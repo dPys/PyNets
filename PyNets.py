@@ -15,7 +15,7 @@ import_list=["import nilearn", "import numpy as np", "import os", "import bct", 
 
 ##User inputs##
 input_ts='/Users/PSYC-dap3463/Desktop/PyNets/data/roi_CC200.1D'
-ID=CC200
+ID='CC200'
 ###############
 
 ##Import ts and estimate cov
@@ -89,11 +89,13 @@ def net_global_scalars_inv_sps_cov_func(est_path2):
 ##save global scalar files to pandas dataframes
 def import_to_pandas(out_path, ID)
     import pandas as pd
+    dir_path = os.path.dirname(os.path.realpath(out_path))
     csv_loc = out_path
     df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('').astype('float')
     df = df.T
     df = df.rename(columns={0: 'global_efficiency', 1: 'modularity_und', 2:'modularity_louvain_und'})
     df['id'] = range(1, len(df) + 1)
+
     ##Rearrange columns in dataframe so that ID is the first column (if ID exists)
     if 'id' in df.columns:
         cols = df.columns.tolist()
@@ -101,7 +103,10 @@ def import_to_pandas(out_path, ID)
         cols_ID = cols[ix:ix+1]+cols[:ix]+cols[ix+1:]
         df = df[cols_ID]
     df['id'].values[0]=ID
-    return df
+    suffix=out_path.split("_",1)[1][:-4]
+    out_path=dir_path + '/' + ID + '_' + suffix
+    df.to_pickle(out_path)
+    return df out_path
 
 ##Create input/output nodes
 inputnode = pe.Node(niu.IdentityInterface(fields=['in_file']),
