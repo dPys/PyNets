@@ -1,0 +1,6 @@
+#!/bin/env python
+import nilearn
+import numpy as np
+from numpy import genfromtxt
+DR_st_1='/Users/PSYC-dap3463/Desktop/PyNets/roi_CC200.1D'
+mx = genfromtxt(DR_st_1, delimiter='\t')
