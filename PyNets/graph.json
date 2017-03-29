@@ -1,0 +1,40 @@
+[
+    {
+        "group": 1,
+        "imports": [],
+        "name": "0_imp_est",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "0_imp_est"
+        ],
+        "name": "1_sps_inv_cov_plt",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "0_imp_est"
+        ],
+        "name": "2_cov_plt",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "0_imp_est"
+        ],
+        "name": "3_net_glob_scalars",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "3_net_glob_scalars"
+        ],
+        "name": "4_sinker",
+        "size": 1
+    }
+]
