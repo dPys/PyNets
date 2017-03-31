@@ -10,7 +10,7 @@
         "imports": [
             "0_imp_est"
         ],
-        "name": "1_sps_inv_cov_plt",
+        "name": "1_net_global_scalars_inv_sps_cov",
         "size": 1
     },
     {
@@ -24,17 +24,33 @@
     {
         "group": 1,
         "imports": [
-            "0_imp_est"
+            "1_net_global_scalars_inv_sps_cov"
         ],
-        "name": "3_net_glob_scalars",
+        "name": "3_export_to_pandas2",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
-            "3_net_glob_scalars"
+            "0_imp_est"
         ],
-        "name": "4_sinker",
+        "name": "4_net_glob_scalars_cov",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "4_net_glob_scalars_cov"
+        ],
+        "name": "5_export_to_pandas1",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "0_imp_est"
+        ],
+        "name": "6_sps_inv_cov_plt",
         "size": 1
     }
 ]

@@ -1,0 +1,49 @@
+[
+    {
+        "group": 1,
+        "imports": [],
+        "name": "0_imp_est",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "0_imp_est"
+        ],
+        "name": "1_net_global_scalars_inv_sps_cov",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "0_imp_est"
+        ],
+        "name": "2_sps_inv_cov_plt",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "0_imp_est"
+        ],
+        "name": "3_cov_plt",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "0_imp_est"
+        ],
+        "name": "4_net_glob_scalars_cov",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "4_net_glob_scalars_cov",
+            "1_net_global_scalars_inv_sps_cov"
+        ],
+        "name": "5_sinker",
+        "size": 1
+    }
+]
