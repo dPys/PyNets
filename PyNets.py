@@ -11,13 +11,13 @@ if len(sys.argv) > 1:
     try:
         ID=sys.argv[2]
     except:
-        print("Error: You must include a subject ID as your second entry on the command line")
+        print("Error: You must include a subject ID, in quotes, as your second entry on the command line")
         sys.exit()
     if '.nii' in input_file:
         try:
             atlas_select=sys.argv[3]
         except:
-            print("Error: You have specified the path to an image file. You must also include an atlas name as the third argument to your PyNets.py call")
+            print("Error: You have specified the path, in quotes, to an image file. You must also include an atlas name as the third argument to your PyNets.py call")
             sys.exit()
     else:
         atlas_select=Undefined
@@ -25,7 +25,7 @@ if len(sys.argv) > 1:
         try:
             TR=sys.argv[4]
         except:
-            print("Error: You have specified the path to an image file. You must also include a TR value as the fourth argument to your PyNets.py call")
+            print("Error: You have specified the path, in quotes, to an image file. You must also include a TR value as the fourth argument to your PyNets.py call")
             sys.exit()
     else:
         #TR=Undefined
@@ -73,7 +73,7 @@ if '.nii' in input_file:
 print("\n\n\n")
 dir_path = os.path.dirname(os.path.realpath(input_file))
 
-##Import ts and estimate cov
+##Import/generate time-series and estimate covariance/sparse inverse covariance matrices
 def import_mat_func(input_file, ID, atlas_select, TR):
     if '.nii' in input_file:
         from nilearn import datasets
@@ -125,7 +125,7 @@ def import_mat_func(input_file, ID, atlas_select, TR):
     np.savetxt(est_path2, estimator.precision_, delimiter='\t')
     return(mx, est_path1, est_path2)
 
-##Display the covariance
+##Create plots for covariance matrix interface
 def cov_plt_func(mx, est_path1, ID):
     rois_num=mx.shape[0]
     ts_num=mx.shape[1]
@@ -146,6 +146,7 @@ def cov_plt_func(mx, est_path1, ID):
     plt.close()
     return(est_path1)
 
+##Create plots for sparse inverse covariance matrix interface
 def sps_inv_cov_plt_func(mx, est_path2, ID):
     rois_num=mx.shape[0]
     ts_num=mx.shape[1]
@@ -167,6 +168,7 @@ def sps_inv_cov_plt_func(mx, est_path2, ID):
     plt.close()
     return(est_path2)
 
+##Extract network metrics interface
 def extractnetstats(est_path, ID, out_file=None):
     in_mat = np.array(genfromtxt(est_path))
     dir_path = os.path.dirname(os.path.realpath(est_path))
@@ -215,7 +217,7 @@ class ExtractNetStats(BaseInterface):
         import os.path as op
         return {'out_file': op.abspath(getattr(self, '_outpath'))}
 
-##save global scalar files to pandas dataframes
+##save global scalar files to pandas dataframes interface
 def export_to_pandas(csv_loc, ID, out_file=None):
     import pandas as pd
     df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
