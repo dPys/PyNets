@@ -38,6 +38,6 @@ row per subject.
 3. Coming soon (or for any interested developers):\
 a) Optionally incorporate a confound regressor into your covariance/ sparse inverse covariance matrix estimation (for now, PyNets assumes this has already been done)\
 
-b) Iterate network metric extraction over atlas-defined and/or group-ICA masked RSN's (e.g. DMN, CCN, etc.)
+  b) Iterate network metric extraction over atlas-defined and/or group-ICA masked RSN's (e.g. DMN, CCN, etc.)
 
 Happy Netting!
