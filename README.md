@@ -12,8 +12,8 @@ your rsfMRI image was collected with a TR=2 seconds:
 'coords_power_2011' '2'
 ```
 
-Situation B) You only have your time-series in a text or csv-like file where the matrix is saved
-in the format of # of functional volumes x # of ROI's:
+  Situation B) You only have your time-series in a text or csv-like file where the matrix is saved
+  in the format of # of functional volumes x # of ROI's:
 
 ```python
 ./PyNets.py '/Users/dpisner453/PyNets_examples/200/roi_CC200.1D' '200'
