@@ -1,5 +1,5 @@
 # PyNets
-An Open-Source Nipype-Powered Workflow for Network Analysis of rsfMRI
+A Nipype-Powered Workflow for Network Analysis of rsfMRI
 
 1. Usage:\
 Situation A) You have a standard space-normalized, preprocessed functional rsfMRI image called 
