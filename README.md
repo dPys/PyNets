@@ -1,6 +1,13 @@
 # PyNets
 A Nipype-Powered Workflow for Network Analysis of rsfMRI
 
+PyNets utilizes nilearn and bctpy tools in a nipype workflow to generate plots of rsfMRI networks 
+based on user-defined ROI parcellation schemes and extract the following scalar graph theoretical
+measures from those networks:
+efficiency_bin, efficiency_wei, modularity_finetune_dir, modularity_finetune_und_sign, modularity_und, 
+modularity_louvain_dir, modularity_louvain_und, modularity_louvain_und_sign, modularity_probtune_und_sign, 
+transitivity_bu, transitivity_wd, assortativity_bin, assortativity_wei, density_dir, charpath
+
 1. Usage:\
 Situation A) You have a standard space-normalized, preprocessed functional rsfMRI image called 
 "filtered_func_data_clean_standard.nii.gz" where the subject id=002, the atlas that you wish to
