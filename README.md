@@ -7,12 +7,12 @@ Situation A) You have a standard space-normalized, preprocessed functional rsfMR
 use is the 264-node parcellation scheme from Power et al. 2011 called 'coords_power_2011', and
 your rsfMRI image was collected with a TR=2 seconds:
 ```python
-./PyNets.py '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' '002' \
+python ./PyNets.py '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' '002' \
 'coords_power_2011' '2'
 ```
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation B) You only have your time-series in a text or csv-like file where the matrix is saved in the format of # of functional volumes x # of ROI's:
 ```python
-./PyNets.py '/Users/dpisner453/PyNets_examples/200/roi_CC200.1D' '200'
+python ./PyNets.py '/Users/dpisner453/PyNets_examples/200/roi_CC200.1D' '200'
 ```
 
 2. Viewing outputs:\
