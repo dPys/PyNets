@@ -8,7 +8,8 @@ use is the 264-node parcellation scheme form Power et al. 2011 called 'coords_po
 your rsfMRI image was collected with a TR=2 seconds:
 
 ```python
-./PyNets.py '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' '002' 'coords_power_2011' '2'
+./PyNets.py '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' '002' \
+'coords_power_2011' '2'
 ```
 
 Situation B) You only have your time-series in a text or csv-like file where the matrix is saved
@@ -19,9 +20,9 @@ in the format of # of functional volumes x # of ROI's:
 ```
 
 2. Viewing outputs:
-PyNets outputs network metrics into text files and pickled pandas dataframes within the same subject folder in which 
-the initial image or time-series was fed into the workflow. To open the pickled pandas dataframes, you 
-can:
+PyNets outputs network metrics into text files and pickled pandas dataframes within the same subject folder 
+in which the initial image or time-series was fed into the workflow. To open the pickled pandas dataframes, 
+you can:
 
 ```python
 import pandas as pd
@@ -31,6 +32,7 @@ df = pd.read_pickle(pickle_path)
 df
 ```
 
-These dataframes can then be iteratively loaded and aggregated by row into a single dataframe, where there is 1 row per subject.
+These dataframes can then be iteratively loaded and aggregated by row into a single dataframe, where there is 1 
+row per subject.
 
 Happy Netting!
