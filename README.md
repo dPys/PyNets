@@ -17,8 +17,8 @@ python ./PyNets.py '/Users/dpisner453/PyNets_examples/200/roi_CC200.1D' '200'
 
 2. Viewing outputs:\
 PyNets outputs network metrics into text files and pickled pandas dataframes within the same subject folder 
-in which the initial image or time-series was fed into the workflow. To open the pickled pandas dataframes, 
-you can:
+in which the initial image or time-series was fed into the workflow. To open the pickled pandas dataframes
+from within the interpreter, you can:
 ```python
 import pandas as pd
 ##Assign pickle path for the covariance (as opposed to the sparse inverse covariance net)
