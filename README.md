@@ -12,6 +12,12 @@ https://sites.google.com/site/bctnet/measures/list
 
 1. Installation
 ```python
+##You will firstly need the development version of nipype available on github
+git clone https://github.com/nipy/nipype
+cd nipype
+python setup.py install
+
+##Second you will need to clone the PyNets repo and install dependencies
 git clone https://github.com/dpisner453/PyNets.git
 cd /path/to/PyNets
 pip install -r requirements.txt 
