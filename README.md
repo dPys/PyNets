@@ -21,6 +21,9 @@ python setup.py install
 git clone https://github.com/dpisner453/PyNets.git
 cd /path/to/PyNets
 pip install -r requirements.txt 
+
+##If you run into any problems at run time, try installing the optional features of nipype with:
+pip install nipype[all]
 ```
 
 2. Usage:\
