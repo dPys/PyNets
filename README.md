@@ -11,9 +11,11 @@ For more information on interpeting these measures, see:
 https://sites.google.com/site/bctnet/measures/list 
 
 1. Installation
+```python
 git clone https://github.com/dpisner453/PyNets.git
 cd /path/to/PyNets
 pip install -r requirements.txt 
+```
 
 2. Usage:\
 Situation A) You have a standard space-normalized, preprocessed functional rsfMRI image called 
