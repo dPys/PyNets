@@ -313,7 +313,7 @@ wf.connect([
 #    (export_to_pandas2, datasink, [('out_file', 'pandas_df2')]),
 ])
 
-wf.write_graph()
+#wf.write_graph()
 #wf.run(plugin='SLURM')
 #wf.run(plugin='MultiProc')
 wf.run()
