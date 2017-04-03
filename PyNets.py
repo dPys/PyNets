@@ -1,6 +1,7 @@
 #!/bin/env python -W ignore::DeprecationWarning
 import sys
 from nipype.interfaces.base import isdefined,Undefined
+from sklearn.cross_validation import train_test_split
 ######################
 return_list = "\n\n\nPyNets help: \n\n\nYou must include: \n1) Either a path to a functional image in standard space and .nii or .nii.gz format OR an input time-series text/csv file \n2) A subject ID (numerical) for those files\n\n\n*If a functional image file is used, you must also select: \n3) An atlas from the list below \n4) A TR value\n\n\n'abide_pcp'\n'adhd'\n'atlas_aal'\n'atlas_basc_multiscale_2015'\n'atlas_craddock_2012'\n'atlas_destrieux_2009'\n'atlas_harvard_oxford'\n'atlas_msdl'\n'atlas_smith_2009'\n'atlas_yeo_2011'\n'cobre'\n'coords_dosenbach_2010'\n'coords_power_2011'\n'haxby'\n'haxby_simple'\n'icbm152_2009'\n'icbm152_brain_gm_mask'\n'localizer_button_task'\n'localizer_calculation_task'\n'localizer_contrasts'\n'megatrawls_netmats'\n'mixed_gambles'\n'miyawaki2008'\n'nyu_rest'\n'oasis_vbm'\n"
 if '-h' in sys.argv:
