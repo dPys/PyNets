@@ -25,7 +25,7 @@ elif len(sys.argv) > 1:
             print("Error: You have specified the path, in quotes, to an image file. You must also include an atlas name as the third argument to your PyNets.py call")
             sys.exit()
     else:
-        atlas_select=Undefined
+        atlas_select=''
     if '.nii' in input_file:
         try:
             TR=sys.argv[4]
@@ -33,14 +33,14 @@ elif len(sys.argv) > 1:
             print("Error: You have specified the path, in quotes, to an image file. You must also include a TR value as the fourth argument to your PyNets.py call")
             sys.exit()
     else:
-        TR=Undefined
+        TR=''
 else:
     print("\nMissing command-line inputs!\n" + return_list)
     sys.exit()
 try:
     NETWORK=sys.argv[5]
 except:
-    NETWORK=Undefined
+    NETWORK=''
 
 ######################
 
@@ -63,9 +63,10 @@ from nilearn.connectome import ConnectivityMeasure
 from nilearn import input_data
 from nilearn import plotting
 import networkx as nx
+import gzip
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, Str
 
-import_list=["import nilearn", "import numpy as np", "import os", "import bct", "from numpy import genfromtxt", "from matplotlib import pyplot as plt", "from nipype import Node, Workflow", "from nipype import Node, Workflow", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn import plotting", "from nilearn import datasets", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nilearn import input_data", "from nilearn import plotting", "import networkx as nx", "import nibabel as nib", "from nipype.interfaces.base import isdefined,Undefined"]
+import_list=["import nilearn", "import numpy as np", "import os", "import bct", "from numpy import genfromtxt", "from matplotlib import pyplot as plt", "from nipype import Node, Workflow", "from nipype import Node, Workflow", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn import plotting", "from nilearn import datasets", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nilearn import datasets", "import gzip", "from nilearn import input_data", "from nilearn import plotting", "import networkx as nx", "import nibabel as nib", "from nipype.interfaces.base import isdefined,Undefined"]
 
 print("\n\n\n")
 print ("INPUT FILE: " + input_file)
@@ -77,16 +78,15 @@ if '.nii' in input_file:
     print("\n")
     print ("TR: " + TR)
     print("\n")
-    print ("NETWORK: " + NETWORK)
+    if NETWORK != '':
+        print ("NETWORK: " + NETWORK)
 print("\n\n\n")
 dir_path = os.path.dirname(os.path.realpath(input_file))
 
 ##Import/generate time-series and estimate GLOBAL covariance/sparse inverse covariance matrices
 def import_mat_func(input_file, ID, atlas_select, TR, NETWORK):
-    if '.nii' in input_file and NETWORK == Undefined:
+    if '.nii' in input_file and NETWORK == '':
         func_file=input_file
-        from nilearn import datasets
-        import gzip
         dir_path = os.path.dirname(os.path.realpath(func_file))
         atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
         atlas_name = atlas['description'].splitlines()[0]
@@ -122,7 +122,7 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK):
         np.savetxt(time_series_path, time_series, delimiter='\t')
         mx = genfromtxt(time_series_path, delimiter='')
 
-    elif '.nii' in input_file and NETWORK != Undefined:
+    elif '.nii' in input_file and NETWORK != '':
         func_file=input_file
         network_list = ['DMN','CCN']
         ####RSN REFERENCE LISTS####
@@ -141,8 +141,6 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK):
         #    'Medial prefrontal cortex'
         #]
         ###########################
-        from nilearn import datasets
-        import gzip
         dir_path = os.path.dirname(os.path.realpath(func_file))
         ##Prepare RSN ROI coords and labels
         for i, j in enumerate(network_list):
@@ -155,7 +153,6 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK):
         labels = eval(RSN_labels_list)
 
         ##Grow ROIs
-        from nilearn import input_data
         masker = input_data.NiftiSpheresMasker(
             coords, radius=8,
             detrend=True, standardize=True,
@@ -172,12 +169,8 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK):
         out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_TS_plot.png'
         plt.savefig(out_path_fig)
         plt.close()
-
-        from nilearn.connectome import ConnectivityMeasure
         connectivity_measure = ConnectivityMeasure(kind='partial correlation')
         partial_correlation_matrix = connectivity_measure.fit_transform([time_series])[0]
-
-        from nilearn import plotting
         plot_title = NETWORK + ' Network Time Series'
         plotting.plot_connectome(partial_correlation_matrix, coords,
                                  title=plot_title)
@@ -196,7 +189,7 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK):
     from sklearn.covariance import GraphLassoCV
     estimator = GraphLassoCV()
     est = estimator.fit(mx)
-    if NETWORK != Undefined:
+    if NETWORK != '':
         est_path1 = dir_path + '/' + ID + '_' + NETWORK + '_est_cov.txt'
         est_path2 = dir_path + '/' + ID + '_' + NETWORK + '_est_sps_inv_cov.txt'
     else:
@@ -211,7 +204,11 @@ def cov_plt_func(mx, est_path1, ID, NETWORK):
     dir_path = os.path.dirname(os.path.realpath(est_path1))
     est_cov = genfromtxt(est_path1)
     rois_num=est_cov.shape[0]
-    plt.figure(figsize=(rois_num, rois_num))
+    if NETWORK != '':
+        print("Creating Covariance plot of dimensions:\n" + str(rois_num) + ' x ' + str(rois_num))
+        plt.figure(figsize=(rois_num, rois_num))
+    else:
+        plt.figure(figsize=(10, 10))
     ##The covariance can be found at estimator.covariance_
     plt.imshow(est_cov, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
     ##And display the labels
@@ -220,7 +217,7 @@ def cov_plt_func(mx, est_path1, ID, NETWORK):
     plt.title('Covariance')
     A=np.matrix(est_cov)
     G=nx.from_numpy_matrix(A)
-    if NETWORK != Undefined:
+    if NETWORK != '':
         G = nx.write_graphml(G, dir_path + '/' + ID + '_' + NETWORK + '.graphml')
         out_path=dir_path + '/' + ID + '_' + NETWORK + '_adj_mat_cov.png'
     else:
@@ -235,6 +232,11 @@ def sps_inv_cov_plt_func(mx, est_path2, ID, NETWORK):
     dir_path = os.path.dirname(os.path.realpath(est_path2))
     est_sps_inv_cov = genfromtxt(est_path2)
     rois_num=est_sps_inv_cov.shape[0]
+    if NETWORK != '':
+        print("Creating Sparse Inverse Covariance plot of dimensions:\n" + str(rois_num) + ' x ' + str(rois_num))
+        plt.figure(figsize=(rois_num, rois_num))
+    else:
+        plt.figure(figsize=(10, 10))
     plt.figure(figsize=(rois_num, rois_num))
     ##The covariance can be found at estimator.precision_
     plt.imshow(-est_sps_inv_cov, interpolation="nearest",
@@ -245,7 +247,7 @@ def sps_inv_cov_plt_func(mx, est_path2, ID, NETWORK):
     plt.title('Sparse inverse covariance')
     A=np.matrix(est_sps_inv_cov)
     G=nx.from_numpy_matrix(A)
-    if NETWORK != Undefined:
+    if NETWORK != '':
         G = nx.write_graphml(G, dir_path + '/' + ID + '_' + NETWORK + '.graphml')
         out_path=dir_path + '/' + ID + '_' + NETWORK + '_adj_mat_sps_inv_cov.png'
     else:
@@ -275,12 +277,12 @@ def extractnetstats(est_path, ID, NETWORK, out_file=None):
     density_dir = float(bct.density_dir(in_mat)[0])
     charpath = float(bct.charpath(in_mat)[4])
     if 'inv' in est_path:
-        if NETWORK != Undefined:
+        if NETWORK != '':
             out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_global_scalars_inv_sps_cov.csv'
         else:
             out_path = dir_path + '/' + ID + '_net_global_scalars_inv_sps_cov.csv'
     else:
-        if NETWORK != Undefined:
+        if NETWORK != '':
             out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_global_scalars_cov.csv'
         else:
             out_path = dir_path + '/' + ID + '_net_global_scalars_cov.csv'
