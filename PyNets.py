@@ -3,7 +3,7 @@ import sys
 from nipype.interfaces.base import isdefined,Undefined
 from sklearn.model_selection import train_test_split
 ######################
-return_list = "\n\n\nPyNets help: \n\n\nYou must include: \n1) Either a path to a functional image in standard space and .nii or .nii.gz format OR an input time-series text/csv file, in single quotes \n2) A subject ID (numerical only) for those files in single quotes\n\n\n*If a functional image file is used, you must also select: \n3) An atlas from the list below in single quotes \n4) A TR value in single quotes\n 5) *Optionally, an atlas-defined RSN name from the list below from which to extract local time-series graphs\n\n\n ATLASES:\n'abide_pcp'\n'adhd'\n'atlas_aal'\n'atlas_basc_multiscale_2015'\n'atlas_craddock_2012'\n'atlas_destrieux_2009'\n'atlas_harvard_oxford'\n'atlas_msdl'\n'atlas_smith_2009'\n'atlas_yeo_2011'\n'cobre'\n'coords_dosenbach_2010'\n'coords_power_2011'\n'haxby'\n'haxby_simple'\n'icbm152_2009'\n'icbm152_brain_gm_mask'\n'megatrawls_netmats'\n'mixed_gambles'\n'miyawaki2008'\n'nyu_rest'\n'oasis_vbm'\n"
+return_list = "\n\n\nPyNets help: \n\n\nYou must include: \n1) Either a path to a functional image in standard space and .nii or .nii.gz format OR an input time-series text/csv file, in quotes \n2) A subject ID (numerical only) for those files in quotes\n\n\n*If a functional image file is used, you must also select: \n3) An atlas from the list below in quotes \n4) A TR value in quotes\n5) *Optionally, an atlas-defined RSN name, in quotes, from the list below from which to extract local time-series graphs\n\n\nATLASES:\n'abide_pcp'\n'adhd'\n'atlas_aal'\n'atlas_basc_multiscale_2015'\n'atlas_craddock_2012'\n'atlas_destrieux_2009'\n'atlas_harvard_oxford'\n'atlas_msdl'\n'atlas_smith_2009'\n'atlas_yeo_2011'\n'cobre'\n'coords_dosenbach_2010'\n'coords_power_2011'\n'haxby'\n'haxby_simple'\n'icbm152_2009'\n'icbm152_brain_gm_mask'\n'megatrawls_netmats'\n'mixed_gambles'\n'miyawaki2008'\n'nyu_rest'\n'oasis_vbm'\n\n\nRSN's:\n'DMN'"
 if '-h' in sys.argv:
     print(return_list)
     sys.exit()
@@ -26,7 +26,6 @@ elif len(sys.argv) > 1:
             sys.exit()
     else:
         atlas_select=Undefined
-        #atlas_select=''
     if '.nii' in input_file:
         try:
             TR=sys.argv[4]
@@ -35,21 +34,18 @@ elif len(sys.argv) > 1:
             sys.exit()
     else:
         TR=Undefined
-        #TR=''
 else:
     print("\nMissing command-line inputs!\n" + return_list)
     sys.exit()
-
 try:
     NETWORK=sys.argv[5]
 except:
     NETWORK=Undefined
-    #NETWORK=''
 
 ######################
 
 import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore")
 import nilearn
 import numpy as np
 import bct
@@ -69,7 +65,7 @@ from nilearn import plotting
 import networkx as nx
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, Str
 
-import_list=["import nilearn", "import numpy as np", "import os", "import bct", "from numpy import genfromtxt", "from matplotlib import pyplot as plt", "from nipype import Node, Workflow", "from nipype import Node, Workflow", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn import plotting", "from nilearn import datasets", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nilearn import input_data", "from nilearn import plotting", "import networkx as nx", "import nibabel as nib"]
+import_list=["import nilearn", "import numpy as np", "import os", "import bct", "from numpy import genfromtxt", "from matplotlib import pyplot as plt", "from nipype import Node, Workflow", "from nipype import Node, Workflow", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn import plotting", "from nilearn import datasets", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nilearn import input_data", "from nilearn import plotting", "import networkx as nx", "import nibabel as nib", "from nipype.interfaces.base import isdefined,Undefined"]
 
 print("\n\n\n")
 print ("INPUT FILE: " + input_file)
@@ -87,7 +83,7 @@ dir_path = os.path.dirname(os.path.realpath(input_file))
 
 ##Import/generate time-series and estimate GLOBAL covariance/sparse inverse covariance matrices
 def import_mat_func(input_file, ID, atlas_select, TR, NETWORK):
-    if '.nii' in input_file and NETWORK == '':
+    if '.nii' in input_file and NETWORK == Undefined:
         func_file=input_file
         from nilearn import datasets
         import gzip
@@ -126,7 +122,7 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK):
         np.savetxt(time_series_path, time_series, delimiter='\t')
         mx = genfromtxt(time_series_path, delimiter='')
 
-    elif '.nii' in input_file and NETWORK != "":
+    elif '.nii' in input_file and NETWORK != Undefined:
         func_file=input_file
         network_list = ['DMN','CCN']
         ####RSN REFERENCE LISTS####
@@ -166,7 +162,6 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK):
             low_pass=0.1, high_pass=0.01, t_r=float(TR),
             memory='nilearn_cache', memory_level=1, verbose=2)
         time_series = masker.fit_transform(func_file)
-
         for time_serie, label in zip(time_series.T, labels):
             plt.plot(time_serie, label=label)
         plt.title(NETWORK + ' Network Time Series')
@@ -200,20 +195,23 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK):
         mx = genfromtxt(DR_st_1, delimiter='')
     from sklearn.covariance import GraphLassoCV
     estimator = GraphLassoCV()
-    est = estimator.fit(mx.T)
-    est_path1 = dir_path + '/' + ID + '_est_cov.txt'
-    est_path2 = dir_path + '/' + ID + '_est_sps_inv_cov.txt'
+    est = estimator.fit(mx)
+    if NETWORK != Undefined:
+        est_path1 = dir_path + '/' + ID + '_' + NETWORK + '_est_cov.txt'
+        est_path2 = dir_path + '/' + ID + '_' + NETWORK + '_est_sps_inv_cov.txt'
+    else:
+        est_path1 = dir_path + '/' + ID + '_est_cov.txt'
+        est_path2 = dir_path + '/' + ID + '_est_sps_inv_cov.txt'
     np.savetxt(est_path1, estimator.covariance_, delimiter='\t')
     np.savetxt(est_path2, estimator.precision_, delimiter='\t')
     return(mx, est_path1, est_path2)
 
 ##Create plots for covariance matrix interface
-def cov_plt_func(mx, est_path1, ID):
-    rois_num=mx.shape[0]
-    ts_num=mx.shape[1]
+def cov_plt_func(mx, est_path1, ID, NETWORK):
     dir_path = os.path.dirname(os.path.realpath(est_path1))
     est_cov = genfromtxt(est_path1)
-    plt.figure(figsize=(10, 10))
+    rois_num=est_cov.shape[0]
+    plt.figure(figsize=(rois_num, rois_num))
     ##The covariance can be found at estimator.covariance_
     plt.imshow(est_cov, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
     ##And display the labels
@@ -222,19 +220,22 @@ def cov_plt_func(mx, est_path1, ID):
     plt.title('Covariance')
     A=np.matrix(est_cov)
     G=nx.from_numpy_matrix(A)
-    G = nx.write_graphml(G, dir_path + '/' + ID + '.graphml')
-    out_path=dir_path + '/' + ID + '_adj_mat_cov.png'
+    if NETWORK != Undefined:
+        G = nx.write_graphml(G, dir_path + '/' + ID + '_' + NETWORK + '.graphml')
+        out_path=dir_path + '/' + ID + '_' + NETWORK + '_adj_mat_cov.png'
+    else:
+        G = nx.write_graphml(G, dir_path + '/' + ID + '.graphml')
+        out_path=dir_path + '/' + ID + '_adj_mat_cov.png'
     plt.savefig(out_path)
     plt.close()
     return(est_path1)
 
 ##Create plots for sparse inverse covariance matrix interface
-def sps_inv_cov_plt_func(mx, est_path2, ID):
-    rois_num=mx.shape[0]
-    ts_num=mx.shape[1]
+def sps_inv_cov_plt_func(mx, est_path2, ID, NETWORK):
     dir_path = os.path.dirname(os.path.realpath(est_path2))
     est_sps_inv_cov = genfromtxt(est_path2)
-    plt.figure(figsize=(10, 10))
+    rois_num=est_sps_inv_cov.shape[0]
+    plt.figure(figsize=(rois_num, rois_num))
     ##The covariance can be found at estimator.precision_
     plt.imshow(-est_sps_inv_cov, interpolation="nearest",
                vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
@@ -244,14 +245,18 @@ def sps_inv_cov_plt_func(mx, est_path2, ID):
     plt.title('Sparse inverse covariance')
     A=np.matrix(est_sps_inv_cov)
     G=nx.from_numpy_matrix(A)
-    G = nx.write_graphml(G, dir_path + '/' + ID + '.graphml')
-    out_path=dir_path + '/' + ID + '_adj_mat_sps_inv_cov.png'
+    if NETWORK != Undefined:
+        G = nx.write_graphml(G, dir_path + '/' + ID + '_' + NETWORK + '.graphml')
+        out_path=dir_path + '/' + ID + '_' + NETWORK + '_adj_mat_sps_inv_cov.png'
+    else:
+        G = nx.write_graphml(G, dir_path + '/' + ID + '.graphml')
+        out_path=dir_path + '/' + ID + '_adj_mat_sps_inv_cov.png'
     plt.savefig(out_path)
     plt.close()
     return(est_path2)
 
 ##Extract network metrics interface
-def extractnetstats(est_path, ID, out_file=None):
+def extractnetstats(est_path, ID, NETWORK, out_file=None):
     in_mat = np.array(genfromtxt(est_path))
     dir_path = os.path.dirname(os.path.realpath(est_path))
     efficiency_bin = float(bct.efficiency_bin(in_mat))
@@ -270,15 +275,22 @@ def extractnetstats(est_path, ID, out_file=None):
     density_dir = float(bct.density_dir(in_mat)[0])
     charpath = float(bct.charpath(in_mat)[4])
     if 'inv' in est_path:
-      out_path = dir_path + '/' + ID + '_net_global_scalars_inv_sps_cov.csv'
+        if NETWORK != Undefined:
+            out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_global_scalars_inv_sps_cov.csv'
+        else:
+            out_path = dir_path + '/' + ID + '_net_global_scalars_inv_sps_cov.csv'
     else:
-      out_path = dir_path + '/' + ID + '_net_global_scalars_cov.csv'
+        if NETWORK != Undefined:
+            out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_global_scalars_cov.csv'
+        else:
+            out_path = dir_path + '/' + ID + '_net_global_scalars_cov.csv'
     np.savetxt(out_path, [efficiency_bin, efficiency_wei, modularity_finetune_dir, modularity_finetune_und_sign, modularity_und, modularity_louvain_dir, modularity_louvain_und, modularity_louvain_und_sign, modularity_probtune_und_sign, transitivity_bu, transitivity_wd, assortativity_bin, assortativity_wei, density_dir, charpath])
     return out_path
 
 class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
     est_path = File(exists=True, mandatory=True, desc="")
     sub_id = Str(mandatory=True)
+    NETWORK = Str(mandatory=True)
 
 class ExtractNetStatsOutputSpec(TraitedSpec):
     out_file = File()
@@ -291,6 +303,7 @@ class ExtractNetStats(BaseInterface):
         out = extractnetstats(
             self.inputs.est_path,
             self.inputs.sub_id,
+            self.inputs.NETWORK,
         )
         setattr(self, '_outpath', out)
         return runtime
@@ -300,7 +313,7 @@ class ExtractNetStats(BaseInterface):
         return {'out_file': op.abspath(getattr(self, '_outpath'))}
 
 ##save global scalar files to pandas dataframes interface
-def export_to_pandas(csv_loc, ID, out_file=None):
+def export_to_pandas(csv_loc, ID, NETWORK, out_file=None):
     import pandas as pd
     df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
     df = df.T
@@ -320,6 +333,7 @@ def export_to_pandas(csv_loc, ID, out_file=None):
 class Export2PandasInputSpec(BaseInterfaceInputSpec):
     in_csv = File(exists=True, mandatory=True, desc="")
     sub_id = Str(mandatory=True)
+    NETWORK = Str(mandatory=True)
     out_file = File('output_export2pandas.csv', usedefault=True)
 
 class Export2PandasOutputSpec(TraitedSpec):
@@ -333,6 +347,7 @@ class Export2Pandas(BaseInterface):
         export_to_pandas(
             self.inputs.in_csv,
             self.inputs.sub_id,
+            self.inputs.NETWORK,
             out_file=self.inputs.out_file
         )
         return runtime
@@ -356,8 +371,8 @@ inputnode.inputs.NETWORK = NETWORK
 #3) Add variable to function nodes
 ##Create function nodes
 imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'TR', 'NETWORK'], output_names = ['mx','est_path1', 'est_path2'], function=import_mat_func, imports=import_list), name = "imp_est")
-cov_plt = pe.Node(niu.Function(input_names = ['mx', 'est_path1', 'ID'], output_names = ['est_path1'], function=cov_plt_func, imports=import_list), name = "cov_plt")
-sps_inv_cov_plt = pe.Node(niu.Function(input_names=['mx', 'est_path2', 'ID'], output_names = ['est_path2'], function=sps_inv_cov_plt_func, imports=import_list), name = "sps_inv_cov_plt")
+cov_plt = pe.Node(niu.Function(input_names = ['mx', 'est_path1', 'ID', 'NETWORK'], output_names = ['est_path1'], function=cov_plt_func, imports=import_list), name = "cov_plt")
+sps_inv_cov_plt = pe.Node(niu.Function(input_names=['mx', 'est_path2', 'ID', 'NETWORK'], output_names = ['est_path2'], function=sps_inv_cov_plt_func, imports=import_list), name = "sps_inv_cov_plt")
 net_glob_scalars_cov = pe.Node(ExtractNetStats(), name = "ExtractNetStats1")
 net_global_scalars_inv_sps_cov = pe.Node(ExtractNetStats(), name = "ExtractNetStats2")
 export_to_pandas1 = pe.Node(Export2Pandas(), name = "export_to_pandas1")
@@ -379,21 +394,27 @@ wf.connect([
                           ('atlas_select', 'atlas_select'),
                           ('TR', 'TR'),
                           ('NETWORK', 'NETWORK')]),
-    (inputnode, cov_plt, [('ID', 'ID')]),
+    (inputnode, cov_plt, [('ID', 'ID'),
+                          ('NETWORK', 'NETWORK')]),
     (imp_est, cov_plt, [('mx', 'mx'),
                         ('est_path1', 'est_path1')]),
     (imp_est, sps_inv_cov_plt, [('mx', 'mx'),
                                 ('est_path2', 'est_path2')]),
-    (inputnode, sps_inv_cov_plt, [('ID', 'ID')]),
+    (inputnode, sps_inv_cov_plt, [('ID', 'ID'),
+                                  ('NETWORK', 'NETWORK')]),
     (imp_est, net_glob_scalars_cov, [('est_path1', 'est_path')]),
-    (inputnode, net_glob_scalars_cov, [('ID', 'sub_id')]),
+    (inputnode, net_glob_scalars_cov, [('ID', 'sub_id'),
+                                       ('NETWORK', 'NETWORK')]),
     (imp_est, net_global_scalars_inv_sps_cov, [('est_path2', 'est_path')]),
-    (inputnode, net_global_scalars_inv_sps_cov, [('ID', 'sub_id')]),
+    (inputnode, net_global_scalars_inv_sps_cov, [('ID', 'sub_id'),
+                                                 ('NETWORK', 'NETWORK')]),
 #    (net_glob_scalars_cov, datasink, [('est_path1', 'csv_loc')]),
 #    (net_global_scalars_inv_sps_cov, datasink, [('est_path2', 'csv_loc')]),
-    (inputnode, export_to_pandas1, [('ID', 'sub_id')]),
+    (inputnode, export_to_pandas1, [('ID', 'sub_id'),
+                                    ('NETWORK', 'NETWORK')]),
     (net_glob_scalars_cov, export_to_pandas1, [('out_file', 'in_csv')]),
-    (inputnode, export_to_pandas2, [('ID', 'sub_id')]),
+    (inputnode, export_to_pandas2, [('ID', 'sub_id'),
+                                    ('NETWORK', 'NETWORK')]),
     (net_global_scalars_inv_sps_cov, export_to_pandas2, [('out_file', 'in_csv')]),
 #    (export_to_pandas1, datasink, [('out_file', 'pandas_df1')]),
 #    (export_to_pandas2, datasink, [('out_file', 'pandas_df2')]),
