@@ -1,9 +1,9 @@
 #!/bin/env python -W ignore::DeprecationWarning
 import sys
 from nipype.interfaces.base import isdefined,Undefined
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 ######################
-return_list = "\n\n\nPyNets help: \n\n\nYou must include: \n1) Either a path to a functional image in standard space and .nii or .nii.gz format OR an input time-series text/csv file \n2) A subject ID (numerical) for those files\n\n\n*If a functional image file is used, you must also select: \n3) An atlas from the list below \n4) A TR value\n\n\n'abide_pcp'\n'adhd'\n'atlas_aal'\n'atlas_basc_multiscale_2015'\n'atlas_craddock_2012'\n'atlas_destrieux_2009'\n'atlas_harvard_oxford'\n'atlas_msdl'\n'atlas_smith_2009'\n'atlas_yeo_2011'\n'cobre'\n'coords_dosenbach_2010'\n'coords_power_2011'\n'haxby'\n'haxby_simple'\n'icbm152_2009'\n'icbm152_brain_gm_mask'\n'localizer_button_task'\n'localizer_calculation_task'\n'localizer_contrasts'\n'megatrawls_netmats'\n'mixed_gambles'\n'miyawaki2008'\n'nyu_rest'\n'oasis_vbm'\n"
+return_list = "\n\n\nPyNets help: \n\n\nYou must include: \n1) Either a path to a functional image in standard space and .nii or .nii.gz format OR an input time-series text/csv file, in single quotes \n2) A subject ID (numerical only) for those files in single quotes\n\n\n*If a functional image file is used, you must also select: \n3) An atlas from the list below in single quotes \n4) A TR value in single quotes\n 5) *Optionally, an atlas-defined RSN name from the list below from which to extract local time-series graphs\n\n\n ATLASES:\n'abide_pcp'\n'adhd'\n'atlas_aal'\n'atlas_basc_multiscale_2015'\n'atlas_craddock_2012'\n'atlas_destrieux_2009'\n'atlas_harvard_oxford'\n'atlas_msdl'\n'atlas_smith_2009'\n'atlas_yeo_2011'\n'cobre'\n'coords_dosenbach_2010'\n'coords_power_2011'\n'haxby'\n'haxby_simple'\n'icbm152_2009'\n'icbm152_brain_gm_mask'\n'megatrawls_netmats'\n'mixed_gambles'\n'miyawaki2008'\n'nyu_rest'\n'oasis_vbm'\n"
 if '-h' in sys.argv:
     print(return_list)
     sys.exit()
@@ -25,8 +25,8 @@ elif len(sys.argv) > 1:
             print("Error: You have specified the path, in quotes, to an image file. You must also include an atlas name as the third argument to your PyNets.py call")
             sys.exit()
     else:
-        #atlas_select=Undefined
-        atlas_select=''
+        atlas_select=Undefined
+        #atlas_select=''
     if '.nii' in input_file:
         try:
             TR=sys.argv[4]
@@ -34,11 +34,17 @@ elif len(sys.argv) > 1:
             print("Error: You have specified the path, in quotes, to an image file. You must also include a TR value as the fourth argument to your PyNets.py call")
             sys.exit()
     else:
-        #TR=Undefined
-        TR=''
+        TR=Undefined
+        #TR=''
 else:
     print("\nMissing command-line inputs!\n" + return_list)
     sys.exit()
+
+try:
+    NETWORK=sys.argv[5]
+except:
+    NETWORK=Undefined
+    #NETWORK=''
 
 ######################
 
@@ -74,14 +80,17 @@ if '.nii' in input_file:
     print ("ATLAS: " + atlas_select)
     print("\n")
     print ("TR: " + TR)
+    print("\n")
+    print ("NETWORK: " + NETWORK)
 print("\n\n\n")
 dir_path = os.path.dirname(os.path.realpath(input_file))
 
-##Import/generate time-series and estimate covariance/sparse inverse covariance matrices
-def import_mat_func(input_file, ID, atlas_select, TR):
-    if '.nii' in input_file:
-        from nilearn import datasets
+##Import/generate time-series and estimate GLOBAL covariance/sparse inverse covariance matrices
+def import_mat_func(input_file, ID, atlas_select, TR, NETWORK):
+    if '.nii' in input_file and NETWORK == '':
         func_file=input_file
+        from nilearn import datasets
+        import gzip
         dir_path = os.path.dirname(os.path.realpath(func_file))
         atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
         atlas_name = atlas['description'].splitlines()[0]
@@ -114,6 +123,75 @@ def import_mat_func(input_file, ID, atlas_select, TR):
         plt.savefig(out_path_fig)
         plt.close()
         time_series_path = dir_path + '/' + ID + '_ts.txt'
+        np.savetxt(time_series_path, time_series, delimiter='\t')
+        mx = genfromtxt(time_series_path, delimiter='')
+
+    elif '.nii' in input_file and NETWORK != "":
+        func_file=input_file
+        network_list = ['DMN','CCN']
+        ####RSN REFERENCE LISTS####
+        DMN_coords = [(0, -52, 18), (-46, -68, 32), (46, -68, 32), (1, 50, -5)]
+        DMN_labels = [
+            'Posterior Cingulate Cortex',
+            'Left Temporoparietal junction',
+            'Right Temporoparietal junction',
+            'Medial prefrontal cortex'
+        ]
+        #CCN_coords = [(0, -52, 18), (-46, -68, 32), (46, -68, 32), (1, 50, -5)]
+        #CCN_labels = [
+        #    'Posterior Cingulate Cortex',
+        #    'Left Temporoparietal junction',
+        #    'Right Temporoparietal junction',
+        #    'Medial prefrontal cortex'
+        #]
+        ###########################
+        from nilearn import datasets
+        import gzip
+        dir_path = os.path.dirname(os.path.realpath(func_file))
+        ##Prepare RSN ROI coords and labels
+        for i, j in enumerate(network_list):
+            if j == NETWORK:
+                net_index = i
+
+        RSN_coords_list = NETWORK + '_coords'
+        RSN_labels_list = NETWORK + '_labels'
+        coords = eval(RSN_coords_list)
+        labels = eval(RSN_labels_list)
+
+        ##Grow ROIs
+        from nilearn import input_data
+        masker = input_data.NiftiSpheresMasker(
+            coords, radius=8,
+            detrend=True, standardize=True,
+            low_pass=0.1, high_pass=0.01, t_r=float(TR),
+            memory='nilearn_cache', memory_level=1, verbose=2)
+        time_series = masker.fit_transform(func_file)
+
+        for time_serie, label in zip(time_series.T, labels):
+            plt.plot(time_serie, label=label)
+        plt.title(NETWORK + ' Network Time Series')
+        plt.xlabel('Scan Number')
+        plt.ylabel('Normalized Signal')
+        plt.legend()
+        plt.tight_layout()
+        out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_TS_plot.png'
+        plt.savefig(out_path_fig)
+        plt.close()
+
+        from nilearn.connectome import ConnectivityMeasure
+        connectivity_measure = ConnectivityMeasure(kind='partial correlation')
+        partial_correlation_matrix = connectivity_measure.fit_transform([time_series])[0]
+
+        from nilearn import plotting
+        plot_title = NETWORK + ' Network Time Series'
+        plotting.plot_connectome(partial_correlation_matrix, coords,
+                                 title=plot_title)
+        # Display connectome with hemispheric projections.
+        title = "Connectivity Projected on Hemispheres"
+        out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_connectome_plot.png'
+        plotting.plot_connectome(partial_correlation_matrix, coords, title=title,
+        display_mode='lyrz', output_file=out_path_fig)
+        time_series_path = dir_path + '/' + ID + '_' + NETWORK + '_ts.txt'
         np.savetxt(time_series_path, time_series, delimiter='\t')
         mx = genfromtxt(time_series_path, delimiter='')
     else:
@@ -264,15 +342,20 @@ class Export2Pandas(BaseInterface):
         return {'out_file': op.abspath(self.inputs.out_file)}
 
 ##Create input/output nodes
-inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'TR']),
+#1) Add variable to IdentityInterface if user-set
+inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'TR', 'NETWORK']),
                     name='inputnode')
+
+#2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
 inputnode.inputs.in_file = input_file
 inputnode.inputs.ID = ID
 inputnode.inputs.atlas_select = atlas_select
 inputnode.inputs.TR = TR
+inputnode.inputs.NETWORK = NETWORK
 
+#3) Add variable to function nodes
 ##Create function nodes
-imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'TR'], output_names = ['mx','est_path1', 'est_path2'], function=import_mat_func, imports=import_list), name = "imp_est")
+imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'TR', 'NETWORK'], output_names = ['mx','est_path1', 'est_path2'], function=import_mat_func, imports=import_list), name = "imp_est")
 cov_plt = pe.Node(niu.Function(input_names = ['mx', 'est_path1', 'ID'], output_names = ['est_path1'], function=cov_plt_func, imports=import_list), name = "cov_plt")
 sps_inv_cov_plt = pe.Node(niu.Function(input_names=['mx', 'est_path2', 'ID'], output_names = ['est_path2'], function=sps_inv_cov_plt_func, imports=import_list), name = "sps_inv_cov_plt")
 net_glob_scalars_cov = pe.Node(ExtractNetStats(), name = "ExtractNetStats1")
@@ -288,12 +371,14 @@ wf.base_directory='/tmp/nipype'
 #datasink = pe.Node(nio.DataSink(), name='sinker')
 #datasink.inputs.base_directory = dir_path + '/DataSink'
 
+##Add variable to workflow
 ##Connect nodes of workflow
 wf.connect([
     (inputnode, imp_est, [('in_file', 'input_file'),
                           ('ID', 'ID'),
                           ('atlas_select', 'atlas_select'),
-                          ('TR', 'TR')]),
+                          ('TR', 'TR'),
+                          ('NETWORK', 'NETWORK')]),
     (inputnode, cov_plt, [('ID', 'ID')]),
     (imp_est, cov_plt, [('mx', 'mx'),
                         ('est_path1', 'est_path1')]),
