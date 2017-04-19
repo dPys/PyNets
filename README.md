@@ -51,10 +51,32 @@ pickle_path = '/Users/dpisner453/PyNets_examples/200/200_net_global_scalars_cov_
 df = pd.read_pickle(pickle_path)
 df
 ```
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; These dataframes can then be iteratively loaded and aggregated by row into a single dataframe, where there is 1 row per subject.
+```
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; These dataframes can then be iteratively loaded and aggregated by row into a single dataframe, where there is 1 row per subject. Here is an example of what that code could look like (where 'frame' here is the aggregated df):
 
+```python
+import glob
+import os
+import pandas as pd
+path = r'/Users/dpisner453/PyNets_examples/network_analysis/' # use your path
+allFiles = []
+for fn in os.listdir(path):
+    path_name = path + fn + '/' + fn + '_DMN_net_global_scalars_inv_sps_cov_' + fn
+    print(path_name)
+    allFiles.append(path_name)
+
+frame = pd.DataFrame()
+list_ = []
+
+for file_ in allFiles:
+    df = pd.read_pickle(file_)
+    list_.append(df)
+
+frame = pd.concat(list_)
+```
 4. Coming soon (or for any interested developers):\
 a) Optionally incorporate a confound regressor into your covariance/ sparse inverse covariance matrix estimation (for now, PyNets assumes this has already been done)\
-b) Iterate network metric extraction over atlas-defined and/or group-ICA masked RSN's (e.g. DMN, CCN, etc.)
+b) Iterate network metric extraction over more atlas-defined and/or group-ICA masked RSN's (right now limited to DMN, FPTC, VA, DA, SN as defined by the Power et al. 2011 264-node atlas)
+
 
 Happy Netting!
