@@ -65,8 +65,9 @@ from nilearn import plotting
 import networkx as nx
 import gzip
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, Str
+import pandas as pd
 
-import_list=["import nilearn", "import numpy as np", "import os", "import bct", "from numpy import genfromtxt", "from matplotlib import pyplot as plt", "from nipype import Node, Workflow", "from nipype import Node, Workflow", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn import plotting", "from nilearn import datasets", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nilearn import datasets", "import gzip", "from nilearn import input_data", "from nilearn import plotting", "import networkx as nx", "import nibabel as nib", "from nipype.interfaces.base import isdefined,Undefined"]
+import_list=["import nilearn", "import numpy as np", "import os", "import bct", "from numpy import genfromtxt", "from matplotlib import pyplot as plt", "from nipype import Node, Workflow", "from nipype import Node, Workflow", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn import plotting", "from nilearn import datasets", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nilearn import datasets", "import gzip", "from nilearn import input_data", "from nilearn import plotting", "import networkx as nx", "import nibabel as nib", "from nipype.interfaces.base import isdefined,Undefined", "import pandas as pd"]
 
 print("\n\n\n")
 print ("INPUT FILE: " + input_file)
@@ -83,8 +84,10 @@ if '.nii' in input_file:
 print("\n\n\n")
 dir_path = os.path.dirname(os.path.realpath(input_file))
 
+pynets_dir = os.path.dirname(os.path.realpath('__file__'))
+
 ##Import/generate time-series and estimate GLOBAL covariance/sparse inverse covariance matrices
-def import_mat_func(input_file, ID, atlas_select, TR, NETWORK):
+def import_mat_func(input_file, ID, atlas_select, TR, NETWORK, pynets_dir):
     if '.nii' in input_file and NETWORK == '':
         func_file=input_file
         dir_path = os.path.dirname(os.path.realpath(func_file))
@@ -124,37 +127,32 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK):
 
     elif '.nii' in input_file and NETWORK != '':
         func_file=input_file
-        network_list = ['DMN','CCN']
-        ####RSN REFERENCE LISTS####
-        DMN_coords = [(0, -52, 18), (-46, -68, 32), (46, -68, 32), (1, 50, -5)]
-        DMN_labels = [
-            'Posterior Cingulate Cortex',
-            'Left Temporoparietal junction',
-            'Right Temporoparietal junction',
-            'Medial prefrontal cortex'
-        ]
-        #CCN_coords = [(0, -52, 18), (-46, -68, 32), (46, -68, 32), (1, 50, -5)]
-        #CCN_labels = [
-        #    'Posterior Cingulate Cortex',
-        #    'Left Temporoparietal junction',
-        #    'Right Temporoparietal junction',
-        #    'Medial prefrontal cortex'
-        #]
-        ###########################
-        dir_path = os.path.dirname(os.path.realpath(func_file))
-        ##Prepare RSN ROI coords and labels
-        for i, j in enumerate(network_list):
-            if j == NETWORK:
-                net_index = i
 
-        RSN_coords_list = NETWORK + '_coords'
-        RSN_labels_list = NETWORK + '_labels'
-        coords = eval(RSN_coords_list)
-        labels = eval(RSN_labels_list)
+        ##Reference RSN list
+	load_path= pynets_dir + '/RSN_refs/' + NETWORK + '_coords.csv'
+	df = pd.read_csv(load_path).ix[:,0:4]
+	i=1
+	coords = []
+	labels = []
+	for i in range(len(df)):
+  	    print("ROI Reference #: " + str(i))
+  	    x = int(df.ix[i,1])
+  	    y = int(df.ix[i,2])
+  	    z = int(df.ix[i,3])
+  	    print("X:" + str(x) + " Y:" + str(y) + " Z:" + str(z))
+  	    coords.append((x, y, z))
+  	    labels.append(i)
+  	print("\n")
+ 	print(coords)
+  	print(labels)
+  	print("\n")
+  	print("-------------------")
+  	i + 1	
+        dir_path = os.path.dirname(os.path.realpath(func_file))
 
         ##Grow ROIs
         masker = input_data.NiftiSpheresMasker(
-            coords, radius=8,
+            coords, radius=1,
             detrend=True, standardize=True,
             low_pass=0.1, high_pass=0.01, t_r=float(TR),
             memory='nilearn_cache', memory_level=1, verbose=2)
@@ -175,7 +173,7 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK):
         plotting.plot_connectome(partial_correlation_matrix, coords,
                                  title=plot_title)
         # Display connectome with hemispheric projections.
-        title = "Connectivity Projected on Hemispheres"
+        title = "Connectivity Projected on the " + NETWORK
         out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_connectome_plot.png'
         plotting.plot_connectome(partial_correlation_matrix, coords, title=title,
         display_mode='lyrz', output_file=out_path_fig)
@@ -316,7 +314,6 @@ class ExtractNetStats(BaseInterface):
 
 ##save global scalar files to pandas dataframes interface
 def export_to_pandas(csv_loc, ID, NETWORK, out_file=None):
-    import pandas as pd
     df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
     df = df.T
     df = df.rename(columns={0:"efficiency_bin", 1:"efficiency_wei", 2:"modularity_finetune_dir", 3:"modularity_finetune_und_sign", 4:"modularity_und", 5:"modularity_louvain_dir", 6:"modularity_louvain_und", 7:"modularity_louvain_und_sign", 8:"modularity_probtune_und_sign", 9:"transitivity_bu", 10:"transitivity_wd", 11:"assortativity_bin", 12:"assortativity_wei",
@@ -360,7 +357,7 @@ class Export2Pandas(BaseInterface):
 
 ##Create input/output nodes
 #1) Add variable to IdentityInterface if user-set
-inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'TR', 'NETWORK']),
+inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'TR', 'NETWORK', 'pynets_dir']),
                     name='inputnode')
 
 #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
@@ -369,10 +366,11 @@ inputnode.inputs.ID = ID
 inputnode.inputs.atlas_select = atlas_select
 inputnode.inputs.TR = TR
 inputnode.inputs.NETWORK = NETWORK
+inputnode.inputs.pynets_dir = pynets_dir
 
 #3) Add variable to function nodes
 ##Create function nodes
-imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'TR', 'NETWORK'], output_names = ['mx','est_path1', 'est_path2'], function=import_mat_func, imports=import_list), name = "imp_est")
+imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'TR', 'NETWORK', 'pynets_dir'], output_names = ['mx','est_path1', 'est_path2'], function=import_mat_func, imports=import_list), name = "imp_est")
 cov_plt = pe.Node(niu.Function(input_names = ['mx', 'est_path1', 'ID', 'NETWORK'], output_names = ['est_path1'], function=cov_plt_func, imports=import_list), name = "cov_plt")
 sps_inv_cov_plt = pe.Node(niu.Function(input_names=['mx', 'est_path2', 'ID', 'NETWORK'], output_names = ['est_path2'], function=sps_inv_cov_plt_func, imports=import_list), name = "sps_inv_cov_plt")
 net_glob_scalars_cov = pe.Node(ExtractNetStats(), name = "ExtractNetStats1")
@@ -395,7 +393,8 @@ wf.connect([
                           ('ID', 'ID'),
                           ('atlas_select', 'atlas_select'),
                           ('TR', 'TR'),
-                          ('NETWORK', 'NETWORK')]),
+                          ('NETWORK', 'NETWORK'),
+			  ('pynets_dir', 'pynets_dir')]),
     (inputnode, cov_plt, [('ID', 'ID'),
                           ('NETWORK', 'NETWORK')]),
     (imp_est, cov_plt, [('mx', 'mx'),

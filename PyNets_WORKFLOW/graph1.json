@@ -8,12 +8,18 @@
                 2,
                 3,
                 4,
-                5
+                5,
+                6
             ],
-            "total": 6
+            "total": 7
         }
     ],
     "links": [
+        {
+            "source": 0,
+            "target": 6,
+            "value": 1
+        },
         {
             "source": 0,
             "target": 4,
@@ -25,12 +31,12 @@
             "value": 1
         },
         {
-            "source": 1,
-            "target": 5,
+            "source": 0,
+            "target": 1,
             "value": 1
         },
         {
-            "source": 0,
+            "source": 2,
             "target": 3,
             "value": 1
         },
@@ -38,50 +44,51 @@
             "source": 0,
             "target": 2,
             "value": 1
-        },
-        {
-            "source": 0,
-            "target": 1,
-            "value": 1
         }
     ],
-    "maxN": 6,
+    "maxN": 7,
     "nodes": [
         {
             "group": 1,
             "name": "0_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpVyk1kR/PyNets_WORKFLOW/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpVyk1kR/PyNets_WORKFLOW/imp_est/result_imp_est.pklz"
+            "report": "/tmp/tmpCRPksu/PyNets_WORKFLOW/imp_est/_report/report.rst",
+            "result": "/tmp/tmpCRPksu/PyNets_WORKFLOW/imp_est/result_imp_est.pklz"
         },
         {
             "group": 1,
-            "name": "1_net_global_scalars_inv_sps_cov",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpg22G7u/PyNets_WORKFLOW/net_global_scalars_inv_sps_cov/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpg22G7u/PyNets_WORKFLOW/net_global_scalars_inv_sps_cov/result_net_global_scalars_inv_sps_cov.pklz"
+            "name": "1_cov_plt",
+            "report": "/tmp/tmp3tcZnr/PyNets_WORKFLOW/cov_plt/_report/report.rst",
+            "result": "/tmp/tmp3tcZnr/PyNets_WORKFLOW/cov_plt/result_cov_plt.pklz"
         },
         {
             "group": 1,
-            "name": "2_sps_inv_cov_plt",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpxg4nIC/PyNets_WORKFLOW/sps_inv_cov_plt/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpxg4nIC/PyNets_WORKFLOW/sps_inv_cov_plt/result_sps_inv_cov_plt.pklz"
+            "name": "2_ExtractNetStats1",
+            "report": "/tmp/tmpl8tzsg/PyNets_WORKFLOW/ExtractNetStats1/_report/report.rst",
+            "result": "/tmp/tmpl8tzsg/PyNets_WORKFLOW/ExtractNetStats1/result_ExtractNetStats1.pklz"
         },
         {
             "group": 1,
-            "name": "3_cov_plt",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmphSnNaT/PyNets_WORKFLOW/cov_plt/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmphSnNaT/PyNets_WORKFLOW/cov_plt/result_cov_plt.pklz"
+            "name": "3_export_to_pandas1",
+            "report": "/tmp/tmpBpiXRn/PyNets_WORKFLOW/export_to_pandas1/_report/report.rst",
+            "result": "/tmp/tmpBpiXRn/PyNets_WORKFLOW/export_to_pandas1/result_export_to_pandas1.pklz"
         },
         {
             "group": 1,
-            "name": "4_net_glob_scalars_cov",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp_FlUR7/PyNets_WORKFLOW/net_glob_scalars_cov/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp_FlUR7/PyNets_WORKFLOW/net_glob_scalars_cov/result_net_glob_scalars_cov.pklz"
+            "name": "4_ExtractNetStats2",
+            "report": "/tmp/tmpUSOohw/PyNets_WORKFLOW/ExtractNetStats2/_report/report.rst",
+            "result": "/tmp/tmpUSOohw/PyNets_WORKFLOW/ExtractNetStats2/result_ExtractNetStats2.pklz"
         },
         {
             "group": 1,
-            "name": "5_sinker",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpPAmj8s/PyNets_WORKFLOW/sinker/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpPAmj8s/PyNets_WORKFLOW/sinker/result_sinker.pklz"
+            "name": "5_export_to_pandas2",
+            "report": "/tmp/tmpptpGsO/PyNets_WORKFLOW/export_to_pandas2/_report/report.rst",
+            "result": "/tmp/tmpptpGsO/PyNets_WORKFLOW/export_to_pandas2/result_export_to_pandas2.pklz"
+        },
+        {
+            "group": 1,
+            "name": "6_sps_inv_cov_plt",
+            "report": "/tmp/tmpOxHPUP/PyNets_WORKFLOW/sps_inv_cov_plt/_report/report.rst",
+            "result": "/tmp/tmpOxHPUP/PyNets_WORKFLOW/sps_inv_cov_plt/result_sps_inv_cov_plt.pklz"
         }
     ]
 }
