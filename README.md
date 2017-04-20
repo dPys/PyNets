@@ -41,7 +41,7 @@ python ./PyNets.py '/Users/dpisner453/PyNets_examples/200/roi_CC200.1D' '200'
 ```
 
 3. Viewing outputs:\
-PyNets outputs network metrics into text files and pickled pandas dataframes within the same subject folder 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PyNets outputs network metrics into text files and pickled pandas dataframes within the same subject folder 
 in which the initial image or time-series was fed into the workflow. To open the pickled pandas dataframes
 from within the interpreter, you can:
 ```python
@@ -52,7 +52,7 @@ df = pd.read_pickle(pickle_path)
 df
 ```
 
-These dataframes can then be iteratively loaded and aggregated by row into a single dataframe, where there is 1 row per subject. Here is an example of what that code could look like (where 'frame' here is the aggregated df):
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; These dataframes can then be iteratively loaded and aggregated by row into a single dataframe, where there is 1 row per subject. Here is an example of what that code could look like (where 'frame' here is the aggregated df):
 ```python
 import glob
 import os
@@ -74,8 +74,9 @@ for file_ in allFiles:
 frame = pd.concat(list_)
 ```
 4. Coming soon (or for any interested developers):\
-a) Optionally incorporate a confound regressor into your covariance/ sparse inverse covariance matrix estimation (for now, PyNets assumes this has already been done)\
-b) Iterate network metric extraction over more atlas-defined and/or group-ICA masked RSN's (right now limited to DMN, FPTC, VA, DA, SN as defined by the Power et al. 2011 264-node atlas)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; a) Optionally incorporate a confound regressor into your covariance/ sparse inverse covariance matrix estimation (for now, PyNets assumes this has already been done)\
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; b) Iterate network metric extraction over more atlas-defined and/or group-ICA masked RSN's (right now limited to DMN, FPTC, VA, DA, SN as defined by the Power et al. 2011 264-node atlas)
 
+![RSN Nets](PyNets_RSNs_img.png)
 
 Happy Netting!
