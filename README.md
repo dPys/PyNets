@@ -75,6 +75,6 @@ frame = pd.concat(list_)
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; a) Optionally incorporate a confound regressor into your covariance/ sparse inverse covariance matrix estimation (for now, PyNets assumes this has already been done)\
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; b) Iterate network metric extraction over more atlas-defined and/or group-ICA masked RSN's (right now limited to DMN, FPTC, VA, DA, SN as defined by the Power et al. 2011 264-node atlas)
 
-![RSN Nets](PyNets_RSNs_img.png)
+![RSN Nets](PyNets_RSNs.png)
 
 Happy Netting!
