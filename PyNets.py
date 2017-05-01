@@ -276,7 +276,6 @@ def extractnetstats(est_path, ID, NETWORK, out_file=None):
     assortativity_bin = float(bct.assortativity_bin(in_mat))
     assortativity_wei = float(bct.assortativity_wei(in_mat))
     density_dir = float(bct.density_dir(in_mat)[0])
-    charpath = float(bct.charpath(in_mat)[4])
     if 'inv' in est_path:
         if NETWORK != '':
             out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_global_scalars_inv_sps_cov.csv'
@@ -287,7 +286,7 @@ def extractnetstats(est_path, ID, NETWORK, out_file=None):
             out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_global_scalars_cov.csv'
         else:
             out_path = dir_path + '/' + ID + '_net_global_scalars_cov.csv'
-    np.savetxt(out_path, [efficiency_bin, efficiency_wei, modularity_finetune_dir, modularity_finetune_und_sign, modularity_und, modularity_louvain_dir, modularity_louvain_und, modularity_louvain_und_sign, modularity_probtune_und_sign, transitivity_bu, transitivity_wd, assortativity_bin, assortativity_wei, density_dir, charpath])
+    np.savetxt(out_path, [efficiency_bin, efficiency_wei, modularity_finetune_dir, modularity_finetune_und_sign, modularity_und, modularity_louvain_dir, modularity_louvain_und, modularity_louvain_und_sign, modularity_probtune_und_sign, transitivity_bu, transitivity_wd, assortativity_bin, assortativity_wei, density_dir])
     return out_path
 
 class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
@@ -320,7 +319,7 @@ def export_to_pandas(csv_loc, ID, NETWORK, out_file=None):
     df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
     df = df.T
     df = df.rename(columns={0:"efficiency_bin", 1:"efficiency_wei", 2:"modularity_finetune_dir", 3:"modularity_finetune_und_sign", 4:"modularity_und", 5:"modularity_louvain_dir", 6:"modularity_louvain_und", 7:"modularity_louvain_und_sign", 8:"modularity_probtune_und_sign", 9:"transitivity_bu", 10:"transitivity_wd", 11:"assortativity_bin", 12:"assortativity_wei",
-    13:"density_dir", 14:"charpath"})
+    13:"density_dir"})
     df['id'] = range(1, len(df) + 1)
     if 'id' in df.columns:
         cols = df.columns.tolist()
