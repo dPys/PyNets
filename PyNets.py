@@ -64,7 +64,7 @@ from nilearn import input_data
 from nilearn import plotting
 import networkx as nx
 import gzip
-from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, Str
+from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
 import pandas as pd
 
 import_list=["import nilearn", "import numpy as np", "import os", "import bct", "from numpy import genfromtxt", "from matplotlib import pyplot as plt", "from nipype import Node, Workflow", "from nipype import Node, Workflow", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn import plotting", "from nilearn import datasets", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nilearn import datasets", "import gzip", "from nilearn import input_data", "from nilearn import plotting", "import networkx as nx", "import nibabel as nib", "from nipype.interfaces.base import isdefined,Undefined", "import pandas as pd"]
@@ -84,7 +84,10 @@ if '.nii' in input_file:
 print("\n\n\n")
 dir_path = os.path.dirname(os.path.realpath(input_file))
 
-pynets_dir = os.path.dirname(os.path.realpath('__file__'))
+pynets_dir = os.path.dirname(os.path.abspath(__file__))
+
+#print(pynets_dir)
+#sys.exit()
 
 ##Import/generate time-series and estimate GLOBAL covariance/sparse inverse covariance matrices
 def import_mat_func(input_file, ID, atlas_select, TR, NETWORK, pynets_dir):
@@ -102,7 +105,7 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK, pynets_dir):
         print("\n")
         spheres_masker = input_data.NiftiSpheresMasker(
             seeds=coords, smoothing_fwhm=6, radius=5.,
-            detrend=True, standardize=True, low_pass=0.1, high_pass=0.01, t_r=float(TR))
+            detrend=True, standardize=True, low_pass=0.1, high_pass=0.01, t_r=float(TR), memory='nilearn_cache')
         time_series = spheres_masker.fit_transform(func_file)
         correlation_measure = ConnectivityMeasure(kind='correlation')
         correlation_matrix = correlation_measure.fit_transform([time_series])[0]
@@ -155,7 +158,7 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK, pynets_dir):
             coords, radius=1,
             detrend=True, standardize=True,
             low_pass=0.1, high_pass=0.01, t_r=float(TR),
-            memory='nilearn_cache', memory_level=1, verbose=2)
+            memory='nilearn_cache', verbose=2)
         time_series = masker.fit_transform(func_file)
         for time_serie, label in zip(time_series.T, labels):
             plt.plot(time_serie, label=label)
@@ -289,8 +292,8 @@ def extractnetstats(est_path, ID, NETWORK, out_file=None):
 
 class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
     est_path = File(exists=True, mandatory=True, desc="")
-    sub_id = Str(mandatory=True)
-    NETWORK = Str(mandatory=True)
+    sub_id = traits.Str(mandatory=True)
+    NETWORK = traits.Str(mandatory=True)
 
 class ExtractNetStatsOutputSpec(TraitedSpec):
     out_file = File()
@@ -331,8 +334,8 @@ def export_to_pandas(csv_loc, ID, NETWORK, out_file=None):
 
 class Export2PandasInputSpec(BaseInterfaceInputSpec):
     in_csv = File(exists=True, mandatory=True, desc="")
-    sub_id = Str(mandatory=True)
-    NETWORK = Str(mandatory=True)
+    sub_id = traits.Str(mandatory=True)
+    NETWORK = traits.Str(mandatory=True)
     out_file = File('output_export2pandas.csv', usedefault=True)
 
 class Export2PandasOutputSpec(TraitedSpec):
@@ -409,19 +412,18 @@ wf.connect([
     (imp_est, net_global_scalars_inv_sps_cov, [('est_path2', 'est_path')]),
     (inputnode, net_global_scalars_inv_sps_cov, [('ID', 'sub_id'),
                                                  ('NETWORK', 'NETWORK')]),
-#    (net_glob_scalars_cov, datasink, [('est_path1', 'csv_loc')]),
-#    (net_global_scalars_inv_sps_cov, datasink, [('est_path2', 'csv_loc')]),
+    #(net_glob_scalars_cov, datasink, [('est_path1', 'csv_loc')]),
+    #(net_global_scalars_inv_sps_cov, datasink, [('est_path2', 'csv_loc')]),
     (inputnode, export_to_pandas1, [('ID', 'sub_id'),
                                     ('NETWORK', 'NETWORK')]),
     (net_glob_scalars_cov, export_to_pandas1, [('out_file', 'in_csv')]),
     (inputnode, export_to_pandas2, [('ID', 'sub_id'),
                                     ('NETWORK', 'NETWORK')]),
     (net_global_scalars_inv_sps_cov, export_to_pandas2, [('out_file', 'in_csv')]),
-#    (export_to_pandas1, datasink, [('out_file', 'pandas_df1')]),
-#    (export_to_pandas2, datasink, [('out_file', 'pandas_df2')]),
+    #(export_to_pandas1, datasink, [('out_file', 'pandas_df1')]),
+    #(export_to_pandas2, datasink, [('out_file', 'pandas_df2')]),
 ])
 
-#wf.write_graph()
 #wf.run(plugin='SLURM')
-#wf.run(plugin='MultiProc')
+wf.run(plugin='MultiProc')
 wf.run()
