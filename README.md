@@ -25,8 +25,7 @@ pip install nipype[all]
 ```
 
 2. Usage:\
-```
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation A) You have a normalized (MNI-space), preprocessed functional rsfMRI image called "filtered_func_data_clean_standard.nii.gz" where the subject id=002, you wish to extract network metrics for a whole-brain network, using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011', and your rsfMRI image was collected with a TR=2 seconds:
+Situation A) You have a normalized (MNI-space), preprocessed functional rsfMRI image called "filtered_func_data_clean_standard.nii.gz" where the subject id=002, you wish to extract network metrics for a whole-brain network, using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011', and your rsfMRI image was collected with a TR=2 seconds:
 ```python
 python /path/to/PyNets/PyNets.py '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' '002' \
 'coords_power_2011' '2'
@@ -37,6 +36,7 @@ python /path/to/PyNets/PyNets.py '/Users/dpisner453/PyNets_examples/002/filtered
 'coords_power_2011' '2' 'DMN'
 ```
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation C) You only have your time-series in a text or csv-like file where the matrix is saved in the format of # of functional volumes x # of ROI's:
+
 ```python
 python /path/to/PyNets/PyNets.py '/Users/dpisner453/PyNets_examples/200/roi_CC200.1D' '200'
 ```
