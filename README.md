@@ -1,10 +1,8 @@
 # PyNets
 A Python-Powered Workflow for Network Analysis of Resting-State fMRI (rsfMRI)
 
-PyNets utilizes nilearn and bctpy tools in a nipype workflow to automatically generate plots of rsfMRI networks (whole-brain, or RSN's like the DMN) based on a variety of atlas-defined parcellation schemes, and then automatically extract the following graph theoretical measures from those networks:
-efficiency_bin, efficiency_wei, modularity_finetune_dir, modularity_finetune_und_sign, modularity_und, 
-modularity_louvain_dir, modularity_louvain_und, modularity_louvain_und_sign, modularity_probtune_und_sign, 
-transitivity_bu, transitivity_wd, assortativity_bin, assortativity_wei, density_dir \
+PyNets utilizes nilearn and bctpy tools in a nipype workflow to automatically generate rsfMRI networks (whole-brain, or RSN's like the DMN) based on a variety of atlas-defined parcellation schemes, and then automatically plot associated adjacency matrices, connectome visualizations, and extract the following graph theoretical measures from those networks (both binary and weighted undirected versions, with a 90% thresholding):
+efficiency, modularity finetune, modularity louvain, transitivity, assortativity, community louvain, density, mean clustering coefficient \
 For more information on interpeting these measures, see:
 https://sites.google.com/site/bctnet/measures/list 
 
