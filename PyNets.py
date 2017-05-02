@@ -155,7 +155,7 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK, pynets_dir):
 
         ##Grow ROIs
         masker = input_data.NiftiSpheresMasker(
-            coords, radius=1,
+            coords, radius=6, allow_overlap=True,
             detrend=True, standardize=True,
             low_pass=0.1, high_pass=0.01, t_r=float(TR),
             memory='nilearn_cache', verbose=2)
@@ -262,20 +262,38 @@ def sps_inv_cov_plt_func(mx, est_path2, ID, NETWORK):
 def extractnetstats(est_path, ID, NETWORK, out_file=None):
     in_mat = np.array(genfromtxt(est_path))
     dir_path = os.path.dirname(os.path.realpath(est_path))
-    efficiency_bin = float(bct.efficiency_bin(in_mat))
-    efficiency_wei = float(bct.efficiency_wei(in_mat))
-    modularity_finetune_dir = float(bct.modularity_finetune_dir(in_mat)[1])
-    modularity_finetune_und_sign = float(bct.modularity_finetune_und_sign(in_mat)[1])
+
+    ##Threshold, binarize, and normalize matrix
+    in_mat_thr = bct.threshold_proportional(in_mat, 0.9)
+    in_mat_wei = bct.weight_conversion(in_mat_thr, 'normalize')
+    in_mat_bin = bct.weight_conversion(in_mat_thr, 'binarize')
+    in_mat_len = bct.weight_conversion(in_mat_thr, 'lengths')
+
+    ##Calculate graph metrics
+    efficiency_bin = float(bct.efficiency_bin(in_mat_bin))
+    efficiency_wei = float(bct.efficiency_wei(in_mat_wei))
+    modularity_finetune_und = float(bct.modularity_finetune_und(in_mat)[1])
     modularity_und = float(bct.modularity_und(in_mat)[1])
-    modularity_louvain_dir = float(bct.modularity_louvain_dir(in_mat)[1])
     modularity_louvain_und = float(bct.modularity_louvain_und(in_mat)[1])
-    modularity_louvain_und_sign = float(bct.modularity_louvain_und_sign(in_mat)[1])
-    modularity_probtune_und_sign = float(bct.modularity_probtune_und_sign(in_mat)[1])
-    transitivity_bu = float(bct.transitivity_bu(in_mat))
-    transitivity_wd = float(bct.transitivity_wd(in_mat))
-    assortativity_bin = float(bct.assortativity_bin(in_mat))
-    assortativity_wei = float(bct.assortativity_wei(in_mat))
-    density_dir = float(bct.density_dir(in_mat)[0])
+    transitivity_wd = float(bct.transitivity_wd(in_mat_wei))
+    transitivity_bu = float(bct.transitivity_bu(in_mat_bin))
+    assortativity_bin = float(bct.assortativity_bin(in_mat_bin))
+    assortativity_wei = float(bct.assortativity_wei(in_mat_wei))
+    try:
+    	community_louvain_wei = float(bct.community_louvain(in_mat_wei)[1])
+    except:
+	community_louvain_wei = float('nan')
+    try:
+    	community_louvain_bin = float(bct.community_louvain(in_mat_bin)[1])
+    except:
+	community_louvain_bin = float('nan')
+    density_und_wei = float(bct.density_und(in_mat_wei)[0])
+    density_und_bin = float(bct.density_und(in_mat_bin)[0])
+    mean_clustering_coef_wei = float(np.mean(bct.clustering_coef_wu(in_mat_wei)))
+    mean_clustering_coef_bin = float(np.mean(bct.clustering_coef_bu(in_mat_bin)))
+    #distance_mat_wei_net = bct.distance_wei(in_mat_len)[0]
+    #L_net = bct.charpath(distance_mat_wei_net)[0]
+
     if 'inv' in est_path:
         if NETWORK != '':
             out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_global_scalars_inv_sps_cov.csv'
@@ -286,7 +304,7 @@ def extractnetstats(est_path, ID, NETWORK, out_file=None):
             out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_global_scalars_cov.csv'
         else:
             out_path = dir_path + '/' + ID + '_net_global_scalars_cov.csv'
-    np.savetxt(out_path, [efficiency_bin, efficiency_wei, modularity_finetune_dir, modularity_finetune_und_sign, modularity_und, modularity_louvain_dir, modularity_louvain_und, modularity_louvain_und_sign, modularity_probtune_und_sign, transitivity_bu, transitivity_wd, assortativity_bin, assortativity_wei, density_dir])
+    np.savetxt(out_path, [efficiency_bin, efficiency_wei, modularity_finetune_und, modularity_und, modularity_louvain_und, transitivity_wd, transitivity_bu, assortativity_bin, assortativity_wei, community_louvain_wei, community_louvain_bin, density_und_wei, density_und_bin, mean_clustering_coef_wei, mean_clustering_coef_bin])
     return out_path
 
 class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
@@ -318,8 +336,7 @@ class ExtractNetStats(BaseInterface):
 def export_to_pandas(csv_loc, ID, NETWORK, out_file=None):
     df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
     df = df.T
-    df = df.rename(columns={0:"efficiency_bin", 1:"efficiency_wei", 2:"modularity_finetune_dir", 3:"modularity_finetune_und_sign", 4:"modularity_und", 5:"modularity_louvain_dir", 6:"modularity_louvain_und", 7:"modularity_louvain_und_sign", 8:"modularity_probtune_und_sign", 9:"transitivity_bu", 10:"transitivity_wd", 11:"assortativity_bin", 12:"assortativity_wei",
-    13:"density_dir"})
+    df = df.rename(columns={0:"efficiency_bin", 1:"efficiency_wei", 2:"modularity_finetune_und", 3:"modularity_und", 4:"modularity_louvain_und", 5:"transitivity_wd", 6:"transitivity_bu", 7:"assortativity_bin", 8:"assortativity_wei", 9:"community_louvain_wei", 10:"community_louvain_bin", 11:"density_und_wei", 12:"density_und_bin", 13:"mean_clustering_coef_wei", 14:"mean_clustering_coef_bin"})
     df['id'] = range(1, len(df) + 1)
     if 'id' in df.columns:
         cols = df.columns.tolist()
@@ -424,5 +441,5 @@ wf.connect([
 ])
 
 #wf.run(plugin='SLURM')
-wf.run(plugin='MultiProc')
+#wf.run(plugin='MultiProc')
 wf.run()
