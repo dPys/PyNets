@@ -1,0 +1,94 @@
+{
+    "groups": [
+        {
+            "name": "Group_00001",
+            "procs": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+            ],
+            "total": 7
+        }
+    ],
+    "links": [
+        {
+            "source": 0,
+            "target": 6,
+            "value": 1
+        },
+        {
+            "source": 1,
+            "target": 5,
+            "value": 1
+        },
+        {
+            "source": 0,
+            "target": 3,
+            "value": 1
+        },
+        {
+            "source": 0,
+            "target": 2,
+            "value": 1
+        },
+        {
+            "source": 3,
+            "target": 4,
+            "value": 1
+        },
+        {
+            "source": 0,
+            "target": 1,
+            "value": 1
+        }
+    ],
+    "maxN": 7,
+    "nodes": [
+        {
+            "group": 1,
+            "name": "0_imp_est",
+            "report": "/tmp/tmpeXCoHB/PyNets_WORKFLOW/imp_est/_report/report.rst",
+            "result": "/tmp/tmpeXCoHB/PyNets_WORKFLOW/imp_est/result_imp_est.pklz"
+        },
+        {
+            "group": 1,
+            "name": "1_ExtractNetStats2",
+            "report": "/tmp/tmpcbw6re/PyNets_WORKFLOW/ExtractNetStats2/_report/report.rst",
+            "result": "/tmp/tmpcbw6re/PyNets_WORKFLOW/ExtractNetStats2/result_ExtractNetStats2.pklz"
+        },
+        {
+            "group": 1,
+            "name": "2_sps_inv_cov_plt",
+            "report": "/tmp/tmpt5UIVo/PyNets_WORKFLOW/sps_inv_cov_plt/_report/report.rst",
+            "result": "/tmp/tmpt5UIVo/PyNets_WORKFLOW/sps_inv_cov_plt/result_sps_inv_cov_plt.pklz"
+        },
+        {
+            "group": 1,
+            "name": "3_ExtractNetStats1",
+            "report": "/tmp/tmpD9K6om/PyNets_WORKFLOW/ExtractNetStats1/_report/report.rst",
+            "result": "/tmp/tmpD9K6om/PyNets_WORKFLOW/ExtractNetStats1/result_ExtractNetStats1.pklz"
+        },
+        {
+            "group": 1,
+            "name": "4_export_to_pandas1",
+            "report": "/tmp/tmphOpTJf/PyNets_WORKFLOW/export_to_pandas1/_report/report.rst",
+            "result": "/tmp/tmphOpTJf/PyNets_WORKFLOW/export_to_pandas1/result_export_to_pandas1.pklz"
+        },
+        {
+            "group": 1,
+            "name": "5_export_to_pandas2",
+            "report": "/tmp/tmpa7rux5/PyNets_WORKFLOW/export_to_pandas2/_report/report.rst",
+            "result": "/tmp/tmpa7rux5/PyNets_WORKFLOW/export_to_pandas2/result_export_to_pandas2.pklz"
+        },
+        {
+            "group": 1,
+            "name": "6_cov_plt",
+            "report": "/tmp/tmpsslOyT/PyNets_WORKFLOW/cov_plt/_report/report.rst",
+            "result": "/tmp/tmpsslOyT/PyNets_WORKFLOW/cov_plt/result_cov_plt.pklz"
+        }
+    ]
+}

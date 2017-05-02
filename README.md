@@ -1,7 +1,7 @@
 # PyNets
 A Python-Powered Workflow for Network Analysis of Resting-State fMRI (rsfMRI)
 
-PyNets utilizes nilearn and bctpy tools in a nipype workflow to automatically generate rsfMRI networks (whole-brain, or RSN's like the DMN) based on a variety of atlas-defined parcellation schemes, and then automatically plot associated adjacency matrices, connectome visualizations, and extract the following graph theoretical measures from those networks (both binary and weighted undirected versions, with a 90% thresholding):\
+PyNets utilizes nilearn and bctpy tools in a nipype workflow to automatically generate rsfMRI networks (whole-brain, or RSN's like the DMN) based on a variety of atlas-defined parcellation schemes, and then automatically plot associated adjacency matrices, connectome visualizations, and extract the following graph theoretical measures from those networks (both binary and weighted undirected versions, with a user-defined thresholding):\
 efficiency, modularity finetune, modularity louvain, transitivity, assortativity, community louvain, density, mean clustering coefficient \
 For more information on interpeting these measures, see:
 https://sites.google.com/site/bctnet/measures/list 
@@ -28,10 +28,10 @@ Situation A) You have a normalized (MNI-space), preprocessed functional rsfMRI i
 python /path/to/PyNets/PyNets.py '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' '002' \
 'coords_power_2011' '2'
 ```
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation B) You have a normalized (MNI-space), preprocessed functional rsfMRI image called "filtered_func_data_clean_standard.nii.gz" where the subject id=002, you wish to extract network metrics for the DMN network, using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011' (currently the only atlas supported for extracting RSN networks in PyNets!), and your rsfMRI image was collected with a TR=2 seconds:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation B) You have a normalized (MNI-space), preprocessed functional rsfMRI image called "filtered_func_data_clean_standard.nii.gz" where the subject id=002, you wish to extract network metrics for the DMN network, using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011' (currently the only atlas supported for extracting RSN networks in PyNets!), your rsfMRI image was collected with a TR=2 seconds, you wish to threshold the connectivity graph by preserving 80% of the strongest weights, and you define your node radius as 5 voxels in size:
 ```python
 python /path/to/PyNets/PyNets.py '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' '002' \
-'coords_power_2011' '2' 'DMN'
+'coords_power_2011' '2' 'DMN' '0.8' '5'
 ```
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation C) You only have your time-series in a text or csv-like file where the matrix is saved in the format of # of functional volumes x # of ROI's:
 
