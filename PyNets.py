@@ -338,8 +338,14 @@ def extractnetstats(est_path, ID, NETWORK, thr, out_file=None):
 	mean_clustering_coef_bin = float(np.mean(bct.clustering_coef_bu(in_mat_bin)))
     except:
 	mean_clustering_coef_bin = float('nan')
-    #distance_mat_wei_net = bct.distance_wei(in_mat_len)[0]
-    #L_net = bct.charpath(distance_mat_wei_net)[0]
+    try:
+        kcoreness_centrality_bin = float(np.mean(bct.kcoreness_centrality_bu(in_mat_bin)))
+    except:
+        kcoreness_centrality_bin = float('nan')
+    try:
+	avg_rich_club_coeff = float(np.nanmean(bct.rich_club_bu(in_mat_bin)[0]))
+    except:
+	avg_rich_club_coeff = float('nan')
 
     if 'inv' in est_path:
         if NETWORK != '':
@@ -351,7 +357,7 @@ def extractnetstats(est_path, ID, NETWORK, thr, out_file=None):
             out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_global_scalars_cov.csv'
         else:
             out_path = dir_path + '/' + ID + '_net_global_scalars_cov.csv'
-    np.savetxt(out_path, [efficiency_bin, efficiency_wei, modularity_finetune_und, modularity_und, modularity_louvain_und, transitivity_wd, transitivity_bu, assortativity_bin, assortativity_wei, community_louvain_wei, community_louvain_bin, density_und_wei, density_und_bin, mean_clustering_coef_wei, mean_clustering_coef_bin])
+    np.savetxt(out_path, [efficiency_bin, efficiency_wei, modularity_finetune_und, modularity_und, modularity_louvain_und, transitivity_wd, transitivity_bu, assortativity_bin, assortativity_wei, community_louvain_wei, community_louvain_bin, density_und_wei, density_und_bin, mean_clustering_coef_wei, mean_clustering_coef_bin, kcoreness_centrality_bin, avg_rich_club_coeff])
     return out_path
 
 class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
@@ -385,7 +391,7 @@ class ExtractNetStats(BaseInterface):
 def export_to_pandas(csv_loc, ID, NETWORK, out_file=None):
     df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
     df = df.T
-    df = df.rename(columns={0:"efficiency_bin", 1:"efficiency_wei", 2:"modularity_finetune_und", 3:"modularity_und", 4:"modularity_louvain_und", 5:"transitivity_wd", 6:"transitivity_bu", 7:"assortativity_bin", 8:"assortativity_wei", 9:"community_louvain_wei", 10:"community_louvain_bin", 11:"density_und_wei", 12:"density_und_bin", 13:"mean_clustering_coef_wei", 14:"mean_clustering_coef_bin"})
+    df = df.rename(columns={0:"efficiency_bin", 1:"efficiency_wei", 2:"modularity_finetune_und", 3:"modularity_und", 4:"modularity_louvain_und", 5:"transitivity_wd", 6:"transitivity_bu", 7:"assortativity_bin", 8:"assortativity_wei", 9:"community_louvain_wei", 10:"community_louvain_bin", 11:"density_und_wei", 12:"density_und_bin", 13:"mean_clustering_coef_wei", 14:"mean_clustering_coef_bin", 15:"kcoreness_centrality_bin", 16:"avg_rich_club_coeff"})
     df['id'] = range(1, len(df) + 1)
     if 'id' in df.columns:
         cols = df.columns.tolist()
