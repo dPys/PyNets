@@ -26,29 +26,21 @@ elif len(sys.argv) > 1:
             sys.exit()
     else:
         atlas_select=''
-    if '.nii' in input_file:
-        try:
-            TR=sys.argv[4]
-        except:
-            print("Error: You have specified the path, in quotes, to an image file. You must also include a TR value as the fourth argument to your PyNets.py call")
-            sys.exit()
-    else:
-        TR=''
 else:
     print("\nMissing command-line inputs!\n" + return_list)
     sys.exit()
 try:
-    NETWORK=sys.argv[5]
+    NETWORK=sys.argv[4]
 except:
     NETWORK=''
 try:
-    thr=sys.argv[6]
+    thr=sys.argv[5]
 except:
     thr='0.9'
 try:
-    node_size=sys.argv[7]
+    node_size=sys.argv[6]
 except:
-    node_size='5'
+    node_size='3'
 
 ######################
 
@@ -85,8 +77,6 @@ if '.nii' in input_file:
     print("\n")
     print ("ATLAS: " + atlas_select)
     print("\n")
-    print ("TR: " + TR)
-    print("\n")
     if NETWORK != '':
         print ("NETWORK: " + NETWORK)
 print("\n\n\n")
@@ -98,7 +88,7 @@ pynets_dir = os.path.dirname(os.path.abspath(__file__))
 #sys.exit()
 
 ##Import/generate time-series and estimate GLOBAL covariance/sparse inverse covariance matrices
-def import_mat_func(input_file, ID, atlas_select, TR, NETWORK, pynets_dir, node_size):
+def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size):
     if '.nii' in input_file and NETWORK == '':
         func_file=input_file
         dir_path = os.path.dirname(os.path.realpath(func_file))
@@ -112,8 +102,7 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK, pynets_dir, node_
         print('Stacked atlas coordinates in array of shape {0}.'.format(coords.shape))
         print("\n")
         spheres_masker = input_data.NiftiSpheresMasker(
-            seeds=coords, smoothing_fwhm=6, radius=float(node_size),
-            detrend=True, standardize=True, low_pass=0.1, high_pass=0.01, t_r=float(TR), memory='nilearn_cache')
+            seeds=coords, radius=float(node_size), memory='nilearn_cache')
         time_series = spheres_masker.fit_transform(func_file)
         correlation_measure = ConnectivityMeasure(kind='correlation')
         correlation_matrix = correlation_measure.fit_transform([time_series])[0]
@@ -164,8 +153,6 @@ def import_mat_func(input_file, ID, atlas_select, TR, NETWORK, pynets_dir, node_
         ##Grow ROIs
         masker = input_data.NiftiSpheresMasker(
             coords, radius=float(node_size), allow_overlap=True,
-            detrend=True, standardize=True,
-            low_pass=0.1, high_pass=0.01, t_r=float(TR),
             memory='nilearn_cache', verbose=2)
         time_series = masker.fit_transform(func_file)
         for time_serie, label in zip(time_series.T, labels):
@@ -431,13 +418,12 @@ class Export2Pandas(BaseInterface):
 
 ##Create input/output nodes
 #1) Add variable to IdentityInterface if user-set
-inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'TR', 'NETWORK', 'pynets_dir', 'thr', 'node_size']), name='inputnode')
+inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'thr', 'node_size']), name='inputnode')
 
 #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
 inputnode.inputs.in_file = input_file
 inputnode.inputs.ID = ID
 inputnode.inputs.atlas_select = atlas_select
-inputnode.inputs.TR = TR
 inputnode.inputs.NETWORK = NETWORK
 inputnode.inputs.pynets_dir = pynets_dir
 inputnode.inputs.thr = thr
@@ -445,7 +431,7 @@ inputnode.inputs.node_size = node_size
 
 #3) Add variable to function nodes
 ##Create function nodes
-imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'TR', 'NETWORK', 'pynets_dir', 'node_size'], output_names = ['mx','est_path1', 'est_path2'], function=import_mat_func, imports=import_list), name = "imp_est")
+imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'node_size'], output_names = ['mx','est_path1', 'est_path2'], function=import_mat_func, imports=import_list), name = "imp_est")
 cov_plt = pe.Node(niu.Function(input_names = ['mx', 'est_path1', 'ID', 'NETWORK'], output_names = ['est_path1'], function=cov_plt_func, imports=import_list), name = "cov_plt")
 sps_inv_cov_plt = pe.Node(niu.Function(input_names=['mx', 'est_path2', 'ID', 'NETWORK'], output_names = ['est_path2'], function=sps_inv_cov_plt_func, imports=import_list), name = "sps_inv_cov_plt")
 net_glob_scalars_cov = pe.Node(ExtractNetStats(), name = "ExtractNetStats1")
@@ -467,7 +453,6 @@ wf.connect([
     (inputnode, imp_est, [('in_file', 'input_file'),
                           ('ID', 'ID'),
                           ('atlas_select', 'atlas_select'),
-                          ('TR', 'TR'),
                           ('NETWORK', 'NETWORK'),
 			  ('pynets_dir', 'pynets_dir'),
 			  ('node_size', 'node_size')]),

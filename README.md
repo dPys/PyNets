@@ -31,7 +31,7 @@ python /path/to/PyNets/pynets.py '/Users/dpisner453/PyNets_examples/002/filtered
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation B) You have a normalized (MNI-space), preprocessed functional rsfMRI image called "filtered_func_data_clean_standard.nii.gz" where the subject id=002, you wish to extract network metrics for the DMN network, using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011' (currently the only atlas supported for extracting RSN networks in PyNets!), your rsfMRI image was collected with a TR=2 seconds, you wish to threshold the connectivity graph by preserving 80% of the strongest weights, and you define your node radius as 5 voxels in size:
 ```python
 python /path/to/PyNets/pynets.py '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' '002' \
-'coords_power_2011' '2' 'DMN' '0.8' '5'
+'coords_power_2011' '2' 'DMN' '0.8' '3'
 ```
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation C) You only have your time-series in a text or csv-like file where the matrix is saved in the format of # of functional volumes x # of ROI's:
 
