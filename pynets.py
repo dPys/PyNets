@@ -1,4 +1,21 @@
 #!/bin/env python -W ignore::DeprecationWarning
+#    PyNets: A Python-Powered Workflow for Network Analysis of Resting-State fMRI (rsfMRI)
+#    Copyright (C) 2017  AUTHOR: Derek Pisner
+#
+#    openDTI is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as published
+#    by the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    openDTI is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the complete GNU Affero General Public
+#    License with openDTI in a file called LICENSE.txt. If not, and/or you simply have
+#    questions about licensing and copyright/patent restrictions with openDTI, please
+#    contact the primary author, Derek Pisner, at dpisner@utexas.edu
 import sys
 from nipype.interfaces.base import isdefined,Undefined
 from sklearn.model_selection import train_test_split
