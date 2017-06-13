@@ -23,15 +23,13 @@ pip install nipype[all]
 ```
 
 2. Usage:\
-Situation A) You have a normalized (MNI-space), preprocessed functional rsfMRI image called "filtered_func_data_clean_standard.nii.gz" where the subject id=002, you wish to extract network metrics for a whole-brain network, using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011', and your rsfMRI image was collected with a TR=2 seconds:
+Situation A) You have a normalized (MNI-space), preprocessed functional rsfMRI image called "filtered_func_data_clean_standard.nii.gz" where the subject id=002, you wish to extract network metrics for a whole-brain network, using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011':
 ```python
-python /path/to/PyNets/pynets.py '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' '002' \
-'coords_power_2011' '2'
+python /path/to/PyNets/pynets.py -i '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' \-ID '002' \-a'coords_power_2011'
 ```
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation B) You have a normalized (MNI-space), preprocessed functional rsfMRI image called "filtered_func_data_clean_standard.nii.gz" where the subject id=002, you wish to extract network metrics for the DMN network, using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011' (currently the only atlas supported for extracting RSN networks in PyNets!), your rsfMRI image was collected with a TR=2 seconds, you wish to threshold the connectivity graph by preserving 80% of the strongest weights, and you define your node radius as 5 voxels in size:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation B) You have a normalized (MNI-space), preprocessed functional rsfMRI image called "filtered_func_data_clean_standard.nii.gz" where the subject id=002, you wish to extract network metrics for the DMN network, using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011' (currently the only atlas supported for extracting RSN networks in PyNets!), you wish to threshold the connectivity graph by preserving 95% of the strongest weights (also the default), and you define your node radius as 3 voxels in size (also the default):
 ```python
-python /path/to/PyNets/pynets.py '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' '002' \
-'coords_power_2011' '2' 'DMN' '0.8' '3'
+python /path/to/PyNets/pynets.py \-i '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' \-ID '002' \-a 'coords_power_2011' \-n 'DMN' \-thr '0.95' \-ns '3'
 ```
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation C) You only have your time-series in a text or csv-like file where the matrix is saved in the format of # of functional volumes x # of ROI's:
 
@@ -60,8 +58,9 @@ path = r'/Users/dpisner453/PyNets_examples/network_analysis/' # use your path
 allFiles = []
 for fn in os.listdir(path):
     path_name = path + fn + '/' + fn + '_DMN_net_global_scalars_inv_sps_cov_' + fn
-    print(path_name)
-    allFiles.append(path_name)
+    if os.path.isfile(path_name):
+        print(path_name)
+        allFiles.append(path_name)
 
 frame = pd.DataFrame()
 list_ = []
@@ -72,9 +71,6 @@ for file_ in allFiles:
 
 frame = pd.concat(list_)
 ```
-4. Coming soon (or for any interested developers):\
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; a) Optionally incorporate a confound regressor into your covariance/ sparse inverse covariance matrix estimation (for now, PyNets assumes this has already been done)\
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; b) Iterate network metric extraction over more atlas-defined and/or group-ICA masked RSN's (right now limited to DMN, FPTC, VA, DA, SN as defined by the Power et al. 2011 264-node atlas)
 
 ![RSN Nets](PyNets_RSNs.png)
 
