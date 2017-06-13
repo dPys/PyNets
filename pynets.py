@@ -122,22 +122,18 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         print("\n")
         print('Stacked atlas coordinates in array of shape {0}.'.format(coords.shape))
         print("\n")
-        if mask is None:
-            spheres_masker = input_data.NiftiSpheresMasker(
-                seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2, standardize=True)
-        else:
+        if mask is not None:
             from nilearn import masking
             from scipy import stats
             mask_data, _ = masking._load_mask_img(mask)
             mask_coords = list(zip(*np.where(mask_data != 0)))
             for coord in coords:
-                if tuple(coord) in mask_coords:
+                if tuple(coord) not in mask_coords:
                     print('Removing coordinate: ' + str(tuple(coord)) + ' since it falls outside of network mask...')
                     ix = stats.mode(np.where(coords == coord)[0])[0][0]
                     coords = np.delete(coords, ix, axis=0)
                     print(str(len(coords)))
-            spheres_masker = input_data.NiftiSpheresMasker(
-                seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2, standardize=True)
+        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2, standardize=True)
         time_series = spheres_masker.fit_transform(func_file)
         correlation_measure = ConnectivityMeasure(kind='correlation')
         correlation_matrix = correlation_measure.fit_transform([time_series])[0]
@@ -152,7 +148,10 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         plt.close()
         # Tweak edge_threshold to keep only the strongest connections.
         atlast_graph_title = atlas_name + ' correlation graph'
-        plotting.plot_connectome(correlation_matrix, coords, title=atlast_graph_title, edge_threshold='99.5%', node_size=20, colorbar=True)
+        if mask is None:
+            plotting.plot_connectome(correlation_matrix, coords, title=atlast_graph_title, edge_threshold='99.5%', node_size=20, colorbar=True)
+        else:
+            plotting.plot_connectome(correlation_matrix, coords, title='Masked Power Atlas Nodes', edge_threshold='95%', node_size=20, colorbar=True)
         out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_connectome_viz.png'
         plt.savefig(out_path_fig)
         plt.close()
