@@ -29,7 +29,7 @@ python /path/to/PyNets/pynets.py -i '/Users/dpisner453/PyNets_examples/002/filte
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation C) You only have your time-series in a text or csv-like file where the matrix is saved in the format of # of functional volumes x # of ROI's:
 
 ```python
-python /path/to/PyNets/pynets.py '/Users/dpisner453/PyNets_examples/200/roi_CC200.1D' '200'
+python /path/to/PyNets/pynets.py -i '/Users/dpisner453/PyNets_examples/200/roi_CC200.1D' -ID '200'
 ```
 
 3. Viewing outputs:\
