@@ -225,9 +225,24 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         DR_st_1=input_file
         dir_path = os.path.dirname(os.path.realpath(DR_st_1))
         mx = genfromtxt(DR_st_1, delimiter='')
-    from sklearn.covariance import GraphLassoCV
+    from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
     estimator = GraphLassoCV()
-    est = estimator.fit(mx)
+    try:
+        est = estimator.fit(mx)
+    except:
+#        print("WARNING: Lasso Cross-Validation Failed. Using Shrunk Covariance instead...")
+#        emp_cov = covariance.empirical_covariance(mx)
+#        shrunk_cov = covariance.shrunk_covariance(emp_cov, shrinkage=0.8) # Set shrinkage closer to 1 for poorly-conditioned data
+#
+#        alphaRange = 10.0 ** np.arange(-8,0) # 1e-7 to 1e-1 by order of magnitude
+#        for alpha in alphaRange:
+#            try:
+#                estimator = covariance.graph_lasso(shrunk_cov, alpha)
+#                print("Calculated graph-lasso covariance matrix for alpha=%s"%alpha)
+#            except FloatingPointError:
+#                print("Failed at alpha=%s"%alpha)
+        estimator = ShrunkCovariance()
+        est = estimator.fit(mx)
     if NETWORK != None:
         est_path1 = dir_path + '/' + ID + '_' + NETWORK + '_est_cov.txt'
         est_path2 = dir_path + '/' + ID + '_' + NETWORK + '_est_sps_inv_cov.txt'
