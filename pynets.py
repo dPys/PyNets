@@ -64,6 +64,10 @@ if __name__ == '__main__':
         default=False,
         action='store_true',
         help='Optionally use this flag if your input file is a pre-made graph matrix, as opposed to a time-series text file or functional image')
+    parser.add_argument('-sps',
+        default=False,
+        action='store_true',
+        help='Optionally use this flag if you wish to model your graph using lasso sparse inverse covariance')
     args = parser.parse_args()
 
 if len(sys.argv) > 1:
@@ -84,6 +88,7 @@ thr=args.thr
 node_size=args.ns
 mask=args.m
 graph=args.g
+sps_model=args.sps
 #######################
 
 import warnings
@@ -136,7 +141,7 @@ pynets_dir = os.path.dirname(os.path.abspath(__file__))
 parlistfile=args.ua
 
 ##Import/generate time-series and estimate GLOBAL covariance/sparse inverse covariance matrices
-def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask, thr, graph, parlistfile):
+def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask, thr, graph, parlistfile, sps_model):
     if '.nii' in input_file and parlistfile == None and NETWORK == None:
         if graph == True:
             func_file=input_file
@@ -159,7 +164,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
                         coords = np.delete(coords, ix, axis=0)
                         print(str(len(coords)))
                         print("\n")
-            spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2, standardize=True)
+            spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2, standardize=True, standardize=True)
             time_series = spheres_masker.fit_transform(func_file)
             correlation_measure = ConnectivityMeasure(kind='correlation')
             correlation_matrix = correlation_measure.fit_transform([time_series])[0]
@@ -336,75 +341,57 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         estimator = ShrunkCovariance()
         est = estimator.fit(mx)
     if NETWORK != None:
-        est_path_cov = dir_path + '/' + ID + '_' + NETWORK + '_est_cov.txt'
-        est_path_sps_inv_cov = dir_path + '/' + ID + '_' + NETWORK + '_est_sps_inv_cov.txt'
+        if sps_model == False:
+            est_path = dir_path + '/' + ID + '_' + NETWORK + '_est_cov.txt'
+        else:
+            est_path = dir_path + '/' + ID + '_' + NETWORK + '_est_sps_inv_cov.txt'
     else:
-        est_path_cov = dir_path + '/' + ID + '_est_cov.txt'
-        est_path_sps_inv_cov = dir_path + '/' + ID + '_est_sps_inv_cov.txt'
-    np.savetxt(est_path_cov, estimator.covariance_, delimiter='\t')
-    np.savetxt(est_path_sps_inv_cov, estimator.precision_, delimiter='\t')
-    return(mx, est_path_cov, est_path_sps_inv_cov)
+        if sps_model == False:
+            est_path = dir_path + '/' + ID + '_est_cov.txt'
+        elif sps_model == True:
+            est_path = dir_path + '/' + ID + '_est_sps_inv_cov.txt'
+    if sps_model == False:
+        np.savetxt(est_path, estimator.covariance_, delimiter='\t')
+    elif sps_model == True:
+        np.savetxt(est_path, estimator.precision_, delimiter='\t')
+    return(mx, est_path)
 
-##Create plots for covariance matrix interface
-def cov_plt_func(mx, est_path_cov, ID, NETWORK):
-    dir_path = os.path.dirname(os.path.realpath(est_path_cov))
-    est_cov = genfromtxt(est_path_cov)
-    rois_num=est_cov.shape[0]
+##Create plots for matrix interface
+def cov_plt_func(mx, est_path, ID, NETWORK, sps_model):
+    dir_path = os.path.dirname(os.path.realpath(est_path))
+    est = genfromtxt(est_path)
+    rois_num=est.shape[0]
     if NETWORK != None:
-        print("Creating Covariance plot of dimensions:\n" + str(rois_num) + ' x ' + str(rois_num))
+        if sps_model == False:
+            print("Creating Covariance plot of dimensions:\n" + str(rois_num) + ' x ' + str(rois_num))
+        elif sps_model == True:
+            print("Creating Sparse Inverse Covariance plot of dimensions:\n" + str(rois_num) + ' x ' + str(rois_num))
         plt.figure(figsize=(rois_num, rois_num))
     else:
         plt.figure(figsize=(10, 10))
     ##The covariance can be found at estimator.covariance_
-    plt.imshow(est_cov, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
+    plt.imshow(est, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
     ##And display the labels
     x_ticks = plt.xticks(range(rois_num), rotation=90)
     y_ticks = plt.yticks(range(rois_num))
-    plt.title('Covariance')
-    A=np.matrix(est_cov)
+    if sps_model == False:
+        plt.title('Covariance')
+    elif sps_model == True:
+        plt.title('Sparse inverse covariance')
+    A=np.matrix(est)
     G=nx.from_numpy_matrix(A)
     if NETWORK != None:
         G = nx.write_graphml(G, dir_path + '/' + ID + '_' + NETWORK + '.graphml')
-        out_path=dir_path + '/' + ID + '_' + NETWORK + '_adj_mat_cov.png'
+        out_path=dir_path + '/' + ID + '_' + NETWORK + '_adj_mat%s_cov.png'%('_sps_inv' if sps_model else '')
     else:
         G = nx.write_graphml(G, dir_path + '/' + ID + '.graphml')
-        out_path=dir_path + '/' + ID + '_adj_mat_cov.png'
+        out_path=dir_path + '/' + ID + '_adj_mat%s_cov.png'%('_sps_inv' if sps_model else '')
     plt.savefig(out_path)
     plt.close()
-    return(est_path_cov)
-
-##Create plots for sparse inverse covariance matrix interface
-def sps_inv_cov_plt_func(mx, est_path_sps_inv_cov, ID, NETWORK):
-    dir_path = os.path.dirname(os.path.realpath(est_path_sps_inv_cov))
-    est_sps_inv_cov = genfromtxt(est_path_sps_inv_cov)
-    rois_num=est_sps_inv_cov.shape[0]
-    if NETWORK != None:
-        print("Creating Sparse Inverse Covariance plot of dimensions:\n" + str(rois_num) + ' x ' + str(rois_num))
-        plt.figure(figsize=(rois_num, rois_num))
-    else:
-        plt.figure(figsize=(10, 10))
-    plt.figure(figsize=(rois_num, rois_num))
-    ##The covariance can be found at estimator.precision_
-    plt.imshow(-est_sps_inv_cov, interpolation="nearest",
-               vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
-    ##And display the labels
-    x_ticks = plt.xticks(range(rois_num), rotation=90)
-    y_ticks = plt.yticks(range(rois_num))
-    plt.title('Sparse inverse covariance')
-    A=np.matrix(est_sps_inv_cov)
-    G=nx.from_numpy_matrix(A)
-    if NETWORK != None:
-        G = nx.write_graphml(G, dir_path + '/' + ID + '_' + NETWORK + '.graphml')
-        out_path=dir_path + '/' + ID + '_' + NETWORK + '_adj_mat_sps_inv_cov.png'
-    else:
-        G = nx.write_graphml(G, dir_path + '/' + ID + '.graphml')
-        out_path=dir_path + '/' + ID + '_adj_mat_sps_inv_cov.png'
-    plt.savefig(out_path)
-    plt.close()
-    return(est_path_sps_inv_cov)
+    return(est_path)
 
 ##Extract network metrics interface
-def extractnetstats(est_path, ID, NETWORK, thr, out_file=None):
+def extractnetstats(est_path, ID, NETWORK, thr, sps_model, out_file=None):
     in_mat = np.array(genfromtxt(est_path))
     dir_path = os.path.dirname(os.path.realpath(est_path))
     G=nx.from_numpy_matrix(in_mat)
@@ -483,6 +470,7 @@ def extractnetstats(est_path, ID, NETWORK, thr, out_file=None):
         else:
             out_path = dir_path + '/' + ID + '_net_mets_cov.csv'
     np.savetxt(out_path, net_met_val_list)
+
     return(out_path)
     return(metric_list_names)
 
@@ -491,6 +479,7 @@ class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
     sub_id = traits.Str(mandatory=True)
     NETWORK = traits.Any(mandatory=True)
     thr = traits.Any(mandatory=True)
+    sps_model = traits.Bool(mandatory=True)
 
 class ExtractNetStatsOutputSpec(TraitedSpec):
     out_file = File()
@@ -504,7 +493,8 @@ class ExtractNetStats(BaseInterface):
             self.inputs.est_path,
             self.inputs.sub_id,
             self.inputs.NETWORK,
-	        self.inputs.thr)
+	        self.inputs.thr,
+            self.inputs.sps_model)
         setattr(self, '_outpath', out)
         return runtime
 
@@ -517,7 +507,6 @@ def export_to_pandas(csv_loc, ID, NETWORK, out_file=None):
     import cPickle
     met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/met_list_pickle'
     metric_list_names = cPickle.load(open(met_list_picke_path, 'rb'))
-
     df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
     df = df.T
     column_headers={k: v for k, v in enumerate(metric_list_names)}
@@ -560,7 +549,7 @@ class Export2Pandas(BaseInterface):
 
 ##Create input/output nodes
 #1) Add variable to IdentityInterface if user-set
-inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'thr', 'node_size', 'mask', 'graph', 'parlistfile']), name='inputnode')
+inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'thr', 'node_size', 'mask', 'graph', 'parlistfile', 'sps_model']), name='inputnode')
 
 #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
 inputnode.inputs.in_file = input_file
@@ -573,16 +562,14 @@ inputnode.inputs.node_size = node_size
 inputnode.inputs.mask = mask
 inputnode.inputs.graph = graph
 inputnode.inputs.parlistfile = parlistfile
+inputnode.inputs.sps_model = sps_model
 
 #3) Add variable to function nodes
 ##Create function nodes
-imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'node_size', 'mask', 'thr', 'graph', 'parlistfile'], output_names = ['mx','est_path_cov', 'est_path_sps_inv_cov'], function=import_mat_func, imports=import_list), name = "imp_est")
-cov_plt = pe.Node(niu.Function(input_names = ['mx', 'est_path_cov', 'ID', 'NETWORK'], output_names = ['est_path_cov'], function=cov_plt_func, imports=import_list), name = "cov_plt")
-sps_inv_cov_plt = pe.Node(niu.Function(input_names=['mx', 'est_path_sps_inv_cov', 'ID', 'NETWORK'], output_names = ['est_path_sps_inv_cov'], function=sps_inv_cov_plt_func, imports=import_list), name = "sps_inv_cov_plt")
-net_mets_cov = pe.Node(ExtractNetStats(), name = "ExtractNetStats1")
-net_mets_inv_sps_cov = pe.Node(ExtractNetStats(), name = "ExtractNetStats2")
-export_to_pandas1 = pe.Node(Export2Pandas(), name = "export_to_pandas1")
-export_to_pandas2 = pe.Node(Export2Pandas(), name = "export_to_pandas2")
+imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'node_size', 'mask', 'thr', 'graph', 'parlistfile', 'sps_model'], output_names = ['mx','est_path'], function=import_mat_func, imports=import_list), name = "imp_est")
+cov_plt = pe.Node(niu.Function(input_names = ['mx', 'est_path', 'ID', 'NETWORK', 'sps_model'], output_names = ['est_path'], function=cov_plt_func, imports=import_list), name = "cov_plt")
+net_mets_cov1 = pe.Node(ExtractNetStats(), name = "ExtractNetStats")
+export_to_pandas1 = pe.Node(Export2Pandas(), name = "export_to_pandas")
 
 ##Create PyNets workflow
 wf = pe.Workflow(name='PyNets_WORKFLOW')
@@ -604,33 +591,23 @@ wf.connect([
                           ('mask', 'mask'),
                           ('thr', 'thr'),
                           ('graph', 'graph'),
-                          ('parlistfile', 'parlistfile')]),
+                          ('parlistfile', 'parlistfile'),
+                          ('sps_model', 'sps_model')]),
     (inputnode, cov_plt, [('ID', 'ID'),
-                          ('NETWORK', 'NETWORK')]),
+                          ('NETWORK', 'NETWORK'),
+                          ('sps_model', 'sps_model')]),
     (imp_est, cov_plt, [('mx', 'mx'),
-                        ('est_path_cov', 'est_path_cov')]),
-    (imp_est, sps_inv_cov_plt, [('mx', 'mx'),
-                                ('est_path_sps_inv_cov', 'est_path_sps_inv_cov')]),
-    (inputnode, sps_inv_cov_plt, [('ID', 'ID'),
-                                  ('NETWORK', 'NETWORK')]),
-    (imp_est, net_mets_cov, [('est_path_cov', 'est_path')]),
-    (inputnode, net_mets_cov, [('ID', 'sub_id'),
+                        ('est_path', 'est_path')]),
+    (imp_est, net_mets_cov1, [('est_path', 'est_path')]),
+    (inputnode, net_mets_cov1, [('ID', 'sub_id'),
                                ('NETWORK', 'NETWORK'),
-				               ('thr', 'thr')]),
-    (imp_est, net_mets_inv_sps_cov, [('est_path_sps_inv_cov', 'est_path')]),
-    (inputnode, net_mets_inv_sps_cov, [('ID', 'sub_id'),
-                                       ('NETWORK', 'NETWORK'),
-						               ('thr', 'thr')]),
-    #(net_mets_cov, datasink, [('est_path_cov', 'csv_loc')]),
-    #(net_mets_inv_sps_cov, datasink, [('est_path_sps_inv_cov', 'csv_loc')]),
+				               ('thr', 'thr'),
+                               ('sps_model', 'sps_model')]),
+    #(net_mets_cov1, datasink, [('est_path', 'csv_loc')]),
     (inputnode, export_to_pandas1, [('ID', 'sub_id'),
                                     ('NETWORK', 'NETWORK')]),
-    (net_mets_cov, export_to_pandas1, [('out_file', 'in_csv')]),
-    (inputnode, export_to_pandas2, [('ID', 'sub_id'),
-                                    ('NETWORK', 'NETWORK')]),
-    (net_mets_inv_sps_cov, export_to_pandas2, [('out_file', 'in_csv')]),
-    #(export_to_pandas1, datasink, [('out_file', 'pandas_df1')]),
-    #(export_to_pandas2, datasink, [('out_file', 'pandas_df2')]),
+    (net_mets_cov1, export_to_pandas1, [('out_file', 'in_csv')]),
+    #(export_to_pandas1, datasink, [('out_file', 'pandas_df)]),
 ])
 
 #wf.run(plugin='SLURM')
