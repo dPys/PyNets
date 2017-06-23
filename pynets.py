@@ -41,9 +41,9 @@ if __name__ == '__main__':
 # parser.add_argument('-ma', '--multiatlas',
 #     default='All')
     parser.add_argument('-ua',
-        metavar='Path to list of paths',
+        metavar='Path to parcellation file',
         default=None,
-        help='Path to a text file containing full path or paths to nifti format parcellations. One line per parcellation')
+        help='Path to nifti-formatted parcellation image file')
     parser.add_argument('-n',
         metavar='RSN',
         default=None,
@@ -198,17 +198,20 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
     elif '.nii' in input_file and parlistfile != None and NETWORK == None: # block of code for whole brain parcellations
         func_file=input_file
         dir_path = os.path.dirname(os.path.realpath(func_file))
-        ##Read txt file and get list of parcellations.
-        with open(parlistfile, 'r') as parcellation_file:
-            par_list=parcellation_file.read()
 
-        atlas_name = par_list.split('/')[-1].split('.')[0]
+        atlas_name = parlistfile.split('/')[-1].split('.')[0]
         # Code for getting name and coordinates of parcels.
         # Adapted from Dan L. (https://github.com/danlurie/despolab_lesion/blob/master/code/sandbox/Sandbox%20-%20Calculate%20and%20plot%20HCP%20mean%20matrix.ipynb)
-        bna_img = nib.load(par_list)
+        bna_img = nib.load(parlistfile)
         bna_data = bna_img.get_data()
-        # Number of parcels:
-        par_max = np.max(bna_data)
+        if bna_img.get_data_dtype() != np.dtype(np.int):
+            bna_data_for_coords = bna_img.get_data()
+            # Number of parcels:
+            par_max = np.ceil(np.max(bna_data_for_coords)).astype('int')
+            bna_data = bna_data.astype('int16')
+        else:
+            par_max = np.max(bna_data)
+
         img_stack = []
         for idx in range(1, par_max+1):
             roi_img = bna_data == idx
@@ -219,7 +222,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
             roi_img = nilearn.image.new_img_like(bna_img, img_stack[idx])
             img_list.append(roi_img)
 
-        bna_4D = image.concat_imgs(img_list)
+        bna_4D = nilearn.image.concat_imgs(img_list)
         coords = []
         for roi_img in img_list:
             coords.append(nilearn.plotting.find_xyz_cut_coords(roi_img))
@@ -229,7 +232,6 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         print("\n")
         print(atlas_name + ' comes with {0}.'.format(par_max))
         print("\n")
-        coords = np.vstack((atlas.rois['x'], atlas.rois['y'], atlas.rois['z'])).T
         print("\n")
         print('Stacked atlas coordinates in array of shape {0}.'.format(coords.shape))
         print("\n")
@@ -245,7 +247,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
                     print(str(len(coords)))
 
         ##extract time series from whole brain parcellaions:
-        parcellation = nib.load(par_list)
+        parcellation = nib.load(parlistfile)
         parcel_masker = input_data.NiftiLabelsMasker(labels_img=parcellation, background_label=0, memory='nilearn_cache', memory_level=5, standardize=True)
         time_series = parcel_masker.fit_transform(func_file)
         ##old ref code for coordinate parcellations:
