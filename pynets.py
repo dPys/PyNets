@@ -411,12 +411,19 @@ def mat_plt_func(mx, est_path, ID, NETWORK, sps_model):
 ##Extract network metrics interface
 def extractnetstats(est_path, ID, NETWORK, thr, sps_model, out_file=None):
     in_mat = np.array(genfromtxt(est_path))
+    ##
+    import bct
+    in_mat_thr = bct.threshold_proportional(in_mat, float(thr))
+    in_mat_wei = bct.weight_conversion(in_mat_thr, 'normalize')
+    in_mat_bin = bct.weight_conversion(in_mat_thr, 'binarize')
+    in_mat_len = bct.weight_conversion(in_mat_thr, 'lengths')
+    ##
 
     ##Get hyperbolic tangent of graph if non-sparse (i.e. fischer r-to-z transform)
-    if sps_model == False:
-        in_mat = np.arctanh(in_mat)
+    #if sps_model == False:
+    #    in_mat = np.arctanh(in_mat)
     dir_path = os.path.dirname(os.path.realpath(est_path))
-    G=nx.from_numpy_matrix(in_mat)
+    G=nx.from_numpy_matrix(in_mat_thr)
 
 ###############################################################
 ############Calculate graph metrics from graph G###############
