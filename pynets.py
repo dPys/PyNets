@@ -328,15 +328,15 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_TS_plot.png'
         plt.savefig(out_path_fig)
         plt.close()
-        connectivity_measure = ConnectivityMeasure(kind='correlation')
-        correlation_matrix = connectivity_measure.fit_transform([time_series])[0]
+        connectivity_measure = ConnectivityMeasure(kind='partial correlation')
+        partial_correlation_matrix = connectivity_measure.fit_transform([time_series])[0]
         plot_title = NETWORK + ' Network Time Series'
-        plotting.plot_connectome(correlation_matrix, coords,
+        plotting.plot_connectome(partial_correlation_matrix, coords,
                                  title=plot_title)
         ##Display connectome with hemispheric projections.
         title = "Connectivity Projected on the " + NETWORK
         out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_connectome_plot.png'
-        plotting.plot_connectome(correlation_matrix, coords, title=title,
+        plotting.plot_connectome(partial_correlation_matrix, coords, title=title,
         display_mode='lyrz', output_file=out_path_fig)
         time_series_path = dir_path + '/' + ID + '_' + NETWORK + '_ts.txt'
         np.savetxt(time_series_path, time_series, delimiter='\t')
@@ -368,7 +368,10 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
     else:
         est_path = dir_path + '/' + ID + '_est_%s.txt'%('_sps_inv' if sps_model else '')
     if sps_model == False:
-        np.savetxt(est_path, correlation_matrix, delimiter='\t')
+        if NETWORK != None:
+            np.savetxt(est_path, partial_correlation_matrix, delimiter='\t')
+        else:
+            np.savetxt(est_path, correlation_matrix, delimiter='\t')
     elif sps_model == True:
         np.savetxt(est_path, estimator.precision_, delimiter='\t')
     return(mx, est_path)
