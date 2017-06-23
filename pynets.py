@@ -165,7 +165,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
                         coords = np.delete(coords, ix, axis=0)
                         print(str(len(coords)))
                         print("\n")
-            spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2)
+            spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2, standardize=True)
             time_series = spheres_masker.fit_transform(func_file)
             correlation_measure = ConnectivityMeasure(kind='correlation')
             correlation_matrix = correlation_measure.fit_transform([time_series])[0]
@@ -248,7 +248,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
 
         ##extract time series from whole brain parcellaions:
         parcellation = nib.load(parlistfile)
-        parcel_masker = input_data.NiftiLabelsMasker(labels_img=parcellation, background_label=0, memory='nilearn_cache', memory_level=5)
+        parcel_masker = input_data.NiftiLabelsMasker(labels_img=parcellation, background_label=0, memory='nilearn_cache', memory_level=5, standardize=True)
         time_series = parcel_masker.fit_transform(func_file)
         ##old ref code for coordinate parcellations:
         #spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=2, verbose=2)
@@ -316,7 +316,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
                     coords.remove(coord)
         masker = input_data.NiftiSpheresMasker(
             seeds=coords, radius=float(node_size), allow_overlap=True, memory_level=5,
-            memory='nilearn_cache', verbose=2)
+            memory='nilearn_cache', verbose=2, standardize=True)
         time_series = masker.fit_transform(func_file)
         for time_serie, label in zip(time_series.T, labels):
             plt.plot(time_serie, label=label)
@@ -328,15 +328,15 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_TS_plot.png'
         plt.savefig(out_path_fig)
         plt.close()
-        connectivity_measure = ConnectivityMeasure(kind='partial correlation')
-        partial_correlation_matrix = connectivity_measure.fit_transform([time_series])[0]
+        connectivity_measure = ConnectivityMeasure(kind='correlation')
+        correlation_matrix = connectivity_measure.fit_transform([time_series])[0]
         plot_title = NETWORK + ' Network Time Series'
-        plotting.plot_connectome(partial_correlation_matrix, coords,
+        plotting.plot_connectome(correlation_matrix, coords,
                                  title=plot_title)
         ##Display connectome with hemispheric projections.
         title = "Connectivity Projected on the " + NETWORK
         out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_connectome_plot.png'
-        plotting.plot_connectome(partial_correlation_matrix, coords, title=title,
+        plotting.plot_connectome(correlation_matrix, coords, title=title,
         display_mode='lyrz', output_file=out_path_fig)
         time_series_path = dir_path + '/' + ID + '_' + NETWORK + '_ts.txt'
         np.savetxt(time_series_path, time_series, delimiter='\t')
@@ -369,7 +369,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         est_path = dir_path + '/' + ID + '_est_%s.txt'%('_sps_inv' if sps_model else '')
     if sps_model == False:
         if NETWORK != None:
-            np.savetxt(est_path, partial_correlation_matrix, delimiter='\t')
+            np.savetxt(est_path, correlation_matrix, delimiter='\t')
         else:
             np.savetxt(est_path, correlation_matrix, delimiter='\t')
     elif sps_model == True:
