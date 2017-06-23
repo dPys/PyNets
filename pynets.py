@@ -112,8 +112,9 @@ import networkx as nx
 import gzip
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
 import pandas as pd
+import nibabel as nib
 
-import_list=["import nilearn", "import numpy as np", "import os", "from numpy import genfromtxt", "from matplotlib import pyplot as plt", "from nipype import Node, Workflow", "from nipype import Node, Workflow", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn import plotting", "from nilearn import datasets", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nilearn import datasets", "import gzip", "from nilearn import input_data", "from nilearn import plotting", "import networkx as nx", "import nibabel as nib", "from nipype.interfaces.base import isdefined,Undefined", "import pandas as pd"]
+import_list=["import nilearn", "import numpy as np", "import os", "from numpy import genfromtxt", "from matplotlib import pyplot as plt", "from nipype import Node, Workflow", "from nipype import Node, Workflow", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn import plotting", "from nilearn import datasets", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nilearn import datasets", "import gzip", "from nilearn import input_data", "from nilearn import plotting", "import networkx as nx", "import nibabel as nib", "from nipype.interfaces.base import isdefined,Undefined", "import pandas as pd", "import nibabel as nib"]
 
 print("\n\n\n")
 if graph == True:
@@ -201,12 +202,32 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         with open(parlistfile, 'r') as parcellation_file:
             par_list=parcellation_file.read()
 
-        ##Code for getting name and coordinates of parcels.
-        ##To Do: swap out with COG code from Dan L.
-        atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
-        atlas_name = atlas['description'].splitlines()[0]
+        atlas_name = par_list.split('/')[-1].split('.')[0]
+        # Code for getting name and coordinates of parcels.
+        # Adapted from Dan L. (https://github.com/danlurie/despolab_lesion/blob/master/code/sandbox/Sandbox%20-%20Calculate%20and%20plot%20HCP%20mean%20matrix.ipynb)
+        bna_img = nib.load(par_list)
+        bna_data = bna_img.get_data()
+        # Number of parcels:
+        par_max = np.max(bna_data)
+        img_stack = []
+        for idx in range(1, par_max+1):
+            roi_img = bna_data == idx
+            img_stack.append(roi_img)
+        img_stack = np.array(img_stack)
+        img_list = []
+        for idx in range(par_max):
+            roi_img = nilearn.image.new_img_like(bna_img, img_stack[idx])
+            img_list.append(roi_img)
+
+        bna_4D = image.concat_imgs(img_list)
+        coords = []
+        for roi_img in img_list:
+            coords.append(nilearn.plotting.find_xyz_cut_coords(roi_img))
+        coords = np.array(coords)
+        # atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
+        # atlas_name = atlas['description'].splitlines()[0]
         print("\n")
-        print(atlas_name + ' comes with {0}.'.format(atlas.keys()))
+        print(atlas_name + ' comes with {0}.'.format(par_max))
         print("\n")
         coords = np.vstack((atlas.rois['x'], atlas.rois['y'], atlas.rois['z'])).T
         print("\n")
