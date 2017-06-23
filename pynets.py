@@ -143,7 +143,7 @@ parlistfile=args.ua
 ##Import/generate time-series and estimate GLOBAL covariance/sparse inverse covariance matrices
 def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask, thr, graph, parlistfile, sps_model):
     if '.nii' in input_file and parlistfile == None and NETWORK == None:
-        if graph == True:
+        if graph == False:
             func_file=input_file
             dir_path = os.path.dirname(os.path.realpath(func_file))
             atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
@@ -164,7 +164,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
                         coords = np.delete(coords, ix, axis=0)
                         print(str(len(coords)))
                         print("\n")
-            spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2, standardize=True, standardize=True)
+            spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2, standardize=True)
             time_series = spheres_masker.fit_transform(func_file)
             correlation_measure = ConnectivityMeasure(kind='correlation')
             correlation_matrix = correlation_measure.fit_transform([time_series])[0]
@@ -341,15 +341,9 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         estimator = ShrunkCovariance()
         est = estimator.fit(mx)
     if NETWORK != None:
-        if sps_model == False:
-            est_path = dir_path + '/' + ID + '_' + NETWORK + '_est_cov.txt'
-        else:
-            est_path = dir_path + '/' + ID + '_' + NETWORK + '_est_sps_inv_cov.txt'
+        est_path = dir_path + '/' + ID + '_' + NETWORK + '_est_%scov.txt'%('sps_inv_' if sps_model else '')
     else:
-        if sps_model == False:
-            est_path = dir_path + '/' + ID + '_est_cov.txt'
-        elif sps_model == True:
-            est_path = dir_path + '/' + ID + '_est_sps_inv_cov.txt'
+        est_path = dir_path + '/' + ID + '_est_%scov.txt'%('sps_inv_' if sps_model else '')
     if sps_model == False:
         np.savetxt(est_path, estimator.covariance_, delimiter='\t')
     elif sps_model == True:
@@ -393,14 +387,18 @@ def cov_plt_func(mx, est_path, ID, NETWORK, sps_model):
 ##Extract network metrics interface
 def extractnetstats(est_path, ID, NETWORK, thr, sps_model, out_file=None):
     in_mat = np.array(genfromtxt(est_path))
+
+    ##Get hyperbolic tangent of graph (i.e. fischer r-to-z transform)
+    in_mat_stand = np.arctanh(in_mat)
     dir_path = os.path.dirname(os.path.realpath(est_path))
-    G=nx.from_numpy_matrix(in_mat)
+    G=nx.from_numpy_matrix(in_mat_stand)
 
 ###############################################################
 ############Calculate graph metrics from graph G###############
 ###############################################################
     from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, rich_club_coefficient, transitivity, betweenness_centrality
     from itertools import permutations
+    import cPickle
 
     def efficiency(G, u, v):
         return float(1) / nx.shortest_path_length(G, u, v)
@@ -430,27 +428,32 @@ def extractnetstats(est_path, ID, NETWORK, thr, sps_model, out_file=None):
         print(str(net_met_val))
         j = j + 1
 
-    bc_vector = betweenness_centrality(G)
-    bc_vals = bc_vector.values()
-    bc_nodes = bc_vector.keys()
-    num_nodes = len(bc_nodes)
-    bc_arr = np.zeros([num_nodes, 2], dtype='object')
-    j=0
-    for i in range(num_nodes):
-        bc_arr[j,0] = NETWORK + '_' + str(bc_nodes[j]) + '_bet_cent'
-        bc_arr[j,1] = bc_vals[j]
-        print(NETWORK + '_' + str(bc_nodes[j]))
-        print(str(bc_vals[j]))
-        j = j + 1
+    if NETWORK != None:
+        bc_vector = betweenness_centrality(G)
+        bc_vals = bc_vector.values()
+        bc_nodes = bc_vector.keys()
+        num_nodes = len(bc_nodes)
+        bc_arr = np.zeros([num_nodes, 2], dtype='object')
+        j=0
+        for i in range(num_nodes):
+            bc_arr[j,0] = NETWORK + '_' + str(bc_nodes[j]) + '_bet_cent'
+            bc_arr[j,1] = bc_vals[j]
+            print(NETWORK + '_' + str(bc_nodes[j]))
+            print(str(bc_vals[j]))
+            j = j + 1
+        net_met_val_list = list(net_met_arr[:,1]) + list(bc_arr[:,1])
+    else:
+        net_met_val_list = list(net_met_arr[:,1])
 
-    net_met_val_list = list(net_met_arr[:,1]) + list(bc_arr[:,1])
     metric_list_names = []
     for i in metric_list:
         metric_list_names.append('%s' % i.func_name)
 
-    for i in bc_arr[:,0]:
-        metric_list_names.append(i)
-    import cPickle
+    if NETWORK != None:
+        for i in bc_arr[:,0]:
+            metric_list_names.append(i)
+
+    ##Save metric names as pickle
     met_list_picke_path = os.path.dirname(os.path.abspath(est_path)) + '/met_list_pickle'
     cPickle.dump(metric_list_names, open(met_list_picke_path, 'wb'))
 
@@ -568,8 +571,8 @@ inputnode.inputs.sps_model = sps_model
 ##Create function nodes
 imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'node_size', 'mask', 'thr', 'graph', 'parlistfile', 'sps_model'], output_names = ['mx','est_path'], function=import_mat_func, imports=import_list), name = "imp_est")
 cov_plt = pe.Node(niu.Function(input_names = ['mx', 'est_path', 'ID', 'NETWORK', 'sps_model'], output_names = ['est_path'], function=cov_plt_func, imports=import_list), name = "cov_plt")
-net_mets_cov1 = pe.Node(ExtractNetStats(), name = "ExtractNetStats")
-export_to_pandas1 = pe.Node(Export2Pandas(), name = "export_to_pandas")
+net_mets_cov_node = pe.Node(ExtractNetStats(), name = "ExtractNetStats")
+export_to_pandas_node = pe.Node(Export2Pandas(), name = "export_to_pandas")
 
 ##Create PyNets workflow
 wf = pe.Workflow(name='PyNets_WORKFLOW')
@@ -598,15 +601,15 @@ wf.connect([
                           ('sps_model', 'sps_model')]),
     (imp_est, cov_plt, [('mx', 'mx'),
                         ('est_path', 'est_path')]),
-    (imp_est, net_mets_cov1, [('est_path', 'est_path')]),
-    (inputnode, net_mets_cov1, [('ID', 'sub_id'),
+    (imp_est, net_mets_cov_node, [('est_path', 'est_path')]),
+    (inputnode, net_mets_cov_node, [('ID', 'sub_id'),
                                ('NETWORK', 'NETWORK'),
 				               ('thr', 'thr'),
                                ('sps_model', 'sps_model')]),
-    #(net_mets_cov1, datasink, [('est_path', 'csv_loc')]),
-    (inputnode, export_to_pandas1, [('ID', 'sub_id'),
+    #(net_mets_cov_node, datasink, [('est_path', 'csv_loc')]),
+    (inputnode, export_to_pandas_node, [('ID', 'sub_id'),
                                     ('NETWORK', 'NETWORK')]),
-    (net_mets_cov1, export_to_pandas1, [('out_file', 'in_csv')]),
+    (net_mets_cov_node, export_to_pandas_node, [('out_file', 'in_csv')]),
     #(export_to_pandas1, datasink, [('out_file', 'pandas_df)]),
 ])
 
