@@ -5,7 +5,28 @@ Created on Fri Jun 23 16:55:42 2017
 
 @author: aki.nikolaidis
 """
-
+def collect_files():
+    import glob
+    import os
+    import pandas as pd
+    path = r'/Users/PyNetsTest/'
+    #path = r'/Users/dpisner453/PyNets_examples/network_analysis/' # use your path
+    allFiles = []
+    for fn in os.listdir(path):
+        #path_name = path + fn + '/' + fn + '_DMN_net_global_scalars_inv_sps_cov_' + fn
+        path_name = path + fn + '/' + fn + '_DMN_net_mets_corr_' + fn
+        if os.path.isfile(path_name):
+            print(path_name)
+            allFiles.append(path_name)
+    
+    frame = pd.DataFrame()
+    list_ = []
+    
+    for file_ in allFiles:
+        df = pd.read_pickle(file_)
+        list_.append(df)
+    
+    frame = pd.concat(list_)
 
 
 def dim_reduce(X, n_clusters):
