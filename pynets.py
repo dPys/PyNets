@@ -429,6 +429,9 @@ def extractnetstats(est_path, ID, NETWORK, thr, sps_model, out_file=None):
 ############Calculate graph metrics from graph G###############
 ###############################################################
     from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, rich_club_coefficient, transitivity, betweenness_centrality
+    from networkx.algorithms.approximation import maximum_independent_set, min_weighted_vertex_cover
+    #from networkx.algorithms.matching import min_maximal_matching
+    
     from itertools import permutations
     import cPickle
 
@@ -443,7 +446,7 @@ def extractnetstats(est_path, ID, NETWORK, thr, sps_model, out_file=None):
     def local_efficiency(G):
         return float(sum(global_efficiency(nx.ego_graph(G, v)) for v in G)) / len(G)
 
-    metric_list = [global_efficiency, local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, rich_club_coefficient, transitivity]
+    metric_list = [global_efficiency, maximum_independent_set, min_weighted_vertex_cover, local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, rich_club_coefficient, transitivity]
 
     num_mets = len(metric_list)
     net_met_arr = np.zeros([num_mets, 2], dtype='object')
