@@ -29,10 +29,12 @@ if __name__ == '__main__':
     parser.add_argument('-i',
         metavar='Path to input file',
         default=None,
+        required=True,
         help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR the path to an 4D time-series text/csv file OR the path of a pre-made graph that has been thresholded and standardized appropriately')
     parser.add_argument('-ID',
         metavar='Subject ID',
         default=None,
+        required=True,
         help='A subject ID that is also the name of the directory containing the input file')
     parser.add_argument('-a',
         metavar='Atlas',
@@ -50,8 +52,8 @@ if __name__ == '__main__':
         help='Optionally specify an atlas-defined network name from the following list of RSNs:\n\nDMN\nFPTC\nDA\nSN\nVA')
     parser.add_argument('-thr',
         metavar='Graph threshold',
-        default='0.99',
-        help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is 0.99')
+        default='0.95',
+        help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is 0.95')
     parser.add_argument('-ns',
         metavar='Node size',
         default='3',
