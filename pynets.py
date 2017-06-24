@@ -117,8 +117,10 @@ import pandas as pd
 import nibabel as nib
 from nibabel.affines import apply_affine
 import numpy.linalg as npl
+import seaborn as sns
+from matplotlib import colors
 
-import_list=["import nilearn", "import numpy as np", "import os", "from numpy import genfromtxt", "from matplotlib import pyplot as plt", "from nipype import Node, Workflow", "from nipype import Node, Workflow", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn import plotting", "from nilearn import datasets", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nilearn import datasets", "import gzip", "from nilearn import input_data", "from nilearn import plotting", "import networkx as nx", "import nibabel as nib", "from nipype.interfaces.base import isdefined,Undefined", "import pandas as pd", "import nibabel as nib", "from nibabel.affines import apply_affine", "import numpy.linalg as npl"]
+import_list=["import nilearn", "import numpy as np", "import os", "from numpy import genfromtxt", "from matplotlib import pyplot as plt", "from nipype import Node, Workflow", "from nipype import Node, Workflow", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn import plotting", "from nilearn import datasets", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nilearn import datasets", "import gzip", "from nilearn import input_data", "from nilearn import plotting", "import networkx as nx", "import nibabel as nib", "from nipype.interfaces.base import isdefined,Undefined", "import pandas as pd", "import nibabel as nib", "from nibabel.affines import apply_affine", "import numpy.linalg as npl", "import seaborn as sns", "from matplotlib import colors"]
 
 print("\n\n\n")
 if graph == True:
@@ -205,7 +207,15 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         else:
             atlast_graph_title = atlas_name + ' Masked Nodes'
         edge_threshold = str(float(thr)*100) +'%'
-        plotting.plot_connectome(correlation_matrix, coords, title=atlast_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True)
+        # coloring code:
+        import seaborn as sns
+        from matplotlib import colors
+        n = len(membership.unique())
+        clust_pal = sns.color_palette("Set2", n)
+        clust_lut = dict(zip(map(str, np.unique(membership.astype('category'))), clust_pal))
+        clust_colors = colors.to_rgba_array(membership.map(clust_lut))
+        # plot graph:
+        plotting.plot_connectome(correlation_matrix, coords, node_color = clust_colors, title=atlast_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True)
         out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_connectome_viz.png'
         plt.savefig(out_path_fig)
         plt.close()
