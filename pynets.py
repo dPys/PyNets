@@ -115,8 +115,10 @@ import gzip
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
 import pandas as pd
 import nibabel as nib
+from nibabel.affines import apply_affine
+import numpy.linalg as npl
 
-import_list=["import nilearn", "import numpy as np", "import os", "from numpy import genfromtxt", "from matplotlib import pyplot as plt", "from nipype import Node, Workflow", "from nipype import Node, Workflow", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn import plotting", "from nilearn import datasets", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nilearn import datasets", "import gzip", "from nilearn import input_data", "from nilearn import plotting", "import networkx as nx", "import nibabel as nib", "from nipype.interfaces.base import isdefined,Undefined", "import pandas as pd", "import nibabel as nib"]
+import_list=["import nilearn", "import numpy as np", "import os", "from numpy import genfromtxt", "from matplotlib import pyplot as plt", "from nipype import Node, Workflow", "from nipype import Node, Workflow", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn import plotting", "from nilearn import datasets", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nilearn import datasets", "import gzip", "from nilearn import input_data", "from nilearn import plotting", "import networkx as nx", "import nibabel as nib", "from nipype.interfaces.base import isdefined,Undefined", "import pandas as pd", "import nibabel as nib", "from nibabel.affines import apply_affine", "import numpy.linalg as npl"]
 
 print("\n\n\n")
 if graph == True:
@@ -139,12 +141,25 @@ dir_path = os.path.dirname(os.path.realpath(input_file))
 
 pynets_dir = os.path.dirname(os.path.abspath(__file__))
 #print(pynets_dir)
-#sys.exit()
+#sys.exit()   
 
 parlistfile=args.ua
 
 ##Import/generate time-series and estimate GLOBAL covariance/sparse inverse covariance matrices
 def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask, thr, graph, parlistfile, sps_model):
+    par_path = pynets_dir + '/RSN_refs/yeo.nii.gz'
+    par_img = nib.load(par_path)
+    par_data = par_img.get_data()
+
+    ref_dict = {0:'unknown', 1:'vis', 2:'sm', 3:'dan', 4:'van', 5:'lim', 6:'fp', 7:'def'}
+
+    def get_ref_net(x, y, z):
+        aff=bna_img.affine
+        aff_inv=npl.inv(bna_img.affine)
+        # apply_affine(aff, (x,y,z)) # vox to mni
+        vox_coord = apply_affine(aff_inv, (x, y, z)) # mni to vox
+        return ref_dict[int(par_data[int(vox_coord[0]),int(vox_coord[1]),int(vox_coord[2])])]
+
     if '.nii' in input_file and parlistfile == None and NETWORK == None:
         if graph == False:
             func_file=input_file
@@ -154,6 +169,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
             print(atlas_name + ' comes with {0}.'.format(atlas.keys()))
             print("\n")
             coords = np.vstack((atlas.rois['x'], atlas.rois['y'], atlas.rois['z'])).T
+            membership = pd.Series([get_ref_net(coord[0],coord[1],coord[2]) for coord in coords])
             print('Stacked atlas coordinates in array of shape {0}.'.format(coords.shape))
             print("\n")
             if mask is not None:
@@ -229,6 +245,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         for roi_img in img_list:
             coords.append(nilearn.plotting.find_xyz_cut_coords(roi_img))
         coords = np.array(coords)
+        membership = pd.Series([get_ref_net(coord[0],coord[1],coord[2]) for coord in coords])
         # atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
         # atlas_name = atlas['description'].splitlines()[0]
         print("\n")
@@ -303,6 +320,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
       	print(labels)
       	print("\n")
       	print("-------------------")
+        membership = pd.Series([get_ref_net(coord[0],coord[1],coord[2]) for coord in coords])
       	i + 1
         dir_path = os.path.dirname(os.path.realpath(func_file))
 
