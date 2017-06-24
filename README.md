@@ -17,19 +17,35 @@ Learn more about Nilearn: http://nilearn.github.io/
 
 Learn more about Networkx: https://networkx.github.io/
 
-PyNets utilizes nilearn and networkx tools in a nipype workflow to automatically generate rsfMRI networks (whole-brain, or RSN's like the DMN) based on a variety of atlas-defined parcellation schemes, and then automatically plot associated adjacency matrices, connectome visualizations, and extract the following graph theoretical measures from those networks (both binary and weighted undirected versions, with a user-defined thresholding):\
+More specifically: PyNets utilizes nilearn and networkx tools in a nipype workflow to automatically generate rsfMRI networks (whole-brain, or RSN's like the DMN) based on a variety of atlas-defined parcellation schemes, and then automatically plot associated adjacency matrices, connectome visualizations, and extract the following graph theoretical measures from those networks (both binary and weighted undirected versions, with a user-defined thresholding):\
 efficiency, modularity finetune, modularity louvain, transitivity, assortativity, community louvain, density, mean clustering coefficient \
-For more information on interpeting these measures, see:
-https://sites.google.com/site/bctnet/measures/list 
 
+
+For more information on interpeting these measures, see: https://sites.google.com/site/bctnet/measures/list 
+
+-----
 
 Walkthrough:
 
-1- Step 1
+1- Step 1:
 
-2- Step 2
+Inputs: 
+	
+	-Subject's data- 4D fmri file or diffusion weighted file
+	-Atlas name
+	-Network to extract
+	-Edge Threshold
+	-Node size
 
-3- Step 3
+2- Step 2: Create Graph object for NetworkX
+
+3- Step 3: Extract network stats
+
+4- Step 4: Create plots
+
+5- Step 5: Collect Group data
+
+6- Step 6: Reduce Dimensionality of Node metrics
 
 -----
 

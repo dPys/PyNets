@@ -28,6 +28,7 @@ def collect_files():
     
     frame = pd.concat(list_)
 
+collect_files()
 
 def dim_reduce(X, n_clusters):
     
