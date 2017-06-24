@@ -33,7 +33,7 @@ if __name__ == '__main__':
     parser.add_argument('-ID',
         metavar='Subject ID',
         default=None,
-        help='A numerical subject ID that is also the name of the directory containing the input file')
+        help='A subject ID that is also the name of the directory containing the input file')
     parser.add_argument('-a',
         metavar='Atlas',
         default='coords_power_2011',
@@ -411,19 +411,38 @@ def mat_plt_func(mx, est_path, ID, NETWORK, sps_model):
 ##Extract network metrics interface
 def extractnetstats(est_path, ID, NETWORK, thr, sps_model, out_file=None):
     in_mat = np.array(genfromtxt(est_path))
-    ##
-    import bct
-    in_mat_thr = bct.threshold_proportional(in_mat, float(thr))
-    in_mat_wei = bct.weight_conversion(in_mat_thr, 'normalize')
-    in_mat_bin = bct.weight_conversion(in_mat_thr, 'binarize')
-    in_mat_len = bct.weight_conversion(in_mat_thr, 'lengths')
-    ##
-
-    ##Get hyperbolic tangent of graph if non-sparse (i.e. fischer r-to-z transform)
-    #if sps_model == False:
-    #    in_mat = np.arctanh(in_mat)
+    def threshold_proportional(in_mat, thr):
+        ##number of nodes
+        n = len(in_mat)
+        ##clear diagonal
+        np.fill_diagonal(in_mat, 0)
+        ##if symmetric matrix
+        if np.allclose(in_mat, in_mat.T):
+            ##ensure symmetry is preserved
+            in_mat[np.tril_indices(n)] = 0
+            ##halve number of removed links
+            ud = 2
+        else:
+            ud = 1
+        ##find all links
+        ind = np.where(in_mat)
+        ##sort indices by magnitude
+        I = np.argsort(in_mat[ind])[::-1]
+        ##number of links to be preserved
+        en = int(round((n * n - n) * float(thr) / ud))
+        ##apply threshold
+        in_mat[(ind[0][I][en:], ind[1][I][en:])] = 0
+        ##if symmetric matrix
+        if ud == 2:
+            ##reconstruct symmetry
+            in_mat[:, :] = in_mat + in_mat.T
+        return in_mat
+    threshold_proportional(in_mat, thr)
+    ##Get hyperbolic tangent of graph if non-sparse (i.e. fischer r-to-z transform), and divide by the variance of the matrix
+    if sps_model == False:
+        in_mat = np.arctanh(in_mat)/np.var(in_mat)
     dir_path = os.path.dirname(os.path.realpath(est_path))
-    G=nx.from_numpy_matrix(in_mat_thr)
+    G=nx.from_numpy_matrix(in_mat)
 
 ###############################################################
 ############Calculate graph metrics from graph G###############
@@ -552,6 +571,7 @@ def export_to_pandas(csv_loc, ID, NETWORK, out_file=None):
         ix = cols.index('id')
         cols_ID = cols[ix:ix+1]+cols[:ix]+cols[ix+1:]
         df = df[cols_ID]
+    df['id'] = df['id'].astype('object')
     df['id'].values[0] = ID
     out_file = csv_loc.replace('.', '')[:-3] + '_' + ID
     df.to_pickle(out_file)
