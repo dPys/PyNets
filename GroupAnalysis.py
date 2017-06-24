@@ -38,8 +38,13 @@ def dim_reduce(X, n_clusters):
     from sklearn import cluster
     
     #Clean up X matrix
+    X=X.iloc[:,1:X.shape[1]]
     data=X.filter(regex='DMN*',axis=1)
-    
+    #data2=X.filter(regex='!DMN*',axis=1)
+    data2=X.loc[:,'global_efficiency':'transitivity']
+    #data2=pd.concat([X, X, data]).drop_duplicates(keep=False)
+    #data2=pd.concat([data, X, X]).drop_duplicates(keep=False)
+
     #Calculate Distance matrix
     dist_of_1 = sp.spatial.distance.pdist(data.T, metric = 'correlation')
     dist_of_1[np.isnan((dist_of_1))]=1
@@ -59,11 +64,23 @@ def dim_reduce(X, n_clusters):
         a=y_pred==i
         a=a*1
         temp=data[a].mean(axis=1)
-        clust_dim=pd.concat([newmat,temp], axis=1)
+        clust_dim=pd.concat([clust_dim,temp], axis=1)
 
-    return newmat
+    frame= pd.DataFrame[data2, clust_dim]
 
+    finaldata = pd.concat([data2, clust_dim], axis=1)
+    pd.DataFrame.to_csv(finaldata)
+    return finaldata
+
+finaldata.to_csv('/Users/aki.nikolaidis/git_repo/PyNets/dim_reduce.csv')
 X=pd.read_csv('/Users/aki.nikolaidis/git_repo/PyNets/all_subjects_DMN.csv')
 n_clusters=5
 
 clust_dim = dim_reduce(X, n_clusters)
+
+#todo- figure out how to add the rest of the X dataframe back to the clustered nodes.
+#Run the R two way clustering function
+#save the group level results into a group level output folder.
+
+
+
