@@ -167,7 +167,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
                         coords = np.delete(coords, ix, axis=0)
                         print(str(len(coords)))
                         print("\n")
-            spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2, standardize=True)
+            spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2)
             time_series = spheres_masker.fit_transform(func_file)
             correlation_measure = ConnectivityMeasure(kind='correlation')
             correlation_matrix = correlation_measure.fit_transform([time_series])[0]
@@ -250,7 +250,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
 
         ##extract time series from whole brain parcellaions:
         parcellation = nib.load(parlistfile)
-        parcel_masker = input_data.NiftiLabelsMasker(labels_img=parcellation, background_label=0, memory='nilearn_cache', memory_level=5, standardize=True)
+        parcel_masker = input_data.NiftiLabelsMasker(labels_img=parcellation, background_label=0, memory='nilearn_cache', memory_level=5)
         time_series = parcel_masker.fit_transform(func_file)
         ##old ref code for coordinate parcellations:
         #spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=2, verbose=2)
@@ -318,7 +318,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
                     coords.remove(coord)
         masker = input_data.NiftiSpheresMasker(
             seeds=coords, radius=float(node_size), allow_overlap=True, memory_level=5,
-            memory='nilearn_cache', verbose=2, standardize=True)
+            memory='nilearn_cache', verbose=2)
         time_series = masker.fit_transform(func_file)
         for time_serie, label in zip(time_series.T, labels):
             plt.plot(time_serie, label=label)
