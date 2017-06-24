@@ -141,24 +141,25 @@ dir_path = os.path.dirname(os.path.realpath(input_file))
 
 pynets_dir = os.path.dirname(os.path.abspath(__file__))
 #print(pynets_dir)
-#sys.exit()
+#sys.exit()   
 
 parlistfile=args.ua
-par_path = pynets_dir + '/RSN_refs/yeo.nii.gz'
-par_img = nib.load(par_path)
-par_data = par_img.get_data()
-
-ref_dict = {0:'unknown', 1:'vis', 2:'sm', 3:'dan', 4:'van', 5:'lim', 6:'fp', 7:'def'}
-
-def get_ref_net(x, y, z):
-    aff=bna_img.affine
-    aff_inv=npl.inv(bna_img.affine)
-    # apply_affine(aff, (x,y,z)) # vox to mni
-    vox_coord = apply_affine(aff_inv, (x, y, z)) # mni to vox
-    return ref_dict[int(par_data[int(vox_coord[0]),int(vox_coord[1]),int(vox_coord[2])])]
 
 ##Import/generate time-series and estimate GLOBAL covariance/sparse inverse covariance matrices
 def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask, thr, graph, parlistfile, sps_model):
+    par_path = pynets_dir + '/RSN_refs/yeo.nii.gz'
+    par_img = nib.load(par_path)
+    par_data = par_img.get_data()
+
+    ref_dict = {0:'unknown', 1:'vis', 2:'sm', 3:'dan', 4:'van', 5:'lim', 6:'fp', 7:'def'}
+
+    def get_ref_net(x, y, z):
+        aff=bna_img.affine
+        aff_inv=npl.inv(bna_img.affine)
+        # apply_affine(aff, (x,y,z)) # vox to mni
+        vox_coord = apply_affine(aff_inv, (x, y, z)) # mni to vox
+        return ref_dict[int(par_data[int(vox_coord[0]),int(vox_coord[1]),int(vox_coord[2])])]
+
     if '.nii' in input_file and parlistfile == None and NETWORK == None:
         if graph == False:
             func_file=input_file
