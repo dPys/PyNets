@@ -12,7 +12,9 @@ Problem: Network analysis packages for neuroimaging are not implemented in pytho
 Solution: In PyNets, we harness the power of nipype, nilearn, and networkx to automatically generate a range of graph theory metrics per individual.
 
 Learn more about Nipype: http://nipype.readthedocs.io/en/latest/index.html
+
 Learn more about Nilearn: http://nilearn.github.io/
+
 Learn more about Networkx: https://networkx.github.io/
 
 PyNets utilizes nilearn and networkx tools in a nipype workflow to automatically generate rsfMRI networks (whole-brain, or RSN's like the DMN) based on a variety of atlas-defined parcellation schemes, and then automatically plot associated adjacency matrices, connectome visualizations, and extract the following graph theoretical measures from those networks (both binary and weighted undirected versions, with a user-defined thresholding):\
@@ -20,6 +22,14 @@ efficiency, modularity finetune, modularity louvain, transitivity, assortativity
 For more information on interpeting these measures, see:
 https://sites.google.com/site/bctnet/measures/list 
 
+
+Walkthrough:
+
+1- Step 1
+
+2- Step 2
+
+3- Step 3
 
 -----
 
