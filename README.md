@@ -4,11 +4,11 @@ A Python-Powered Workflow for Network Analysis of Resting-State fMRI (rsfMRI) an
 About 
 -----
 
-PyNets automates functional and diffusion-weighted MRI network analysis in python using the Networkx package.
+PyNets automates functional and structural MRI network analysis in python.
 
-Problem: Network analysis packages for neuroimaging are not implemented in python, preventing them from using the power of nipype.
+Problem: A comprehensive, flexible, and fully-automated network analysis package for neuroimaging has yet to be implemented.
 
-Solution: In PyNets, we harness the power of nipype, nilearn, and networkx to automatically generate a range of graph theory metrics on a subject-by-subject basis.
+Solution: In PyNets, we harness the power of nipype, nilearn, and networkx python packages to automatically generate a range of graph theory metrics on a subject-by-subject basis. Uniquely, PyNets utilities can be integrated with ANY existing preprocessing workflow for you data.
 
 Learn more about Nipype: http://nipype.readthedocs.io/en/latest/index.html
 
@@ -16,10 +16,8 @@ Learn more about Nilearn: http://nilearn.github.io/
 
 Learn more about Networkx: https://networkx.github.io/
 
-More specifically: PyNets utilizes nilearn and networkx tools in a nipype workflow to automatically generate rsfMRI networks (whole-brain, or RSN's like the DMN) based on a variety of atlas-defined parcellation schemes, and then automatically plot associated adjacency matrices, connectome visualizations, and extract the following graph theoretical measures from those networks (both binary and weighted undirected versions, with a user-defined thresholding):\
+More specifically: PyNets utilizes nilearn and networkx tools in a nipype workflow to automatically generate rsfMRI networks (whole-brain, or RSN's like the DMN) based on a variety of atlas-defined parcellation schemes, and then automatically plot associated adjacency matrices, connectome visualizations, and extract the following graph theoretical measures from those networks with a user-defined thresholding:\
 global efficiency, local efficiency, transitivity, degree assortativity coefficient, average clustering coefficient, average shortest path length, betweenness centrality, degree pearson correlation coefficient, number of cliques \
-
-For more information on interpeting these measures, see: https://sites.google.com/site/bctnet/measures/list 
 
 -----
 
@@ -29,7 +27,7 @@ Walkthrough:
 
 Required User Inputs: 
 	
-	-Subject's data- Any 4D preprocessed fMRI file in MNI space, a text file containing a 4D time-series matrix, a pre-made grpah/adjacency matrix, or diffusion weighted image file with completed bedpostx outputs(in construction)
+	-Subject's data- Any 4D preprocessed fMRI file, a text file containing a 4D time-series matrix, a pre-made grpah/adjacency matrix, or diffusion weighted image file with completed bedpostx outputs (in construction)
 	-A subject ID (user-specified name of the directory containing the input data)
 
 2- Step 2: Create correlation graph object for NetworkX (based on covariance or sparse inverse covariance model fitting)
@@ -60,9 +58,9 @@ Situation A) You have a normalized (MNI-space), preprocessed functional rsfMRI i
 ```python
 python /path/to/PyNets/pynets.py -i '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' -ID '002' -a 'coords_power_2011'
 ```
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation B) You have a normalized (MNI-space), preprocessed functional rsfMRI image called "filtered_func_data_clean_standard.nii.gz" where the subject id=002, you wish to extract network metrics for the DMN network, using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011' (currently the only atlas supported for extracting RSN networks in PyNets!), you wish to threshold the connectivity graph by preserving 95% of the strongest weights (also the default), you define your node radius as 3 voxels in size (also the default), and you wish to fit model with lasso sparse inverse covariance:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation B) You have a normalized (MNI-space), preprocessed functional rsfMRI image called "filtered_func_data_clean_standard.nii.gz" where the subject id=s002, you wish to extract network metrics for the DMN network, using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011' (currently the only atlas supported for extracting RSN networks in PyNets!), you wish to threshold the connectivity graph by preserving 95% of the strongest weights (also the default), you define your node radius as 3 voxels in size (also the default), and you wish to fit model with lasso sparse inverse covariance:
 ```python
-python /path/to/PyNets/pynets.py -i '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' -ID '002' -a 'coords_power_2011' -n 'DMN' -thr '0.95' -ns '3' -sps
+python /path/to/PyNets/pynets.py -i '/Users/dpisner453/PyNets_examples/s002/filtered_func_data_clean_standard.nii.gz' -ID 's002' -a 'coords_power_2011' -n 'DMN' -thr '0.95' -ns '3' -sps
 ```
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation C) You only have your time-series in a text or csv-like file where the matrix is saved in the format of # of functional volumes x # of ROI's:
 
@@ -89,7 +87,7 @@ import os
 import pandas as pd
 ###
 working_path = r'/Users/dpisner453/PyNets_examples/network_analysis/' # use your path
-name_of_network_pickle = 'DMN_net_global_scalars_inv_sps_cov'
+name_of_network_pickle = 'DMN_net_mets_corr'
 ###
 allFiles = []
 for fn in os.listdir(working_path):
@@ -106,6 +104,8 @@ for file_ in allFiles:
     list_.append(df)
 
 frame = pd.concat(list_)
+
+df.to_csv('/path/to/csv/file/database/output.csv')
 ```
 
 ![RSN Nets](PyNets_RSNs.png)
