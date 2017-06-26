@@ -146,10 +146,7 @@ if '.nii' in input_file:
 print("\n\n\n")
 
 dir_path = os.path.dirname(os.path.realpath(input_file))
-
 pynets_dir = os.path.dirname(os.path.abspath(__file__))
-#print(pynets_dir)
-#sys.exit()
 
 parlistfile=args.ua
 
@@ -414,7 +411,8 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
     try:
         est = estimator.fit(mx)
     except:
-#        print("WARNING: Lasso Cross-Validation Failed. Using Shrunk Covariance instead...")
+        print("Error: Lasso sparse matrix modeling failed. Check your input time-series data...")
+	
 #        emp_cov = covariance.empirical_covariance(mx)
 #        shrunk_cov = covariance.shrunk_covariance(emp_cov, shrinkage=0.8) # Set shrinkage closer to 1 for poorly-conditioned data
 #
@@ -425,8 +423,8 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
 #                print("Calculated graph-lasso covariance matrix for alpha=%s"%alpha)
 #            except FloatingPointError:
 #                print("Failed at alpha=%s"%alpha)
-        estimator = ShrunkCovariance()
-        est = estimator.fit(mx)
+#        estimator = ShrunkCovariance()
+#        est = estimator.fit(mx)
     if NETWORK != None:
         est_path = dir_path + '/' + ID + '_' + NETWORK + '_est%s.txt'%('_sps_inv' if sps_model else '')
     else:
