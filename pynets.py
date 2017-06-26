@@ -62,6 +62,10 @@ if __name__ == '__main__':
         metavar='Path to mask image',
         default=None,
         help='Optionally specify a thresholded inverse-binarized mask image such as a group ICA-derived network volume, to retain only those network nodes contained within that mask')
+    parser.add_argument('-an',
+        default=False,
+        action='store_true',
+        help='Optionally use this flag if you wish to activate plotting designations and network statistic extraction for all Yeo RSNs in the specified atlas')
     parser.add_argument('-g',
         default=False,
         action='store_true',
@@ -91,6 +95,7 @@ node_size=args.ns
 mask=args.m
 graph=args.g
 sps_model=args.sps
+all_nets=args.an
 #######################
 
 import warnings
@@ -143,35 +148,38 @@ dir_path = os.path.dirname(os.path.realpath(input_file))
 
 pynets_dir = os.path.dirname(os.path.abspath(__file__))
 #print(pynets_dir)
-#sys.exit()   
+#sys.exit()
 
 parlistfile=args.ua
 
 ##Import/generate time-series and estimate GLOBAL covariance/sparse inverse covariance matrices
-def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask, thr, graph, parlistfile, sps_model):
-    par_path = pynets_dir + '/RSN_refs/yeo.nii.gz'
-    par_img = nib.load(par_path)
-    par_data = par_img.get_data()
-
-    ref_dict = {0:'unknown', 1:'vis', 2:'sm', 3:'dan', 4:'van', 5:'lim', 6:'fp', 7:'def'}
-
-    def get_ref_net(x, y, z):
-        aff=bna_img.affine
-        aff_inv=npl.inv(bna_img.affine)
-        # apply_affine(aff, (x,y,z)) # vox to mni
-        vox_coord = apply_affine(aff_inv, (x, y, z)) # mni to vox
-        return ref_dict[int(par_data[int(vox_coord[0]),int(vox_coord[1]),int(vox_coord[2])])]
-
+def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask, thr, graph, parlistfile, sps_model, all_nets):
     if '.nii' in input_file and parlistfile == None and NETWORK == None:
         if graph == False:
             func_file=input_file
+
+            if all_nets != None:
+                func_img = nib.load(func_file)
+                par_path = pynets_dir + '/RSN_refs/yeo.nii.gz'
+                par_img = nib.load(par_path)
+                par_data = par_img.get_data()
+
+                ref_dict = {0:'unknown', 1:'VIS', 2:'SM', 3:'DA', 4:'VA', 5:'LIM', 6:'FP', 7:'DEF'}
+
+                def get_ref_net(x, y, z):
+                    aff_inv=npl.inv(func_img.affine)
+                    # apply_affine(aff, (x,y,z)) # vox to mni
+                    vox_coord = apply_affine(aff_inv, (x, y, z)) # mni to vox
+                    return ref_dict[int(par_data[int(vox_coord[0]),int(vox_coord[1]),int(vox_coord[2])])]
+
             dir_path = os.path.dirname(os.path.realpath(func_file))
             atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
             atlas_name = atlas['description'].splitlines()[0]
             print(atlas_name + ' comes with {0}.'.format(atlas.keys()))
             print("\n")
             coords = np.vstack((atlas.rois['x'], atlas.rois['y'], atlas.rois['z'])).T
-            membership = pd.Series([get_ref_net(coord[0],coord[1],coord[2]) for coord in coords])
+            if all_nets != None:
+                membership = pd.Series([get_ref_net(coord[0],coord[1],coord[2]) for coord in coords])
             print('Stacked atlas coordinates in array of shape {0}.'.format(coords.shape))
             print("\n")
             if mask is not None:
@@ -207,15 +215,18 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         else:
             atlast_graph_title = atlas_name + ' Masked Nodes'
         edge_threshold = str(float(thr)*100) +'%'
-        # coloring code:
-        import seaborn as sns
-        from matplotlib import colors
-        n = len(membership.unique())
-        clust_pal = sns.color_palette("Set2", n)
-        clust_lut = dict(zip(map(str, np.unique(membership.astype('category'))), clust_pal))
-        clust_colors = colors.to_rgba_array(membership.map(clust_lut))
+
         # plot graph:
-        plotting.plot_connectome(correlation_matrix, coords, node_color = clust_colors, title=atlast_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True)
+        if all_nets != None:
+            # coloring code:
+            n = len(membership.unique())
+            clust_pal = sns.color_palette("Set1", n)
+            clust_lut = dict(zip(map(str, np.unique(membership.astype('category'))), clust_pal))
+            clust_colors = colors.to_rgba_array(membership.map(clust_lut))
+
+            plotting.plot_connectome(correlation_matrix, coords, node_color = clust_colors, title=atlast_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True)
+        else:
+            plotting.plot_connectome(correlation_matrix, coords, title=atlast_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True)
         out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_connectome_viz.png'
         plt.savefig(out_path_fig)
         plt.close()
@@ -224,6 +235,19 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         mx = genfromtxt(time_series_path, delimiter='')
 
     elif '.nii' in input_file and parlistfile != None and NETWORK == None: # block of code for whole brain parcellations
+        if all_nets != None:
+            par_path = pynets_dir + '/RSN_refs/yeo.nii.gz'
+            par_img = nib.load(par_path)
+            par_data = par_img.get_data()
+
+            ref_dict = {0:'unknown', 1:'VIS', 2:'SM', 3:'DA', 4:'VA', 5:'LIM', 6:'FP', 7:'DEF'}
+
+            def get_ref_net(x, y, z):
+                aff_inv=npl.inv(bna_img.affine)
+                # apply_affine(aff, (x,y,z)) # vox to mni
+                vox_coord = apply_affine(aff_inv, (x, y, z)) # mni to vox
+                return ref_dict[int(par_data[int(vox_coord[0]),int(vox_coord[1]),int(vox_coord[2])])]
+
         func_file=input_file
         dir_path = os.path.dirname(os.path.realpath(func_file))
 
@@ -255,7 +279,8 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         for roi_img in img_list:
             coords.append(nilearn.plotting.find_xyz_cut_coords(roi_img))
         coords = np.array(coords)
-        membership = pd.Series([get_ref_net(coord[0],coord[1],coord[2]) for coord in coords])
+        if all_nets != None:
+            membership = pd.Series([get_ref_net(coord[0],coord[1],coord[2]) for coord in coords])
         # atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
         # atlas_name = atlas['description'].splitlines()[0]
         print("\n")
@@ -300,7 +325,16 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
         else:
             atlast_graph_title = atlas_name + ' Masked Nodes'
         edge_threshold = str(float(thr)*100) +'%'
-        plotting.plot_connectome(correlation_matrix, coords, title=atlast_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True)
+
+        if all_nets != None:
+            # coloring code:
+            n = len(membership.unique())
+            clust_pal = sns.color_palette("Set1", n)
+            clust_lut = dict(zip(map(str, np.unique(membership.astype('category'))), clust_pal))
+            clust_colors = colors.to_rgba_array(membership.map(clust_lut))
+            plotting.plot_connectome(correlation_matrix, coords, node_color = clust_colors, title=atlast_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True)
+        else:
+            plotting.plot_connectome(correlation_matrix, coords, title=atlast_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True)
         out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_connectome_viz.png'
         plt.savefig(out_path_fig)
         plt.close()
@@ -330,7 +364,6 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
       	print(labels)
       	print("\n")
       	print("-------------------")
-        membership = pd.Series([get_ref_net(coord[0],coord[1],coord[2]) for coord in coords])
       	i + 1
         dir_path = os.path.dirname(os.path.realpath(func_file))
 
@@ -396,7 +429,7 @@ def import_mat_func(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size
     if NETWORK != None:
         est_path = dir_path + '/' + ID + '_' + NETWORK + '_est%s.txt'%('_sps_inv' if sps_model else '')
     else:
-        est_path = dir_path + '/' + ID + '_est_%s.txt'%('_sps_inv' if sps_model else '')
+        est_path = dir_path + '/' + ID + '_est%s.txt'%('_sps_inv' if sps_model else '')
     if sps_model == False:
         if NETWORK != None:
             np.savetxt(est_path, correlation_matrix, delimiter='\t')
@@ -478,9 +511,8 @@ def extractnetstats(est_path, ID, NETWORK, thr, sps_model, out_file=None):
 ############Calculate graph metrics from graph G###############
 ###############################################################
     from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, rich_club_coefficient, transitivity, betweenness_centrality
-    from networkx.algorithms.approximation import maximum_independent_set, min_weighted_vertex_cover
     #from networkx.algorithms.matching import min_maximal_matching
-    
+
     from itertools import permutations
     import cPickle
 
@@ -495,7 +527,7 @@ def extractnetstats(est_path, ID, NETWORK, thr, sps_model, out_file=None):
     def local_efficiency(G):
         return float(sum(global_efficiency(nx.ego_graph(G, v)) for v in G)) / len(G)
 
-    metric_list = [global_efficiency, maximum_independent_set, min_weighted_vertex_cover, local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, rich_club_coefficient, transitivity]
+    metric_list = [global_efficiency, local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, rich_club_coefficient, transitivity]
 
     num_mets = len(metric_list)
     net_met_arr = np.zeros([num_mets, 2], dtype='object')
@@ -637,7 +669,7 @@ class Export2Pandas(BaseInterface):
 
 ##Create input/output nodes
 #1) Add variable to IdentityInterface if user-set
-inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'thr', 'node_size', 'mask', 'graph', 'parlistfile', 'sps_model']), name='inputnode')
+inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'thr', 'node_size', 'mask', 'graph', 'parlistfile', 'sps_model', 'all_nets']), name='inputnode')
 
 #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
 inputnode.inputs.in_file = input_file
@@ -651,10 +683,11 @@ inputnode.inputs.mask = mask
 inputnode.inputs.graph = graph
 inputnode.inputs.parlistfile = parlistfile
 inputnode.inputs.sps_model = sps_model
+inputnode.inputs.all_nets = all_nets
 
 #3) Add variable to function nodes
 ##Create function nodes
-imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'node_size', 'mask', 'thr', 'graph', 'parlistfile', 'sps_model'], output_names = ['mx','est_path'], function=import_mat_func, imports=import_list), name = "imp_est")
+imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'node_size', 'mask', 'thr', 'graph', 'parlistfile', 'sps_model', 'all_nets'], output_names = ['mx','est_path'], function=import_mat_func, imports=import_list), name = "imp_est")
 cov_plt = pe.Node(niu.Function(input_names = ['mx', 'est_path', 'ID', 'NETWORK', 'sps_model'], output_names = ['est_path'], function=mat_plt_func, imports=import_list), name = "cov_plt")
 net_mets_corr_node = pe.Node(ExtractNetStats(), name = "ExtractNetStats")
 export_to_pandas_node = pe.Node(Export2Pandas(), name = "export_to_pandas")
@@ -680,7 +713,8 @@ wf.connect([
                           ('thr', 'thr'),
                           ('graph', 'graph'),
                           ('parlistfile', 'parlistfile'),
-                          ('sps_model', 'sps_model')]),
+                          ('sps_model', 'sps_model'),
+                          ('all_nets', 'all_nets')]),
     (inputnode, cov_plt, [('ID', 'ID'),
                           ('NETWORK', 'NETWORK'),
                           ('sps_model', 'sps_model')]),
