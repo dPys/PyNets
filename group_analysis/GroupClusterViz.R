@@ -6,7 +6,8 @@ library("purrr")
 #source("/Users/aki.nikolaidis/Dropbox/1_Projects/1_Research/2_FosterCare/Code/functions.r")
 #TwoWayclust(WIAT_NIH7,group_thresh = 1.5,"/Users/aki.nikolaidis/Dropbox/1_Projects/2_Grants/NARSAD/HBN_Data")
 
-data<-read.csv('/Users/aki.nikolaidis/git_repo/PyNets/dim_reduce.csv',row.names = 1, header = TRUE, sep = ",");
+data<-read.csv('/Users/aki.nikolaidis/git_repo/PyNets/Testing/dim_reduce.csv',row.names = 1, header = TRUE, sep = ",");
+pynets_path<- '/Users/aki.nikolaidis/git_repo/PyNets'
 
 UnprocessedData <- data
 UnprocessedData[is.na(UnprocessedData) == TRUE] <- 0
@@ -38,5 +39,9 @@ mycolhc <- rainbow(length(unique(Var_Group)), start = 0.1, end = 0.9);
 mycolhc <- mycolhc[as.vector(Var_Group)]
 
 #6- Visualization
+#FIX SIZE OF SAVED FILE
+file_location<- paste(pynets_path,'Testing/heatmap.jpg', sep = "")
+jpeg(file = file_location)
 heatmap(Clusterset, Rowv = as.dendrogram(hr), Colv = as.dendrogram(hc), col = inferno(256), scale = "none", RowSideColors = mycolhr, ColSideColors = mycolhc)
+dev.off()
 #-------------------------------------------------------------------------------------

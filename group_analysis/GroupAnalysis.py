@@ -13,7 +13,6 @@ def collect_files():
     #path = r'/Users/dpisner453/PyNets_examples/network_analysis/' # use your path
     allFiles = []
     for fn in os.listdir(path):
-        #path_name = path + fn + '/' + fn + '_DMN_net_global_scalars_inv_sps_cov_' + fn
         path_name = path + fn + '/' + fn + '_DMN_net_mets_corr_' + fn
         if os.path.isfile(path_name):
             print(path_name)
@@ -69,11 +68,10 @@ def dim_reduce(X, n_clusters):
     frame= pd.DataFrame[data2, clust_dim]
 
     finaldata = pd.concat([data2, clust_dim], axis=1)
-    pd.DataFrame.to_csv(finaldata)
     return finaldata
 
-finaldata.to_csv('/Users/aki.nikolaidis/git_repo/PyNets/dim_reduce.csv')
-X=pd.read_csv('/Users/aki.nikolaidis/git_repo/PyNets/all_subjects_DMN.csv')
+finaldata.to_csv('/Users/aki.nikolaidis/git_repo/PyNets/Testing/dim_reduce.csv')
+X=pd.read_csv('/Users/aki.nikolaidis/git_repo/PyNets/Testing/all_subjects_DMN.csv')
 n_clusters=5
 
 clust_dim = dim_reduce(X, n_clusters)
