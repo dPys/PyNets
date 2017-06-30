@@ -1,7 +1,7 @@
 # PyNets
 A Python-Powered Workflow for Network Analysis of Resting-State fMRI (rsfMRI) and Diffusion MRI (dMRI)
 
-About 
+About
 -----
 
 PyNets automates functional and structural MRI network analysis in python.
@@ -25,9 +25,9 @@ Walkthrough:
 
 1- Step 1:
 
-Required User Inputs: 
-	
-	-Subject's data- Any 4D preprocessed fMRI file, a text file containing a 4D time-series matrix, a pre-made grpah/adjacency matrix, or diffusion weighted image file with completed bedpostx outputs (in construction)
+Required User Inputs:
+
+	-Subject's data- Any 4D preprocessed fMRI file or diffusion weighted image file with completed bedpostx outputs (in construction)
 	-A subject ID (user-specified name of the directory containing the input data)
 
 2- Step 2: Create correlation graph object for NetworkX (based on covariance or sparse inverse covariance model fitting)
@@ -38,7 +38,7 @@ Required User Inputs:
 
 5- Step 5: Aggregate individual network data into group database
 
-6- Step 6: Reduce dimensionality of node metrics at the gorup level using cluster analysis and/or PCA
+6- Step 6: Reduce dimensionality of node metrics at the group level using cluster analysis and/or PCA
 
 -----
 
@@ -47,7 +47,7 @@ Required User Inputs:
 ##Clone the PyNets repo and install dependencies
 git clone https://github.com/dpisner453/PyNets.git
 cd /path/to/PyNets
-pip install -r requirements.txt 
+pip install -r requirements.txt
 
 ##If you run into any problems at run time, try installing the optional features of nipype with:
 pip install nipype[all]
@@ -56,20 +56,15 @@ pip install nipype[all]
 2. Usage:\
 Situation A) You have a normalized (MNI-space), preprocessed functional rsfMRI image called "filtered_func_data_clean_standard.nii.gz" where the subject id=002, you wish to extract network metrics for a whole-brain network, using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011':
 ```python
-python /path/to/PyNets/pynets.py -i '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' -ID '002' -a 'coords_power_2011'
+python /path/to/PyNets/pynets.py -i '/Users/dpisner453/PyNets_examples/002/filtered_func_data_clean_standard.nii.gz' -ID '002' -a 'coords_power_2011' -model 'corr'
 ```
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation B) You have a normalized (MNI-space), preprocessed functional rsfMRI image called "filtered_func_data_clean_standard.nii.gz" where the subject id=s002, you wish to extract network metrics for the DMN network, using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011' (currently the only atlas supported for extracting RSN networks in PyNets!), you wish to threshold the connectivity graph by preserving 95% of the strongest weights (also the default), you define your node radius as 3 voxels in size (also the default), and you wish to fit model with lasso sparse inverse covariance:
 ```python
-python /path/to/PyNets/pynets.py -i '/Users/dpisner453/PyNets_examples/s002/filtered_func_data_clean_standard.nii.gz' -ID 's002' -a 'coords_power_2011' -n 'DMN' -thr '0.95' -ns '3' -sps
-```
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation C) You only have your time-series in a text or csv-like file where the matrix is saved in the format of # of functional volumes x # of ROI's:
-
-```python
-python /path/to/PyNets/pynets.py -i '/Users/dpisner453/PyNets_examples/200/roi_CC200.1D' -ID '200'
+python /path/to/PyNets/pynets.py -i '/Users/dpisner453/PyNets_examples/s002/filtered_func_data_clean_standard.nii.gz' -ID 's002' -a 'coords_power_2011' -n 'DMN' -thr '0.95' -ns '3' -model 'sps'
 ```
 
 3. Viewing outputs:\
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PyNets outputs network metrics into text files and pickled pandas dataframes within the same subject folder 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PyNets outputs network metrics into text files and pickled pandas dataframes within the same subject folder
 in which the initial image or time-series was fed into the workflow. To open the pickled pandas dataframes
 from within the interpreter, you can:
 ```python
