@@ -103,7 +103,7 @@ if ID is None:
     sys.exit()
 
 ##Print inputs verbosely
-print("\n\n\n")
+print("\n\n\n" + "------------------------------------------------------------")
 print ("INPUT FILE: " + input_file)
 print("\n")
 print ("SUBJECT ID: " + str(ID))
@@ -118,7 +118,7 @@ if NETWORK != None:
     print ("NETWORK: " + str(NETWORK))
 elif NETWORK == None:
     print("USING WHOLE-BRAIN CONNECTOME..." )
-print("\n\n\n")
+print("------------------------------------------------------------" + "\n\n\n")
 
 ##Set directory path containing input file
 dir_path = os.path.dirname(os.path.realpath(input_file))
@@ -129,35 +129,32 @@ pynets_dir = os.path.dirname(os.path.abspath(__file__))
 ##Import core modules
 import warnings
 warnings.filterwarnings("ignore")
+import gzip
 import nilearn
+import cPickle
 import numpy as np
+import networkx as nx
+import pandas as pd
+import nibabel as nib
+import seaborn as sns
+import numpy.linalg as npl
 from numpy import genfromtxt
-from sklearn.covariance import GraphLassoCV
-from nipype.interfaces.base import isdefined,Undefined
-from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
-from matplotlib import pyplot as plt
+from matplotlib import colors
 from nipype import Node, Workflow
+from nilearn import input_data, plotting, masking, datasets
+from matplotlib import pyplot as plt
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from nipype.interfaces import io as nio
-from nilearn import datasets
 from nilearn.input_data import NiftiLabelsMasker
 from nilearn.connectome import ConnectivityMeasure
-from nilearn import input_data
-from nilearn import plotting
-from nilearn import masking
-import networkx as nx
-import gzip
-from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
-import pandas as pd
-import nibabel as nib
 from nibabel.affines import apply_affine
-import numpy.linalg as npl
-import seaborn as sns
-from matplotlib import colors
+from nipype.interfaces.base import isdefined, Undefined
+from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
+from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
 
 ##Set input list for all workflow nodes
-import_list=["import nilearn", "import numpy as np", "import os", "import sys", "from numpy import genfromtxt", "from matplotlib import pyplot as plt", "from nipype import Node, Workflow", "from nipype import Node, Workflow", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn import plotting", "from nilearn import datasets", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso", "from nilearn import datasets", "import gzip", "from nilearn import input_data", "from nilearn import plotting", "from nilearn import masking", "import networkx as nx", "import nibabel as nib", "from nipype.interfaces.base import isdefined,Undefined", "import pandas as pd", "import nibabel as nib", "from nibabel.affines import apply_affine", "import numpy.linalg as npl", "import seaborn as sns", "from matplotlib import colors"]
+import_list=["import sys", "import os", "from sklearn.model_selection import train_test_split", "import warnings", "import gzip", "import nilearn", "import cPickle", "import numpy as np", "import networkx as nx", "import pandas as pd", "import nibabel as nib", "import seaborn as sns", "import numpy.linalg as npl", "from numpy import genfromtxt", "from matplotlib import colors", "from nipype import Node, Workflow", "from nilearn import input_data, plotting, masking, datasets", "from matplotlib import pyplot as plt", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nibabel.affines import apply_affine", "from nipype.interfaces.base import isdefined, Undefined", "from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso", "from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits"]
 
 ##Import time-series/graph, fit matrix model, plot matrix, plot connectome
 def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask, thr, parlistfile, all_nets, conn_model):
@@ -171,10 +168,13 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         return(coords, atlas_name)
 
     def get_ref_net(bna_img, par_data, x, y, z):
+        ##Network membership dictionary-->enhance/expand based on Yeo and others.
+        ##A variety of membership determination schemes could be implemented...
         ref_dict = {0:'UNKNOWN', 1:'VIS', 2:'SENS', 3:'DA', 4:'VA', 5:'LIMBIC', 6:'FPTC', 7:'DMN'}
+        ##apply_affine(aff, (x,y,z)) # vox to mni
         aff_inv=npl.inv(bna_img.affine)
-        # apply_affine(aff, (x,y,z)) # vox to mni
-        vox_coord = apply_affine(aff_inv, (x, y, z)) # mni to vox
+        ##mni to vox
+        vox_coord = apply_affine(aff_inv, (x, y, z))
         return ref_dict[int(par_data[int(vox_coord[0]),int(vox_coord[1]),int(vox_coord[2])])]
 
     def get_mem_dict(pynets_dir, func_file, coords):
@@ -241,7 +241,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         bna_data = bna_img.get_data()
         if bna_img.get_data_dtype() != np.dtype(np.int):
             bna_data_for_coords = bna_img.get_data()
-            # Number of parcels:
+            ##Number of parcels:
             par_max = np.ceil(np.max(bna_data_for_coords)).astype('int')
             bna_data = bna_data.astype('int16')
         else:
@@ -261,7 +261,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         for roi_img in img_list:
             coords.append(nilearn.plotting.find_xyz_cut_coords(roi_img))
         coords = np.array(coords)
-        return(coords, atlas_name)
+        return(coords, atlas_name, par_max)
 
     def gen_network_parcels(parlistfile, NETWORK, labels):
         bna_img = nib.load(parlistfile)
@@ -324,6 +324,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_adj_mat_' + conn_model + '.png'
         plt.savefig(out_path_fig)
         plt.close()
+        return(atlast_graph_title)
 
     def plot_membership(membership_plotting, conn_matrix, conn_model, coords, edge_threshold, atlast_name, dir_path):
         atlast_connectome_title = atlas_name + '_all_networks'
@@ -396,7 +397,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         dir_path = os.path.dirname(os.path.realpath(func_file))
 
         ##Fetch user-specified atlas coords
-        [coords, atlas_name] = get_names_and_coords_of_parcels(parlistfile)
+        [coords, atlas_name, par_max] = get_names_and_coords_of_parcels(parlistfile)
 
         ##Get coord membership dictionary if all_nets option triggered
         if all_nets != None:
@@ -421,7 +422,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         np.savetxt(est_path, conn_matrix, delimiter='\t')
 
         ##Plot adj. matrix based on determined inputs
-        plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK)
+        atlast_graph_title = plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK)
 
         ##Plot connectome viz for all Yeo networks
         ##Tweak edge_threshold to keep only the strongest connections based on thr
@@ -458,14 +459,13 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
               	    net_coords.append((x, y, z))
               	    labels.append(i)
                     i = i + 1
-                print('\n')
-             	print(net_coords)
+             	print("-------------------\n")
+                print(net_coords)
               	print(labels)
-                print('\n')
-              	print("-------------------")
+                print("\n-------------------")
             elif atlas_name != 'Power 2011 atlas':
                 sys.exit()
-                ####Add code for special RSN reference lists for the nilearn atlases here
+                ####Add code for any special RSN reference lists for the nilearn atlases here#####
 
             ##If masking, remove those coords that fall outside of the mask
             if mask != None:
@@ -477,7 +477,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             net_ts = ts_within_spheres
         else:
             ##Fetch user-specified atlas coords
-            [coords_all, atlas_name] = get_names_and_coords_of_parcels(parlistfile)
+            [coords_all, atlas_name, par_max] = get_names_and_coords_of_parcels(parlistfile)
             coords = list(tuple(x) for x in coords_all)
 
             ##Get coord membership dictionary
@@ -500,7 +500,8 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             ts_within_spheres = masker.fit_transform(func_file)
             net_ts = ts_within_spheres
 
-            ##Generate network parcels image
+            ##Generate network parcels image (through refinement, this could be used
+            ##in place of the 3 lines above)
             #net_parcels_img_path = gen_network_parcels(parlistfile, NETWORK, labels)
             #parcellation = nib.load(net_parcels_img_path)
             #parcel_masker = input_data.NiftiLabelsMasker(labels_img=parcellation, background_label=0, memory='nilearn_cache', memory_level=5, standardize=True)
@@ -554,12 +555,18 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
             in_mat[:, :] = in_mat + in_mat.T
         return in_mat
 
+    ##Load and threshold matrix
     in_mat_un_thr = np.array(genfromtxt(est_path1))
     in_mat = threshold_proportional(in_mat_un_thr, thr)
-    ##Get hyperbolic tangent of graph if non-sparse (i.e. fischer r-to-z transform), and divide by the variance of the matrix
+
+    ##Get hyperbolic tangent of matrix if non-sparse (i.e. fischer r-to-z transform), and divide by the variance of the matrix
     if conn_model != 'sps':
         in_mat = np.arctanh(in_mat)/np.var(in_mat)
+
+    ##Get dir_path
     dir_path = os.path.dirname(os.path.realpath(est_path1))
+
+    ##Load numpy matrix as networkx graph
     G=nx.from_numpy_matrix(in_mat)
 
     ##Save gephi files
@@ -569,12 +576,12 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
         H = nx.write_graphml(G, dir_path + '/' + ID + '.graphml')
 
     ###############################################################
-    ############Calculate graph metrics from graph G###############
+    ########### Calculate graph metrics from graph G ##############
     ###############################################################
-    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality
     from itertools import permutations
-    import cPickle
+    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality
 
+    ##Define missing network functions here. Small-worldness, modularity, and rich-club will also need to be added.
     def efficiency(G, u, v):
         return float(1) / nx.shortest_path_length(G, u, v)
 
@@ -586,8 +593,12 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
     def local_efficiency(G):
         return float(sum(global_efficiency(nx.ego_graph(G, v)) for v in G)) / len(G)
 
+    ##For scalar metrics from networkx.algorithms library,
+    ##add the name of the function here for it to be automatically calculated.
+    ##Because I'm lazy, it will also need to be imported above.
     metric_list = [global_efficiency, local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
 
+    ##Iteratively run functions from above metric list
     num_mets = len(metric_list)
     net_met_arr = np.zeros([num_mets, 2], dtype='object')
     j=0
@@ -604,6 +615,7 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
         print('\n')
         j = j + 1
 
+    ##If an RSN, extract node metrics like centrality measures here.
     if NETWORK != None:
         bc_vector = betweenness_centrality(G)
         bc_vals = bc_vector.values()
@@ -621,10 +633,12 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
     else:
         net_met_val_list = list(net_met_arr[:,1])
 
+    ##Create a list of metric names for scalar metrics
     metric_list_names = []
     for i in metric_list:
         metric_list_names.append('%s' % i.func_name)
 
+    ##Create a list of metric names for nodal-type metrics
     if NETWORK != None:
         for i in bc_arr[:,0]:
             metric_list_names.append(i)
@@ -682,7 +696,6 @@ class ExtractNetStats(BaseInterface):
 
 ##save net metric files to pandas dataframes interface
 def export_to_pandas(csv_loc, ID, NETWORK, out_file=None):
-    import cPickle
     met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/met_list_pickle'
     metric_list_names = cPickle.load(open(met_list_picke_path, 'rb'))
     df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
