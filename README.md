@@ -1,10 +1,10 @@
 # PyNets
-A Python-Powered Workflow for Network Analysis of Resting-State fMRI (rsfMRI) and Diffusion MRI (dMRI)
+
+![pynets](PyNets_logo.png)
 
 About
 -----
-
-PyNets automates functional and structural MRI network analysis in python.
+A Python-Powered Workflow for Network Analysis of Resting-State fMRI (rsfMRI) and Diffusion MRI (dMRI)
 
 Problem: A comprehensive, flexible, and fully-automated network analysis package for neuroimaging has yet to be implemented.
 
@@ -104,5 +104,7 @@ df.to_csv('/path/to/csv/file/database/output.csv')
 ```
 
 ![RSN Nets](PyNets_RSNs.png)
+
+![pynets_diffusion](PyNets_diffusion.png)
 
 Happy Netting!
