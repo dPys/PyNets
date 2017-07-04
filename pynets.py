@@ -238,6 +238,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
                     conn_matrix = -estimator.precision_
                 elif conn_model == 'cov':
                     conn_matrix = estimator.covariance_
+        np.savetxt(est_path, conn_matrix, delimiter='\t')
         return(conn_matrix, est_path)
 
     def get_names_and_coords_of_parcels(parlistfile):
@@ -414,7 +415,6 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             [conn_matrix, est_path] = get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID)
         else:
             [conn_matrix, est_path, edge_threshold, thr] = adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, thr)
-        np.savetxt(est_path, conn_matrix, delimiter='\t')
 
         ##Plot adj. matrix based on determined inputs
         plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK)
@@ -464,7 +464,6 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             [conn_matrix, est_path] = get_conn_matrix(ts_within_parcels, conn_model, NETWORK, ID)
         else:
             [conn_matrix, est_path, edge_threshold, thr] = adaptive_thresholding(ts_within_parcels, conn_model, NETWORK, ID, thr)
-        np.savetxt(est_path, conn_matrix, delimiter='\t')
 
         ##Plot adj. matrix based on determined inputs
         atlast_graph_title = plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK)
@@ -570,7 +569,6 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             [conn_matrix, est_path] = get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID)
         else:
             [conn_matrix, est_path, edge_threshold, thr] = adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, thr)
-        np.savetxt(est_path, conn_matrix, delimiter='\t')
 
         ##Plot adj. matrix based on determined inputs
         plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK)
