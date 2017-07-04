@@ -73,9 +73,13 @@ if __name__ == '__main__':
         action='store_true',
         help='Optionally use this flag if you wish to activate plotting designations and network statistic extraction for all Yeo RSNs in the specified atlas')
     parser.add_argument('-model',
-        metavar='Matrix estimation type',
+        metavar='Connectivity',
         default='corr',
         help='Optionally specify matrix estimation type: corr, cov, or sps for correlation, covariance, or sparse-inverse covariance, respectively')
+    parser.add_argument('-at',
+        default=False,
+        action='store_true',
+        help='Optionally use this flag if you wish to activate adaptive thresholding')
     args = parser.parse_args()
 
 ###Set Arguments to global variables###
@@ -89,6 +93,7 @@ mask=args.m
 conn_model=args.model
 all_nets=args.an
 parlistfile=args.ua
+adapt_thresh=args.at
 #######################################
 
 ##Check required inputs for existence
@@ -101,9 +106,12 @@ elif not os.path.isfile(input_file):
 if ID is None:
     print("Error: You must include a subject ID in your command line call")
     sys.exit()
+if adapt_thresh == True and conn_model == 'sps':
+    print("Adaptive thresholding not available for sparse inverse covariance model")
+    sys.exit()
 
 ##Print inputs verbosely
-print("\n\n\n" + "------------------------------------------------------------")
+print("\n\n\n" + "------------------------------------------------------------------------")
 print ("INPUT FILE: " + input_file)
 print("\n")
 print ("SUBJECT ID: " + str(ID))
@@ -118,7 +126,7 @@ if NETWORK != None:
     print ("NETWORK: " + str(NETWORK))
 elif NETWORK == None:
     print("USING WHOLE-BRAIN CONNECTOME..." )
-print("------------------------------------------------------------" + "\n\n\n")
+print("-------------------------------------------------------------------------" + "\n\n\n")
 
 ##Set directory path containing input file
 dir_path = os.path.dirname(os.path.realpath(input_file))
@@ -157,14 +165,13 @@ from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, Traite
 import_list=["import sys", "import os", "from sklearn.model_selection import train_test_split", "import warnings", "import gzip", "import nilearn", "import cPickle", "import numpy as np", "import networkx as nx", "import pandas as pd", "import nibabel as nib", "import seaborn as sns", "import numpy.linalg as npl", "from numpy import genfromtxt", "from matplotlib import colors", "from nipype import Node, Workflow", "from nilearn import input_data, plotting, masking, datasets", "from matplotlib import pyplot as plt", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nibabel.affines import apply_affine", "from nipype.interfaces.base import isdefined, Undefined", "from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso", "from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits"]
 
 ##Import time-series/graph, fit matrix model, plot matrix, plot connectome
-def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask, thr, parlistfile, all_nets, conn_model):
+def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask, thr, parlistfile, all_nets, conn_model, adapt_thresh):
     def fetch_nilearn_atlas_coords(atlas_select):
         atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
         atlas_name = atlas['description'].splitlines()[0]
         print('\n' + atlas_name + ' comes with {0}'.format(atlas.keys()) + '\n')
         coords = np.vstack((atlas.rois['x'], atlas.rois['y'], atlas.rois['z'])).T
-        print('Stacked atlas coordinates in array of shape {0}.'.format(coords.shape))
-        print("\n")
+        print('Stacked atlas coordinates in array of shape {0}.'.format(coords.shape) + '\n')
         return(coords, atlas_name)
 
     def get_ref_net(bna_img, par_data, x, y, z):
@@ -179,7 +186,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
 
     def get_mem_dict(pynets_dir, func_file, coords):
         bna_img = nib.load(func_file)
-        par_path = pynets_dir + '/RSN_refs/yeo.nii.gz'
+        par_path = pynets_dir + '/RSN_refs/Yeo7.nii.gz'
         par_img = nib.load(par_path)
         par_data = par_img.get_data()
         membership = pd.Series(list(tuple(x) for x in coords), [get_ref_net(bna_img, par_data, coord[0],coord[1],coord[2]) for coord in coords])
@@ -321,7 +328,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             y_ticks = plt.yticks(range(rois_num))
         plt.colorbar()
         plt.title(atlas_name.upper() + ' ' + conn_model.upper() + ' MATRIX')
-        out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_adj_mat_' + conn_model + '.png'
+        out_path_fig=dir_path + '/' + ID + '_adj_mat_' + conn_model + '.png'
         plt.savefig(out_path_fig)
         plt.close()
         return(atlast_graph_title)
@@ -332,7 +339,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         clust_pal = sns.color_palette("Set2", n)
         clust_lut = dict(zip(map(str, np.unique(membership_plotting.astype('category'))), clust_pal))
         clust_colors = colors.to_rgba_array(membership_plotting.map(clust_lut))
-        out_path_fig = dir_path + '/' + ID + '_' + atlas_name + '_connectome_viz.png'
+        out_path_fig = dir_path + '/' + ID + '_connectome_viz.png'
         plotting.plot_connectome(conn_matrix, coords, node_color = clust_colors, black_bg=True, title=atlast_connectome_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
 
     def plot_timeseries(time_series, NETWORK, ID, dir_path, atlas_name, labels):
@@ -344,22 +351,49 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         plt.legend()
         #plt.tight_layout()
         if NETWORK != None:
-            out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_' + NETWORK + '_TS_plot.png'
+            out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_TS_plot.png'
         else:
-            out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_Whole_Brain_TS_plot.png'
+            out_path_fig=dir_path + '/' + ID + '_Whole_Brain_TS_plot.png'
         plt.savefig(out_path_fig)
         plt.close()
+
+    def adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, thr):
+        thr=0.95
+        [conn_matrix, est_path] = get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID)
+        i = 1
+        zeroes = np.count_nonzero(conn_matrix==0)
+        perc_missing_edges = float(zeroes) / float(conn_matrix.size)
+        print(str((zeroes)) + " missing edges detected..." + "\n")
+        while perc_missing_edges > float(0.25):
+            zeroes = np.count_nonzero(conn_matrix==0)
+            perc_missing_edges = float(zeroes) / float(conn_matrix.size)
+            if perc_missing_edges > float(0.50):
+                thr = thr + float(0.05)
+            elif perc_missing_edges > float(0.25):
+                thr = thr + float(0.01)
+            else:
+                thr = thr + float(0.001)
+            edge_threshold = str(float(thr)*100) +'%'
+            print('Adaptively thresholding -- Iteration ' + str(i) + ' -- with thresh: ' + str(thr) + '...')
+            print(str((zeroes)) + " missing edges detected..." + "\n")
+            [conn_matrix, est_path] = get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID)
+            i = i + 1
+            if perc_missing_edges < float(0.25) or thr >= float(0.99):
+                break
+        return(conn_matrix, est_path, edge_threshold, thr)
 
     ##Case 1: Whole-brain connectome with nilearn atlas
     if '.nii' in input_file and parlistfile == None and NETWORK == None:
         ##Input is nifti file
         func_file=input_file
 
-        ##Get subject directory path
-        dir_path = os.path.dirname(os.path.realpath(func_file))
-
         ##Fetch nilearn atlas coords
         [coords, atlas_name] = fetch_nilearn_atlas_coords(atlas_select)
+
+        ##Get subject directory path
+        dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_name
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
 
         ##Get coord membership dictionary if all_nets option triggered
         if all_nets != False:
@@ -375,7 +409,11 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         print('\n' + 'Time series has {0} samples'.format(ts_within_spheres.shape[0]) + '\n')
 
         ##Fit connectivity model
-        [conn_matrix, est_path] = get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID)
+        if adapt_thresh == False:
+            edge_threshold = str(float(thr)*100) +'%'
+            [conn_matrix, est_path] = get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID)
+        else:
+            [conn_matrix, est_path, edge_threshold, thr] = adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, thr)
         np.savetxt(est_path, conn_matrix, delimiter='\t')
 
         ##Plot adj. matrix based on determined inputs
@@ -383,7 +421,6 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
 
         ##Plot connectome viz for all Yeo networks
         ##Tweak edge_threshold to keep only the strongest connections based on thr
-        edge_threshold = str(float(thr)*100) +'%'
         if all_nets != False:
             plot_membership(membership_plotting, conn_matrix, conn_model, coords, edge_threshold, atlas_name, dir_path)
         else:
@@ -394,10 +431,14 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
     elif '.nii' in input_file and parlistfile != None and NETWORK == None: # block of code for whole brain parcellations
         ##Input is nifti file
         func_file=input_file
-        dir_path = os.path.dirname(os.path.realpath(func_file))
 
         ##Fetch user-specified atlas coords
         [coords, atlas_name, par_max] = get_names_and_coords_of_parcels(parlistfile)
+
+        ##Get subject directory path
+        dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_name
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
 
         ##Get coord membership dictionary if all_nets option triggered
         if all_nets != None:
@@ -418,7 +459,11 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         print('\n' + 'Time series has {0} samples'.format(ts_within_parcels.shape[0]) + '\n')
 
         ##Fit connectivity model
-        [conn_matrix, est_path] = get_conn_matrix(ts_within_parcels, conn_model, NETWORK, ID)
+        if adapt_thresh == False:
+            edge_threshold = str(float(thr)*100) +'%'
+            [conn_matrix, est_path] = get_conn_matrix(ts_within_parcels, conn_model, NETWORK, ID)
+        else:
+            [conn_matrix, est_path, edge_threshold, thr] = adaptive_thresholding(ts_within_parcels, conn_model, NETWORK, ID, thr)
         np.savetxt(est_path, conn_matrix, delimiter='\t')
 
         ##Plot adj. matrix based on determined inputs
@@ -426,18 +471,16 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
 
         ##Plot connectome viz for all Yeo networks
         ##Tweak edge_threshold to keep only the strongest connections based on thr
-        edge_threshold = str(float(thr)*100) +'%'
         if all_nets != False:
             plot_membership(membership_plotting, conn_matrix, conn_model, coords, edge_threshold, atlas_name, dir_path)
         else:
-            out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
             plotting.plot_connectome(conn_matrix, coords, title=atlast_graph_title, black_bg=True, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
 
     ##Case 3: RSN connectome with nilearn atlas
     elif '.nii' in input_file and NETWORK != None:
         ##Input is nifti file
         func_file=input_file
-        dir_path = os.path.dirname(os.path.realpath(func_file))
 
         if parlistfile == None:
             ##Fetch nilearn atlas coords
@@ -459,13 +502,18 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
               	    net_coords.append((x, y, z))
               	    labels.append(i)
                     i = i + 1
-             	print("-------------------\n")
+             	print("-----------------------------------------------------\n")
                 print(net_coords)
               	print(labels)
-                print("\n-------------------")
+                print("\n-----------------------------------------------------")
             elif atlas_name != 'Power 2011 atlas':
                 sys.exit()
                 ####Add code for any special RSN reference lists for the nilearn atlases here#####
+
+            ##Get subject directory path
+            dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_name
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
 
             ##If masking, remove those coords that fall outside of the mask
             if mask != None:
@@ -479,6 +527,11 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             ##Fetch user-specified atlas coords
             [coords_all, atlas_name, par_max] = get_names_and_coords_of_parcels(parlistfile)
             coords = list(tuple(x) for x in coords_all)
+
+            ##Get subject directory path
+            dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_name
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
 
             ##Get coord membership dictionary
             [membership, membership_plotting] = get_mem_dict(pynets_dir, func_file, coords)
@@ -512,7 +565,11 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         plot_timeseries(net_ts, NETWORK, ID, dir_path, atlas_name, labels)
 
         ##Fit connectivity model
-        [conn_matrix, est_path] = get_conn_matrix(net_ts, conn_model, NETWORK, ID)
+        if adapt_thresh == False:
+            edge_threshold = str(float(thr)*100) +'%'
+            [conn_matrix, est_path] = get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID)
+        else:
+            [conn_matrix, est_path, edge_threshold, thr] = adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, thr)
         np.savetxt(est_path, conn_matrix, delimiter='\t')
 
         ##Plot adj. matrix based on determined inputs
@@ -520,7 +577,6 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
 
         ##Plot connectome viz for specific Yeo networks
         ##Tweak edge_threshold to keep only the strongest connections based on thr
-        edge_threshold = str(float(thr)*100) +'%'
         title = "Connectivity Projected on the " + NETWORK
         out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_connectome_plot.png'
         plotting.plot_connectome(conn_matrix, net_coords, edge_threshold=edge_threshold, black_bg=True, title=title, display_mode='lyrz', output_file=out_path_fig)
@@ -592,6 +648,7 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
 
     def local_efficiency(G):
         return float(sum(global_efficiency(nx.ego_graph(G, v)) for v in G)) / len(G)
+
 
     ##For scalar metrics from networkx.algorithms library,
     ##add the name of the function here for it to be automatically calculated.
@@ -742,7 +799,7 @@ class Export2Pandas(BaseInterface):
 if __name__ == '__main__':
     ##Create input/output nodes
     #1) Add variable to IdentityInterface if user-set
-    inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'thr', 'node_size', 'mask', 'parlistfile', 'all_nets', 'conn_model']), name='inputnode')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'thr', 'node_size', 'mask', 'parlistfile', 'all_nets', 'conn_model', 'adapt_thresh']), name='inputnode')
 
     #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
     inputnode.inputs.in_file = input_file
@@ -756,10 +813,11 @@ if __name__ == '__main__':
     inputnode.inputs.parlistfile = parlistfile
     inputnode.inputs.all_nets = all_nets
     inputnode.inputs.conn_model = conn_model
+    inputnode.inputs.adapt_thresh = adapt_thresh
 
     #3) Add variable to function nodes
     ##Create function nodes
-    imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'node_size', 'mask', 'thr', 'parlistfile', 'all_nets', 'conn_model'], output_names = ['est_path'], function=mat_funcs, imports=import_list), name = "imp_est")
+    imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'NETWORK', 'pynets_dir', 'node_size', 'mask', 'thr', 'parlistfile', 'all_nets', 'conn_model', 'adapt_thresh'], output_names = ['est_path'], function=mat_funcs, imports=import_list), name = "imp_est")
     net_mets_node = pe.Node(ExtractNetStats(), name = "ExtractNetStats")
     export_to_pandas_node = pe.Node(Export2Pandas(), name = "export_to_pandas")
 
@@ -784,7 +842,8 @@ if __name__ == '__main__':
                               ('thr', 'thr'),
                               ('parlistfile', 'parlistfile'),
                               ('all_nets', 'all_nets'),
-                              ('conn_model', 'conn_model')]),
+                              ('conn_model', 'conn_model'),
+                              ('adapt_thresh', 'adapt_thresh')]),
         (inputnode, net_mets_node, [('ID', 'sub_id'),
                                    ('NETWORK', 'NETWORK'),
     				               ('thr', 'thr'),
