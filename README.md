@@ -21,24 +21,26 @@ global efficiency, local efficiency, transitivity, degree assortativity coeffici
 
 -----
 
-Walkthrough:
-
-1- Step 1:
+Walkthrough of the fully-automated pipeline:
 
 Required User Inputs:
 
 	-Subject's data- Any 4D preprocessed fMRI file or diffusion weighted image file with completed bedpostx outputs (in construction)
 	-A subject ID (user-specified name of the directory containing the input data)
+	-Any atlas (default is Power et al. 2011, 264-node parcellation scheme) or Bootstrap Analysis of Stable Clusters (BASC) for subject-level parcellation (in construction)
+	-Graph or subgraph specification (i.e. Whole-brain or individual RSN's)
 
-2- Step 2: Create correlation graph object for NetworkX (based on covariance or sparse inverse covariance model fitting)
+Step 1: PyNets models a functional connectivity matrix for the rsfMRI data (based on correlation, covariance, or sparse inverse covariance model fitting)
 
-3- Step 3: Extract network statistics
+Step 2: PyNets models a structural connectivity matrix (in construction) for the dMRI data (based on probtrackx and resulting proportion of fibers between ROI coordinates used in Step 1, and constrained by FA and ventricular exclusion masking)
 
-4- Step 4: Create connectome plots and adjacency matrices
+Step 3: PyNets creates connectome plots and adjacency matrices
 
-5- Step 5: Aggregate individual network data into group database
+Step 4: PyNets extracts network statistics for both functional and structural graphs (see above metrics)
 
-6- Step 6: Reduce dimensionality of node metrics at the group level using cluster analysis and/or PCA
+Step 5: PyNets aggregates individual network data into group database
+
+Step 6: PyNets reduces dimensionality of nodal metrics at the group level (in construction) using cluster analysis and/or PCA
 
 -----
 
