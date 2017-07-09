@@ -16,7 +16,7 @@ Learn more about Nilearn: http://nilearn.github.io/
 
 Learn more about Networkx: https://networkx.github.io/
 
-More specifically: PyNets utilizes nilearn and networkx tools in a nipype workflow to automatically generate rsfMRI networks (whole-brain, or RSN's like the DMN) based on a variety of atlas-defined parcellation schemes, and then automatically plot associated adjacency matrices, connectome visualizations, and extract the following graph theoretical measures from those networks with a user-defined thresholding:\
+More specifically: PyNets utilizes nilearn and networkx tools in a nipype workflow to automatically generate rsfMRI networks (whole-brain, or RSN's like the DMN) and associated dMRI structural networks based on a variety of atlas-defined parcellation schemes, and then automatically plot associated adjacency matrices, connectome visualizations, and extract the following graph theoretical measures from those networks with a user-defined thresholding:\
 global efficiency, local efficiency, transitivity, degree assortativity coefficient, average clustering coefficient, average shortest path length, betweenness centrality, degree pearson correlation coefficient, number of cliques \
 
 -----
@@ -38,7 +38,7 @@ Step 3: PyNets creates connectome plots and adjacency matrices
 
 Step 4: PyNets extracts network statistics for both functional and structural graphs (see above metrics)
 
-Step 5: PyNets aggregates individual network data into group database
+Step 5: PyNets aggregates individual network data into a group database
 
 Step 6: PyNets reduces dimensionality of nodal metrics at the group level (in construction) using cluster analysis and/or PCA
 

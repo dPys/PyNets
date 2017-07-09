@@ -476,7 +476,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
             plotting.plot_connectome(conn_matrix, coords, title=atlast_graph_title, black_bg=True, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
 
-    ##Case 3: RSN connectome with nilearn atlas
+    ##Case 3: RSN connectome with nilearn atlas or user-specified atlas
     elif '.nii' in input_file and NETWORK != None:
         ##Input is nifti file
         func_file=input_file
