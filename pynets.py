@@ -405,7 +405,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             coords = coord_masker_with_tuples(mask, coords)
 
         ##Extract within-spheres time-series from funct file
-        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2, standardize=True)
+        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True, memory='nilearn_cache', memory_level=5, verbose=2, standardize=True)
         ts_within_spheres = spheres_masker.fit_transform(func_file)
         print('\n' + 'Time series has {0} samples'.format(ts_within_spheres.shape[0]) + '\n')
 
