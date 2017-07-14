@@ -647,11 +647,37 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
     def local_efficiency(G):
         return float(sum(global_efficiency(nx.ego_graph(G, v)) for v in G)) / len(G)
 
+    def create_random_graph(G, n, p):
+        rG = nx.erdos_renyi_graph(n, p, seed=42)
+        return rG
+
+    def smallworldness_measure(G, rG):
+        C_g = nx.algorithms.average_clustering(G)
+        C_r = nx.algorithms.average_clustering(rG)
+        L_g = nx.average_shortest_path_length(G)
+        L_r = nx.average_shortest_path_length(rG)
+        gam = float(C_g) / float(C_r)
+        lam = float(L_g) / float(L_r)
+        swm = gam / lam
+        return swm
+
+    def smallworldness(G, rep = 1000):
+        n = nx.number_of_nodes(G)
+        m = nx.number_of_edges(G)
+
+        p = float(m) * 2 /(n*(n-1))
+        ss = []
+        for bb in range(rep):
+        	rG = create_random_graph(G, n, p)
+        	swm = smallworldness_measure(G, rG)
+        	ss.append(swm)
+        mean_s = np.mean(ss)
+        return mean_s
 
     ##For scalar metrics from networkx.algorithms library,
     ##add the name of the function here for it to be automatically calculated.
     ##Because I'm lazy, it will also need to be imported above.
-    metric_list = [global_efficiency, local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
+    metric_list = [global_efficiency, local_efficiency, smallworldness, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
 
     ##Iteratively run functions from above metric list
     num_mets = len(metric_list)
