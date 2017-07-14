@@ -341,7 +341,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         clust_lut = dict(zip(map(str, np.unique(membership_plotting.astype('category'))), clust_pal))
         clust_colors = colors.to_rgba_array(membership_plotting.map(clust_lut))
         out_path_fig = dir_path + '/' + ID + '_connectome_viz.png'
-        plotting.plot_connectome(conn_matrix, coords, node_color = clust_colors, black_bg=True, title=atlast_connectome_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
+        plotting.plot_connectome(conn_matrix, coords, node_color = clust_colors, title=atlast_connectome_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
 
     def plot_timeseries(time_series, NETWORK, ID, dir_path, atlas_name, labels):
         for time_serie, label in zip(time_series.T, labels):
@@ -425,7 +425,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             plot_membership(membership_plotting, conn_matrix, conn_model, coords, edge_threshold, atlas_name, dir_path)
         else:
             out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_connectome_viz.png'
-            plotting.plot_connectome(conn_matrix, coords, title=atlas_name, black_bg=True, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
+            plotting.plot_connectome(conn_matrix, coords, title=atlas_name, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
 
     ##Case 2: Whole-brain connectome with user-specified atlas
     elif '.nii' in input_file and parlistfile != None and NETWORK == None: # block of code for whole brain parcellations
@@ -474,7 +474,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             plot_membership(membership_plotting, conn_matrix, conn_model, coords, edge_threshold, atlas_name, dir_path)
         else:
             out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
-            plotting.plot_connectome(conn_matrix, coords, title=atlast_graph_title, black_bg=True, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
+            plotting.plot_connectome(conn_matrix, coords, title=atlast_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
 
     ##Case 3: RSN connectome with nilearn atlas or user-specified atlas
     elif '.nii' in input_file and NETWORK != None:
@@ -577,7 +577,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         ##Tweak edge_threshold to keep only the strongest connections based on thr
         title = "Connectivity Projected on the " + NETWORK
         out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_connectome_plot.png'
-        plotting.plot_connectome(conn_matrix, net_coords, edge_threshold=edge_threshold, black_bg=True, title=title, display_mode='lyrz', output_file=out_path_fig)
+        plotting.plot_connectome(conn_matrix, net_coords, edge_threshold=edge_threshold, title=title, display_mode='lyrz', output_file=out_path_fig)
     return(est_path)
 
 ##Extract network metrics interface
