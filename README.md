@@ -83,26 +83,29 @@ import glob
 import os
 import pandas as pd
 ###
-working_path = r'/Users/dpisner453/PyNets_examples/network_analysis/' # use your path
-name_of_network_pickle = 'DMN_net_mets_corr'
+working_path = r'/work/04171/dpisner/data/ABM/network_analysis/' # use your path
+name_of_network_pickle = 'FPTC_net_mets_inv_sps_cov'
+atlas_name='Power 2011 atlas'
 ###
+
 allFiles = []
-for fn in os.listdir(working_path):
-    path_name = path + fn + '/' + fn + '_' + name_of_network_pickle + '_' + fn
-    if os.path.isfile(path_name):
-        print(path_name)
-        allFiles.append(path_name)
+for ID in os.listdir(working_path):
+path_name = working_path + ID + '/' + atlas_name + '/' + ID + '_' + name_of_network_pickle + '_' + ID
+if os.path.isfile(path_name):
+print(path_name)
+allFiles.append(path_name)
 
 frame = pd.DataFrame()
 list_ = []
 
 for file_ in allFiles:
-    df = pd.read_pickle(file_)
-    list_.append(df)
+df = pd.read_pickle(file_)
+list_.append(df)
 
 frame = pd.concat(list_)
 
-df.to_csv('/path/to/csv/file/database/output.csv')
+out_path = working_path + '/' + name_of_network_pickle + '_output.csv'
+frame.to_csv(out_path)
 ```
 
 ![RSN Nets](PyNets_RSNs.png)
