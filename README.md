@@ -8,7 +8,7 @@ A Python-Powered Workflow for Network Analysis of Resting-State fMRI (rsfMRI) an
 
 Problem: A comprehensive, flexible, and fully-automated network analysis package for neuroimaging has yet to be implemented.
 
-Solution: In PyNets, we harness the power of nipype, nilearn, and networkx python packages to automatically generate a range of graph theory metrics on a subject-by-subject basis. Uniquely, PyNets utilities can be integrated with ANY existing preprocessing workflow for you data.
+Solution: In PyNets, we harness the power of nipype, nilearn, and networkx python packages to automatically generate a range of graph theory metrics on a subject-by-subject basis. Uniquely, PyNets utilities can be integrated with ANY existing preprocessing workflow for your data.
 
 Learn more about Nipype: http://nipype.readthedocs.io/en/latest/index.html
 
