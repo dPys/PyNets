@@ -55,7 +55,7 @@ if __name__ == '__main__':
     parser.add_argument('-n',
         metavar='RSN',
         default=None,
-        help='Optionally specify an atlas-defined network name from the following list of RSNs:\n\nDMN\nFPTC\nDA\nSN\nVA')
+        help='Optionally specify an atlas-defined network acronym from the following list of RSNs:\n\nDMN Default Mode\nFPTC Fronto-Parietal Task Control\nDA Dorsal Attention\nSN Salience\nVA Ventral Attention\nCOT Cingular-Opercular')
     parser.add_argument('-thr',
         metavar='Graph threshold',
         default='0.95',
@@ -146,11 +146,13 @@ import pandas as pd
 import nibabel as nib
 import seaborn as sns
 import numpy.linalg as npl
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from numpy import genfromtxt
 from matplotlib import colors
 from nipype import Node, Workflow
 from nilearn import input_data, plotting, masking, datasets
-from matplotlib import pyplot as plt
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from nipype.interfaces import io as nio
@@ -162,10 +164,14 @@ from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
 
 ##Set input list for all workflow nodes
-import_list=["import sys", "import os", "from sklearn.model_selection import train_test_split", "import warnings", "import gzip", "import nilearn", "import cPickle", "import numpy as np", "import networkx as nx", "import pandas as pd", "import nibabel as nib", "import seaborn as sns", "import numpy.linalg as npl", "from numpy import genfromtxt", "from matplotlib import colors", "from nipype import Node, Workflow", "from nilearn import input_data, plotting, masking, datasets", "from matplotlib import pyplot as plt", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nibabel.affines import apply_affine", "from nipype.interfaces.base import isdefined, Undefined", "from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso", "from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits"]
+import_list=["import sys", "import os", "from sklearn.model_selection import train_test_split", "import warnings", "import gzip", "import nilearn", "import cPickle", "import numpy as np", "import networkx as nx", "import pandas as pd", "import nibabel as nib", "import seaborn as sns", "import numpy.linalg as npl", "import matplotlib", "matplotlib.use('Agg')", "import matplotlib.pyplot as plt", "from numpy import genfromtxt", "from matplotlib import colors", "from nipype import Node, Workflow", "from nilearn import input_data, plotting, masking, datasets", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nibabel.affines import apply_affine", "from nipype.interfaces.base import isdefined, Undefined", "from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso", "from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits"]
 
 ##Import time-series/graph, fit matrix model, plot matrix, plot connectome
 def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask, thr, parlistfile, all_nets, conn_model, adapt_thresh):
+    plt.ioff()
+    matplotlib.use('Agg')
+
+    ##Core matrix and plotting functions
     def fetch_nilearn_atlas_coords(atlas_select):
         atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
         atlas_name = atlas['description'].splitlines()[0]
@@ -194,12 +200,54 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         return(membership, membership_plotting)
 
     def coord_masker(mask, coords):
+	import itertools
         mask_data, _ = masking._load_mask_img(mask)
         mask_coords = list(zip(*np.where(mask_data != 0)))
+	mask_coords_mni = []
+	def mmToVox(mmcoords):
+    	    voxcoords = ['','','']
+    	    voxcoords[0] = str(int(round(int(mmcoords[0])/2))*-1+45)
+    	    voxcoords[1] = str(int(round(int(mmcoords[1])/2))+63)
+    	    voxcoords[2] = str(int(round(int(mmcoords[2])/2))+36)
+    	    return voxcoords
+
+	for coord in mask_coords:
+	    x=coord[0]
+            y=coord[1]
+	    z=coord[2]
+	    coord = mmToVox([x, y, z])
+	    mask_coords_mni.append(coord)
+
         for coord in coords:
-            if coord in mask_coords:
-                print('Removing coordinate: ' + str(coord) + ' since it falls outside of mask...')
-                coords.remove(coord)
+            if coord not in mask_coords_mni:
+		error=5
+		neighbors=[]
+		##Check range in case it's close by
+	        x=coord[0]
+	        y=coord[1]
+	        z=coord[2]
+	        x_min=x-error
+	        x_max=x+error
+	        y_min=y-error
+	        y_max=y+error
+	        z_min=z-error
+	        z_max=z+error
+	        x_range = range(x_min, x_max, 1)
+	        y_range = range(y_min, y_max, 1)
+	        z_range = range(z_min, z_max, 1)
+	        ##Check range in case it's close by
+	        tuple_range = list(itertools.product(x_range, y_range, z_range))
+	        for i in tuple_range:
+		    if tuple(i) in mask_coords_mni:
+		        neighbors.append(i)
+		        print(str(coord) + ' is within a + or - ' + str(error) + ' voxel neighborhood...')
+		        break
+		if len(neighbors)==0:
+                    print('Removing coordinate: ' + str(coord) + ' since it falls outside of mask...')
+                    coords.remove(coord)
+	    else:
+		continue
+
         return coords
 
     def coord_masker_with_tuples(mask, coords):
@@ -218,26 +266,53 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             conn_measure = ConnectivityMeasure(kind='correlation')
             conn_matrix = conn_measure.fit_transform([time_series])[0]
             est_path = dir_path + '/' + ID + '_est_corr.txt'
+	elif conn_model == 'partcorr':
+            conn_measure = ConnectivityMeasure(kind='partial correlation')
+            conn_matrix = conn_measure.fit_transform([time_series])[0]
+            est_path = dir_path + '/' + ID + '_est_part_corr.txt'
         elif conn_model == 'cov' or conn_model == 'sps':
                 ##Fit estimator to matrix to get sparse matrix
                 estimator = GraphLassoCV()
 
                 try:
-                    print("Fitting Lasso estimator...")
+                    #print("Fitting Lasso estimator...")
                     est = estimator.fit(time_series)
                 except:
-                    print("Error: Lasso sparse matrix modeling failed. Using ledoit-wolf shrinkage...")
-                    from sklearn.covariance import LedoitWolf
-                    estimator = LedoitWolf()
-                    est = estimator.fit(time_series)
+		    print('Unstable Lasso estimation--Attempting to re-run by first applying shrinkage...')
+                    #from sklearn.covariance import GraphLasso, empirical_covariance, shrunk_covariance
+                    #emp_cov = empirical_covariance(time_series)
+		    #for i in np.arange(0.8, 0.99, 0.01):
+                        #shrunk_cov = shrunk_covariance(emp_cov, shrinkage=i) # Set shrinkage closer to 1 for poorly-conditioned data
+                        #alphaRange = 10.0 ** np.arange(-8,0) # 1e-7 to 1e-1 by order of magnitude
+                        #for alpha in alphaRange:
+                            #try:
+			        #estimator_shrunk = GraphLasso(alpha)
+			        #est=estimator_shrunk.fit(shrunk_cov)
+                                #print("Calculated graph-lasso covariance matrix for alpha=%s"%alpha)
+			        #break
+                            #except FloatingPointError:
+                                #print("Failed at alpha=%s"%alpha)
+		        #if estimator_shrunk == None:
+			    #pass
+		        #else:
+			    #break
+		    print('Unstable Lasso estimation. Try again!')
+		    sys.exit()
+
                 if NETWORK != None:
                     est_path = dir_path + '/' + ID + '_' + NETWORK + '_est%s.txt'%('_sps_inv' if conn_model=='sps' else 'cov')
                 else:
                     est_path = dir_path + '/' + ID + '_est%s.txt'%('_sps_inv' if conn_model=='sps' else 'cov')
                 if conn_model == 'sps':
-                    conn_matrix = -estimator.precision_
+                    try:
+			conn_matrix = -estimator.precision_
+		    except:
+			conn_matrix = -estimator_shrunk.precision_
                 elif conn_model == 'cov':
-                    conn_matrix = estimator.covariance_
+		    try:
+                        conn_matrix = estimator.covariance_
+		    except:
+			conn_matrix = estimator_shrunk.covariance_
         np.savetxt(est_path, conn_matrix, delimiter='\t')
         return(conn_matrix, est_path)
 
@@ -303,9 +378,12 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         return(out_path)
 
     def plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK):
+	matplotlib.use('Agg')
         ##Set title for adj. matrix based on connectivity model used
         if conn_model == 'corr':
             atlast_graph_title = atlas_name + '_Correlation_Graph'
+        elif conn_model == 'partcorr':
+            atlast_graph_title = atlas_name + '_Partial_Correlation_Graph'
         elif conn_model == 'sps':
             atlast_graph_title = atlas_name + '_Sparse_Covariance_Graph'
         elif conn_model == 'cov':
@@ -335,6 +413,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         return(atlast_graph_title)
 
     def plot_membership(membership_plotting, conn_matrix, conn_model, coords, edge_threshold, atlast_name, dir_path):
+	matplotlib.use('Agg')
         atlast_connectome_title = atlas_name + '_all_networks'
         n = len(membership_plotting.unique())
         clust_pal = sns.color_palette("Set2", n)
@@ -342,8 +421,10 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
         clust_colors = colors.to_rgba_array(membership_plotting.map(clust_lut))
         out_path_fig = dir_path + '/' + ID + '_connectome_viz.png'
         plotting.plot_connectome(conn_matrix, coords, node_color = clust_colors, title=atlast_connectome_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
+	display.close()
 
     def plot_timeseries(time_series, NETWORK, ID, dir_path, atlas_name, labels):
+	matplotlib.use('Agg')
         for time_serie, label in zip(time_series.T, labels):
             plt.plot(time_serie, label=label)
         plt.title(NETWORK + ' Network Time Series')
@@ -405,7 +486,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             coords = coord_masker_with_tuples(mask, coords)
 
         ##Extract within-spheres time-series from funct file
-        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True, memory='nilearn_cache', memory_level=5, verbose=2, standardize=True)
+        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2, standardize=True)
         ts_within_spheres = spheres_masker.fit_transform(func_file)
         print('\n' + 'Time series has {0} samples'.format(ts_within_spheres.shape[0]) + '\n')
 
@@ -486,6 +567,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             [coords_all, atlas_name] = fetch_nilearn_atlas_coords(atlas_select)
 
             if atlas_name == 'Power 2011 atlas':
+
                 ##Reference RSN list
                 load_path = pynets_dir + '/RSN_refs/' + NETWORK + '_coords.csv'
                 df = pd.read_csv(load_path).ix[:,0:4]
@@ -493,6 +575,7 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
                 net_coords = []
                 labels = []
                 for i in range(len(df)):
+
               	    print("ROI Reference #: " + str(i))
               	    x = int(df.ix[i,1])
               	    y = int(df.ix[i,2])
@@ -506,7 +589,19 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
               	print(labels)
                 print("\n-----------------------------------------------------")
             elif atlas_name != 'Power 2011 atlas':
-                sys.exit()
+		coords = list(tuple(x) for x in coords_all)
+
+           	##Get coord membership dictionary
+            	[membership, membership_plotting] = get_mem_dict(pynets_dir, func_file, coords)
+
+            	##Convert to membership dataframe
+            	mem_df = membership.to_frame().reset_index()
+
+            	##Get coords for network-of-interest
+            	mem_df.loc[mem_df['index'] == NETWORK]
+            	net_coords = mem_df.loc[mem_df['index'] == NETWORK][[0]].values[:,0]
+            	net_coords = list(tuple(x) for x in net_coords)
+            	labels = mem_df.loc[mem_df['index'] == NETWORK].index.values
                 ####Add code for any special RSN reference lists for the nilearn atlases here#####
 
             ##Get subject directory path
@@ -616,6 +711,7 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
     ##Get hyperbolic tangent of matrix if non-sparse (i.e. fischer r-to-z transform), and divide by the variance of the matrix
     if conn_model != 'sps':
         in_mat = np.arctanh(in_mat)/np.var(in_mat)
+	#in_mat = np.arctanh(in_mat)
 
     ##Get dir_path
     dir_path = os.path.dirname(os.path.realpath(est_path1))
@@ -647,6 +743,7 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
     def local_efficiency(G):
         return float(sum(global_efficiency(nx.ego_graph(G, v)) for v in G)) / len(G)
 
+
     def create_random_graph(G, n, p):
         rG = nx.erdos_renyi_graph(n, p, seed=42)
         return rG
@@ -664,13 +761,12 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
     def smallworldness(G, rep = 1000):
         n = nx.number_of_nodes(G)
         m = nx.number_of_edges(G)
-
         p = float(m) * 2 /(n*(n-1))
         ss = []
         for bb in range(rep):
-        	rG = create_random_graph(G, n, p)
-        	swm = smallworldness_measure(G, rG)
-        	ss.append(swm)
+            rG = create_random_graph(G, n, p)
+            swm = smallworldness_measure(G, rG)
+            ss.append(swm)
         mean_s = np.mean(ss)
         return mean_s
 

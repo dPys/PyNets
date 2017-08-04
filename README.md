@@ -107,9 +107,11 @@ frame = pd.concat(list_)
 out_path = working_path + '/' + name_of_network_pickle + '_output.csv'
 frame.to_csv(out_path)
 ```
-
+Map your favorite RSN's based on your favorite atlas(es)
 ![RSN Nets](PyNets_RSNs.png)
-![All RSNs](Allnets_Power_connectome_viz.png)
-![pynets_diffusion](PyNets_diffusion.png)
+Iterate network estimation for a given RSN (e.g. the DMN) across all of your subjects 
+![Multi-Subject DMN](DMNs.png)
+Feed the path to your bedpostx directory into the pipeline to get a corresponding structural connectome (in construction)
+![DMN diffusion](pynets_diffusion.png) 
 
 Happy Netting!
