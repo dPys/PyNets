@@ -109,6 +109,5 @@ frame.to_csv(out_path)
 ```
 
 ![RSN Nets](PyNets_RSNs.png)
-![All RSNs](Allnets_Power_connectome_viz.png)
 
 Happy Netting!
