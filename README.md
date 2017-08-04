@@ -111,5 +111,9 @@ Map your favorite RSN's based on your favorite atlas(es)
 ![RSN Nets](PyNets_RSNs.png)
 Iterate network estimation for a given RSN (e.g. the DMN) across all of your subjects 
 ![Multi-Subject DMN](DMNs.png)
+Create adjacency matrices for whole-brain and/or RSN networks based on any atlas
+![Whole-brain graph](all_nodes_graph.png)
+Feed the path to your bedpostx directory into the pipeline to get a corresponding structural connectome (in construction)
+![DMN diffusion](pynets_diffusion.png) 
 
 Happy Netting!
