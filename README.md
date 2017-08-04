@@ -109,7 +109,7 @@ frame.to_csv(out_path)
 ```
 Map your favorite RSN's based on your favorite atlas(es)
 ![RSN Nets](PyNets_RSNs.png)
-Iterate Network Estimation for a given RSN (e.g. the DMN) across all of your subjects 
+Iterate network estimation for a given RSN (e.g. the DMN) across all of your subjects 
 ![Multi-Subject DMN](DMNs.png)
 
 Happy Netting!
