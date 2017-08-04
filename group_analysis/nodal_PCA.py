@@ -20,139 +20,134 @@ There are two functions (so that the User can define or not the number of compon
 # each value in the dataframe is the projection of each subject on a given component
 
 # Functions B (pca_pynets_ncomp) is similar to function A, but one can specify the number of threshold
-# that we want. The same plot as above is produced, and one can see 
+# that we want. The same plot as above is produced, and one can see
 
 # base must be a pandas datagrame
 # eg: base = pandas.read_csv('/Users/charleslaidi/Desktop/charles.csv', index_col = 'id', sep = ",")
-# path_output = '/Users/charleslaidi/Desktop' this is the output where the plot are produced 
+# path_output = '/Users/charleslaidi/Desktop' this is the output where the plot are produced
 
 # A. function with no custom number of components
-def pca_pynets(base,path_output):
-    # Essai pour faire une PCA 
+def pca_pynets(base, path_output):
+    # Essai pour faire une PCA
     from sklearn.decomposition import PCA
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
-    
-    
+
     # définition de la base en array à utiliser
-    
-    data=base.filter(regex='DMN*',axis=1) # name of the network 
-    
+
+    data = base.filter(regex='DMN*', axis=1) # name of the network
+
     # ------------------------------------
     # transform the database into a matrix
     matrix_nodes = data.as_matrix()
-    
+
     # ------------------------------------
     # PCA
     # ------------------------------------
-    
+
     # def of PCA
     pca = PCA()
-    
+
     # fit the PCA
     pca.fit(matrix_nodes)
-    
-    # apply the transform reduction to the dataset 
-    # X_new = pca.transform(matrix_nodes) not used for this part 
-    
-    # explained variance
-    variance = pca.explained_variance_ratio_ # gives the percentage of variance explained by each component
-    
+
+    # apply the transform reduction to the dataset
+    # x_new = pca.transform(matrix_nodes) not used for this part
+
+    # gives the percentage of variance explained by each component
+    variance = pca.explained_variance_ratio_
+
     # plot the components y = explained variance / x = components
     seuil = 1/float(matrix_nodes.shape[1])
     fig = plt.figure()
     horiz_line_data = np.array([seuil for i in xrange(len(variance))])
-    liste = range(0,len(variance))
-    plt.plot(liste, horiz_line_data, 'r--') 
+    liste = range(0, len(variance))
+    plt.plot(liste, horiz_line_data, 'r--')
     fig.suptitle('Explained variance X Components (thr = %.2f) \n thr = 1/(nb of nodes)'%(seuil), fontsize=10)
     plt.plot(title="Components by Explained variance")
     plt.ylabel('Percentage of explained variance')
     plt.xlabel('Components')
-    plt.plot(liste,variance)
+    plt.plot(liste, variance)
     fig.savefig('%s/Components by explained variance undefined threshold.png'%(path_output))
     #plt.show()
     plt.close()
-    
+
     # calculating the number of remaining components after applying thresholds
     retained = variance > seuil
-    
+
     # count the number of components > threshold
-    nf = np.sum(retained)
-    
+    num_retained = np.sum(retained)
+
     # rerunning the PCA with the number of components above the thr
-    pca2 = PCA(n_components=nf)
-    pca2.fit(matrix_nodes)
-    X_new2 = pca2.transform(matrix_nodes)
-    variance2 = pca2.explained_variance_ratio_
-    liste2 = range(0,nf)
+    pca_retained = PCA(n_components=num_retained)
+    pca_retained.fit(matrix_nodes)
+    x_new2 = pca_retained.transform(matrix_nodes)
+    variance2 = pca_retained.explained_variance_ratio_
+    liste2 = range(0, num_retained)
     liste3 = []
-    for x in liste2: 
+    for x in liste2:
         h = x + 1
-        z = 'Comp_n%s_expvar_%.2f_perc' %(h,variance2[x])
+        z = 'Comp_n%s_expvar_%.2f_perc' %(h, variance2[x])
         liste3.append(z)
-    df_final = pd.DataFrame(data=X_new2,columns=liste3)
+    df_final = pd.DataFrame(data=x_new2, columns=liste3)
     return df_final
 
 
-
-
 # B. function with custom number of components
-def pca_pynets_ncomp(base,path_output,n_comp=int):
-    # Essai pour faire une PCA 
+def pca_pynets_ncomp(base, path_output, n_comp=int):
+    # Essai pour faire une PCA
     from sklearn.decomposition import PCA
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
-    
-    
+
     # définition de la base en array à utiliser
-    
-    data=base.filter(regex='DMN*',axis=1) # change this part with the name 
-    
+
+    data = base.filter(regex='DMN*', axis=1) # change this part with the name
+
     # ------------------------------------
     # transform the database into a matrix
     matrix_nodes = data.as_matrix()
-    
+
     # ------------------------------------
     # PCA
     # ------------------------------------
-    
+
     # def of PCA
     pca = PCA(n_components=n_comp)
-    
+
     # fit the PCA
     pca.fit(matrix_nodes)
-    
-    # apply the transform reduction to the dataset 
-    X_new = pca.transform(matrix_nodes)
-    
-    # explained variance
-    variance = pca.explained_variance_ratio_ # gives the percentage of variance explained by each component
-    
+
+    # apply the transform reduction to the dataset
+    x_new = pca.transform(matrix_nodes)
+
+    # gives the percentage of variance explained by each component
+    variance = pca.explained_variance_ratio_
+
     # plot the components y = explained variance / x = components
     seuil = 1/float(matrix_nodes.shape[1])
     fig = plt.figure()
     horiz_line_data = np.array([seuil for i in xrange(len(variance))])
-    liste = range(0,len(variance))
-    plt.plot(liste, horiz_line_data, 'r--') 
+    liste = range(0, len(variance))
+    plt.plot(liste, horiz_line_data, 'r--')
     fig.suptitle('Explained variance X Components custom(thr = %.2f) \n thr = 1/(nb of nodes)'%(seuil), fontsize=10)
     plt.plot(title="Components by Explained variance")
     plt.ylabel('Percentage of explained variance')
     plt.xlabel('Components')
-    plt.plot(liste,variance)
+    plt.plot(liste, variance)
     fig.savefig('%s/Components by explained variance custom threshold.png'%(path_output))
     #plt.show()
     plt.close()
-    
-    variance = pca.explained_variance_ratio_
-    liste2 = range(0,n_comp)
-    liste3 = []
-    for x in liste2: 
-        h = x + 1
-        z = 'Comp_n%s_expvar_%.2f_perc' %(h,variance[x])
-        liste3.append(z)
-    df_final = pd.DataFrame(data=X_new,columns=liste3)
-    #return X_new2
-    return df_final
 
+    variance = pca.explained_variance_ratio_
+    liste2 = range(0, n_comp)
+    liste3 = []
+    for x in liste2:
+        h = x + 1
+        z = 'Comp_n%s_expvar_%.2f_perc' %(h, variance[x])
+        liste3.append(z)
+    df_final = pd.DataFrame(data=x_new, columns=liste3)
+    #return x_new2
+    return df_final

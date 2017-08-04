@@ -567,13 +567,15 @@ def mat_funcs(input_file, ID, atlas_select, NETWORK, pynets_dir, node_size, mask
             [coords_all, atlas_name] = fetch_nilearn_atlas_coords(atlas_select)
 
             if atlas_name == 'Power 2011 atlas':
-            	##Reference RSN list
-            	load_path = pynets_dir + '/RSN_refs/' + NETWORK + '_coords.csv'
-		df = pd.read_csv(load_path).ix[:,0:4]
-		i=1
-		net_coords = []
-		labels = []
-		for i in range(len(df)):
+
+                ##Reference RSN list
+                load_path = pynets_dir + '/RSN_refs/' + NETWORK + '_coords.csv'
+                df = pd.read_csv(load_path).ix[:,0:4]
+                i=1
+                net_coords = []
+                labels = []
+                for i in range(len(df)):
+
               	    print("ROI Reference #: " + str(i))
               	    x = int(df.ix[i,1])
               	    y = int(df.ix[i,2])
