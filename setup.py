@@ -23,7 +23,9 @@ requirements = [
     'networkx==1.11',
     'nibabel==2.1.0',
     'scikit_learn==0.18.2',
-    'pathlib==1.0.1'
+    'pathlib==1.0.1',
+    'setuptools==36.2.7',
+    'configparser==3.5.0'
 ]
 
 setup_requirements = [
