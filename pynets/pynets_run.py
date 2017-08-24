@@ -436,14 +436,14 @@ if __name__ == '__main__':
         ##Save results to csv
         if 'inv' in est_path1:
             if NETWORK != None:
-                out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_mets_inv_sps_cov.csv'
+                out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_mets_inv_sps_cov_' + str(thr) + '.csv'
             else:
-                out_path = dir_path + '/' + ID + '_net_mets_inv_sps_cov.csv'
+                out_path = dir_path + '/' + ID + '_net_mets_inv_sps_cov_' + str(thr) + '.csv'
         else:
             if NETWORK != None:
-                out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_mets_corr.csv'
+                out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_mets_corr_' + str(thr) + '.csv'
             else:
-                out_path = dir_path + '/' + ID + '_net_mets_corr.csv'
+                out_path = dir_path + '/' + ID + '_net_mets_corr_' + str(thr) + '.csv'
         np.savetxt(out_path, net_met_val_list_final)
 
         return(out_path)
