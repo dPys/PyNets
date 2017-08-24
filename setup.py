@@ -22,7 +22,8 @@ requirements = [
     'pandas==0.19.2',
     'networkx==1.11',
     'nibabel==2.1.0',
-    'scikit_learn==0.18.2'
+    'scikit_learn==0.18.2',
+    'pathlib==1.0.1'
 ]
 
 setup_requirements = [
