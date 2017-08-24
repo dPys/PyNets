@@ -13,7 +13,7 @@ import sklearn
 import matplotlib
 import warnings
 import pynets
-warnings.simplefilter("ignore")
+#warnings.simplefilter("ignore")
 import matplotlib.pyplot as plt
 from numpy import genfromtxt
 from matplotlib import colors
@@ -188,3 +188,41 @@ def adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat
     conn_matrix = threshold_absolute(conn_matrix, min_thresh)
     edge_threshold = str(float(min_thresh)*100) +'%'
     return(conn_matrix, est_path, edge_threshold)
+
+def binarize(W, copy=True):
+    if copy:
+        W = W.copy()
+    W[W != 0] = 1
+    return W
+
+def invert(W, copy=False):
+    if copy:
+        W = W.copy()
+    E = np.where(W)
+    W[E] = 1. / W[E]
+    return W
+
+def weight_conversion(W, wcm, copy=True):
+    if wcm == 'binarize':
+        return binarize(W, copy)
+    elif wcm == 'lengths':
+        return invert(W, copy)
+
+def autofix(W, copy=True):
+    if copy:
+        W = W.copy()
+    # zero diagonal
+    np.fill_diagonal(W, 0)
+    # remove np.inf and np.nan
+    try:
+        W[np.logical_or(np.where(np.isinf(W)), np.where(np.isnan(W)))] = 0
+    except:
+        pass
+    # ensure exact binarity
+    u = np.unique(W)
+    if np.all(np.logical_or(np.abs(u) < 1e-8, np.abs(u - 1) < 1e-8)):
+        W = np.around(W, decimal=5)
+    # ensure exact symmetry
+    if np.allclose(W, W.T):
+        W = np.around(W, decimals=5)
+    return W

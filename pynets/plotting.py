@@ -13,7 +13,7 @@ import sklearn
 import matplotlib
 import warnings
 import pynets
-warnings.simplefilter("ignore")
+#warnings.simplefilter("ignore")
 import matplotlib.pyplot as plt
 from numpy import genfromtxt
 from matplotlib import colors

@@ -13,7 +13,7 @@ import sklearn
 import matplotlib
 import warnings
 import pynets
-warnings.simplefilter("ignore")
+#warnings.simplefilter("ignore")
 import matplotlib.pyplot as plt
 from numpy import genfromtxt
 from matplotlib import colors
@@ -29,6 +29,11 @@ from nibabel.affines import apply_affine
 from nipype.interfaces.base import isdefined, Undefined
 from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
+try:
+    import brainiak
+    from brainiak.fcma.util import compute_correlation
+except ImportError:
+    pass
 
 def get_conn_matrix(time_series, conn_model, NETWORK, ID, dir_path):
     if conn_model == 'corr':
@@ -36,8 +41,10 @@ def get_conn_matrix(time_series, conn_model, NETWORK, ID, dir_path):
         conn_matrix = conn_measure.fit_transform([time_series])[0]
         est_path = dir_path + '/' + ID + '_est_corr.txt'
     elif conn_model == 'corr_fast':
-        from brainiak.fcma.util import compute_correlation
-        conn_matrix = compute_correlation(time_series,time_series)
+        try:
+            conn_matrix = compute_correlation(time_series,time_series)
+        except RuntimeError:
+            print('Cannot run accelerated correlation computation due to a missing dependency. You need brainiak installed!')
     elif conn_model == 'partcorr':
         conn_measure = ConnectivityMeasure(kind='partial correlation')
         conn_matrix = conn_measure.fit_transform([time_series])[0]
@@ -48,7 +55,7 @@ def get_conn_matrix(time_series, conn_model, NETWORK, ID, dir_path):
         try:
             print("Fitting Lasso estimator...")
             est = estimator.fit(time_series)
-        except:
+        except RuntimeError:
             print('Unstable Lasso estimation--Attempting to re-run by first applying shrinkage...')
             #from sklearn.covariance import GraphLasso, empirical_covariance, shrunk_covariance
             #emp_cov = empirical_covariance(time_series)

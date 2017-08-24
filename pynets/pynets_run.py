@@ -1,25 +1,3 @@
-#!/usr/bin/env python2.7
-# -*- coding: utf-8 -*-
-#    PyNets: A Python-Powered Workflow for Network Analysis of Resting-State fMRI (rsfMRI) and Diffusion MRI (dMRI)
-#    Copyright (C) 2017
-#    ORIGINAL AUTHOR: Derek A. Pisner (University of Texas at Austin)
-#    DEVELOPERS: Derek A. Pisner, Aki nikolaidis, Andrew Reineberg, Charles Laidi
-#
-#    PyNets is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as published
-#    by the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    PyNets is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the complete GNU Affero General Public
-#    License with PyNets in a file called license.txt. If not, and/or you simply have
-#    questions about licensing and copyright/patent restrictions with PyNets, please
-#    contact the primary author, Derek Pisner, at dpisner@utexas.edu
-from __future__ import division, print_function
 import sys
 import argparse
 import os
@@ -91,6 +69,10 @@ if __name__ == '__main__':
         default=False,
         action='store_true',
         help='Optionally use this flag if you wish to activate adaptive thresholding')
+    parser.add_argument('-plt',
+        default=False,
+        action='store_true',
+        help='Optionally use this flag if you wish to activate plotting of adjacency matrices, connectomes, and time-series')
     args = parser.parse_args()
 
     ###Set Arguments to global variables###
@@ -107,6 +89,7 @@ if __name__ == '__main__':
     dens_thresh=args.dt
     conf=args.confounds
     adapt_thresh=args.at
+    plot_switch=args.plt
     #######################################
 
     ##Check required inputs for existence
@@ -174,7 +157,7 @@ if __name__ == '__main__':
     from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
     from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
 
-    def workflow_selector(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh):
+    def workflow_selector(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch):
         import pynets
         from pynets import workflows
 
@@ -182,179 +165,26 @@ if __name__ == '__main__':
 
         ##Case 1: Whole-brain connectome with nilearn coord atlas
         if '.nii' in input_file and parlistfile == None and NETWORK == None and atlas_select not in nilearn_atlases:
-
-            est_path = workflows.wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh)
+            est_path = workflows.wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch)
 
         ##Case 2: Whole-brain connectome with user-specified atlas or nilearn atlas img
         elif '.nii' in input_file and NETWORK == None and (parlistfile != None or atlas_select in nilearn_atlases):
-
-            est_path = workflows.wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh)
+            est_path = workflows.wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch)
 
         ##Case 3: RSN connectome with nilearn atlas or user-specified atlas
         elif '.nii' in input_file and NETWORK != None:
-
-            est_path = workflows.network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh)
+            est_path = workflows.network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch)
 
         return est_path
 
     ##Extract network metrics interface
     def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
-        def binarize(W, copy=True):
-            if copy:
-                W = W.copy()
-            W[W != 0] = 1
-            return W
-
-        def invert(W, copy=False):
-            if copy:
-                W = W.copy()
-            E = np.where(W)
-            W[E] = 1. / W[E]
-            return W
-
-        def weight_conversion(W, wcm, copy=True):
-            if wcm == 'binarize':
-                return binarize(W, copy)
-            elif wcm == 'lengths':
-                return invert(W, copy)
-
-        def autofix(W, copy=True):
-            if copy:
-                W = W.copy()
-            # zero diagonal
-            np.fill_diagonal(W, 0)
-            # remove np.inf and np.nan
-            try:
-                W[np.logical_or(np.where(np.isinf(W)), np.where(np.isnan(W)))] = 0
-            except:
-                pass
-            # ensure exact binarity
-            u = np.unique(W)
-            if np.all(np.logical_or(np.abs(u) < 1e-8, np.abs(u - 1) < 1e-8)):
-                W = np.around(W, decimal=5)
-            # ensure exact symmetry
-            if np.allclose(W, W.T):
-                W = np.around(W, decimals=5)
-            return W
-
-        def modularity(W, qtype='sta', seed=None):
-            '''
-            Input:      W       undirected (weighted or binary) connection matrix
-                                with positive and negative weights
-                        qtype,  modularity type (see Rubinov and Sporns, 2011)
-                                   'sta',  Q_* (default if qtype is not specified)
-                                   'pos',  Q_+
-                                   'smp',  Q_simple
-                                   'gja',  Q_GJA
-                                   'neg',  Q_-
-                        seed,    random seed. Default None, seed from /dev/urandom
-            Output:     Ci,     community affiliation vector
-                        Q,      modularity (qtype dependent)
-            Note: Ci and Q may vary from run to run, due to heuristics in the
-            algorithm. Consequently, it may be worth to compare multiple runs.
-            '''
-            np.random.seed(seed)
-            n = len(W)
-            W0 = W * (W > 0)
-            W1 = -W * (W < 0)
-            s0 = np.sum(W0)
-            s1 = np.sum(W1)
-            if qtype == 'smp':
-                d0 = 1 / s0
-                d1 = 1 / s1
-            elif qtype == 'gja':
-                d0 = 1 / (s0 + s1)
-                d1 = d0
-            elif qtype == 'sta':
-                d0 = 1 / s0
-                d1 = 1 / (s0 + s1)
-            elif qtype == 'pos':
-                d0 = 1 / s0
-                d1 = 0
-            elif qtype == 'neg':
-                d0 = 0
-                d1 = 1 / s1
-            else:
-                raise KeyError('modularity type unknown')
-
-            if not s0:
-                s0 = 1
-                d1 = 0
-            if not s1:
-                s1 = 1
-                d1 = 0
-            h = 1
-            nh = n
-            ci = [None, np.arange(n) + 1]
-            q = [-1, 0]
-            while q[h] - q[h - 1] > 1e-10:
-                if h > 300:
-                    raise KeyError('Modularity Infinite Loop')
-
-                kn0 = np.sum(W0, axis=0)
-                kn1 = np.sum(W1, axis=0)
-                km0 = kn0.copy()
-                km1 = kn1.copy()
-                knm0 = W0.copy()
-                knm1 = W1.copy()
-                m = np.arange(nh) + 1
-                flag = True
-                it = 0
-                while flag:
-                    it += 1
-                    if it > 1000:
-                        raise KeyError('Infinite Loop was detected and stopped.')
-
-                    flag = False
-                    for u in np.random.permutation(nh):
-                        ma = m[u] - 1
-                        dQ0 = (knm0[u, :] + W0[u, u] - knm0[u, ma]) - kn0[u] * (
-                            km0 + kn0[u] - km0[ma]) / s0
-                        dQ1 = (knm1[u, :] + W1[u, u] - knm1[u, ma]) - kn1[u] * (
-                            km1 + kn1[u] - km1[ma]) / s1
-                        dQ = d0 * dQ0 - d1 * dQ1
-                        dQ[ma] = 0
-                        max_dQ = np.max(dQ)
-                        if max_dQ > 1e-10:
-                            flag = True
-                            mb = np.argmax(dQ)
-                            knm0[:, mb] += W0[:, u]
-                            knm0[:, ma] -= W0[:, u]
-                            knm1[:, mb] += W1[:, u]
-                            knm1[:, ma] -= W1[:, u]
-                            km0[mb] += kn0[u]
-                            km0[ma] -= kn0[u]
-                            km1[mb] += kn1[u]
-                            km1[ma] -= kn1[u]
-                            m[u] = mb + 1
-                h += 1
-                ci.append(np.zeros((n,)))
-                _, m = np.unique(m, return_inverse=True)
-                m += 1
-                for u in range(nh):
-                    ci[h][np.where(ci[h - 1] == u + 1)] = m[u]
-                nh = np.max(m)
-                wn0 = np.zeros((nh, nh))
-                wn1 = np.zeros((nh, nh))
-                for u in range(nh):
-                    for v in range(u, nh):
-                        wn0[u, v] = np.sum(W0[np.ix_(m == u + 1, m == v + 1)])
-                        wn1[u, v] = np.sum(W1[np.ix_(m == u + 1, m == v + 1)])
-                        wn0[v, u] = wn0[u, v]
-                        wn1[v, u] = wn1[u, v]
-                W0 = wn0
-                W1 = wn1
-                q.append(0)
-                q0 = np.trace(W0) - np.sum(np.dot(W0, W0)) / s0
-                q1 = np.trace(W1) - np.sum(np.dot(W1, W1)) / s1
-                q[h] = d0 * q0 - d1 * q1
-            _, ci_ret = np.unique(ci[-1], return_inverse=True)
-            ci_ret += 1
-            return ci_ret, q[-1]
+        import pynets
+        from pynets import netstats, thresholding
 
         ##Load and threshold matrix
         in_mat = np.array(genfromtxt(est_path1))
-        in_mat = autofix(in_mat)
+        in_mat = thresholding.autofix(in_mat)
 
         ##Get hyperbolic tangent of matrix if non-sparse (i.e. fischer r-to-z transform)
         if conn_model == 'corr':
@@ -374,7 +204,7 @@ if __name__ == '__main__':
         #G_bin=nx.from_numpy_matrix(mat_bin)
 
         ##Create Length matrix
-        mat_len = weight_conversion(in_mat, 'lengths')
+        mat_len = thresholding.weight_conversion(in_mat, 'lengths')
         ##Load numpy matrix as networkx graph
         G_len=nx.from_numpy_matrix(mat_len)
 
@@ -387,51 +217,13 @@ if __name__ == '__main__':
         ###############################################################
         ########### Calculate graph metrics from graph G ##############
         ###############################################################
-        from itertools import permutations
         import random
+        import itertools
+        from itertools import permutations
         from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, rich_club_coefficient, eigenvector_centrality, communicability_centrality
-
-        ##Define missing network functions here. Small-worldness, modularity, and rich-club will also need to be added.
-        def efficiency(G, u, v):
-            return float(1) / nx.shortest_path_length(G, u, v)
-
-        def global_efficiency(G):
-            n = len(G)
-            denom = n * (n - 1)
-            return float(sum(efficiency(G, u, v) for u, v in permutations(G, 2))) / denom
-
-        def local_efficiency(G):
-            return float(sum(global_efficiency(nx.ego_graph(G, v)) for v in G)) / len(G)
-
-        def create_random_graph(G, n, p):
-            rG = nx.erdos_renyi_graph(n, p, seed=42)
-            return rG
-
-        def smallworldness_measure(G, rG):
-            C_g = nx.algorithms.average_clustering(G)
-            C_r = nx.algorithms.average_clustering(rG)
-            L_g = nx.average_shortest_path_length(G)
-            L_r = nx.average_shortest_path_length(rG)
-            gam = float(C_g) / float(C_r)
-            lam = float(L_g) / float(L_r)
-            swm = gam / lam
-            return swm
-
-        def smallworldness(G, rep = 1000):
-            n = nx.number_of_nodes(G)
-            m = nx.number_of_edges(G)
-            p = float(m) * 2 /(n*(n-1))
-            ss = []
-            for bb in range(rep):
-                rG = create_random_graph(G, n, p)
-                swm = smallworldness_measure(G, rG)
-                ss.append(swm)
-            mean_s = np.mean(ss)
-            return mean_s
-
-        ##For scalar metrics from networkx.algorithms library,
-        ##add the name of the function here for it to be automatically calculated.
-        ##Because I'm lazy, it will also need to be imported above.
+        from pynets.netstats import efficiency, global_efficiency, local_efficiency, create_random_graph, smallworldness_measure, smallworldness, modularity
+        ##For non-nodal scalar metrics from networkx.algorithms library, add the name of the function to metric_list for it to be automatically calculated.
+        ##For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the function  (with a G-only input) to the netstats module.
         metric_list = [global_efficiency, local_efficiency, smallworldness, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
 
         ##Iteratively run functions from above metric list
@@ -461,10 +253,10 @@ if __name__ == '__main__':
 
         ##betweenness_centrality
         try:
-            print('Extracting Betweeness Centrality vector for all network nodes...')
             bc_vector = betweenness_centrality(G_len)
-            bc_vals = bc_vector.values()
-            bc_nodes = bc_vector.keys()
+            print('Extracting Betweeness Centrality vector for all network nodes...')
+            bc_vals = list(bc_vector.values())
+            bc_nodes = list(bc_vector.keys())
             num_nodes = len(bc_nodes)
             bc_arr = np.zeros([num_nodes + 1, 2], dtype='object')
             j=0
@@ -475,7 +267,10 @@ if __name__ == '__main__':
                 else:
                     bc_arr[j,0] = 'WholeBrain_' + str(bc_nodes[j]) + '_betw_cent'
                     print('\n' + 'WholeBrain_' + str(bc_nodes[j]) + '_betw_cent')
-                bc_arr[j,1] = bc_vals[j]
+                try:
+                    bc_arr[j,1] = bc_vals[j]
+                except:
+                    bc_arr[j,1] = np.nan
                 print(str(bc_vals[j]))
                 j = j + 1
             bc_val_list = list(bc_arr[:,1])
@@ -490,10 +285,10 @@ if __name__ == '__main__':
 
         ##eigenvector_centrality
         try:
-            print('Extracting Eigenvector Centrality vector for all network nodes...')
             ec_vector = eigenvector_centrality(G_len)
-            ec_vals = ec_vector.values()
-            ec_nodes = ec_vector.keys()
+            print('Extracting Eigenvector Centrality vector for all network nodes...')
+            ec_vals = list(ec_vector.values())
+            ec_nodes = list(ec_vector.keys())
             num_nodes = len(ec_nodes)
             ec_arr = np.zeros([num_nodes + 1, 2], dtype='object')
             j=0
@@ -504,7 +299,10 @@ if __name__ == '__main__':
                 else:
                     ec_arr[j,0] = 'WholeBrain_' + str(ec_nodes[j]) + '_eig_cent'
                     print('\n' + 'WholeBrain_' + str(ec_nodes[j]) + '_eig_cent')
-                ec_arr[j,1] = ec_vals[j]
+                try:
+                    ec_arr[j,1] = ec_vals[j]
+                except:
+                    ec_arr[j,1] = np.nan
                 print(str(ec_vals[j]))
                 j = j + 1
             ec_val_list = list(ec_arr[:,1])
@@ -519,10 +317,10 @@ if __name__ == '__main__':
 
         ##communicability_centrality
         try:
-            print('Extracting Communicability Centrality vector for all network nodes...')
             cc_vector = communicability_centrality(G_len)
-            cc_vals = cc_vector.values()
-            cc_nodes = cc_vector.keys()
+            print('Extracting Communicability Centrality vector for all network nodes...')
+            cc_vals = list(cc_vector.values())
+            cc_nodes = list(cc_vector.keys())
             num_nodes = len(cc_nodes)
             cc_arr = np.zeros([num_nodes + 1, 2], dtype='object')
             j=0
@@ -533,7 +331,10 @@ if __name__ == '__main__':
                 else:
                     cc_arr[j,0] = 'WholeBrain_' + str(cc_nodes[j]) + '_comm_cent'
                     print('\n' + 'WholeBrain_' + str(cc_nodes[j]) + '_comm_cent')
-                cc_arr[j,1] = cc_vals[j]
+                try:
+                    cc_arr[j,1] = cc_vals[j]
+                except:
+                    cc_arr[j,1] = np.nan
                 print(str(cc_vals[j]))
                 j = j + 1
             cc_val_list = list(cc_arr[:,1])
@@ -548,10 +349,10 @@ if __name__ == '__main__':
 
         ##rich_club_coefficient
         try:
-            print('Extracting Rich Club Coefficient vector for all network nodes...')
             rc_vector = rich_club_coefficient(G, normalized=True)
-            rc_vals = rc_vector.values()
-            rc_edges = rc_vector.keys()
+            print('Extracting Rich Club Coefficient vector for all network nodes...')
+            rc_vals = list(rc_vector.values())
+            rc_edges = list(rc_vector.keys())
             num_edges = len(rc_edges)
             rc_arr = np.zeros([num_edges + 1, 2], dtype='object')
             j=0
@@ -562,7 +363,10 @@ if __name__ == '__main__':
                 else:
                     cc_arr[j,0] = 'WholeBrain_' + str(rc_nodes[j]) + '_rich_club'
                     print('\n' + 'WholeBrain_' + str(rc_nodes[j]) + '_rich_club')
-                rc_arr[j,1] = rc_vals[j]
+                try:
+                    rc_arr[j,1] = rc_vals[j]
+                except:
+                    rc_arr[j,1] = np.nan
                 print(str(rc_vals[j]))
                 j = j + 1
             ##Add mean
@@ -730,7 +534,7 @@ if __name__ == '__main__':
 
     ##Create input/output nodes
     #1) Add variable to IdentityInterface if user-set
-    inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'NETWORK', 'thr', 'node_size', 'mask', 'parlistfile', 'all_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh']), name='inputnode')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'NETWORK', 'thr', 'node_size', 'mask', 'parlistfile', 'all_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch']), name='inputnode')
 
     #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
     inputnode.inputs.in_file = input_file
@@ -746,10 +550,11 @@ if __name__ == '__main__':
     inputnode.inputs.dens_thresh = dens_thresh
     inputnode.inputs.conf = conf
     inputnode.inputs.adapt_thresh = adapt_thresh
+    inputnode.inputs.plot_switch = plot_switch
 
     #3) Add variable to function nodes
     ##Create function nodes
-    imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'NETWORK', 'node_size', 'mask', 'thr', 'parlistfile', 'all_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh'], output_names = ['est_path'], function=workflow_selector, imports=import_list), name = "imp_est")
+    imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'NETWORK', 'node_size', 'mask', 'thr', 'parlistfile', 'all_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch'], output_names = ['est_path'], function=workflow_selector, imports=import_list), name = "imp_est")
     net_mets_node = pe.Node(ExtractNetStats(), name = "ExtractNetStats")
     export_to_pandas_node = pe.Node(Export2Pandas(), name = "export_to_pandas")
 
@@ -776,7 +581,8 @@ if __name__ == '__main__':
                               ('conn_model', 'conn_model'),
                               ('dens_thresh', 'dens_thresh'),
                               ('conf', 'conf'),
-                              ('adapt_thresh', 'adapt_thresh')]),
+                              ('adapt_thresh', 'adapt_thresh'),
+                              ('plot_switch', 'plot_switch')]),
         (inputnode, net_mets_node, [('ID', 'sub_id'),
                                    ('NETWORK', 'NETWORK'),
                                    ('thr', 'thr'),

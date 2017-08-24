@@ -31,7 +31,7 @@ from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
 from pynets import nodemaker, thresholding, plotting, graphestimation
 
-def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh):
+def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch):
     ##Input is nifti file
     func_file=input_file
 
@@ -97,19 +97,20 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, no
     elif dens_thresh is not None:
         [conn_matrix, est_path, edge_threshold] = thresholding.density_thresholding(ts_within_parcels, conn_model, NETWORK, ID, dens_thresh, dir_path)
 
-    ##Plot adj. matrix based on determined inputs
-    atlast_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names, mask)
 
-    ##Plot connectome viz for all Yeo networks
-    ##Tweak edge_threshold to keep only the strongest connections based on thr
-    if all_nets != False:
-        plotting.plot_membership(membership_plotting, conn_matrix, conn_model, coords, edge_threshold, atlas_name, dir_path)
-    else:
-        out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
-        niplot.plot_connectome(conn_matrix, coords, title=atlast_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
+    if plot_switch == True:
+        ##Plot adj. matrix based on determined inputs
+        atlast_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names, mask)
+
+        ##Plot connectome viz for all Yeo networks
+        if all_nets != False:
+            plotting.plot_membership(membership_plotting, conn_matrix, conn_model, coords, edge_threshold, atlas_name, dir_path)
+        else:
+            out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
+            niplot.plot_connectome(conn_matrix, coords, title=atlast_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     return est_path
 
-def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh):
+def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch):
     nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
 
     ##Input is nifti file
@@ -156,19 +157,19 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, no
     elif dens_thresh is not None:
         [conn_matrix, est_path, edge_threshold] = thresholding.density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh, dir_path)
 
-    ##Plot adj. matrix based on determined inputs
-    plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names, mask)
+    if plot_switch == True:
+        ##Plot adj. matrix based on determined inputs
+        plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names, mask)
 
-    ##Plot connectome viz for all Yeo networks
-    ##Tweak edge_threshold to keep only the strongest connections based on thr
-    if all_nets != False:
-        plotting.plot_membership(membership_plotting, conn_matrix, conn_model, coords, edge_threshold, atlas_name, dir_path)
-    else:
-        out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_connectome_viz.png'
-        niplot.plot_connectome(conn_matrix, coords, title=atlas_name, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
+        ##Plot connectome viz for all Yeo networks
+        if all_nets != False:
+            plotting.plot_membership(membership_plotting, conn_matrix, conn_model, coords, edge_threshold, atlas_name, dir_path)
+        else:
+            out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_connectome_viz.png'
+            niplot.plot_connectome(conn_matrix, coords, title=atlas_name, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     return est_path
 
-def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh):
+def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch):
     nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
 
     ##Input is nifti file
@@ -187,7 +188,7 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
                 networks_list = atlas.networks
             except:
                 networks_list = None
-        except:
+        except RuntimeError:
             print('Error, atlas fetching failed.')
             sys.exit()
 
@@ -214,9 +215,7 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
                 net_coords.append((x, y, z))
                 ix_labels.append(i)
                 i = i + 1
-                print("-----------------------------------------------------\n")
                 print(net_coords)
-                print("\n-----------------------------------------------------")
                 label_names=ix_labels
         elif atlas_name == 'Dosenbach 2010 atlas':
             coords = list(tuple(x) for x in coords)
@@ -314,8 +313,9 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
     out_path_ts=dir_path + '/' + ID + '_' + NETWORK + '_net_ts.txt'
     np.savetxt(out_path_ts, net_ts)
 
-    ##Plot network time-series
-    plotting.plot_timeseries(net_ts, NETWORK, ID, dir_path, atlas_name, label_names)
+    if plot_switch == True:
+        ##Plot network time-series
+        plotting.plot_timeseries(net_ts, NETWORK, ID, dir_path, atlas_name, label_names)
 
     ##Fit connectivity model
     if adapt_thresh is not False:
@@ -333,12 +333,12 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
     elif dens_thresh is not None:
         [conn_matrix, est_path, edge_threshold] = thresholding.density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh, dir_path)
 
-    ##Plot adj. matrix based on determined inputs
-    plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names, mask)
+    if plot_switch == True:
+        ##Plot adj. matrix based on determined inputs
+        plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names, mask)
 
-    ##Plot connectome viz for specific Yeo networks
-    ##Tweak edge_threshold to keep only the strongest connections based on thr
-    title = "Connectivity Projected on the " + NETWORK
-    out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_connectome_plot.png'
-    niplot.plot_connectome(conn_matrix, net_coords, edge_threshold=edge_threshold, title=title, display_mode='lyrz', output_file=out_path_fig)
+        ##Plot connectome viz for specific Yeo networks
+        title = "Connectivity Projected on the " + NETWORK
+        out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_connectome_plot.png'
+        niplot.plot_connectome(conn_matrix, net_coords, edge_threshold=edge_threshold, title=title, display_mode='lyrz', output_file=out_path_fig)
     return est_path
