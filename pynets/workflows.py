@@ -85,17 +85,17 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, no
     if adapt_thresh is not False:
         struct_mat_path = dir_path + '/' + str(ID) + '_' + NETWORK + '_structural_mx.txt'
         if os.path.isfile(struct_mat_path) == True:
-            [conn_matrix, est_path, edge_threshold] = thresholding.adaptive_thresholding(ts_within_parcels, conn_model, NETWORK, ID, struct_mat_path, dir_path)
+            [conn_matrix, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_parcels, conn_model, NETWORK, ID, struct_mat_path, dir_path)
         else:
             print('No structural mx found! Exiting...')
             sys.exit(0)
     elif dens_thresh is None:
         edge_threshold = str(float(thr)*100) +'%'
-        [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_parcels, conn_model, NETWORK, ID, dir_path)
+        [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_parcels, conn_model, NETWORK, ID, dir_path, thr)
         conn_matrix = thresholding.threshold_proportional(conn_matrix, thr)
         conn_matrix = thresholding.normalize(conn_matrix)
     elif dens_thresh is not None:
-        [conn_matrix, est_path, edge_threshold] = thresholding.density_thresholding(ts_within_parcels, conn_model, NETWORK, ID, dens_thresh, dir_path)
+        [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_parcels, conn_model, NETWORK, ID, dens_thresh, dir_path)
 
 
     if plot_switch == True:
@@ -145,17 +145,17 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, no
     if adapt_thresh is not False:
         struct_mat_path = dir_path + '/' + str(ID) + '_' + NETWORK + '_structural_mx.txt'
         if os.path.isfile(struct_mat_path) == True:
-            [conn_matrix, est_path, edge_threshold] = thresholding.adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat_path, dir_path)
+            [conn_matrix, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat_path, dir_path)
         else:
             print('No structural mx found! Exiting...')
             sys.exit(0)
     elif dens_thresh is None:
         edge_threshold = str(float(thr)*100) +'%'
-        [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path)
+        [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path, thr)
         conn_matrix = thresholding.threshold_proportional(conn_matrix, thr, dir_path)
         conn_matrix = thresholding.normalize(conn_matrix)
     elif dens_thresh is not None:
-        [conn_matrix, est_path, edge_threshold] = thresholding.density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh, dir_path)
+        [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh, dir_path)
 
     if plot_switch == True:
         ##Plot adj. matrix based on determined inputs
@@ -321,17 +321,17 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
     if adapt_thresh is not False:
         struct_mat_path = dir_path + '/' + str(ID) + '_' + NETWORK + '_structural_mx.txt'
         if os.path.isfile(struct_mat_path) == True:
-            [conn_matrix, est_path, edge_threshold] = thresholding.adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat_path, dir_path)
+            [conn_matrix, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat_path, dir_path)
         else:
             print('No structural mx found! Exiting...')
             sys.exit(0)
     elif dens_thresh is None:
         edge_threshold = str(float(thr)*100) +'%'
-        [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path)
+        [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path, thr)
         conn_matrix = thresholding.threshold_proportional(conn_matrix, thr, dir_path)
         conn_matrix = thresholding.normalize(conn_matrix)
     elif dens_thresh is not None:
-        [conn_matrix, est_path, edge_threshold] = thresholding.density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh, dir_path)
+        [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh, dir_path)
 
     if plot_switch == True:
         ##Plot adj. matrix based on determined inputs
@@ -341,4 +341,4 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
         title = "Connectivity Projected on the " + NETWORK
         out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_connectome_plot.png'
         niplot.plot_connectome(conn_matrix, net_coords, edge_threshold=edge_threshold, title=title, display_mode='lyrz', output_file=out_path_fig)
-    return est_path
+    return(est_path, thr)

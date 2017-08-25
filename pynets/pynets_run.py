@@ -73,6 +73,14 @@ if __name__ == '__main__':
         default=False,
         action='store_true',
         help='Optionally use this flag if you wish to activate plotting of adjacency matrices, connectomes, and time-series')
+    parser.add_argument('-ma',
+        default=False,
+        action='store_true',
+        help='Optionally use this flag if you wish to iterate your pynets run over all available nilearn atlases')
+    parser.add_argument('-mt',
+        default=False,
+        action='store_true',
+        help='Optionally use this flag if you wish to iterate your pynets run over a range of proportional thresholds from 0.99 to 0.90')
     args = parser.parse_args()
 
     ###Set Arguments to global variables###
@@ -90,9 +98,11 @@ if __name__ == '__main__':
     conf=args.confounds
     adapt_thresh=args.at
     plot_switch=args.plt
+    multi_atlas=args.ma
+    multi_thr=args.mt
     #######################################
 
-    ##Check required inputs for existence
+    ##Check required inputs for existence, and configure run
     if input_file is None:
         print("Error: You must include a file path to either a standard space functional image in .nii or .nii.gz format or a path to a time-series text/csv file, with the -i flag")
         sys.exit()
@@ -106,6 +116,9 @@ if __name__ == '__main__':
         thr=None
     else:
         thr=float(thr)
+    if multi_thr==True:
+        dens_thresh=None
+        adapt_thresh=None
 
     ##Print inputs verbosely
     print("\n\n\n" + "------------------------------------------------------------------------")
@@ -554,7 +567,13 @@ if __name__ == '__main__':
 
     #3) Add variable to function nodes
     ##Create function nodes
-    imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'NETWORK', 'node_size', 'mask', 'thr', 'parlistfile', 'all_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch'], output_names = ['est_path'], function=workflow_selector, imports=import_list), name = "imp_est")
+    imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'NETWORK', 'node_size', 'mask', 'thr', 'parlistfile', 'all_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch'], output_names = ['est_path', 'thr'], function=workflow_selector, imports=import_list), name = "imp_est")
+    if multi_thr==True:
+        print('Iterating pipeline across multiple thresholds...')
+        #imp_est.iterables = ("thr", ['0.99', '0.98', '0.97', '0.96', '0.95', '0.94', '0.93', '0.92', '0.91', '0.90'])
+    if multi_atlas==True:
+        print('Iterating pipeline across multiple atlases...')
+        #imp_est.iterables = ("atlas_select", ['coords_power_2011', 'coords_dosenbach_2010', 'atlas_destrieux_2009', 'atlas_aal'])
     net_mets_node = pe.Node(ExtractNetStats(), name = "ExtractNetStats")
     export_to_pandas_node = pe.Node(Export2Pandas(), name = "export_to_pandas")
 
@@ -585,9 +604,9 @@ if __name__ == '__main__':
                               ('plot_switch', 'plot_switch')]),
         (inputnode, net_mets_node, [('ID', 'sub_id'),
                                    ('NETWORK', 'NETWORK'),
-                                   ('thr', 'thr'),
                                    ('conn_model', 'conn_model')]),
-        (imp_est, net_mets_node, [('est_path', 'est_path1')]),
+        (imp_est, net_mets_node, [('est_path', 'est_path1'),
+                                  ('thr', 'thr')]),
         #(net_mets_cov_node, datasink, [('est_path', 'csv_loc')]),
         (inputnode, export_to_pandas_node, [('ID', 'sub_id'),
                                         ('NETWORK', 'NETWORK')]),

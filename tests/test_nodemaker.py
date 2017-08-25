@@ -6,9 +6,11 @@ import pynets
 from pynets import nodemaker
 from nilearn import datasets
 
-def test_coord_maker():
+def test_nodemaker_tools():
+    ##Set example inputs##
     NETWORK='DMN'
     mask = Path(__file__).parent/"examples"/"997"/"pDMN_3_bin.nii.gz"
+    parlistfile = Path(__file__).parent/"examples"/"whole_brain_cluster_labels_PCA100.nii.gz"
     atlas_select = 'coords_power_2011'
     [coords, atlas_name, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
 
@@ -35,6 +37,19 @@ def test_coord_maker():
             pass
         label_names=[label_names[i] for i in ix_labels]
 
-    [net_coords, label_names] = nodemaker.coord_masker(str(mask), net_coords, label_names)
+    ##Test 1
+    [net_coords, label_names_out] = nodemaker.coord_masker(str(mask), net_coords, label_names)
+    ##Test 2
+    #[mask, coords] = nodemaker.coord_masker_with_tuples(str(mask), coords)
+    ##Test 3
+    [coords, atlas_name, par_max] = nodemaker.get_names_and_coords_of_parcels(str(parlistfile))
+    ##Test 4
+    #out_path = nodemaker.gen_network_parcels(str(parlistfile), NETWORK, labels_names)
+
     assert net_coords is not None
-    assert label_names is not None
+    assert label_names_out is not None
+    #assert mask is not None
+    #assert coords is not None
+    assert atlas_name is not None
+    assert par_max is not None
+    #assert out_path is not None

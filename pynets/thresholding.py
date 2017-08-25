@@ -67,7 +67,7 @@ def normalize(W, copy=True):
     return W
 
 def density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh, dir_path):
-    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path)
+    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path, thr)
     conn_matrix = normalize(conn_matrix)
     np.fill_diagonal(conn_matrix, 0)
     i = 1
@@ -84,7 +84,7 @@ def density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh
         print('Iteratively thresholding -- Iteration ' + str(i) + ' -- with absolute thresh: ' + str(thr) + ' and Density: ' + str(density) + '...')
         i = i + 1
     edge_threshold = str(float(thr)*100) +'%'
-    return(conn_matrix, est_path, edge_threshold)
+    return(conn_matrix, est_path, edge_threshold, thr)
 
 def adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat_path, dir_path):
     import collections
@@ -125,7 +125,7 @@ def adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat
         total_err = float(float(FP + FN)/diffs.size)
         return(FP_error, FN_error, total_err, density)
 
-    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path)
+    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path, thr)
     struct_mat = np.genfromtxt(struct_mat_path)
     print('Using reference structural matrix from: ' + struct_mat_path)
 
@@ -172,7 +172,7 @@ def adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat
         if value[0] == value[1]:
             good_threshes.append(float(key))
 
-    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path)
+    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path, thr)
     conn_matrix = normalize(conn_matrix)
     np.fill_diagonal(conn_matrix, 0)
     min_thresh = min(good_threshes)
@@ -187,7 +187,7 @@ def adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat
     print('Final Thresholded FP Error: ' + str(FP_error) + '\n\n\n')
     conn_matrix = threshold_absolute(conn_matrix, min_thresh)
     edge_threshold = str(float(min_thresh)*100) +'%'
-    return(conn_matrix, est_path, edge_threshold)
+    return(conn_matrix, est_path, edge_threshold, min_thresh)
 
 def binarize(W, copy=True):
     if copy:

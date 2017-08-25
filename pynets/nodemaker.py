@@ -14,6 +14,8 @@ import matplotlib
 import warnings
 import pkg_resources
 import pynets
+import itertools
+import multiprocessing
 #warnings.simplefilter("ignore")
 import matplotlib.pyplot as plt
 from numpy import genfromtxt
@@ -32,6 +34,39 @@ from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
 
 ##Core node definition, graph estimation, and plotting functions
+def check_neighborhood(coord, mask_coords):
+    if coord not in mask_coords:
+        error=2
+        neighbors=[]
+        ##Check range in case it's close by
+        x=coord[0]
+        y=coord[1]
+        z=coord[2]
+        x_min=x-error
+        x_max=x+error
+        y_min=y-error
+        y_max=y+error
+        z_min=z-error
+        z_max=z+error
+        x_range = list(range(x_min, x_max, 1))
+        y_range = list(range(y_min, y_max, 1))
+        z_range = list(range(z_min, z_max, 1))
+        ##Check range in case it's close by
+        tuple_range = list(itertools.product(x_range, y_range, z_range))
+        for i in tuple_range:
+            if tuple(i) in mask_coords:
+                neighbors.append(i)
+                print(str(coord) + ' is within a + or - ' + str(error) + ' voxel neighborhood...')
+                break
+        if len(neighbors)==0:
+            bad_coord=coord
+        elif len(neighbors)>0:
+            bad_coord=None
+    else:
+        bad_coord=None
+        print(str(coord) + ' falls within mask...')
+    return bad_coord
+
 def fetch_nilearn_atlas_coords(atlas_select):
     atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
     atlas_name = atlas['description'].splitlines()[0]
@@ -72,7 +107,6 @@ def get_mem_dict(func_file, coords, networks_list):
     return(membership, membership_plotting)
 
 def coord_masker(mask, coords, label_names):
-    import itertools
     x_vox = np.diagonal(masking._load_mask_img(mask)[1][:3,0:3])[0]
     y_vox = np.diagonal(masking._load_mask_img(mask)[1][:3,0:3])[1]
     z_vox = np.diagonal(masking._load_mask_img(mask)[1][:3,0:3])[2]
@@ -82,54 +116,37 @@ def coord_masker(mask, coords, label_names):
         voxcoords[1] = int((round(int(mmcoords[1])/y_vox))+63)
         voxcoords[2] = int((round(int(mmcoords[2])/z_vox))+36)
         return voxcoords
+
     mask_data, _ = masking._load_mask_img(mask)
     mask_coords = list(zip(*np.where(mask_data == True)))
     coords_vox = []
     for i in coords:
         coords_vox.append(mmToVox(i))
     coords_vox = list(tuple(x) for x in coords_vox)
-    masked_coords=[]
-    label_names_rem=[]
-    indices=[]
-    ix=0
 
+    bad_coords = []
     for coord in coords_vox:
-        ix = ix + 1
-        if coord not in mask_coords:
-            error=2
-            neighbors=[]
-            ##Check range in case it's close by
-            x=coord[0]
-            y=coord[1]
-            z=coord[2]
-            x_min=x-error
-            x_max=x+error
-            y_min=y-error
-            y_max=y+error
-            z_min=z-error
-            z_max=z+error
-            x_range = range(x_min, x_max, 1)
-            y_range = range(y_min, y_max, 1)
-            z_range = range(z_min, z_max, 1)
-            ##Check range in case it's close by
-            tuple_range = list(itertools.product(x_range, y_range, z_range))
-            for i in tuple_range:
-                if tuple(i) in mask_coords:
-                    neighbors.append(i)
-                    print(str(coord) + ' is within a + or - ' + str(error) + ' voxel neighborhood...')
-                    break
-            if len(neighbors)==0:
-                bad_lab = label_names[coords_vox.index(coord)]
-                label_names_rem.append(bad_lab)
-                masked_coords.append(coord)
-                indices.append(ix-1)
-                print('Removing coordinate: ' + str(coord) + ' with label: ' + str(bad_lab) + ' since it falls outside of mask...')
-        else:
-            print(str(coord) + ' falls within mask...')
-            continue
-    for index in sorted(indices, reverse=True):
-        del coords[index]
-        del label_names[index]
+        bad_coord = check_neighborhood(coord, mask_coords)
+        bad_coords.append(bad_coord)
+    bad_coords = [x for x in bad_coords if x is not None]
+
+    #if __name__ == '__main__':
+        #number_processes = (multiprocessing.cpu_count())
+        #pool = multiprocessing.Pool(int(number_processes))
+        #coord = coords_vox
+        #result = pool.map_async(check_neighborhood, coord)
+        #pool.close()
+        #pool.join()
+    #bad_coords = [x for x in result.get() if x is not None]
+
+    indices=[]
+    for bad_coord in bad_coords:
+        indices.append(coords_vox.index(bad_coord))
+
+    for ix in sorted(indices, reverse=True):
+        print('Removing: ' + str(label_names[ix]) + ' at ' + str(coords[ix]))
+        del label_names[ix]
+        del coords[ix]
     return(coords, label_names)
 
 def coord_masker_with_tuples(mask, coords):
