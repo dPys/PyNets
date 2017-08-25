@@ -67,11 +67,11 @@ def normalize(W, copy=True):
     return W
 
 def density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh, dir_path):
+    thr=0.0
     [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path, thr)
     conn_matrix = normalize(conn_matrix)
     np.fill_diagonal(conn_matrix, 0)
     i = 1
-    thr=0.0
     thr_max=0.40
     G=nx.from_numpy_matrix(conn_matrix)
     density=nx.density(G)
@@ -84,7 +84,9 @@ def density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh
         print('Iteratively thresholding -- Iteration ' + str(i) + ' -- with absolute thresh: ' + str(thr) + ' and Density: ' + str(density) + '...')
         i = i + 1
     edge_threshold = str(float(thr)*100) +'%'
-    return(conn_matrix, est_path, edge_threshold, thr)
+    est_path2 = est_path.split('_0.')[0] + '_' + str(dens_thresh) + '.txt'
+    os.rename(est_path, est_path2)
+    return(conn_matrix, est_path2, edge_threshold, dens_thresh)
 
 def adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat_path, dir_path):
     import collections

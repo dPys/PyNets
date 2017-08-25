@@ -92,7 +92,7 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, no
     elif dens_thresh is None:
         edge_threshold = str(float(thr)*100) +'%'
         [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_parcels, conn_model, NETWORK, ID, dir_path, thr)
-        conn_matrix = thresholding.threshold_proportional(conn_matrix, thr)
+        conn_matrix = thresholding.threshold_proportional(conn_matrix, float(thr), dir_path)
         conn_matrix = thresholding.normalize(conn_matrix)
     elif dens_thresh is not None:
         [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_parcels, conn_model, NETWORK, ID, dens_thresh, dir_path)
@@ -108,7 +108,7 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, no
         else:
             out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
             niplot.plot_connectome(conn_matrix, coords, title=atlast_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
-    return est_path
+    return est_path, thr
 
 def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch):
     nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
@@ -152,7 +152,7 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, no
     elif dens_thresh is None:
         edge_threshold = str(float(thr)*100) +'%'
         [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path, thr)
-        conn_matrix = thresholding.threshold_proportional(conn_matrix, thr, dir_path)
+        conn_matrix = thresholding.threshold_proportional(conn_matrix, float(thr), dir_path)
         conn_matrix = thresholding.normalize(conn_matrix)
     elif dens_thresh is not None:
         [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh, dir_path)
@@ -167,7 +167,7 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, no
         else:
             out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_connectome_viz.png'
             niplot.plot_connectome(conn_matrix, coords, title=atlas_name, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
-    return est_path
+    return est_path, thr
 
 def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch):
     nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
@@ -328,7 +328,7 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
     elif dens_thresh is None:
         edge_threshold = str(float(thr)*100) +'%'
         [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path, thr)
-        conn_matrix = thresholding.threshold_proportional(conn_matrix, thr, dir_path)
+        conn_matrix = thresholding.threshold_proportional(conn_matrix, float(thr), dir_path)
         conn_matrix = thresholding.normalize(conn_matrix)
     elif dens_thresh is not None:
         [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh, dir_path)
@@ -341,4 +341,4 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
         title = "Connectivity Projected on the " + NETWORK
         out_path_fig=dir_path + '/' + ID + '_' + NETWORK + '_connectome_plot.png'
         niplot.plot_connectome(conn_matrix, net_coords, edge_threshold=edge_threshold, title=title, display_mode='lyrz', output_file=out_path_fig)
-    return(est_path, thr)
+    return est_path, thr

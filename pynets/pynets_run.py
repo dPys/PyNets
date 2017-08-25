@@ -81,6 +81,10 @@ if __name__ == '__main__':
         default=False,
         action='store_true',
         help='Optionally use this flag if you wish to iterate your pynets run over a range of proportional thresholds from 0.99 to 0.90')
+    parser.add_argument('-md',
+        default=False,
+        action='store_true',
+        help='Optionally use this flag if you wish to iterate your pynets run over a range of densities from 0.1 to 0.4')
     args = parser.parse_args()
 
     ###Set Arguments to global variables###
@@ -100,6 +104,7 @@ if __name__ == '__main__':
     plot_switch=args.plt
     multi_atlas=args.ma
     multi_thr=args.mt
+    multi_dens=args.md
     #######################################
 
     ##Check required inputs for existence, and configure run
@@ -118,7 +123,13 @@ if __name__ == '__main__':
         thr=float(thr)
     if multi_thr==True:
         dens_thresh=None
-        adapt_thresh=None
+        adapt_thresh=False
+    if multi_dens==True:
+        dens_thresh=None
+        adapt_thresh=False
+    if multi_dens==True and multi_thr==True:
+        print('Error: Cannot iterate across both multiple densities and multiple proportional thresholds!\nUse either the -mt flag or the -md flag, but not both')
+        sys.exit(0)
 
     ##Print inputs verbosely
     print("\n\n\n" + "------------------------------------------------------------------------")
@@ -178,17 +189,17 @@ if __name__ == '__main__':
 
         ##Case 1: Whole-brain connectome with nilearn coord atlas
         if '.nii' in input_file and parlistfile == None and NETWORK == None and atlas_select not in nilearn_atlases:
-            est_path = workflows.wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch)
+            [est_path, thr] = workflows.wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch)
 
         ##Case 2: Whole-brain connectome with user-specified atlas or nilearn atlas img
         elif '.nii' in input_file and NETWORK == None and (parlistfile != None or atlas_select in nilearn_atlases):
-            est_path = workflows.wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch)
+            [est_path, thr] = workflows.wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch)
 
         ##Case 3: RSN connectome with nilearn atlas or user-specified atlas
         elif '.nii' in input_file and NETWORK != None:
-            est_path = workflows.network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch)
+            [est_path, thr] = workflows.network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch)
 
-        return est_path
+        return est_path, thr
 
     ##Extract network metrics interface
     def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
@@ -450,9 +461,9 @@ if __name__ == '__main__':
         ##Save results to csv
         if 'inv' in est_path1:
             if NETWORK != None:
-                out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_mets_inv_sps_cov_' + str(thr) + '.csv'
+                out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_mets_sps_cov_' + str(thr) + '.csv'
             else:
-                out_path = dir_path + '/' + ID + '_net_mets_inv_sps_cov_' + str(thr) + '.csv'
+                out_path = dir_path + '/' + ID + '_net_mets_sps_cov_' + str(thr) + '.csv'
         else:
             if NETWORK != None:
                 out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_mets_corr_' + str(thr) + '.csv'
@@ -515,7 +526,7 @@ if __name__ == '__main__':
         df = df[cols_ID]
         df['id'] = df['id'].astype('object')
         df['id'].values[0] = ID
-        out_file = csv_loc.replace('.', '')[:-3] + '_' + ID
+        out_file = csv_loc.split('.csv')[0]
         df.to_pickle(out_file)
         return(out_file)
 
@@ -571,10 +582,15 @@ if __name__ == '__main__':
     imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'NETWORK', 'node_size', 'mask', 'thr', 'parlistfile', 'all_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch'], output_names = ['est_path', 'thr'], function=workflow_selector, imports=import_list), name = "imp_est")
     if multi_thr==True:
         print('Iterating pipeline across multiple thresholds...')
-        #imp_est.iterables = ("thr", ['0.99', '0.98', '0.97', '0.96', '0.95', '0.94', '0.93', '0.92', '0.91', '0.90'])
+        iter_thresh = [str(i) for i in np.round(np.arange(0.90, 0.99, 0.01),decimals=2).tolist()]
+        imp_est.iterables = ("thr", iter_thresh)
     if multi_atlas==True:
         print('Iterating pipeline across multiple atlases...')
-        #imp_est.iterables = ("atlas_select", ['coords_power_2011', 'coords_dosenbach_2010', 'atlas_destrieux_2009', 'atlas_aal'])
+        imp_est.iterables = ("atlas_select", ['coords_power_2011', 'coords_dosenbach_2010', 'atlas_destrieux_2009', 'atlas_aal'])
+    if multi_dens==True:
+        print('Iterating pipeline across multiple target densities...')
+        iter_abs_thresh = [str(i) for i in np.round(np.arange(0.10, 0.40, 0.01),decimals=2).tolist()]
+        imp_est.iterables = ("dens_thresh", iter_abs_thresh)
     net_mets_node = pe.Node(ExtractNetStats(), name = "ExtractNetStats")
     export_to_pandas_node = pe.Node(Export2Pandas(), name = "export_to_pandas")
 
