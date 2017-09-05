@@ -89,256 +89,12 @@
                 29
             ],
             "total": 3
-        },
-        {
-            "name": "Group_00011",
-            "procs": [
-                30,
-                31,
-                32
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00012",
-            "procs": [
-                33,
-                34,
-                35
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00013",
-            "procs": [
-                36,
-                37,
-                38
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00014",
-            "procs": [
-                39,
-                40,
-                41
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00015",
-            "procs": [
-                42,
-                43,
-                44
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00016",
-            "procs": [
-                45,
-                46,
-                47
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00017",
-            "procs": [
-                48,
-                49,
-                50
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00018",
-            "procs": [
-                51,
-                52,
-                53
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00019",
-            "procs": [
-                54,
-                55,
-                56
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00020",
-            "procs": [
-                57,
-                58,
-                59
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00021",
-            "procs": [
-                60,
-                61,
-                62
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00022",
-            "procs": [
-                63,
-                64,
-                65
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00023",
-            "procs": [
-                66,
-                67,
-                68
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00024",
-            "procs": [
-                69,
-                70,
-                71
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00025",
-            "procs": [
-                72,
-                73,
-                74
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00026",
-            "procs": [
-                75,
-                76,
-                77
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00027",
-            "procs": [
-                78,
-                79,
-                80
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00028",
-            "procs": [
-                81,
-                82,
-                83
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00029",
-            "procs": [
-                84,
-                85,
-                86
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00030",
-            "procs": [
-                87,
-                88,
-                89
-            ],
-            "total": 3
-        },
-        {
-            "name": "Group_00031",
-            "procs": [
-                90,
-                91,
-                92
-            ],
-            "total": 3
         }
     ],
     "links": [
         {
-            "source": 0,
-            "target": 1,
-            "value": 1
-        },
-        {
             "source": 1,
             "target": 2,
-            "value": 1
-        },
-        {
-            "source": 3,
-            "target": 4,
-            "value": 1
-        },
-        {
-            "source": 4,
-            "target": 5,
-            "value": 1
-        },
-        {
-            "source": 6,
-            "target": 7,
-            "value": 1
-        },
-        {
-            "source": 7,
-            "target": 8,
-            "value": 1
-        },
-        {
-            "source": 9,
-            "target": 10,
-            "value": 1
-        },
-        {
-            "source": 10,
-            "target": 11,
-            "value": 1
-        },
-        {
-            "source": 12,
-            "target": 13,
-            "value": 1
-        },
-        {
-            "source": 13,
-            "target": 14,
-            "value": 1
-        },
-        {
-            "source": 15,
-            "target": 16,
-            "value": 1
-        },
-        {
-            "source": 16,
-            "target": 17,
             "value": 1
         },
         {
@@ -347,13 +103,23 @@
             "value": 1
         },
         {
-            "source": 19,
-            "target": 20,
+            "source": 7,
+            "target": 8,
             "value": 1
         },
         {
-            "source": 21,
-            "target": 22,
+            "source": 10,
+            "target": 11,
+            "value": 1
+        },
+        {
+            "source": 0,
+            "target": 1,
+            "value": 1
+        },
+        {
+            "source": 6,
+            "target": 7,
             "value": 1
         },
         {
@@ -362,8 +128,43 @@
             "value": 1
         },
         {
-            "source": 24,
-            "target": 25,
+            "source": 16,
+            "target": 17,
+            "value": 1
+        },
+        {
+            "source": 19,
+            "target": 20,
+            "value": 1
+        },
+        {
+            "source": 15,
+            "target": 16,
+            "value": 1
+        },
+        {
+            "source": 4,
+            "target": 5,
+            "value": 1
+        },
+        {
+            "source": 21,
+            "target": 22,
+            "value": 1
+        },
+        {
+            "source": 3,
+            "target": 4,
+            "value": 1
+        },
+        {
+            "source": 13,
+            "target": 14,
+            "value": 1
+        },
+        {
+            "source": 12,
+            "target": 13,
             "value": 1
         },
         {
@@ -372,223 +173,23 @@
             "value": 1
         },
         {
-            "source": 27,
-            "target": 28,
-            "value": 1
-        },
-        {
             "source": 28,
             "target": 29,
             "value": 1
         },
         {
-            "source": 30,
-            "target": 31,
+            "source": 9,
+            "target": 10,
             "value": 1
         },
         {
-            "source": 31,
-            "target": 32,
+            "source": 24,
+            "target": 25,
             "value": 1
         },
         {
-            "source": 33,
-            "target": 34,
-            "value": 1
-        },
-        {
-            "source": 34,
-            "target": 35,
-            "value": 1
-        },
-        {
-            "source": 36,
-            "target": 37,
-            "value": 1
-        },
-        {
-            "source": 37,
-            "target": 38,
-            "value": 1
-        },
-        {
-            "source": 39,
-            "target": 40,
-            "value": 1
-        },
-        {
-            "source": 40,
-            "target": 41,
-            "value": 1
-        },
-        {
-            "source": 42,
-            "target": 43,
-            "value": 1
-        },
-        {
-            "source": 43,
-            "target": 44,
-            "value": 1
-        },
-        {
-            "source": 45,
-            "target": 46,
-            "value": 1
-        },
-        {
-            "source": 46,
-            "target": 47,
-            "value": 1
-        },
-        {
-            "source": 48,
-            "target": 49,
-            "value": 1
-        },
-        {
-            "source": 49,
-            "target": 50,
-            "value": 1
-        },
-        {
-            "source": 51,
-            "target": 52,
-            "value": 1
-        },
-        {
-            "source": 52,
-            "target": 53,
-            "value": 1
-        },
-        {
-            "source": 54,
-            "target": 55,
-            "value": 1
-        },
-        {
-            "source": 55,
-            "target": 56,
-            "value": 1
-        },
-        {
-            "source": 57,
-            "target": 58,
-            "value": 1
-        },
-        {
-            "source": 58,
-            "target": 59,
-            "value": 1
-        },
-        {
-            "source": 60,
-            "target": 61,
-            "value": 1
-        },
-        {
-            "source": 61,
-            "target": 62,
-            "value": 1
-        },
-        {
-            "source": 63,
-            "target": 64,
-            "value": 1
-        },
-        {
-            "source": 64,
-            "target": 65,
-            "value": 1
-        },
-        {
-            "source": 66,
-            "target": 67,
-            "value": 1
-        },
-        {
-            "source": 67,
-            "target": 68,
-            "value": 1
-        },
-        {
-            "source": 69,
-            "target": 70,
-            "value": 1
-        },
-        {
-            "source": 70,
-            "target": 71,
-            "value": 1
-        },
-        {
-            "source": 72,
-            "target": 73,
-            "value": 1
-        },
-        {
-            "source": 73,
-            "target": 74,
-            "value": 1
-        },
-        {
-            "source": 75,
-            "target": 76,
-            "value": 1
-        },
-        {
-            "source": 76,
-            "target": 77,
-            "value": 1
-        },
-        {
-            "source": 78,
-            "target": 79,
-            "value": 1
-        },
-        {
-            "source": 79,
-            "target": 80,
-            "value": 1
-        },
-        {
-            "source": 81,
-            "target": 82,
-            "value": 1
-        },
-        {
-            "source": 82,
-            "target": 83,
-            "value": 1
-        },
-        {
-            "source": 84,
-            "target": 85,
-            "value": 1
-        },
-        {
-            "source": 85,
-            "target": 86,
-            "value": 1
-        },
-        {
-            "source": 87,
-            "target": 88,
-            "value": 1
-        },
-        {
-            "source": 88,
-            "target": 89,
-            "value": 1
-        },
-        {
-            "source": 90,
-            "target": 91,
-            "value": 1
-        },
-        {
-            "source": 91,
-            "target": 92,
+            "source": 27,
+            "target": 28,
             "value": 1
         }
     ],
@@ -597,560 +198,182 @@
         {
             "group": 1,
             "name": "0_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpltx5c7t9/PyNets_WORKFLOW/_dens_thresh_0.1/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpltx5c7t9/PyNets_WORKFLOW/_dens_thresh_0.1/imp_est/result_imp_est.pklz"
+            "report": "/tmp/tmpSCpgOG/PyNets_WORKFLOW/_thr_0.87/imp_est/_report/report.rst",
+            "result": "/tmp/tmpSCpgOG/PyNets_WORKFLOW/_thr_0.87/imp_est/result_imp_est.pklz"
         },
         {
             "group": 1,
             "name": "1_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp_05iegh6/PyNets_WORKFLOW/_dens_thresh_0.1/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp_05iegh6/PyNets_WORKFLOW/_dens_thresh_0.1/ExtractNetStats/result_ExtractNetStats.pklz"
+            "report": "/tmp/tmpkJ0wLZ/PyNets_WORKFLOW/_thr_0.87/ExtractNetStats/_report/report.rst",
+            "result": "/tmp/tmpkJ0wLZ/PyNets_WORKFLOW/_thr_0.87/ExtractNetStats/result_ExtractNetStats.pklz"
         },
         {
             "group": 1,
             "name": "2_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpzldlw1ok/PyNets_WORKFLOW/_dens_thresh_0.1/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpzldlw1ok/PyNets_WORKFLOW/_dens_thresh_0.1/export_to_pandas/result_export_to_pandas.pklz"
+            "report": "/tmp/tmpOoMpSG/PyNets_WORKFLOW/_thr_0.87/export_to_pandas/_report/report.rst",
+            "result": "/tmp/tmpOoMpSG/PyNets_WORKFLOW/_thr_0.87/export_to_pandas/result_export_to_pandas.pklz"
         },
         {
             "group": 2,
             "name": "3_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpx0yenbum/PyNets_WORKFLOW/_dens_thresh_0.11/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpx0yenbum/PyNets_WORKFLOW/_dens_thresh_0.11/imp_est/result_imp_est.pklz"
+            "report": "/tmp/tmpvguG3t/PyNets_WORKFLOW/_thr_0.84/imp_est/_report/report.rst",
+            "result": "/tmp/tmpvguG3t/PyNets_WORKFLOW/_thr_0.84/imp_est/result_imp_est.pklz"
         },
         {
             "group": 2,
             "name": "4_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp36w5_gsj/PyNets_WORKFLOW/_dens_thresh_0.11/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp36w5_gsj/PyNets_WORKFLOW/_dens_thresh_0.11/ExtractNetStats/result_ExtractNetStats.pklz"
+            "report": "/tmp/tmp_ww9qp/PyNets_WORKFLOW/_thr_0.84/ExtractNetStats/_report/report.rst",
+            "result": "/tmp/tmp_ww9qp/PyNets_WORKFLOW/_thr_0.84/ExtractNetStats/result_ExtractNetStats.pklz"
         },
         {
             "group": 2,
             "name": "5_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpcxgu3bf2/PyNets_WORKFLOW/_dens_thresh_0.11/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpcxgu3bf2/PyNets_WORKFLOW/_dens_thresh_0.11/export_to_pandas/result_export_to_pandas.pklz"
+            "report": "/tmp/tmpLq14a4/PyNets_WORKFLOW/_thr_0.84/export_to_pandas/_report/report.rst",
+            "result": "/tmp/tmpLq14a4/PyNets_WORKFLOW/_thr_0.84/export_to_pandas/result_export_to_pandas.pklz"
         },
         {
             "group": 3,
             "name": "6_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpazn2cdqn/PyNets_WORKFLOW/_dens_thresh_0.12/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpazn2cdqn/PyNets_WORKFLOW/_dens_thresh_0.12/imp_est/result_imp_est.pklz"
+            "report": "/tmp/tmp3wXQCk/PyNets_WORKFLOW/_thr_0.82/imp_est/_report/report.rst",
+            "result": "/tmp/tmp3wXQCk/PyNets_WORKFLOW/_thr_0.82/imp_est/result_imp_est.pklz"
         },
         {
             "group": 3,
             "name": "7_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpxxhs1n73/PyNets_WORKFLOW/_dens_thresh_0.12/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpxxhs1n73/PyNets_WORKFLOW/_dens_thresh_0.12/ExtractNetStats/result_ExtractNetStats.pklz"
+            "report": "/tmp/tmpfw6Y8s/PyNets_WORKFLOW/_thr_0.82/ExtractNetStats/_report/report.rst",
+            "result": "/tmp/tmpfw6Y8s/PyNets_WORKFLOW/_thr_0.82/ExtractNetStats/result_ExtractNetStats.pklz"
         },
         {
             "group": 3,
             "name": "8_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpq_h9skhe/PyNets_WORKFLOW/_dens_thresh_0.12/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpq_h9skhe/PyNets_WORKFLOW/_dens_thresh_0.12/export_to_pandas/result_export_to_pandas.pklz"
+            "report": "/tmp/tmpEIl3N8/PyNets_WORKFLOW/_thr_0.82/export_to_pandas/_report/report.rst",
+            "result": "/tmp/tmpEIl3N8/PyNets_WORKFLOW/_thr_0.82/export_to_pandas/result_export_to_pandas.pklz"
         },
         {
             "group": 4,
             "name": "9_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp2oje3p2x/PyNets_WORKFLOW/_dens_thresh_0.13/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp2oje3p2x/PyNets_WORKFLOW/_dens_thresh_0.13/imp_est/result_imp_est.pklz"
+            "report": "/tmp/tmpnkhsuQ/PyNets_WORKFLOW/_thr_0.88/imp_est/_report/report.rst",
+            "result": "/tmp/tmpnkhsuQ/PyNets_WORKFLOW/_thr_0.88/imp_est/result_imp_est.pklz"
         },
         {
             "group": 4,
             "name": "10_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpwww4twdm/PyNets_WORKFLOW/_dens_thresh_0.13/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpwww4twdm/PyNets_WORKFLOW/_dens_thresh_0.13/ExtractNetStats/result_ExtractNetStats.pklz"
+            "report": "/tmp/tmpfjSd4Y/PyNets_WORKFLOW/_thr_0.88/ExtractNetStats/_report/report.rst",
+            "result": "/tmp/tmpfjSd4Y/PyNets_WORKFLOW/_thr_0.88/ExtractNetStats/result_ExtractNetStats.pklz"
         },
         {
             "group": 4,
             "name": "11_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp4i2xuhhh/PyNets_WORKFLOW/_dens_thresh_0.13/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp4i2xuhhh/PyNets_WORKFLOW/_dens_thresh_0.13/export_to_pandas/result_export_to_pandas.pklz"
+            "report": "/tmp/tmpfwFbbf/PyNets_WORKFLOW/_thr_0.88/export_to_pandas/_report/report.rst",
+            "result": "/tmp/tmpfwFbbf/PyNets_WORKFLOW/_thr_0.88/export_to_pandas/result_export_to_pandas.pklz"
         },
         {
             "group": 5,
             "name": "12_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp_v32gocr/PyNets_WORKFLOW/_dens_thresh_0.14/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp_v32gocr/PyNets_WORKFLOW/_dens_thresh_0.14/imp_est/result_imp_est.pklz"
+            "report": "/tmp/tmpBq1Phm/PyNets_WORKFLOW/_thr_0.8/imp_est/_report/report.rst",
+            "result": "/tmp/tmpBq1Phm/PyNets_WORKFLOW/_thr_0.8/imp_est/result_imp_est.pklz"
         },
         {
             "group": 5,
             "name": "13_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpglxpkt9y/PyNets_WORKFLOW/_dens_thresh_0.14/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpglxpkt9y/PyNets_WORKFLOW/_dens_thresh_0.14/ExtractNetStats/result_ExtractNetStats.pklz"
+            "report": "/tmp/tmpzMkkyC/PyNets_WORKFLOW/_thr_0.8/ExtractNetStats/_report/report.rst",
+            "result": "/tmp/tmpzMkkyC/PyNets_WORKFLOW/_thr_0.8/ExtractNetStats/result_ExtractNetStats.pklz"
         },
         {
             "group": 5,
             "name": "14_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp2jmcsjwa/PyNets_WORKFLOW/_dens_thresh_0.14/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp2jmcsjwa/PyNets_WORKFLOW/_dens_thresh_0.14/export_to_pandas/result_export_to_pandas.pklz"
+            "report": "/tmp/tmpWArUin/PyNets_WORKFLOW/_thr_0.8/export_to_pandas/_report/report.rst",
+            "result": "/tmp/tmpWArUin/PyNets_WORKFLOW/_thr_0.8/export_to_pandas/result_export_to_pandas.pklz"
         },
         {
             "group": 6,
             "name": "15_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpnjlkzr47/PyNets_WORKFLOW/_dens_thresh_0.15/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpnjlkzr47/PyNets_WORKFLOW/_dens_thresh_0.15/imp_est/result_imp_est.pklz"
+            "report": "/tmp/tmpsSRf3l/PyNets_WORKFLOW/_thr_0.83/imp_est/_report/report.rst",
+            "result": "/tmp/tmpsSRf3l/PyNets_WORKFLOW/_thr_0.83/imp_est/result_imp_est.pklz"
         },
         {
             "group": 6,
             "name": "16_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpie4i28ys/PyNets_WORKFLOW/_dens_thresh_0.15/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpie4i28ys/PyNets_WORKFLOW/_dens_thresh_0.15/ExtractNetStats/result_ExtractNetStats.pklz"
+            "report": "/tmp/tmp79tybX/PyNets_WORKFLOW/_thr_0.83/ExtractNetStats/_report/report.rst",
+            "result": "/tmp/tmp79tybX/PyNets_WORKFLOW/_thr_0.83/ExtractNetStats/result_ExtractNetStats.pklz"
         },
         {
             "group": 6,
             "name": "17_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp9k8gp6jn/PyNets_WORKFLOW/_dens_thresh_0.15/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp9k8gp6jn/PyNets_WORKFLOW/_dens_thresh_0.15/export_to_pandas/result_export_to_pandas.pklz"
+            "report": "/tmp/tmpRSOXfw/PyNets_WORKFLOW/_thr_0.83/export_to_pandas/_report/report.rst",
+            "result": "/tmp/tmpRSOXfw/PyNets_WORKFLOW/_thr_0.83/export_to_pandas/result_export_to_pandas.pklz"
         },
         {
             "group": 7,
             "name": "18_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpfkjeeq1z/PyNets_WORKFLOW/_dens_thresh_0.16/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpfkjeeq1z/PyNets_WORKFLOW/_dens_thresh_0.16/imp_est/result_imp_est.pklz"
+            "report": "/tmp/tmpq7inOa/PyNets_WORKFLOW/_thr_0.89/imp_est/_report/report.rst",
+            "result": "/tmp/tmpq7inOa/PyNets_WORKFLOW/_thr_0.89/imp_est/result_imp_est.pklz"
         },
         {
             "group": 7,
             "name": "19_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp4g2f1sqg/PyNets_WORKFLOW/_dens_thresh_0.16/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp4g2f1sqg/PyNets_WORKFLOW/_dens_thresh_0.16/ExtractNetStats/result_ExtractNetStats.pklz"
+            "report": "/tmp/tmpnT59ME/PyNets_WORKFLOW/_thr_0.89/ExtractNetStats/_report/report.rst",
+            "result": "/tmp/tmpnT59ME/PyNets_WORKFLOW/_thr_0.89/ExtractNetStats/result_ExtractNetStats.pklz"
         },
         {
             "group": 7,
             "name": "20_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpgft9k8jt/PyNets_WORKFLOW/_dens_thresh_0.16/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpgft9k8jt/PyNets_WORKFLOW/_dens_thresh_0.16/export_to_pandas/result_export_to_pandas.pklz"
+            "report": "/tmp/tmpToNybo/PyNets_WORKFLOW/_thr_0.89/export_to_pandas/_report/report.rst",
+            "result": "/tmp/tmpToNybo/PyNets_WORKFLOW/_thr_0.89/export_to_pandas/result_export_to_pandas.pklz"
         },
         {
             "group": 8,
             "name": "21_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpr2y8al7b/PyNets_WORKFLOW/_dens_thresh_0.17/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpr2y8al7b/PyNets_WORKFLOW/_dens_thresh_0.17/imp_est/result_imp_est.pklz"
+            "report": "/tmp/tmpgT8CF1/PyNets_WORKFLOW/_thr_0.85/imp_est/_report/report.rst",
+            "result": "/tmp/tmpgT8CF1/PyNets_WORKFLOW/_thr_0.85/imp_est/result_imp_est.pklz"
         },
         {
             "group": 8,
             "name": "22_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpdumkkndj/PyNets_WORKFLOW/_dens_thresh_0.17/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpdumkkndj/PyNets_WORKFLOW/_dens_thresh_0.17/ExtractNetStats/result_ExtractNetStats.pklz"
+            "report": "/tmp/tmpK1XjrS/PyNets_WORKFLOW/_thr_0.85/ExtractNetStats/_report/report.rst",
+            "result": "/tmp/tmpK1XjrS/PyNets_WORKFLOW/_thr_0.85/ExtractNetStats/result_ExtractNetStats.pklz"
         },
         {
             "group": 8,
             "name": "23_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpdjxoyjt6/PyNets_WORKFLOW/_dens_thresh_0.17/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpdjxoyjt6/PyNets_WORKFLOW/_dens_thresh_0.17/export_to_pandas/result_export_to_pandas.pklz"
+            "report": "/tmp/tmpxGisqT/PyNets_WORKFLOW/_thr_0.85/export_to_pandas/_report/report.rst",
+            "result": "/tmp/tmpxGisqT/PyNets_WORKFLOW/_thr_0.85/export_to_pandas/result_export_to_pandas.pklz"
         },
         {
             "group": 9,
             "name": "24_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpfits024v/PyNets_WORKFLOW/_dens_thresh_0.18/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpfits024v/PyNets_WORKFLOW/_dens_thresh_0.18/imp_est/result_imp_est.pklz"
+            "report": "/tmp/tmpSwyTKz/PyNets_WORKFLOW/_thr_0.86/imp_est/_report/report.rst",
+            "result": "/tmp/tmpSwyTKz/PyNets_WORKFLOW/_thr_0.86/imp_est/result_imp_est.pklz"
         },
         {
             "group": 9,
             "name": "25_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpys3msx99/PyNets_WORKFLOW/_dens_thresh_0.18/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpys3msx99/PyNets_WORKFLOW/_dens_thresh_0.18/ExtractNetStats/result_ExtractNetStats.pklz"
+            "report": "/tmp/tmpeMOcbD/PyNets_WORKFLOW/_thr_0.86/ExtractNetStats/_report/report.rst",
+            "result": "/tmp/tmpeMOcbD/PyNets_WORKFLOW/_thr_0.86/ExtractNetStats/result_ExtractNetStats.pklz"
         },
         {
             "group": 9,
             "name": "26_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpkskmk2a4/PyNets_WORKFLOW/_dens_thresh_0.18/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpkskmk2a4/PyNets_WORKFLOW/_dens_thresh_0.18/export_to_pandas/result_export_to_pandas.pklz"
+            "report": "/tmp/tmp90d5Jn/PyNets_WORKFLOW/_thr_0.86/export_to_pandas/_report/report.rst",
+            "result": "/tmp/tmp90d5Jn/PyNets_WORKFLOW/_thr_0.86/export_to_pandas/result_export_to_pandas.pklz"
         },
         {
             "group": 10,
             "name": "27_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpxs6g13_w/PyNets_WORKFLOW/_dens_thresh_0.19/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpxs6g13_w/PyNets_WORKFLOW/_dens_thresh_0.19/imp_est/result_imp_est.pklz"
+            "report": "/tmp/tmpwLK_V0/PyNets_WORKFLOW/_thr_0.81/imp_est/_report/report.rst",
+            "result": "/tmp/tmpwLK_V0/PyNets_WORKFLOW/_thr_0.81/imp_est/result_imp_est.pklz"
         },
         {
             "group": 10,
             "name": "28_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp9xzrrumg/PyNets_WORKFLOW/_dens_thresh_0.19/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp9xzrrumg/PyNets_WORKFLOW/_dens_thresh_0.19/ExtractNetStats/result_ExtractNetStats.pklz"
+            "report": "/tmp/tmptj8xLl/PyNets_WORKFLOW/_thr_0.81/ExtractNetStats/_report/report.rst",
+            "result": "/tmp/tmptj8xLl/PyNets_WORKFLOW/_thr_0.81/ExtractNetStats/result_ExtractNetStats.pklz"
         },
         {
             "group": 10,
             "name": "29_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpas6ob7i5/PyNets_WORKFLOW/_dens_thresh_0.19/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpas6ob7i5/PyNets_WORKFLOW/_dens_thresh_0.19/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 11,
-            "name": "30_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpzjipnk7j/PyNets_WORKFLOW/_dens_thresh_0.2/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpzjipnk7j/PyNets_WORKFLOW/_dens_thresh_0.2/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 11,
-            "name": "31_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp4_wvp81x/PyNets_WORKFLOW/_dens_thresh_0.2/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp4_wvp81x/PyNets_WORKFLOW/_dens_thresh_0.2/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 11,
-            "name": "32_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpj3qd2n7y/PyNets_WORKFLOW/_dens_thresh_0.2/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpj3qd2n7y/PyNets_WORKFLOW/_dens_thresh_0.2/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 12,
-            "name": "33_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpx4b80tkl/PyNets_WORKFLOW/_dens_thresh_0.21/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpx4b80tkl/PyNets_WORKFLOW/_dens_thresh_0.21/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 12,
-            "name": "34_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp195t0o5q/PyNets_WORKFLOW/_dens_thresh_0.21/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp195t0o5q/PyNets_WORKFLOW/_dens_thresh_0.21/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 12,
-            "name": "35_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpi07xa43j/PyNets_WORKFLOW/_dens_thresh_0.21/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpi07xa43j/PyNets_WORKFLOW/_dens_thresh_0.21/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 13,
-            "name": "36_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpiodmd2p0/PyNets_WORKFLOW/_dens_thresh_0.22/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpiodmd2p0/PyNets_WORKFLOW/_dens_thresh_0.22/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 13,
-            "name": "37_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpw41i7v7n/PyNets_WORKFLOW/_dens_thresh_0.22/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpw41i7v7n/PyNets_WORKFLOW/_dens_thresh_0.22/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 13,
-            "name": "38_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpgfdun4el/PyNets_WORKFLOW/_dens_thresh_0.22/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpgfdun4el/PyNets_WORKFLOW/_dens_thresh_0.22/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 14,
-            "name": "39_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp4b7c2uti/PyNets_WORKFLOW/_dens_thresh_0.23/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp4b7c2uti/PyNets_WORKFLOW/_dens_thresh_0.23/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 14,
-            "name": "40_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp3ahx99bn/PyNets_WORKFLOW/_dens_thresh_0.23/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp3ahx99bn/PyNets_WORKFLOW/_dens_thresh_0.23/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 14,
-            "name": "41_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmph0p0f1f_/PyNets_WORKFLOW/_dens_thresh_0.23/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmph0p0f1f_/PyNets_WORKFLOW/_dens_thresh_0.23/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 15,
-            "name": "42_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpl4wyp25g/PyNets_WORKFLOW/_dens_thresh_0.24/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpl4wyp25g/PyNets_WORKFLOW/_dens_thresh_0.24/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 15,
-            "name": "43_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpnw02t0u_/PyNets_WORKFLOW/_dens_thresh_0.24/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpnw02t0u_/PyNets_WORKFLOW/_dens_thresh_0.24/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 15,
-            "name": "44_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpu5qhyyi5/PyNets_WORKFLOW/_dens_thresh_0.24/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpu5qhyyi5/PyNets_WORKFLOW/_dens_thresh_0.24/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 16,
-            "name": "45_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpoc4igusx/PyNets_WORKFLOW/_dens_thresh_0.25/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpoc4igusx/PyNets_WORKFLOW/_dens_thresh_0.25/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 16,
-            "name": "46_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp_6_bv6u1/PyNets_WORKFLOW/_dens_thresh_0.25/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp_6_bv6u1/PyNets_WORKFLOW/_dens_thresh_0.25/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 16,
-            "name": "47_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpfqj4a9qh/PyNets_WORKFLOW/_dens_thresh_0.25/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpfqj4a9qh/PyNets_WORKFLOW/_dens_thresh_0.25/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 17,
-            "name": "48_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpz4nflqli/PyNets_WORKFLOW/_dens_thresh_0.26/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpz4nflqli/PyNets_WORKFLOW/_dens_thresh_0.26/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 17,
-            "name": "49_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpza6p5gen/PyNets_WORKFLOW/_dens_thresh_0.26/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpza6p5gen/PyNets_WORKFLOW/_dens_thresh_0.26/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 17,
-            "name": "50_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpvkhwp9oj/PyNets_WORKFLOW/_dens_thresh_0.26/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpvkhwp9oj/PyNets_WORKFLOW/_dens_thresh_0.26/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 18,
-            "name": "51_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpm4nb_i77/PyNets_WORKFLOW/_dens_thresh_0.27/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpm4nb_i77/PyNets_WORKFLOW/_dens_thresh_0.27/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 18,
-            "name": "52_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpsklgdmr3/PyNets_WORKFLOW/_dens_thresh_0.27/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpsklgdmr3/PyNets_WORKFLOW/_dens_thresh_0.27/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 18,
-            "name": "53_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpjf8inafg/PyNets_WORKFLOW/_dens_thresh_0.27/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpjf8inafg/PyNets_WORKFLOW/_dens_thresh_0.27/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 19,
-            "name": "54_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp4_p_ls81/PyNets_WORKFLOW/_dens_thresh_0.28/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp4_p_ls81/PyNets_WORKFLOW/_dens_thresh_0.28/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 19,
-            "name": "55_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmps79__iey/PyNets_WORKFLOW/_dens_thresh_0.28/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmps79__iey/PyNets_WORKFLOW/_dens_thresh_0.28/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 19,
-            "name": "56_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpjtff9c3h/PyNets_WORKFLOW/_dens_thresh_0.28/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpjtff9c3h/PyNets_WORKFLOW/_dens_thresh_0.28/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 20,
-            "name": "57_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp2bzxxysd/PyNets_WORKFLOW/_dens_thresh_0.29/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp2bzxxysd/PyNets_WORKFLOW/_dens_thresh_0.29/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 20,
-            "name": "58_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpkhsus0m3/PyNets_WORKFLOW/_dens_thresh_0.29/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpkhsus0m3/PyNets_WORKFLOW/_dens_thresh_0.29/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 20,
-            "name": "59_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpqcxn6uva/PyNets_WORKFLOW/_dens_thresh_0.29/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpqcxn6uva/PyNets_WORKFLOW/_dens_thresh_0.29/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 21,
-            "name": "60_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpagk2ksp_/PyNets_WORKFLOW/_dens_thresh_0.3/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpagk2ksp_/PyNets_WORKFLOW/_dens_thresh_0.3/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 21,
-            "name": "61_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpf6f1jv7r/PyNets_WORKFLOW/_dens_thresh_0.3/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpf6f1jv7r/PyNets_WORKFLOW/_dens_thresh_0.3/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 21,
-            "name": "62_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpty0c0kn0/PyNets_WORKFLOW/_dens_thresh_0.3/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpty0c0kn0/PyNets_WORKFLOW/_dens_thresh_0.3/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 22,
-            "name": "63_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmppxe9_bsc/PyNets_WORKFLOW/_dens_thresh_0.31/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmppxe9_bsc/PyNets_WORKFLOW/_dens_thresh_0.31/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 22,
-            "name": "64_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp66m2zz8v/PyNets_WORKFLOW/_dens_thresh_0.31/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp66m2zz8v/PyNets_WORKFLOW/_dens_thresh_0.31/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 22,
-            "name": "65_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpryu0_c1u/PyNets_WORKFLOW/_dens_thresh_0.31/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpryu0_c1u/PyNets_WORKFLOW/_dens_thresh_0.31/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 23,
-            "name": "66_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpj24itfx_/PyNets_WORKFLOW/_dens_thresh_0.32/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpj24itfx_/PyNets_WORKFLOW/_dens_thresh_0.32/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 23,
-            "name": "67_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmphotmt103/PyNets_WORKFLOW/_dens_thresh_0.32/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmphotmt103/PyNets_WORKFLOW/_dens_thresh_0.32/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 23,
-            "name": "68_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpb88g5ma3/PyNets_WORKFLOW/_dens_thresh_0.32/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpb88g5ma3/PyNets_WORKFLOW/_dens_thresh_0.32/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 24,
-            "name": "69_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp3bxt3njc/PyNets_WORKFLOW/_dens_thresh_0.33/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp3bxt3njc/PyNets_WORKFLOW/_dens_thresh_0.33/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 24,
-            "name": "70_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpkq7n6zn6/PyNets_WORKFLOW/_dens_thresh_0.33/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpkq7n6zn6/PyNets_WORKFLOW/_dens_thresh_0.33/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 24,
-            "name": "71_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpst8tltuo/PyNets_WORKFLOW/_dens_thresh_0.33/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpst8tltuo/PyNets_WORKFLOW/_dens_thresh_0.33/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 25,
-            "name": "72_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmphghow75a/PyNets_WORKFLOW/_dens_thresh_0.34/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmphghow75a/PyNets_WORKFLOW/_dens_thresh_0.34/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 25,
-            "name": "73_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpu75m_d8p/PyNets_WORKFLOW/_dens_thresh_0.34/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpu75m_d8p/PyNets_WORKFLOW/_dens_thresh_0.34/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 25,
-            "name": "74_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmptfe6vvuw/PyNets_WORKFLOW/_dens_thresh_0.34/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmptfe6vvuw/PyNets_WORKFLOW/_dens_thresh_0.34/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 26,
-            "name": "75_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpqqjk9vrf/PyNets_WORKFLOW/_dens_thresh_0.35/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpqqjk9vrf/PyNets_WORKFLOW/_dens_thresh_0.35/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 26,
-            "name": "76_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp2_3_py15/PyNets_WORKFLOW/_dens_thresh_0.35/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp2_3_py15/PyNets_WORKFLOW/_dens_thresh_0.35/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 26,
-            "name": "77_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpn53z32bm/PyNets_WORKFLOW/_dens_thresh_0.35/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpn53z32bm/PyNets_WORKFLOW/_dens_thresh_0.35/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 27,
-            "name": "78_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpgi1rua10/PyNets_WORKFLOW/_dens_thresh_0.36/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpgi1rua10/PyNets_WORKFLOW/_dens_thresh_0.36/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 27,
-            "name": "79_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpxqwmmddz/PyNets_WORKFLOW/_dens_thresh_0.36/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpxqwmmddz/PyNets_WORKFLOW/_dens_thresh_0.36/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 27,
-            "name": "80_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpqbqhcesq/PyNets_WORKFLOW/_dens_thresh_0.36/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpqbqhcesq/PyNets_WORKFLOW/_dens_thresh_0.36/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 28,
-            "name": "81_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpik066l_4/PyNets_WORKFLOW/_dens_thresh_0.37/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpik066l_4/PyNets_WORKFLOW/_dens_thresh_0.37/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 28,
-            "name": "82_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpz4u5irm1/PyNets_WORKFLOW/_dens_thresh_0.37/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpz4u5irm1/PyNets_WORKFLOW/_dens_thresh_0.37/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 28,
-            "name": "83_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp5kqr90ne/PyNets_WORKFLOW/_dens_thresh_0.37/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp5kqr90ne/PyNets_WORKFLOW/_dens_thresh_0.37/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 29,
-            "name": "84_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpx4ykg71l/PyNets_WORKFLOW/_dens_thresh_0.38/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpx4ykg71l/PyNets_WORKFLOW/_dens_thresh_0.38/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 29,
-            "name": "85_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpjssxb85q/PyNets_WORKFLOW/_dens_thresh_0.38/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpjssxb85q/PyNets_WORKFLOW/_dens_thresh_0.38/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 29,
-            "name": "86_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp6iti4dh5/PyNets_WORKFLOW/_dens_thresh_0.38/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp6iti4dh5/PyNets_WORKFLOW/_dens_thresh_0.38/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 30,
-            "name": "87_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpjzw4x70y/PyNets_WORKFLOW/_dens_thresh_0.39/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpjzw4x70y/PyNets_WORKFLOW/_dens_thresh_0.39/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 30,
-            "name": "88_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpnaf8zg_4/PyNets_WORKFLOW/_dens_thresh_0.39/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpnaf8zg_4/PyNets_WORKFLOW/_dens_thresh_0.39/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 30,
-            "name": "89_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp5pnabzlv/PyNets_WORKFLOW/_dens_thresh_0.39/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp5pnabzlv/PyNets_WORKFLOW/_dens_thresh_0.39/export_to_pandas/result_export_to_pandas.pklz"
-        },
-        {
-            "group": 31,
-            "name": "90_imp_est",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpjend4u9p/PyNets_WORKFLOW/_dens_thresh_0.4/imp_est/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpjend4u9p/PyNets_WORKFLOW/_dens_thresh_0.4/imp_est/result_imp_est.pklz"
-        },
-        {
-            "group": 31,
-            "name": "91_ExtractNetStats",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpb7t7g12o/PyNets_WORKFLOW/_dens_thresh_0.4/ExtractNetStats/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpb7t7g12o/PyNets_WORKFLOW/_dens_thresh_0.4/ExtractNetStats/result_ExtractNetStats.pklz"
-        },
-        {
-            "group": 31,
-            "name": "92_export_to_pandas",
-            "report": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp_0rliz1n/PyNets_WORKFLOW/_dens_thresh_0.4/export_to_pandas/_report/report.rst",
-            "result": "/var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmp_0rliz1n/PyNets_WORKFLOW/_dens_thresh_0.4/export_to_pandas/result_export_to_pandas.pklz"
+            "report": "/tmp/tmp80m1XD/PyNets_WORKFLOW/_thr_0.81/export_to_pandas/_report/report.rst",
+            "result": "/tmp/tmp80m1XD/PyNets_WORKFLOW/_thr_0.81/export_to_pandas/result_export_to_pandas.pklz"
         }
     ]
 }

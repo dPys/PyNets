@@ -36,7 +36,7 @@ from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, Traite
 ##Core node definition, graph estimation, and plotting functions
 def check_neighborhood(coord, mask_coords):
     if coord not in mask_coords:
-        error=2
+        error=4
         neighbors=[]
         ##Check range in case it's close by
         x=coord[0]
@@ -74,7 +74,7 @@ def fetch_nilearn_atlas_coords(atlas_select):
     coords = np.vstack((atlas.rois['x'], atlas.rois['y'], atlas.rois['z'])).T
     print('Stacked atlas coordinates in array of shape {0}.'.format(coords.shape) + '\n')
     try:
-        networks_list = atlas.networks
+        networks_list = atlas.networks.astype('U')
     except:
         networks_list = None
     try:
@@ -149,21 +149,8 @@ def coord_masker(mask, coords, label_names):
         del coords[ix]
     return(coords, label_names)
 
-def coord_masker_with_tuples(mask, coords):
-    mask_data, _ = masking._load_mask_img(mask)
-    mask_coords = list(zip(*np.where(mask_data != 0)))
-    for coord in coords:
-        if tuple(coord) not in mask_coords:
-            print('Removing coordinate: ' + str(tuple(coord)) + ' since it falls outside of mask...')
-            ix = np.where(coords == coord)[0][0]
-            coords = np.delete(coords, ix, axis=0)
-            print(str(len(coords)))
-    return coords
-
 def get_names_and_coords_of_parcels(parlistfile):
     atlas_name = parlistfile.split('/')[-1].split('.')[0]
-    ##Code for getting name and coordinates of parcels. Adapted from Dan L. (https://github.com/danlurie/despolab_lesion/blob/master/code/sandbox/Sandbox%20-%20Calculate%20and%20plot%20HCP%20mean%20matrix.ipynb)
-    ###Reindex parcel. schemes with non-contiguous parcels (Andy?)
     bna_img = nib.load(parlistfile)
     bna_data = bna_img.get_data()
     if bna_img.get_data_dtype() != np.dtype(np.int):
@@ -188,7 +175,7 @@ def get_names_and_coords_of_parcels(parlistfile):
     coords = np.array(coords)
     return(coords, atlas_name, par_max)
 
-def gen_network_parcels(parlistfile, NETWORK, labels):
+def gen_network_parcels(parlistfile, NETWORK, labels, dir_path):
     bna_img = nib.load(parlistfile)
     bna_data = bna_img.get_data()
     if bna_img.get_data_dtype() != np.dtype(np.int):

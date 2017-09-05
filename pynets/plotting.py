@@ -29,6 +29,8 @@ from nibabel.affines import apply_affine
 from nipype.interfaces.base import isdefined, Undefined
 from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
+from scipy.cluster.hierarchy import linkage, fcluster
+from nipype.utils.filemanip import load_json, save_json
 
 def plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names, mask):
     ##Set title for adj. matrix based on connectivity model used
@@ -63,6 +65,46 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, la
     plt.savefig(out_path_fig)
     plt.close()
     return(atlast_graph_title)
+
+def plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names):
+    G=nx.from_numpy_matrix(conn_matrix)
+    clust_levels = 7
+    def doClust(X, clust_levels):
+        ##get the linkage diagram
+        Z = linkage(X, 'ward', )
+        ##choose # cluster levels
+        cluster_levels = range(1,clust_levels)
+        ##init array to store labels for each level
+        clust_levels_tmp = clust_levels - 1
+        label_arr = np.zeros((clust_levels_tmp,X.shape[0]))
+        ##iterate thru levels
+        for c in cluster_levels:
+            fl = fcluster(Z,c,criterion='maxclust')
+            label_arr[c-1, :] = fl
+        return label_arr
+
+    label_arr = doClust(conn_matrix, clust_levels)
+
+    def get_node_label(node_idx, labels):
+        abet = ["a", "b", "c", "d", "e", "f"]
+        node_labels = labels[:, node_idx]
+        return ".".join(["{}{}".format(abet[i],int(l)) for i, l in enumerate(node_labels)])+".{}".format(label_names[node_idx])
+
+    output = []
+    for node_idx, connections in enumerate(G.adjacency_list()):
+        entry = {}
+        nodes_label = get_node_label(node_idx, label_arr)
+        entry["name"] = nodes_label
+        entry["size"] = len(connections)
+        entry["imports"] = [get_node_label(int(d)-1, label_arr) for d in connections]
+        #entry["weights"] =
+        output.append(entry)
+
+    if NETWORK != None:
+        connectogram_plot = dir_path + '/' + ID + '_' + NETWORK + '_connectogram_' + conn_model + '_network.json'
+    else:
+        connectogram_plot = dir_path + '/' + ID + '_connectogram_' + conn_model + '.json'
+    save_json(connectogram_plot, output)
 
 def plot_membership(membership_plotting, conn_matrix, conn_model, coords, edge_threshold, atlast_name, dir_path):
     atlast_connectome_title = atlas_name + '_all_networks'
