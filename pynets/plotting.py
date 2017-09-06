@@ -15,7 +15,6 @@ import warnings
 import pynets
 #warnings.simplefilter("ignore")
 import matplotlib.pyplot as plt
-from shutil import copyfile
 from numpy import genfromtxt
 from matplotlib import colors
 from nipype import Node, Workflow
@@ -110,25 +109,32 @@ def plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK
         output.append(entry)
 
     if NETWORK != None:
-        js_file_name = str(ID) + '_' + NETWORK + '_connectogram_' + conn_model + '_network.json'
-        connectogram_plot = dir_path + '/' + js_file_name
+        json_file_name = str(ID) + '_' + NETWORK + '_connectogram_' + conn_model + '_network.json'
+        connectogram_plot = dir_path + '/' + json_file_name
         connectogram_js_sub = dir_path + '/' + str(ID) + '_' + NETWORK + '_connectogram_' + conn_model + '_network.js'
+        connectogram_js_name = str(ID) + '_' + NETWORK + '_connectogram_' + conn_model + '_network.js'
     else:
-        js_file_name = str(ID) + '_connectogram_' + conn_model + '.json'
-        connectogram_plot = dir_path + '/' + js_file_name
+        json_file_name = str(ID) + '_connectogram_' + conn_model + '.json'
+        connectogram_plot = dir_path + '/' + json_file_name
         connectogram_js_sub = dir_path + '/' + str(ID) + '_connectogram_' + conn_model + '.js'
+        connectogram_js_name = str(ID) + '_connectogram_' + conn_model + '.js'
     save_json(connectogram_plot, output)
 
     ##Copy index.html and json to dir_path
-    conn_js_path = '/Users/PSYC-dap3463/Applications/PyNets/pynets/connectogram.js'
-    index_html_path = '/Users/PSYC-dap3463/Applications/PyNets/pynets/index.html'
-    #conn_js_path = Path(__file__).parent/"pynets"/"connectogram.js"
-    #index_html_path = Path(__file__).parent/"pynets"/"index.html"
-    copyfile(index_html_path, str(dir_path + 'index.html'))
-    replacements = {'template.json': str(js_file_name)}
+    #conn_js_path = '/Users/PSYC-dap3463/Applications/PyNets/pynets/connectogram.js'
+    #index_html_path = '/Users/PSYC-dap3463/Applications/PyNets/pynets/index.html'
+    conn_js_path = Path(__file__).parent/"connectogram.js"
+    index_html_path = Path(__file__).parent/"index.html"
+    replacements_html = {'connectogram.js': str(connectogram_js_name)}
+    with open(index_html_path) as infile, open(str(dir_path + '/index.html'), 'w') as outfile:
+        for line in infile:
+            for src, target in replacements_html.items():
+                line = line.replace(src, target)
+            outfile.write(line)
+    replacements_js = {'template.json': str(json_file_name)}
     with open(conn_js_path) as infile, open(connectogram_js_sub, 'w') as outfile:
         for line in infile:
-            for src, target in replacements.items():
+            for src, target in replacements_js.items():
                 line = line.replace(src, target)
             outfile.write(line)
 

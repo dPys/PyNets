@@ -125,6 +125,9 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, no
         [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_parcels, conn_model, NETWORK, ID, dens_thresh, dir_path)
 
     if plot_switch == True:
+        ##Plot connectogram
+        plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names)
+
         ##Plot adj. matrix based on determined inputs
         atlast_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names, mask)
 
@@ -205,6 +208,9 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, no
         [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh, dir_path)
 
     if plot_switch == True:
+        ##Plot connectogram
+        plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names)
+
         ##Plot adj. matrix based on determined inputs
         plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names, mask)
 
@@ -390,10 +396,6 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
     out_path_ts=dir_path + '/' + ID + '_' + NETWORK + '_net_ts.txt'
     np.savetxt(out_path_ts, net_ts)
 
-    if plot_switch == True:
-        ##Plot network time-series
-        plotting.plot_timeseries(net_ts, NETWORK, ID, dir_path, atlas_name, label_names)
-
     ##Fit connectivity model
     if adapt_thresh is not False:
         if os.path.isfile(est_path2) == True:
@@ -410,8 +412,14 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
         [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh, dir_path)
 
     if plot_switch == True:
+        ##Plot connectogram
+        plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names)
+
         ##Plot adj. matrix based on determined inputs
         plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names, mask)
+
+        ##Plot network time-series
+        plotting.plot_timeseries(net_ts, NETWORK, ID, dir_path, atlas_name, label_names)
 
         ##Plot connectome viz for specific Yeo networks
         title = "Connectivity Projected on the " + NETWORK

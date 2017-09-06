@@ -78,7 +78,8 @@ def fetch_nilearn_atlas_coords(atlas_select):
     except:
         networks_list = None
     try:
-        label_names=atlas.labels
+        label_names=atlas.labels.astype('U')
+        label_names=np.array([s.strip('b\'') for s in label_names]).astype('U')
     except:
         label_names=None
     return(coords, atlas_name, networks_list, label_names)
