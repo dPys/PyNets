@@ -36,6 +36,8 @@ except ImportError:
     import _pickle as pickle
 
 def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir):
+    nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
+
     ##Input is nifti file
     func_file=input_file
 
@@ -65,6 +67,10 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, no
 
     ##Get coord membership dictionary if all_nets option triggered
     if all_nets != None:
+        try:
+            networks_list
+        except:
+            networks_list = None
         [membership, membership_plotting] = nodemaker.get_mem_dict(func_file, coords, networks_list)
 
     ##Describe user atlas coords
@@ -146,6 +152,10 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, no
 
     ##Get coord membership dictionary if all_nets option triggered
     if all_nets != False:
+        try:
+            networks_list
+        except:
+            networks_list = None
         [membership, membership_plotting] = nodemaker.get_mem_dict(func_file, coords, networks_list)
 
     ##Mask coordinates
@@ -328,6 +338,10 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
             os.makedirs(dir_path)
 
         ##Get coord membership dictionary
+        try:
+            networks_list
+        except:
+            networks_list = None
         [membership, membership_plotting] = nodemaker.get_mem_dict(func_file, coords, networks_list)
 
         ##Convert to membership dataframe
@@ -338,10 +352,10 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
         net_coords = mem_df.loc[mem_df['index'] == NETWORK][[0]].values[:,0]
         net_coords = list(tuple(x) for x in net_coords)
         ix_labels = mem_df.loc[mem_df['index'] == NETWORK].index.values
-        if label_names == None:
-            label_names=ix_labels
-        else:
+        try:
             label_names=[label_names[i] for i in ix_labels]
+        except:
+            label_names=ix_labels
 
         if mask != None:
             [net_coords, label_names] = nodemaker.coord_masker(mask, net_coords, label_names)

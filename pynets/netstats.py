@@ -17,6 +17,7 @@ import pynets
 import matplotlib.pyplot as plt
 import random
 import itertools
+import multiprocessing
 from numpy import genfromtxt
 from matplotlib import colors
 from nipype import Node, Workflow
@@ -74,21 +75,6 @@ def smallworldness(G, rep = 1000):
     return mean_s
 
 def modularity(W, qtype='sta', seed=None):
-    '''
-    Input:      W       undirected (weighted or binary) connection matrix
-                        with positive and negative weights
-                qtype,  modularity type (see Rubinov and Sporns, 2011)
-                           'sta',  Q_* (default if qtype is not specified)
-                           'pos',  Q_+
-                           'smp',  Q_simple
-                           'gja',  Q_GJA
-                           'neg',  Q_-
-                seed,    random seed. Default None, seed from /dev/urandom
-    Output:     Ci,     community affiliation vector
-                Q,      modularity (qtype dependent)
-    Note: Ci and Q may vary from run to run, due to heuristics in the
-    algorithm. Consequently, it may be worth to compare multiple runs.
-    '''
     np.random.seed(seed)
     n = len(W)
     W0 = W * (W > 0)
