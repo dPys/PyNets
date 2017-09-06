@@ -40,16 +40,14 @@ def test_nodemaker_tools():
     ##Test 1
     [net_coords, label_names_out] = nodemaker.coord_masker(str(mask), net_coords, label_names)
     ##Test 2
-    #[mask, coords] = nodemaker.coord_masker_with_tuples(str(mask), coords)
-    ##Test 3
     [coords, atlas_name, par_max] = nodemaker.get_names_and_coords_of_parcels(str(parlistfile))
-    ##Test 4
+    ##Test 3
     #out_path = nodemaker.gen_network_parcels(str(parlistfile), NETWORK, labels_names)
 
     assert net_coords is not None
     assert label_names_out is not None
-    #assert mask is not None
-    #assert coords is not None
+    assert mask is not None
+    assert coords is not None
     assert atlas_name is not None
     assert par_max is not None
     #assert out_path is not None
