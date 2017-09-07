@@ -38,7 +38,7 @@ if __name__ == '__main__':
         help='Path to nifti-formatted parcellation image file')
     parser.add_argument('-pm',
         metavar='Number of Cores and GB of Memory',
-        default=[2,4],
+        default= '2,4',
         help='Number of cores to use, number of GB of memory to use, please enter as two integer seperated by a comma')
     parser.add_argument('-n',
         metavar='RSN',
@@ -109,15 +109,14 @@ if __name__ == '__main__':
         default=0.01,
         help='Threshold step value for multi-thresholding. Default is 0.01.')
     args = parser.parse_args()
-
+    
     ###Set Arguments to global variables###
     input_file=args.i
     ID=args.ID
     atlas_select=args.a
     basc=args.basc
     parlistfile=args.ua
-    pm0=args.pm.split(',')
-    procmem=list(pm0)
+    procmem=list(eval(str((args.pm))))
     NETWORK=args.n
     thr=args.thr
     node_size=args.ns
@@ -135,9 +134,8 @@ if __name__ == '__main__':
     min_thr=args.min_thr
     max_thr=args.max_thr
     step_thr=args.step_thr
-    import pdb
-    pdb.set_trace()
-    #######################################
+    
+    print('Starting up! ヾ｜￣ー￣｜ﾉ')
 
     ##Check required inputs for existence, and configure run
     if input_file.endswith('.txt'):
@@ -157,7 +155,8 @@ if __name__ == '__main__':
     if basc == True:
        from pynets import basc_run
        basc_run(subjects_list, basc_config)
-
+       parlistfile='/Users/aki.nikolaidis/PyTest/workflow_output/gsclusters_img/group_stability_clusters.nii.gz'
+       
     if dens_thresh is not None or adapt_thresh != False:
         thr=None
     else:
@@ -213,7 +212,16 @@ if __name__ == '__main__':
     else:
         print("USING WHOLE-BRAIN CONNECTOME..." )
     print("-------------------------------------------------------------------------" + "\n\n\n")
-
+    print('<(^.^<)')
+    print('   <(^.^<)')
+    print('      <(^.^<)')
+    print('         <(^.^<)')
+    print('            <(^.^<)')
+    print('               <(^.^<)')
+    print('                  <(^.^<)')
+    print('                     <(^.^<)')
+    print('                        <(^.^<)')
+    print('                           <(^.^<)')
     ##Import core modules
     import nilearn
     import numpy as np
