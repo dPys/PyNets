@@ -36,6 +36,10 @@ if __name__ == '__main__':
         metavar='Path to parcellation file',
         default=None,
         help='Path to nifti-formatted parcellation image file')
+    parser.add_argument('-pm',
+        metavar='Number of Cores and GB of Memory',
+        default=str((2,4)),
+        help='Number of cores to use, number of GB of memory to use')
     parser.add_argument('-n',
         metavar='RSN',
         default=None,
@@ -110,15 +114,17 @@ if __name__ == '__main__':
     input_file=args.i
     ID=args.ID
     atlas_select=args.a
+    basc=args.basc
+    parlistfile=args.ua
+    procmem=list(args.pm)
     NETWORK=args.n
     thr=args.thr
     node_size=args.ns
     mask=args.m
-    conn_model=args.model
     all_nets=args.an
-    parlistfile=args.ua
-    dens_thresh=args.dt
+    conn_model=args.model
     conf=args.confounds
+    dens_thresh=args.dt
     adapt_thresh=args.at
     plot_switch=args.plt
     multi_atlas=args.ma
@@ -128,6 +134,7 @@ if __name__ == '__main__':
     min_thr=args.min_thr
     max_thr=args.max_thr
     step_thr=args.step_thr
+    #import pdb;pdb.set_trace()
     #######################################
 
     ##Check required inputs for existence, and configure run
@@ -474,9 +481,9 @@ if __name__ == '__main__':
         wf_multi = wf_multi_subject(subjects_list, atlas_select, NETWORK, node_size,
         mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr)
-
+        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[2])} 
         #wf_multi.run(plugin='MultiProc')
-        wf_multi.run()
+        wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
     ##Single-subject workflow generator
     else:
         wf = init_wf_single_subject(ID, input_file, dir_path, atlas_select, NETWORK,
@@ -484,7 +491,7 @@ if __name__ == '__main__':
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr)
         #wf.run(plugin='MultiProc')
-        plugin_args = { ‘n_procs’ : 2,‘memory_gb’: 4} 
-        wf.run(plugin=‘MultiProc’, plugin_args= plugin_args)
+        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[2])} 
+        wf.run(plugin='MultiProc', plugin_args= plugin_args)
 
     print('Time execution : ', timeit.default_timer() - start_time)
