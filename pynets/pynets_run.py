@@ -29,9 +29,9 @@ if __name__ == '__main__':
         default='coords_power_2011',
         help='Specify a single coordinate atlas parcellation of those availabe in nilearn. Default is coords_power_2011. Available atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011')
     parser.add_argument('-basc',
-       metavar='BASC',
        default=False,
-       help='Specify whether you want to run BASC to calculate a group level set of nodes')                              
+       action='store_true',
+       help='Specify whether you want to run BASC to calculate a group level set of nodes')
     parser.add_argument('-ua',
         metavar='Path to parcellation file',
         default=None,
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     parser.add_argument('-pm',
         metavar='Number of Cores and GB of Memory',
         default= '2,4',
-        help='Number of cores to use, number of GB of memory to use')
+        help='Number of cores to use, number of GB of memory to use, please enter as two integer seperated by a comma')
     parser.add_argument('-n',
         metavar='RSN',
         default=None,
@@ -136,8 +136,7 @@ if __name__ == '__main__':
     step_thr=args.step_thr
     
     print('Starting up! ヾ｜￣ー￣｜ﾉ')
-    
-    
+
     ##Check required inputs for existence, and configure run
     if input_file.endswith('.txt'):
         with open(input_file) as f:
@@ -152,6 +151,7 @@ if __name__ == '__main__':
     if ID is None and subjects_list is None:
         print("Error: You must include a subject ID in your command line call")
         sys.exit()
+
     if basc == True:
        from pynets import basc_run
        basc_run(subjects_list, basc_config)
@@ -418,7 +418,7 @@ if __name__ == '__main__':
 
         if imp_est_iterables:
             imp_est.iterables = imp_est_iterables
-            
+
         net_mets_node = pe.Node(ExtractNetStats(), name = "ExtractNetStats")
         export_to_pandas_node = pe.Node(Export2Pandas(), name = "export_to_pandas")
 
@@ -493,8 +493,8 @@ if __name__ == '__main__':
         wf_multi = wf_multi_subject(subjects_list, atlas_select, NETWORK, node_size,
         mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr)
-        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])} 
         #wf_multi.run(plugin='MultiProc')
+        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])}
         wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
     ##Single-subject workflow generator
     else:
@@ -503,7 +503,7 @@ if __name__ == '__main__':
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr)
         #wf.run(plugin='MultiProc')
-        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])} 
+        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])}
         wf.run(plugin='MultiProc', plugin_args= plugin_args)
 
     print('Time execution : ', timeit.default_timer() - start_time)
