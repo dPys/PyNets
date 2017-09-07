@@ -495,9 +495,7 @@ if __name__ == '__main__':
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr)
         #wf.run(plugin='MultiProc')
-        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])} 
+        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])}
         wf.run(plugin='MultiProc', plugin_args= plugin_args)
-
-
 
     print('Time execution : ', timeit.default_timer() - start_time)
