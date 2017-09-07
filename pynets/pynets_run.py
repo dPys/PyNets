@@ -38,7 +38,7 @@ if __name__ == '__main__':
         help='Path to nifti-formatted parcellation image file')
     parser.add_argument('-pm',
         metavar='Number of Cores and GB of Memory',
-        default=str((2,4)),
+        default= '2,4',
         help='Number of cores to use, number of GB of memory to use')
     parser.add_argument('-n',
         metavar='RSN',
@@ -109,14 +109,14 @@ if __name__ == '__main__':
         default=0.01,
         help='Threshold step value for multi-thresholding. Default is 0.01.')
     args = parser.parse_args()
-
+    
     ###Set Arguments to global variables###
     input_file=args.i
     ID=args.ID
     atlas_select=args.a
     basc=args.basc
     parlistfile=args.ua
-    procmem=list(args.pm)
+    procmem=list(eval(str((args.pm))))
     NETWORK=args.n
     thr=args.thr
     node_size=args.ns
@@ -134,9 +134,10 @@ if __name__ == '__main__':
     min_thr=args.min_thr
     max_thr=args.max_thr
     step_thr=args.step_thr
-    #import pdb;pdb.set_trace()
-    #######################################
-
+    
+    print('Starting up! ヾ｜￣ー￣｜ﾉ')
+    
+    
     ##Check required inputs for existence, and configure run
     if input_file.endswith('.txt'):
         with open(input_file) as f:
@@ -154,6 +155,8 @@ if __name__ == '__main__':
     if basc == True:
        from pynets import basc_run
        basc_run(subjects_list, basc_config)
+       parlistfile='/Users/aki.nikolaidis/PyTest/workflow_output/gsclusters_img/group_stability_clusters.nii.gz'
+       
     if dens_thresh is not None or adapt_thresh != False:
         thr=None
     else:
@@ -209,7 +212,16 @@ if __name__ == '__main__':
     else:
         print("USING WHOLE-BRAIN CONNECTOME..." )
     print("-------------------------------------------------------------------------" + "\n\n\n")
-
+    print('<(^.^<)')
+    print('   <(^.^<)')
+    print('      <(^.^<)')
+    print('         <(^.^<)')
+    print('            <(^.^<)')
+    print('               <(^.^<)')
+    print('                  <(^.^<)')
+    print('                     <(^.^<)')
+    print('                        <(^.^<)')
+    print('                           <(^.^<)')
     ##Import core modules
     import nilearn
     import numpy as np
@@ -481,7 +493,7 @@ if __name__ == '__main__':
         wf_multi = wf_multi_subject(subjects_list, atlas_select, NETWORK, node_size,
         mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr)
-        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[2])} 
+        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])} 
         #wf_multi.run(plugin='MultiProc')
         wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
     ##Single-subject workflow generator
@@ -491,7 +503,7 @@ if __name__ == '__main__':
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr)
         #wf.run(plugin='MultiProc')
-        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[2])} 
+        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])} 
         wf.run(plugin='MultiProc', plugin_args= plugin_args)
 
     print('Time execution : ', timeit.default_timer() - start_time)
