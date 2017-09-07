@@ -3,7 +3,6 @@ import argparse
 import os
 import timeit
 import string
-import multiprocessing
 
 # Start time clock
 start_time = timeit.default_timer()
