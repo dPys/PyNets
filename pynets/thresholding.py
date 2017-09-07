@@ -88,24 +88,27 @@ def density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh
     os.rename(est_path, est_path2)
     return(conn_matrix, est_path2, edge_threshold, dens_thresh)
 
+##Calculate density
+def est_density(func_mat):
+    fG=nx.from_numpy_matrix(func_mat)
+    density=nx.density(fG)
+    return density
+
+def thr2prob(W, copy=True):
+    if copy:
+        W = W.copy()
+    W[W < 0.001] = 0
+    return W
+
+def binarize(W, copy=True):
+    if copy:
+        W = W.copy()
+    W[W != 0] = 1
+    return W
+
 def adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat_path, dir_path):
     import collections
-    def binarize(W, copy=True):
-        if copy:
-            W = W.copy()
-        W[W != 0] = 1
-        return W
-    def thr2prob(W, copy=True):
-        if copy:
-            W = W.copy()
-        W[W < 0.001] = 0
-        return W
-
-    ##Calculate density
-    def est_density(func_mat):
-        fG=nx.from_numpy_matrix(func_mat)
-        density=nx.density(fG)
-        return density
+    from pynets import binarize, thr2prob, est_density
 
     def thr_step(func_mat, thr):
         thr = float(thr) + float(0.01)
