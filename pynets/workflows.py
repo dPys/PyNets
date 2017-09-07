@@ -59,6 +59,14 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, no
 
     ##Fetch user-specified atlas coords
     [coords, atlas_name, par_max] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
+    atlas_select=atlas_name
+
+    try:
+        label_names
+    except:
+
+
+        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
     ##Get subject directory path
     dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_select

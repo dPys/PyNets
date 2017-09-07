@@ -155,9 +155,8 @@ def get_names_and_coords_of_parcels(parlistfile):
     bna_img = nib.load(parlistfile)
     bna_data = bna_img.get_data()
     if bna_img.get_data_dtype() != np.dtype(np.int):
-        bna_data_for_coords = bna_img.get_data()
         ##Get an array of unique parcels
-        bna_data_for_coords_uniq = np.unique(bna_data_for_coords)
+        bna_data_for_coords_uniq = np.round(np.unique(bna_data))
         ##Number of parcels:
         par_max = len(bna_data_for_coords_uniq) - 1
         bna_data = bna_data.astype('int16')
@@ -170,6 +169,8 @@ def get_names_and_coords_of_parcels(parlistfile):
     for idx in range(par_max):
         roi_img = nilearn.image.new_img_like(bna_img, img_stack[idx])
         img_list.append(roi_img)
+    bna_4D = nilearn.image.concat_imgs(img_list).get_data()
+    #nib.Nifti1Image(img_list, affine=np.eye(4))
     coords = []
     for roi_img in img_list:
         coords.append(nilearn.plotting.find_xyz_cut_coords(roi_img))
@@ -178,15 +179,16 @@ def get_names_and_coords_of_parcels(parlistfile):
 
 def gen_network_parcels(parlistfile, NETWORK, labels, dir_path):
     bna_img = nib.load(parlistfile)
-    bna_data = bna_img.get_data()
     if bna_img.get_data_dtype() != np.dtype(np.int):
         bna_data_for_coords = bna_img.get_data()
         # Number of parcels:
         par_max = np.ceil(np.max(bna_data_for_coords)).astype('int')
         bna_data = bna_data.astype('int16')
     else:
+        bna_data = bna_img.get_data()
         par_max = np.max(bna_data)
     img_stack = []
+    ##Set indices
     for idx in range(1, par_max+1):
         roi_img = bna_data == idx
         img_stack.append(roi_img)
