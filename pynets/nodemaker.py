@@ -36,7 +36,7 @@ from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, Traite
 ##Core node definition, graph estimation, and plotting functions
 def check_neighborhood(coord, mask_coords):
     if coord not in mask_coords:
-        error=2
+        error=4
         neighbors=[]
         ##Check range in case it's close by
         x=coord[0]
@@ -74,11 +74,12 @@ def fetch_nilearn_atlas_coords(atlas_select):
     coords = np.vstack((atlas.rois['x'], atlas.rois['y'], atlas.rois['z'])).T
     print('Stacked atlas coordinates in array of shape {0}.'.format(coords.shape) + '\n')
     try:
-        networks_list = atlas.networks
+        networks_list = atlas.networks.astype('U')
     except:
         networks_list = None
     try:
-        label_names=atlas.labels
+        label_names=atlas.labels.astype('U')
+        label_names=np.array([s.strip('b\'') for s in label_names]).astype('U')
     except:
         label_names=None
     return(coords, atlas_name, networks_list, label_names)
@@ -149,27 +150,13 @@ def coord_masker(mask, coords, label_names):
         del coords[ix]
     return(coords, label_names)
 
-def coord_masker_with_tuples(mask, coords):
-    mask_data, _ = masking._load_mask_img(mask)
-    mask_coords = list(zip(*np.where(mask_data != 0)))
-    for coord in coords:
-        if tuple(coord) not in mask_coords:
-            print('Removing coordinate: ' + str(tuple(coord)) + ' since it falls outside of mask...')
-            ix = np.where(coords == coord)[0][0]
-            coords = np.delete(coords, ix, axis=0)
-            print(str(len(coords)))
-    return coords
-
 def get_names_and_coords_of_parcels(parlistfile):
     atlas_name = parlistfile.split('/')[-1].split('.')[0]
-    ##Code for getting name and coordinates of parcels. Adapted from Dan L. (https://github.com/danlurie/despolab_lesion/blob/master/code/sandbox/Sandbox%20-%20Calculate%20and%20plot%20HCP%20mean%20matrix.ipynb)
-    ###Reindex parcel. schemes with non-contiguous parcels (Andy?)
     bna_img = nib.load(parlistfile)
     bna_data = bna_img.get_data()
     if bna_img.get_data_dtype() != np.dtype(np.int):
-        bna_data_for_coords = bna_img.get_data()
         ##Get an array of unique parcels
-        bna_data_for_coords_uniq = np.unique(bna_data_for_coords)
+        bna_data_for_coords_uniq = np.round(np.unique(bna_data))
         ##Number of parcels:
         par_max = len(bna_data_for_coords_uniq) - 1
         bna_data = bna_data.astype('int16')
@@ -182,23 +169,26 @@ def get_names_and_coords_of_parcels(parlistfile):
     for idx in range(par_max):
         roi_img = nilearn.image.new_img_like(bna_img, img_stack[idx])
         img_list.append(roi_img)
+    bna_4D = nilearn.image.concat_imgs(img_list).get_data()
+    #nib.Nifti1Image(img_list, affine=np.eye(4))
     coords = []
     for roi_img in img_list:
         coords.append(nilearn.plotting.find_xyz_cut_coords(roi_img))
     coords = np.array(coords)
     return(coords, atlas_name, par_max)
 
-def gen_network_parcels(parlistfile, NETWORK, labels):
+def gen_network_parcels(parlistfile, NETWORK, labels, dir_path):
     bna_img = nib.load(parlistfile)
-    bna_data = bna_img.get_data()
     if bna_img.get_data_dtype() != np.dtype(np.int):
         bna_data_for_coords = bna_img.get_data()
         # Number of parcels:
         par_max = np.ceil(np.max(bna_data_for_coords)).astype('int')
         bna_data = bna_data.astype('int16')
     else:
+        bna_data = bna_img.get_data()
         par_max = np.max(bna_data)
     img_stack = []
+    ##Set indices
     for idx in range(1, par_max+1):
         roi_img = bna_data == idx
         img_stack.append(roi_img)

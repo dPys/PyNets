@@ -2,6 +2,7 @@ import sys
 import argparse
 import os
 import timeit
+import string
 
 # Start time clock
 start_time = timeit.default_timer()
@@ -16,19 +17,17 @@ if __name__ == '__main__':
     parser.add_argument('-i',
         metavar='Path to input file',
         default=None,
-        required=True,
-        help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR the path to an 4D time-series text/csv file OR the path of a pre-made graph that has been thresholded and standardized appropriately')
+        required=False,
+        help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR the path to a text file containing a list of paths to subject files')
     parser.add_argument('-ID',
         metavar='Subject ID',
         default=None,
-        required=True,
+        required=False,
         help='A subject ID that is also the name of the directory containing the input file')
     parser.add_argument('-a',
         metavar='Atlas',
         default='coords_power_2011',
         help='Specify a single coordinate atlas parcellation of those availabe in nilearn. Default is coords_power_2011. Available atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011')
-# parser.add_argument('-ma', '--multiatlas',
-#     default='All')
     parser.add_argument('-ua',
         metavar='Path to parcellation file',
         default=None,
@@ -44,7 +43,7 @@ if __name__ == '__main__':
     parser.add_argument('-ns',
         metavar='Node size',
         default='3',
-        help='Optionally specify a coordinate-based node radius size. Default is 3 voxels')
+        help='Optionally specify a coordinate-based node radius size. Default is 4 voxels')
     parser.add_argument('-m',
         metavar='Path to mask image',
         default=None,
@@ -81,10 +80,26 @@ if __name__ == '__main__':
         default=False,
         action='store_true',
         help='Optionally use this flag if you wish to iterate your pynets run over a range of proportional thresholds from 0.99 to 0.90')
-    parser.add_argument('-md',
+    parser.add_argument('-bpx',
+        metavar='Path to bedpostx directory',
+        default=None,
+        help='Formatted according to the FSL default tree structure found at https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX')
+    parser.add_argument('-bids',
         default=False,
         action='store_true',
-        help='Optionally use this flag if you wish to iterate your pynets run over a range of densities from 0.1 to 0.4')
+        help='Initiate bids automation')
+    parser.add_argument('-min_thr',
+        metavar='Minimum threshold',
+        default=0.90,
+        help='Minimum threshold for multi-thresholding. Default is 0.90.')
+    parser.add_argument('-max_thr',
+        metavar='Maximum threshold',
+        default=0.99,
+        help='Maximum threshold for multi-thresholding. Default is 0.99.')
+    parser.add_argument('-step_thr',
+        metavar='Multithresholding step',
+        default=0.01,
+        help='Threshold step value for multi-thresholding. Default is 0.01.')
     args = parser.parse_args()
 
     ###Set Arguments to global variables###
@@ -104,53 +119,83 @@ if __name__ == '__main__':
     plot_switch=args.plt
     multi_atlas=args.ma
     multi_thr=args.mt
-    multi_dens=args.md
+    bedpostx_dir=args.bpx
+    bids=args.bids
+    min_thr=args.min_thr
+    max_thr=args.max_thr
+    step_thr=args.step_thr
     #######################################
 
     ##Check required inputs for existence, and configure run
-    if input_file is None:
+    if input_file.endswith('.txt'):
+        with open(input_file) as f:
+            subjects_list = f.read().splitlines()
+    else:
+        subjects_list = None
+
+    if input_file is None and bedpostx_dir is None:
         print("Error: You must include a file path to either a standard space functional image in .nii or .nii.gz format or a path to a time-series text/csv file, with the -i flag")
         sys.exit()
-    elif not os.path.isfile(input_file):
-        print("Error: Input file does not exist.")
-        sys.exit()
-    if ID is None:
+
+    if ID is None and subjects_list is None:
         print("Error: You must include a subject ID in your command line call")
         sys.exit()
+
     if dens_thresh is not None or adapt_thresh != False:
         thr=None
     else:
         thr=float(thr)
+
     if multi_thr==True:
         dens_thresh=None
         adapt_thresh=False
-    if multi_dens==True:
-        dens_thresh=None
-        adapt_thresh=False
-    if multi_dens==True and multi_thr==True:
-        print('Error: Cannot iterate across both multiple densities and multiple proportional thresholds!\nUse either the -mt flag or the -md flag, but not both')
-        sys.exit(0)
+    else:
+        min_thr=None
+        max_thr=None
+        step_thr=None
 
-    ##Print inputs verbosely
+    ##Print inputs verbosely and set dir_path
     print("\n\n\n" + "------------------------------------------------------------------------")
-    print ("INPUT FILE: " + input_file)
+    if input_file is not None and subjects_list is not None:
+        print("\n")
+        print('Running workflow of workflows across subjects:\n')
+        print (str(subjects_list))
+        print("\n")
+    elif input_file is not None and bedpostx_dir is not None and subjects_list is None:
+        print("\n")
+        print('Running joint structural-functional connectometry...')
+        print ("INPUT FILE: " + input_file)
+        print("\n")
+        ##Set directory path containing input file
+        dir_path = os.path.dirname(os.path.realpath(input_file))
+    elif input_file is not None and bedpostx_dir is None and subjects_list is None:
+        print("\n")
+        print('Running functional connectometry only...')
+        print ("INPUT FILE: " + input_file)
+        print("\n")
+        ##Set directory path containing input file
+        dir_path = os.path.dirname(os.path.realpath(input_file))
+
     print("\n")
     print ("SUBJECT ID: " + str(ID))
     print("\n")
+
     if parlistfile != None:
         atlas_name = parlistfile.split('/')[-1].split('.')[0]
         print ("ATLAS: " + str(atlas_name))
     else:
         print ("ATLAS: " + str(atlas_select))
         print("\n")
+
+    if multi_atlas == True:
+        atlas_select = None
+        print('\nIterating across multiple atlases...\n')
+
     if NETWORK != None:
         print ("NETWORK: " + str(NETWORK))
     else:
         print("USING WHOLE-BRAIN CONNECTOME..." )
     print("-------------------------------------------------------------------------" + "\n\n\n")
-
-    ##Set directory path containing input file
-    dir_path = os.path.dirname(os.path.realpath(input_file))
 
     ##Import core modules
     import nilearn
@@ -181,300 +226,26 @@ if __name__ == '__main__':
     from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
     from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
 
-    def workflow_selector(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch):
+    def workflow_selector(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir):
         import pynets
         from pynets import workflows
 
         nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
 
+
         ##Case 1: Whole-brain connectome with nilearn coord atlas
-        if '.nii' in input_file and parlistfile == None and NETWORK == None and atlas_select not in nilearn_atlases:
-            [est_path, thr] = workflows.wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch)
+        if parlistfile == None and NETWORK == None and atlas_select not in nilearn_atlases:
+            [est_path, thr] = workflows.wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir)
 
         ##Case 2: Whole-brain connectome with user-specified atlas or nilearn atlas img
-        elif '.nii' in input_file and NETWORK == None and (parlistfile != None or atlas_select in nilearn_atlases):
-            [est_path, thr] = workflows.wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch)
+        elif NETWORK == None and (parlistfile != None or atlas_select in nilearn_atlases):
+            [est_path, thr] = workflows.wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir)
 
         ##Case 3: RSN connectome with nilearn atlas or user-specified atlas
-        elif '.nii' in input_file and NETWORK != None:
-            [est_path, thr] = workflows.network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch)
+        elif NETWORK != None:
+            [est_path, thr] = workflows.network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir)
 
         return est_path, thr
-
-    ##Extract network metrics interface
-    def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
-        import pynets
-        from pynets import netstats, thresholding
-
-        ##Load and threshold matrix
-        in_mat = np.array(genfromtxt(est_path1))
-        in_mat = thresholding.autofix(in_mat)
-
-        ##Get hyperbolic tangent of matrix if non-sparse (i.e. fischer r-to-z transform)
-        if conn_model == 'corr':
-            in_mat = np.arctanh(in_mat)
-
-        ##Get dir_path
-        dir_path = os.path.dirname(os.path.realpath(est_path1))
-
-        ##Assign Weight matrix
-        mat_wei = in_mat
-        ##Load numpy matrix as networkx graph
-        G=nx.from_numpy_matrix(mat_wei)
-
-        ##Create Binary matrix
-        #mat_bin = weight_conversion(in_mat, 'binarize')
-        ##Load numpy matrix as networkx graph
-        #G_bin=nx.from_numpy_matrix(mat_bin)
-
-        ##Create Length matrix
-        mat_len = thresholding.weight_conversion(in_mat, 'lengths')
-        ##Load numpy matrix as networkx graph
-        G_len=nx.from_numpy_matrix(mat_len)
-
-        ##Save gephi files
-        if NETWORK != None:
-            nx.write_graphml(G, dir_path + '/' + ID + '_' + NETWORK + '.graphml')
-        else:
-            nx.write_graphml(G, dir_path + '/' + ID + '.graphml')
-
-        ###############################################################
-        ########### Calculate graph metrics from graph G ##############
-        ###############################################################
-        import random
-        import itertools
-        from itertools import permutations
-        from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, rich_club_coefficient, eigenvector_centrality, communicability_centrality
-        from pynets.netstats import efficiency, global_efficiency, local_efficiency, create_random_graph, smallworldness_measure, smallworldness, modularity
-        ##For non-nodal scalar metrics from networkx.algorithms library, add the name of the function to metric_list for it to be automatically calculated.
-        ##For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the function  (with a G-only input) to the netstats module.
-        #metric_list = [global_efficiency, local_efficiency, smallworldness, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
-        metric_list = [global_efficiency, local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
-
-        ##Iteratively run functions from above metric list
-        num_mets = len(metric_list)
-        net_met_arr = np.zeros([num_mets, 2], dtype='object')
-        j=0
-        for i in metric_list:
-            met_name = str(i).split('<function ')[1].split(' at')[0]
-            if NETWORK != None:
-                net_met = NETWORK + '_' + met_name
-            else:
-                net_met = met_name
-            try:
-                net_met_val = float(i(G))
-            except:
-                net_met_val = np.nan
-            net_met_arr[j,0] = net_met
-            net_met_arr[j,1] = net_met_val
-            print(net_met)
-            print(str(net_met_val))
-            print('\n')
-            j = j + 1
-        net_met_val_list = list(net_met_arr[:,1])
-
-        ##Calculate modularity using the Louvain algorithm
-        [community_aff, modularity] = modularity(mat_wei)
-
-        ##betweenness_centrality
-        try:
-            bc_vector = betweenness_centrality(G_len)
-            print('Extracting Betweeness Centrality vector for all network nodes...')
-            bc_vals = list(bc_vector.values())
-            bc_nodes = list(bc_vector.keys())
-            num_nodes = len(bc_nodes)
-            bc_arr = np.zeros([num_nodes + 1, 2], dtype='object')
-            j=0
-            for i in range(num_nodes):
-                if NETWORK != None:
-                    bc_arr[j,0] = NETWORK + '_' + str(bc_nodes[j]) + '_betw_cent'
-                    print('\n' + NETWORK + '_' + str(bc_nodes[j]) + '_betw_cent')
-                else:
-                    bc_arr[j,0] = 'WholeBrain_' + str(bc_nodes[j]) + '_betw_cent'
-                    print('\n' + 'WholeBrain_' + str(bc_nodes[j]) + '_betw_cent')
-                try:
-                    bc_arr[j,1] = bc_vals[j]
-                except:
-                    bc_arr[j,1] = np.nan
-                print(str(bc_vals[j]))
-                j = j + 1
-            bc_val_list = list(bc_arr[:,1])
-            bc_arr[num_nodes,0] = NETWORK + '_MEAN_betw_cent'
-            nonzero_arr_betw_cent = np.delete(bc_arr[:,1], [0])
-            bc_arr[num_nodes,1] = np.mean(nonzero_arr_betw_cent)
-            print('\n' + 'Mean Betweenness Centrality across all nodes: ' + str(bc_arr[num_nodes,1]) + '\n')
-        except:
-            print('Betweeness Centrality calculation failed. Skipping...')
-            bc_val_list = []
-            pass
-
-        ##eigenvector_centrality
-        try:
-            ec_vector = eigenvector_centrality(G_len)
-            print('Extracting Eigenvector Centrality vector for all network nodes...')
-            ec_vals = list(ec_vector.values())
-            ec_nodes = list(ec_vector.keys())
-            num_nodes = len(ec_nodes)
-            ec_arr = np.zeros([num_nodes + 1, 2], dtype='object')
-            j=0
-            for i in range(num_nodes):
-                if NETWORK != None:
-                    ec_arr[j,0] = NETWORK + '_' + str(ec_nodes[j]) + '_eig_cent'
-                    print('\n' + NETWORK + '_' + str(ec_nodes[j]) + '_eig_cent')
-                else:
-                    ec_arr[j,0] = 'WholeBrain_' + str(ec_nodes[j]) + '_eig_cent'
-                    print('\n' + 'WholeBrain_' + str(ec_nodes[j]) + '_eig_cent')
-                try:
-                    ec_arr[j,1] = ec_vals[j]
-                except:
-                    ec_arr[j,1] = np.nan
-                print(str(ec_vals[j]))
-                j = j + 1
-            ec_val_list = list(ec_arr[:,1])
-            ec_arr[num_nodes,0] = NETWORK + '_MEAN_eig_cent'
-            nonzero_arr_eig_cent = np.delete(ec_arr[:,1], [0])
-            ec_arr[num_nodes,1] = np.mean(nonzero_arr_eig_cent)
-            print('\n' + 'Mean Eigenvector Centrality across all nodes: ' + str(ec_arr[num_nodes,1]) + '\n')
-        except:
-            print('Eigenvector Centrality calculation failed. Skipping...')
-            ec_val_list = []
-            pass
-
-        ##communicability_centrality
-        try:
-            cc_vector = communicability_centrality(G_len)
-            print('Extracting Communicability Centrality vector for all network nodes...')
-            cc_vals = list(cc_vector.values())
-            cc_nodes = list(cc_vector.keys())
-            num_nodes = len(cc_nodes)
-            cc_arr = np.zeros([num_nodes + 1, 2], dtype='object')
-            j=0
-            for i in range(num_nodes):
-                if NETWORK != None:
-                    cc_arr[j,0] = NETWORK + '_' + str(cc_nodes[j]) + '_comm_cent'
-                    print('\n' + NETWORK + '_' + str(cc_nodes[j]) + '_comm_cent')
-                else:
-                    cc_arr[j,0] = 'WholeBrain_' + str(cc_nodes[j]) + '_comm_cent'
-                    print('\n' + 'WholeBrain_' + str(cc_nodes[j]) + '_comm_cent')
-                try:
-                    cc_arr[j,1] = cc_vals[j]
-                except:
-                    cc_arr[j,1] = np.nan
-                print(str(cc_vals[j]))
-                j = j + 1
-            cc_val_list = list(cc_arr[:,1])
-            cc_arr[num_nodes,0] = NETWORK + '_MEAN_comm_cent'
-            nonzero_arr_comm_cent = np.delete(cc_arr[:,1], [0])
-            cc_arr[num_nodes,1] = np.mean(nonzero_arr_comm_cent)
-            print('\n' + 'Mean Communicability Centrality across all nodes: ' + str(cc_arr[num_nodes,1]) + '\n')
-        except:
-            print('Communicability Centrality calculation failed. Skipping...')
-            cc_val_list = []
-            pass
-
-        ##rich_club_coefficient
-        try:
-            rc_vector = rich_club_coefficient(G, normalized=True)
-            print('Extracting Rich Club Coefficient vector for all network nodes...')
-            rc_vals = list(rc_vector.values())
-            rc_edges = list(rc_vector.keys())
-            num_edges = len(rc_edges)
-            rc_arr = np.zeros([num_edges + 1, 2], dtype='object')
-            j=0
-            for i in range(num_edges):
-                if NETWORK != None:
-                    rc_arr[j,0] = NETWORK + '_' + str(rc_edges[j]) + '_rich_club'
-                    print('\n' + NETWORK + '_' + str(rc_edges[j]) + '_rich_club')
-                else:
-                    cc_arr[j,0] = 'WholeBrain_' + str(rc_nodes[j]) + '_rich_club'
-                    print('\n' + 'WholeBrain_' + str(rc_nodes[j]) + '_rich_club')
-                try:
-                    rc_arr[j,1] = rc_vals[j]
-                except:
-                    rc_arr[j,1] = np.nan
-                print(str(rc_vals[j]))
-                j = j + 1
-            ##Add mean
-            rc_val_list = list(rc_arr[:,1])
-            rc_arr[num_edges,0] = NETWORK + '_MEAN_rich_club'
-            nonzero_arr_rich_club = np.delete(rc_arr[:,1], [0])
-            rc_arr[num_edges,1] = np.mean(nonzero_arr_rich_club)
-            print('\n' + 'Mean Rich Club Coefficient across all edges: ' + str(rc_arr[num_edges,1]) + '\n')
-        except:
-            print('Rich Club calculation failed. Skipping...')
-            rc_val_list = []
-            pass
-
-        ##Create a list of metric names for scalar metrics
-        metric_list_names = []
-        net_met_val_list_final = net_met_val_list
-        for i in net_met_arr[:,0]:
-            metric_list_names.append(i)
-
-        ##Add modularity measure
-        try:
-            if NETWORK != None:
-                metric_list_names.append(NETWORK + '_Modularity')
-            else:
-                metric_list_names.append('WholeBrain_Modularity')
-            net_met_val_list_final.append(modularity)
-        except:
-            pass
-
-        ##Add centrality and rich club measures
-        try:
-            for i in bc_arr[:,0]:
-                metric_list_names.append(i)
-            net_met_val_list_final = net_met_val_list_final + list(bc_arr[:,1])
-        except:
-            pass
-        try:
-            for i in ec_arr[:,0]:
-                metric_list_names.append(i)
-            net_met_val_list_final = net_met_val_list_final + list(ec_arr[:,1])
-        except:
-            pass
-        try:
-            for i in cc_arr[:,0]:
-                metric_list_names.append(i)
-            net_met_val_list_final = net_met_val_list_final + list(cc_arr[:,1])
-        except:
-            pass
-        try:
-            for i in rc_arr[:,0]:
-                metric_list_names.append(i)
-            net_met_val_list_final = net_met_val_list_final + list(rc_arr[:,1])
-        except:
-            pass
-
-        ##Save metric names as pickle
-        try:
-            import cPickle
-        except ImportError:
-            import _pickle as cPickle
-        if NETWORK != None:
-            met_list_picke_path = os.path.dirname(os.path.abspath(est_path1)) + '/met_list_pickle_' + NETWORK
-        else:
-            met_list_picke_path = os.path.dirname(os.path.abspath(est_path1)) + '/met_list_pickle_WB'
-        cPickle.dump(metric_list_names, open(met_list_picke_path, 'wb'))
-
-        ##Save results to csv
-        if 'inv' in est_path1:
-            if NETWORK != None:
-                out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_mets_sps_cov_' + str(thr) + '.csv'
-            else:
-                out_path = dir_path + '/' + ID + '_net_mets_sps_cov_' + str(thr) + '.csv'
-        else:
-            if NETWORK != None:
-                out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_mets_corr_' + str(thr) + '.csv'
-            else:
-                out_path = dir_path + '/' + ID + '_net_mets_corr_' + str(thr) + '.csv'
-        np.savetxt(out_path, net_met_val_list_final)
-
-        return(out_path)
-        ###############################################################
-        ###############################################################
-
 
     class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
         sub_id = traits.Str(mandatory=True)
@@ -491,6 +262,7 @@ if __name__ == '__main__':
         output_spec = ExtractNetStatsOutputSpec
 
         def _run_interface(self, runtime):
+            from pynets.netstats import extractnetstats
             out = extractnetstats(
                 self.inputs.sub_id,
                 self.inputs.NETWORK,
@@ -555,84 +327,157 @@ if __name__ == '__main__':
             import os.path as op
             return {'out_file': op.abspath(self.inputs.out_file)}
 
-    import_list=[ "import sys", "import os", "from sklearn.model_selection import train_test_split", "import warnings", "import gzip", "import nilearn", "import numpy as np", "import networkx as nx", "import pandas as pd", "import nibabel as nib", "import seaborn as sns", "import numpy.linalg as npl", "import matplotlib", "matplotlib.use('Agg')", "import matplotlib.pyplot as plt", "from numpy import genfromtxt", "from matplotlib import colors", "from nipype import Node, Workflow", "from nilearn import input_data, masking, datasets", "from nilearn import plotting as niplot", "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu", "from nipype.interfaces import io as nio", "from nilearn.input_data import NiftiLabelsMasker", "from nilearn.connectome import ConnectivityMeasure", "from nibabel.affines import apply_affine", "from nipype.interfaces.base import isdefined, Undefined", "from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso", "from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits" ]
+    import_list=[ "import sys", "import os", "from sklearn.model_selection import train_test_split",
+    "import warnings", "import gzip", "import nilearn", "import numpy as np",
+    "import networkx as nx", "import pandas as pd", "import nibabel as nib",
+    "import seaborn as sns", "import numpy.linalg as npl", "import matplotlib",
+    "matplotlib.use('Agg')", "import matplotlib.pyplot as plt", "from numpy import genfromtxt",
+    "from matplotlib import colors", "from nipype import Node, Workflow",
+    "from nilearn import input_data, masking, datasets", "from nilearn import plotting as niplot",
+    "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu",
+    "from nipype.interfaces import io as nio", "from nilearn.input_data import NiftiLabelsMasker",
+    "from nilearn.connectome import ConnectivityMeasure", "from nibabel.affines import apply_affine",
+    "from nipype.interfaces.base import isdefined, Undefined",
+    "from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso",
+    "from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits" ]
 
-    ##Create input/output nodes
-    #1) Add variable to IdentityInterface if user-set
-    inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'NETWORK', 'thr', 'node_size', 'mask', 'parlistfile', 'all_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch']), name='inputnode')
+    def init_wf_single_subject(ID, input_file, dir_path, atlas_select, NETWORK,
+    node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf,
+    adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
+    max_thr, step_thr):
+        wf = pe.Workflow(name='PyNets_' + str(ID))
+        #wf.base_directory='/tmp/pynets'
+        ##Create input/output nodes
+        #1) Add variable to IdentityInterface if user-set
+        inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID',
+        'atlas_select', 'NETWORK', 'thr', 'node_size', 'mask', 'parlistfile',
+        'all_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch',
+        'bedpostx_dir']), name='inputnode')
 
-    #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
-    inputnode.inputs.in_file = input_file
-    inputnode.inputs.ID = ID
-    inputnode.inputs.atlas_select = atlas_select
-    inputnode.inputs.NETWORK = NETWORK
-    inputnode.inputs.thr = thr
-    inputnode.inputs.node_size = node_size
-    inputnode.inputs.mask = mask
-    inputnode.inputs.parlistfile = parlistfile
-    inputnode.inputs.all_nets = all_nets
-    inputnode.inputs.conn_model = conn_model
-    inputnode.inputs.dens_thresh = dens_thresh
-    inputnode.inputs.conf = conf
-    inputnode.inputs.adapt_thresh = adapt_thresh
-    inputnode.inputs.plot_switch = plot_switch
+        #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
+        inputnode.inputs.in_file = input_file
+        inputnode.inputs.ID = ID
+        inputnode.inputs.atlas_select = atlas_select
+        inputnode.inputs.NETWORK = NETWORK
+        inputnode.inputs.thr = thr
+        inputnode.inputs.node_size = node_size
+        inputnode.inputs.mask = mask
+        inputnode.inputs.parlistfile = parlistfile
+        inputnode.inputs.all_nets = all_nets
+        inputnode.inputs.conn_model = conn_model
+        inputnode.inputs.dens_thresh = dens_thresh
+        inputnode.inputs.conf = conf
+        inputnode.inputs.adapt_thresh = adapt_thresh
+        inputnode.inputs.plot_switch = plot_switch
+        inputnode.inputs.bedpostx_dir = bedpostx_dir
 
-    #3) Add variable to function nodes
-    ##Create function nodes
-    imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select', 'NETWORK', 'node_size', 'mask', 'thr', 'parlistfile', 'all_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch'], output_names = ['est_path', 'thr'], function=workflow_selector, imports=import_list), name = "imp_est")
-    if multi_thr==True:
-        print('Iterating pipeline across multiple thresholds...')
-        iter_thresh = [str(i) for i in np.round(np.arange(0.90, 0.99, 0.01),decimals=2).tolist()]
-        imp_est.iterables = ("thr", iter_thresh)
-    if multi_atlas==True:
-        print('Iterating pipeline across multiple atlases...')
-        imp_est.iterables = ("atlas_select", ['coords_power_2011', 'coords_dosenbach_2010', 'atlas_destrieux_2009', 'atlas_aal'])
-    if multi_dens==True:
-        print('Iterating pipeline across multiple target densities...')
-        iter_abs_thresh = [str(i) for i in np.round(np.arange(0.10, 0.40, 0.01),decimals=2).tolist()]
-        imp_est.iterables = ("dens_thresh", iter_abs_thresh)
-    net_mets_node = pe.Node(ExtractNetStats(), name = "ExtractNetStats")
-    export_to_pandas_node = pe.Node(Export2Pandas(), name = "export_to_pandas")
+        #3) Add variable to function nodes
+        ##Create function nodes
+        imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select',
+        'NETWORK', 'node_size', 'mask', 'thr', 'parlistfile', 'all_nets', 'conn_model',
+        'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch', 'bedpostx_dir'],
+        output_names = ['est_path', 'thr'], function=workflow_selector, imports=import_list),
+        name = "imp_est")
 
-    ##Create PyNets workflow
-    wf = pe.Workflow(name='PyNets_WORKFLOW')
-    wf.base_directory='/tmp/pynets'
+        imp_est_iterables=[]
+        if multi_thr==True:
+            print('Iterating pipeline across multiple thresholds...')
+            iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
+            float(max_thr), float(step_thr)),decimals=2).tolist()]
+            imp_est_iterables.append(("thr", iter_thresh))
+        if multi_atlas==True:
+            print('Iterating pipeline across multiple atlases...')
+            atlas_iterables = ("atlas_select", ['coords_power_2011',
+            'coords_dosenbach_2010', 'atlas_destrieux_2009', 'atlas_aal'])
+            imp_est_iterables.append(atlas_iterables)
 
-    ##Create data sink
-    #datasink = pe.Node(nio.DataSink(), name='sinker')
-    #datasink.inputs.base_directory = dir_path + '/DataSink'
+        if imp_est_iterables:
+            imp_est.iterables = imp_est_iterables
+            
+        net_mets_node = pe.Node(ExtractNetStats(), name = "ExtractNetStats")
+        export_to_pandas_node = pe.Node(Export2Pandas(), name = "export_to_pandas")
 
-    ##Add variable to workflow
-    ##Connect nodes of workflow
-    wf.connect([
-        (inputnode, imp_est, [('in_file', 'input_file'),
-                              ('ID', 'ID'),
-                              ('atlas_select', 'atlas_select'),
-                              ('NETWORK', 'NETWORK'),
-                              ('node_size', 'node_size'),
-                              ('mask', 'mask'),
-                              ('thr', 'thr'),
-                              ('parlistfile', 'parlistfile'),
-                              ('all_nets', 'all_nets'),
-                              ('conn_model', 'conn_model'),
-                              ('dens_thresh', 'dens_thresh'),
-                              ('conf', 'conf'),
-                              ('adapt_thresh', 'adapt_thresh'),
-                              ('plot_switch', 'plot_switch')]),
-        (inputnode, net_mets_node, [('ID', 'sub_id'),
-                                   ('NETWORK', 'NETWORK'),
-                                   ('conn_model', 'conn_model')]),
-        (imp_est, net_mets_node, [('est_path', 'est_path1'),
-                                  ('thr', 'thr')]),
-        #(net_mets_cov_node, datasink, [('est_path', 'csv_loc')]),
-        (inputnode, export_to_pandas_node, [('ID', 'sub_id'),
-                                        ('NETWORK', 'NETWORK')]),
-        (net_mets_node, export_to_pandas_node, [('out_file', 'in_csv')]),
-        #(export_to_pandas1, datasink, [('out_file', 'pandas_df)]),
-    ])
+        ##Create data sink
+        #datasink = pe.Node(nio.DataSink(), name='sinker')
+        #datasink.inputs.base_directory = dir_path + '/DataSink'
 
-    #wf.run(plugin='SLURM')
-    #wf.run(plugin='MultiProc')
-    wf.run()
+        ##Add variable to workflow
+        ##Connect nodes of workflow
+        wf.connect([
+            (inputnode, imp_est, [('in_file', 'input_file'),
+                                  ('ID', 'ID'),
+                                  ('atlas_select', 'atlas_select'),
+                                  ('NETWORK', 'NETWORK'),
+                                  ('node_size', 'node_size'),
+                                  ('mask', 'mask'),
+                                  ('thr', 'thr'),
+                                  ('parlistfile', 'parlistfile'),
+                                  ('all_nets', 'all_nets'),
+                                  ('conn_model', 'conn_model'),
+                                  ('dens_thresh', 'dens_thresh'),
+                                  ('conf', 'conf'),
+                                  ('adapt_thresh', 'adapt_thresh'),
+                                  ('plot_switch', 'plot_switch'),
+                                  ('bedpostx_dir', 'bedpostx_dir')]),
+            (inputnode, net_mets_node, [('ID', 'sub_id'),
+                                       ('NETWORK', 'NETWORK'),
+                                       ('conn_model', 'conn_model')]),
+            (imp_est, net_mets_node, [('est_path', 'est_path1'),
+                                      ('thr', 'thr')]),
+            #(net_mets_cov_node, datasink, [('est_path', 'csv_loc')]),
+            (inputnode, export_to_pandas_node, [('ID', 'sub_id'),
+                                            ('NETWORK', 'NETWORK')]),
+            (net_mets_node, export_to_pandas_node, [('out_file', 'in_csv')]),
+            #(export_to_pandas1, datasink, [('out_file', 'pandas_df)]),
+        ])
+        return wf
 
-print('Time execution : ', timeit.default_timer() - start_time)
+    def wf_multi_subject(subjects_list, atlas_select, NETWORK, node_size, mask,
+    thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
+    plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr):
+        wf_multi = pe.Workflow(name='PyNets_multisubject')
+        i=0
+        for _file in subjects_list:
+            wf_single_subject = init_wf_single_subject(ID=os.path.dirname(os.path.realpath(subjects_list[i])).split('/')[-1],
+                               input_file=_file,
+                               dir_path=os.path.dirname(os.path.realpath(subjects_list[i])),
+                               atlas_select=atlas_select,
+                               NETWORK=NETWORK,
+                               node_size=node_size,
+                               mask=mask,
+                               thr=thr,
+                               parlistfile=parlistfile,
+                               all_nets=all_nets,
+                               conn_model=conn_model,
+                               dens_thresh=dens_thresh,
+                               conf=conf,
+                               adapt_thresh=adapt_thresh,
+                               plot_switch=plot_switch,
+                               bedpostx_dir=bedpostx_dir,
+                               multi_thr=multi_thr,
+                               multi_atlas= multi_atlas,
+                               min_thr=min_thr,
+                               max_thr=max_thr,
+                               step_thr=step_thr)
+            wf_multi.add_nodes([wf_single_subject])
+            i = i + 1
+        return wf_multi
+
+    ##Multi-subject workflow generator
+    if subjects_list is not None:
+        wf_multi = wf_multi_subject(subjects_list, atlas_select, NETWORK, node_size,
+        mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
+        plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr)
+
+        #wf_multi.run(plugin='MultiProc')
+        wf_multi.run()
+    ##Single-subject workflow generator
+    else:
+        wf = init_wf_single_subject(ID, input_file, dir_path, atlas_select, NETWORK,
+        node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf,
+        adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
+        max_thr, step_thr)
+        #wf.run(plugin='MultiProc')
+        wf.run()
+
+    print('Time execution : ', timeit.default_timer() - start_time)
