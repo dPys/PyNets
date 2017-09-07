@@ -36,9 +36,13 @@ if __name__ == '__main__':
         metavar='Path to parcellation file',
         default=None,
         help='Path to nifti-formatted parcellation image file')
+    #parser.add_argument('-pm',
+     #   metavar='Number of Cores and GB of Memory',
+      #  default=str((2,4)),
+       # help='Number of cores to use, number of GB of memory to use')
     parser.add_argument('-pm',
         metavar='Number of Cores and GB of Memory',
-        default=str((2,4)),
+        default=[2,4],
         help='Number of cores to use, number of GB of memory to use')
     parser.add_argument('-n',
         metavar='RSN',
@@ -483,7 +487,7 @@ if __name__ == '__main__':
         mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr)
         #wf_multi.run(plugin='MultiProc')
-        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[2])}
+        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])}
         wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
     ##Single-subject workflow generator
     else:
@@ -492,7 +496,7 @@ if __name__ == '__main__':
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr)
         #wf.run(plugin='MultiProc')
-        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[2])} 
+        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])} 
         wf.run(plugin='MultiProc', plugin_args= plugin_args)
 
 
