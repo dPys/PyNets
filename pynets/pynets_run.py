@@ -31,7 +31,7 @@ if __name__ == '__main__':
     parser.add_argument('-basc',
        default=False,
        action='store_true',
-       help='Specify whether you want to run BASC to calculate a group level set of nodes')                              
+       help='Specify whether you want to run BASC to calculate a group level set of nodes')
     parser.add_argument('-ua',
         metavar='Path to parcellation file',
         default=None,
@@ -407,7 +407,7 @@ if __name__ == '__main__':
 
         if imp_est_iterables:
             imp_est.iterables = imp_est_iterables
-            
+
         net_mets_node = pe.Node(ExtractNetStats(), name = "ExtractNetStats")
         export_to_pandas_node = pe.Node(Export2Pandas(), name = "export_to_pandas")
 
@@ -482,8 +482,8 @@ if __name__ == '__main__':
         wf_multi = wf_multi_subject(subjects_list, atlas_select, NETWORK, node_size,
         mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr)
-        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[2])} 
         #wf_multi.run(plugin='MultiProc')
+        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[2])}
         wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
     ##Single-subject workflow generator
     else:
