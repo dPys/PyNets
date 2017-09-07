@@ -183,7 +183,6 @@ def modularity(W, qtype='sta', seed=None):
     ci_ret += 1
     return ci_ret, q[-1]
 
-
 def link_communities(W, type_clustering='single'):
     n = len(W)
     #W = normalize(W)
