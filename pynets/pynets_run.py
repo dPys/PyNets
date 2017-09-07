@@ -29,8 +29,8 @@ if __name__ == '__main__':
         default='coords_power_2011',
         help='Specify a single coordinate atlas parcellation of those availabe in nilearn. Default is coords_power_2011. Available atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011')
     parser.add_argument('-basc',
-       metavar='BASC',
        default=False,
+       action='store_true',
        help='Specify whether you want to run BASC to calculate a group level set of nodes')                              
     parser.add_argument('-ua',
         metavar='Path to parcellation file',
@@ -128,6 +128,7 @@ if __name__ == '__main__':
     min_thr=args.min_thr
     max_thr=args.max_thr
     step_thr=args.step_thr
+    basc=args.basc
     #######################################
 
     ##Check required inputs for existence, and configure run
@@ -144,9 +145,11 @@ if __name__ == '__main__':
     if ID is None and subjects_list is None:
         print("Error: You must include a subject ID in your command line call")
         sys.exit()
+
     if basc == True:
        from pynets import basc_run
        basc_run(subjects_list, basc_config)
+
     if dens_thresh is not None or adapt_thresh != False:
         thr=None
     else:
@@ -484,7 +487,8 @@ if __name__ == '__main__':
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr)
         #wf.run(plugin='MultiProc')
+
         plugin_args = { ‘n_procs’ : 2,‘memory_gb’: 4} 
         wf.run(plugin=‘MultiProc’, plugin_args= plugin_args)
-#el Barto was here
+
     print('Time execution : ', timeit.default_timer() - start_time)

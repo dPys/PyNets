@@ -67,30 +67,57 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, la
     return(atlast_graph_title)
 
 def plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names):
+    import json
     from pynets.thresholding import normalize
     from pathlib import Path
+    from random import sample
+    from string import ascii_uppercase, ascii_lowercase
+    link_comm = True
 
     conn_matrix = normalize(conn_matrix)
     G=nx.from_numpy_matrix(conn_matrix)
-    clust_levels = 7
+
     def doClust(X, clust_levels):
         ##get the linkage diagram
         Z = linkage(X, 'ward', )
         ##choose # cluster levels
-        cluster_levels = range(1,clust_levels)
+        cluster_levels = range(1,int(clust_levels))
         ##init array to store labels for each level
-        clust_levels_tmp = clust_levels - 1
-        label_arr = np.zeros((clust_levels_tmp,X.shape[0]))
+        clust_levels_tmp = int(clust_levels) - 1
+        label_arr = np.zeros((int(clust_levels_tmp),int(X.shape[0])))
         ##iterate thru levels
         for c in cluster_levels:
             fl = fcluster(Z,c,criterion='maxclust')
+            #print(fl)
             label_arr[c-1, :] = fl
-        return label_arr
+        return label_arr, clust_levels_tmp
 
-    label_arr = doClust(conn_matrix, clust_levels)
+    if NETWORK is not None:
+        clust_levels = 3
+        [label_arr, clust_levels_tmp] = doClust(conn_matrix, clust_levels)
+    else:
+        if link_comm == True:
+            from pynets.netstats import link_communities
+            #G_lin = nx.line_graph(G)
+            ##Plot link communities
+            node_comm_aff_mat = link_communities(conn_matrix, type_clustering='single')
+            clust_levels = len(node_comm_aff_mat)
+            clust_levels_tmp = int(clust_levels) - 1
+            mask_mat = np.squeeze(np.array([node_comm_aff_mat == 0]).astype('int'))
+            label_arr = node_comm_aff_mat * np.expand_dims(np.arange(1,clust_levels+1),axis=1) + mask_mat
+        #else:
+            ##Plot node communities
+            #from pynets.netstats import community_louvain
+            #[ci, q] = community_louvain(conn_matrix, gamma=0.75)
+            #clust_levels = len(np.unique(ci))
+            #clust_levels_tmp = int(clust_levels) - 1
 
-    def get_node_label(node_idx, labels):
-        abet = ["a", "b", "c", "d", "e", "f"]
+    def get_node_label(node_idx, labels, clust_levels_tmp):
+        def get_letters(n, random=False, uppercase=False):
+            """Return n letters of the alphabet."""
+            letters = (ascii_uppercase if uppercase else ascii_lowercase)
+            return json.dumps((sample(letters, n) if random else list(letters[:n])))
+        abet = get_letters(clust_levels_tmp)
         node_labels = labels[:, node_idx]
         return ".".join(["{}{}".format(abet[i],int(l)) for i, l in enumerate(node_labels)])+".{}".format(label_names[node_idx])
 
@@ -99,12 +126,13 @@ def plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK
         weight_vec = []
         for i in connections:
             wei = G.get_edge_data(node_idx,int(i))['weight']
+            #wei = G_lin.get_edge_data(node_idx,int(i))['weight']
             weight_vec.append(wei)
         entry = {}
-        nodes_label = get_node_label(node_idx, label_arr)
+        nodes_label = get_node_label(node_idx, label_arr, clust_levels_tmp)
         entry["name"] = nodes_label
         entry["size"] = len(connections)
-        entry["imports"] = [get_node_label(int(d)-1, label_arr) for d in connections]
+        entry["imports"] = [get_node_label(int(d)-1, label_arr, clust_levels_tmp) for d in connections]
         entry["weights"] = weight_vec
         output.append(entry)
 
