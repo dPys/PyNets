@@ -38,8 +38,8 @@ if __name__ == '__main__':
         help='Path to nifti-formatted parcellation image file')
     parser.add_argument('-pm',
         metavar='Number of Cores and GB of Memory',
-        default=str((2,4)),
-        help='Number of cores to use, number of GB of memory to use')
+        default=[2,4],
+        help='Number of cores to use, number of GB of memory to use, please enter as two integer seperated by a comma')
     parser.add_argument('-n',
         metavar='RSN',
         default=None,
@@ -116,7 +116,8 @@ if __name__ == '__main__':
     atlas_select=args.a
     basc=args.basc
     parlistfile=args.ua
-    procmem=list(args.pm)
+    pm0=args.pm.split(',')
+    procmem=list(pm0)
     NETWORK=args.n
     thr=args.thr
     node_size=args.ns
@@ -134,6 +135,8 @@ if __name__ == '__main__':
     min_thr=args.min_thr
     max_thr=args.max_thr
     step_thr=args.step_thr
+    import pdb
+    pdb.set_trace()
     #######################################
 
     ##Check required inputs for existence, and configure run
