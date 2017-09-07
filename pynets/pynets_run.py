@@ -3,6 +3,7 @@ import argparse
 import os
 import timeit
 import string
+import multiprocessing
 
 # Start time clock
 start_time = timeit.default_timer()
@@ -31,7 +32,7 @@ if __name__ == '__main__':
     parser.add_argument('-basc',
        default=False,
        action='store_true',
-       help='Specify whether you want to run BASC to calculate a group level set of nodes')                              
+       help='Specify whether you want to run BASC to calculate a group level set of nodes')
     parser.add_argument('-ua',
         metavar='Path to parcellation file',
         default=None,
@@ -46,7 +47,7 @@ if __name__ == '__main__':
         help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is 0.95')
     parser.add_argument('-ns',
         metavar='Node size',
-        default='3',
+        default='4',
         help='Optionally specify a coordinate-based node radius size. Default is 4 voxels')
     parser.add_argument('-m',
         metavar='Path to mask image',
@@ -402,7 +403,7 @@ if __name__ == '__main__':
 
         if imp_est_iterables:
             imp_est.iterables = imp_est_iterables
-            
+
         net_mets_node = pe.Node(ExtractNetStats(), name = "ExtractNetStats")
         export_to_pandas_node = pe.Node(Export2Pandas(), name = "export_to_pandas")
 
@@ -477,7 +478,8 @@ if __name__ == '__main__':
         wf_multi = wf_multi_subject(subjects_list, atlas_select, NETWORK, node_size,
         mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr)
-
+        #args_dict={'n_procs': 4, 'memory_gb': 6}
+        #wf_multi.run(plugin='MultiProc', plugin_args=args_dict)
         #wf_multi.run(plugin='MultiProc')
         wf_multi.run()
     ##Single-subject workflow generator
@@ -486,9 +488,9 @@ if __name__ == '__main__':
         node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf,
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr)
+        #args_dict={'n_procs': 4, 'memory_gb': 6}
+        #wf.run(plugin='MultiProc', plugin_args=args_dict)
         #wf.run(plugin='MultiProc')
-
-        plugin_args = { ‘n_procs’ : 2,‘memory_gb’: 4} 
-        wf.run(plugin=‘MultiProc’, plugin_args= plugin_args)
+        wf.run()
 
     print('Time execution : ', timeit.default_timer() - start_time)
