@@ -19,6 +19,7 @@ import sklearn
 import matplotlib
 import warnings
 import matplotlib.pyplot as plt
+import pytest
 from numpy import genfromtxt
 from matplotlib import colors
 from nipype import Node, Workflow

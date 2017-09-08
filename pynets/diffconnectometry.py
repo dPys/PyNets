@@ -12,6 +12,7 @@ import sys
 import seaborn as sns
 import matplotlib
 import multiprocessing
+import pynets
 from matplotlib import pyplot as plt
 from nipype.interfaces.fsl import FLIRT, ProbTrackX2, FNIRT, ConvertXFM, InvWarp, ApplyWarp
 from subprocess import call
@@ -184,7 +185,6 @@ def run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords_MNI, 
             plt.close()
 
             conn_matrix_symm = np.maximum(conn_matrix, conn_matrix.transpose())
-            plotting.plot_connectogram(conn_matrix_symm, conn_model, atlas_name, dir_path, ID, NETWORK, label_names)
 
         fdt_paths_loc = probtrackx_output_dir_path + '/fdt_paths.nii.gz'
 
@@ -226,6 +226,10 @@ def run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords_MNI, 
             out_file_path = dir_path + '/structural_connectome_fig_' + NETWORK + '_' + str(ID) + '.png'
             plt.savefig(out_file_path)
             plt.close()
+
+            from pynets import plotting as pynplot
+            NETWORK = NETWORK + '_structural'
+            pynplot.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names)
 
         if NETWORK != None:
             est_path = dir_path + '/' + ID + '_' + NETWORK + '_structural_est.txt'
