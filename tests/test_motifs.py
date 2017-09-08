@@ -1,7 +1,11 @@
 import numpy as np
-import _pickle as cPickle
 from pynets.netmotifs import countMotifs,adaptiveThresh_4motifs
 from pathlib import Path
+
+try:
+    import cPickle
+except ImportError:
+    import _pickle as cPickle
 
 def motifCount_test():
     #loads a collection of adjacency matrices along with the motif-counts
