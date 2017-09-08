@@ -1,18 +1,19 @@
 import numpy as np
-import h5py
+import _pickle as cPickle
 from pynets.netmotifs import countMotifs,adaptiveThresh_4motifs
 from pathlib import Path
-  
+
 def motifCount_test():
     #loads a collection of adjacency matrices along with the motif-counts
     #calculated using package graph-tool
     #and asserts that our implementation should deliver same results
     #for counting motifs of size 3, 4
-    gt_ref = Path(__file__).parent/"examples"/"motif_examples"/"graph_tool_results.h5"
-    with h5py.File(gt_ref,'r') as hf:
-        motif3=np.array(hf['motif3'])
-        motif4=np.array(hf['motif4'])
-        Aset=np.array(hf['Aset'])
+    gt_ref = Path(__file__).parent/"examples"/"motif_examples"/"graph_tool_results.pickle"
+    with open(gt_ref,'rb') as fhandle:
+        d=cPickle.load(fhandle)
+        motif3=d['motif3']
+        motif4=d['motif4']
+        Aset=d['Aset']
     m3lib=['112','222']
     m4lib=['1113','1122','1223','2222','2233','3333']
     M3=[]
