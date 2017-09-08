@@ -1,0 +1,12 @@
+ID='sub002'
+atlas_select='whole_brain_cluster_labels_PCA100'
+atlas_name='whole_brain_cluster_labels_PCA100'
+ID='sub002'
+NETWORK = 'DefaultA'
+func_file = '/Users/PSYC-dap3463/Desktop/Working_docs/sub002/filtered_func_data_clean_standard.nii.gz'
+dir_path = '/Users/PSYC-dap3463/Desktop/Working_docs/sub002/whole_brain_cluster_labels_PCA100'
+coords=pickle.load(open('/Users/PSYC-dap3463/Desktop/Working_docs/sub002/whole_brain_cluster_labels_PCA100/coords_DefaultA_0.9.pkl', 'rb'))
+networks_list = None
+label_names = pickle.load(open('/Users/PSYC-dap3463/Desktop/Working_docs/sub002/whole_brain_cluster_labels_PCA100/labelnames_DefaultA_0.9.pkl', 'rb'))
+conn_matrix = np.genfromtxt('/Users/PSYC-dap3463/Desktop/Working_docs/sub002/whole_brain_cluster_labels_PCA100/sub002_DefaultA_est_sps_inv_0.9.txt')
+conn_model = 'sps'

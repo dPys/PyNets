@@ -73,14 +73,6 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, no
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
-    ##Get coord membership dictionary if all_nets option triggered
-    if all_nets != None:
-        try:
-            networks_list
-        except:
-            networks_list = None
-        [membership, membership_plotting] = nodemaker.get_mem_dict(func_file, coords, networks_list)
-
     ##Describe user atlas coords
     print('\n' + atlas_name + ' comes with {0} '.format(par_max) + 'parcels' + '\n')
     print('\n'+ 'Stacked atlas coordinates in array of shape {0}.'.format(coords.shape) + '\n')
@@ -149,11 +141,8 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, no
         atlas_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names, mask)
 
         ##Plot connectome viz for all Yeo networks
-        if all_nets != False:
-            plotting.plot_membership(membership_plotting, conn_matrix, conn_model, coords, edge_threshold, atlas_name, dir_path)
-        else:
-            out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
-            niplot.plot_connectome(conn_matrix, coords, title=atlas_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
+        out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
+        niplot.plot_connectome(conn_matrix, coords, title=atlas_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     return est_path, thr
 
 def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir):
@@ -169,14 +158,6 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, no
     dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_select
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
-
-    ##Get coord membership dictionary if all_nets option triggered
-    if all_nets != False:
-        try:
-            networks_list
-        except:
-            networks_list = None
-        [membership, membership_plotting] = nodemaker.get_mem_dict(func_file, coords, networks_list)
 
     ##Mask coordinates
     if mask is not None:
@@ -241,11 +222,8 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, no
         plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names, mask)
 
         ##Plot connectome viz for all Yeo networks
-        if all_nets != False:
-            plotting.plot_membership(membership_plotting, conn_matrix, conn_model, coords, edge_threshold, atlas_name, dir_path)
-        else:
-            out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_connectome_viz.png'
-            niplot.plot_connectome(conn_matrix, coords, title=atlas_name, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
+        out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_connectome_viz.png'
+        niplot.plot_connectome(conn_matrix, coords, title=atlas_name, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     return est_path, thr
 
 def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir):
@@ -275,62 +253,18 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
         ##Fetch nilearn atlas coords
         [coords, atlas_name, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
 
-        if atlas_name == 'Power 2011 atlas':
-            ##Reference RSN list
-            import pkgutil
-            import io
-            network_coords_ref = NETWORK + '_coords.csv'
-            atlas_coords = pkgutil.get_data("pynets", "rsnrefs/" + network_coords_ref)
-            df = pd.read_csv(io.BytesIO(atlas_coords)).ix[:,0:4]
-            i=1
-            net_coords = []
-            ix_labels = []
-            for i in range(len(df)):
-                #print("ROI Reference #: " + str(i))
-                x = int(df.ix[i,1])
-                y = int(df.ix[i,2])
-                z = int(df.ix[i,3])
-                #print("X:" + str(x) + " Y:" + str(y) + " Z:" + str(z))
-                net_coords.append((x, y, z))
-                ix_labels.append(i)
-                i = i + 1
-                #print(net_coords)
-                label_names=ix_labels
-        elif atlas_name == 'Dosenbach 2010 atlas':
-            coords = list(tuple(x) for x in coords)
+        try:
+            networks_list
+        except:
+            networks_list = None
 
-            ##Get coord membership dictionary
-            [membership, membership_plotting] = nodemaker.get_mem_dict(func_file, coords, networks_list)
+        net_coords = nodemaker.get_membership_from_coords(NETWORK, func_file, coords, networks_list)
+        ix_labels = list(np.arange(len(net_coords)) + 1)[:-1]
 
-            ##Convert to membership dataframe
-            mem_df = membership.to_frame().reset_index()
-
-            nets_avail=list(set(list(mem_df['index'])))
-            ##Get network name equivalents
-            if NETWORK == 'DMN':
-                NETWORK = 'default'
-            elif NETWORK == 'FPTC':
-                NETWORK = 'fronto-parietal'
-            elif NETWORK == 'CON':
-                NETWORK = 'cingulo-opercular'
-            elif NETWORK not in nets_avail:
-                print('Error: ' + NETWORK + ' not available with this atlas!')
-                sys.exit()
-
-            ##Get coords for network-of-interest
-            mem_df.loc[mem_df['index'] == NETWORK]
-            net_coords = mem_df.loc[mem_df['index'] == NETWORK][[0]].values[:,0]
-            net_coords = list(tuple(x) for x in net_coords)
-            ix_labels = mem_df.loc[mem_df['index'] == NETWORK].index.values
-            ####Add code for any special RSN reference lists for the nilearn atlases here#####
-            ##If labels_names are not indices and NETWORK is specified, sub-list label names
-
-        if label_names!=ix_labels:
-            try:
-                label_names=label_names.tolist()
-            except:
-                pass
-            label_names=[label_names[i] for i in ix_labels]
+        try:
+            label_names=label_names.tolist()
+        except:
+            label_names=ix_labels
 
         ##Get subject directory path
         dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_select
@@ -377,18 +311,12 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
             networks_list
         except:
             networks_list = None
-        [membership, membership_plotting] = nodemaker.get_mem_dict(func_file, coords, networks_list)
 
-        ##Convert to membership dataframe
-        mem_df = membership.to_frame().reset_index()
+        net_coords = nodemaker.get_membership_from_coords(NETWORK, func_file, coords, networks_list)
+        ix_labels = list(np.arange(len(net_coords)) + 1)[:-1]
 
-        ##Get coords for network-of-interest
-        mem_df.loc[mem_df['index'] == NETWORK]
-        net_coords = mem_df.loc[mem_df['index'] == NETWORK][[0]].values[:,0]
-        net_coords = list(tuple(x) for x in net_coords)
-        ix_labels = mem_df.loc[mem_df['index'] == NETWORK].index.values
         try:
-            label_names=[label_names[i] for i in ix_labels]
+            label_names
         except:
             label_names=ix_labels
 
@@ -450,6 +378,7 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
 
     if plot_switch == True:
         ##Plot connectogram
+        '''TO-DO'''
         plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names)
 
         ##Plot adj. matrix based on determined inputs
