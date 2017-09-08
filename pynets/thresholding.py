@@ -32,6 +32,8 @@ from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, Traite
 from pynets import graphestimation
 
 def threshold_absolute(W, thr, copy=True):
+    '''##Adapted from bctpy
+    '''
     if copy:
         W = W.copy()
     np.fill_diagonal(W, 0)
@@ -39,6 +41,8 @@ def threshold_absolute(W, thr, copy=True):
     return W
 
 def threshold_proportional(W, p, copy=True):
+    '''##Adapted from bctpy
+    '''
     if p > 1 or p < 0:
         print('Threshold must be in range [0,1]')
         sys.exit()
@@ -61,6 +65,8 @@ def threshold_proportional(W, p, copy=True):
     return W
 
 def normalize(W, copy=True):
+    '''##Adapted from bctpy
+    '''
     if copy:
         W = W.copy()
     W /= np.max(np.abs(W))
@@ -90,17 +96,23 @@ def density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh
 
 ##Calculate density
 def est_density(func_mat):
+    '''##Adapted from bctpy
+    '''
     fG=nx.from_numpy_matrix(func_mat)
     density=nx.density(fG)
     return density
 
 def thr2prob(W, copy=True):
+    '''##Adapted from bctpy
+    '''
     if copy:
         W = W.copy()
     W[W < 0.001] = 0
     return W
 
 def binarize(W, copy=True):
+    '''##Adapted from bctpy
+    '''
     if copy:
         W = W.copy()
     W[W != 0] = 1
@@ -195,12 +207,16 @@ def adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat
     return(conn_matrix, est_path, edge_threshold, min_thresh)
 
 def binarize(W, copy=True):
+    '''##Adapted from bctpy
+    '''
     if copy:
         W = W.copy()
     W[W != 0] = 1
     return W
 
 def invert(W, copy=False):
+    '''##Adapted from bctpy
+    '''
     if copy:
         W = W.copy()
     E = np.where(W)
@@ -208,12 +224,16 @@ def invert(W, copy=False):
     return W
 
 def weight_conversion(W, wcm, copy=True):
+    '''##Adapted from bctpy
+    '''
     if wcm == 'binarize':
         return binarize(W, copy)
     elif wcm == 'lengths':
         return invert(W, copy)
 
 def autofix(W, copy=True):
+    '''##Adapted from bctpy
+    '''
     if copy:
         W = W.copy()
     # zero diagonal

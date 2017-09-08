@@ -105,7 +105,7 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, no
             FSLDIR
         except NameError:
             print('FSLDIR environment variable not set!')
-        est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords, node_size)
+        est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
 
     ##extract time series from whole brain parcellaions:
     parcellation = nib.load(parlistfile)
@@ -137,14 +137,14 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, no
         plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names)
 
         ##Plot adj. matrix based on determined inputs
-        atlast_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names, mask)
+        atlas_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names, mask)
 
         ##Plot connectome viz for all Yeo networks
         if all_nets != False:
             plotting.plot_membership(membership_plotting, conn_matrix, conn_model, coords, edge_threshold, atlas_name, dir_path)
         else:
             out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
-            niplot.plot_connectome(conn_matrix, coords, title=atlast_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
+            niplot.plot_connectome(conn_matrix, coords, title=atlas_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     return est_path, thr
 
 def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir):
@@ -189,7 +189,7 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, no
             FSLDIR
         except NameError:
             print('FSLDIR environment variable not set!')
-        est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords, node_size)
+        est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
 
     ##Extract within-spheres time-series from funct file
     spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2, standardize=True)
@@ -339,7 +339,7 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
                 FSLDIR
             except NameError:
                 print('FSLDIR environment variable not set!')
-            est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, net_coords, node_size)
+            est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, net_coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
 
     else:
         ##Fetch user-specified atlas coords
@@ -385,7 +385,7 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
 
         if bedpostx_dir is not None:
             from pynets.diffconnectometry import run_struct_mapping
-            est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, net_coords, node_size)
+            est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, net_coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
 
         ##Generate network parcels image (through refinement, this could be used
         ##in place of the 3 lines above)

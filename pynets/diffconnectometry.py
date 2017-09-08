@@ -19,10 +19,9 @@ from sklearn.preprocessing import normalize
 from nilearn import plotting, image, masking
 from matplotlib import colors
 
-def run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords_MNI, node_size):
+def run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords_MNI, node_size, atlas_select, atlas_name, label_names, plot_switch):
     edge_threshold = 0.90
     connectome_fdt_thresh = 1000
-    final_plot_path = dir_path + '/structural_connectome_fig_' + NETWORK + '_' + str(ID) + '.png'
 
     ####Auto-set INPUTS####
     nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
@@ -169,18 +168,23 @@ def run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords_MNI, 
         out_path_mx=dir_path + '/' + str(ID) + '_' + NETWORK + '_structural_mx.txt'
         np.savetxt(out_path_mx, conn_matrix, delimiter='\t')
 
-        rois_num=conn_matrix.shape[0]
-        print("Creating plot of dimensions:\n" + str(rois_num) + ' x ' + str(rois_num))
-        plt.figure(figsize=(10, 10))
-        plt.imshow(conn_matrix, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
 
-        ##And display the labels
-        plt.colorbar()
-        plt.title(atlas_select.upper() + ' ' + NETWORK + ' Structural Connectivity')
+        if plot_switch == True:
+            rois_num=conn_matrix.shape[0]
+            print("Creating plot of dimensions:\n" + str(rois_num) + ' x ' + str(rois_num))
+            plt.figure(figsize=(10, 10))
+            plt.imshow(conn_matrix, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
 
-        out_path_fig=dir_path + '/' + str(ID) + '_' + NETWORK + '_structural_adj_mat.png'
-        plt.savefig(out_path_fig)
-        plt.close()
+            ##And display the labels
+            plt.colorbar()
+            plt.title(atlas_select.upper() + ' ' + NETWORK + ' Structural Connectivity')
+
+            out_path_fig=dir_path + '/' + str(ID) + '_' + NETWORK + '_structural_adj_mat.png'
+            plt.savefig(out_path_fig)
+            plt.close()
+
+            conn_matrix_symm = np.maximum(conn_matrix, conn_matrix.transpose())
+            plotting.plot_connectogram(conn_matrix_symm, conn_model, atlas_name, dir_path, ID, NETWORK, label_names)
 
         fdt_paths_loc = probtrackx_output_dir_path + '/fdt_paths.nii.gz'
 
@@ -212,16 +216,16 @@ def run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords_MNI, 
 
         fdt_paths_MNI_loc = probtrackx_output_dir_path + '/fdt_paths_MNI.nii.gz'
 
-        norm = colors.Normalize(vmin=-1, vmax=1)
-        clust_pal = sns.color_palette("Blues_r", 4)
-        clust_colors = colors.to_rgba_array(clust_pal)
+        if plot_switch == True:
+            norm = colors.Normalize(vmin=-1, vmax=1)
+            clust_pal = sns.color_palette("Blues_r", 4)
+            clust_colors = colors.to_rgba_array(clust_pal)
 
-        conn_matrix_symm = np.maximum(conn_matrix, conn_matrix.transpose())
-        connectome = plotting.plot_connectome(conn_matrix_symm, coords_MNI, edge_threshold=edge_threshold, node_color=clust_colors, edge_cmap=plotting.cm.black_blue_r)
-        connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=plotting.cm.cyan_copper_r)
-        out_file_path = dir_path + '/structural_connectome_fig_' + NETWORK + '_' + str(ID) + '.png'
-        plt.savefig(out_file_path)
-        plt.close()
+            connectome = plotting.plot_connectome(conn_matrix_symm, coords_MNI, edge_threshold=edge_threshold, node_color=clust_colors, edge_cmap=plotting.cm.black_blue_r)
+            connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=plotting.cm.cyan_copper_r)
+            out_file_path = dir_path + '/structural_connectome_fig_' + NETWORK + '_' + str(ID) + '.png'
+            plt.savefig(out_file_path)
+            plt.close()
 
         if NETWORK != None:
             est_path = dir_path + '/' + ID + '_' + NETWORK + '_structural_est.txt'

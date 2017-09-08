@@ -189,7 +189,7 @@ def link_communities(W, type_clustering='single'):
     '''##Adapted from bctpy
     '''
     n = len(W)
-    #W = normalize(W)
+    W = normalize(W)
 
     if type_clustering not in ('single', 'complete'):
         print('Unrecognized clustering type')
