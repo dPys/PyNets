@@ -186,6 +186,7 @@ def modularity(W, qtype='sta', seed=None):
     return ci_ret, q[-1]
 
 def link_communities(W, type_clustering='single'):
+    from pynets.thresholding import normalize
     '''##Adapted from bctpy
     '''
     n = len(W)
@@ -370,6 +371,101 @@ def link_communities(W, type_clustering='single'):
 
     M = M[np.sum(M, axis=1) > 2, :]
     return M
+
+def modularity_finetune_und_sign(W, qtype='sta', gamma=1, ci=None, seed=None):
+
+    np.random.seed(seed)
+
+    n = len(W)  # number of nodes/modules
+    if ci is None:
+        ci = np.arange(n) + 1
+    else:
+        _, ci = np.unique(ci, return_inverse=True)
+        ci += 1
+
+    W0 = W * (W > 0)  # positive weights matrix
+    W1 = -W * (W < 0)  # negative weights matrix
+    s0 = np.sum(W0)  # positive sum of weights
+    s1 = np.sum(W1)  # negative sum of weights
+    Knm0 = np.zeros((n, n))  # positive node-to-module-degree
+    Knm1 = np.zeros((n, n))  # negative node-to-module degree
+
+    for m in range(int(np.max(ci))):  # loop over modules
+        Knm0[:, m] = np.sum(W0[:, ci == m + 1], axis=1)
+        Knm1[:, m] = np.sum(W1[:, ci == m + 1], axis=1)
+
+    Kn0 = np.sum(Knm0, axis=1)  # positive node degree
+    Kn1 = np.sum(Knm1, axis=1)  # negative node degree
+    Km0 = np.sum(Knm0, axis=0)  # positive module degree
+    Km1 = np.sum(Knm1, axis=0)  # negative module degree
+
+    if qtype == 'smp':
+        d0 = 1 / s0
+        d1 = 1 / s1  # dQ=dQ0/s0-dQ1/s1
+    elif qtype == 'gja':
+        d0 = 1 / (s0 + s1)
+        d1 = 1 / (s0 + s1)  # dQ=(dQ0-dQ1)/(s0+s1)
+    elif qtype == 'sta':
+        d0 = 1 / s0
+        d1 = 1 / (s0 + s1)  # dQ=dQ0/s0-dQ1/(s0+s1)
+    elif qtype == 'pos':
+        d0 = 1 / s0
+        d1 = 0  # dQ=dQ0/s0
+    elif qtype == 'neg':
+        d0 = 0
+        d1 = 1 / s1  # dQ=-dQ1/s1
+    else:
+        raise KeyError('modularity type unknown')
+
+    if not s0:  # adjust for absent positive weights
+        s0 = 1
+        d0 = 0
+    if not s1:  # adjust for absent negative weights
+        s1 = 1
+        d1 = 0
+
+    flag = True  # flag for within hierarchy search
+    h = 0
+    while flag:
+        h += 1
+        if h > 1000:
+            raise BCTParamError('Modularity infinite loop style D')
+        flag = False
+        for u in np.random.permutation(n):  # loop over nodes in random order
+            ma = ci[u] - 1  # current module of u
+            dq0 = ((Knm0[u, :] + W0[u, u] - Knm0[u, ma]) -
+                   gamma * Kn0[u] * (Km0 + Kn0[u] - Km0[ma]) / s0)
+            dq1 = ((Knm1[u, :] + W1[u, u] - Knm1[u, ma]) -
+                   gamma * Kn1[u] * (Km1 + Kn1[u] - Km1[ma]) / s1)
+            dq = d0 * dq0 - d1 * dq1  # rescaled changes in modularity
+            dq[ma] = 0  # no changes for same module
+
+            # print dq,ma,u
+
+            max_dq = np.max(dq)  # maximal increase in modularity
+            mb = np.argmax(dq)  # corresponding module
+            if max_dq > 1e-10:  # if maximal increase is positive
+                # print h,max_dq,mb,u
+                flag = True
+                ci[u] = mb + 1  # reassign module
+
+                Knm0[:, mb] += W0[:, u]
+                Knm0[:, ma] -= W0[:, u]
+                Knm1[:, mb] += W1[:, u]
+                Knm1[:, ma] -= W1[:, u]
+                Km0[mb] += Kn0[u]
+                Km0[ma] -= Kn0[u]
+                Km1[mb] += Kn1[u]
+                Km1[ma] -= Kn1[u]
+
+    _, ci = np.unique(ci, return_inverse=True)
+    ci += 1
+    m = np.tile(ci, (n, 1))
+    q0 = (W0 - np.outer(Kn0, Kn0) / s0) * (m == m.T)
+    q1 = (W1 - np.outer(Kn1, Kn1) / s1) * (m == m.T)
+    q = d0 * np.sum(q0) - d1 * np.sum(q1)
+
+    return ci, q
 
 def community_louvain(W, gamma=1, ci=None, B='modularity', seed=None):
     '''##Adapted from bctpy

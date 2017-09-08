@@ -246,7 +246,6 @@ if __name__ == '__main__':
 
         nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
 
-
         ##Case 1: Whole-brain connectome with nilearn coord atlas
         if parlistfile == None and NETWORK == None and atlas_select not in nilearn_atlases:
             [est_path, thr] = workflows.wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir)
