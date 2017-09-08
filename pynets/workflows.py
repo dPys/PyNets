@@ -105,7 +105,10 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, no
             FSLDIR
         except NameError:
             print('FSLDIR environment variable not set!')
-        est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
+        try:
+            est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
+        except RuntimeError:
+            print('Whole-brain Structural Graph Estimation Failed!')
 
     ##extract time series from whole brain parcellaions:
     parcellation = nib.load(parlistfile)
@@ -119,11 +122,17 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, NETWORK, no
 
     ##Fit connectivity model
     if adapt_thresh is not False:
-        if os.path.isfile(est_path2) == True:
-            [conn_matrix, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_parcels, conn_model, NETWORK, ID, est_path2, dir_path)
-        else:
-            print('No structural mx found! Exiting...')
-            sys.exit(0)
+        try:
+            est_path2
+            if os.path.isfile(est_path2) == True:
+                [conn_matrix, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_parcels, conn_model, NETWORK, ID, est_path2, dir_path)
+            else:
+                print('No structural mx found! Exiting...')
+                sys.exit()
+        except:
+            print('No structural mx assigned! Exiting...')
+            sys.exit()
+
     elif dens_thresh is None:
         edge_threshold = str(float(thr)*100) +'%'
         [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_parcels, conn_model, NETWORK, ID, dir_path, thr)
@@ -189,7 +198,10 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, no
             FSLDIR
         except NameError:
             print('FSLDIR environment variable not set!')
-        est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
+        try:
+            est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
+        except RuntimeError:
+            print('Whole-brain Structural Graph Estimation Failed!')
 
     ##Extract within-spheres time-series from funct file
     spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=5, verbose=2, standardize=True)
@@ -202,11 +214,17 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, NETWORK, no
 
     ##Fit connectivity model
     if adapt_thresh is not False:
-        if os.path.isfile(est_path2) == True:
-            [conn_matrix, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, est_path2, dir_path)
-        else:
-            print('No structural mx found! Exiting...')
-            sys.exit(0)
+        try:
+            est_path2
+            if os.path.isfile(est_path2) == True:
+                [conn_matrix, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, est_path2, dir_path)
+            else:
+                print('No structural mx found! Exiting...')
+                sys.exit()
+        except:
+            print('No structural mx assigned! Exiting...')
+            sys.exit()
+
     elif dens_thresh is None:
         edge_threshold = str(float(thr)*100) +'%'
         [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path, thr)
@@ -339,7 +357,10 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
                 FSLDIR
             except NameError:
                 print('FSLDIR environment variable not set!')
-            est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, net_coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
+            try:
+                est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, net_coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
+            except RuntimeError:
+                print('Whole-brain Structural Graph Estimation Failed!')
 
     else:
         ##Fetch user-specified atlas coords
@@ -385,7 +406,10 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
 
         if bedpostx_dir is not None:
             from pynets.diffconnectometry import run_struct_mapping
-            est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, net_coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
+            try:
+                est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, net_coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
+            except RuntimeError:
+                print('Network Structural Graph Estimation Failed!')
 
         ##Generate network parcels image (through refinement, this could be used
         ##in place of the 3 lines above)
@@ -406,11 +430,16 @@ def network_connectome(input_file, ID, atlas_select, NETWORK, node_size, mask, t
 
     ##Fit connectivity model
     if adapt_thresh is not False:
-        if os.path.isfile(est_path2) == True:
-            [conn_matrix, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, est_path2, dir_path)
-        else:
-            print('No structural mx found! Exiting...')
-            sys.exit(0)
+        try:
+            est_path2
+            if os.path.isfile(est_path2) == True:
+                [conn_matrix, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, est_path2, dir_path)
+            else:
+                print('No structural mx found! Exiting...')
+                sys.exit()
+        except:
+            print('No structural mx assigned! Exiting...')
+            sys.exit()
     elif dens_thresh is None:
         edge_threshold = str(float(thr)*100) +'%'
         [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path, thr)

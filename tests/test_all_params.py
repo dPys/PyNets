@@ -42,7 +42,9 @@ def test_all_param_combs():
     ##For fake testing
     input_file='examples/997/sub-997_ses-01_task-REST_run-01_bold.nii.gz'
     parlistfile='examples/whole_brain_cluster_labels_PCA100.nii.gz'
-    conf='examples/997/sub-997_ses-01_task-REST_run-01_bold_confounds.tsv'
+    dir_path = 'examples/997'
+    #conf='examples/997/sub-997_ses-01_task-REST_run-01_bold_confounds.tsv'
+    conf=None
     ##
 
     #input_file=Path(__file__).parent/"examples"/"997"/"sub-997_ses-01_task-REST_run-01_bold.nii.gz"
@@ -53,9 +55,9 @@ def test_all_param_combs():
     thr = ['0.99', '0.95', '0.90']
     node_size = ['2', '4', '6']
     conn_model = ['corr', 'partcorr', 'sps', 'cov']
-    atlas_select=['coords_power_2011', 'coords_dosenbach_2010', 'atlas_destrieux_2009', 'atlas_aal']
-    ID='997'
-    adapt_thresh = None
+    atlas_select = ['coords_power_2011', 'coords_dosenbach_2010', 'atlas_destrieux_2009', 'atlas_aal']
+    ID = '997'
+    adapt_thresh = False
     all_nets = [True, False]
     plot_switch = [True, False]
     multi_atlas = [True, False]
@@ -65,17 +67,19 @@ def test_all_param_combs():
     step_thr = None
     dens_thresh = None
     bedpostx_dir = None
-    mask=None
+    mask = None
 
     pynets_iterables = list(product(conn_model, NETWORK, thr, node_size, atlas_select))
     print('Iterating over ' + str(len(list(product(conn_model, NETWORK, thr, node_size)))) + ' combinations of the pipeline...')
 
+    i = 1
     for (conn_model_iter, NETWORK_iter, thr_iter, node_size_iter, atlas_select) in pynets_iterables:
-        print(conn_model_iter)
-        print(NETWORK_iter)
-        print(thr_iter)
-        print(node_size_iter)
+        print('Iteration: ' + str(i))
+        print('Model estimator: '+ str(conn_model_iter))
+        print('Restricted Network: '+ str(NETWORK_iter))
+        print('Proportional Threshold: '+ str(thr_iter))
+        print('Node Size: '+ str(node_size_iter) + '\n')
         [est_path, thr] = workflows.network_connectome(input_file, ID, atlas_select, NETWORK_iter,
         node_size_iter, mask, thr_iter, parlistfile, all_nets, conn_model_iter, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir)
-
+        i = i + 1
     assert est_path is not None
