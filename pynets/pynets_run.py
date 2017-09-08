@@ -4,6 +4,8 @@ import os
 import timeit
 import string
 
+
+
 # Start time clock
 start_time = timeit.default_timer()
 
@@ -38,19 +40,19 @@ if __name__ == '__main__':
         help='Path to nifti-formatted parcellation image file')
     parser.add_argument('-pm',
         metavar='Number of Cores and GB of Memory',
-        default=str((2,4)),
-        help='Number of cores to use, number of GB of memory to use')
+        default= '2,4',
+        help='Number of cores to use, number of GB of memory to use, please enter as two integers seperated by a comma')
     parser.add_argument('-n',
         metavar='RSN',
         default=None,
-        help='Optionally specify an atlas-defined network acronym from the following list of RSNs:\n\nDMN Default Mode\nFPTC Fronto-Parietal Task Control\nDA Dorsal Attention\nSN Salience\nVA Ventral Attention\nCON Cingular-Opercular')
+        help='Optionally specify an atlas-defined network acronym from the following list of RSNs:\n\nDMN Default Mode\nFPTC Fronto-Parietal Task Control\nDA Dorsal Attention\nSN Salience\nVA Ventral Attention\nCOT Cingular-Opercular')
     parser.add_argument('-thr',
         metavar='Graph threshold',
         default='0.95',
         help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is 0.95')
     parser.add_argument('-ns',
         metavar='Node size',
-        default='4',
+        default='3',
         help='Optionally specify a coordinate-based node radius size. Default is 4 voxels')
     parser.add_argument('-m',
         metavar='Path to mask image',
@@ -63,7 +65,7 @@ if __name__ == '__main__':
     parser.add_argument('-model',
         metavar='Connectivity',
         default='corr',
-        help='Optionally specify matrix estimation type: corr, cov, sps, or partcorr for correlation, covariance, sparse-inverse covariance, or partial correlation respectively')
+        help='Optionally specify matrix estimation type: corr, cov, or sps for correlation, covariance, or sparse-inverse covariance, respectively')
     parser.add_argument('-confounds',
         metavar='Confounds',
         default=None,
@@ -109,14 +111,14 @@ if __name__ == '__main__':
         default=0.01,
         help='Threshold step value for multi-thresholding. Default is 0.01.')
     args = parser.parse_args()
-
+    
     ###Set Arguments to global variables###
     input_file=args.i
     ID=args.ID
     atlas_select=args.a
     basc=args.basc
     parlistfile=args.ua
-    procmem=list(args.pm)
+    procmem=list(eval(str((args.pm))))
     NETWORK=args.n
     thr=args.thr
     node_size=args.ns
@@ -134,7 +136,10 @@ if __name__ == '__main__':
     min_thr=args.min_thr
     max_thr=args.max_thr
     step_thr=args.step_thr
-    #######################################
+    
+
+    print('Starting up! ヾ｜￣ー￣｜ﾉ')
+    
 
     ##Check required inputs for existence, and configure run
     if input_file.endswith('.txt'):
@@ -150,11 +155,7 @@ if __name__ == '__main__':
     if ID is None and subjects_list is None:
         print("Error: You must include a subject ID in your command line call")
         sys.exit()
-
-    if basc == True:
-       from pynets import basc_run
-       basc_run(subjects_list, basc_config)
-
+       
     if dens_thresh is not None or adapt_thresh != False:
         thr=None
     else:
@@ -210,6 +211,16 @@ if __name__ == '__main__':
     else:
         print("USING WHOLE-BRAIN CONNECTOME..." )
     print("-------------------------------------------------------------------------" + "\n\n\n")
+    print('<(^.^<)')
+    print('   <(^.^<)')
+    print('      <(^.^<)')
+    print('         <(^.^<)')
+    print('            <(^.^<)')
+    print('               <(^.^<)')
+    print('                  <(^.^<)')
+    print('                     <(^.^<)')
+    print('                        <(^.^<)')
+    print('                           <(^.^<)')
 
     ##Import core modules
     import nilearn
@@ -239,6 +250,19 @@ if __name__ == '__main__':
     from nipype.interfaces.base import isdefined, Undefined
     from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
     from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
+
+
+    if basc == True:
+       from pynets import basc_run
+       basc_config='/Users/aki.nikolaidis/git_repo/ALL_PYNETS/PyNets/basc_config.yaml'
+       subjects_list='/Users/aki.nikolaidis/git_repo/ALL_PYNETS/PyNets_NHW1/Sublist.txt'
+       sublist=np.genfromtxt(subjects_list, dtype=str).tolist()
+       
+       
+       print("\n\n\n-------------<(^.^<) STARTING BASC <(^.^<)----------------------" + "\n\n\n")
+       
+       basc_run.basc_runner(sublist, basc_config)
+       parlistfile='/Users/aki.nikolaidis/Desktop/PyTest/workflow_output/gsclusters_img/group_stability_clusters.nii.gz'
 
     def workflow_selector(input_file, ID, atlas_select, NETWORK, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir):
         import pynets
@@ -482,18 +506,22 @@ if __name__ == '__main__':
         wf_multi = wf_multi_subject(subjects_list, atlas_select, NETWORK, node_size,
         mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr)
-        wf_multi.run(plugin='MultiProc')
-        #plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])}
-        #wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
+
+        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])} 
+        #wf_multi.run(plugin='MultiProc')
+        wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
     ##Single-subject workflow generator
     else:
         wf = init_wf_single_subject(ID, input_file, dir_path, atlas_select, NETWORK,
         node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf,
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr)
-        wf.run()
         #wf.run(plugin='MultiProc')
-        #plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])}
-        #wf.run(plugin='MultiProc', plugin_args= plugin_args)
+        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])} 
+        wf.run(plugin='MultiProc', plugin_args= plugin_args)
+
+
 
     print('Time execution : ', timeit.default_timer() - start_time)
+    print('---------PYNETS COMPLETE------------')
+    print(' CHEERS!（ ^_^）o自自o（^_^ ）CHEERS!')
