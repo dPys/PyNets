@@ -5,20 +5,21 @@
 
 
 instance:
-    proc_mem: [3,6]
-    #roi_mask_file: '/Users/aki.nikolaidis/Google Drive/DropboxArchive/UIUC_Projects/FYP/MNI152_T1_2mm_brain.nii.gz'
-    roi_mask_file: '/Users/aki.nikolaidis/Downloads/MNI152_T1_3mm_brain.nii.gz'
+    proc_mem: [2,6]
+    roi_mask_file: '/Users/aki.nikolaidis/git_repo/BASC/masks/BG_3mm.nii.gz'
+    roi2_mask_file: '/Users/aki.nikolaidis/git_repo/BASC/masks/yeo2_3mm.nii.gz'
+    #roi_mask_file: '/Users/aki.nikolaidis/Downloads/MNI152_T1_3mm_brain.nii.gz'
     dataset_bootstraps: 5
     timeseries_bootstraps: 5
-    n_clusters: 400
-    output_size: 5000
+    n_clusters: 50
+    output_size: 1000
     bootstrap_list: list(range(0,dataset_bootstraps))
-    cross_cluster: False
-    affinity_threshold: [0.8, 0.8, 0.8, 0.8]
-    out_dir: '/Users/aki.nikolaidis/PyNetsTest'
+    cross_cluster: True
+    affinity_threshold: [0.8, 0.8]#, 0.8, 0.8]
+    out_dir: '/Users/aki.nikolaidis/Desktop/PyTest'
     run: True
 
     
    
-    
-    
+   
+#runfile('/Users/aki.nikolaidis/git_repo/ALL_PYNETS/PyNets/pynets/pynets_run.py',args="-i '/Users/aki.nikolaidis/git_repo/ALL_PYNETS/PyNets_NHW1/Sublist.txt' -basc 'True' -pm '2,4', -dt '0.3' -ns '4' -model 'sps'", wdir='/Users/aki.nikolaidis/git_repo/ALL_PYNETS')

@@ -1,0 +1,2 @@
+/Users/aki.nikolaidis/git_repo/ALL_PYNETS/3mm_small.nii.gz
+/Users/aki.nikolaidis/git_repo/ALL_PYNETS/3mm_small.nii.gz
