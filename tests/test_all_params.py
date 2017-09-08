@@ -33,7 +33,9 @@ from nibabel.affines import apply_affine
 from nipype.interfaces.base import isdefined, Undefined
 from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
-from pynets import
+from pynets import pynets_run
+
+@pytest.mark.skip(reason="no way of currently testing this")
 
 input_file=Path(__file__).parent/"examples"/"997"/"sub-997_ses-01_task-REST_run-01_bold.nii.gz"
 ID='997'
@@ -52,6 +54,7 @@ multi_thr = None
 min_thr = None
 max_thr = None
 step_thr = None
+dens_thresh = None
 
 pynets_run(input_file, ID, atlas_select, parlistfile, NETWORK, thr, node_size, mask,
 all_nets, conn_model, conf, dens_thresh, adapt_thresh, plot_switch, multi_atlas,
