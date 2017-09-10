@@ -186,6 +186,7 @@ def modularity(W, qtype='sta', seed=None):
     return ci_ret, q[-1]
 
 def link_communities(W, type_clustering='single'):
+    from pynets.thresholding import normalize
     '''##Adapted from bctpy
     '''
     n = len(W)
@@ -371,6 +372,101 @@ def link_communities(W, type_clustering='single'):
     M = M[np.sum(M, axis=1) > 2, :]
     return M
 
+def modularity_finetune_und_sign(W, qtype='sta', gamma=1, ci=None, seed=None):
+
+    np.random.seed(seed)
+
+    n = len(W)  # number of nodes/modules
+    if ci is None:
+        ci = np.arange(n) + 1
+    else:
+        _, ci = np.unique(ci, return_inverse=True)
+        ci += 1
+
+    W0 = W * (W > 0)  # positive weights matrix
+    W1 = -W * (W < 0)  # negative weights matrix
+    s0 = np.sum(W0)  # positive sum of weights
+    s1 = np.sum(W1)  # negative sum of weights
+    Knm0 = np.zeros((n, n))  # positive node-to-module-degree
+    Knm1 = np.zeros((n, n))  # negative node-to-module degree
+
+    for m in range(int(np.max(ci))):  # loop over modules
+        Knm0[:, m] = np.sum(W0[:, ci == m + 1], axis=1)
+        Knm1[:, m] = np.sum(W1[:, ci == m + 1], axis=1)
+
+    Kn0 = np.sum(Knm0, axis=1)  # positive node degree
+    Kn1 = np.sum(Knm1, axis=1)  # negative node degree
+    Km0 = np.sum(Knm0, axis=0)  # positive module degree
+    Km1 = np.sum(Knm1, axis=0)  # negative module degree
+
+    if qtype == 'smp':
+        d0 = 1 / s0
+        d1 = 1 / s1  # dQ=dQ0/s0-dQ1/s1
+    elif qtype == 'gja':
+        d0 = 1 / (s0 + s1)
+        d1 = 1 / (s0 + s1)  # dQ=(dQ0-dQ1)/(s0+s1)
+    elif qtype == 'sta':
+        d0 = 1 / s0
+        d1 = 1 / (s0 + s1)  # dQ=dQ0/s0-dQ1/(s0+s1)
+    elif qtype == 'pos':
+        d0 = 1 / s0
+        d1 = 0  # dQ=dQ0/s0
+    elif qtype == 'neg':
+        d0 = 0
+        d1 = 1 / s1  # dQ=-dQ1/s1
+    else:
+        raise KeyError('modularity type unknown')
+
+    if not s0:  # adjust for absent positive weights
+        s0 = 1
+        d0 = 0
+    if not s1:  # adjust for absent negative weights
+        s1 = 1
+        d1 = 0
+
+    flag = True  # flag for within hierarchy search
+    h = 0
+    while flag:
+        h += 1
+        if h > 1000:
+            raise BCTParamError('Modularity infinite loop style D')
+        flag = False
+        for u in np.random.permutation(n):  # loop over nodes in random order
+            ma = ci[u] - 1  # current module of u
+            dq0 = ((Knm0[u, :] + W0[u, u] - Knm0[u, ma]) -
+                   gamma * Kn0[u] * (Km0 + Kn0[u] - Km0[ma]) / s0)
+            dq1 = ((Knm1[u, :] + W1[u, u] - Knm1[u, ma]) -
+                   gamma * Kn1[u] * (Km1 + Kn1[u] - Km1[ma]) / s1)
+            dq = d0 * dq0 - d1 * dq1  # rescaled changes in modularity
+            dq[ma] = 0  # no changes for same module
+
+            # print dq,ma,u
+
+            max_dq = np.max(dq)  # maximal increase in modularity
+            mb = np.argmax(dq)  # corresponding module
+            if max_dq > 1e-10:  # if maximal increase is positive
+                # print h,max_dq,mb,u
+                flag = True
+                ci[u] = mb + 1  # reassign module
+
+                Knm0[:, mb] += W0[:, u]
+                Knm0[:, ma] -= W0[:, u]
+                Knm1[:, mb] += W1[:, u]
+                Knm1[:, ma] -= W1[:, u]
+                Km0[mb] += Kn0[u]
+                Km0[ma] -= Kn0[u]
+                Km1[mb] += Kn1[u]
+                Km1[ma] -= Kn1[u]
+
+    _, ci = np.unique(ci, return_inverse=True)
+    ci += 1
+    m = np.tile(ci, (n, 1))
+    q0 = (W0 - np.outer(Kn0, Kn0) / s0) * (m == m.T)
+    q1 = (W1 - np.outer(Kn1, Kn1) / s1) * (m == m.T)
+    q = d0 * np.sum(q0) - d1 * np.sum(q1)
+
+    return ci, q
+
 def community_louvain(W, gamma=1, ci=None, B='modularity', seed=None):
     '''##Adapted from bctpy
     '''
@@ -504,7 +600,7 @@ def community_louvain(W, gamma=1, ci=None, B='modularity', seed=None):
     return ci, q
 
 ##Extract network metrics interface
-def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
+def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
     import pynets
     from pynets import netstats, thresholding
 
@@ -530,8 +626,8 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
     G_len=nx.from_numpy_matrix(mat_len)
 
     ##Save gephi files
-    if NETWORK != None:
-        nx.write_graphml(G, dir_path + '/' + ID + '_' + NETWORK + '.graphml')
+    if network != None:
+        nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '.graphml')
     else:
         nx.write_graphml(G, dir_path + '/' + ID + '.graphml')
 
@@ -554,8 +650,8 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
     j=0
     for i in metric_list:
         met_name = str(i).split('<function ')[1].split(' at')[0]
-        if NETWORK != None:
-            net_met = NETWORK + '_' + met_name
+        if network != None:
+            net_met = network + '_' + met_name
         else:
             net_met = met_name
         try:
@@ -583,9 +679,9 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
         bc_arr = np.zeros([num_nodes + 1, 2], dtype='object')
         j=0
         for i in range(num_nodes):
-            if NETWORK != None:
-                bc_arr[j,0] = NETWORK + '_' + str(bc_nodes[j]) + '_betw_cent'
-                print('\n' + NETWORK + '_' + str(bc_nodes[j]) + '_betw_cent')
+            if network != None:
+                bc_arr[j,0] = network + '_' + str(bc_nodes[j]) + '_betw_cent'
+                print('\n' + network + '_' + str(bc_nodes[j]) + '_betw_cent')
             else:
                 bc_arr[j,0] = 'WholeBrain_' + str(bc_nodes[j]) + '_betw_cent'
                 print('\n' + 'WholeBrain_' + str(bc_nodes[j]) + '_betw_cent')
@@ -596,7 +692,7 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
             print(str(bc_vals[j]))
             j = j + 1
         bc_val_list = list(bc_arr[:,1])
-        bc_arr[num_nodes,0] = NETWORK + '_MEAN_betw_cent'
+        bc_arr[num_nodes,0] = network + '_MEAN_betw_cent'
         nonzero_arr_betw_cent = np.delete(bc_arr[:,1], [0])
         bc_arr[num_nodes,1] = np.mean(nonzero_arr_betw_cent)
         print('\n' + 'Mean Betweenness Centrality across all nodes: ' + str(bc_arr[num_nodes,1]) + '\n')
@@ -615,9 +711,9 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
         ec_arr = np.zeros([num_nodes + 1, 2], dtype='object')
         j=0
         for i in range(num_nodes):
-            if NETWORK != None:
-                ec_arr[j,0] = NETWORK + '_' + str(ec_nodes[j]) + '_eig_cent'
-                print('\n' + NETWORK + '_' + str(ec_nodes[j]) + '_eig_cent')
+            if network != None:
+                ec_arr[j,0] = network + '_' + str(ec_nodes[j]) + '_eig_cent'
+                print('\n' + network + '_' + str(ec_nodes[j]) + '_eig_cent')
             else:
                 ec_arr[j,0] = 'WholeBrain_' + str(ec_nodes[j]) + '_eig_cent'
                 print('\n' + 'WholeBrain_' + str(ec_nodes[j]) + '_eig_cent')
@@ -628,7 +724,7 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
             print(str(ec_vals[j]))
             j = j + 1
         ec_val_list = list(ec_arr[:,1])
-        ec_arr[num_nodes,0] = NETWORK + '_MEAN_eig_cent'
+        ec_arr[num_nodes,0] = network + '_MEAN_eig_cent'
         nonzero_arr_eig_cent = np.delete(ec_arr[:,1], [0])
         ec_arr[num_nodes,1] = np.mean(nonzero_arr_eig_cent)
         print('\n' + 'Mean Eigenvector Centrality across all nodes: ' + str(ec_arr[num_nodes,1]) + '\n')
@@ -647,9 +743,9 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
         cc_arr = np.zeros([num_nodes + 1, 2], dtype='object')
         j=0
         for i in range(num_nodes):
-            if NETWORK != None:
-                cc_arr[j,0] = NETWORK + '_' + str(cc_nodes[j]) + '_comm_cent'
-                print('\n' + NETWORK + '_' + str(cc_nodes[j]) + '_comm_cent')
+            if network != None:
+                cc_arr[j,0] = network + '_' + str(cc_nodes[j]) + '_comm_cent'
+                print('\n' + network + '_' + str(cc_nodes[j]) + '_comm_cent')
             else:
                 cc_arr[j,0] = 'WholeBrain_' + str(cc_nodes[j]) + '_comm_cent'
                 print('\n' + 'WholeBrain_' + str(cc_nodes[j]) + '_comm_cent')
@@ -660,7 +756,7 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
             print(str(cc_vals[j]))
             j = j + 1
         cc_val_list = list(cc_arr[:,1])
-        cc_arr[num_nodes,0] = NETWORK + '_MEAN_comm_cent'
+        cc_arr[num_nodes,0] = network + '_MEAN_comm_cent'
         nonzero_arr_comm_cent = np.delete(cc_arr[:,1], [0])
         cc_arr[num_nodes,1] = np.mean(nonzero_arr_comm_cent)
         print('\n' + 'Mean Communicability Centrality across all nodes: ' + str(cc_arr[num_nodes,1]) + '\n')
@@ -679,9 +775,9 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
         rc_arr = np.zeros([num_edges + 1, 2], dtype='object')
         j=0
         for i in range(num_edges):
-            if NETWORK != None:
-                rc_arr[j,0] = NETWORK + '_' + str(rc_edges[j]) + '_rich_club'
-                print('\n' + NETWORK + '_' + str(rc_edges[j]) + '_rich_club')
+            if network != None:
+                rc_arr[j,0] = network + '_' + str(rc_edges[j]) + '_rich_club'
+                print('\n' + network + '_' + str(rc_edges[j]) + '_rich_club')
             else:
                 cc_arr[j,0] = 'WholeBrain_' + str(rc_nodes[j]) + '_rich_club'
                 print('\n' + 'WholeBrain_' + str(rc_nodes[j]) + '_rich_club')
@@ -693,7 +789,7 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
             j = j + 1
         ##Add mean
         rc_val_list = list(rc_arr[:,1])
-        rc_arr[num_edges,0] = NETWORK + '_MEAN_rich_club'
+        rc_arr[num_edges,0] = network + '_MEAN_rich_club'
         nonzero_arr_rich_club = np.delete(rc_arr[:,1], [0])
         rc_arr[num_edges,1] = np.mean(nonzero_arr_rich_club)
         print('\n' + 'Mean Rich Club Coefficient across all edges: ' + str(rc_arr[num_edges,1]) + '\n')
@@ -710,8 +806,8 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
 
     ##Add modularity measure
     try:
-        if NETWORK != None:
-            metric_list_names.append(NETWORK + '_Modularity')
+        if network != None:
+            metric_list_names.append(network + '_Modularity')
         else:
             metric_list_names.append('WholeBrain_Modularity')
         net_met_val_list_final.append(modularity)
@@ -749,21 +845,21 @@ def extractnetstats(ID, NETWORK, thr, conn_model, est_path1, out_file=None):
         import cPickle
     except ImportError:
         import _pickle as cPickle
-    if NETWORK != None:
-        met_list_picke_path = os.path.dirname(os.path.abspath(est_path1)) + '/met_list_pickle_' + NETWORK
+    if network != None:
+        met_list_picke_path = os.path.dirname(os.path.abspath(est_path1)) + '/met_list_pickle_' + network
     else:
         met_list_picke_path = os.path.dirname(os.path.abspath(est_path1)) + '/met_list_pickle_WB'
     cPickle.dump(metric_list_names, open(met_list_picke_path, 'wb'))
 
     ##Save results to csv
     if 'inv' in est_path1:
-        if NETWORK != None:
-            out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_mets_sps_cov_' + str(thr) + '.csv'
+        if network != None:
+            out_path = dir_path + '/' + ID + '_' + network + '_net_mets_sps_cov_' + str(thr) + '.csv'
         else:
             out_path = dir_path + '/' + ID + '_net_mets_sps_cov_' + str(thr) + '.csv'
     else:
-        if NETWORK != None:
-            out_path = dir_path + '/' + ID + '_' + NETWORK + '_net_mets_corr_' + str(thr) + '.csv'
+        if network != None:
+            out_path = dir_path + '/' + ID + '_' + network + '_net_mets_corr_' + str(thr) + '.csv'
         else:
             out_path = dir_path + '/' + ID + '_net_mets_corr_' + str(thr) + '.csv'
     np.savetxt(out_path, net_met_val_list_final)
