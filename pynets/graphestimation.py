@@ -35,7 +35,7 @@ try:
 except ImportError:
     pass
 
-def get_conn_matrix(time_series, conn_model, NETWORK, ID, dir_path, thr):
+def get_conn_matrix(time_series, conn_model, network, ID, dir_path, thr):
     if conn_model == 'corr':
         conn_measure = ConnectivityMeasure(kind='correlation')
         conn_matrix = conn_measure.fit_transform([time_series])[0]
@@ -54,7 +54,7 @@ def get_conn_matrix(time_series, conn_model, NETWORK, ID, dir_path, thr):
         ##Fit estimator to matrix to get sparse matrix
         estimator = GraphLassoCV()
         try:
-            print("Fitting Lasso estimator...")
+            print("Fitting Lasso Estimator...")
             est = estimator.fit(time_series)
         except RuntimeError:
             print('Unstable Lasso estimation--Attempting to re-run by first applying shrinkage...')
@@ -78,8 +78,8 @@ def get_conn_matrix(time_series, conn_model, NETWORK, ID, dir_path, thr):
             print('Unstable Lasso estimation. Try again!')
             sys.exit()
 
-        if NETWORK != None:
-            est_path = dir_path + '/' + ID + '_' + NETWORK + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '.txt'
+        if network != None:
+            est_path = dir_path + '/' + ID + '_' + network + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '.txt'
         else:
             est_path = dir_path + '/' + ID + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '.txt'
         if conn_model == 'sps':

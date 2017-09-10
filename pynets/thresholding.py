@@ -72,9 +72,9 @@ def normalize(W, copy=True):
     W /= np.max(np.abs(W))
     return W
 
-def density_thresholding(ts_within_spheres, conn_model, NETWORK, ID, dens_thresh, dir_path):
+def density_thresholding(ts_within_spheres, conn_model, network, ID, dens_thresh, dir_path):
     thr=0.0
-    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path, thr)
+    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, network, ID, dir_path, thr)
     conn_matrix = normalize(conn_matrix)
     np.fill_diagonal(conn_matrix, 0)
     i = 1
@@ -118,7 +118,7 @@ def binarize(W, copy=True):
     W[W != 0] = 1
     return W
 
-def adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat_path, dir_path):
+def adaptive_thresholding(ts_within_spheres, conn_model, network, ID, struct_mat_path, dir_path):
     import collections
     from pynets import binarize, thr2prob, est_density
 
@@ -142,7 +142,7 @@ def adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat
         total_err = float(float(FP + FN)/diffs.size)
         return(FP_error, FN_error, total_err, density)
 
-    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path, thr)
+    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, network, ID, dir_path, thr)
     struct_mat = np.genfromtxt(struct_mat_path)
     print('Using reference structural matrix from: ' + struct_mat_path)
 
@@ -189,7 +189,7 @@ def adaptive_thresholding(ts_within_spheres, conn_model, NETWORK, ID, struct_mat
         if value[0] == value[1]:
             good_threshes.append(float(key))
 
-    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, NETWORK, ID, dir_path, thr)
+    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, network, ID, dir_path, thr)
     conn_matrix = normalize(conn_matrix)
     np.fill_diagonal(conn_matrix, 0)
     min_thresh = min(good_threshes)
