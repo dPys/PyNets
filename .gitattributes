@@ -1,3 +1,1 @@
-tests/examples/997/sub-997_ses-01_task-REST_run-01_bold.nii.gz filter=lfs diff=lfs merge=lfs -text
-pynets/rsnrefs/Schaefer2018_1000Parcels_17Networks_order_FSLMNI152_1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
-pynets/rsnrefs/Schaefer2018_1000Parcels_17Networks_order_FSLMNI152_2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+
