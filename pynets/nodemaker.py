@@ -65,28 +65,84 @@ def fetch_nilearn_atlas_coords(atlas_select):
         label_names=None
     return(coords, atlas_name, networks_list, label_names)
 
-def get_ref_net(bna_img, par_data, x, y, z):
-    ref_dict = {0:'UNKNOWN', 1:'VIS', 2:'SENS', 3:'DA', 4:'VA', 5:'LIMBIC', 6:'FPTC', 7:'DMN'}
-    ##apply_affine(aff, (x,y,z)) # vox to mni
-    aff_inv=npl.inv(bna_img.affine)
-    ##mni to vox
-    vox_coord = apply_affine(aff_inv, (x, y, z))
-    return ref_dict[int(par_data[int(vox_coord[0]),int(vox_coord[1]),int(vox_coord[2])])]
-
-def get_mem_dict(func_file, coords, networks_list):
+def get_membership_from_coords(network, func_file, coords, networks_list):
+    ##Load subject func data
     bna_img = nib.load(func_file)
-    if networks_list is None:
-        #net_atlas = nilearn.datasets.fetch_atlas_yeo_2011()
-        #par_path = net_atlas.thick_7
-        par_file = pkg_resources.resource_filename("pynets", "rsnrefs/Yeo7.nii.gz")
+
+    if networks_list is None or network not in networks_list:
+        x_vox = np.diagonal(bna_img.affine[:3,0:3])[0]
+        y_vox = np.diagonal(bna_img.affine[:3,0:3])[1]
+        z_vox = np.diagonal(bna_img.affine[:3,0:3])[2]
+
+        if x_vox <= 1 and y_vox <= 1 and z_vox <=1:
+            par_file = pkg_resources.resource_filename("pynets", "rsnrefs/BIGREF1mm.nii.gz")
+        else:
+            par_file = pkg_resources.resource_filename("pynets", "rsnrefs/BIGREF2mm.nii.gz")
+
+        ##Grab RSN reference file
+        nets_ref_txt = pkg_resources.resource_filename("pynets", "rsnrefs/Schaefer2018_1000_17nets_ref.txt")
+
+        ##Create membership dictionary
+        dict_df = pd.read_csv(nets_ref_txt, sep="\t", header=None, names=["Index", "Region", "X", "Y", "Z"])
+        dict_df.Region.unique().tolist()
+        ref_dict = {v: k for v, k in enumerate(dict_df.Region.unique().tolist())}
+
         par_img = nib.load(par_file)
         par_data = par_img.get_data()
-        membership = pd.Series(list(tuple(x) for x in coords), [get_ref_net(bna_img, par_data, coord[0],coord[1],coord[2]) for coord in coords])
-        membership_plotting = pd.Series([get_ref_net(bna_img, par_data, coord[0],coord[1],coord[2]) for coord in coords])
+
+        RSN_ix=list(ref_dict.keys())[list(ref_dict.values()).index(network)]
+        RSNmask = par_data[:,:,:,RSN_ix]
+
+        def mmToVox(mmcoords):
+            voxcoords = ['','','']
+            voxcoords[0] = int((round(int(mmcoords[0])/x_vox))+45)
+            voxcoords[1] = int((round(int(mmcoords[1])/y_vox))+63)
+            voxcoords[2] = int((round(int(mmcoords[2])/z_vox))+36)
+            return voxcoords
+
+        def VoxTomm(voxcoords):
+            mmcoords = ['','','']
+            mmcoords[0] = int((round(int(voxcoords[0])-45)*x_vox))
+            mmcoords[1] = int((round(int(voxcoords[1])-63)*y_vox))
+            mmcoords[2] = int((round(int(voxcoords[2])-36)*z_vox))
+            return mmcoords
+
+        coords_vox = []
+        for i in coords:
+            coords_vox.append(mmToVox(i))
+        coords_vox = list(tuple(x) for x in coords_vox)
+
+        error=4
+        RSN_coords_vox = []
+        for coord in coords_vox:
+            sphere_vol = np.zeros(RSNmask.shape, dtype=bool)
+            sphere_vol[tuple(coord)] = 1
+            if (RSNmask.astype('bool') & sphere_vol).any():
+                print(str(coord) + ' falls within mask...')
+                RSN_coords_vox.append(coord)
+            inds = get_sphere(coord, error, (np.abs(x_vox), y_vox, z_vox), RSNmask.shape)
+            sphere_vol[tuple(inds.T)] = 1
+            if (RSNmask.astype('bool') & sphere_vol).any():
+                print(str(coord) + ' is within a + or - ' + str(error) + ' mm neighborhood...')
+                RSN_coords_vox.append(coord)
+
+        coords_mm = []
+        for i in RSN_coords_vox:
+            coords_mm.append(VoxTomm(i))
+        coords_mm = list(tuple(x) for x in coords_mm)
+
     else:
         membership = pd.Series(list(tuple(x) for x in coords), networks_list)
-        membership_plotting = pd.Series(networks_list)
-    return(membership, membership_plotting)
+        ##Convert to membership dataframe
+        mem_df = membership.to_frame().reset_index()
+
+        nets_avail=list(set(list(mem_df['index'])))
+
+        ##Get coords for network-of-interest
+        mem_df.loc[mem_df['index'] == network]
+        net_coords = mem_df.loc[mem_df['index'] == network][[0]].values[:,0]
+        coords_mm = list(tuple(x) for x in net_coords)
+    return coords_mm
 
 def coord_masker(mask, coords, label_names):
     x_vox = np.diagonal(masking._load_mask_img(mask)[1][:3,0:3])[0]
@@ -117,7 +173,7 @@ def coord_masker(mask, coords, label_names):
         inds = get_sphere(coord, error, (np.abs(x_vox), y_vox, z_vox), mask_data.shape)
         sphere_vol[tuple(inds.T)] = 1
         if (mask_data & sphere_vol).any():
-            print(str(coord) + ' is within a + or - ' + str(error) + ' voxel neighborhood...')
+            print(str(coord) + ' is within a + or - ' + str(error) + ' mm neighborhood...')
             continue
         bad_coords.append(coord)
 
@@ -158,7 +214,7 @@ def get_names_and_coords_of_parcels(parlistfile):
     coords = np.array(coords)
     return(coords, atlas_name, par_max)
 
-def gen_network_parcels(parlistfile, NETWORK, labels, dir_path):
+def gen_network_parcels(parlistfile, network, labels, dir_path):
     bna_img = nib.load(parlistfile)
     if bna_img.get_data_dtype() != np.dtype(np.int):
         bna_data_for_coords = bna_img.get_data()
@@ -178,12 +234,12 @@ def gen_network_parcels(parlistfile, NETWORK, labels, dir_path):
     for idx in range(par_max):
         roi_img = nilearn.image.new_img_like(bna_img, img_stack[idx])
         img_list.append(roi_img)
-    print('Extracting parcels associated with ' + NETWORK + ' locations...')
+    print('Extracting parcels associated with ' + network + ' locations...')
     net_parcels = [i for j, i in enumerate(img_list) if j in labels]
     bna_4D = nilearn.image.concat_imgs(net_parcels).get_data()
     index_vec = np.array(range(len(net_parcels))) + 1
     net_parcels_sum = np.sum(index_vec * bna_4D, axis=3)
     net_parcels_map_nifti = nib.Nifti1Image(net_parcels_sum, affine=np.eye(4))
-    out_path = dir_path + '/' + NETWORK + '_parcels.nii.gz'
+    out_path = dir_path + '/' + network + '_parcels.nii.gz'
     nib.save(net_parcels_map_nifti, out_path)
     return(out_path)

@@ -20,7 +20,7 @@ from sklearn.preprocessing import normalize
 from nilearn import plotting, image, masking
 from matplotlib import colors
 
-def run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords_MNI, node_size, atlas_select, atlas_name, label_names, plot_switch):
+def run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, network, coords_MNI, node_size, atlas_select, atlas_name, label_names, plot_switch):
     edge_threshold = 0.90
     connectome_fdt_thresh = 1000
 
@@ -30,7 +30,7 @@ def run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords_MNI, 
     merged_f_samples_path = bedpostx_dir + '/merged_f1samples.nii.gz'
     merged_ph_samples_path = bedpostx_dir + '/merged_ph1samples.nii.gz'
     input_MNI = FSLDIR + '/data/standard/MNI152_T1_2mm_brain.nii.gz'
-    probtrackx_output_dir_path = bedpostx_dir + '/probtrackx_' + NETWORK
+    probtrackx_output_dir_path = bedpostx_dir + '/probtrackx_' + network
     ####Auto-set INPUTS####
 
     ##Delete any existing roi spheres
@@ -127,7 +127,7 @@ def run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords_MNI, 
     for i in del_files_spheres:
         os.remove(i)
 
-    mx_path = dir_path + '/' + str(ID) + '_' + NETWORK + '_structural_mx.txt'
+    mx_path = dir_path + '/' + str(ID) + '_' + network + '_structural_mx.txt'
     probtrackx2 = pe.Node(interface=fsl.ProbTrackX2(),name='probtrackx2')
     probtrackx2.inputs.network=True
     probtrackx2.inputs.seed=seeds_text
@@ -166,7 +166,7 @@ def run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords_MNI, 
         conn_matrix = normalize(conn_matrix)
 
         ##Save matrix
-        out_path_mx=dir_path + '/' + str(ID) + '_' + NETWORK + '_structural_mx.txt'
+        out_path_mx=dir_path + '/' + str(ID) + '_' + network + '_structural_mx.txt'
         np.savetxt(out_path_mx, conn_matrix, delimiter='\t')
 
 
@@ -178,9 +178,9 @@ def run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords_MNI, 
 
             ##And display the labels
             plt.colorbar()
-            plt.title(atlas_select.upper() + ' ' + NETWORK + ' Structural Connectivity')
+            plt.title(atlas_select.upper() + ' ' + network + ' Structural Connectivity')
 
-            out_path_fig=dir_path + '/' + str(ID) + '_' + NETWORK + '_structural_adj_mat.png'
+            out_path_fig=dir_path + '/' + str(ID) + '_' + network + '_structural_adj_mat.png'
             plt.savefig(out_path_fig)
             plt.close()
 
@@ -223,16 +223,16 @@ def run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, NETWORK, coords_MNI, 
 
             connectome = plotting.plot_connectome(conn_matrix_symm, coords_MNI, edge_threshold=edge_threshold, node_color=clust_colors, edge_cmap=plotting.cm.black_blue_r)
             connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=plotting.cm.cyan_copper_r)
-            out_file_path = dir_path + '/structural_connectome_fig_' + NETWORK + '_' + str(ID) + '.png'
+            out_file_path = dir_path + '/structural_connectome_fig_' + network + '_' + str(ID) + '.png'
             plt.savefig(out_file_path)
             plt.close()
 
             from pynets import plotting as pynplot
-            NETWORK = NETWORK + '_structural'
-            pynplot.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, NETWORK, label_names)
+            network = network + '_structural'
+            pynplot.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
 
-        if NETWORK != None:
-            est_path = dir_path + '/' + ID + '_' + NETWORK + '_structural_est.txt'
+        if network != None:
+            est_path = dir_path + '/' + ID + '_' + network + '_structural_est.txt'
         else:
             est_path = dir_path + '/' + ID + '_structural_est.txt'
         try:
