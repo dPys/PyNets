@@ -51,8 +51,8 @@ d3.json(
       d.weight = weight
     })
       .attr("d", line)
-      .transition()
-      .duration(1000)
+      /*.transition()
+      .duration(1000)*/
       .style("stroke", function(d){
         var weight = d.weight
         return d3.interpolateCool(weight)
@@ -78,10 +78,9 @@ function mouseovered(d) {
       .each(function(n) { n.target = n.source = false; });
 
   link
-
-      .classed("link--source", function(l) { if (l.source === d) return l.target.target = true; })
+    .classed("link--source", function(l) { if (l.source === d) return l.target.target = true; })
     .filter(function(l) { return l.target === d || l.source === d; })
-      .raise();
+    .raise();
 
   node
       .classed("node--target", function(n) { return n.target; })
@@ -89,13 +88,13 @@ function mouseovered(d) {
 }
 
 function mouseouted(d) {
-  /*link
+  link
       .classed("link--target", false)
       .classed("link--source", false);
 
   node
       .classed("node--target", false)
-      .classed("node--source", false);*/
+      .classed("node--source", false);
 }
 
 // Lazily construct the package hierarchy from class names.

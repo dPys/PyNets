@@ -5,10 +5,10 @@ import numpy as np
 
 ###
 working_path = r'/work/04171/dpisner/data/ABM/network_analysis' # use your path
-name_of_network_pickle = 'DMN_net_mets_sps_cov'
+name_of_network_pickle = 'Default_net_mets_sps_cov'
 missingness_thresh = 0.10
-#atlas_name='Power 2011 atlas'
-atlas_name='Dosenbach 2010 atlas'
+atlas_name='coords_power_2011'
+#atlas_name='Dosenbach 2010 atlas'
 ###
 
 all_subs = [i for i in os.listdir(working_path) if len(i) <= 3]
@@ -21,9 +21,10 @@ for ID in all_subs:
     for i in os.listdir(subject_path):
         if name_of_network_pickle in i and '.csv' not in i:
             try:
-                val = int(i.split('_0.')[1])
-                if val < 100 and val >= 90:
-                    net_pickle_mt_list.append(i)
+                val = int(i.split('_0.')[1].split('.pkl')[0])
+                #if val < 100 and val >= 90:
+                    #net_pickle_mt_list.append(i)
+                net_pickle_mt_list.append(i)
             except:
                 continue
 

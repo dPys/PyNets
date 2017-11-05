@@ -46,6 +46,6 @@ def adaptiveThresh_test():
     F=np.maximum(F,F.T)
     S=(S!=0).astype(int)
     ms,mfset=adaptiveThresh_4motifs(S,F,threshes=np.linspace(-0.8,1.5,21),plot_on=False)
-    
+
     assert len(ms)==6,'Structural 4-Motifs did not return array of length 6'
     assert mfset.shape==(21,6),"Functional Thresholded 4-Motifs did not generate (21,6) array"

@@ -6,8 +6,6 @@
 
 instance:
     proc_mem: [3,6]
-    #roi_mask_file: '/Users/aki.nikolaidis/Google Drive/DropboxArchive/UIUC_Projects/FYP/MNI152_T1_2mm_brain.nii.gz'
-    roi_mask_file: '/Users/aki.nikolaidis/Downloads/MNI152_T1_3mm_brain.nii.gz'
     dataset_bootstraps: 5
     timeseries_bootstraps: 5
     n_clusters: 400
@@ -15,10 +13,4 @@ instance:
     bootstrap_list: list(range(0,dataset_bootstraps))
     cross_cluster: False
     affinity_threshold: [0.8, 0.8, 0.8, 0.8]
-    out_dir: '/Users/aki.nikolaidis/PyNetsTest'
     run: True
-
-    
-   
-    
-    

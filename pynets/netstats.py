@@ -638,11 +638,12 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
     import itertools
     from itertools import permutations
     from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, rich_club_coefficient, eigenvector_centrality, communicability_centrality
-    from pynets.netstats import efficiency, global_efficiency, local_efficiency, create_random_graph, smallworldness_measure, smallworldness, modularity
-    ##For non-nodal scalar metrics from networkx.algorithms library, add the name of the function to metric_list for it to be automatically calculated.
+    from pynets.netstats import efficiency, global_efficiency, create_random_graph, smallworldness_measure, smallworldness, modularity
     ##For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the function  (with a G-only input) to the netstats module.
-    #metric_list = [global_efficiency, local_efficiency, smallworldness, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
-    metric_list = [global_efficiency, local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
+    metric_list = [global_efficiency, smallworldness, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
+
+    ##Assortativity
+    custom_params = 'weight = 0.25'
 
     ##Iteratively run functions from above metric list
     num_mets = len(metric_list)
@@ -655,7 +656,10 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
         else:
             net_met = met_name
         try:
-            net_met_val = float(i(G))
+            if custom_params and i is degree_assortativity_coefficient:
+                net_met_val = float(i(G, custom_params))
+            else:
+                net_met_val = float(i(G))
         except:
             net_met_val = np.nan
         net_met_arr[j,0] = net_met

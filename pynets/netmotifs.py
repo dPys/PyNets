@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+
 #%% FUNCTIONS
-def countMotifs(A,N=3):
+def countMotifs(A,N=4):
     #
     #This can be considered as three stages:
     #(1) Enumerate subgraphs using method from
@@ -15,9 +16,9 @@ def countMotifs(A,N=3):
     #    implemented but should be in the future.
     import numpy as np
     from copy import copy
-    
+
     assert N in [3,4], "Only motifs of size N=3,4 currently supported"
-    
+
     X2=np.array([[k] for k in range(A.shape[0]-1)])
     for n in range(N-1):
         X=copy(X2)
@@ -51,10 +52,10 @@ def adaptiveThresh_4motifs(S,F,threshes=np.linspace(-0.8,1.5,201),plot_on=True,s
     assert np.all(np.unique(S)==np.array([0,1])),"Structural Matrix S must be binarized"
     assert np.all(S==S.T), "Structural Matrix A must be symmetric"
     assert np.all(F==F.T), "Functional Matrix F must be symmetric"
-    
-    #list of 
+
+    #list of
     m4lib=['1113','1122','1223','2222','2233','3333']
-    #count 
+    #count
     ms=countMotifs(S,N=4)
     ms=np.array([ms[k] for k in m4lib])
     def adaptiveThresh(a):
@@ -62,20 +63,24 @@ def adaptiveThresh_4motifs(S,F,threshes=np.linspace(-0.8,1.5,201),plot_on=True,s
         mf=countMotifs((F>thr).astype(int),N=4)
         mf=np.array([mf[k] for k in m4lib])
         return mf
-    
-    mfset=[adaptiveThresh(a) for a in threshes]
+
+    #fset=[adaptiveThresh(a) for a in threshes]
+    mfset = []
+    for a in threshes:
+        print(a)
+        mfset.append(adaptiveThresh(a))
     mfset=np.vstack(mfset)
 
     if plot_on:
         vmax=np.maximum(mfset.max(),ms.max())
         fig=plt.figure()
-        plt.get_current_fig_manager().window.setGeometry(257,29,891,652)
+        #plt.get_current_fig_manager().window.setGeometry(257,29,891,652)
         ax=plt.subplot2grid((3,4),(0,0),colspan=3)
         plt.imshow(ms[None,:],aspect='auto',vmin=0,vmax=vmax)
         plt.xticks([]);plt.yticks([])
         plt.ylabel('Structural')
-        
-        
+
+
         plt.subplot2grid((3,4),(1,0),rowspan=2,colspan=3)
         im=plt.imshow(mfset,aspect='auto',vmin=0,vmax=vmax)
         plt.xticks(range(len(m4lib)),m4lib)
@@ -87,7 +92,7 @@ def adaptiveThresh_4motifs(S,F,threshes=np.linspace(-0.8,1.5,201),plot_on=True,s
         plt.yticks(yt,['{:0.1f}'.format(threshes[y]) for y in yt])
         plt.ylim(ylim)
         plt.gca().invert_yaxis()
-        
+
         adist=np.sum(np.abs(mfset-ms),1)
         othresh=threshes[np.argmin(adist)]
         plt.subplot2grid((3,4),(1,3),rowspan=2)
@@ -99,10 +104,10 @@ def adaptiveThresh_4motifs(S,F,threshes=np.linspace(-0.8,1.5,201),plot_on=True,s
         plt.plot(xl,[othresh,othresh],':')
         plt.xlim(xl)
         plt.gca().set_title('Opt. Thresh = {:0.2f}'.format(othresh),fontsize=10)
-        
+
         cax=fig.add_axes(ax.get_position().from_bounds(0.71,0.66,0.02,0.21))
         fig.colorbar(im, cax=cax, orientation="vertical",label='Motif Counts')
-        
+
         if save_plot:
             plt.savefig(plot_path)
     return ms,mfset
