@@ -185,6 +185,106 @@ def modularity(W, qtype='sta', seed=None):
     ci_ret += 1
     return ci_ret, q[-1]
 
+def diversity_coef_sign(W, ci):
+    '''##Adapted from bctpy
+    '''
+    n = len(W)  # number of nodes
+
+    _, ci = np.unique(ci, return_inverse=True)
+    ci += 1
+
+    m = np.max(ci)  # number of modules
+
+    def entropy(w_):
+        S = np.sum(w_, axis=1)  # strength
+        Snm = np.zeros((n, m))  # node-to-module degree
+        for i in range(m):
+            Snm[:, i] = np.sum(w_[:, ci == i + 1], axis=1)
+        pnm = Snm / (np.tile(S, (m, 1)).T)
+        pnm[np.isnan(pnm)] = 0
+        pnm[np.logical_not(pnm)] = 1
+        return -np.sum(pnm * np.log(pnm), axis=1) / np.log(m)
+
+    #explicitly ignore compiler warning for division by zero
+    with np.errstate(invalid='ignore'):
+        Hpos = entropy(W * (W > 0))
+        Hneg = entropy(-W * (W < 0))
+
+    return Hpos, Hneg
+
+def core_periphery_dir(W, gamma=1, C0=None):
+    '''##Adapted from bctpy
+    '''
+    n = len(W)
+    np.fill_diagonal(W, 0)
+
+    if C0 == None:
+        C = np.random.randint(2, size=(n,))
+    else:
+        C = C0.copy()
+
+    s = np.sum(W)
+    p = np.mean(W)
+    b = W - gamma * p
+    B = (b + b.T) / (2 * s)
+    cix, = np.where(C)
+    ncix, = np.where(np.logical_not(C))
+    q = np.sum(B[np.ix_(cix, cix)]) - np.sum(B[np.ix_(ncix, ncix)])
+
+    print(q)
+
+    flag = True
+    it = 0
+    while flag:
+        it += 1
+        if it > 100:
+            print('Infinite Loop aborted')
+            sys.exit(0)
+
+        flag = False
+        #initial node indices
+        ixes = np.arange(n)
+
+        Ct = C.copy()
+        while len(ixes) > 0:
+            Qt = np.zeros((n,))
+            ctix, = np.where(Ct)
+            nctix, = np.where(np.logical_not(Ct))
+            q0 = (np.sum(B[np.ix_(ctix, ctix)]) -
+                  np.sum(B[np.ix_(nctix, nctix)]))
+            Qt[ctix] = q0 - 2 * np.sum(B[ctix, :], axis=1)
+            Qt[nctix] = q0 + 2 * np.sum(B[nctix, :], axis=1)
+
+            max_Qt = np.max(Qt[ixes])
+            u, = np.where(np.abs(Qt[ixes]-max_Qt) < 1e-10)
+            print(np.where(np.abs(Qt[ixes]-max_Qt) < 1e-10))
+            print(Qt[ixes])
+            print(max_Qt)
+            #tunourn
+            u = u[np.random.randint(len(u))]
+            print(np.sum(Ct))
+            Ct[ixes[u]] = np.logical_not(Ct[ixes[u]])
+            print(np.sum(Ct))
+            #casga
+
+            ixes = np.delete(ixes, u)
+
+            print(max_Qt - q)
+            print(len(ixes))
+
+            if max_Qt - q > 1e-10:
+                flag = True
+                C = Ct.copy()
+                cix, = np.where(C)
+                ncix, = np.where(np.logical_not(C))
+                q = (np.sum(B[np.ix_(cix, cix)]) -
+                     np.sum(B[np.ix_(ncix, ncix)]))
+
+    cix, = np.where(C)
+    ncix, = np.where(np.logical_not(C))
+    q = np.sum(B[np.ix_(cix, cix)]) - np.sum(B[np.ix_(ncix, ncix)])
+    return C, q
+
 def link_communities(W, type_clustering='single'):
     from pynets.thresholding import normalize
     '''##Adapted from bctpy
@@ -429,7 +529,8 @@ def modularity_finetune_und_sign(W, qtype='sta', gamma=1, ci=None, seed=None):
     while flag:
         h += 1
         if h > 1000:
-            raise BCTParamError('Modularity infinite loop style D')
+            print('Modularity infinite loop style D')
+            sys.exit(0)
         flag = False
         for u in np.random.permutation(n):  # loop over nodes in random order
             ma = ci[u] - 1  # current module of u
@@ -645,7 +746,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
     ##Assortativity
     custom_params = 'weight = 0.25'
 
-    ##Iteratively run functions from above metric list
+    ##Iteratively run functions from above metric list that generate single scalar output
     num_mets = len(metric_list)
     net_met_arr = np.zeros([num_mets, 2], dtype='object')
     j=0
@@ -656,7 +757,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
         else:
             net_met = met_name
         try:
-            if custom_params and i is degree_assortativity_coefficient:
+            if custom_params and i is 'degree_assortativity_coefficient':
                 net_met_val = float(i(G, custom_params))
             else:
                 net_met_val = float(i(G))
@@ -670,8 +771,15 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
         j = j + 1
     net_met_val_list = list(net_met_arr[:,1])
 
+    ##Run miscellaneous functions that generate multiple outputs
     ##Calculate modularity using the Louvain algorithm
     [community_aff, modularity] = modularity(mat_wei)
+
+    ##Calculate core-periphery subdivision
+    #[Coreness_vec, Coreness_q] = core_periphery_dir(mat_wei)
+
+    ##Calculate diversity coefficient (positive and negative edges)
+    #[diversity_coefficient_pos, diversity_coefficient_neg] = diversity_coef_sign(mat_wei, community_aff)
 
     ##betweenness_centrality
     try:
@@ -817,6 +925,36 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
         net_met_val_list_final.append(modularity)
     except:
         pass
+
+    ##Add Core/Periphery measure
+#    try:
+#        if network != None:
+#            metric_list_names.append(network + '_Coreness')
+#        else:
+#            metric_list_names.append('WholeBrain_Coreness')
+#        net_met_val_list_final.append(Coreness_q)
+#    except:
+#        pass
+
+    ##Add Diversity Coefficient (Positive)
+#    try:
+#        if network != None:
+#            metric_list_names.append(network + '_Diversity_Coefficient_Positive')
+#        else:
+#            metric_list_names.append('WholeBrain_Diversity_Coefficient_Positive')
+#        net_met_val_list_final.append(diversity_coefficient_pos)
+#    except:
+#        pass
+
+    ##Add Diversity Coefficient (Negative)
+#    try:
+#        if network != None:
+#            metric_list_names.append(network + '_Diversity_Coefficient_Negative')
+#        else:
+#            metric_list_names.append('WholeBrain_Diversity_Coefficient_Negative')
+#        net_met_val_list_final.append(diversity_coefficient_neg)
+#    except:
+#        pass
 
     ##Add centrality and rich club measures
     try:

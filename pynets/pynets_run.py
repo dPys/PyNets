@@ -412,7 +412,7 @@ if __name__ == '__main__':
 
         imp_est_iterables=[]
         if multi_thr==True:
-            print('Iterating pipeline across multiple thresholds...')
+            print('Iterating pipeline for ' + str(ID) + ' across multiple thresholds...')
             iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
             float(max_thr), float(step_thr)),decimals=2).tolist()]
             imp_est_iterables.append(("thr", iter_thresh))

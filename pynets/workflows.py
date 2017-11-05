@@ -143,8 +143,12 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, network, no
 
     if plot_switch == True:
         ##Plot connectogram
-        plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
-
+        try:
+            plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
+        except RuntimeError:
+            print('\n\n\nError: Connectogram plotting failed!')
+            pass
+        
         ##Plot adj. matrix based on determined inputs
         atlas_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names, mask)
 
@@ -237,7 +241,11 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, network, no
 
     if plot_switch == True:
         ##Plot connectogram
-        plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
+        try:
+            plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
+        except RuntimeError:
+            print('\n\n\nError: Connectogram plotting failed!')
+            pass
 
         ##Plot adj. matrix based on determined inputs
         plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names, mask)
@@ -411,7 +419,11 @@ def network_connectome(input_file, ID, atlas_select, network, node_size, mask, t
 
     if plot_switch == True:
         ##Plot connectogram
-        plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
+        try:
+            plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
+        except RuntimeError:
+            print('\n\n\nError: Connectogram plotting failed!')
+            pass
 
         ##Plot adj. matrix based on determined inputs
         plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names, mask)
