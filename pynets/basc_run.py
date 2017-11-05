@@ -12,23 +12,36 @@ def basc_run(subjects_list, basc_config):
     import os
     import numpy as np
     import scipy.stats
+    import nibabel as nib
     from os.path import expanduser
     import yaml
     from basc_workflow_runner import run_basc_workflow
+    from pathlib import Path
 
-    
-    
     subject_file_list= subjects_list
-    
-    #basc_config = Path(__file__).parent/"basc_config.yaml"
-    
-    basc_config='/Users/aki.nikolaidis/git_repo/ALL_PYNETS/PyNets/basc_config.yaml'
+
+    try:
+        FSLDIR = os.environ['FSLDIR']
+    except NameError:
+        print('FSLDIR environment variable not set!')
+
+    ##Determine the voxel size from sample subject's func image affine to pull correct MNI_152 image
+    bna_img = nib.load(subject_file_list[0])
+
+    x_vox = np.diagonal(bna_img.affine[:3,0:3])[0]
+    y_vox = np.diagonal(bna_img.affine[:3,0:3])[1]
+    z_vox = np.diagonal(bna_img.affine[:3,0:3])[2]
+
+    if x_vox <= 1 and y_vox <= 1 and z_vox <=1:
+        roi_mask_file = FSLDIR + '/data/standard/MNI152_T1_1mm_brain.nii.gz'
+    else:
+        roi_mask_file = FSLDIR + '/data/standard/MNI152_T1_2mm_brain.nii.gz'
+
+    basc_config=Path(__file__)/'basc_config.yaml'
     f = open(basc_config)
     basc_dict_yaml=yaml.load(f)
     basc_dict =basc_dict_yaml['instance']
-    
     proc_mem=basc_dict['proc_mem']
-    roi_mask_file=basc_dict['roi_mask_file']
     dataset_bootstraps= basc_dict['dataset_bootstraps']
     timeseries_bootstraps= basc_dict['timeseries_bootstraps']
     n_clusters= basc_dict['n_clusters']
@@ -36,13 +49,7 @@ def basc_run(subjects_list, basc_config):
     bootstrap_list= eval(basc_dict['bootstrap_list'])
     cross_cluster= basc_dict['cross_cluster']
     affinity_threshold= basc_dict['affinity_threshold']
-    out_dir= basc_dict['out_dir']
+    out_dir= Path(__file__)/'pynets'/'rsnrefs'
     run= basc_dict['run']
 
-    
-    
-    
     basc_test= run_basc_workflow(subject_file_list, roi_mask_file, dataset_bootstraps, timeseries_bootstraps, n_clusters, output_size, bootstrap_list, proc_mem, cross_cluster=cross_cluster, roi2_mask_file=None, affinity_threshold=affinity_threshold, out_dir=out_dir, run=run)
-            
-#basc_run('/Users/aki.nikolaidis/git_repo/ALL_PYNETS/PyNets_NHW1/Sublist.txt', '/Users/aki.nikolaidis/git_repo/ALL_PYNETS/PyNets/pynets/basc_config.yaml')
-#runfile('/Users/aki.nikolaidis/git_repo/ALL_PYNETS/PyNets/pynets/pynets_run.py',args="-i '/Users/aki.nikolaidis/git_repo/ALL_PYNETS/PyNets_NHW1/Sublist.txt' -basc 'True' -dt '0.3' -ns '4' -model 'sps' -mt", wdir='/Users/aki.nikolaidis/git_repo/ALL_PYNETS')

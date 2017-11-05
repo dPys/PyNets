@@ -1,10 +1,9 @@
+# -*- coding: utf-8 -*-
 import sys
 import argparse
 import os
 import timeit
 import string
-
-
 
 # Start time clock
 start_time = timeit.default_timer()
@@ -45,7 +44,7 @@ if __name__ == '__main__':
     parser.add_argument('-n',
         metavar='resting-state network',
         default=None,
-        help='Optionally specify the name of one of the 2017 Yeo-Schaefer RSNs: VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar')
+        help='Optionally specify the name of one of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar')
     parser.add_argument('-thr',
         metavar='graph threshold',
         default='0.95',
@@ -94,10 +93,10 @@ if __name__ == '__main__':
         metavar='path to bedpostx directory',
         default=None,
         help='Formatted according to the FSL default tree structure found at https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX')
-    parser.add_argument('-bids',
-        default=False,
-        action='store_true',
-        help='Initiate bids automation')
+    parser.add_argument('-anat',
+        metavar='path to subject anatomical image (skull-stripped and normalized to MNI space)',
+        default=None,
+        help='Optional with the -bpx flag to initiate probabilistic connectome estimation using parcels (recommended) as opposed to coordinate-based spherical volumes')
     parser.add_argument('-min_thr',
         metavar='multi-thresholding minimum threshold',
         default=0.90,
@@ -132,10 +131,10 @@ if __name__ == '__main__':
     multi_atlas=args.ma
     multi_thr=args.mt
     bedpostx_dir=args.bpx
-    bids=args.bids
     min_thr=args.min_thr
     max_thr=args.max_thr
     step_thr=args.step_thr
+    anat_loc=args.anat
 
     print('Starting up!')
 
@@ -146,8 +145,13 @@ if __name__ == '__main__':
     else:
         subjects_list = None
 
+    try:
+        bedpostx_dir
+    except:
+        bedpostx_dir = None
+
     if input_file is None and bedpostx_dir is None:
-        print("Error: You must include a file path to either a standard space functional image in .nii or .nii.gz format or a path to a time-series text/csv file, with the -i flag")
+        print("Error: You must include a file path to either a standard space functional image in .nii or .nii.gz format with the -i flag")
         sys.exit()
 
     if ID is None and subjects_list is None:
@@ -158,6 +162,14 @@ if __name__ == '__main__':
         thr=None
     else:
         thr=float(thr)
+
+    try:
+        anat_loc
+    except:
+        anat_loc = None
+
+    if anat_loc is not None and bedpostx_dir is None:
+        print('Warning: anatomical image specified, but not bedpostx directory specified. Anatomical images are only supported for structural connectome estimation at this time.')
 
     if multi_thr==True:
         dens_thresh=None
@@ -176,6 +188,9 @@ if __name__ == '__main__':
     elif input_file is not None and bedpostx_dir is not None and subjects_list is None:
         print('Running joint structural-functional connectometry...')
         print ("INPUT FILE: " + input_file)
+        print ("Bedpostx Directory: " + bedpostx_dir)
+        if anat_loc is not None:
+            print ("Anatomical Image: " + anat_loc)
         ##Set directory path containing input file
         dir_path = os.path.dirname(os.path.realpath(input_file))
     elif input_file is not None and bedpostx_dir is None and subjects_list is None:
@@ -234,17 +249,15 @@ if __name__ == '__main__':
 
     if basc == True:
        from pynets import basc_run
-       basc_config='/Users/aki.nikolaidis/git_repo/ALL_PYNETS/PyNets/basc_config.yaml'
-       subjects_list='/Users/aki.nikolaidis/git_repo/ALL_PYNETS/PyNets_NHW1/Sublist.txt'
-       sublist=np.genfromtxt(subjects_list, dtype=str).tolist()
-
+       from pathlib import Path
+       basc_config=Path(__file__)/'basc_config.yaml'
 
        print("\n\n\n-------------<(^.^<) STARTING BASC <(^.^<)----------------------" + "\n\n\n")
 
-       basc_run.basc_runner(sublist, basc_config)
-       parlistfile='/Users/aki.nikolaidis/Desktop/PyTest/workflow_output/gsclusters_img/group_stability_clusters.nii.gz'
+       basc_run.basc_runner(subjects_list, basc_config)
+       parlistfile=Path(__file__)/'pynets'/'rsnrefs'/'group_stability_clusters.nii.gz'
 
-    def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir):
+    def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc):
         import pynets
         from pynets import workflows
 
@@ -252,15 +265,15 @@ if __name__ == '__main__':
 
         ##Case 1: Whole-brain connectome with nilearn coord atlas
         if parlistfile == None and network == None and atlas_select not in nilearn_atlases:
-            [est_path, thr] = workflows.wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, network, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir)
+            [est_path, thr] = workflows.wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, network, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc)
 
         ##Case 2: Whole-brain connectome with user-specified atlas or nilearn atlas img
         elif network == None and (parlistfile != None or atlas_select in nilearn_atlases):
-            [est_path, thr] = workflows.wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir)
+            [est_path, thr] = workflows.wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc)
 
         ##Case 3: RSN connectome with nilearn atlas or user-specified atlas
         elif network != None:
-            [est_path, thr] = workflows.network_connectome(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir)
+            [est_path, thr] = workflows.network_connectome(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc)
 
         return est_path, thr
 
@@ -361,7 +374,7 @@ if __name__ == '__main__':
     def init_wf_single_subject(ID, input_file, dir_path, atlas_select, network,
     node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf,
     adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
-    max_thr, step_thr):
+    max_thr, step_thr, anat_loc):
         wf = pe.Workflow(name='PyNets_' + str(ID))
         #wf.base_directory='/tmp/pynets'
         ##Create input/output nodes
@@ -369,7 +382,7 @@ if __name__ == '__main__':
         inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID',
         'atlas_select', 'network', 'thr', 'node_size', 'mask', 'parlistfile',
         'all_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch',
-        'bedpostx_dir']), name='inputnode')
+        'bedpostx_dir', 'anat_loc']), name='inputnode')
 
         #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
         inputnode.inputs.in_file = input_file
@@ -387,18 +400,19 @@ if __name__ == '__main__':
         inputnode.inputs.adapt_thresh = adapt_thresh
         inputnode.inputs.plot_switch = plot_switch
         inputnode.inputs.bedpostx_dir = bedpostx_dir
+        inputnode.inputs.anat_loc = anat_loc
 
         #3) Add variable to function nodes
         ##Create function nodes
         imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select',
         'network', 'node_size', 'mask', 'thr', 'parlistfile', 'all_nets', 'conn_model',
-        'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch', 'bedpostx_dir'],
+        'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch', 'bedpostx_dir', 'anat_loc'],
         output_names = ['est_path', 'thr'], function=workflow_selector, imports=import_list),
         name = "imp_est")
 
         imp_est_iterables=[]
         if multi_thr==True:
-            print('Iterating pipeline across multiple thresholds...')
+            print('Iterating pipeline for ' + str(ID) + ' across multiple thresholds...')
             iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
             float(max_thr), float(step_thr)),decimals=2).tolist()]
             imp_est_iterables.append(("thr", iter_thresh))
@@ -435,7 +449,8 @@ if __name__ == '__main__':
                                   ('conf', 'conf'),
                                   ('adapt_thresh', 'adapt_thresh'),
                                   ('plot_switch', 'plot_switch'),
-                                  ('bedpostx_dir', 'bedpostx_dir')]),
+                                  ('bedpostx_dir', 'bedpostx_dir'),
+                                  ('anat_loc', 'anat_loc')]),
             (inputnode, net_mets_node, [('ID', 'sub_id'),
                                        ('network', 'network'),
                                        ('conn_model', 'conn_model')]),
@@ -451,7 +466,7 @@ if __name__ == '__main__':
 
     def wf_multi_subject(subjects_list, atlas_select, network, node_size, mask,
     thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
-    plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr):
+    plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc):
         wf_multi = pe.Workflow(name='PyNets_multisubject')
         i=0
         for _file in subjects_list:
@@ -475,7 +490,8 @@ if __name__ == '__main__':
                                multi_atlas= multi_atlas,
                                min_thr=min_thr,
                                max_thr=max_thr,
-                               step_thr=step_thr)
+                               step_thr=step_thr,
+                               anat_loc=anat_loc)
             wf_multi.add_nodes([wf_single_subject])
             i = i + 1
         return wf_multi
@@ -484,21 +500,20 @@ if __name__ == '__main__':
     if subjects_list is not None:
         wf_multi = wf_multi_subject(subjects_list, atlas_select, network, node_size,
         mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
-        plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr)
-        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])}
-        wf.run()
-        #wf_multi.run(plugin='MultiProc')
-        #wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
+        plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc)
+        plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
+        #wf_multi.run()
+        print('\n' + 'Running with ' + str(plugin_args) + '\n')
+        wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
     ##Single-subject workflow generator
     else:
         wf = init_wf_single_subject(ID, input_file, dir_path, atlas_select, network,
         node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf,
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
-        max_thr, step_thr)
-        plugin_args = { 'n_procs' : int(procmem[0]),'memory_gb': int(procmem[1])}
-        wf.run()
-        #wf.run(plugin='MultiProc')
-        #wf.run(plugin='MultiProc', plugin_args= plugin_args)
+        max_thr, step_thr, anat_loc)
+        plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
+        #wf.run()
+        wf.run(plugin='MultiProc', plugin_args= plugin_args)
 
 
     print('-----------PYNETS COMPLETE-----------')

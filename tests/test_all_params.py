@@ -40,16 +40,12 @@ from itertools import product
 @pytest.mark.skip(reason="no way of currently testing this")
 def test_all_param_combs():
     ##For fake testing
-    input_file='examples/997/sub-997_ses-01_task-REST_run-01_bold.nii.gz'
-    parlistfile='examples/whole_brain_cluster_labels_PCA100.nii.gz'
-    dir_path = 'examples/997'
-    #conf='examples/997/sub-997_ses-01_task-REST_run-01_bold_confounds.tsv'
+    input_file=Path(__file__).parent/"examples"/"997"/"sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz"
+    parlistfile=Path(__file__).parent/"examples"/"whole_brain_cluster_labels_PCA200.nii.gz"
+    dir_path =Path(__file__).parent/"examples"/"997"
+    #conf=Path(__file__).parent/"examples"/"997"/"sub-997_ses-01_task-REST_run-01_bold_confounds.tsv"
     conf=None
     ##
-
-    #input_file=Path(__file__).parent/"examples"/"997"/"sub-997_ses-01_task-REST_run-01_bold.nii.gz"
-    #parlistfile=Path(__file__).parent/"examples"/"whole_brain_cluster_labels_PCA100.nii.gz"
-    #conf = Path(__file__).parent/"examples"/"997"/"sub-997_ses-01_task-REST_run-01_bold_confounds.tsv"
 
     NETWORK = ['DMN', 'FPTC', 'DA', 'SN', 'VA', 'CON']
     thr = ['0.99', '0.95', '0.90']

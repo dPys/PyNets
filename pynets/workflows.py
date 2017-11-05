@@ -13,9 +13,10 @@ import sklearn
 import matplotlib
 import warnings
 import pynets
-#warnings.simplefilter("ignore")
+warnings.simplefilter("ignore")
 import matplotlib.pyplot as plt
 from numpy import genfromtxt
+from pathlib import Path
 from matplotlib import colors
 from nipype import Node, Workflow
 from nilearn import input_data, masking, datasets
@@ -35,7 +36,7 @@ try:
 except ImportError:
     import _pickle as pickle
 
-def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir):
+def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc):
     nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
 
     ##Input is nifti file
@@ -64,9 +65,14 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, network, no
     try:
         label_names
     except:
-
-
-        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+        try:
+            atlas_ref_txt = atlas_name + '.txt'
+            ref_txt = Path(__file__)/'atlases'/atlas_ref_txt
+            dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+            indices = dict_df.Index.unique().tolist()
+            label_names = dict_df['Region'].tolist()
+        except:
+            label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
     ##Get subject directory path
     dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_select
@@ -90,23 +96,25 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, network, no
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f)
 
-    if bedpostx_dir is not None:
-        from pynets.diffconnectometry import run_struct_mapping
-        FSLDIR = os.environ['FSLDIR']
-        try:
-            FSLDIR
-        except NameError:
-            print('FSLDIR environment variable not set!')
-        try:
-            est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, network, coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
-        except RuntimeError:
-            print('Whole-brain Structural Graph Estimation Failed!')
-
     ##extract time series from whole brain parcellaions:
     parcellation = nib.load(parlistfile)
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=parcellation, background_label=0, memory='nilearn_cache', memory_level=10, standardize=True)
     ts_within_parcels = parcel_masker.fit_transform(func_file, confounds=conf)
     print('\n' + 'Time series has {0} samples'.format(ts_within_parcels.shape[0]) + '\n')
+
+    if bedpostx_dir is not None and anat_loc is not None:
+        from pynets.diffconnectometry import run_struct_mapping
+        network= 'whole_brain'
+        if anat_loc is not None:
+            parcels = True
+        else:
+            parcels = False
+            dict_df = None
+            indices = None
+        try:
+            est_path2 = run_struct_mapping(ID, bedpostx_dir, network, coords, node_size, atlas_select, atlas_name, label_names, plot_switch, parcels, dict_df, indices, anat_loc)
+        except RuntimeError:
+            print('Whole-brain Structural Graph Estimation Failed!')
 
     ##Save time series as txt file
     out_path_ts=dir_path + '/' + ID + '_whole_brain_ts_within_parcels.txt'
@@ -135,8 +143,12 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, network, no
 
     if plot_switch == True:
         ##Plot connectogram
-        plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
-
+        try:
+            plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
+        except RuntimeError:
+            print('\n\n\nError: Connectogram plotting failed!')
+            pass
+        
         ##Plot adj. matrix based on determined inputs
         atlas_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names, mask)
 
@@ -145,7 +157,7 @@ def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, network, no
         niplot.plot_connectome(conn_matrix, coords, title=atlas_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     return est_path, thr
 
-def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, network, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir):
+def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, network, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc):
     nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
 
     ##Input is nifti file
@@ -158,6 +170,16 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, network, no
     dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_select
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
+
+    if label_names is None:
+        try:
+            atlas_ref_txt = atlas_name + '.txt'
+            ref_txt = Path(__file__)/'atlases'/atlas_ref_txt
+            dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+            indices = dict_df.Index.unique().tolist()
+            label_names = dict_df['Region'].tolist()
+        except:
+            label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
     ##Mask coordinates
     if mask is not None:
@@ -172,22 +194,25 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, network, no
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f)
 
-    if bedpostx_dir is not None:
-        from pynets.diffconnectometry import run_struct_mapping
-        FSLDIR = os.environ['FSLDIR']
-        try:
-            FSLDIR
-        except NameError:
-            print('FSLDIR environment variable not set!')
-        try:
-            est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, network, coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
-        except RuntimeError:
-            print('Whole-brain Structural Graph Estimation Failed!')
-
     ##Extract within-spheres time-series from funct file
     spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=10, verbose=2, standardize=True)
     ts_within_spheres = spheres_masker.fit_transform(func_file, confounds=conf)
     print('\n' + 'Time series has {0} samples'.format(ts_within_spheres.shape[0]) + '\n')
+
+    if bedpostx_dir is not None and anat_loc is not None:
+        from pynets.diffconnectometry import run_struct_mapping
+        network= 'whole_brain'
+        if anat_loc is not None:
+            parcels = True
+        else:
+            parcels = False
+            dict_df = None
+            indices = None
+
+        try:
+            est_path2 = est_path2 = run_struct_mapping(ID, bedpostx_dir, network, coords, node_size, atlas_select, atlas_name, label_names, plot_switch, parcels, dict_df, indices, anat_loc)
+        except RuntimeError:
+            print('Whole-brain Structural Graph Estimation Failed!')
 
     ##Save time series as txt file
     out_path_ts=dir_path + '/' + ID + '_whole_brain_ts_within_spheres.txt'
@@ -216,7 +241,11 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, network, no
 
     if plot_switch == True:
         ##Plot connectogram
-        plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
+        try:
+            plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
+        except RuntimeError:
+            print('\n\n\nError: Connectogram plotting failed!')
+            pass
 
         ##Plot adj. matrix based on determined inputs
         plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names, mask)
@@ -226,7 +255,7 @@ def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, network, no
         niplot.plot_connectome(conn_matrix, coords, title=atlas_name, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     return est_path, thr
 
-def network_connectome(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir):
+def network_connectome(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc):
     nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
 
     ##Input is nifti file
@@ -259,12 +288,18 @@ def network_connectome(input_file, ID, atlas_select, network, node_size, mask, t
             networks_list = None
 
         net_coords = nodemaker.get_membership_from_coords(network, func_file, coords, networks_list)
-        ix_labels = list(np.arange(len(net_coords)) + 1)[:-1]
 
         try:
             label_names=label_names.tolist()
         except:
-            label_names=ix_labels
+            try:
+                atlas_ref_txt = atlas_name + '.txt'
+                ref_txt = Path(__file__)/'atlases'/atlas_ref_txt
+                dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+                indices = dict_df.Index.unique().tolist()
+                label_names = dict_df['Region'].tolist()
+            except:
+                label_names=list(np.arange(len(net_coords)) + 1)
 
         ##Get subject directory path
         dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_select
@@ -284,15 +319,17 @@ def network_connectome(input_file, ID, atlas_select, network, node_size, mask, t
         with open(labels_path, 'wb') as f:
             pickle.dump(label_names, f)
 
-        if bedpostx_dir is not None:
+        if bedpostx_dir is not None and anat_loc is not None:
             from pynets.diffconnectometry import run_struct_mapping
-            FSLDIR = os.environ['FSLDIR']
+            if anat_loc is not None:
+                parcels = True
+            else:
+                parcels = False
+                dict_df = None
+                indices = None
+
             try:
-                FSLDIR
-            except NameError:
-                print('FSLDIR environment variable not set!')
-            try:
-                est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, network, net_coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
+                est_path2 = run_struct_mapping(ID, bedpostx_dir, network, coords, node_size, atlas_select, atlas_name, label_names, plot_switch, parcels, dict_df, indices, anat_loc)
             except RuntimeError:
                 print('Whole-brain Structural Graph Estimation Failed!')
 
@@ -313,12 +350,11 @@ def network_connectome(input_file, ID, atlas_select, network, node_size, mask, t
             networks_list = None
 
         net_coords = nodemaker.get_membership_from_coords(network, func_file, coords, networks_list)
-        ix_labels = list(np.arange(len(net_coords)) + 1)[:-1]
 
         try:
             label_names
         except:
-            label_names=ix_labels
+            label_names=list(np.arange(len(net_coords)) + 1)
 
         if mask != None:
             [net_coords, label_names] = nodemaker.coord_masker(mask, net_coords, label_names)
@@ -332,15 +368,20 @@ def network_connectome(input_file, ID, atlas_select, network, node_size, mask, t
         with open(labels_path, 'wb') as f:
             pickle.dump(label_names, f)
 
-        if bedpostx_dir is not None:
+        if bedpostx_dir is not None and anat_loc is not None:
             from pynets.diffconnectometry import run_struct_mapping
+            if anat_loc is not None:
+                parcels = True
+            else:
+                parcels = False
+                dict_df = None
+                indices = None
             try:
-                est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, network, net_coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
+                est_path2 = run_struct_mapping(ID, bedpostx_dir, network, coords_MNI, node_size, atlas_select, atlas_name, label_names, plot_switch, parcels, dict_df, indices, anat_loc)
             except RuntimeError:
                 print('Network Structural Graph Estimation Failed!')
 
-        ##Generate network parcels image (through refinement, this could be used
-        ##in place of the 3 lines above)
+        ##Generate network parcels image
         #net_parcels_img_path = gen_network_parcels(parlistfile, network, labels)
         #parcellation = nib.load(net_parcels_img_path)
         #parcel_masker = input_data.NiftiLabelsMasker(labels_img=parcellation, background_label=0, memory='nilearn_cache', memory_level=5, standardize=True)
@@ -378,7 +419,11 @@ def network_connectome(input_file, ID, atlas_select, network, node_size, mask, t
 
     if plot_switch == True:
         ##Plot connectogram
-        plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
+        try:
+            plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
+        except RuntimeError:
+            print('\n\n\nError: Connectogram plotting failed!')
+            pass
 
         ##Plot adj. matrix based on determined inputs
         plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names, mask)

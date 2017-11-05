@@ -35,20 +35,20 @@ from nipype.utils.filemanip import load_json, save_json
 def plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names, mask):
     ##Set title for adj. matrix based on connectivity model used
     if conn_model == 'corr':
-        atlast_graph_title = atlas_name + '_Correlation_Graph'
+        atlast_graph_title = str(atlas_name) + '_Correlation_Graph'
     elif conn_model == 'partcorr':
-        atlast_graph_title = atlas_name + '_Partial_Correlation_Graph'
+        atlast_graph_title = str(atlas_name) + '_Partial_Correlation_Graph'
     elif conn_model == 'sps':
-        atlast_graph_title = atlas_name + '_Sparse_Covariance_Graph'
+        atlast_graph_title = str(atlas_name) + '_Sparse_Covariance_Graph'
     elif conn_model == 'cov':
-        atlast_graph_title = atlas_name + '_Covariance_Graph'
+        atlast_graph_title = str(atlas_name) + '_Covariance_Graph'
     if mask != None:
-        atlast_graph_title = atlast_graph_title + '_With_Masked_Nodes'
+        atlast_graph_title = str(atlast_graph_title) + '_With_Masked_Nodes'
     if network != None:
-        atlast_graph_title = atlast_graph_title + '_' + network
-        out_path_fig=dir_path + '/' + ID + '_' + network + '_adj_mat_' + conn_model + '_network.png'
+        atlast_graph_title = str(atlast_graph_title) + '_' + str(network)
+        out_path_fig=dir_path + '/' + str(ID) + '_' + str(network) + '_adj_mat_' + str(conn_model) + '_network.png'
     else:
-        out_path_fig=dir_path + '/' + ID + '_adj_mat_' + conn_model + '.png'
+        out_path_fig=dir_path + '/' + str(ID) + '_adj_mat_' + str(conn_model) + '.png'
     rois_num=conn_matrix.shape[0]
     plt.figure(figsize=(10, 10))
     plt.imshow(conn_matrix, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
@@ -97,7 +97,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network
         if network is not None and len(conn_matrix) > 80:
             gamma=0.3
         else:
-            gamma=1
+            gamma=1.0
         [node_comm_aff_mat, q] = modularity_finetune_und_sign(conn_matrix, gamma=gamma)
         print('Found ' + str(len(node_comm_aff_mat)) + ' communities with gamma=' + str(gamma) + '...')
         clust_levels = len(node_comm_aff_mat)
@@ -114,7 +114,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network
         mask_mat = np.squeeze(np.array([link_comm_aff_mat == 0]).astype('int'))
         label_arr = link_comm_aff_mat * np.expand_dims(np.arange(1,clust_levels+1),axis=1) + mask_mat
     elif len(conn_matrix) <= 80 and len(conn_matrix) > 20:
-        print('Graph to small for reliable plotting of communities. Plotting by fcluster instead...')
+        print('Graph too small for reliable plotting of communities. Plotting by fcluster instead...')
         if len(conn_matrix) >= 70:
             clust_levels = 7
         elif len(conn_matrix) >= 60:
@@ -205,7 +205,16 @@ def plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network
             for src, target in replacements_html.items():
                 line = line.replace(src, target)
             outfile.write(line)
-    replacements_js = {'template.json': str(json_file_name)}
+
+    #color_scheme = 'interpolateCool'
+    #color_scheme = 'interpolateGnBu'
+    color_scheme = 'interpolateOrRd'
+    #color_scheme = 'interpolatePuRd'
+    #color_scheme = 'interpolateYlOrRd'
+    #color_scheme = 'interpolateReds'
+    #color_scheme = 'interpolateGreens'
+    #color_scheme = 'interpolateBlues'
+    replacements_js = {'template.json': str(json_file_name), 'interpolateCool': str(color_scheme)}
     with open(conn_js_path) as infile, open(connectogram_js_sub, 'w') as outfile:
         for line in infile:
             for src, target in replacements_js.items():

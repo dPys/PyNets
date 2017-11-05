@@ -16,7 +16,7 @@ import pkg_resources
 import pynets
 import itertools
 import multiprocessing
-#warnings.simplefilter("ignore")
+warnings.simplefilter("ignore")
 import matplotlib.pyplot as plt
 from numpy import genfromtxt
 from matplotlib import colors
@@ -51,7 +51,7 @@ def get_sphere(coords, r, vox_dims, dims):
 def fetch_nilearn_atlas_coords(atlas_select):
     atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
     atlas_name = atlas['description'].splitlines()[0]
-    print('\n' + atlas_name + ' comes with {0}'.format(atlas.keys()) + '\n')
+    print('\n' + str(atlas_name) + ' comes with {0}'.format(atlas.keys()) + '\n')
     coords = np.vstack((atlas.rois['x'], atlas.rois['y'], atlas.rois['z'])).T
     print('Stacked atlas coordinates in array of shape {0}.'.format(coords.shape) + '\n')
     try:
@@ -69,18 +69,31 @@ def get_membership_from_coords(network, func_file, coords, networks_list):
     ##Load subject func data
     bna_img = nib.load(func_file)
 
-    if networks_list is None or network not in networks_list:
+    if networks_list is None:
         x_vox = np.diagonal(bna_img.affine[:3,0:3])[0]
         y_vox = np.diagonal(bna_img.affine[:3,0:3])[1]
         z_vox = np.diagonal(bna_img.affine[:3,0:3])[2]
 
-        if x_vox <= 1 and y_vox <= 1 and z_vox <=1:
-            par_file = pkg_resources.resource_filename("pynets", "rsnrefs/BIGREF1mm.nii.gz")
-        else:
-            par_file = pkg_resources.resource_filename("pynets", "rsnrefs/BIGREF2mm.nii.gz")
+        ##Determine whether input is from 17-networks or 7-networks
+        seven_nets = [ 'Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default' ]
+        seventeen_nets = ['VisCent', 'VisPeri', 'SomMotA', 'SomMotB', 'DorsAttnA', 'DorsAttnB', 'SalVentAttnA', 'SalVentAttnB', 'LimbicOFC', 'LimbicTempPole', 'ContA', 'ContB', 'ContC', 'DefaultA', 'DefaultB', 'DefaultC', 'TempPar']
 
-        ##Grab RSN reference file
-        nets_ref_txt = pkg_resources.resource_filename("pynets", "rsnrefs/Schaefer2018_1000_17nets_ref.txt")
+        if network in seventeen_nets:
+            if x_vox <= 1 and y_vox <= 1 and z_vox <=1:
+                par_file = pkg_resources.resource_filename("pynets", "rsnrefs/BIGREF1mm.nii.gz")
+            else:
+                par_file = pkg_resources.resource_filename("pynets", "rsnrefs/BIGREF2mm.nii.gz")
+
+            ##Grab RSN reference file
+            nets_ref_txt = pkg_resources.resource_filename("pynets", "rsnrefs/Schaefer2018_1000_17nets_ref.txt")
+        elif network in seven_nets:
+            if x_vox <= 1 and y_vox <= 1 and z_vox <=1:
+                par_file = pkg_resources.resource_filename("pynets", "rsnrefs/SMALLREF1mm.nii.gz")
+            else:
+                par_file = pkg_resources.resource_filename("pynets", "rsnrefs/SMALLREF2mm.nii.gz")
+
+            ##Grab RSN reference file
+            nets_ref_txt = pkg_resources.resource_filename("pynets", "rsnrefs/Schaefer2018_1000_7nets_ref.txt")
 
         ##Create membership dictionary
         dict_df = pd.read_csv(nets_ref_txt, sep="\t", header=None, names=["Index", "Region", "X", "Y", "Z"])
@@ -112,7 +125,7 @@ def get_membership_from_coords(network, func_file, coords, networks_list):
             coords_vox.append(mmToVox(i))
         coords_vox = list(tuple(x) for x in coords_vox)
 
-        error=4
+        error=6
         RSN_coords_vox = []
         for coord in coords_vox:
             sphere_vol = np.zeros(RSNmask.shape, dtype=bool)
@@ -129,19 +142,31 @@ def get_membership_from_coords(network, func_file, coords, networks_list):
         coords_mm = []
         for i in RSN_coords_vox:
             coords_mm.append(VoxTomm(i))
-        coords_mm = list(tuple(x) for x in coords_mm)
+        coords_mm = list(set(list(tuple(x) for x in coords_mm)))
 
     else:
+        '''Fix this later'''
         membership = pd.Series(list(tuple(x) for x in coords), networks_list)
         ##Convert to membership dataframe
         mem_df = membership.to_frame().reset_index()
 
         nets_avail=list(set(list(mem_df['index'])))
+        ##Get network name equivalents
+        if network == 'DMN':
+            network = 'default'
+        elif network == 'FPTC':
+            network = 'fronto-parietal'
+        elif network == 'CON':
+            network = 'cingulo-opercular'
+        elif network not in nets_avail:
+            print('Error: ' + network + ' not available with this atlas!')
+            sys.exit()
 
         ##Get coords for network-of-interest
         mem_df.loc[mem_df['index'] == network]
         net_coords = mem_df.loc[mem_df['index'] == network][[0]].values[:,0]
-        coords_mm = list(tuple(x) for x in net_coords)
+        coord_mm = list(tuple(x) for x in net_coords)
+        '''Fix this later'''
     return coords_mm
 
 def coord_masker(mask, coords, label_names):
@@ -163,7 +188,7 @@ def coord_masker(mask, coords, label_names):
     coords_vox = list(tuple(x) for x in coords_vox)
 
     bad_coords = []
-    error=8
+    error=6
     for coord in coords_vox:
         sphere_vol = np.zeros(mask_data.shape, dtype=bool)
         sphere_vol[tuple(coord)] = 1
@@ -182,10 +207,12 @@ def coord_masker(mask, coords, label_names):
     for bad_coord in bad_coords:
         indices.append(coords_vox.index(bad_coord))
 
+    label_names=list(label_names)
+    coords = list(tuple(x) for x in coords)
     for ix in sorted(indices, reverse=True):
         print('Removing: ' + str(label_names[ix]) + ' at ' + str(coords[ix]))
-        del label_names[ix]
-        del coords[ix]
+        label_names.pop(ix)
+        coords.pop(ix)
     return(coords, label_names)
 
 def get_names_and_coords_of_parcels(parlistfile):
