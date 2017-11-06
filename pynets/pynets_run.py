@@ -109,6 +109,10 @@ if __name__ == '__main__':
         metavar='multi-thresholding step size',
         default=0.01,
         help='Threshold step value for multi-thresholding. Default is 0.01.')
+    parser.add_argument('-parc',
+        default=False,
+        action='store_true',
+        help='Include this flag to use parcels instead of coordinates as nodes.')
     args = parser.parse_args()
 
     ###Set Arguments to global variables###
@@ -135,6 +139,7 @@ if __name__ == '__main__':
     max_thr=args.max_thr
     step_thr=args.step_thr
     anat_loc=args.anat
+    parc=args.parc
 
     print('Starting up!')
 
@@ -257,23 +262,19 @@ if __name__ == '__main__':
        basc_run.basc_runner(subjects_list, basc_config)
        parlistfile=Path(__file__)/'pynets'/'rsnrefs'/'group_stability_clusters.nii.gz'
 
-    def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc):
+    def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc):
         import pynets
         from pynets import workflows
 
         nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
 
-        ##Case 1: Whole-brain connectome with nilearn coord atlas
-        if parlistfile == None and network == None and atlas_select not in nilearn_atlases:
-            [est_path, thr] = workflows.wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, network, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc)
+        ##Case 1: Whole-brain connectome with user-specified atlas or nilearn atlas img
+        if network == None and (parlistfile != None or atlas_select in nilearn_atlases):
+            [est_path, thr] = workflows.wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc)
 
-        ##Case 2: Whole-brain connectome with user-specified atlas or nilearn atlas img
-        elif network == None and (parlistfile != None or atlas_select in nilearn_atlases):
-            [est_path, thr] = workflows.wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc)
-
-        ##Case 3: RSN connectome with nilearn atlas or user-specified atlas
+        ##Case 2: RSN connectome with nilearn atlas or user-specified atlas
         elif network != None:
-            [est_path, thr] = workflows.network_connectome(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc)
+            [est_path, thr] = workflows.network_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc)
 
         return est_path, thr
 
@@ -374,7 +375,7 @@ if __name__ == '__main__':
     def init_wf_single_subject(ID, input_file, dir_path, atlas_select, network,
     node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf,
     adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
-    max_thr, step_thr, anat_loc):
+    max_thr, step_thr, anat_loc, parc):
         wf = pe.Workflow(name='PyNets_' + str(ID))
         #wf.base_directory='/tmp/pynets'
         ##Create input/output nodes
@@ -382,7 +383,7 @@ if __name__ == '__main__':
         inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID',
         'atlas_select', 'network', 'thr', 'node_size', 'mask', 'parlistfile',
         'all_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch',
-        'bedpostx_dir', 'anat_loc']), name='inputnode')
+        'bedpostx_dir', 'anat_loc', 'parc']), name='inputnode')
 
         #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
         inputnode.inputs.in_file = input_file
@@ -401,12 +402,13 @@ if __name__ == '__main__':
         inputnode.inputs.plot_switch = plot_switch
         inputnode.inputs.bedpostx_dir = bedpostx_dir
         inputnode.inputs.anat_loc = anat_loc
+        inputnode.inputs.parc = parc
 
         #3) Add variable to function nodes
         ##Create function nodes
         imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select',
         'network', 'node_size', 'mask', 'thr', 'parlistfile', 'all_nets', 'conn_model',
-        'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch', 'bedpostx_dir', 'anat_loc'],
+        'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch', 'bedpostx_dir', 'anat_loc', 'parc'],
         output_names = ['est_path', 'thr'], function=workflow_selector, imports=import_list),
         name = "imp_est")
 
@@ -417,7 +419,7 @@ if __name__ == '__main__':
             float(max_thr), float(step_thr)),decimals=2).tolist()]
             imp_est_iterables.append(("thr", iter_thresh))
         if multi_atlas==True:
-            print('Iterating pipeline across multiple atlases...')
+            print('Iterating pipeline for ' + str(ID) + ' across multiple atlases...')
             atlas_iterables = ("atlas_select", ['coords_power_2011',
             'coords_dosenbach_2010', 'atlas_destrieux_2009', 'atlas_aal'])
             imp_est_iterables.append(atlas_iterables)
@@ -450,7 +452,8 @@ if __name__ == '__main__':
                                   ('adapt_thresh', 'adapt_thresh'),
                                   ('plot_switch', 'plot_switch'),
                                   ('bedpostx_dir', 'bedpostx_dir'),
-                                  ('anat_loc', 'anat_loc')]),
+                                  ('anat_loc', 'anat_loc'),
+                                  ('parc', 'parc')]),
             (inputnode, net_mets_node, [('ID', 'sub_id'),
                                        ('network', 'network'),
                                        ('conn_model', 'conn_model')]),
@@ -466,7 +469,7 @@ if __name__ == '__main__':
 
     def wf_multi_subject(subjects_list, atlas_select, network, node_size, mask,
     thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
-    plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc):
+    plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc):
         wf_multi = pe.Workflow(name='PyNets_multisubject')
         i=0
         for _file in subjects_list:
@@ -500,20 +503,20 @@ if __name__ == '__main__':
     if subjects_list is not None:
         wf_multi = wf_multi_subject(subjects_list, atlas_select, network, node_size,
         mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
-        plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc)
+        plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc)
         plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
-        #wf_multi.run()
-        print('\n' + 'Running with ' + str(plugin_args) + '\n')
-        wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
+        wf_multi.run()
+        #print('\n' + 'Running with ' + str(plugin_args) + '\n')
+        #wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
     ##Single-subject workflow generator
     else:
         wf = init_wf_single_subject(ID, input_file, dir_path, atlas_select, network,
         node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf,
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
-        max_thr, step_thr, anat_loc)
-        plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
-        #wf.run()
-        wf.run(plugin='MultiProc', plugin_args= plugin_args)
+        max_thr, step_thr, anat_loc, parc)
+        #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
+        wf.run()
+        #wf.run(plugin='MultiProc', plugin_args= plugin_args)
 
 
     print('-----------PYNETS COMPLETE-----------')

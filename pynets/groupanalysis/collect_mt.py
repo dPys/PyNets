@@ -5,9 +5,9 @@ import numpy as np
 
 ###
 working_path = r'/work/04171/dpisner/data/ABM/network_analysis' # use your path
-name_of_network_pickle = 'Default_net_mets_sps_cov'
+name_of_network_pickle = 'SalVentAttn_net_mets_sps_cov'
 missingness_thresh = 0.10
-atlas_name='coords_power_2011'
+atlas_name='craddock_1000'
 #atlas_name='Dosenbach 2010 atlas'
 ###
 
@@ -88,7 +88,7 @@ for column in frame:
 ##Remove variables that have too many NAs
 for i in range(len(nas_list)):
     ##Delete those variables with high correlations
-    frame.drop(nas_list[i], axis=1, inplace=True)
+    frame.drop(nas_list[i], axis=0, inplace=True)
 
 ##Fix column order
 frame = frame[frame.columns[::-1]]

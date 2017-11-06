@@ -37,16 +37,151 @@ from itertools import permutations
 from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, rich_club_coefficient, eigenvector_centrality, communicability_centrality
 
 ##Define missing network functions here. Small-worldness, modularity, and rich-club will also need to be added.
-def efficiency(G, u, v):
-    return float(1) / nx.shortest_path_length(G, u, v)
+def global_efficiency(G, weight=None):
+    """Return the global efficiency of the graph G
 
-def global_efficiency(G):
-    n = len(G)
-    denom = n * (n - 1)
-    return float(sum(efficiency(G, u, v) for u, v in permutations(G, 2))) / denom
+    Parameters
+    ----------
+    G : NetworkX graph
 
-def local_efficiency(G):
-    return float(sum(global_efficiency(nx.ego_graph(G, v)) for v in G)) / len(G)
+    Returns
+    -------
+    global_efficiency : float
+
+    Notes
+    -----
+    The published definition includes a scale factor based on a completely
+    connected graph. In the case of an unweighted network, the scaling factor
+    is 1 and can be ignored. In the case of a weighted graph, calculating the
+    scaling factor requires somehow knowing the weights of the edges required
+    to make a completely connected graph. Since that knowlege may not exist,
+    the scaling factor is not included. If that knowlege exists, construct the
+    corresponding weighted graph and calculate its global_efficiency to scale
+    the weighted graph.
+
+    Distance between nodes is calculated as the sum of weights. If the graph is
+    defined such that a higher weight represents a stronger connection,
+    distance should be represented by 1/weight. In this case, use the invert_
+    weights function to generate a graph where the weights are set to 1/weight
+    and then calculate efficiency
+
+    References
+    ----------
+    .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
+       small-world networks. Physical Review Letters 87.
+    .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
+       in weighted networks. Eur Phys J B 32, 249-263.
+
+    """
+    N = len(G)
+    if N < 2:
+        return 0    # facilitates calculation of local_efficiency although
+                    # could reasonably raise nx.NetworkXUnfeasible or
+                    # nx.NetworkXPointlessConcept error instead and force
+                    # testing to occur in local_efficiency
+
+    inv_lengths = []
+    for node in G:
+        if weight is None:
+            lengths = nx.single_source_shortest_path_length(G, node)
+        else:
+            lengths = nx.single_source_dijkstra_path_length(G, node,
+                                                            weight=weight)
+
+        inv = [1/x for x in lengths.values() if x is not 0]
+        inv_lengths.extend(inv)
+
+    return sum(inv_lengths)/(N*(N-1))
+
+
+def local_efficiency(G, weight=None):
+    """Return the local efficiency of each node in the graph G
+
+    Parameters
+    ----------
+    G : NetworkX graph
+
+    Returns
+    -------
+    local_efficiency : dict
+       the keys of the dict are the nodes in the graph G and the corresponding
+       values are local efficiencies of each node
+
+    Notes
+    -----
+    The published definition includes a scale factor based on a completely
+    connected graph. In the case of an unweighted network, the scaling factor
+    is 1 and can be ignored. In the case of a weighted graph, calculating the
+    scaling factor requires somehow knowing the weights of the edges required
+    to make a completely connected graph. Since that knowlege may not exist,
+    the scaling factor is not included. If that knowlege exists, construct the
+    corresponding weighted graph and calculate its local_efficiency to scale
+    the weighted graph.
+
+    References
+    ----------
+    .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
+       small-world networks. Physical Review Letters 87.
+    .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
+       in weighted networks. Eur Phys J B 32, 249-263.
+
+    """
+    if G.is_directed():
+        new_graph = nx.DiGraph
+    else:
+        new_graph = nx.Graph
+
+    efficiencies = dict()
+    for node in G:
+        temp_G = new_graph()
+        temp_G.add_nodes_from(G.neighbors(node))
+        for neighbor in G.neighbors(node):
+            for (n1, n2) in G.edges(neighbor):
+                if (n1 in temp_G) and (n2 in temp_G):
+                    temp_G.add_edge(n1, n2)
+
+        if weight is not None:
+            for (n1, n2) in temp_G.edges():
+                temp_G[n1][n2][weight] = G[n1][n2][weight]
+
+        efficiencies[node] = global_efficiency(temp_G, weight)
+
+    return efficiencies
+
+
+def average_local_efficiency(G, weight=None):
+    """Return the average local efficiency of all of the nodes in the graph G
+
+    Parameters
+    ----------
+    G : NetworkX graph
+
+    Returns
+    -------
+    average_local_efficiency : float
+
+    Notes
+    -----
+    The published definition includes a scale factor based on a completely
+    connected graph. In the case of an unweighted network, the scaling factor
+    is 1 and can be ignored. In the case of a weighted graph, calculating the
+    scaling factor requires somehow knowing the weights of the edges required
+    to make a completely connected graph. Since that knowlege may not exist,
+    the scaling factor is not included. If that knowlege existed, a revised
+    version of this function would be required.
+
+    References
+    ----------
+    .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
+       small-world networks. Physical Review Letters 87.
+    .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
+       in weighted networks. Eur Phys J B 32, 249-263.
+
+    """
+    eff = local_efficiency(G, weight)
+    total = sum(eff.values())
+    N = len(eff)
+    return total/N
 
 def create_random_graph(G, n, p):
     rG = nx.erdos_renyi_graph(n, p, seed=42)
@@ -738,12 +873,12 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
     import random
     import itertools
     from itertools import permutations
-    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, rich_club_coefficient, eigenvector_centrality, communicability_centrality
-    from pynets.netstats import efficiency, global_efficiency, create_random_graph, smallworldness_measure, smallworldness, modularity
+    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, rich_club_coefficient, eigenvector_centrality, communicability_centrality, clustering, degree_centrality
+    from pynets.netstats import global_efficiency, local_efficiency, average_local_efficiency, create_random_graph, smallworldness_measure, smallworldness, modularity
     ##For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the function  (with a G-only input) to the netstats module.
-    metric_list = [global_efficiency, smallworldness, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
+    metric_list = [global_efficiency, average_local_efficiency, smallworldness, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
 
-    ##Assortativity
+    ##Custom Parameters
     custom_params = 'weight = 0.25'
 
     ##Iteratively run functions from above metric list that generate single scalar output
@@ -776,12 +911,102 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
     [community_aff, modularity] = modularity(mat_wei)
 
     ##Calculate core-periphery subdivision
-    #[Coreness_vec, Coreness_q] = core_periphery_dir(mat_wei)
+    [Coreness_vec, Coreness_q] = core_periphery_dir(mat_wei)
 
-    ##Calculate diversity coefficient (positive and negative edges)
-    #[diversity_coefficient_pos, diversity_coefficient_neg] = diversity_coef_sign(mat_wei, community_aff)
+    ##Local Efficiency
+    try:
+        le_vector = local_efficiency(G)
+        print('Extracting Local Efficiency vector for all network nodes...')
+        le_vals = list(le_vector.values())
+        le_nodes = list(le_vector.keys())
+        num_nodes = len(le_nodes)
+        le_arr = np.zeros([num_nodes + 1, 2], dtype='object')
+        j=0
+        for i in range(num_nodes):
+            if network != None:
+                le_arr[j,0] = network + '_' + str(le_nodes[j]) + '_local_efficiency'
+                print('\n' + network + '_' + str(le_nodes[j]) + '_local_efficiency')
+            else:
+                le_arr[j,0] = 'WholeBrain_' + str(le_nodes[j]) + '_local_efficiency'
+                print('\n' + 'WholeBrain_' + str(le_nodes[j]) + '_local_efficiency')
+            try:
+                le_arr[j,1] = le_vals[j]
+            except:
+                le_arr[j,1] = np.nan
+            print(str(le_vals[j]))
+            j = j + 1
+        le_val_list = list(le_arr[:,1])
+        le_arr[num_nodes,0] = network + '_MEAN_local_efficiency'
+        nonzero_arr_le = np.delete(le_arr[:,1], [0])
+        le_arr[num_nodes,1] = np.mean(nonzero_arr_le)
+        print('\n' + 'Local Efficiency across all nodes: ' + str(le_arr[num_nodes,1]) + '\n')
+    except:
+        le_val_list = []
+        pass
 
-    ##betweenness_centrality
+    ##Local Clustering
+    try:
+        cl_vector = clustering(G)
+        print('Extracting Local Clustering vector for all network nodes...')
+        cl_vals = list(cl_vector.values())
+        cl_nodes = list(cl_vector.keys())
+        num_nodes = len(cl_nodes)
+        cl_arr = np.zeros([num_nodes + 1, 2], dtype='object')
+        j=0
+        for i in range(num_nodes):
+            if network != None:
+                cl_arr[j,0] = network + '_' + str(cl_nodes[j]) + '_local_clustering'
+                print('\n' + network + '_' + str(cl_nodes[j]) + '_local_clustering')
+            else:
+                cl_arr[j,0] = 'WholeBrain_' + str(cl_nodes[j]) + '_local_clustering'
+                print('\n' + 'WholeBrain_' + str(cl_nodes[j]) + '_local_clustering')
+            try:
+                cl_arr[j,1] = cl_vals[j]
+            except:
+                cl_arr[j,1] = np.nan
+            print(str(cl_vals[j]))
+            j = j + 1
+        cl_val_list = list(cl_arr[:,1])
+        cl_arr[num_nodes,0] = network + '_MEAN_local_efficiency'
+        nonzero_arr_cl = np.delete(cl_arr[:,1], [0])
+        cl_arr[num_nodes,1] = np.mean(nonzero_arr_cl)
+        print('\n' + 'Local Efficiency across all nodes: ' + str(cl_arr[num_nodes,1]) + '\n')
+    except:
+        cl_val_list = []
+        pass
+
+    ##Degree centrality
+    try:
+        dc_vector = degree_centrality(G)
+        print('Extracting Degree Centrality vector for all network nodes...')
+        dc_vals = list(dc_vector.values())
+        dc_nodes = list(dc_vector.keys())
+        num_nodes = len(dc_nodes)
+        dc_arr = np.zeros([num_nodes + 1, 2], dtype='object')
+        j=0
+        for i in range(num_nodes):
+            if network != None:
+                dc_arr[j,0] = network + '_' + str(dc_nodes[j]) + '_degree_centrality'
+                print('\n' + network + '_' + str(dc_nodes[j]) + '_degree_centrality')
+            else:
+                dc_arr[j,0] = 'WholeBrain_' + str(dc_nodes[j]) + '_degree_centrality'
+                print('\n' + 'WholeBrain_' + str(dc_nodes[j]) + '_degree_centrality')
+            try:
+                dc_arr[j,1] = dc_vals[j]
+            except:
+                dc_arr[j,1] = np.nan
+            print(str(cl_vals[j]))
+            j = j + 1
+        dc_val_list = list(dc_arr[:,1])
+        dc_arr[num_nodes,0] = network + '_MEAN_degree_centrality'
+        nonzero_arr_cl = np.delete(dc_arr[:,1], [0])
+        dc_arr[num_nodes,1] = np.mean(nonzero_arr_dc)
+        print('\n' + 'Degree Centrality across all nodes: ' + str(dc_arr[num_nodes,1]) + '\n')
+    except:
+        dc_val_list = []
+        pass
+
+    ##Betweenness Centrality
     try:
         bc_vector = betweenness_centrality(G_len)
         print('Extracting Betweeness Centrality vector for all network nodes...')
@@ -809,11 +1034,10 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
         bc_arr[num_nodes,1] = np.mean(nonzero_arr_betw_cent)
         print('\n' + 'Mean Betweenness Centrality across all nodes: ' + str(bc_arr[num_nodes,1]) + '\n')
     except:
-        print('Betweeness Centrality calculation failed. Skipping...')
         bc_val_list = []
         pass
 
-    ##eigenvector_centrality
+    ##Eigenvector Centrality
     try:
         ec_vector = eigenvector_centrality(G)
         print('Extracting Eigenvector Centrality vector for all network nodes...')
@@ -841,11 +1065,10 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
         ec_arr[num_nodes,1] = np.mean(nonzero_arr_eig_cent)
         print('\n' + 'Mean Eigenvector Centrality across all nodes: ' + str(ec_arr[num_nodes,1]) + '\n')
     except:
-        print('Eigenvector Centrality calculation failed. Skipping...')
         ec_val_list = []
         pass
 
-    ##communicability_centrality
+    ##Communicability Centrality
     try:
         cc_vector = communicability_centrality(G_len)
         print('Extracting Communicability Centrality vector for all network nodes...')
@@ -873,11 +1096,10 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
         cc_arr[num_nodes,1] = np.mean(nonzero_arr_comm_cent)
         print('\n' + 'Mean Communicability Centrality across all nodes: ' + str(cc_arr[num_nodes,1]) + '\n')
     except:
-        print('Communicability Centrality calculation failed. Skipping...')
         cc_val_list = []
         pass
 
-    ##rich_club_coefficient
+    ##Rich club coefficient
     try:
         rc_vector = rich_club_coefficient(G, normalized=True)
         print('Extracting Rich Club Coefficient vector for all network nodes...')
@@ -906,7 +1128,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
         rc_arr[num_edges,1] = np.mean(nonzero_arr_rich_club)
         print('\n' + 'Mean Rich Club Coefficient across all edges: ' + str(rc_arr[num_edges,1]) + '\n')
     except:
-        print('Rich Club calculation failed. Skipping...')
         rc_val_list = []
         pass
 
@@ -927,36 +1148,38 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
         pass
 
     ##Add Core/Periphery measure
-#    try:
-#        if network != None:
-#            metric_list_names.append(network + '_Coreness')
-#        else:
-#            metric_list_names.append('WholeBrain_Coreness')
-#        net_met_val_list_final.append(Coreness_q)
-#    except:
-#        pass
+    try:
+        if network != None:
+            metric_list_names.append(network + '_Coreness')
+        else:
+            metric_list_names.append('WholeBrain_Coreness')
+        net_met_val_list_final.append(Coreness_q)
+    except:
+        pass
 
-    ##Add Diversity Coefficient (Positive)
-#    try:
-#        if network != None:
-#            metric_list_names.append(network + '_Diversity_Coefficient_Positive')
-#        else:
-#            metric_list_names.append('WholeBrain_Diversity_Coefficient_Positive')
-#        net_met_val_list_final.append(diversity_coefficient_pos)
-#    except:
-#        pass
+    ##Add local efficiency measures
+    try:
+        for i in le_arr[:,0]:
+            metric_list_names.append(i)
+        net_met_val_list_final = net_met_val_list_final + list(le_arr[:,1])
+    except:
+        pass
 
-    ##Add Diversity Coefficient (Negative)
-#    try:
-#        if network != None:
-#            metric_list_names.append(network + '_Diversity_Coefficient_Negative')
-#        else:
-#            metric_list_names.append('WholeBrain_Diversity_Coefficient_Negative')
-#        net_met_val_list_final.append(diversity_coefficient_neg)
-#    except:
-#        pass
+    ##Add local clustering measures
+    try:
+        for i in cl_arr[:,0]:
+            metric_list_names.append(i)
+        net_met_val_list_final = net_met_val_list_final + list(cl_arr[:,1])
+    except:
+        pass
 
-    ##Add centrality and rich club measures
+    ##Add centrality measures
+    try:
+        for i in dc_arr[:,0]:
+            metric_list_names.append(i)
+        net_met_val_list_final = net_met_val_list_final + list(dc_arr[:,1])
+    except:
+        pass
     try:
         for i in bc_arr[:,0]:
             metric_list_names.append(i)
@@ -975,6 +1198,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
         net_met_val_list_final = net_met_val_list_final + list(cc_arr[:,1])
     except:
         pass
+
+    ##Add rich club measure
     try:
         for i in rc_arr[:,0]:
             metric_list_names.append(i)

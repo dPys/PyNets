@@ -32,6 +32,7 @@ from nibabel.affines import apply_affine
 from nipype.interfaces.base import isdefined, Undefined
 from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
+from scipy.ndimage.morphology import binary_dilation
 
 def get_sphere(coords, r, vox_dims, dims):
     """##Adapted from Neurosynth
@@ -125,7 +126,7 @@ def get_membership_from_coords(network, func_file, coords, networks_list):
             coords_vox.append(mmToVox(i))
         coords_vox = list(tuple(x) for x in coords_vox)
 
-        error=6
+        error=2
         RSN_coords_vox = []
         for coord in coords_vox:
             sphere_vol = np.zeros(RSNmask.shape, dtype=bool)
@@ -169,6 +170,38 @@ def get_membership_from_coords(network, func_file, coords, networks_list):
         '''Fix this later'''
     return coords_mm
 
+def parcel_masker(mask, coords, parcel_list, label_names):
+    mask_data, _ = masking._load_mask_img(mask)
+    mask_coords = list(zip(*np.where(mask_data == True)))
+
+    bad_parcels = []
+    error=4
+    for parcel in parcel_list:
+        parcel_vol = np.zeros(mask_data.shape, dtype=bool)
+        parcel_vol[parcel.get_data()==1] = 1
+        if (mask_data & parcel_vol).any():
+            print('Parcel falls within mask...')
+            continue
+        parcel_vol=binary_dilation(parcel_vol, iterations=error)
+        if (mask_data & parcel_vol).any():
+            print('Dilated parcel falls within mask...')
+            continue
+        bad_parcels.append(parcel)
+
+    bad_parcels = [x for x in bad_parcels if x is not None]
+    indices=[]
+    for bad_parcel in bad_parcels:
+        indices.append(bad_parcels.index(bad_parcel))
+
+    label_names=list(label_names)
+    coords = list(tuple(x) for x in coords)
+    for ix in sorted(indices, reverse=True):
+        print('Removing: ' + str(label_names[ix]) + ' at ' + str(coords[ix]))
+        label_names.pop(ix)
+        coords.pop(ix)
+        parcel_list.pop(ix)
+    return(coords, label_names, parcel_list)
+
 def coord_masker(mask, coords, label_names):
     x_vox = np.diagonal(masking._load_mask_img(mask)[1][:3,0:3])[0]
     y_vox = np.diagonal(masking._load_mask_img(mask)[1][:3,0:3])[1]
@@ -188,7 +221,7 @@ def coord_masker(mask, coords, label_names):
     coords_vox = list(tuple(x) for x in coords_vox)
 
     bad_coords = []
-    error=6
+    error=4
     for coord in coords_vox:
         sphere_vol = np.zeros(mask_data.shape, dtype=bool)
         sphere_vol[tuple(coord)] = 1
@@ -239,7 +272,7 @@ def get_names_and_coords_of_parcels(parlistfile):
     for roi_img in img_list:
         coords.append(nilearn.plotting.find_xyz_cut_coords(roi_img))
     coords = np.array(coords)
-    return(coords, atlas_name, par_max)
+    return(coords, atlas_name, par_max, img_list)
 
 def gen_network_parcels(parlistfile, network, labels, dir_path):
     bna_img = nib.load(parlistfile)
