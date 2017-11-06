@@ -494,7 +494,8 @@ if __name__ == '__main__':
                                min_thr=min_thr,
                                max_thr=max_thr,
                                step_thr=step_thr,
-                               anat_loc=anat_loc)
+                               anat_loc=anat_loc,
+                               parc=parc)
             wf_multi.add_nodes([wf_single_subject])
             i = i + 1
         return wf_multi

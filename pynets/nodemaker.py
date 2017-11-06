@@ -175,10 +175,12 @@ def parcel_masker(mask, coords, parcel_list, label_names):
     mask_coords = list(zip(*np.where(mask_data == True)))
 
     bad_parcels = []
+    cd_ix = 0
     error=4
     for parcel in parcel_list:
         parcel_vol = np.zeros(mask_data.shape, dtype=bool)
-        parcel_vol[parcel.get_data()==1] = 1
+        parcel_vol[tuple(coords[cd_ix])] = 1
+        cd_ix = cd_ix + 1
         if (mask_data & parcel_vol).any():
             print('Parcel falls within mask...')
             continue
