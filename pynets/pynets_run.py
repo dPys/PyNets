@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Created on Tue Nov  7 10:40:07 2017
+
+@author: Derek Pisner
+"""
 import sys
 import argparse
 import os
@@ -113,6 +118,10 @@ if __name__ == '__main__':
         default=False,
         action='store_true',
         help='Include this flag to use parcels instead of coordinates as nodes.')
+    parser.add_argument('-ref',
+        metavar='atlas reference file path',
+        default=None,
+        help='Specify the path to the atlas reference .txt file')
     args = parser.parse_args()
 
     ###Set Arguments to global variables###
@@ -140,6 +149,7 @@ if __name__ == '__main__':
     step_thr=args.step_thr
     anat_loc=args.anat
     parc=args.parc
+    ref_txt=args.ref
 
     print('Starting up!')
 
@@ -149,11 +159,6 @@ if __name__ == '__main__':
             subjects_list = f.read().splitlines()
     else:
         subjects_list = None
-
-    try:
-        bedpostx_dir
-    except:
-        bedpostx_dir = None
 
     if input_file is None and bedpostx_dir is None:
         print("Error: You must include a file path to either a standard space functional image in .nii or .nii.gz format with the -i flag")
@@ -167,11 +172,6 @@ if __name__ == '__main__':
         thr=None
     else:
         thr=float(thr)
-
-    try:
-        anat_loc
-    except:
-        anat_loc = None
 
     if anat_loc is not None and bedpostx_dir is None:
         print('Warning: anatomical image specified, but not bedpostx directory specified. Anatomical images are only supported for structural connectome estimation at this time.')
@@ -207,10 +207,8 @@ if __name__ == '__main__':
     print ("SUBJECT ID: " + str(ID))
 
     if parlistfile != None:
-        atlas_name = parlistfile.split('/')[-1].split('.')[0]
-        print ("ATLAS: " + str(atlas_name))
-    else:
-        print ("ATLAS: " + str(atlas_select))
+        atlas_select = parlistfile.split('/')[-1].split('.')[0]
+    print ("ATLAS: " + str(atlas_select))
 
     if multi_atlas == True:
         atlas_select = None
@@ -262,19 +260,16 @@ if __name__ == '__main__':
        basc_run.basc_runner(subjects_list, basc_config)
        parlistfile=Path(__file__)/'pynets'/'rsnrefs'/'group_stability_clusters.nii.gz'
 
-    def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc):
+    def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem):
         import pynets
         from pynets import workflows
 
-        nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
-
         ##Case 1: Whole-brain connectome with user-specified atlas or nilearn atlas img
-        if network == None and (parlistfile != None or atlas_select in nilearn_atlases):
-            [est_path, thr] = workflows.wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc)
-
+        if network == None:
+            [est_path, thr] = workflows.wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem)
         ##Case 2: RSN connectome with nilearn atlas or user-specified atlas
-        elif network != None:
-            [est_path, thr] = workflows.network_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc)
+        else:
+            [est_path, thr] = workflows.network_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem)
 
         return est_path, thr
 
@@ -375,7 +370,7 @@ if __name__ == '__main__':
     def init_wf_single_subject(ID, input_file, dir_path, atlas_select, network,
     node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf,
     adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
-    max_thr, step_thr, anat_loc, parc):
+    max_thr, step_thr, anat_loc, parc, ref_txt, procmem):
         wf = pe.Workflow(name='PyNets_' + str(ID))
         #wf.base_directory='/tmp/pynets'
         ##Create input/output nodes
@@ -383,7 +378,7 @@ if __name__ == '__main__':
         inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID',
         'atlas_select', 'network', 'thr', 'node_size', 'mask', 'parlistfile',
         'all_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch',
-        'bedpostx_dir', 'anat_loc', 'parc']), name='inputnode')
+        'bedpostx_dir', 'anat_loc', 'parc', 'ref_txt', 'procmem']), name='inputnode')
 
         #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
         inputnode.inputs.in_file = input_file
@@ -403,12 +398,14 @@ if __name__ == '__main__':
         inputnode.inputs.bedpostx_dir = bedpostx_dir
         inputnode.inputs.anat_loc = anat_loc
         inputnode.inputs.parc = parc
+        inputnode.inputs.ref_txt = ref_txt
+        inputnode.inputs.procmem = procmem
 
         #3) Add variable to function nodes
         ##Create function nodes
         imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select',
         'network', 'node_size', 'mask', 'thr', 'parlistfile', 'all_nets', 'conn_model',
-        'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch', 'bedpostx_dir', 'anat_loc', 'parc'],
+        'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch', 'bedpostx_dir', 'anat_loc', 'parc', 'ref_txt', 'procmem'],
         output_names = ['est_path', 'thr'], function=workflow_selector, imports=import_list),
         name = "imp_est")
 
@@ -453,7 +450,9 @@ if __name__ == '__main__':
                                   ('plot_switch', 'plot_switch'),
                                   ('bedpostx_dir', 'bedpostx_dir'),
                                   ('anat_loc', 'anat_loc'),
-                                  ('parc', 'parc')]),
+                                  ('parc', 'parc'),
+                                  ('ref_txt', 'ref_txt'),
+                                  ('procmem', 'procmem')]),
             (inputnode, net_mets_node, [('ID', 'sub_id'),
                                        ('network', 'network'),
                                        ('conn_model', 'conn_model')]),
@@ -469,7 +468,7 @@ if __name__ == '__main__':
 
     def wf_multi_subject(subjects_list, atlas_select, network, node_size, mask,
     thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
-    plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc):
+    plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem):
         wf_multi = pe.Workflow(name='PyNets_multisubject')
         i=0
         for _file in subjects_list:
@@ -495,7 +494,9 @@ if __name__ == '__main__':
                                max_thr=max_thr,
                                step_thr=step_thr,
                                anat_loc=anat_loc,
-                               parc=parc)
+                               parc=parc,
+                               ref_txt=ref_txt,
+                               procmem=procmem)
             wf_multi.add_nodes([wf_single_subject])
             i = i + 1
         return wf_multi
@@ -504,7 +505,8 @@ if __name__ == '__main__':
     if subjects_list is not None:
         wf_multi = wf_multi_subject(subjects_list, atlas_select, network, node_size,
         mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
-        plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc)
+        plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr,
+        anat_loc, parc, ref_txt, procmem)
         plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
         wf_multi.run()
         #print('\n' + 'Running with ' + str(plugin_args) + '\n')
@@ -514,7 +516,7 @@ if __name__ == '__main__':
         wf = init_wf_single_subject(ID, input_file, dir_path, atlas_select, network,
         node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf,
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
-        max_thr, step_thr, anat_loc, parc)
+        max_thr, step_thr, anat_loc, parc, ref_txt, procmem)
         #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
         wf.run()
         #wf.run(plugin='MultiProc', plugin_args= plugin_args)

@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov  7 10:40:07 2017
+
+@author: Derek Pisner
+"""
 import sys
 import argparse
 import os
@@ -36,13 +42,13 @@ try:
 except ImportError:
     import _pickle as pickle
 
-def wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc):
-    nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
+def wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem):
 
     ##Input is nifti file
     func_file=input_file
 
     ##Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
+    nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
     if atlas_select in nilearn_atlases:
         try:
             parlistfile=getattr(datasets, 'fetch_%s' % atlas_select)().maps
@@ -55,33 +61,40 @@ def wb_functional_connectometry(input_file, ID, atlas_select, network, node_size
             except:
                 networks_list = None
         except:
-            print('PyNets is not ready for multi-scale atlases like BASC just yet!')
+            print('Extraction from nilearn datasets failed!')
             sys.exit()
 
+    ##Get coordinates and/or parcels from atlas
     if parlistfile is None and parc == False:
         print('Fetching coordinates and labels from nilearn coordinate-based atlases')
         ##Fetch nilearn atlas coords
-        [coords, atlas_name, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
+        [coords, atlas_select, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
     else:
         ##Fetch user-specified atlas coords
-        [coords, atlas_name, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
-        atlas_select=atlas_name
+        [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
 
         ##Describe user atlas coords
-        print('\n' + atlas_name + ' comes with {0} '.format(par_max) + 'parcels' + '\n')
+        print('\n' + atlas_select + ' comes with {0} '.format(par_max) + 'parcels' + '\n')
         print('\n'+ 'Stacked atlas coordinates in array of shape {0}.'.format(coords.shape) + '\n')
 
+    ##Labels prep
     try:
         label_names
     except:
-        try:
-            atlas_ref_txt = atlas_name + '.txt'
-            ref_txt = Path(__file__)/'atlases'/atlas_ref_txt
+        if ref_txt is not None and os.path.exists(ref_txt):
+            atlas_select = os.path.basename(ref_txt).split('.txt')[0]
             dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
             indices = dict_df.Index.unique().tolist()
             label_names = dict_df['Region'].tolist()
-        except:
-            label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+        else:
+            try:
+                atlas_ref_txt = atlas_select + '.txt'
+                ref_txt = Path(__file__)/'atlases'/atlas_ref_txt
+                dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+                indices = dict_df.Index.unique().tolist()
+                label_names = dict_df['Region'].tolist()
+            except:
+                label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
     ##Get subject directory path
     dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_select
@@ -91,13 +104,15 @@ def wb_functional_connectometry(input_file, ID, atlas_select, network, node_size
     ##Mask coordinates
     if mask is not None:
         if parc == True:
-            [coords, label_names, parcel_list] = nodemaker.parcel_masker(mask, coords, parcel_list, label_names)
-            parcellation = nilearn.image.concat_imgs(parcel_list).get_data()
-            index_vec = np.array(range(len(parcel_list))) + 1
-            net_parcels_sum = np.sum(index_vec * parcellation, axis=3)
-            net_parcels_map_nifti = nib.Nifti1Image(net_parcels_sum, affine=np.eye(4))
+            [coords, label_names, parcel_list_masked] = nodemaker.parcel_masker(mask, coords, parcel_list, label_names)
+            [net_parcels_map_nifti, parcel_list_adj] = nodemaker.create_parcel_atlas(parcel_list_masked)
         elif parc == False:
             [coords, label_names] = nodemaker.coord_masker(mask, coords, label_names)
+    else:
+        if parc == True:
+            [net_parcels_map_nifti, parcel_list_adj] = nodemaker.create_parcel_atlas(parcel_list)
+        else:
+            print('No masking...')
 
     ##Save coords and label_names to pickles
     coord_path = dir_path + '/coords_wb_' + str(thr) + '.pkl'
@@ -108,35 +123,55 @@ def wb_functional_connectometry(input_file, ID, atlas_select, network, node_size
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f)
 
+    ##Extract time-series from nodes
     if parc == True:
         ##extract time series from whole brain parcellaions:
-        parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0, memory='nilearn_cache', memory_level=10, standardize=True)
+        parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0, memory='joblib.Memory', memory_level=10, standardize=True)
         ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
         print('\n' + 'Time series has {0} samples'.format(ts_within_nodes.shape[0]) + '\n')
     else:
         ##Extract within-spheres time-series from funct file
-        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=10, standardize=True)
+        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True, memory='joblib.Memory', memory_level=10, standardize=True)
         ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
         print('\n' + 'Time series has {0} samples'.format(ts_within_nodes.shape[0]) + '\n')
-
-    if bedpostx_dir is not None and anat_loc is not None:
-        from pynets.diffconnectometry import run_struct_mapping
-        if anat_loc is not None:
-            parcels = True
-        else:
-            parcels = False
-            dict_df = None
-            indices = None
-        try:
-            est_path2 = run_struct_mapping(ID, bedpostx_dir, network, coords, node_size, atlas_select, atlas_name, label_names, plot_switch, parcels, dict_df, indices, anat_loc)
-        except RuntimeError:
-            print('Whole-brain Structural Graph Estimation Failed!')
 
     ##Save time series as txt file
     out_path_ts=dir_path + '/' + ID + '_whole_brain_ts_within_nodes.txt'
     np.savetxt(out_path_ts, ts_within_nodes)
 
-    ##Fit connectivity model
+    if bedpostx_dir is not None and anat_loc is not None:
+        from pynets.diffconnectometry import prepare_masks, run_struct_mapping
+
+        atlas_path = parlistfile
+        parcels = parc
+        coords_MNI = coords
+        threads = int(procmem[0])
+
+        print('Bedpostx Directory: ' + bedpostx_dir)
+        print('Anatomical File Location: ' + anat_loc)
+        print('Atlas: ' + os.path.basename(atlas_path).split('.')[0])
+
+        try:
+            ##Prepare Volumes
+            if parcels == True:
+                print('\n' + 'Converting 3d atlas image file to 4d image of atlas volume masks...' + '\n')
+                [coords_MNI, volumes_dir] = convert_atlas_to_volumes_and_coords(atlas_path, parcels)
+                coords_MNI=None
+            else:
+                volumes_dir=None
+
+            ##Prepare seed, avoidance, and waypoint masks
+            print('\n' + 'Running node preparation...' + '\n')
+            [vent_CSF_diff_mask_path, WM_diff_mask_path] = prepare_masks(ID, bedpostx_dir, network, coords_MNI, node_size, atlas_select, atlas_select, label_names, plot_switch, parcels, dict_df, indices, anat_loc, volumes_dir, threads)
+
+            ##Run all stages of probabilistic structural connectometry
+            print('\n' + 'Running probabilistic structural connectometry...' + '\n')
+            est_path2 = run_struct_mapping(ID, bedpostx_dir, network, coords_MNI, node_size, atlas_select, label_names, plot_switch, parcels, dict_df, indices, anat_loc, volumes_dir, threads, vent_CSF_diff_mask_path, WM_diff_mask_path)
+
+        except RuntimeError:
+            print('Whole-brain Structural Graph Estimation Failed!')
+
+    ##Threshold and fit connectivity model
     if adapt_thresh is not False:
         try:
             est_path2
@@ -152,167 +187,149 @@ def wb_functional_connectometry(input_file, ID, atlas_select, network, node_size
         edge_threshold = str(float(thr)*100) +'%'
         [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_nodes, conn_model, network, ID, dir_path, thr)
         conn_matrix = thresholding.threshold_proportional(conn_matrix, float(thr), dir_path)
-        conn_matrix = thresholding.normalize(conn_matrix)
     elif dens_thresh is not None:
         [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_nodes, conn_model, network, ID, dens_thresh, dir_path)
+
+    ##Normalize connectivity matrix (weights between 0-1)
+    conn_matrix = thresholding.normalize(conn_matrix)
 
     if plot_switch == True:
         ##Plot connectogram
         try:
-            plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
+            plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
         except RuntimeError:
             print('\n\n\nError: Connectogram plotting failed!')
             pass
 
         ##Plot adj. matrix based on determined inputs
-        atlas_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names, mask)
+        atlas_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask)
 
         ##Plot connectome viz for all Yeo networks
         out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
         niplot.plot_connectome(conn_matrix, coords, title=atlas_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     return est_path, thr
 
-def network_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc):
-    nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
-
+def network_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem):
     ##Input is nifti file
     func_file=input_file
 
-    ##Test if atlas_select is a nilearn atlas
+    ##Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
+    nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
     if atlas_select in nilearn_atlases:
-        atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
         try:
-            parlistfile=atlas.maps
+            parlistfile=getattr(datasets, 'fetch_%s' % atlas_select)().maps
             try:
-                label_names=atlas.labels
+                label_names=getattr(datasets, 'fetch_%s' % atlas_select)().labels
             except:
                 label_names=None
             try:
-                networks_list = atlas.networks
+                networks_list = getattr(datasets, 'fetch_%s' % atlas_select)().networks
             except:
                 networks_list = None
-        except RuntimeError:
-            print('Error, atlas fetching failed.')
+        except:
+            print('Extraction from nilearn datasets failed!')
             sys.exit()
 
-    if parlistfile == None and atlas_select not in nilearn_atlases:
+    ##Get coordinates and/or parcels from atlas
+    if parlistfile is None and parc == False:
+        print('Fetching coordinates and labels from nilearn coordinate-based atlases')
         ##Fetch nilearn atlas coords
-        [coords, atlas_name, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
-
-        try:
-            networks_list
-        except:
-            networks_list = None
-
-        net_coords = nodemaker.get_membership_from_coords(network, func_file, coords, networks_list)
-
-        try:
-            label_names=label_names.tolist()
-        except:
-            try:
-                atlas_ref_txt = atlas_name + '.txt'
-                ref_txt = Path(__file__)/'atlases'/atlas_ref_txt
-                dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
-                indices = dict_df.Index.unique().tolist()
-                label_names = dict_df['Region'].tolist()
-            except:
-                label_names=list(np.arange(len(net_coords)) + 1)
-
-        ##Get subject directory path
-        dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_select
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
-
-        ##If masking, remove those coords that fall outside of the mask
-        if mask != None:
-            [net_coords, label_names] = nodemaker.coord_masker(mask, net_coords, label_names)
-
-        ##Save coords and label_names to pickles
-        coord_path = dir_path + '/coords_' + network + '_' + str(thr) + '.pkl'
-        with open(coord_path, 'wb') as f:
-            pickle.dump(net_coords, f)
-
-        labels_path = dir_path + '/labelnames_' + network + '_' + str(thr) + '.pkl'
-        with open(labels_path, 'wb') as f:
-            pickle.dump(label_names, f)
-
-        if bedpostx_dir is not None and anat_loc is not None:
-            from pynets.diffconnectometry import run_struct_mapping
-            if anat_loc is not None:
-                parcels = True
-            else:
-                parcels = False
-                dict_df = None
-                indices = None
-
-            try:
-                est_path2 = run_struct_mapping(ID, bedpostx_dir, network, coords, node_size, atlas_select, atlas_name, label_names, plot_switch, parcels, dict_df, indices, anat_loc)
-            except RuntimeError:
-                print('Whole-brain Structural Graph Estimation Failed!')
-
+        [coords, atlas_select, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
     else:
         ##Fetch user-specified atlas coords
-        [coords_all, atlas_name, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
-        coords = list(tuple(x) for x in coords_all)
+        [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
+        networks_list = None
 
-        ##Get subject directory path
-        dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_name
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
+    ##Get subject directory path
+    dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_select
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
 
-        ##Get coord membership dictionary
-        try:
-            networks_list
-        except:
-            networks_list = None
+    ##Labels prep
+    try:
+        label_names
+    except:
+        if ref_txt is not None and os.path.exists(ref_txt):
+            atlas_select = os.path.basename(ref_txt).split('.txt')[0]
+            dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+            indices = dict_df.Index.unique().tolist()
+            label_names = dict_df['Region'].tolist()
+        else:
+            label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
-        net_coords = nodemaker.get_membership_from_coords(network, func_file, coords, networks_list)
+    ##Get coord membership dictionary
+    [net_coords, net_parcel_list, net_label_names] = nodemaker.get_node_membership(network, func_file, coords, label_names, parc, parcel_list)
 
-        try:
-            label_names
-        except:
-            label_names=list(np.arange(len(net_coords)) + 1)
+    if mask is not None:
+        if parc == True:
+            [net_coords, net_label_names, net_parcel_list_masked] = nodemaker.parcel_masker(mask, net_coords, net_parcel_list, net_label_names)
+            [net_parcels_map_nifti, net_parcel_list_adj] = nodemaker.create_parcel_atlas(net_parcel_list_masked)
+        elif parc == False:
+            [net_coords, net_label_names] = nodemaker.coord_masker(mask, net_coords, net_label_names)
+    else:
+        if parc == True:
+            [net_parcels_map_nifti, net_parcel_list_adj] = nodemaker.create_parcel_atlas(net_parcel_list)
+        else:
+            print('No masking...')
 
-        if mask != None:
-            [net_coords, label_names] = nodemaker.coord_masker(mask, net_coords, label_names)
+    ##Save coords and label_names to pickles
+    coord_path = dir_path + '/coords_' + network + '_' + str(thr) + '.pkl'
+    with open(coord_path, 'wb') as f:
+        pickle.dump(net_coords, f)
 
-        ##Save coords and label_names to pickles
-        coord_path = dir_path + '/coords_' + network + '_' + str(thr) + '.pkl'
-        with open(coord_path, 'wb') as f:
-            pickle.dump(net_coords, f)
+    labels_path = dir_path + '/labelnames_' + network + '_' + str(thr) + '.pkl'
+    with open(labels_path, 'wb') as f:
+        pickle.dump(net_label_names, f)
 
-        labels_path = dir_path + '/labelnames_' + network + '_' + str(thr) + '.pkl'
-        with open(labels_path, 'wb') as f:
-            pickle.dump(label_names, f)
+    ##Extract time-series from nodes
+    if parc == True:
+        ##extract time series from whole brain parcellaions:
+        parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label='False', memory='joblib.Memory', memory_level=10, standardize=True)
+        ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
+        print('\n' + 'Time series has {0} samples'.format(ts_within_nodes.shape[0]) + '\n')
+    else:
+        ##Extract within-spheres time-series from funct file
+        spheres_masker = input_data.NiftiSpheresMasker(seeds=net_coords, radius=float(node_size), allow_overlap=True, memory='joblib.Memory', memory_level=10, standardize=True)
+        ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
+        print('\n' + 'Time series has {0} samples'.format(ts_within_nodes.shape[0]) + '\n')
 
-        if bedpostx_dir is not None and anat_loc is not None:
-            from pynets.diffconnectometry import run_struct_mapping
-            if anat_loc is not None:
-                parcels = True
-            else:
-                parcels = False
-                dict_df = None
-                indices = None
-            try:
-                est_path2 = run_struct_mapping(ID, bedpostx_dir, network, coords_MNI, node_size, atlas_select, atlas_name, label_names, plot_switch, parcels, dict_df, indices, anat_loc)
-            except RuntimeError:
-                print('Network Structural Graph Estimation Failed!')
-
-        ##Generate network parcels image
-        #net_parcels_img_path = gen_network_parcels(parlistfile, network, labels)
-        #parcellation = nib.load(net_parcels_img_path)
-        #parcel_masker = input_data.NiftiLabelsMasker(labels_img=parcellation, background_label=0, memory='nilearn_cache', memory_level=5, standardize=True)
-        #ts_within_nodes = parcel_masker.fit_transform(func_file)
-        #net_ts = ts_within_nodes
-
-    ##Grow ROIs
-    masker = input_data.NiftiSpheresMasker(seeds=net_coords, radius=float(node_size), allow_overlap=True, memory_level=10, memory='nilearn_cache', verbose=2, standardize=True)
-    ts_within_nodes = masker.fit_transform(func_file, confounds=conf)
     net_ts = ts_within_nodes
 
     ##Save time series as txt file
     out_path_ts=dir_path + '/' + ID + '_' + network + '_net_ts.txt'
     np.savetxt(out_path_ts, net_ts)
+
+    if bedpostx_dir is not None and anat_loc is not None:
+        from pynets.diffconnectometry import prepare_masks, run_struct_mapping
+
+        atlas_path = parlistfile
+        parcels = parc
+        coords_MNI = net_coords
+        threads = int(procmem[0])
+
+        print('Bedpostx Directory: ' + bedpostx_dir)
+        print('Anatomical File Location: ' + anat_loc)
+        print('Atlas: ' + os.path.basename(atlas_path).split('.')[0])
+
+        try:
+            ##Prepare Volumes
+            if parcels == True:
+                print('\n' + 'Converting 3d atlas image file to 4d image of atlas volume masks...' + '\n')
+                [coords_MNI, volumes_dir] = convert_atlas_to_volumes_and_coords(atlas_path, parcels)
+                coords_MNI=None
+            else:
+                volumes_dir=None
+
+            ##Prepare seed, avoidance, and waypoint masks
+            print('\n' + 'Running node preparation...' + '\n')
+            [vent_CSF_diff_mask_path, WM_diff_mask_path] = prepare_masks(ID, bedpostx_dir, network, coords_MNI, node_size, atlas_select, atlas_select, net_label_names, plot_switch, parcels, dict_df, indices, anat_loc, volumes_dir, threads)
+
+            ##Run all stages of probabilistic structural connectometry
+            print('\n' + 'Running probabilistic structural connectometry...' + '\n')
+            est_path2 = run_struct_mapping(ID, bedpostx_dir, network, coords_MNI, node_size, atlas_select, net_label_names, plot_switch, parcels, dict_df, indices, anat_loc, volumes_dir, threads, vent_CSF_diff_mask_path, WM_diff_mask_path)
+
+        except RuntimeError:
+            print('Whole-brain Structural Graph Estimation Failed!')
 
     ##Fit connectivity model
     if adapt_thresh is not False:
@@ -330,23 +347,25 @@ def network_functional_connectometry(input_file, ID, atlas_select, network, node
         edge_threshold = str(float(thr)*100) +'%'
         [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_nodes, conn_model, network, ID, dir_path, thr)
         conn_matrix = thresholding.threshold_proportional(conn_matrix, float(thr), dir_path)
-        conn_matrix = thresholding.normalize(conn_matrix)
     elif dens_thresh is not None:
         [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_nodes, conn_model, network, ID, dens_thresh, dir_path)
+
+    ##Normalize connectivity matrix (weights between 0-1)
+    conn_matrix = thresholding.normalize(conn_matrix)
 
     if plot_switch == True:
         ##Plot connectogram
         try:
-            plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
+            plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, net_label_names)
         except RuntimeError:
             print('\n\n\nError: Connectogram plotting failed!')
             pass
 
         ##Plot adj. matrix based on determined inputs
-        plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names, mask)
+        plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, net_label_names, mask)
 
         ##Plot network time-series
-        plotting.plot_timeseries(net_ts, network, ID, dir_path, atlas_name, label_names)
+        plotting.plot_timeseries(net_ts, network, ID, dir_path, atlas_select, net_label_names)
 
         ##Plot connectome viz for specific Yeo networks
         title = "Connectivity Projected on the " + network

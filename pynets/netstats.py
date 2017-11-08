@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov  7 10:40:07 2017
+
+@author: Derek Pisner
+"""
 import sys
 import argparse
 import os
@@ -366,14 +372,14 @@ def core_periphery_dir(W, gamma=1, C0=None):
     ncix, = np.where(np.logical_not(C))
     q = np.sum(B[np.ix_(cix, cix)]) - np.sum(B[np.ix_(ncix, ncix)])
 
-    print(q)
+    #print(q)
 
     flag = True
     it = 0
     while flag:
         it += 1
         if it > 100:
-            print('Infinite Loop aborted')
+            #print('Infinite Loop aborted')
             sys.exit(0)
 
         flag = False
@@ -392,20 +398,15 @@ def core_periphery_dir(W, gamma=1, C0=None):
 
             max_Qt = np.max(Qt[ixes])
             u, = np.where(np.abs(Qt[ixes]-max_Qt) < 1e-10)
-            print(np.where(np.abs(Qt[ixes]-max_Qt) < 1e-10))
-            print(Qt[ixes])
-            print(max_Qt)
-            #tunourn
-            u = u[np.random.randint(len(u))]
-            print(np.sum(Ct))
+            #u = u[np.random.randint(len(u))]
+            #print(np.sum(Ct))
             Ct[ixes[u]] = np.logical_not(Ct[ixes[u]])
-            print(np.sum(Ct))
-            #casga
+            #print(np.sum(Ct))
 
             ixes = np.delete(ixes, u)
 
-            print(max_Qt - q)
-            print(len(ixes))
+            #print(max_Qt - q)
+            #print(len(ixes))
 
             if max_Qt - q > 1e-10:
                 flag = True

@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov  7 10:40:07 2017
+
+@author: Derek Pisner
+"""
 import sys
 import argparse
 import os
@@ -32,16 +38,16 @@ from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, Traite
 from scipy.cluster.hierarchy import linkage, fcluster
 from nipype.utils.filemanip import load_json, save_json
 
-def plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names, mask):
+def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask):
     ##Set title for adj. matrix based on connectivity model used
     if conn_model == 'corr':
-        atlast_graph_title = str(atlas_name) + '_Correlation_Graph'
+        atlast_graph_title = str(atlas_select) + '_Correlation_Graph'
     elif conn_model == 'partcorr':
-        atlast_graph_title = str(atlas_name) + '_Partial_Correlation_Graph'
+        atlast_graph_title = str(atlas_select) + '_Partial_Correlation_Graph'
     elif conn_model == 'sps':
-        atlast_graph_title = str(atlas_name) + '_Sparse_Covariance_Graph'
+        atlast_graph_title = str(atlas_select) + '_Sparse_Covariance_Graph'
     elif conn_model == 'cov':
-        atlast_graph_title = str(atlas_name) + '_Covariance_Graph'
+        atlast_graph_title = str(atlas_select) + '_Covariance_Graph'
     if mask != None:
         atlast_graph_title = str(atlast_graph_title) + '_With_Masked_Nodes'
     if network != None:
@@ -66,7 +72,7 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, network, la
     plt.close()
     return(atlast_graph_title)
 
-def plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names):
+def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names):
     import json
     from pynets.thresholding import normalize
     from pathlib import Path
@@ -92,10 +98,16 @@ def plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network
             label_arr[c-1, :] = fl
         return label_arr, clust_levels_tmp
 
-    if comm == 'nodes' and len(conn_matrix) > 80:
+    if comm == 'nodes' and len(conn_matrix) > 40:
         from pynets.netstats import modularity_finetune_und_sign
-        if network is not None and len(conn_matrix) > 80:
+        if len(conn_matrix) < 50:
             gamma=0.3
+        elif len(conn_matrix) < 60:
+            gamma=0.5
+        elif len(conn_matrix) < 70:
+            gamma=0.7
+        elif len(conn_matrix) < 80:
+            gamma=0.9
         else:
             gamma=1.0
         [node_comm_aff_mat, q] = modularity_finetune_und_sign(conn_matrix, gamma=gamma)
@@ -104,7 +116,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network
         clust_levels_tmp = int(clust_levels) - 1
         mask_mat = np.squeeze(np.array([node_comm_aff_mat == 0]).astype('int'))
         label_arr = node_comm_aff_mat * np.expand_dims(np.arange(1,clust_levels+1),axis=1) + mask_mat
-    elif comm == 'links' and len(conn_matrix) > 80:
+    elif comm == 'links' and len(conn_matrix) > 40:
         from pynets.netstats import link_communities
         ##Plot link communities
         link_comm_aff_mat = link_communities(conn_matrix, type_clustering='single')
@@ -113,7 +125,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network
         clust_levels_tmp = int(clust_levels) - 1
         mask_mat = np.squeeze(np.array([link_comm_aff_mat == 0]).astype('int'))
         label_arr = link_comm_aff_mat * np.expand_dims(np.arange(1,clust_levels+1),axis=1) + mask_mat
-    elif len(conn_matrix) <= 80 and len(conn_matrix) > 20:
+    elif len(conn_matrix) <= 40 and len(conn_matrix) > 20:
         print('Graph too small for reliable plotting of communities. Plotting by fcluster instead...')
         if len(conn_matrix) >= 70:
             clust_levels = 7
@@ -130,7 +142,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network
         [label_arr, clust_levels_tmp] = doClust(conn_matrix, clust_levels)
     else:
         print('Error: Cannot plot connectogram for graphs smaller than 20 x 20!')
-        sys.exit()
+        return None
 
     def get_node_label(node_idx, labels, clust_levels_tmp):
         from collections import OrderedDict
@@ -208,8 +220,8 @@ def plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network
 
     #color_scheme = 'interpolateCool'
     #color_scheme = 'interpolateGnBu'
-    color_scheme = 'interpolateOrRd'
-    #color_scheme = 'interpolatePuRd'
+    #color_scheme = 'interpolateOrRd'
+    color_scheme = 'interpolatePuRd'
     #color_scheme = 'interpolateYlOrRd'
     #color_scheme = 'interpolateReds'
     #color_scheme = 'interpolateGreens'
@@ -221,7 +233,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network
                 line = line.replace(src, target)
             outfile.write(line)
 
-def plot_timeseries(time_series, network, ID, dir_path, atlas_name, labels):
+def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
     for time_serie, label in zip(time_series.T, labels):
         plt.plot(time_serie, label=label)
     plt.title(network + ' Network Time Series')
