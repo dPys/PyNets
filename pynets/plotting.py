@@ -4,39 +4,12 @@ Created on Tue Nov  7 10:40:07 2017
 
 @author: Derek Pisner
 """
-import sys
-import argparse
-import os
-import nilearn
 import numpy as np
 import networkx as nx
-import pandas as pd
-import nibabel as nib
-import seaborn as sns
-import numpy.linalg as npl
-import matplotlib
-import sklearn
-import matplotlib
-import warnings
-import pynets
 #warnings.simplefilter("ignore")
 import matplotlib.pyplot as plt
-from numpy import genfromtxt
-from matplotlib import colors
-from nipype import Node, Workflow
-from nilearn import input_data, masking, datasets
-from nilearn import plotting as niplot
-from nipype.pipeline import engine as pe
-from nipype.interfaces import utility as niu
-from nipype.interfaces import io as nio
-from nilearn.input_data import NiftiLabelsMasker
-from nilearn.connectome import ConnectivityMeasure
-from nibabel.affines import apply_affine
-from nipype.interfaces.base import isdefined, Undefined
-from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
-from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
 from scipy.cluster.hierarchy import linkage, fcluster
-from nipype.utils.filemanip import load_json, save_json
+from nipype.utils.filemanip import save_json
 
 def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask):
     ##Set title for adj. matrix based on connectivity model used
@@ -61,11 +34,11 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, 
     ##And display the labels
     if rois_num < 50:
         if all(isinstance(item, int) for item in label_names)==False:
-            x_ticks = plt.xticks(range(len(label_names)), label_names, size='x-small', rotation=90)
-            y_ticks = plt.yticks(range(len(label_names)), label_names, size='x-small')
+            plt.xticks(range(len(label_names)), label_names, size='x-small', rotation=90)
+            plt.yticks(range(len(label_names)), label_names, size='x-small')
         else:
-            x_ticks = plt.xticks(range(rois_num), rotation=90)
-            y_ticks = plt.yticks(range(rois_num))
+            plt.xticks(range(rois_num), rotation=90)
+            plt.yticks(range(rois_num))
     plt.title(atlast_graph_title)
     plt.grid(False)
     plt.savefig(out_path_fig)
@@ -76,9 +49,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
     import json
     from pynets.thresholding import normalize
     from pathlib import Path
-    from random import sample
-    from string import ascii_uppercase, ascii_lowercase
-    comm = 'nodes'
+    comm = 'links'
 
     conn_matrix = normalize(conn_matrix)
     G=nx.from_numpy_matrix(conn_matrix)
@@ -99,18 +70,19 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
         return label_arr, clust_levels_tmp
 
     if comm == 'nodes' and len(conn_matrix) > 40:
-        from pynets.netstats import modularity_finetune_und_sign
+        from pynets.netstats import modularity_louvain_dir
         if len(conn_matrix) < 50:
-            gamma=0.3
-        elif len(conn_matrix) < 60:
-            gamma=0.5
-        elif len(conn_matrix) < 70:
-            gamma=0.7
-        elif len(conn_matrix) < 80:
-            gamma=0.9
+            gamma=4.0
+        elif len(conn_matrix) < 100:
+            gamma=3.0
+        elif len(conn_matrix) < 150:
+            gamma=2.0
+        elif len(conn_matrix) < 200:
+            gamma=1.5
         else:
             gamma=1.0
-        [node_comm_aff_mat, q] = modularity_finetune_und_sign(conn_matrix, gamma=gamma)
+            
+        [node_comm_aff_mat, q] = modularity_louvain_dir(conn_matrix, gamma=gamma)
         print('Found ' + str(len(node_comm_aff_mat)) + ' communities with gamma=' + str(gamma) + '...')
         clust_levels = len(node_comm_aff_mat)
         clust_levels_tmp = int(clust_levels) - 1
@@ -125,17 +97,17 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
         clust_levels_tmp = int(clust_levels) - 1
         mask_mat = np.squeeze(np.array([link_comm_aff_mat == 0]).astype('int'))
         label_arr = link_comm_aff_mat * np.expand_dims(np.arange(1,clust_levels+1),axis=1) + mask_mat
-    elif len(conn_matrix) <= 40 and len(conn_matrix) > 20:
+    elif len(conn_matrix) > 20:
         print('Graph too small for reliable plotting of communities. Plotting by fcluster instead...')
-        if len(conn_matrix) >= 70:
+        if len(conn_matrix) >= 250:
             clust_levels = 7
-        elif len(conn_matrix) >= 60:
+        elif len(conn_matrix) >= 200:
             clust_levels = 6
-        elif len(conn_matrix) >= 50:
+        elif len(conn_matrix) >= 150:
             clust_levels = 5
-        elif len(conn_matrix) >= 40:
+        elif len(conn_matrix) >= 100:
             clust_levels = 4
-        elif len(conn_matrix) >= 30:
+        elif len(conn_matrix) >= 50:
             clust_levels = 3
         else:
             clust_levels = 2
@@ -171,7 +143,6 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
                     else:
                         break
             return "".join([a for a in roman_num(num)])
-        int_list = list(np.arange(clust_levels_tmp) + 1)[:-1]
         rn_list = []
         node_idx = node_idx - 1
         node_labels = labels[:, node_idx]
@@ -221,11 +192,11 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
     #color_scheme = 'interpolateCool'
     #color_scheme = 'interpolateGnBu'
     #color_scheme = 'interpolateOrRd'
-    color_scheme = 'interpolatePuRd'
+    #color_scheme = 'interpolatePuRd'
     #color_scheme = 'interpolateYlOrRd'
     #color_scheme = 'interpolateReds'
     #color_scheme = 'interpolateGreens'
-    #color_scheme = 'interpolateBlues'
+    color_scheme = 'interpolateBlues'
     replacements_js = {'template.json': str(json_file_name), 'interpolateCool': str(color_scheme)}
     with open(conn_js_path) as infile, open(connectogram_js_sub, 'w') as outfile:
         for line in infile:

@@ -4,41 +4,15 @@ Created on Tue Nov  7 10:40:07 2017
 
 @author: Derek Pisner
 """
-import sys
-import argparse
-import os
 import nilearn
 import numpy as np
-import networkx as nx
 import pandas as pd
 import nibabel as nib
-import seaborn as sns
-import numpy.linalg as npl
-import matplotlib
-import sklearn
-import matplotlib
 import warnings
 import pkg_resources
-import pynets
-import itertools
-import multiprocessing
 warnings.simplefilter("ignore")
-import matplotlib.pyplot as plt
-from numpy import genfromtxt
-from matplotlib import colors
-from nipype import Node, Workflow
-from nilearn import input_data, masking, datasets
-from nilearn import plotting as niplot
-from nipype.pipeline import engine as pe
-from nipype.interfaces import utility as niu
-from nipype.interfaces import io as nio
-from nilearn.input_data import NiftiLabelsMasker
-from nilearn.connectome import ConnectivityMeasure
-from nibabel.affines import apply_affine
-from nipype.interfaces.base import isdefined, Undefined
-from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
-from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
-from scipy.ndimage.morphology import binary_dilation
+from nilearn import datasets, masking
+from nilearn.image import resample_img
 
 def get_sphere(coords, r, vox_dims, dims):
     """##Adapted from Neurosynth
@@ -60,8 +34,8 @@ def create_parcel_atlas(parcel_list):
     parcel_list_exp = [parcel_background] + parcel_list
     parcellation = nilearn.image.concat_imgs(parcel_list_exp).get_data()
     index_vec = np.array(range(len(parcel_list_exp))) + 1
-    net_parcels_sum = np.sum(index_vec * parcellation, axis=3)
-    net_parcels_map_nifti = nib.Nifti1Image(net_parcels_sum, affine=np.eye(4))
+    net_parcels_sum = np.sum(index_vec * parcellation, axis=3)    
+    net_parcels_map_nifti = nib.Nifti1Image(net_parcels_sum, affine=parcel_list[0].affine)
     return(net_parcels_map_nifti, parcel_list_exp)
 
 def fetch_nilearn_atlas_coords(atlas_select):
@@ -83,7 +57,7 @@ def fetch_nilearn_atlas_coords(atlas_select):
 
 def get_node_membership(network, func_file, coords, label_names, parc, parcel_list):
     ##For parcel membership determination, specify overlap thresh and error cushion in mm voxels
-    perc_overlap = 0.025
+    perc_overlap = 0.75 ##Default is >=75% overlap
     error = 2
 
     ##Load subject func data
@@ -176,49 +150,38 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
         net_label_names = []
         for parcel in parcel_list:
             parcel_vol = np.zeros(RSNmask.shape, dtype=bool)
-            parcel_data_reshaped = np.resize(parcel.get_data(), RSNmask.shape)
+            parcel_data_reshaped = resample_img(parcel, target_affine=par_img.affine,
+                               target_shape=RSNmask.shape).get_data()
             parcel_vol[parcel_data_reshaped==1] = 1
-            if float(np.sum((RSNmask.astype('uint8') + parcel_vol.astype('uint8'))>1)/np.sum((parcel_vol.astype('uint8'))==1))>=perc_overlap:
-                print('Parcel ' + str(label_names[i]) + ' falls WITHIN ' + str(network) + ' mask...')
+            overlap = float(np.sum((RSNmask.astype('uint8') + parcel_vol.astype('uint8'))>1)/np.sum((parcel_vol.astype('uint8'))>=1))
+            if overlap >=perc_overlap:
+                print(str(round(100*overlap,1)) + '% of parcel ' + str(label_names[i]) + ' falls within ' + str(network) + ' mask...')
                 RSN_parcels.append(parcel)
                 coords_with_parc.append(coords[i])
                 net_label_names.append(label_names[i])
-            else:
-                parcel_vol_dil=binary_dilation(parcel_vol, iterations=error)
-                if float(np.sum((RSNmask.astype('uint8') + parcel_vol_dil.astype('uint8'))>1)/np.sum((parcel_vol_dil.astype('uint8'))==1))>=perc_overlap:
-                    RSN_parcels.append(parcel)
-                    coords_with_parc.append(coords[i])
-                    net_label_names.append(label_names[i])
-                    print('Dilated parcel ' + str(label_names[i]) + ' falls WITHIN mask...')
-                else:
-                    print('Parcel ' + str(label_names[i]) + ' falls OUTSIDE of ' + str(network) + ' mask...')
             i = i + 1
         coords_mm = list(set(list(tuple(x) for x in coords_with_parc)))
     return(coords_mm, RSN_parcels, net_label_names)
 
 def parcel_masker(mask, coords, parcel_list, label_names):
     ##For parcel masking, specify overlap thresh and error cushion in mm voxels
-    perc_overlap = 0.05
-    error = 2
+    perc_overlap = 0.75 ##Default is >=75% overlap
 
+    mask_img = nib.load(mask)
     mask_data, _ = masking._load_mask_img(mask)
-    mask_coords = list(zip(*np.where(mask_data == True)))
 
     i = 0
     bad_parcels = []
     for parcel in parcel_list:
         parcel_vol = np.zeros(mask_data.shape, dtype=bool)
-        parcel_data_reshaped = np.resize(parcel.get_data(), mask_data.shape)
+        parcel_data_reshaped = resample_img(parcel, target_affine=mask_img.affine,
+                               target_shape=mask_data.shape).get_data()
         parcel_vol[parcel_data_reshaped==1] = 1
-        if float(np.sum((mask_data.astype('uint8') + parcel_vol.astype('uint8'))>1)/np.sum((parcel_vol.astype('uint8'))==1))>=perc_overlap:
-            print('Parcel ' + str(label_names[i]) + ' falls WITHIN mask...')
+        overlap = float(np.sum((mask_data.astype('uint8') + parcel_vol.astype('uint8'))>1)/np.sum((parcel_vol.astype('uint8'))>=1))
+        if overlap >= perc_overlap:
+            print(str(round(100*overlap,1)) + '% of parcel ' + str(label_names[i]) + ' falls within mask...')
         else:
-            parcel_vol_dil=binary_dilation(parcel_vol, iterations=error)
-            if float(np.sum((mask_data.astype('uint8') + parcel_vol_dil.astype('uint8'))>1)/np.sum((parcel_vol_dil.astype('uint8'))==1))>=perc_overlap:
-                print('Dilated parcel ' + str(label_names[i]) + ' falls WITHIN mask...')
-            else:
-                bad_parcels.append(parcel)
-                print('Parcel ' + str(label_names[i]) + ' falls OUTSIDE of mask...')
+            bad_parcels.append(parcel)
         i = i + 1
 
     bad_parcels = [x for x in bad_parcels if x is not None]
@@ -248,14 +211,14 @@ def coord_masker(mask, coords, label_names):
         return voxcoords
 
     mask_data, _ = masking._load_mask_img(mask)
-    mask_coords = list(zip(*np.where(mask_data == True)))
+#    mask_coords = list(zip(*np.where(mask_data == True)))
     coords_vox = []
     for i in coords:
         coords_vox.append(mmToVox(i))
     coords_vox = list(tuple(x) for x in coords_vox)
 
     bad_coords = []
-    error=4
+    error=2
     for coord in coords_vox:
         sphere_vol = np.zeros(mask_data.shape, dtype=bool)
         sphere_vol[tuple(coord)] = 1
@@ -301,7 +264,6 @@ def get_names_and_coords_of_parcels(parlistfile):
     for idx in range(par_max):
         roi_img = nilearn.image.new_img_like(bna_img, img_stack[idx])
         img_list.append(roi_img)
-    bna_4D = nilearn.image.concat_imgs(img_list).get_data()
     coords = []
     for roi_img in img_list:
         coords.append(nilearn.plotting.find_xyz_cut_coords(roi_img))
@@ -314,7 +276,6 @@ def gen_network_parcels(parlistfile, network, labels, dir_path):
         bna_data_for_coords = bna_img.get_data()
         # Number of parcels:
         par_max = np.ceil(np.max(bna_data_for_coords)).astype('int')
-        bna_data = bna_data.astype('int16')
     else:
         bna_data = bna_img.get_data()
         par_max = np.max(bna_data)

@@ -5,15 +5,11 @@ Created on Wed Sep  6 14:58:43 2017
 
 @author: aki.nikolaidis
 """
-import basc
 #BASC_RUN
 def basc_run(subjects_list, basc_config):
-    import utils
     import os
     import numpy as np
-    import scipy.stats
     import nibabel as nib
-    from os.path import expanduser
     import yaml
     from basc_workflow_runner import run_basc_workflow
     from pathlib import Path

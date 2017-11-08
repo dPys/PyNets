@@ -8,7 +8,6 @@ import sys
 import argparse
 import os
 import timeit
-import string
 
 # Start time clock
 start_time = timeit.default_timer()
@@ -221,32 +220,12 @@ if __name__ == '__main__':
     print("\n" + "-------------------------------------------------------------------------" + "\n\n\n")
 
     ##Import core modules
-    import nilearn
     import numpy as np
-    import networkx as nx
     import pandas as pd
-    import nibabel as nib
-    import seaborn as sns
-    import numpy.linalg as npl
-    import matplotlib
-    import sklearn
-    import matplotlib
     import warnings
     warnings.simplefilter("ignore")
-    import matplotlib.pyplot as plt
-    from numpy import genfromtxt
-    from matplotlib import colors
-    from nipype import Node, Workflow
-    from nilearn import input_data, masking, datasets
-    from nilearn import plotting as niplot
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
-    from nipype.interfaces import io as nio
-    from nilearn.input_data import NiftiLabelsMasker
-    from nilearn.connectome import ConnectivityMeasure
-    from nibabel.affines import apply_affine
-    from nipype.interfaces.base import isdefined, Undefined
-    from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
     from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
 
 
@@ -261,7 +240,6 @@ if __name__ == '__main__':
        parlistfile=Path(__file__)/'pynets'/'rsnrefs'/'group_stability_clusters.nii.gz'
 
     def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem):
-        import pynets
         from pynets import workflows
 
         ##Case 1: Whole-brain connectome with user-specified atlas or nilearn atlas img

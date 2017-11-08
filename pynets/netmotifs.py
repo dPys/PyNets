@@ -5,7 +5,6 @@ Created on Tue Nov  7 10:40:07 2017
 @author: James Kunert-Graf
 """
 import numpy as np
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 def countMotifs(A,N=4):

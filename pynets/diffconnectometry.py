@@ -1,28 +1,14 @@
-import warnings
-import nipype.interfaces.io as nio
 import nipype.interfaces.fsl as fsl
-import nipype.interfaces.utility as util
 import nipype.pipeline.engine as pe
 import numpy as np
 import os
 import glob
-import pandas as pd
-import argparse
-import sys
 import seaborn as sns
-import matplotlib
-import multiprocessing
-import pynets
-import nibabel as nib
 from nipype.interfaces.fsl import ExtractROI
 from matplotlib import pyplot as plt
-from nipype.interfaces.fsl import FLIRT, ProbTrackX2, FNIRT, ConvertXFM, InvWarp, ApplyWarp
-from subprocess import call
 from sklearn.preprocessing import normalize
-from nilearn import plotting, image, masking
+from nilearn import masking, plotting
 from matplotlib import colors
-from nilearn import datasets
-from pynets.nodemaker import fetch_nilearn_atlas_coords
 
 def run_struct_mapping(ID, bedpostx_dir, network, coords_MNI, node_size, atlas_select, atlas_name, label_names, plot_switch, parcels, dict_df, indices, anat_loc):
     edge_threshold = 0.90

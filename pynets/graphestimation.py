@@ -6,38 +6,11 @@ Created on Tue Nov  7 10:40:07 2017
 """
 
 import sys
-import argparse
-import os
-import nilearn
 import numpy as np
-import networkx as nx
-import pandas as pd
-import nibabel as nib
-import seaborn as sns
-import numpy.linalg as npl
-import matplotlib
-import sklearn
-import matplotlib
-import warnings
-import pynets
 #warnings.simplefilter("ignore")
-import matplotlib.pyplot as plt
-from numpy import genfromtxt
-from matplotlib import colors
-from nipype import Node, Workflow
-from nilearn import input_data, masking, datasets
-from nilearn import plotting as niplot
-from nipype.pipeline import engine as pe
-from nipype.interfaces import utility as niu
-from nipype.interfaces import io as nio
-from nilearn.input_data import NiftiLabelsMasker
 from nilearn.connectome import ConnectivityMeasure
-from nibabel.affines import apply_affine
-from nipype.interfaces.base import isdefined, Undefined
-from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
-from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
+from sklearn.covariance import GraphLassoCV
 try:
-    import brainiak
     from brainiak.fcma.util import compute_correlation
 except ImportError:
     pass
