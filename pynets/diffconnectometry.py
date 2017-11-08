@@ -19,7 +19,7 @@ from sklearn.preprocessing import normalize
 from matplotlib import colors
 from nilearn import plotting, masking
 
-def prepare_masks(ID, bedpostx_dir, network, coords_MNI, node_size, atlas_select, label_names, plot_switch, parcels, dict_df, indices, anat_loc, volumes_dir, threads):
+def prepare_masks(ID, bedpostx_dir, network, coords_MNI, node_size, atlas_select, label_names, plot_switch, parcels, dict_df, anat_loc, volumes_dir, threads):
     ####Auto-set INPUTS####
     try:
         FSLDIR = os.environ['FSLDIR']
