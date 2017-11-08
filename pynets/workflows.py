@@ -118,7 +118,41 @@ def wb_functional_connectometry(input_file, ID, atlas_select, network, node_size
     ##Save time series as txt file
     out_path_ts=dir_path + '/' + ID + '_whole_brain_ts_within_nodes.txt'
     np.savetxt(out_path_ts, ts_within_nodes)
+ 
+    if bedpostx_dir is not None and anat_loc is not None:
+        from pynets.diffconnectometry import prepare_masks, run_struct_mapping
+        from pynets.nodemaker import convert_atlas_to_volumes_and_coords
     
+        atlas_path = parlistfile
+        parcels = parc
+        coords_MNI = coords
+        threads = int(procmem[0])
+        label_names = label_names
+    
+        print('Bedpostx Directory: ' + bedpostx_dir)
+        print('Anatomical File Location: ' + anat_loc)
+        print('Atlas: ' + os.path.basename(atlas_path).split('.')[0])
+    
+        try:
+            ##Prepare Volumes
+            if parcels == True:
+                print('\n' + 'Converting 3d atlas image file to 4d image of atlas volume masks...' + '\n')
+                [coords_MNI, volumes_dir] = convert_atlas_to_volumes_and_coords(atlas_path, parcels)
+                coords_MNI=None
+            else:
+                volumes_dir=None
+    
+            ##Prepare seed, avoidance, and waypoint masks
+            print('\n' + 'Running node preparation...' + '\n')
+            [vent_CSF_diff_mask_path, WM_diff_mask_path] = prepare_masks(ID, bedpostx_dir, network, coords_MNI, node_size, atlas_select, label_names, plot_switch, parcels, dict_df, anat_loc, volumes_dir, threads)
+    
+            ##Run all stages of probabilistic structural connectometry
+            print('\n' + 'Running probabilistic structural connectometry...' + '\n')
+            est_path2 = run_struct_mapping(ID, bedpostx_dir, network, coords_MNI, node_size, atlas_select, label_names, plot_switch, parcels, dict_df, anat_loc, volumes_dir, threads, vent_CSF_diff_mask_path, WM_diff_mask_path)
+    
+        except RuntimeError:
+            print('Whole-brain Structural Graph Estimation Failed!')
+            
     ##Threshold and fit connectivity model
     if adapt_thresh is not False:
         try:
@@ -248,6 +282,40 @@ def network_functional_connectometry(input_file, ID, atlas_select, network, node
     out_path_ts=dir_path + '/' + ID + '_' + network + '_net_ts.txt'
     np.savetxt(out_path_ts, net_ts)
 
+    if bedpostx_dir is not None and anat_loc is not None:
+        from pynets.diffconnectometry import prepare_masks, run_struct_mapping
+        from pynets.nodemaker import convert_atlas_to_volumes_and_coords
+
+        atlas_path = parlistfile
+        parcels = parc
+        coords_MNI = net_coords
+        threads = int(procmem[0])
+        label_names = net_label_names
+
+        print('Bedpostx Directory: ' + bedpostx_dir)
+        print('Anatomical File Location: ' + anat_loc)
+        print('Atlas: ' + os.path.basename(atlas_path).split('.')[0])
+
+        try:
+            ##Prepare Volumes
+            if parcels == True:
+                print('\n' + 'Converting 3d atlas image file to 4d image of atlas volume masks...' + '\n')
+                [coords_MNI, volumes_dir] = convert_atlas_to_volumes_and_coords(atlas_path, parcels)
+                coords_MNI=None
+            else:
+                volumes_dir=None
+
+            ##Prepare seed, avoidance, and waypoint masks
+            print('\n' + 'Running node preparation...' + '\n')
+            [vent_CSF_diff_mask_path, WM_diff_mask_path] = prepare_masks(ID, bedpostx_dir, network, coords_MNI, node_size, atlas_select, label_names, plot_switch, parcels, dict_df, anat_loc, volumes_dir, threads)
+    
+            ##Run all stages of probabilistic structural connectometry
+            print('\n' + 'Running probabilistic structural connectometry...' + '\n')
+            est_path2 = run_struct_mapping(ID, bedpostx_dir, network, coords_MNI, node_size, atlas_select, label_names, plot_switch, parcels, dict_df, anat_loc, volumes_dir, threads, vent_CSF_diff_mask_path, WM_diff_mask_path)
+
+        except RuntimeError:
+            print('Whole-brain Structural Graph Estimation Failed!')
+            
     ##Fit connectivity model
     if adapt_thresh is not False:
         try:

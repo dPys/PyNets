@@ -4,6 +4,7 @@ Created on Tue Nov  7 10:40:07 2017
 
 @author: Derek Pisner
 """
+import os
 import nilearn
 import numpy as np
 import pandas as pd
@@ -12,7 +13,8 @@ import warnings
 import pkg_resources
 warnings.simplefilter("ignore")
 from nilearn import datasets, masking
-from nilearn.image import resample_img
+from nilearn.image import resample_img, concat_imgs
+from nilearn.plotting import find_xyz_cut_coords
 
 def get_sphere(coords, r, vox_dims, dims):
     """##Adapted from Neurosynth
@@ -298,3 +300,67 @@ def gen_network_parcels(parlistfile, network, labels, dir_path):
     out_path = dir_path + '/' + network + '_parcels.nii.gz'
     nib.save(net_parcels_map_nifti, out_path)
     return(out_path)
+
+def convert_atlas_to_volumes_and_coords(atlas_path, parcels):
+    atlas_dir = os.path.dirname(atlas_path)
+    ref_txt = atlas_dir + '/' + atlas_path.split('/')[-1:][0].split('.')[0] + '.txt'
+    fourd_file = atlas_dir + '/' + atlas_path.split('/')[-1:][0].split('.')[0] + '_4d.nii.gz'
+    if os.path.isfile(ref_txt):
+        try:
+            dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+            indices = dict_df.Index.unique().tolist()
+            par_img = nib.load(atlas_path)
+            par_data = par_img.get_data()
+
+            ##Get list of unique parcels
+            par_data_uniq = np.round(np.unique(par_data)).tolist()
+
+            idx_list = []
+            for i in par_data_uniq:
+                if i in indices:
+                    idx_list.append(par_data_uniq.index(i))
+            img_stack = []
+            for idx in idx_list:
+                roi_img = par_data == par_data_uniq[idx]
+                img_stack.append(roi_img)
+            img_stack = np.array(img_stack)
+
+            img_list = []
+            for ix in range(len(idx_list)):
+                roi_img = nilearn.image.new_img_like(par_img, img_stack[ix])
+                img_list.append(roi_img)
+
+            if parcels == True:
+                all4d = concat_imgs(img_list)
+                nib.save(all4d, fourd_file)
+
+                ##Save individual 3D volumes as individual files
+                volumes_dir = atlas_dir + '/' + atlas_path.split('/')[-1:][0].split('.')[0] + '_volumes'
+                if not os.path.exists(volumes_dir):
+                    os.makedirs(volumes_dir)
+
+                j = 0
+                for img in img_list:
+                    volume_path = volumes_dir + '/parcel_' + str(j)
+                    nib.save(img, volume_path)
+                    j = j + 1
+
+                coords = None
+            else:
+                ##Get MNI coordinates from COG
+                coords = []
+                for roi_img in img_list:
+                    coords.append(find_xyz_cut_coords(roi_img))
+                coords = np.array(coords)
+                coords = [tuple(l) for l in coords]
+
+                volumes_dir = None
+        except:
+            print('Image concatenation failed for: ' + str(atlas_path))
+            coords = None
+            volumes_dir = None
+    else:
+        coords = None
+        print('Atlas reference file not found!')
+        volumes_dir = None
+    return(coords, volumes_dir)
