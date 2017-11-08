@@ -77,10 +77,10 @@ if __name__ == '__main__':
         metavar='density threshold',
         default=None,
         help='Optionally indicate a target density of graph edges to be achieved through iterative absolute thresholding. In group analysis, this could be determined by finding the mean density of all unthresholded graphs across subjects, for instance.')
-    parser.add_argument('-at',
-        default=False,
-        action='store_true',
-        help='Optionally use this flag if you wish to activate adaptive thresholding')
+#    parser.add_argument('-at',
+#        default=False,
+#        action='store_true',
+#        help='Optionally use this flag if you wish to activate adaptive thresholding')
     parser.add_argument('-plt',
         default=False,
         action='store_true',
@@ -138,7 +138,8 @@ if __name__ == '__main__':
     conn_model=args.model
     conf=args.confounds
     dens_thresh=args.dt
-    adapt_thresh=args.at
+#    adapt_thresh=args.at
+    adapt_thresh=False
     plot_switch=args.plt
     multi_atlas=args.ma
     multi_thr=args.mt

@@ -112,9 +112,6 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
         else:
             clust_levels = 2
         [label_arr, clust_levels_tmp] = doClust(conn_matrix, clust_levels)
-    else:
-        print('Error: Cannot plot connectogram for graphs smaller than 20 x 20!')
-        return None
 
     def get_node_label(node_idx, labels, clust_levels_tmp):
         from collections import OrderedDict

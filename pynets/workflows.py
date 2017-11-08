@@ -177,10 +177,13 @@ def wb_functional_connectometry(input_file, ID, atlas_select, network, node_size
 
     if plot_switch == True:
         ##Plot connectogram
-        try:
-            plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
-        except RuntimeError:
-            print('\n\n\nError: Connectogram plotting failed!')
+        if len(conn_matrix) > 20:
+            try:
+                plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
+            except RuntimeError:
+                print('\n\n\nError: Connectogram plotting failed!')
+        else:
+            print('Error: Cannot plot connectogram for graphs smaller than 20 x 20!')
 
         ##Plot adj. matrix based on determined inputs
         atlas_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask)
@@ -340,11 +343,14 @@ def network_functional_connectometry(input_file, ID, atlas_select, network, node
 
     if plot_switch == True:
         ##Plot connectogram
-        try:
-            plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, net_label_names)
-        except RuntimeError:
-            print('\n\n\nError: Connectogram plotting failed!')
-
+        if len(conn_matrix) > 20:
+            try:
+                plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, net_label_names)
+            except RuntimeError:
+                print('\n\n\nError: Connectogram plotting failed!')
+        else:
+            print('Error: Cannot plot connectogram for graphs smaller than 20 x 20!')
+        
         ##Plot adj. matrix based on determined inputs
         plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, net_label_names, mask)
 
