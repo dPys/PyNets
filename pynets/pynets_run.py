@@ -237,7 +237,7 @@ if __name__ == '__main__':
 
        print("\n\n\n-------------<(^.^<) STARTING BASC <(^.^<)----------------------" + "\n\n\n")
 
-       basc_run.basc_runner(subjects_list, basc_config)
+       basc_run.basc_run(subjects_list, basc_config)
        parlistfile=Path(__file__)/'pynets'/'rsnrefs'/'group_stability_clusters.nii.gz'
 
     def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem):
@@ -500,7 +500,7 @@ if __name__ == '__main__':
         wf.run()
         #wf.run(plugin='MultiProc', plugin_args= plugin_args)
 
-
-    print('-----------PYNETS COMPLETE-----------')
+    print('---------------------------------------')
+    print('------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)
-    print('-------------- o自自o ----------------')
+    print('---------------------------------------')

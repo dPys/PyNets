@@ -11,6 +11,10 @@ def basc_run(subjects_list, basc_config):
     import numpy as np
     import nibabel as nib
     import yaml
+    os.chdir('/Users/PSYC-dap3463/Applications/PyBASC')
+    import basc
+    import basc_workflow_runner
+    import utils
     from basc_workflow_runner import run_basc_workflow
     from pathlib import Path
 
