@@ -6,7 +6,7 @@ var cluster = d3.cluster()
     .size([360, innerRadius]);
 
 var line = d3.radialLine()
-    .curve(d3.curveBundle.beta(0.85))
+    .curve(d3.curveBundle.beta(0.90))
     .radius(function(d) { return d.y; })
     .angle(function(d) { return d.x / 180 * Math.PI; });
 
