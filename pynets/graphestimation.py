@@ -6,6 +6,7 @@ Created on Tue Nov  7 10:40:07 2017
 """
 
 import sys
+import os
 import numpy as np
 #warnings.simplefilter("ignore")
 from nilearn.connectome import ConnectivityMeasure
@@ -15,7 +16,7 @@ try:
 except ImportError:
     pass
 
-def get_conn_matrix(time_series, conn_model, network, ID, dir_path, thr):
+def get_conn_matrix(time_series, conn_model, network, ID, dir_path, mask, thr):
     if conn_model == 'corr':
         conn_measure = ConnectivityMeasure(kind='correlation')
         conn_matrix = conn_measure.fit_transform([time_series])[0]
@@ -35,33 +36,39 @@ def get_conn_matrix(time_series, conn_model, network, ID, dir_path, thr):
         estimator = GraphLassoCV()
         try:
             print("Fitting Lasso Estimator...")
-            est = estimator.fit(time_series)
+            estimator.fit(time_series)
         except RuntimeError:
             print('Unstable Lasso estimation--Attempting to re-run by first applying shrinkage...')
-            #from sklearn.covariance import GraphLasso, empirical_covariance, shrunk_covariance
-            #emp_cov = empirical_covariance(time_series)
-            #for i in np.arange(0.8, 0.99, 0.01):
-                #shrunk_cov = shrunk_covariance(emp_cov, shrinkage=i)
-                #alphaRange = 10.0 ** np.arange(-8,0)
-                #for alpha in alphaRange:
-                    #try:
-                        #estimator_shrunk = GraphLasso(alpha)
-                        #est=estimator_shrunk.fit(shrunk_cov)
-                        #print("Calculated graph-lasso covariance matrix for alpha=%s"%alpha)
-                        #break
-                    #except FloatingPointError:
-                        #print("Failed at alpha=%s"%alpha)
-            #if estimator_shrunk == None:
-                #pass
-            #else:
-                #break
-            print('Unstable Lasso estimation. Try again!')
-            sys.exit()
+            from sklearn.covariance import GraphLasso, empirical_covariance, shrunk_covariance
+            emp_cov = empirical_covariance(time_series)
+            for i in np.arange(0.8, 0.99, 0.01):
+                shrunk_cov = shrunk_covariance(emp_cov, shrinkage=i)
+                alphaRange = 10.0 ** np.arange(-8,0)
+                for alpha in alphaRange:
+                    try:
+                        estimator_shrunk = GraphLasso(alpha)
+                        estimator_shrunk.fit(shrunk_cov)
+                        print("Calculated graph-lasso covariance matrix for alpha=%s"%alpha)
+                        break
+                    except FloatingPointError:
+                        print("Failed at alpha=%s"%alpha)
+                if estimator_shrunk == None:
+                    pass
+                else:
+                    break
+                print('Unstable Lasso estimation. Try again!')
+                sys.exit()
 
-        if network != None:
-            est_path = dir_path + '/' + ID + '_' + network + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '.txt'
+        if mask != None:
+            if network != None:
+                est_path = dir_path + '/' + ID + '_' + network + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.txt'
+            else:
+                est_path = dir_path + '/' + ID + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.txt'       
         else:
-            est_path = dir_path + '/' + ID + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '.txt'
+            if network != None:
+                est_path = dir_path + '/' + ID + '_' + network + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '.txt'
+            else:
+                est_path = dir_path + '/' + ID + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '.txt'
         if conn_model == 'sps':
             try:
                 conn_matrix = -estimator.precision_

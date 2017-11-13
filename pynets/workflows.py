@@ -133,7 +133,7 @@ def wb_functional_connectometry(input_file, ID, atlas_select, network, node_size
             sys.exit()
     elif dens_thresh is None:
         edge_threshold = str(float(thr)*100) +'%'
-        [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_nodes, conn_model, network, ID, dir_path, thr)
+        [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_nodes, conn_model, network, ID, dir_path, mask, thr)
         conn_matrix = thresholding.threshold_proportional(conn_matrix, float(thr), dir_path)
     elif dens_thresh is not None:
         [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_nodes, conn_model, network, ID, dens_thresh, dir_path)
@@ -267,7 +267,7 @@ def RSN_functional_connectometry(input_file, ID, atlas_select, network, node_siz
             sys.exit()
     elif dens_thresh is None:
         edge_threshold = str(float(thr)*100) +'%'
-        [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_nodes, conn_model, network, ID, dir_path, thr)
+        [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_nodes, conn_model, network, ID, dir_path, mask, thr)
         conn_matrix = thresholding.threshold_proportional(conn_matrix, float(thr), dir_path)
     elif dens_thresh is not None:
         [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_nodes, conn_model, network, ID, dens_thresh, dir_path)
