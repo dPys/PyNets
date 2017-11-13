@@ -981,7 +981,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, mask, out_file=None
 
     ##Communicability Centrality
     try:
-        cc_vector = communicability_betweenness_centrality(G_len)
+        cc_vector = communicability_betweenness_centrality(G)
+            
         print('Extracting Communicability Centrality vector for all network nodes...')
         cc_vals = list(cc_vector.values())
         cc_nodes = list(cc_vector.keys())

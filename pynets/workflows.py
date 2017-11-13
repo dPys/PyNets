@@ -43,7 +43,6 @@ def wb_functional_connectometry(input_file, ID, atlas_select, network, node_size
 
         ##Describe user atlas coords
         print('\n' + atlas_select + ' comes with {0} '.format(par_max) + 'parcels' + '\n')
-        print('\n'+ 'Stacked atlas coordinates in array of shape {0}.'.format(coords.shape) + '\n')
 
     ##Labels prep
     try:
