@@ -8,8 +8,13 @@ Created on Fri Nov 10 15:44:46 2017
 import sys
 import os
 import nibabel as nib
+import pandas as pd
 from nilearn import datasets
 from nilearn.image import concat_imgs
+try:
+    import cPickle
+except ImportError:
+    import _pickle as cPickle
 
 def nilearn_atlas_helper(atlas_select):
     try:
@@ -54,3 +59,32 @@ def convert_atlas_to_volumes(atlas_path, img_list):
         print('Atlas reference file not found!')
         volumes_dir = None
     return(volumes_dir)
+
+##save net metric files to pandas dataframes interface
+def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
+    if mask != None:
+        if network != None:
+            met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + network + '_' + str(os.path.basename(mask).split('.')[0])
+        else:
+            met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_WB' + '_' + str(os.path.basename(mask).split('.')[0])
+    else:
+        if network != None:
+            met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + network
+        else:
+            met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_WB'
+
+    metric_list_names = cPickle.load(open(met_list_picke_path, 'rb'))
+    df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
+    df = df.T
+    column_headers={k: v for k, v in enumerate(metric_list_names)}
+    df = df.rename(columns=column_headers)
+    df['id'] = range(1, len(df) + 1)
+    cols = df.columns.tolist()
+    ix = cols.index('id')
+    cols_ID = cols[ix:ix+1]+cols[:ix]+cols[ix+1:]
+    df = df[cols_ID]
+    df['id'] = df['id'].astype('object')
+    df['id'].values[0] = ID
+    out_file = csv_loc.split('.csv')[0]
+    df.to_pickle(out_file)
+    return(out_file)

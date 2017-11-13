@@ -10,7 +10,6 @@ import numpy as np
 import networkx as nx
 from numpy import genfromtxt
 
-##Define missing network functions here. Small-worldness, modularity, and rich-club will also need to be added.
 def global_efficiency(G, weight=None):
     """Return the global efficiency of the graph G
 

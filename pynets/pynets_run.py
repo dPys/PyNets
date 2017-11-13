@@ -231,6 +231,7 @@ if __name__ == '__main__':
     import numpy as np
     import warnings
     warnings.simplefilter("ignore")
+    from pynets.utils import export_to_pandas
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
@@ -294,40 +295,6 @@ if __name__ == '__main__':
             import os.path as op
             return {'out_file': op.abspath(getattr(self, '_outpath'))}
 
-    ##save net metric files to pandas dataframes interface
-    def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
-        try:
-            import cPickle
-        except ImportError:
-            import _pickle as cPickle
-
-        if mask != None:
-            if network != None:
-                met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + network + '_' + str(os.path.basename(mask).split('.')[0])
-            else:
-                met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_WB' + '_' + str(os.path.basename(mask).split('.')[0])
-        else:
-            if network != None:
-                met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + network
-            else:
-                met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_WB'
-
-        metric_list_names = cPickle.load(open(met_list_picke_path, 'rb'))
-        df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
-        df = df.T
-        column_headers={k: v for k, v in enumerate(metric_list_names)}
-        df = df.rename(columns=column_headers)
-        df['id'] = range(1, len(df) + 1)
-        cols = df.columns.tolist()
-        ix = cols.index('id')
-        cols_ID = cols[ix:ix+1]+cols[:ix]+cols[ix+1:]
-        df = df[cols_ID]
-        df['id'] = df['id'].astype('object')
-        df['id'].values[0] = ID
-        out_file = csv_loc.split('.csv')[0]
-        df.to_pickle(out_file)
-        return(out_file)
-
     class Export2PandasInputSpec(BaseInterfaceInputSpec):
         in_csv = File(exists=True, mandatory=True, desc="")
         sub_id = traits.Str(mandatory=True)
@@ -356,7 +323,7 @@ if __name__ == '__main__':
             return {'out_file': op.abspath(self.inputs.out_file)}
 
     import_list=[ "import sys", "import os", "from sklearn.model_selection import train_test_split",
-    "import warnings", "import gzip", "import nilearn", "import numpy as np",
+    "from pynets.utils import export_to_pandas", "import warnings", "import gzip", "import nilearn", "import numpy as np",
     "import networkx as nx", "import pandas as pd", "import nibabel as nib",
     "import seaborn as sns", "import numpy.linalg as npl", "import matplotlib",
     "matplotlib.use('Agg')", "import matplotlib.pyplot as plt", "from numpy import genfromtxt",
