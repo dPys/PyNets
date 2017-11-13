@@ -49,7 +49,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
     import json
     from pynets.thresholding import normalize
     from pathlib import Path
-    comm = 'links'
+    comm = 'nodes'
 
     conn_matrix = normalize(conn_matrix)
     G=nx.from_numpy_matrix(conn_matrix)
@@ -72,18 +72,20 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
     if comm == 'nodes' and len(conn_matrix) > 40:
         from pynets.netstats import modularity_louvain_dir
         if len(conn_matrix) < 50:
-            gamma=4.0
+            gamma=0.00001
         elif len(conn_matrix) < 100:
-            gamma=3.0
-        elif len(conn_matrix) < 150:
-            gamma=2.0
+            gamma=0.0001
         elif len(conn_matrix) < 200:
-            gamma=1.5
+            gamma=0.001
+        elif len(conn_matrix) < 500:
+            gamma=0.01
+        elif len(conn_matrix) < 1000:
+            gamma=0.5
         else:
-            gamma=1.0
+            gamma=1
             
-        [node_comm_aff_mat, q] = modularity_louvain_dir(conn_matrix, gamma=gamma)
-        print('Found ' + str(len(node_comm_aff_mat)) + ' communities with gamma=' + str(gamma) + '...')
+        [node_comm_aff_mat, q] = modularity_louvain_dir(conn_matrix, hierarchy=True, gamma=gamma)
+        print('Found ' + str(len(np.unique(node_comm_aff_mat))) + ' communities with gamma=' + str(gamma) + '...')
         clust_levels = len(node_comm_aff_mat)
         clust_levels_tmp = int(clust_levels) - 1
         mask_mat = np.squeeze(np.array([node_comm_aff_mat == 0]).astype('int'))
@@ -149,7 +151,14 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
         return ".".join(["{}{}".format(abet[i],int(l)) for i, l in enumerate(node_labels)])+".{}".format(label_names[node_idx])
 
     output = []
-    for node_idx, connections in enumerate(G.adjacency_list()):
+    
+    adj_dict = {}
+    for i in list(G.adjacency()):
+        source = list(i)[0]
+        target = list(list(i)[1])
+        adj_dict[source] = target
+    
+    for node_idx, connections in adj_dict.items():
         weight_vec = []
         for i in connections:
             wei = G.get_edge_data(node_idx,int(i))['weight']
@@ -164,22 +173,56 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
 
     if network != None:
         json_file_name = str(ID) + '_' + network + '_connectogram_' + conn_model + '_network.json'
+        json_fdg_file_name = str(ID) + '_' + network + '_fdg_' + conn_model + '_network.json'
         connectogram_plot = dir_path + '/' + json_file_name
+        fdg_js_sub = dir_path + '/' + str(ID) + '_' + network + '_fdg_' + conn_model + '_network.js'
+        fdg_js_sub_name = str(ID) + '_' + network + '_fdg_' + conn_model + '_network.js'
         connectogram_js_sub = dir_path + '/' + str(ID) + '_' + network + '_connectogram_' + conn_model + '_network.js'
         connectogram_js_name = str(ID) + '_' + network + '_connectogram_' + conn_model + '_network.js'
     else:
         json_file_name = str(ID) + '_connectogram_' + conn_model + '.json'
+        json_fdg_file_name = str(ID) + '_fdg_' + conn_model + '.json'
         connectogram_plot = dir_path + '/' + json_file_name
         connectogram_js_sub = dir_path + '/' + str(ID) + '_connectogram_' + conn_model + '.js'
+        fdg_js_sub = dir_path + '/' + str(ID) + '_fdg_' + conn_model + '.js'
+        fdg_js_sub_name = str(ID) + '_fdg_' + conn_model + '.js'
         connectogram_js_name = str(ID) + '_connectogram_' + conn_model + '.js'
     save_json(connectogram_plot, output)
 
+    ##Force-directed graphing
+    from networkx.readwrite import json_graph
+    G=nx.from_numpy_matrix(np.round(conn_matrix.astype('float64'),6))        
+    data = json_graph.node_link_data(G)
+    data.pop('directed', None)
+    data.pop('graph', None)
+    data.pop('multigraph', None)
+    for k in range(len(data['links'])):
+        data['links'][k]['value'] = data['links'][k].pop('weight')      
+    for k in range(len(data['nodes'])):  
+        data['nodes'][k]['id'] = str(data['nodes'][k]['id'])
+    for k in range(len(data['links'])):  
+        data['links'][k]['source'] = str(data['links'][k]['source'])
+        data['links'][k]['target'] = str(data['links'][k]['target'])
+        
+    ##Add community structure
+    for k in range(len(data['nodes'])):  
+        data['nodes'][k]['group'] = str(label_arr[0][k])
+
+    ##Add node labels
+    for k in range(len(data['nodes'])):  
+        data['nodes'][k]['name'] = str(label_names[k])
+
+    out_file = str(dir_path + '/' + json_fdg_file_name)            
+    save_json(out_file, data)
+ 
     ##Copy index.html and json to dir_path
     #conn_js_path = '/Users/PSYC-dap3463/Applications/PyNets/pynets/connectogram.js'
     #index_html_path = '/Users/PSYC-dap3463/Applications/PyNets/pynets/index.html'
     conn_js_path = Path(__file__).parent/"connectogram.js"
     index_html_path = Path(__file__).parent/"index.html"
-    replacements_html = {'connectogram.js': str(connectogram_js_name)}
+    fdg_replacements_js = {"FD_graph.json": str(json_fdg_file_name)}
+    replacements_html = {'connectogram.js': str(connectogram_js_name), 'fdg.js': str(fdg_js_sub_name)}
+    fdg_js_path = Path(__file__).parent/"fdg.js"
     with open(index_html_path) as infile, open(str(dir_path + '/index.html'), 'w') as outfile:
         for line in infile:
             for src, target in replacements_html.items():
@@ -198,6 +241,12 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
     with open(conn_js_path) as infile, open(connectogram_js_sub, 'w') as outfile:
         for line in infile:
             for src, target in replacements_js.items():
+                line = line.replace(src, target)
+            outfile.write(line)
+            
+    with open(fdg_js_path) as infile, open(fdg_js_sub, 'w') as outfile:
+        for line in infile:
+            for src, target in fdg_replacements_js.items():
                 line = line.replace(src, target)
             outfile.write(line)
 

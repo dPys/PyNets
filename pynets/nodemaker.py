@@ -5,6 +5,7 @@ Created on Tue Nov  7 10:40:07 2017
 @author: Derek Pisner
 """
 import os
+import sys
 import nilearn
 import numpy as np
 import pandas as pd
@@ -90,6 +91,10 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
         ##Grab RSN reference file
         nets_ref_txt = pkg_resources.resource_filename("pynets", "rsnrefs/Schaefer2018_1000_7nets_ref.txt")
 
+    if not nets_ref_txt:
+        print('Network: ' + str(network) + ' not found!\nSee valid network names using the --help flag with pynets_run.py')
+        sys.exit(0)
+
     ##Create membership dictionary
     dict_df = pd.read_csv(nets_ref_txt, sep="\t", header=None, names=["Index", "Region", "X", "Y", "Z"])
     dict_df.Region.unique().tolist()
@@ -162,8 +167,11 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
             ##Count number of total unique voxels within the parcel
             total_count = len(np.unique(np.where(((parcel_vol.astype('uint8')==1)))))
        
-            ##Calculate % overlap        
-            overlap = float(overlap_count/total_count)
+            ##Calculate % overlap  
+            try:
+                overlap = float(overlap_count/total_count)
+            except:
+                overlap = float(0)
             
             if overlap >=perc_overlap:
                 print(str(round(100*overlap,1)) + '% of parcel ' + str(label_names[i]) + ' falls within ' + str(network) + ' mask...')
@@ -174,7 +182,7 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
         coords_mm = list(set(list(tuple(x) for x in coords_with_parc)))
     return(coords_mm, RSN_parcels, net_label_names)
 
-def parcel_masker(mask, coords, parcel_list, label_names):
+def parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID):
     ##For parcel masking, specify overlap thresh and error cushion in mm voxels
     perc_overlap = 0.75 ##Default is >=90% overlap
 
@@ -196,7 +204,10 @@ def parcel_masker(mask, coords, parcel_list, label_names):
         total_count = len(np.unique(np.where(((parcel_vol.astype('uint8')==1)))))
         
         ##Calculate % overlap
-        overlap = float(overlap_count/total_count)
+        try:
+            overlap = float(overlap_count/total_count)
+        except:
+            overlap = float(0)
         
         if overlap >= perc_overlap:
             print(str(round(100*overlap,1)) + '% of parcel ' + str(label_names[i]) + ' falls within mask...')
@@ -212,6 +223,12 @@ def parcel_masker(mask, coords, parcel_list, label_names):
         label_names_adj.pop(ix)
         coords_adj.pop(ix)
         parcel_list_adj.pop(ix)
+        
+    ##Create a resampled 3D atlas that can be viewed alongside mask img for QA
+    resampled_parcels_nii_path = dir_path + '/' + ID + '_parcels_resampled2mask_' + str(os.path.basename(mask).split('.')[0]) + '.nii.gz'
+    resampled_parcels_atlas, _ = create_parcel_atlas(parcel_list_adj)
+    resampled_parcels_map_nifti = resample_img(resampled_parcels_atlas, target_affine=mask_img.affine, target_shape=mask_data.shape)
+    nib.save(resampled_parcels_map_nifti, resampled_parcels_nii_path)
     return(coords_adj, label_names_adj, parcel_list_adj)
 
 def coord_masker(mask, coords, label_names):
@@ -261,50 +278,53 @@ def coord_masker(mask, coords, label_names):
     return(coords, label_names)
 
 def get_names_and_coords_of_parcels(parlistfile):
-    atlas_select = parlistfile.split('/')[-1].split('.')[0]
+    try:
+        atlas_select = parlistfile.split('/')[-1].split('.')[0]
+    except:
+        atlas_select = 'User_specified_atlas'
     bna_img = nib.load(parlistfile)
-    bna_data = bna_img.get_data()
-    if bna_img.get_data_dtype() != np.dtype(np.int):
-        ##Get an array of unique parcels
-        bna_data_for_coords_uniq = np.round(np.unique(bna_data))
-        ##Number of parcels:
-        par_max = len(bna_data_for_coords_uniq) - 1
-        bna_data = bna_data.astype('int16')
+    bna_data = np.round(bna_img.get_data(),1)
+    ##Get an array of unique parcels
+    bna_data_for_coords_uniq = np.unique(bna_data)
+    ##Number of parcels:
+    par_max = len(bna_data_for_coords_uniq) - 1
+    bna_data = bna_data.astype('int16')
     img_stack = []
     for idx in range(1, par_max+1):
-        roi_img = bna_data == bna_data_for_coords_uniq[idx]
+        roi_img = bna_data == bna_data_for_coords_uniq[idx].astype('int16')
+        roi_img = roi_img.astype('int16')
         img_stack.append(roi_img)
-    img_stack = np.array(img_stack)
+    img_stack = np.array(img_stack).astype('int16')
     img_list = []
-    for idx in range(par_max):
-        roi_img = new_img_like(bna_img, img_stack[idx])
-        img_list.append(roi_img)
+    for idy in range(par_max):
+        roi_img_nifti = new_img_like(bna_img, img_stack[idy])
+        img_list.append(roi_img_nifti)
     coords = []
-    for roi_img in img_list:
-        coords.append(find_xyz_cut_coords(roi_img))
-    coords = np.array(coords)
+    for roiin in img_list:
+        coord = find_xyz_cut_coords(roiin)
+        coords.append(coord)
+    coords = list(tuple(x) for x in np.array(coords))
     return(coords, atlas_select, par_max, img_list)
 
 def gen_network_parcels(parlistfile, network, labels, dir_path):
     bna_img = nib.load(parlistfile)
-    if bna_img.get_data_dtype() != np.dtype(np.int):
-        bna_data_for_coords = bna_img.get_data()
-        # Number of parcels:
-        par_max = np.ceil(np.max(bna_data_for_coords)).astype('int')
-    else:
-        bna_data = bna_img.get_data()
-        par_max = np.max(bna_data)
+    bna_data = np.round(bna_img.get_data(),1)
+    ##Get an array of unique parcels
+    bna_data_for_coords_uniq = np.unique(bna_data)
+    ##Number of parcels:
+    par_max = len(bna_data_for_coords_uniq) - 1
+    bna_data = bna_data.astype('int16')
     img_stack = []
-    ##Set indices
     for idx in range(1, par_max+1):
-        roi_img = bna_data == idx
+        roi_img = bna_data == bna_data_for_coords_uniq[idx].astype('int16')
+        roi_img = roi_img.astype('int16')
         img_stack.append(roi_img)
-    img_stack = np.array(img_stack)
+    img_stack = np.array(img_stack).astype('int16')
     img_list = []
-    for idx in range(par_max):
-        roi_img = new_img_like(bna_img, img_stack[idx])
-        img_list.append(roi_img)
-    print('Extracting parcels associated with ' + network + ' locations...')
+    for idy in range(par_max):
+        roi_img_nifti = new_img_like(bna_img, img_stack[idy])
+        img_list.append(roi_img_nifti)
+    print('Extracting parcels associated with ' + network + ' network locations...')
     net_parcels = [i for j, i in enumerate(img_list) if j in labels]
     bna_4D = concat_imgs(net_parcels).get_data()
     index_vec = np.array(range(len(net_parcels))) + 1
@@ -313,67 +333,3 @@ def gen_network_parcels(parlistfile, network, labels, dir_path):
     out_path = dir_path + '/' + network + '_parcels.nii.gz'
     nib.save(net_parcels_map_nifti, out_path)
     return(out_path)
-
-def convert_atlas_to_volumes_and_coords(atlas_path, parcels):
-    atlas_dir = os.path.dirname(atlas_path)
-    ref_txt = atlas_dir + '/' + atlas_path.split('/')[-1:][0].split('.')[0] + '.txt'
-    fourd_file = atlas_dir + '/' + atlas_path.split('/')[-1:][0].split('.')[0] + '_4d.nii.gz'
-    if os.path.isfile(ref_txt):
-        try:
-            dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
-            indices = dict_df.Index.unique().tolist()
-            par_img = nib.load(atlas_path)
-            par_data = par_img.get_data()
-
-            ##Get list of unique parcels
-            par_data_uniq = np.round(np.unique(par_data)).tolist()
-
-            idx_list = []
-            for i in par_data_uniq:
-                if i in indices:
-                    idx_list.append(par_data_uniq.index(i))
-            img_stack = []
-            for idx in idx_list:
-                roi_img = par_data == par_data_uniq[idx]
-                img_stack.append(roi_img)
-            img_stack = np.array(img_stack)
-
-            img_list = []
-            for ix in range(len(idx_list)):
-                roi_img = nilearn.image.new_img_like(par_img, img_stack[ix])
-                img_list.append(roi_img)
-
-            if parcels == True:
-                all4d = concat_imgs(img_list)
-                nib.save(all4d, fourd_file)
-
-                ##Save individual 3D volumes as individual files
-                volumes_dir = atlas_dir + '/' + atlas_path.split('/')[-1:][0].split('.')[0] + '_volumes'
-                if not os.path.exists(volumes_dir):
-                    os.makedirs(volumes_dir)
-
-                j = 0
-                for img in img_list:
-                    volume_path = volumes_dir + '/parcel_' + str(j)
-                    nib.save(img, volume_path)
-                    j = j + 1
-
-                coords = None
-            else:
-                ##Get MNI coordinates from COG
-                coords = []
-                for roi_img in img_list:
-                    coords.append(find_xyz_cut_coords(roi_img))
-                coords = np.array(coords)
-                coords = [tuple(l) for l in coords]
-
-                volumes_dir = None
-        except:
-            print('Image concatenation failed for: ' + str(atlas_path))
-            coords = None
-            volumes_dir = None
-    else:
-        coords = None
-        print('Atlas reference file not found!')
-        volumes_dir = None
-    return(coords, volumes_dir)

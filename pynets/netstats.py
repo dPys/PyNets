@@ -8,7 +8,6 @@ import sys
 import os
 import numpy as np
 import networkx as nx
-#warnings.simplefilter("ignore")
 from numpy import genfromtxt
 
 ##Define missing network functions here. Small-worldness, modularity, and rich-club will also need to be added.
@@ -194,8 +193,6 @@ def create_communities(node_comm_aff_mat, node_num):
     return com_assign
 
 def modularity(W, qtype='sta', seed=None):
-    '''##Adapted from bctpy
-    '''
     np.random.seed(seed)
     n = len(W)
     W0 = W * (W > 0)
@@ -296,7 +293,21 @@ def modularity(W, qtype='sta', seed=None):
     return ci_ret, q[-1]
 
 def diversity_coef_sign(W, ci):
-    '''##Adapted from bctpy
+    '''
+    The Shannon-entropy based diversity coefficient measures the diversity
+    of intermodular connections of individual nodes and ranges from 0 to 1.
+    Parameters
+    ----------
+    W : NxN np.ndarray
+        undirected connection matrix with positive and negative weights
+    ci : Nx1 np.ndarray
+        community affiliation vector
+    Returns
+    -------
+    Hpos : Nx1 np.ndarray
+        diversity coefficient based on positive connections
+    Hneg : Nx1 np.ndarray
+        diversity coefficient based on negative connections
     '''
     n = len(W)  # number of nodes
 
@@ -323,7 +334,27 @@ def diversity_coef_sign(W, ci):
     return Hpos, Hneg
 
 def core_periphery_dir(W, gamma=1, C0=None):
-    '''##Adapted from bctpy
+    ''' 
+    The optimal core/periphery subdivision is a partition of the network 
+    into two nonoverlapping groups of nodes, a core group and a periphery
+    group. The number of core-group edges is maximized, and the number of
+    within periphery edges is minimized.
+    The core-ness is a statistic which quantifies the goodness of the
+    optimal core/periphery subdivision (with arbitrary relative value).
+    The algorithm uses a variation of the Kernighan-Lin graph partitioning
+    algorithm to optimize a core-structure objective described in
+    Borgatti & Everett (2000) Soc Networks 21:375-395
+    See Rubinov, Ypma et al. (2015) PNAS 112:10032-7
+    Parameters
+    ----------
+    W : NxN np.ndarray
+        directed connection matrix
+    gamma : core-ness resolution parameter
+        Default value = 1
+        gamma > 1 detects small core, large periphery
+        0 < gamma < 1 detects large core, small periphery
+    C0 : NxN np.ndarray
+        Initial core structure
     '''
     n = len(W)
     np.fill_diagonal(W, 0)
@@ -392,7 +423,24 @@ def core_periphery_dir(W, gamma=1, C0=None):
 
 def link_communities(W, type_clustering='single'):
     from pynets.thresholding import normalize
-    '''##Adapted from bctpy
+    '''
+    The optimal community structure is a subdivision of the network into
+    nonoverlapping groups of nodes which maximizes the number of within-group
+    edges and minimizes the number of between-group edges.
+    This algorithm uncovers overlapping community structure via hierarchical
+    clustering of network links. This algorithm is generalized for
+    weighted/directed/fully-connected networks
+    Parameters
+    ----------
+    W : NxN np.array
+        directed weighted/binary adjacency matrix
+    type_clustering : str
+        type of hierarchical clustering. 'single' for single-linkage,
+        'complete' for complete-linkage. Default value='single'
+    Returns
+    -------
+    M : CxN np.ndarray
+        nodal community affiliation matrix.
     '''
     n = len(W)
     W = normalize(W)
@@ -577,7 +625,38 @@ def link_communities(W, type_clustering='single'):
     return M
 
 def modularity_louvain_dir(W, gamma=1, hierarchy=False, seed=None):
-    '''##Adapted from bctpy
+    '''
+    The optimal community structure is a subdivision of the network into
+    nonoverlapping groups of nodes in a way that maximizes the number of
+    within-group edges, and minimizes the number of between-group edges.
+    The modularity is a statistic that quantifies the degree to which the
+    network may be subdivided into such clearly delineated groups.
+    The Louvain algorithm is a fast and accurate community detection
+    algorithm (as of writing). The algorithm may also be used to detect
+    hierarchical community structure.
+    Parameters
+    ----------
+    W : NxN np.ndarray
+        directed weighted/binary connection matrix
+    gamma : float
+        resolution parameter. default value=1. Values 0 <= gamma < 1 detect
+        larger modules while gamma > 1 detects smaller modules.
+    hierarchy : bool
+        Enables hierarchical output. Defalut value=False
+    seed : int | None
+        random seed. default value=None. if None, seeds from /dev/urandom.
+    Returns
+    -------
+    ci : Nx1 np.ndarray
+        refined community affiliation vector. If hierarchical output enabled,
+        it is an NxH np.ndarray instead with multiple iterations
+    Q : float
+        optimized modularity metric. If hierarchical output enabled, becomes
+        an Hx1 array of floats instead.
+    Notes
+    -----
+    Ci and Q may vary from run to run, due to heuristics in the
+    algorithm. Consequently, it may be worth to compare multiple runs.
     '''
     np.random.seed(seed)
 
@@ -592,8 +671,9 @@ def modularity_louvain_dir(W, gamma=1, hierarchy=False, seed=None):
 
     while True:
         if h > 300:
-            raise KeyError('Modularity Infinite Loop Style E.  Please '
+            print('Modularity Infinite Loop Style E.  Please '
                                 'contact the developer with this error.')
+            sys.exit(0)
         k_o = np.sum(W, axis=1)  # node in/out degrees
         k_i = np.sum(W, axis=0)
         km_o = k_o.copy()  # module in/out degrees
@@ -608,8 +688,9 @@ def modularity_louvain_dir(W, gamma=1, hierarchy=False, seed=None):
         while flag:
             it += 1
             if it > 1000:
-                raise KeyError('Modularity Infinite Loop Style F.  Please '
+                print('Modularity Infinite Loop Style F.  Please '
                                     'contact the developer with this error.')
+                sys.exit(0)
             flag = False
 
             # loop over nodes in random order
@@ -668,9 +749,9 @@ def modularity_louvain_dir(W, gamma=1, hierarchy=False, seed=None):
         return ci, q
     else:
         return ci[h - 1], q[h - 1]
-
+    
 ##Extract network metrics interface
-def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
+def extractnetstats(ID, network, thr, conn_model, est_path1, mask, out_file=None):
     from pynets import thresholding
 
     ##Load and threshold matrix
@@ -695,15 +776,21 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
     G_len=nx.from_numpy_matrix(mat_len)
 
     ##Save gephi files
-    if network != None:
-        nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '.graphml')
+    if mask != None:
+        if network != None:
+            nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '.graphml')
+        else:
+            nx.write_graphml(G, dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '.graphml')        
     else:
-        nx.write_graphml(G, dir_path + '/' + ID + '.graphml')
+        if network != None:
+            nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '.graphml')
+        else:
+            nx.write_graphml(G, dir_path + '/' + ID + '.graphml')
 
     ###############################################################
     ########### Calculate graph metrics from graph G ##############
     ###############################################################
-    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, rich_club_coefficient, eigenvector_centrality, communicability_centrality, clustering, degree_centrality
+    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, rich_club_coefficient, eigenvector_centrality, communicability_betweenness_centrality, clustering, degree_centrality
     from pynets.netstats import average_local_efficiency, global_efficiency, local_efficiency, modularity_louvain_dir, smallworldness
     ##For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the function  (with a G-only input) to the netstats module.
     metric_list = [global_efficiency, average_local_efficiency, smallworldness, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
@@ -827,7 +914,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
             j = j + 1
         dc_val_list = list(dc_arr[:,1])
         dc_arr[num_nodes,0] = network + '_MEAN_degree_centrality'
-        nonzero_arr_cl = np.delete(dc_arr[:,1], [0])
+        nonzero_arr_dc = np.delete(dc_arr[:,1], [0])
         dc_arr[num_nodes,1] = np.mean(nonzero_arr_dc)
         print('\n' + 'Degree Centrality across all nodes: ' + str(dc_arr[num_nodes,1]) + '\n')
     except:
@@ -895,7 +982,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
 
     ##Communicability Centrality
     try:
-        cc_vector = communicability_centrality(G_len)
+        cc_vector = communicability_betweenness_centrality(G_len)
         print('Extracting Communicability Centrality vector for all network nodes...')
         cc_vals = list(cc_vector.values())
         cc_nodes = list(cc_vector.keys())
@@ -1035,23 +1122,30 @@ def extractnetstats(ID, network, thr, conn_model, est_path1, out_file=None):
         import cPickle
     except ImportError:
         import _pickle as cPickle
-    if network != None:
-        met_list_picke_path = os.path.dirname(os.path.abspath(est_path1)) + '/met_list_pickle_' + network
+        
+    if mask != None:
+        if network != None:
+            met_list_picke_path = os.path.dirname(os.path.abspath(est_path1)) + '/net_metric_list_' + network + '_' + str(os.path.basename(mask).split('.')[0])
+        else:
+            met_list_picke_path = os.path.dirname(os.path.abspath(est_path1)) + '/net_metric_list_WB' + '_' + str(os.path.basename(mask).split('.')[0])
     else:
-        met_list_picke_path = os.path.dirname(os.path.abspath(est_path1)) + '/met_list_pickle_WB'
+        if network != None:
+            met_list_picke_path = os.path.dirname(os.path.abspath(est_path1)) + '/net_metric_list_' + network
+        else:
+            met_list_picke_path = os.path.dirname(os.path.abspath(est_path1)) + '/net_metric_list_WB'
     cPickle.dump(metric_list_names, open(met_list_picke_path, 'wb'))
 
     ##Save results to csv
-    if 'inv' in est_path1:
+    if mask != None:
         if network != None:
-            out_path = dir_path + '/' + ID + '_' + network + '_net_mets_sps_cov_' + str(thr) + '.csv'
+            out_path = dir_path + '/' + ID + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.csv'
         else:
-            out_path = dir_path + '/' + ID + '_net_mets_sps_cov_' + str(thr) + '.csv'
+            out_path = dir_path + '/' + ID + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.csv'
     else:
         if network != None:
-            out_path = dir_path + '/' + ID + '_' + network + '_net_mets_corr_' + str(thr) + '.csv'
+            out_path = dir_path + '/' + ID + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '.csv'
         else:
-            out_path = dir_path + '/' + ID + '_net_mets_corr_' + str(thr) + '.csv'
+            out_path = dir_path + '/' + ID + '_net_metrics_' + conn_model + '_' + str(thr) + '.csv'
     np.savetxt(out_path, net_met_val_list_final)
 
     return(out_path)

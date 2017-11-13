@@ -8,6 +8,7 @@ import sys
 import argparse
 import os
 import timeit
+import pandas as pd
 
 # Start time clock
 start_time = timeit.default_timer()
@@ -34,9 +35,9 @@ if __name__ == '__main__':
         default='coords_power_2011',
         help='Specify a single coordinate atlas parcellation of those availabe in nilearn. Default is coords_power_2011. Available atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011')
     parser.add_argument('-basc',
-       default=False,
-       action='store_true',
-       help='Specify whether you want to run BASC to calculate a group level set of nodes')
+        default=False,
+        action='store_true',
+        help='Specify whether you want to run BASC to calculate a group level set of nodes')
     parser.add_argument('-ua',
         metavar='path to parcellation file',
         default=None,
@@ -64,7 +65,7 @@ if __name__ == '__main__':
     parser.add_argument('-an',
         default=False,
         action='store_true',
-        help='Optionally use this flag if you wish to activate plotting designations and network statistic extraction for all Yeo RSNs in the specified atlas')
+        help='Optionally use this flag if you wish to activate plotting designations and network statistic extraction for all Yeo 7 RSNs in the specified atlas')
     parser.add_argument('-model',
         metavar='connectivity',
         default='corr',
@@ -190,6 +191,7 @@ if __name__ == '__main__':
         print("\n")
         print('Running workflow of workflows across subjects:\n')
         print (str(subjects_list))
+        dir_path = os.path.dirname(os.path.realpath(subjects_list[0]))
     elif input_file is not None and bedpostx_dir is not None and subjects_list is None:
         print('Running joint structural-functional connectometry...')
         print ("INPUT FILE: " + input_file)
@@ -213,6 +215,11 @@ if __name__ == '__main__':
     if multi_atlas == True:
         atlas_select = None
         print('\nIterating across multiple atlases...\n')
+        
+    if ref_txt != None:
+        dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+        indices = dict_df.Index.unique().tolist()
+        label_names = dict_df['Region'].tolist()
 
     if network != None:
         print ("NETWORK: " + str(network))
@@ -222,20 +229,18 @@ if __name__ == '__main__':
 
     ##Import core modules
     import numpy as np
-    import pandas as pd
     import warnings
     warnings.simplefilter("ignore")
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
 
-
     if basc == True:
        from pynets import basc_run
        from pathlib import Path
        basc_config=Path(__file__)/'basc_config.yaml'
 
-       print("\n\n\n-------------<(^.^<) STARTING BASC <(^.^<)----------------------" + "\n\n\n")
+       print("\n\n\n-------------() > STARTING BASC <()----------------------" + "\n\n\n")
 
        basc_run.basc_run(subjects_list, basc_config)
        parlistfile=Path(__file__)/'pynets'/'rsnrefs'/'group_stability_clusters.nii.gz'
@@ -243,12 +248,18 @@ if __name__ == '__main__':
     def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem):
         from pynets import workflows
 
-        ##Case 1: Whole-brain connectome with user-specified atlas or nilearn atlas img
-        if network == None:
+        ##Case 1: Whole-brain functional connectome
+        if bedpostx_dir == None and network == None:
             [est_path, thr] = workflows.wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem)
-        ##Case 2: RSN connectome with nilearn atlas or user-specified atlas
-        else:
-            [est_path, thr] = workflows.network_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem)
+        ##Case 2: RSN functional connectome
+        elif bedpostx_dir == None:
+            [est_path, thr] = workflows.RSN_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem)
+        ##Case 3: Whole-brain structural connectome
+        elif bedpostx_dir != None and network == None:
+            [est_path, thr] = workflows.wb_structural_connectometry(ID, bedpostx_dir, network, node_size, atlas_select, parlistfile, label_names, plot_switch, parc, dict_df, anat_loc, int(procmem[0]))
+        ##Case 4: RSN structural connectome
+        elif bedpostx_dir != None:
+            [est_path, thr] = workflows.RSN_structural_connectometry(ID, bedpostx_dir, network, node_size, atlas_select, parlistfile, label_names, plot_switch, parc, dict_df, anat_loc, int(procmem[0]))
 
         return est_path, thr
 
@@ -258,6 +269,7 @@ if __name__ == '__main__':
         thr = traits.Any(mandatory=True)
         conn_model = traits.Str(mandatory=True)
         est_path1 = File(exists=True, mandatory=True, desc="")
+        mask = traits.Any(mandatory=False)
 
     class ExtractNetStatsOutputSpec(TraitedSpec):
         out_file = File()
@@ -273,7 +285,8 @@ if __name__ == '__main__':
                 self.inputs.network,
                 self.inputs.thr,
                 self.inputs.conn_model,
-                self.inputs.est_path1)
+                self.inputs.est_path1,
+                self.inputs.mask)
             setattr(self, '_outpath', out)
             return runtime
 
@@ -282,15 +295,23 @@ if __name__ == '__main__':
             return {'out_file': op.abspath(getattr(self, '_outpath'))}
 
     ##save net metric files to pandas dataframes interface
-    def export_to_pandas(csv_loc, ID, network, out_file=None):
+    def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
         try:
             import cPickle
         except ImportError:
             import _pickle as cPickle
-        if network != None:
-            met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/met_list_pickle_' + network
+
+        if mask != None:
+            if network != None:
+                met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + network + '_' + str(os.path.basename(mask).split('.')[0])
+            else:
+                met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_WB' + '_' + str(os.path.basename(mask).split('.')[0])
         else:
-            met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/met_list_pickle_WB'
+            if network != None:
+                met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + network
+            else:
+                met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_WB'
+
         metric_list_names = cPickle.load(open(met_list_picke_path, 'rb'))
         df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
         df = df.T
@@ -311,6 +332,7 @@ if __name__ == '__main__':
         in_csv = File(exists=True, mandatory=True, desc="")
         sub_id = traits.Str(mandatory=True)
         network = traits.Any(mandatory=True)
+        mask = traits.Any(mandatory=False)
         out_file = File('output_export2pandas.csv', usedefault=True)
 
     class Export2PandasOutputSpec(TraitedSpec):
@@ -325,6 +347,7 @@ if __name__ == '__main__':
                 self.inputs.in_csv,
                 self.inputs.sub_id,
                 self.inputs.network,
+                self.inputs.mask,
                 out_file=self.inputs.out_file)
             return runtime
 
@@ -399,7 +422,10 @@ if __name__ == '__main__':
             atlas_iterables = ("atlas_select", ['coords_power_2011',
             'coords_dosenbach_2010', 'atlas_destrieux_2009', 'atlas_aal'])
             imp_est_iterables.append(atlas_iterables)
-
+        if all_nets==True:
+            print('Iterating pipeline for ' + str(ID) + ' across all Yeo 7 networks...')
+            network_iterables = ("network", ['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default'])
+            imp_est_iterables.append(network_iterables)
         if imp_est_iterables:
             imp_est.iterables = imp_est_iterables
 
@@ -434,12 +460,14 @@ if __name__ == '__main__':
                                   ('procmem', 'procmem')]),
             (inputnode, net_mets_node, [('ID', 'sub_id'),
                                        ('network', 'network'),
-                                       ('conn_model', 'conn_model')]),
+                                       ('conn_model', 'conn_model'),
+                                       ('mask', 'mask')]),
             (imp_est, net_mets_node, [('est_path', 'est_path1'),
                                       ('thr', 'thr')]),
             #(net_mets_cov_node, datasink, [('est_path', 'csv_loc')]),
             (inputnode, export_to_pandas_node, [('ID', 'sub_id'),
-                                            ('network', 'network')]),
+                                            ('network', 'network'),
+                                            ('mask', 'mask')]),
             (net_mets_node, export_to_pandas_node, [('out_file', 'in_csv')]),
             #(export_to_pandas1, datasink, [('out_file', 'pandas_df)]),
         ])
@@ -480,27 +508,36 @@ if __name__ == '__main__':
             i = i + 1
         return wf_multi
 
-    ##Multi-subject workflow generator
+    ##Workflow generation
+    import logging
+    from time import gmtime, strftime
+    from nipype.utils.profiler import log_nodes_cb
+    callback_log_path = dir_path + '/run_stats' + '_' + str(ID) + '_' + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + '.log'
+    logger = logging.getLogger('callback')
+    #logger.setLevel(logging.DEBUG)
+    handler = logging.FileHandler(callback_log_path)
+    logger.addHandler(handler)
+
     if subjects_list is not None:
         wf_multi = wf_multi_subject(subjects_list, atlas_select, network, node_size,
         mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr,
         anat_loc, parc, ref_txt, procmem)
-        plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
-        wf_multi.run()
-        #print('\n' + 'Running with ' + str(plugin_args) + '\n')
-        #wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
+        plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1]), 'status_callback' : log_nodes_cb}
+        #wf_multi.run()
+        print('\n' + 'Running with ' + str(plugin_args) + '\n')
+        wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
     ##Single-subject workflow generator
     else:
         wf = init_wf_single_subject(ID, input_file, dir_path, atlas_select, network,
         node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf,
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr, anat_loc, parc, ref_txt, procmem)
-        #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
-        wf.run()
-        #wf.run(plugin='MultiProc', plugin_args= plugin_args)
+        plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1]), 'status_callback' : log_nodes_cb}
+        #wf.run()
+        wf.run(plugin='MultiProc', plugin_args= plugin_args)
 
-    print('---------------------------------------')
-    print('------------NETWORK COMPLETE-----------')
+
+    print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)
     print('---------------------------------------')
