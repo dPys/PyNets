@@ -21,6 +21,7 @@
       .node--source,
       .node--target {
         font-weight: 700;
+        font-size: 13px !important;
       }
 
       .node--source {
@@ -34,11 +35,11 @@
       .link--source,
       .link--target {
         stroke-opacity: 1;
-        stroke-width: 2px;
+        stroke-width: 4px;
       }
 
       .link--source {
-        stroke: #d62728;
+        stroke: #000000 !important;
       }
 
       .link--target {
@@ -46,10 +47,27 @@
       }
     </style>
   </head>
+  <div style="float: bottom;">
+    <body>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.9.1/d3.min.js"></script>
+      <script src="https://d3js.org/d3.v4.min.js"></script>
+      <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+      <script src="connectogram.js"></script>
+    </body>
+    <meta charset="utf-8">
+    <style>
+      .links line {
+        stroke: #999;
+        stroke-opacity: 0.6;
+      }
 
-  <body>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.9.1/d3.min.js"></script>
-    <script src="connectogram.js"></script>
-  </body>
-
+      .nodes circle {
+        stroke: #fff;
+        stroke-width: 1.5px;
+      }
+    </style>
+    <svg width="960" height="600"></svg>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="fdg.js"></script>
+  </div>
 </html>

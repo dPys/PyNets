@@ -5,25 +5,24 @@ import numpy as np
 
 ###
 working_path = r'/work/04171/dpisner/data/ABM/network_analysis' # use your path
-name_of_network_pickle = 'DMN_net_mets_sps_cov'
+name_of_network_pickle = 'net_metrics_sps'
+net_name='CON_mask'
 missingness_thresh = 0.10
-#atlas_name='Power 2011 atlas'
-atlas_name='Dosenbach 2010 atlas'
+atlas_name='craddock_1000'
 ###
 
 all_subs = [i for i in os.listdir(working_path) if len(i) <= 3]
 all_subs.sort()
+all_subs = all_subs[:-35]
 
 for ID in all_subs:
     subject_path = working_path + '/' + str(ID) + '/' + atlas_name
     ##Get path of thresholded pickles
     net_pickle_mt_list = []
     for i in os.listdir(subject_path):
-        if name_of_network_pickle in i and '.csv' not in i:
+        if name_of_network_pickle in i and net_name in i and ID in i and '.csv' not in i and '.txt' not in i and 'net_ts' not in i and '.graphml' not in i and '.nii.gz' not in i:
             try:
-                val = int(i.split('_0.')[1])
-                if val < 100 and val >= 90:
-                    net_pickle_mt_list.append(i)
+                net_pickle_mt_list.append(i)
             except:
                 continue
 
@@ -42,21 +41,22 @@ for ID in all_subs:
         df = pd.read_pickle(file_)
         list_.append(df)
 
+    list_ = list_[0:-1]
     try:
         ##Concatenate and find mean across dataframes
-        print('Concatenating for ' + str(ID))
         df_concat = pd.concat(list_).mean().astype(str)
+        print('Concatenating for ' + str(ID))
         df_concat['id'] = str(ID)
         df_concat = df_concat.to_frame().transpose()
         df_concat['id'] = df_concat['id'].astype(int)
-        df_concat.to_pickle(subject_path + '/' + str(ID) + '_' + name_of_network_pickle + '_mean')
+        df_concat.to_pickle(subject_path + '/' + str(ID) + '_' + name_of_network_pickle + '_' + net_name + '_mean')
     except:
         print('NO OBJECTS TO CONCATENATE FOR ' + str(ID))
         continue
 
 allFiles = []
 for ID in os.listdir(working_path):
-    path_name = working_path + '/' + str(ID) + '/' + atlas_name + '/' + str(ID) + '_' + name_of_network_pickle + '_mean'
+    path_name = working_path + '/' + str(ID) + '/' + atlas_name + '/' + str(ID) + '_' + name_of_network_pickle + '_' + net_name + '_mean'
     if os.path.isfile(path_name):
         print(path_name)
         allFiles.append(path_name)
@@ -69,12 +69,21 @@ list_ = []
 for file_ in allFiles:
     try:
         df = pd.read_pickle(file_)
+        df = df.drop(0, 1)
+        new_names = [(i, net_name + '_' + i) for i in df.iloc[:, 1:].columns.values]
+        df.rename(columns = dict(new_names), inplace=True)
         list_.append(df)
     except:
         print('File: ' + file_ + ' is corrupted!')
         continue
 
-frame = pd.concat(list_, axis=0)
+##Get only common columns
+common_cols = list(set.intersection(*(set(df.columns) for df in list_)))
+try:
+    common_cols.pop(0)
+except:
+    pass
+frame = pd.concat([df[common_cols] for df in list_], ignore_index=True, axis=0)
 
 nas_list=[]
 missing_thresh_perc=100*(missingness_thresh)
@@ -87,7 +96,7 @@ for column in frame:
 ##Remove variables that have too many NAs
 for i in range(len(nas_list)):
     ##Delete those variables with high correlations
-    frame.drop(nas_list[i], axis=1, inplace=True)
+    frame.drop(nas_list[i], axis=0, inplace=True)
 
 ##Fix column order
 frame = frame[frame.columns[::-1]]
@@ -95,5 +104,5 @@ frame = frame[frame.columns[::-1]]
 ##Replace zeroes with nan
 frame[frame == 0] = np.nan
 
-out_path = working_path + '/' + name_of_network_pickle + '_' + atlas_name  + '_output.csv'
+out_path = working_path + '/' + name_of_network_pickle + '_' + atlas_name  + '_' + net_name + '_output.csv'
 frame.to_csv(out_path, index=False)

@@ -1,41 +1,22 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov  7 10:40:07 2017
+
+@author: Derek Pisner
+"""
+
 import sys
-import argparse
 import os
-import nilearn
 import numpy as np
-import networkx as nx
-import pandas as pd
-import nibabel as nib
-import seaborn as sns
-import numpy.linalg as npl
-import matplotlib
-import sklearn
-import matplotlib
-import warnings
-import pynets
 #warnings.simplefilter("ignore")
-import matplotlib.pyplot as plt
-from numpy import genfromtxt
-from matplotlib import colors
-from nipype import Node, Workflow
-from nilearn import input_data, masking, datasets
-from nilearn import plotting as niplot
-from nipype.pipeline import engine as pe
-from nipype.interfaces import utility as niu
-from nipype.interfaces import io as nio
-from nilearn.input_data import NiftiLabelsMasker
 from nilearn.connectome import ConnectivityMeasure
-from nibabel.affines import apply_affine
-from nipype.interfaces.base import isdefined, Undefined
-from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
-from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
+from sklearn.covariance import GraphLassoCV
 try:
-    import brainiak
     from brainiak.fcma.util import compute_correlation
 except ImportError:
     pass
 
-def get_conn_matrix(time_series, conn_model, network, ID, dir_path, thr):
+def get_conn_matrix(time_series, conn_model, network, ID, dir_path, mask, thr):
     if conn_model == 'corr':
         conn_measure = ConnectivityMeasure(kind='correlation')
         conn_matrix = conn_measure.fit_transform([time_series])[0]
@@ -55,33 +36,39 @@ def get_conn_matrix(time_series, conn_model, network, ID, dir_path, thr):
         estimator = GraphLassoCV()
         try:
             print("Fitting Lasso Estimator...")
-            est = estimator.fit(time_series)
+            estimator.fit(time_series)
         except RuntimeError:
             print('Unstable Lasso estimation--Attempting to re-run by first applying shrinkage...')
-            #from sklearn.covariance import GraphLasso, empirical_covariance, shrunk_covariance
-            #emp_cov = empirical_covariance(time_series)
-            #for i in np.arange(0.8, 0.99, 0.01):
-                #shrunk_cov = shrunk_covariance(emp_cov, shrinkage=i)
-                #alphaRange = 10.0 ** np.arange(-8,0)
-                #for alpha in alphaRange:
-                    #try:
-                        #estimator_shrunk = GraphLasso(alpha)
-                        #est=estimator_shrunk.fit(shrunk_cov)
-                        #print("Calculated graph-lasso covariance matrix for alpha=%s"%alpha)
-                        #break
-                    #except FloatingPointError:
-                        #print("Failed at alpha=%s"%alpha)
-            #if estimator_shrunk == None:
-                #pass
-            #else:
-                #break
-            print('Unstable Lasso estimation. Try again!')
-            sys.exit()
+            from sklearn.covariance import GraphLasso, empirical_covariance, shrunk_covariance
+            emp_cov = empirical_covariance(time_series)
+            for i in np.arange(0.8, 0.99, 0.01):
+                shrunk_cov = shrunk_covariance(emp_cov, shrinkage=i)
+                alphaRange = 10.0 ** np.arange(-8,0)
+                for alpha in alphaRange:
+                    try:
+                        estimator_shrunk = GraphLasso(alpha)
+                        estimator_shrunk.fit(shrunk_cov)
+                        print("Calculated graph-lasso covariance matrix for alpha=%s"%alpha)
+                        break
+                    except FloatingPointError:
+                        print("Failed at alpha=%s"%alpha)
+                if estimator_shrunk == None:
+                    pass
+                else:
+                    break
+                print('Unstable Lasso estimation. Try again!')
+                sys.exit()
 
-        if network != None:
-            est_path = dir_path + '/' + ID + '_' + network + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '.txt'
+        if mask != None:
+            if network != None:
+                est_path = dir_path + '/' + ID + '_' + network + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.txt'
+            else:
+                est_path = dir_path + '/' + ID + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.txt'       
         else:
-            est_path = dir_path + '/' + ID + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '.txt'
+            if network != None:
+                est_path = dir_path + '/' + ID + '_' + network + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '.txt'
+            else:
+                est_path = dir_path + '/' + ID + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '.txt'
         if conn_model == 'sps':
             try:
                 conn_matrix = -estimator.precision_

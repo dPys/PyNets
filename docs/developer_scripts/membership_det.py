@@ -46,7 +46,7 @@ for i in range(len(indices)):
     for j in indices:
         print(dict_df['Region'][j])
 
-par_file = '/Users/PSYC-dap3463/Downloads/Schaefer2018_1000Parcels_17Networks_order_FSLMNI152_2mm.nii.gz'
+par_file = '/Users/PSYC-dap3463/Downloads/Schaefer2018_1000Parcels_17Networks_order_FSLMNI152_1mm.nii.gz'
 par_img = nib.load(par_file)
 par_data = par_img.get_data()
 
@@ -77,9 +77,9 @@ for i in indices:
     print('Concatenating images of network : ' + str(i))
 
     bna_4D = nib.Nifti1Image(np.sum([val.get_data() for val in img_list_RSN], axis=0), affine=par_img.affine)
-    print('Appending 4D network image to list of 17 4D network images...')
+    print('Appending 4D network image to list of 4D network images...')
     bna_4D_RSNS.append(bna_4D)
 
 all4d = nilearn.image.concat_imgs(bna_4D_RSNS)
 
-nib.save(all4d, '/Users/PSYC-dap3463/Downloads/BIGREF2mm.nii.gz')
+nib.save(all4d, '/Users/PSYC-dap3463/Downloads/BIGREF1mm.nii.gz')
