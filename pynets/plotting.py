@@ -6,10 +6,15 @@ Created on Tue Nov  7 10:40:07 2017
 """
 import numpy as np
 import networkx as nx
+import json
+import os
 #warnings.simplefilter("ignore")
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import linkage, fcluster
 from nipype.utils.filemanip import save_json
+from pynets.thresholding import normalize
+from pathlib import Path
+from networkx.readwrite import json_graph
 
 def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask):
     ##Set title for adj. matrix based on connectivity model used
@@ -23,11 +28,20 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, 
         atlast_graph_title = str(atlas_select) + '_Covariance_Graph'
     if mask != None:
         atlast_graph_title = str(atlast_graph_title) + '_With_Masked_Nodes'
-    if network != None:
-        atlast_graph_title = str(atlast_graph_title) + '_' + str(network)
-        out_path_fig=dir_path + '/' + str(ID) + '_' + str(network) + '_adj_mat_' + str(conn_model) + '_network.png'
+        
+    if mask != None:   
+        if network != None:
+            atlast_graph_title = str(atlast_graph_title) + '_' + str(network)
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(network) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_network.png'
+        else:
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '.png'    
     else:
-        out_path_fig=dir_path + '/' + str(ID) + '_adj_mat_' + str(conn_model) + '.png'
+        if network != None:
+            atlast_graph_title = str(atlast_graph_title) + '_' + str(network)
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(network) + '_adj_mat_' + str(conn_model) + '_network.png'
+        else:
+            out_path_fig=dir_path + '/' + str(ID) + '_adj_mat_' + str(conn_model) + '.png'
+            
     rois_num=conn_matrix.shape[0]
     plt.figure(figsize=(10, 10))
     plt.imshow(conn_matrix, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
@@ -46,9 +60,6 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, 
     return(atlast_graph_title)
 
 def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names):
-    import json
-    from pynets.thresholding import normalize
-    from pathlib import Path
     comm = 'nodes'
 
     conn_matrix = normalize(conn_matrix)
@@ -190,7 +201,6 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
     save_json(connectogram_plot, output)
 
     ##Force-directed graphing
-    from networkx.readwrite import json_graph
     G=nx.from_numpy_matrix(np.round(conn_matrix.astype('float64'),6))        
     data = json_graph.node_link_data(G)
     data.pop('directed', None)
@@ -218,11 +228,11 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
     ##Copy index.html and json to dir_path
     #conn_js_path = '/Users/PSYC-dap3463/Applications/PyNets/pynets/connectogram.js'
     #index_html_path = '/Users/PSYC-dap3463/Applications/PyNets/pynets/index.html'
-    conn_js_path = Path(__file__).parent/"connectogram.js"
-    index_html_path = Path(__file__).parent/"index.html"
+    conn_js_path = str(Path(__file__).parent/"connectogram.js")
+    index_html_path = str(Path(__file__).parent/"index.html")
     fdg_replacements_js = {"FD_graph.json": str(json_fdg_file_name)}
     replacements_html = {'connectogram.js': str(connectogram_js_name), 'fdg.js': str(fdg_js_sub_name)}
-    fdg_js_path = Path(__file__).parent/"fdg.js"
+    fdg_js_path = str(Path(__file__).parent/"fdg.js")
     with open(index_html_path) as infile, open(str(dir_path + '/index.html'), 'w') as outfile:
         for line in infile:
             for src, target in replacements_html.items():

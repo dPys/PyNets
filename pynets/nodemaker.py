@@ -43,8 +43,10 @@ def create_parcel_atlas(parcel_list):
 
 def fetch_nilearn_atlas_coords(atlas_select):
     atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
-    atlas_select = atlas['description'].splitlines()[0]
-    print('\n' + str(atlas_select) + ' comes with {0}'.format(atlas.keys()) + '\n')
+    atlas_name = atlas['description'].splitlines()[0]
+    if atlas_name is None:
+        atlas_name = atlas_select
+    print('\n' + str(atlas_name.decode('utf-8')) + ' comes with {0}'.format(atlas.keys()) + '\n')
     coords = np.vstack((atlas.rois['x'], atlas.rois['y'], atlas.rois['z'])).T
     print('Stacked atlas coordinates in array of shape {0}.'.format(coords.shape) + '\n')
     try:
@@ -56,7 +58,7 @@ def fetch_nilearn_atlas_coords(atlas_select):
         label_names=np.array([s.strip('b\'') for s in label_names]).astype('U')
     except:
         label_names=None
-    return(coords, atlas_select, networks_list, label_names)
+    return(coords, atlas_name, networks_list, label_names)
 
 def get_node_membership(network, func_file, coords, label_names, parc, parcel_list):
     ##For parcel membership determination, specify overlap thresh and error cushion in mm voxels

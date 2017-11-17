@@ -11,11 +11,7 @@ def basc_run(subjects_list, basc_config):
     import numpy as np
     import nibabel as nib
     import yaml
-    os.chdir('/Users/PSYC-dap3463/Applications/PyBASC')
-    import basc
-    import basc_workflow_runner
-    import utils
-    from basc_workflow_runner import run_basc_workflow
+    from basc.basc_workflow_runner import run_basc_workflow
     from pathlib import Path
 
     subject_file_list= subjects_list
@@ -37,7 +33,7 @@ def basc_run(subjects_list, basc_config):
     else:
         roi_mask_file = FSLDIR + '/data/standard/MNI152_T1_2mm_brain.nii.gz'
 
-    basc_config=Path(__file__)/'basc_config.yaml'
+    basc_config=Path(__file__).parent/'basc_config.yaml'
     f = open(basc_config)
     basc_dict_yaml=yaml.load(f)
     basc_dict =basc_dict_yaml['instance']
@@ -49,7 +45,11 @@ def basc_run(subjects_list, basc_config):
     bootstrap_list= eval(basc_dict['bootstrap_list'])
     cross_cluster= basc_dict['cross_cluster']
     affinity_threshold= basc_dict['affinity_threshold']
-    out_dir= Path(__file__)/'pynets'/'rsnrefs'
+    out_dir= Path(__file__).parent/'rsnrefs'
     run= basc_dict['run']
+    similarity_metric= basc_dict['similarity_metric']
+    
+    print(basc_config)
+    print(out_dir)
 
-    basc_test= run_basc_workflow(subject_file_list, roi_mask_file, dataset_bootstraps, timeseries_bootstraps, n_clusters, output_size, bootstrap_list, proc_mem, cross_cluster=cross_cluster, roi2_mask_file=None, affinity_threshold=affinity_threshold, out_dir=out_dir, run=run)
+    run_basc_workflow(subject_file_list, roi_mask_file, dataset_bootstraps, timeseries_bootstraps, n_clusters, output_size, bootstrap_list, proc_mem, similarity_metric, cross_cluster=cross_cluster, roi2_mask_file=None, affinity_threshold=affinity_threshold, out_dir=out_dir, run=run)
