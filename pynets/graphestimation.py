@@ -6,7 +6,6 @@ Created on Tue Nov  7 10:40:07 2017
 """
 
 import sys
-import os
 import numpy as np
 #warnings.simplefilter("ignore")
 from nilearn.connectome import ConnectivityMeasure
@@ -16,21 +15,18 @@ try:
 except ImportError:
     pass
 
-def get_conn_matrix(time_series, conn_model, network, ID, dir_path, mask, thr):
+def get_conn_matrix(time_series, conn_model):
     if conn_model == 'corr':
         conn_measure = ConnectivityMeasure(kind='correlation')
         conn_matrix = conn_measure.fit_transform([time_series])[0]
-        est_path = dir_path + '/' + ID + '_est_corr' + '_' + str(thr) + '.txt'
     elif conn_model == 'corr_fast':
         try:
             conn_matrix = compute_correlation(time_series,time_series)
-            est_path = dir_path + '/' + ID + '_est_corr_fast' + '_' + str(thr) + '.txt'
         except RuntimeError:
             print('Cannot run accelerated correlation computation due to a missing dependency. You need brainiak installed!')
     elif conn_model == 'partcorr':
         conn_measure = ConnectivityMeasure(kind='partial correlation')
         conn_matrix = conn_measure.fit_transform([time_series])[0]
-        est_path = dir_path + '/' + ID + '_est_part_corr' + '_' + str(thr) + '.txt'
     elif conn_model == 'cov' or conn_model == 'sps':
         ##Fit estimator to matrix to get sparse matrix
         estimator = GraphLassoCV()
@@ -59,16 +55,6 @@ def get_conn_matrix(time_series, conn_model, network, ID, dir_path, mask, thr):
                 print('Unstable Lasso estimation. Try again!')
                 sys.exit()
 
-        if mask != None:
-            if network != None:
-                est_path = dir_path + '/' + ID + '_' + network + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.txt'
-            else:
-                est_path = dir_path + '/' + ID + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.txt'       
-        else:
-            if network != None:
-                est_path = dir_path + '/' + ID + '_' + network + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '.txt'
-            else:
-                est_path = dir_path + '/' + ID + '_est%s'%('_sps_inv' if conn_model=='sps' else 'cov') + '_' + str(thr) + '.txt'
         if conn_model == 'sps':
             try:
                 conn_matrix = -estimator.precision_
@@ -79,5 +65,5 @@ def get_conn_matrix(time_series, conn_model, network, ID, dir_path, mask, thr):
                 conn_matrix = estimator.covariance_
             except:
                 conn_matrix = estimator_shrunk.covariance_
-    np.savetxt(est_path, conn_matrix, delimiter='\t')
-    return(conn_matrix, est_path)
+
+    return(conn_matrix)
