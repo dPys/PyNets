@@ -321,7 +321,7 @@ if __name__ == '__main__':
         return(est_path, thr, network, ID, mask, conn_model)
 
     class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
-        sub_id = traits.Str(mandatory=True)
+        ID = traits.Any(mandatory=True)
         network = traits.Any(mandatory=False)
         thr = traits.Any(mandatory=True)
         conn_model = traits.Str(mandatory=True)
@@ -338,7 +338,7 @@ if __name__ == '__main__':
         def _run_interface(self, runtime):
             from pynets.netstats import extractnetstats
             out = extractnetstats(
-                self.inputs.sub_id,
+                self.inputs.ID,
                 self.inputs.network,
                 self.inputs.thr,
                 self.inputs.conn_model,
@@ -353,7 +353,7 @@ if __name__ == '__main__':
 
     class Export2PandasInputSpec(BaseInterfaceInputSpec):
         in_csv = File(exists=False, mandatory=True, desc="")
-        sub_id = traits.Str(mandatory=True)
+        ID = traits.Any(mandatory=True)
         network = traits.Any(mandatory=False)
         mask = traits.Any(mandatory=False)
         out_file = File('output_export2pandas.csv', usedefault=True)
@@ -368,7 +368,7 @@ if __name__ == '__main__':
         def _run_interface(self, runtime):
             export_to_pandas(
                 self.inputs.in_csv,
-                self.inputs.sub_id,
+                self.inputs.ID,
                 self.inputs.network,
                 self.inputs.mask,
                 out_file=self.inputs.out_file)
@@ -430,8 +430,8 @@ if __name__ == '__main__':
         name = "imp_est")
 
         ##Create MapNode types for net_mets_node and export_to_pandas_node
-        net_mets_node = pe.MapNode(interface=ExtractNetStats(), name = "ExtractNetStats", iterfield=['sub_id', 'network', 'thr', 'conn_model', 'est_path', 'mask'])
-        export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name = "export_to_pandas", iterfield=['in_csv', 'sub_id', 'network', 'mask'])
+        net_mets_node = pe.MapNode(interface=ExtractNetStats(), name = "ExtractNetStats", iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path', 'mask'])
+        export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name = "export_to_pandas", iterfield=['in_csv', 'ID', 'network', 'mask'])
 
         ##Connect nodes of workflow
         wf.connect([
@@ -463,11 +463,11 @@ if __name__ == '__main__':
             (imp_est, net_mets_node, [('est_path', 'est_path'),
                                       ('network', 'network'),
                                       ('thr', 'thr'),
-                                      ('ID', 'sub_id'),        
+                                      ('ID', 'ID'),        
                                       ('conn_model', 'conn_model'),
                                       ('mask', 'mask')]),
             (imp_est, export_to_pandas_node, [('network', 'network'),
-                                              ('ID', 'sub_id'),
+                                              ('ID', 'ID'),
                                               ('mask', 'mask')]),    
             (net_mets_node, export_to_pandas_node, [('out_file', 'in_csv')]),
         ])

@@ -70,7 +70,7 @@ def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
         if network != None:
             met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + network + '_' + str(os.path.basename(mask).split('.')[0])
         else:
-            met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list' + '_' + str(os.path.basename(mask).split('.')[0])
+            met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + str(os.path.basename(mask).split('.')[0])
     else:
         if network != None:
             met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + network
@@ -88,7 +88,7 @@ def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
     cols_ID = cols[ix:ix+1]+cols[:ix]+cols[ix+1:]
     df = df[cols_ID]
     df['id'] = df['id'].astype('object')
-    df['id'].values[0] = ID
+    df.id = df.id.replace(1,ID)
     out_file = csv_loc.split('.csv')[0]
     df.to_pickle(out_file)
     return(out_file)

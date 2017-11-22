@@ -9,7 +9,7 @@ working_path = r'/work/04171/dpisner/data/ABM/network_analysis' # use your path
 name_of_network_pickle = 'net_metrics_sps'
 net_name='CON'
 missingness_thresh = 0.10
-clusters=500
+clusters=100
 ###
 
 all_subs = [i for i in os.listdir(working_path) if len(i) <= 3]

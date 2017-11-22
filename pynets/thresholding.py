@@ -5,7 +5,6 @@ Created on Tue Nov  7 10:40:07 2017
 @author: Derek Pisner
 """
 import sys
-import os
 import numpy as np
 import networkx as nx
 #warnings.simplefilter("ignore")

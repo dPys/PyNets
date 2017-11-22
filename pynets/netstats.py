@@ -827,7 +827,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
     metric_list = [global_efficiency, average_local_efficiency, smallworldness, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
 
     ##Custom Parameters
-    custom_params = 'weight = 0.25'
+    #custom_params = 'weight = 0.25'
+    custom_params = None
 
     ##Iteratively run functions from above metric list that generate single scalar output
     num_mets = len(metric_list)
@@ -843,7 +844,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
                 except:
                     ##case where G is not fully connected
                     net_met_val = float(average_shortest_path_length_for_all(G))
-            if custom_params and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
+            if custom_params is not None and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
                 net_met_val = float(i(G, custom_params))
             else:
                 net_met_val = float(i(G))
@@ -1128,7 +1129,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         if network != None:
             met_list_picke_path = os.path.dirname(os.path.abspath(est_path)) + '/net_metric_list_' + network + '_' + str(os.path.basename(mask).split('.')[0])
         else:
-            met_list_picke_path = os.path.dirname(os.path.abspath(est_path)) + '/net_metric_list' + '_' + str(os.path.basename(mask).split('.')[0])
+            met_list_picke_path = os.path.dirname(os.path.abspath(est_path)) + '/net_metric_list_' + str(os.path.basename(mask).split('.')[0])
     else:
         if network != None:
             met_list_picke_path = os.path.dirname(os.path.abspath(est_path)) + '/net_metric_list_' + network
