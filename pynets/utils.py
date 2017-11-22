@@ -70,12 +70,12 @@ def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
         if network != None:
             met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + network + '_' + str(os.path.basename(mask).split('.')[0])
         else:
-            met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_WB' + '_' + str(os.path.basename(mask).split('.')[0])
+            met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + str(os.path.basename(mask).split('.')[0])
     else:
         if network != None:
             met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + network
         else:
-            met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_WB'
+            met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list'
 
     metric_list_names = pickle.load(open(met_list_picke_path, 'rb'))
     df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
@@ -88,7 +88,7 @@ def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
     cols_ID = cols[ix:ix+1]+cols[:ix]+cols[ix+1:]
     df = df[cols_ID]
     df['id'] = df['id'].astype('object')
-    df['id'].values[0] = ID
+    df.id = df.id.replace(1,ID)
     out_file = csv_loc.split('.csv')[0]
     df.to_pickle(out_file)
     return(out_file)
@@ -250,44 +250,103 @@ def do_dir_path(atlas_select, in_file):
     return dir_path
 
 def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, network, ID, dir_path, mask):
+    from pynets import utils
+   
+    ##Adaptive thresholding scenario
     if adapt_thresh is not False:
         try:
             est_path2 = dir_path + '/' + ID + '_structural_est.txt'
             if os.path.isfile(est_path2) == True:
-                [conn_matrix, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_nodes, conn_model, network, ID, est_path2, dir_path)
+                [conn_matrix_thr, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_nodes, conn_model, network, ID, est_path2, dir_path)
+                ##Save unthresholded
+                unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
+                np.savetxt(unthr_path, conn_matrix_thr, delimiter='\t')
+                edge_threshold = str(float(thr)*100) +'%'
             else:
                 print('No structural mx found! Exiting...')
                 sys.exit()
         except:
             print('No structural mx assigned! Exiting...')
             sys.exit()
-    elif dens_thresh is None:
-        edge_threshold = str(float(thr)*100) +'%'
-        [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_nodes, conn_model, network, ID, dir_path, mask, thr)
-        conn_matrix = thresholding.threshold_proportional(conn_matrix, float(thr), dir_path)
-    elif dens_thresh is not None:
-        [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_nodes, conn_model, network, ID, dens_thresh, dir_path)
-    ##Normalize connectivity matrix (weights between 0-1)
-    conn_matrix = thresholding.normalize(conn_matrix)
-    return(conn_matrix, edge_threshold, est_path)
+    else:        
+        ##Fit mat
+        conn_matrix = graphestimation.get_conn_matrix(ts_within_nodes, conn_model)
+        
+        ##Save unthresholded
+        unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
+        np.savetxt(unthr_path, conn_matrix, delimiter='\t')
 
-def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold):
-    ##Plot connectogram
-    if len(conn_matrix) > 20:
-        try:
-            plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
-        except RuntimeError:
-            print('\n\n\nError: Connectogram plotting failed!')
+        if not dens_thresh:
+            ##Save thresholded
+            conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
+            edge_threshold = str(float(thr)*100) +'%'
+            est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path) 
+        else:
+            conn_matrix_thr = thresholding.density_thresholding(conn_matrix, dens_thresh)
+            edge_threshold = str((1-float(dens_thresh))*100) +'%'
+            est_path = utils.create_est_path(ID, network, conn_model, dens_thresh, mask, dir_path)
+        np.savetxt(est_path, conn_matrix_thr, delimiter='\t')
+    return(conn_matrix_thr, edge_threshold, est_path, thr)
+
+def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold, plot_switch):
+    if plot_switch == True:
+        ##Plot connectogram
+        if len(conn_matrix) > 20:
+            try:
+                plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
+            except RuntimeError:
+                print('\n\n\nError: Connectogram plotting failed!')
+        else:
+            print('Error: Cannot plot connectogram for graphs smaller than 20 x 20!')
+    
+        ##Plot adj. matrix based on determined inputs
+        atlas_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask)
+    
+        ##Plot connectome
+        if mask != None:
+            out_path_fig=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
+        else:
+            out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
+        niplot.plot_connectome(conn_matrix, coords, title=atlas_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     else:
-        print('Error: Cannot plot connectogram for graphs smaller than 20 x 20!')
-
-    ##Plot adj. matrix based on determined inputs
-    atlas_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask)
-
-    ##Plot connectome
-    if mask != None:
-        out_path_fig=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
-    else:
-        out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
-    niplot.plot_connectome(conn_matrix, coords, title=atlas_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
+        pass
     return
+
+def create_est_path(ID, network, conn_model, thr, mask, dir_path):
+    if mask != None:
+        if network != None:
+            est_path = dir_path + '/' + ID + '_' + network + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.txt'
+        else:
+            est_path = dir_path + '/' + ID + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.txt'       
+    else:
+        if network != None:
+            est_path = dir_path + '/' + ID + '_' + network + '_est_' + str(conn_model) + '_' + str(thr) + '.txt'
+        else:
+            est_path = dir_path + '/' + ID + '_est_' + str(conn_model) + '_' + str(thr) + '.txt'
+    return est_path
+
+def create_unthr_path(ID, network, conn_model, mask, dir_path):
+    if mask != None:
+        if network != None:
+            unthr_path = dir_path + '/' + ID + '_' + network + '_est_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_unthresh_mat.txt'
+        else:
+            unthr_path = dir_path + '/' + ID + '_est_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_unthresh_mat.txt'       
+    else:
+        if network != None:
+            unthr_path = dir_path + '/' + ID + '_' + network + '_est_' + str(conn_model) + '_unthresholded_mat.txt'
+        else:
+            unthr_path = dir_path + '/' + ID + '_est_' + str(conn_model) + '_unthresh_mat.txt'
+    return unthr_path
+
+def create_csv_path(ID, network, conn_model, thr, mask, dir_path):
+    if mask != None:
+        if network != None:
+            out_path = dir_path + '/' + ID + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.csv'
+        else:
+            out_path = dir_path + '/' + ID + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.csv'
+    else:
+        if network != None:
+            out_path = dir_path + '/' + ID + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '.csv'
+        else:
+            out_path = dir_path + '/' + ID + '_net_metrics_' + conn_model + '_' + str(thr) + '.csv'
+    return out_path

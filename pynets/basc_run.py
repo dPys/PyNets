@@ -48,8 +48,5 @@ def basc_run(subjects_list, basc_config):
     out_dir= Path(__file__).parent/'rsnrefs'
     run= basc_dict['run']
     similarity_metric= basc_dict['similarity_metric']
-    
-    print(basc_config)
-    print(out_dir)
 
     run_basc_workflow(subject_file_list, roi_mask_file, dataset_bootstraps, timeseries_bootstraps, n_clusters, output_size, bootstrap_list, proc_mem, similarity_metric, cross_cluster=cross_cluster, roi2_mask_file=None, affinity_threshold=affinity_threshold, out_dir=out_dir, run=run)

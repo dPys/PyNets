@@ -63,7 +63,7 @@ if __name__ == '__main__':
         metavar='path to mask image',
         default=None,
         help='Optionally specify a thresholded inverse-binarized mask image such as a group ICA-derived network volume, to retain only those network nodes contained within that mask')
-    parser.add_argument('-an',
+    parser.add_argument('-mn',
         default=False,
         action='store_true',
         help='Optionally use this flag if you wish to activate plotting designations and network statistic extraction for all Yeo 7 RSNs in the specified atlas')
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     thr=args.thr
     node_size=args.ns
     mask=args.m
-    all_nets=args.an
+    multi_nets=args.mn
     conn_model=args.model
     conf=args.confounds
     dens_thresh=args.dt
@@ -194,7 +194,6 @@ if __name__ == '__main__':
     print ("ATLAS: " + str(atlas_select))
 
     if multi_atlas == True:
-        atlas_select = None
         print('\nIterating across multiple atlases...\n')
         
     if ref_txt != None and os.path.exists(ref_txt):
@@ -205,6 +204,9 @@ if __name__ == '__main__':
 
     if network != None:
         print ("NETWORK: " + str(network))
+    elif multi_nets == True:
+        network = 'Vis'
+        print ("Iterating workflow across all 7 Yeo networks...")
     else:
         print("USING WHOLE-BRAIN CONNECTOME..." )
     
@@ -246,7 +248,6 @@ if __name__ == '__main__':
     print("\n" + "-------------------------------------------------------------------------" + "\n\n\n")
 
     ##Import core modules
-    import numpy as np
     import warnings
     warnings.simplefilter("ignore")
     from pynets.utils import export_to_pandas
@@ -259,35 +260,72 @@ if __name__ == '__main__':
        from pathlib import Path
        basc_config=Path(__file__).parent/'basc_config.yaml'
 
-       print("\n\n\n-------------() > STARTING BASC <()----------------------" + "\n\n\n")
+       print("\n\n\n-------------() > STARTING BASC < ()----------------------" + "\n\n\n")
 
        basc_run.basc_run(subjects_list, basc_config)
        parlistfile=Path(__file__)/'pynets'/'rsnrefs'/'group_stability_clusters.nii.gz'
 
-    def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem, dir_path):
+    def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr):
         from pynets import workflows
 
         ##Case 1: Whole-brain functional connectome
         if bedpostx_dir == None and network == None:
-            [est_path, thr] = workflows.wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem, dir_path)
+            [est_path, thr] = workflows.wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr)
         ##Case 2: RSN functional connectome
         elif bedpostx_dir == None:
-            [est_path, thr] = workflows.RSN_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem, dir_path)
+            [est_path, thr] = workflows.RSN_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr)
         ##Case 3: Whole-brain structural connectome
         elif bedpostx_dir != None and network == None:
-            [est_path, thr] = workflows.wb_structural_connectometry(ID, bedpostx_dir, network, node_size, atlas_select, parlistfile, label_names, plot_switch, parc, dict_df, anat_loc, ref_txt, int(procmem[0]), dir_path)
+            [est_path, thr] = workflows.wb_structural_connectometry(ID, bedpostx_dir, network, node_size, atlas_select, parlistfile, label_names, plot_switch, parc, dict_df, anat_loc, ref_txt, int(procmem[0]), dir_path, multi_thr, multi_atlas, multi_nets, max_thr, min_thr)
         ##Case 4: RSN structural connectome
         elif bedpostx_dir != None:
-            [est_path, thr] = workflows.RSN_structural_connectometry(ID, bedpostx_dir, network, node_size, atlas_select, parlistfile, label_names, plot_switch, parc, dict_df, anat_loc, ref_txt, int(procmem[0]), dir_path)
+            [est_path, thr] = workflows.RSN_structural_connectometry(ID, bedpostx_dir, network, node_size, atlas_select, parlistfile, label_names, plot_switch, parc, dict_df, anat_loc, ref_txt, int(procmem[0]), dir_path, multi_thr, multi_atlas, multi_nets, max_thr, min_thr)
 
-        return est_path, thr
+        ##Create est_path iterables for network extraction across multiple graph outputs             
+        if multi_atlas==True or multi_thr==True or multi_nets==True: 
+            from pynets import utils
+            import numpy as np
+            est_path_list = []
+            if multi_thr==True:
+                print('Iterating pipeline for ' + str(ID) + ' across multiple thresholds...')
+                iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
+                float(max_thr), float(step_thr)),decimals=2).tolist()]
+                for thr in iter_thresh:
+                    est_path_tmp = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path)
+                    est_path_list.append(est_path_tmp)
+            if multi_atlas==True:
+                print('Iterating pipeline for ' + str(ID) + ' across multiple atlases...')
+                atlas_list = ['coords_power_2011', 'coords_dosenbach_2010', 'atlas_destrieux_2009', 'atlas_aal']
+                for atlas_select in atlas_list:
+                    dir_path = do_dir_path(atlas_select, input_file)
+                    est_path_tmp = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path)
+                    est_path_list.append(est_path_tmp)
+            else:
+                atlas_list=[atlas_select]
+            if multi_nets==True:
+                print('Iterating pipeline for ' + str(ID) + ' across all Yeo 7 networks...')
+                network_list = ['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default']
+                for network in network_list:
+                    est_path_tmp = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path)
+                    est_path_list.append(est_path_tmp)
+            else:
+                network_list = [network]* len(est_path_list)
+                
+            est_path = est_path_list
+            thr = iter_thresh
+            network = network_list
+            ID = [ID] * len(est_path_list)
+            mask = [mask] * len(est_path_list)
+            conn_model = [conn_model] * len(est_path_list)
+            
+        return(est_path, thr, network, ID, mask, conn_model)
 
     class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
-        sub_id = traits.Str(mandatory=True)
-        network = traits.Any(mandatory=True)
+        ID = traits.Any(mandatory=True)
+        network = traits.Any(mandatory=False)
         thr = traits.Any(mandatory=True)
         conn_model = traits.Str(mandatory=True)
-        est_path1 = File(exists=True, mandatory=True, desc="")
+        est_path = File(exists=False, mandatory=True, desc="")
         mask = traits.Any(mandatory=False)
 
     class ExtractNetStatsOutputSpec(TraitedSpec):
@@ -300,11 +338,11 @@ if __name__ == '__main__':
         def _run_interface(self, runtime):
             from pynets.netstats import extractnetstats
             out = extractnetstats(
-                self.inputs.sub_id,
+                self.inputs.ID,
                 self.inputs.network,
                 self.inputs.thr,
                 self.inputs.conn_model,
-                self.inputs.est_path1,
+                self.inputs.est_path,
                 self.inputs.mask)
             setattr(self, '_outpath', out)
             return runtime
@@ -314,9 +352,9 @@ if __name__ == '__main__':
             return {'out_file': op.abspath(getattr(self, '_outpath'))}
 
     class Export2PandasInputSpec(BaseInterfaceInputSpec):
-        in_csv = File(exists=True, mandatory=True, desc="")
-        sub_id = traits.Str(mandatory=True)
-        network = traits.Any(mandatory=True)
+        in_csv = File(exists=False, mandatory=True, desc="")
+        ID = traits.Any(mandatory=True)
+        network = traits.Any(mandatory=False)
         mask = traits.Any(mandatory=False)
         out_file = File('output_export2pandas.csv', usedefault=True)
 
@@ -330,7 +368,7 @@ if __name__ == '__main__':
         def _run_interface(self, runtime):
             export_to_pandas(
                 self.inputs.in_csv,
-                self.inputs.sub_id,
+                self.inputs.ID,
                 self.inputs.network,
                 self.inputs.mask,
                 out_file=self.inputs.out_file)
@@ -340,22 +378,8 @@ if __name__ == '__main__':
             import os.path as op
             return {'out_file': op.abspath(self.inputs.out_file)}
 
-    import_list=[ "import sys", "import os", "from sklearn.model_selection import train_test_split",
-    "from pynets.utils import export_to_pandas", "import warnings", "import gzip", "import nilearn", "import numpy as np",
-    "import networkx as nx", "import pandas as pd", "import nibabel as nib",
-    "import seaborn as sns", "import numpy.linalg as npl", "import matplotlib",
-    "matplotlib.use('Agg')", "import matplotlib.pyplot as plt", "from numpy import genfromtxt",
-    "from matplotlib import colors", "from nipype import Node, Workflow",
-    "from nilearn import input_data, masking, datasets", "from nilearn import plotting as niplot",
-    "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu",
-    "from nipype.interfaces import io as nio", "from nilearn.input_data import NiftiLabelsMasker",
-    "from nilearn.connectome import ConnectivityMeasure", "from nibabel.affines import apply_affine",
-    "from nipype.interfaces.base import isdefined, Undefined",
-    "from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso",
-    "from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits" ]
-
     def init_wf_single_subject(ID, input_file, dir_path, atlas_select, network,
-    node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf,
+    node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf,
     adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
     max_thr, step_thr, anat_loc, parc, ref_txt, procmem):
         wf = pe.Workflow(name='PyNets_' + str(ID))
@@ -364,8 +388,9 @@ if __name__ == '__main__':
         #1) Add variable to IdentityInterface if user-set
         inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID',
         'atlas_select', 'network', 'thr', 'node_size', 'mask', 'parlistfile',
-        'all_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch',
-        'bedpostx_dir', 'anat_loc', 'parc', 'ref_txt', 'procmem', 'dir_path']), name='inputnode')
+        'multi_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch',
+        'bedpostx_dir', 'anat_loc', 'parc', 'ref_txt', 'procmem', 'dir_path', 'multi_thr', 
+        'multi_atlas', 'max_thr', 'min_thr', 'step_thr']), name='inputnode')
 
         #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
         inputnode.inputs.in_file = input_file
@@ -376,7 +401,7 @@ if __name__ == '__main__':
         inputnode.inputs.node_size = node_size
         inputnode.inputs.mask = mask
         inputnode.inputs.parlistfile = parlistfile
-        inputnode.inputs.all_nets = all_nets
+        inputnode.inputs.multi_nets = multi_nets
         inputnode.inputs.conn_model = conn_model
         inputnode.inputs.dens_thresh = dens_thresh
         inputnode.inputs.conf = conf
@@ -388,35 +413,25 @@ if __name__ == '__main__':
         inputnode.inputs.ref_txt = ref_txt
         inputnode.inputs.procmem = procmem
         inputnode.inputs.dir_path = dir_path
+        inputnode.inputs.multi_thr = multi_thr
+        inputnode.inputs.multi_atlas = multi_atlas
+        inputnode.inputs.max_thr = max_thr
+        inputnode.inputs.min_thr = min_thr
+        inputnode.inputs.step_thr = step_thr
 
         #3) Add variable to function nodes
         ##Create function nodes
         imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select',
-        'network', 'node_size', 'mask', 'thr', 'parlistfile', 'all_nets', 'conn_model',
-        'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch', 'bedpostx_dir', 'anat_loc', 'parc', 'ref_txt', 'procmem', 'dir_path'],
-        output_names = ['est_path', 'thr'], function=workflow_selector, imports=import_list),
+        'network', 'node_size', 'mask', 'thr', 'parlistfile', 'multi_nets', 'conn_model',
+        'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch', 'bedpostx_dir', 'anat_loc', 
+        'parc', 'ref_txt', 'procmem', 'dir_path', 'multi_thr', 'multi_atlas', 'max_thr', 
+        'min_thr', 'step_thr'],
+        output_names = ['est_path', 'thr', 'network', 'ID', 'mask', 'conn_model'], function=workflow_selector),
         name = "imp_est")
 
-        imp_est_iterables=[]
-        if multi_thr==True:
-            print('Iterating pipeline for ' + str(ID) + ' across multiple thresholds...')
-            iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
-            float(max_thr), float(step_thr)),decimals=2).tolist()]
-            imp_est_iterables.append(("thr", iter_thresh))
-        if multi_atlas==True:
-            print('Iterating pipeline for ' + str(ID) + ' across multiple atlases...')
-            atlas_iterables = ("atlas_select", ['coords_power_2011',
-            'coords_dosenbach_2010', 'atlas_destrieux_2009', 'atlas_aal'])
-            imp_est_iterables.append(atlas_iterables)
-        if all_nets==True:
-            print('Iterating pipeline for ' + str(ID) + ' across all Yeo 7 networks...')
-            network_iterables = ("network", ['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default'])
-            imp_est_iterables.append(network_iterables)
-        if imp_est_iterables:
-            imp_est.iterables = imp_est_iterables
-
-        net_mets_node = pe.Node(ExtractNetStats(), name = "ExtractNetStats")
-        export_to_pandas_node = pe.Node(Export2Pandas(), name = "export_to_pandas")
+        ##Create MapNode types for net_mets_node and export_to_pandas_node
+        net_mets_node = pe.MapNode(interface=ExtractNetStats(), name = "ExtractNetStats", iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path', 'mask'])
+        export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name = "export_to_pandas", iterfield=['in_csv', 'ID', 'network', 'mask'])
 
         ##Connect nodes of workflow
         wf.connect([
@@ -428,7 +443,7 @@ if __name__ == '__main__':
                                   ('mask', 'mask'),
                                   ('thr', 'thr'),
                                   ('parlistfile', 'parlistfile'),
-                                  ('all_nets', 'all_nets'),
+                                  ('multi_nets', 'multi_nets'),
                                   ('conn_model', 'conn_model'),
                                   ('dens_thresh', 'dens_thresh'),
                                   ('conf', 'conf'),
@@ -439,22 +454,27 @@ if __name__ == '__main__':
                                   ('parc', 'parc'),
                                   ('ref_txt', 'ref_txt'),
                                   ('procmem', 'procmem'),
-                                  ('dir_path', 'dir_path')]),
-            (inputnode, net_mets_node, [('ID', 'sub_id'),
-                                       ('network', 'network'),
-                                       ('conn_model', 'conn_model'),
-                                       ('mask', 'mask')]),
-            (imp_est, net_mets_node, [('est_path', 'est_path1'),
-                                      ('thr', 'thr')]),
-            (inputnode, export_to_pandas_node, [('ID', 'sub_id'),
-                                            ('network', 'network'),
-                                            ('mask', 'mask')]),
+                                  ('dir_path', 'dir_path'),
+                                  ('multi_thr', 'multi_thr'),
+                                  ('multi_atlas', 'multi_atlas'),
+                                  ('max_thr', 'max_thr'),
+                                  ('min_thr', 'min_thr'),
+                                  ('step_thr', 'step_thr')]),
+            (imp_est, net_mets_node, [('est_path', 'est_path'),
+                                      ('network', 'network'),
+                                      ('thr', 'thr'),
+                                      ('ID', 'ID'),        
+                                      ('conn_model', 'conn_model'),
+                                      ('mask', 'mask')]),
+            (imp_est, export_to_pandas_node, [('network', 'network'),
+                                              ('ID', 'ID'),
+                                              ('mask', 'mask')]),    
             (net_mets_node, export_to_pandas_node, [('out_file', 'in_csv')]),
         ])
         return wf
 
     def wf_multi_subject(subjects_list, atlas_select, network, node_size, mask,
-    thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
+    thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh,
     plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem):
         wf_multi = pe.Workflow(name='PyNets_multisubject')
         i=0
@@ -468,7 +488,7 @@ if __name__ == '__main__':
                                mask=mask,
                                thr=thr,
                                parlistfile=parlistfile,
-                               all_nets=all_nets,
+                               multi_nets=multi_nets,
                                conn_model=conn_model,
                                dens_thresh=dens_thresh,
                                conf=conf,
@@ -500,7 +520,7 @@ if __name__ == '__main__':
 
     if subjects_list is not None:
         wf_multi = wf_multi_subject(subjects_list, atlas_select, network, node_size,
-        mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh,
+        mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr,
         anat_loc, parc, ref_txt, procmem)
         plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1]), 'status_callback' : log_nodes_cb}
@@ -510,7 +530,7 @@ if __name__ == '__main__':
     ##Single-subject workflow generator
     else:
         wf = init_wf_single_subject(ID, input_file, dir_path, atlas_select, network,
-        node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf,
+        node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf,
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr, anat_loc, parc, ref_txt, procmem)
         plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1]), 'status_callback' : log_nodes_cb}
