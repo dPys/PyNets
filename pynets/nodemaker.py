@@ -16,7 +16,13 @@ warnings.simplefilter("ignore")
 from nilearn import datasets, masking
 from nilearn.image import resample_img, concat_imgs, new_img_like
 from nilearn.plotting import find_xyz_cut_coords
-
+from pathlib import Path
+from pynets import utils
+try:
+    import cPickle as pickle
+except ImportError:
+    import _pickle as pickle
+    
 def get_sphere(coords, r, vox_dims, dims):
     """##Adapted from Neurosynth
     Return all points within r mm of coordinates. Generates a cube
@@ -185,6 +191,7 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
     return(coords_mm, RSN_parcels, net_label_names)
 
 def parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID):
+    from pynets import nodemaker
     ##For parcel masking, specify overlap thresh and error cushion in mm voxels
     perc_overlap = 0.75 ##Default is >=90% overlap
 
@@ -228,7 +235,7 @@ def parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID):
         
     ##Create a resampled 3D atlas that can be viewed alongside mask img for QA
     resampled_parcels_nii_path = dir_path + '/' + ID + '_parcels_resampled2mask_' + str(os.path.basename(mask).split('.')[0]) + '.nii.gz'
-    resampled_parcels_atlas, _ = create_parcel_atlas(parcel_list_adj)
+    resampled_parcels_atlas, _ = nodemaker.create_parcel_atlas(parcel_list_adj)
     resampled_parcels_map_nifti = resample_img(resampled_parcels_atlas, target_affine=mask_img.affine, target_shape=mask_data.shape)
     nib.save(resampled_parcels_map_nifti, resampled_parcels_nii_path)
     return(coords_adj, label_names_adj, parcel_list_adj)
@@ -335,3 +342,130 @@ def gen_network_parcels(parlistfile, network, labels, dir_path):
     out_path = dir_path + '/' + network + '_parcels.nii.gz'
     nib.save(net_parcels_map_nifti, out_path)
     return(out_path)
+
+def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc):
+    from pynets import nodemaker
+    ##Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
+    nilearn_parc_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
+    nilearn_coord_atlases=['harvard_oxford', 'msdl', 'coords_power_2011', 'smith_2009', 'basc_multiscale_2015', 'allen_2011', 'coords_dosenbach_2010']
+    if atlas_select in nilearn_parc_atlases:
+        [label_names, networks_list, parlistfile] = utils.nilearn_atlas_helper(atlas_select)
+
+    ##Get coordinates and/or parcels from atlas
+    if parlistfile is None and parc == False and atlas_select in nilearn_coord_atlases:
+        print('Fetching coordinates and labels from nilearn coordinate-based atlases')
+        ##Fetch nilearn atlas coords
+        [coords, atlas_name, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
+        parcel_list = None
+        par_max = None
+    else:
+        try:
+            ##Fetch user-specified atlas coords
+            [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
+            networks_list = None
+            ##Describe user atlas coords
+            print('\n' + str(atlas_select) + ' comes with {0} '.format(par_max) + 'parcels' + '\n')
+        except:
+            print('\n\nError: Either you have specified the name of a nilearn atlas the does not exist or you have not supplied a 3d atlas parcellation image!\n\n')
+            sys.exit(0)
+
+    ##Labels prep
+    try:
+        label_names
+    except:
+        if ref_txt is not None and os.path.exists(ref_txt):
+            atlas_select = os.path.basename(ref_txt).split('.txt')[0]
+            dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+            label_names = dict_df['Region'].tolist()
+        else:
+            try:
+                atlas_ref_txt = atlas_select + '.txt'
+                ref_txt = Path(__file__)/'atlases'/atlas_ref_txt
+                dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+                label_names = dict_df['Region'].tolist()
+            except:
+                label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+    if label_names is None:
+        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+    try:
+        atlas_name
+    except:
+        atlas_name = atlas_select
+    return(label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile)
+
+def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc):
+    ##Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
+    nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
+    if atlas_select in nilearn_atlases:
+        [label_names, networks_list, parlistfile] = utils.nilearn_atlas_helper(atlas_select)
+
+    ##Get coordinates and/or parcels from atlas
+    if parlistfile is None and parc == False:
+        print('Fetching coordinates and labels from nilearn coordinate-based atlases')
+        ##Fetch nilearn atlas coords
+        [coords, atlas_name, networks_list, label_names] = utils.fetch_nilearn_atlas_coords(atlas_select)
+        parcel_list = None
+        par_max = None
+    else:
+        ##Fetch user-specified atlas coords
+        [coords, atlas_select, par_max, parcel_list] = get_names_and_coords_of_parcels(parlistfile)
+        networks_list = None
+
+    ##Labels prep
+    try:
+        label_names
+    except:
+        if ref_txt is not None and os.path.exists(ref_txt):
+            atlas_select = os.path.basename(ref_txt).split('.txt')[0]
+            dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+            label_names = dict_df['Region'].tolist()
+        else:
+            label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+    if label_names is None:
+        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+    try:
+        atlas_name
+    except:
+        atlas_name = atlas_select
+    return(label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile)
+
+def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc):
+    from pynets import nodemaker
+    ##Mask Parcels
+    if parc == True:
+        [coords, label_names, parcel_list_masked] = parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID)
+        [net_parcels_map_nifti, parcel_list_adj] = nodemaker.create_parcel_atlas(parcel_list_masked)     
+        net_parcels_nii_path = dir_path + '/' + ID + '_parcels_masked_' + str(os.path.basename(mask).split('.')[0]) + '.nii.gz'
+        nib.save(net_parcels_map_nifti, net_parcels_nii_path)
+    ##Mask Coordinates
+    elif parc == False:
+        [coords, label_names] = coord_masker(mask, coords, label_names)
+        ##Save coords to pickle
+        coord_path = dir_path + '/WB_func_coords_' + str(os.path.basename(mask).split('.')[0]) + '.pkl'
+        with open(coord_path, 'wb') as f:
+            pickle.dump(coords, f)
+        net_parcels_map_nifti = None
+    ##Save labels to pickle
+    labels_path = dir_path + '/WB_func_labelnames_' + str(os.path.basename(mask).split('.')[0]) + '.pkl'
+    with open(labels_path, 'wb') as f:
+        pickle.dump(label_names, f)
+    return(net_parcels_map_nifti, coords, label_names)
+
+def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
+    from pynets import nodemaker     
+    if parc == True:
+        [net_parcels_map_nifti, parcel_list_adj] = nodemaker.create_parcel_atlas(parcel_list)
+        net_parcels_nii_path = dir_path + '/' + ID + '_wb_parcels.nii.gz'
+        nib.save(net_parcels_map_nifti, net_parcels_nii_path)
+    else:
+        net_parcels_map_nifti = None
+        print('No additional masking...')
+    ##Save coords to pickle
+    coord_path = dir_path + '/WB_func_coords_wb.pkl'
+    with open(coord_path, 'wb') as f:
+        pickle.dump(coords, f)
+    ##Save labels to pickle
+    labels_path = dir_path + '/WB_func_labelnames_wb.pkl'
+    with open(labels_path, 'wb') as f:
+        pickle.dump(label_names, f)
+    return(net_parcels_map_nifti, coords, label_names)

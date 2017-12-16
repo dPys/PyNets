@@ -10,15 +10,18 @@ import os
 import nibabel as nib
 import pandas as pd
 import numpy as np
-from pathlib import Path
+import time
+import sklearn as sk
+import scipy as sp
+from sklearn import cluster
 from nilearn import datasets, input_data
 from nilearn.image import concat_imgs
-from pynets import nodemaker, thresholding, graphestimation, plotting
-from nilearn import plotting as niplot
 try:
     import cPickle as pickle
 except ImportError:
     import _pickle as pickle
+from sklearn.feature_extraction import image
+from sklearn.cluster import FeatureAgglomeration
 
 def nilearn_atlas_helper(atlas_select):
     try:
@@ -93,224 +96,11 @@ def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
     df.to_pickle(out_file)
     return(out_file)
 
-def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc):
-    ##Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
-    nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
-    if atlas_select in nilearn_atlases:
-        [label_names, networks_list, parlistfile] = nilearn_atlas_helper(atlas_select)
-
-    ##Get coordinates and/or parcels from atlas
-    if parlistfile is None and parc == False:
-        print('Fetching coordinates and labels from nilearn coordinate-based atlases')
-        ##Fetch nilearn atlas coords
-        [coords, atlas_name, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
-        parcel_list = None
-        par_max = None
-    else:
-        ##Fetch user-specified atlas coords
-        [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
-        networks_list = None
-        ##Describe user atlas coords
-        print('\n' + str(atlas_select) + ' comes with {0} '.format(par_max) + 'parcels' + '\n')
-
-    ##Labels prep
-    try:
-        label_names
-    except:
-        if ref_txt is not None and os.path.exists(ref_txt):
-            atlas_select = os.path.basename(ref_txt).split('.txt')[0]
-            dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
-            label_names = dict_df['Region'].tolist()
-        else:
-            try:
-                atlas_ref_txt = atlas_select + '.txt'
-                ref_txt = Path(__file__)/'atlases'/atlas_ref_txt
-                dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
-                label_names = dict_df['Region'].tolist()
-            except:
-                label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-    if label_names is None:
-        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-    try:
-        atlas_name
-    except:
-        atlas_name = atlas_select
-    return(label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile)
-
-def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc):
-    ##Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
-    nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
-    if atlas_select in nilearn_atlases:
-        [label_names, networks_list, parlistfile] = nilearn_atlas_helper(atlas_select)
-
-    ##Get coordinates and/or parcels from atlas
-    if parlistfile is None and parc == False:
-        print('Fetching coordinates and labels from nilearn coordinate-based atlases')
-        ##Fetch nilearn atlas coords
-        [coords, atlas_name, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
-        parcel_list = None
-        par_max = None
-    else:
-        ##Fetch user-specified atlas coords
-        [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
-        networks_list = None
-
-    ##Labels prep
-    try:
-        label_names
-    except:
-        if ref_txt is not None and os.path.exists(ref_txt):
-            atlas_select = os.path.basename(ref_txt).split('.txt')[0]
-            dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
-            label_names = dict_df['Region'].tolist()
-        else:
-            label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-    if label_names is None:
-        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-    try:
-        atlas_name
-    except:
-        atlas_name = atlas_select
-    return(label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile)
-
-def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc):
-    ##Mask Parcels
-    if parc == True:
-        [coords, label_names, parcel_list_masked] = nodemaker.parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID)
-        [net_parcels_map_nifti, parcel_list_adj] = nodemaker.create_parcel_atlas(parcel_list_masked)     
-        net_parcels_nii_path = dir_path + '/' + ID + '_parcels_masked_' + str(os.path.basename(mask).split('.')[0]) + '.nii.gz'
-        nib.save(net_parcels_map_nifti, net_parcels_nii_path)
-    ##Mask Coordinates
-    elif parc == False:
-        [coords, label_names] = nodemaker.coord_masker(mask, coords, label_names)
-        ##Save coords to pickle
-        coord_path = dir_path + '/WB_func_coords_' + str(os.path.basename(mask).split('.')[0]) + '.pkl'
-        with open(coord_path, 'wb') as f:
-            pickle.dump(coords, f)
-        net_parcels_map_nifti = None
-    ##Save labels to pickle
-    labels_path = dir_path + '/WB_func_labelnames_' + str(os.path.basename(mask).split('.')[0]) + '.pkl'
-    with open(labels_path, 'wb') as f:
-        pickle.dump(label_names, f)
-    return(net_parcels_map_nifti, coords, label_names)
-
-def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):     
-    if parc == True:
-        [net_parcels_map_nifti, parcel_list_adj] = nodemaker.create_parcel_atlas(parcel_list)
-        net_parcels_nii_path = dir_path + '/' + ID + '_wb_parcels.nii.gz'
-        nib.save(net_parcels_map_nifti, net_parcels_nii_path)
-    else:
-        net_parcels_map_nifti = None
-        print('No additional masking...')
-    ##Save coords to pickle
-    coord_path = dir_path + '/WB_func_coords_wb.pkl'
-    with open(coord_path, 'wb') as f:
-        pickle.dump(coords, f)
-    ##Save labels to pickle
-    labels_path = dir_path + '/WB_func_labelnames_wb.pkl'
-    with open(labels_path, 'wb') as f:
-        pickle.dump(label_names, f)
-    return(net_parcels_map_nifti, coords, label_names)
-
-def extract_ts_wb_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network):
-    ##extract time series from whole brain parcellaions:
-    parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0, memory='joblib.Memory', memory_level=10, standardize=True)
-    ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
-    print('\n' + 'Time series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' volumetric ROI\'s\n')
-    ##Save time series as txt file
-    if mask is None:
-        if network is not None:
-            out_path_ts=dir_path + '/' + ID + '_' + network + '_rsn_net_ts.txt'
-        else:
-            out_path_ts=dir_path + '/' + ID + '_wb_net_ts.txt'
-    else:
-        if network is not None:
-            out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_rsn_net_ts.txt'
-        else:
-            out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_wb_net_ts.txt'
-    np.savetxt(out_path_ts, ts_within_nodes)
-    return(ts_within_nodes)
-    
-def extract_ts_wb_coords(node_size, conf, func_file, coords, dir_path, ID, mask, thr, network):
-    spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True, memory='joblib.Memory', memory_level=10, standardize=True)
-    ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
-    print('\n' + 'Time series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' coordinate ROI\'s\n')
-    ##Save time series as txt file
-    if mask is None:
-        out_path_ts=dir_path + '/' + ID + '_wb_net_ts.txt'
-    else:
-        out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_net_ts.txt'
-    np.savetxt(out_path_ts, ts_within_nodes)
-    return(ts_within_nodes)
-
 def do_dir_path(atlas_select, in_file):
     dir_path = os.path.dirname(os.path.realpath(in_file)) + '/' + atlas_select
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
     return dir_path
-
-def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, network, ID, dir_path, mask):
-    from pynets import utils
-   
-    ##Adaptive thresholding scenario
-    if adapt_thresh is not False:
-        try:
-            est_path2 = dir_path + '/' + ID + '_structural_est.txt'
-            if os.path.isfile(est_path2) == True:
-                [conn_matrix_thr, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_nodes, conn_model, network, ID, est_path2, dir_path)
-                ##Save unthresholded
-                unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
-                np.savetxt(unthr_path, conn_matrix_thr, delimiter='\t')
-                edge_threshold = str(float(thr)*100) +'%'
-            else:
-                print('No structural mx found! Exiting...')
-                sys.exit()
-        except:
-            print('No structural mx assigned! Exiting...')
-            sys.exit()
-    else:        
-        ##Fit mat
-        conn_matrix = graphestimation.get_conn_matrix(ts_within_nodes, conn_model)
-        
-        ##Save unthresholded
-        unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
-        np.savetxt(unthr_path, conn_matrix, delimiter='\t')
-
-        if not dens_thresh:
-            ##Save thresholded
-            conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
-            edge_threshold = str(float(thr)*100) +'%'
-            est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path) 
-        else:
-            conn_matrix_thr = thresholding.density_thresholding(conn_matrix, dens_thresh)
-            edge_threshold = str((1-float(dens_thresh))*100) +'%'
-            est_path = utils.create_est_path(ID, network, conn_model, dens_thresh, mask, dir_path)
-        np.savetxt(est_path, conn_matrix_thr, delimiter='\t')
-    return(conn_matrix_thr, edge_threshold, est_path, thr)
-
-def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold, plot_switch):
-    if plot_switch == True:
-        ##Plot connectogram
-        if len(conn_matrix) > 20:
-            try:
-                plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
-            except RuntimeError:
-                print('\n\n\nError: Connectogram plotting failed!')
-        else:
-            print('Error: Cannot plot connectogram for graphs smaller than 20 x 20!')
-    
-        ##Plot adj. matrix based on determined inputs
-        atlas_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask)
-    
-        ##Plot connectome
-        if mask != None:
-            out_path_fig=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
-        else:
-            out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
-        niplot.plot_connectome(conn_matrix, coords, title=atlas_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
-    else:
-        pass
-    return
 
 def create_est_path(ID, network, conn_model, thr, mask, dir_path):
     if mask != None:
@@ -350,3 +140,149 @@ def create_csv_path(ID, network, conn_model, thr, mask, dir_path):
         else:
             out_path = dir_path + '/' + ID + '_net_metrics_' + conn_model + '_' + str(thr) + '.csv'
     return out_path
+
+def timeseries_bootstrap(tseries, block_size):
+    """
+    Adapted from PyBASC: @Aki Nikolaidis
+    Generates a bootstrap sample derived from the input time-series.  Utilizes Circular-block-bootstrap method described in [1]_.
+
+    Parameters
+    ----------
+    tseries : array_like
+        A matrix of shapes (`M`, `N`) with `M` timepoints and `N` variables
+    block_size : integer
+        Size of the bootstrapped blocks
+
+    Returns
+    -------
+    bseries : array_like
+        Bootstrap sample of the input timeseries
+
+    References
+    ----------
+    .. [1] P. Bellec; G. Marrelec; H. Benali, A bootstrap test to investigate
+       changes in brain connectivity for functional MRI. Statistica Sinica,
+       special issue on Statistical Challenges and Advances in Brain Science,
+       2008, 18: 1253-1268.
+    """
+
+    k = np.ceil(float(tseries.shape[0])/int(block_size))
+    r_ind = np.floor(np.random.rand(1,int(k))*tseries.shape[0])
+    blocks = np.dot(np.arange(0,int(block_size))[:,np.newaxis], np.ones([1,int(k)]))
+    block_offsets = np.dot(np.ones([int(block_size),1]), r_ind)
+    block_mask = (blocks + block_offsets).flatten('F')[:tseries.shape[0]]
+    block_mask = np.mod(block_mask, tseries.shape[0])
+    return tseries[block_mask.astype('int'), :]
+
+def adjacency_matrix(cluster_pred):
+    """
+    Adapted from PyBASC: @Aki Nikolaidis
+    Calculate adjacency matrix for given cluster predictions
+
+    Parameters
+    ----------
+    cluster_pred : array_like
+        A matrix of shape (`N`, `1`) with `N` samples
+
+    Returns
+    -------
+    A : array_like
+        Adjacency matrix of shape (`N`,`N`)
+    """
+    x = cluster_pred.copy()
+    if(len(x.shape) == 1):
+        x = x[:, np.newaxis]
+    # Force the cluster indexing to be positive integers
+    if(x.min() <= 0):
+        x += -x.min() + 1
+    A = np.dot(x**-1., x.T) == 1
+    return A
+
+def cluster_timeseries(X, k, similarity_metric, affinity_threshold, neighbors = 10):
+    """
+    Adapted from PyBASC: @Aki Nikolaidis
+    Cluster a given timeseries
+
+    Parameters
+    ----------
+    X : array_like
+        A matrix of shape (`N`, `M`) with `N` samples and `M` dimensions
+    n_clusters : integer
+        Number of clusters
+    similarity_metric : {'k_neighbors', 'correlation', 'data'}
+        Type of similarity measure for spectral clustering.  The pairwise similarity measure
+        specifies the edges of the similarity graph. 'data' option assumes X as the similarity
+        matrix and hence must be symmetric.  Default is kneighbors_graph [1]_ (forced to be
+        symmetric)
+    affinity_threshold : float
+        Threshold of similarity metric when 'correlation' similarity metric is used.
+
+    Returns
+    -------
+    y_pred : array_like
+        Predicted cluster labels
+
+    References
+    ----------
+    .. [1] http://scikit-learn.org/dev/modules/generated/sklearn.neighbors.kneighbors_graph.html
+    """
+    X = np.array(X)
+    X_dist = sp.spatial.distance.pdist(X, metric = similarity_metric)
+    X_dist = sp.spatial.distance.squareform(X_dist)
+    sim_matrix=1-X_dist
+    sim_matrix[np.isnan((sim_matrix))]=0
+    sim_matrix[sim_matrix<float(affinity_threshold)]=0
+    sim_matrix[sim_matrix>1]=1
+    spectral = cluster.SpectralClustering(k, eigen_solver='arpack', random_state = 5, affinity="precomputed", assign_labels='discretize')
+    spectral.fit(sim_matrix)
+    y_pred = spectral.labels_.astype(np.int)
+    return y_pred
+
+def ism_clustering(ID, mask, k, dir_path, func_file, n_bootstraps = 100, affinity_threshold = 0.80):
+    print('Calculating individual stability matrix from: ' + func_file)
+    data = nib.load(func_file).get_data().astype('float64')
+    mask_img = nib.load(mask)
+    mask_data = mask_img.get_data().astype('float64').astype('bool')
+    Y = data[mask_data].T
+    Y = sk.preprocessing.normalize(Y, norm='l2')
+    samples = Y.shape[0]
+    block_size = int(np.sqrt(samples))
+    print('Block size: ', block_size)
+    S = np.zeros((samples, samples))
+    i = 1
+    print('Bootstrapping:')
+    for bootstrap_i in range(n_bootstraps):
+        print(str(i))
+        Y_b1 = timeseries_bootstrap(Y, block_size)
+        S += adjacency_matrix(cluster_timeseries(Y_b1, k, similarity_metric = 'correlation', affinity_threshold = affinity_threshold)[:,np.newaxis])
+        i = i + 1
+    S /= n_bootstraps
+    S=S.astype("uint8")
+  
+def ward_clustering(ID, clust_mask, k, func_file):
+    k = int(k)
+    mask_img = nib.load(clust_mask)
+    nifti_masker = input_data.NiftiMasker(mask_img = mask_img, memory='joblib.Memory',
+                                          memory_level=1,
+                                          standardize=False)
+    fmri_masked = nifti_masker.fit_transform(func_file)
+    mask_data = nifti_masker.mask_img_.get_data().astype(bool)
+    shape = mask_data.shape
+    connectivity = image.grid_to_graph(n_x=shape[0], n_y=shape[1],
+                                       n_z=shape[2], mask=mask_data)
+    start = time.time()
+    ward = FeatureAgglomeration(n_clusters=k, connectivity=connectivity,
+                                linkage='ward', memory='joblib.Memory')
+    ward.fit(fmri_masked)
+    print('Ward agglomeration for subject ' + str(ID) + ' with '+ str(k) + ' clusters: %.2fs' % (time.time() - start))
+
+    labels = ward.labels_ + 1
+    labels_img = nifti_masker.inverse_transform(labels)
+    #first_plot = plot_roi(labels_img, mean_func_img, title="Ward parcellation", display_mode='xz')
+    mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+    atlas_select = mask_name + '_k' + str(k)
+    dir_path = do_dir_path(atlas_select, func_file)
+    parlistfile = dir_path + '/' + str(ID) + '_' + mask_name + '_parc_k_' + str(k) + '.nii.gz'
+    labels_img.to_filename(parlistfile)
+    print('Saving file to: ' + str(parlistfile) + '\n')
+    return(parlistfile, atlas_select, dir_path)

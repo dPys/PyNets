@@ -7,17 +7,20 @@ from itertools import chain
 ###
 working_path = r'/work/04171/dpisner/data/ABM/network_analysis' # use your path
 name_of_network_pickle = 'net_metrics_sps'
-net_name='CON'
+net_name='triple_net_atlas'
 missingness_thresh = 0.10
-clusters=100
+clusters=10
 ###
 
 all_subs = [i for i in os.listdir(working_path) if len(i) <= 3]
 all_subs.sort()
-all_subs = all_subs[:-35]
+#all_subs = all_subs[:-35]
 
 for ID in all_subs:
-    atlas_name =  ID + '_' + net_name + '_parcellation_' + str(clusters)
+    if clusters is None:
+        atlas_name = net_name
+    else:
+        atlas_name =  ID + '_' + net_name + '_' + str(clusters) + 'clusters'
     subject_path = working_path + '/' + str(ID) + '/' + atlas_name
     ##Get path of thresholded pickles
     net_pickle_mt_list = []
@@ -37,6 +40,7 @@ for ID in all_subs:
         if os.path.isfile(path_name):
             allFiles.append(path_name)
 
+    allFiles = allFiles[5:]
     frame = pd.DataFrame()
     list_ = []
 
@@ -47,23 +51,24 @@ for ID in all_subs:
     list_ = list_[0:-1]
     try:
         ##Concatenate and find mean across dataframes
-        df_concat = pd.concat(list_).mean().astype(str)
+        list_of_dicts = [cur_df.T.to_dict().values() for cur_df in list_]
+        df_concat = pd.concat(list_, axis=1)
+        df_concat = pd.DataFrame(list(chain(*list_of_dicts)))
+        df_concatted = df_concat.loc[:, df_concat.columns != 'id'].mean().to_frame().transpose()
+        df_concatted['id'] = df_concat['id'].head(1)
         print('Concatenating for ' + str(ID))
-        df_concat['id'] = str(ID)
-        df_concat = df_concat.to_frame().transpose()
-        df_concat['id'] = df_concat['id'].astype(int)
-#        df_concat.to_pickle(subject_path + '/' + str(ID) + '_' + name_of_network_pickle + '_' + net_name + '_mean')
-        df_concat.to_pickle(subject_path + '/' + str(ID) + '_' + name_of_network_pickle + '_mean')
+        df_concatted.to_pickle(subject_path + '/' + str(ID) + '_' + name_of_network_pickle + '_' + net_name + '_mean')
     except:
         print('NO OBJECTS TO CONCATENATE FOR ' + str(ID))
         continue
 
 allFiles = []
 for ID in all_subs:
-    atlas_name =  ID + '_' + net_name + '_parcellation_' + str(clusters)
-    #path_name = working_path + '/' + str(ID) + '/' + atlas_name + '/' + str(ID) + '_' + name_of_network_pickle + '_' + net_name + '_mean'
-    path_name = working_path + '/' + str(ID) + '/' + atlas_name + '/' + str(ID) + '_' + name_of_network_pickle + '_mean'
-    print(path_name)
+    atlas_name =  ID + '_' + net_name + '_' + str(clusters) + 'clusters'
+    if clusters is None:
+        path_name = working_path + '/' + str(ID) + '/' + atlas_name + '/' + str(ID) + '_' + name_of_network_pickle + '_mean'
+    else:
+        path_name = working_path + '/' + str(ID) + '/' + atlas_name + '/' + str(ID) + '_' + name_of_network_pickle + '_' + net_name + '_mean'
     if os.path.isfile(path_name):
         print(path_name)
         allFiles.append(path_name)
@@ -76,23 +81,16 @@ list_ = []
 for file_ in allFiles:
     try:
         df = pd.read_pickle(file_)
-        df = df.drop(0, 1)
-        new_names = [(i, net_name + '_' + i) for i in df.iloc[:, 1:].columns.values]
+        bad_cols = [c for c in df.columns if str(c).isdigit()]
+        for j in bad_cols:
+            df = df.drop(j, 1)
+        df_no_id = df.loc[:, df.columns != 'id']
+        new_names = [(i, net_name + '_' + i) for i in df_no_id.iloc[:, 1:].columns.values]
         df.rename(columns = dict(new_names), inplace=True)
         list_.append(df)
     except:
         print('File: ' + file_ + ' is corrupted!')
         continue
-
-##Get only common columns
-#common_cols = list(set.intersection(*(set(df.columns) for df in list_)))
-#try:
-#    common_cols.pop(0)
-#except:
-#    pass
-#frame = pd.concat([df[common_cols] for df in list_], ignore_index=True, axis=0)
-
-#frame = pd.concat(list_, axis=0, ignore_index=True)
 
 list_of_dicts = [cur_df.T.to_dict().values() for cur_df in list_]
 frame = pd.DataFrame(list(chain(*list_of_dicts)))

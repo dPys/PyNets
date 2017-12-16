@@ -5,6 +5,7 @@ Created on Tue Nov  7 10:40:07 2017
 @author: Derek Pisner
 """
 import sys
+import os
 import numpy as np
 import networkx as nx
 #warnings.simplefilter("ignore")
@@ -126,7 +127,6 @@ def adaptive_thresholding(ts_within_nodes, conn_model, network, ID, struct_mat_p
     np.fill_diagonal(conn_matrix, 0)
     func_mat = conn_matrix
     func_mat_bin = binarize(func_mat)
-    fG=nx.from_numpy_matrix(func_mat)
     density = est_density(func_mat)
 
     ##Prep Structural mx
@@ -218,3 +218,43 @@ def autofix(W, copy=True):
     if np.allclose(W, W.T):
         W = np.around(W, decimals=5)
     return W
+
+def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, network, ID, dir_path, mask):
+    from pynets import utils
+    from pynets import thresholding
+   
+    ##Adaptive thresholding scenario
+    if adapt_thresh is not False:
+        try:
+            est_path2 = dir_path + '/' + ID + '_structural_est.txt'
+            if os.path.isfile(est_path2) == True:
+                [conn_matrix_thr, est_path, edge_threshold, thr] = adaptive_thresholding(ts_within_nodes, conn_model, network, ID, est_path2, dir_path)
+                ##Save unthresholded
+                unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
+                np.savetxt(unthr_path, conn_matrix_thr, delimiter='\t')
+                edge_threshold = str(float(thr)*100) +'%'
+            else:
+                print('No structural mx found! Exiting...')
+                sys.exit()
+        except:
+            print('No structural mx assigned! Exiting...')
+            sys.exit()
+    else:        
+        ##Fit mat
+        conn_matrix = graphestimation.get_conn_matrix(ts_within_nodes, conn_model)
+        
+        ##Save unthresholded
+        unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
+        np.savetxt(unthr_path, conn_matrix, delimiter='\t')
+
+        if not dens_thresh:
+            ##Save thresholded
+            conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
+            edge_threshold = str(float(thr)*100) +'%'
+            est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path) 
+        else:
+            conn_matrix_thr = thresholding.density_thresholding(conn_matrix, dens_thresh)
+            edge_threshold = str((1-float(dens_thresh))*100) +'%'
+            est_path = utils.create_est_path(ID, network, conn_model, dens_thresh, mask, dir_path)
+        np.savetxt(est_path, conn_matrix_thr, delimiter='\t')
+    return(conn_matrix_thr, edge_threshold, est_path, thr)
