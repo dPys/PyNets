@@ -1,393 +1,499 @@
-import sys
-import argparse
-import os
-import nilearn
-import numpy as np
-import networkx as nx
-import pandas as pd
-import nibabel as nib
-import seaborn as sns
-import numpy.linalg as npl
-import matplotlib
-import sklearn
-import matplotlib
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov  7 10:40:07 2017
+
+@author: Derek Pisner
+"""
 import warnings
-import pynets
-#warnings.simplefilter("ignore")
-import matplotlib.pyplot as plt
-from numpy import genfromtxt
-from matplotlib import colors
-from nipype import Node, Workflow
-from nilearn import input_data, masking, datasets
-from nilearn import plotting as niplot
+warnings.simplefilter("ignore")
+from pynets import nodemaker
+from pynets.diffconnectometry import prepare_masks, run_struct_mapping
+from pynets import utils, graphestimation, plotting, thresholding
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
-from nipype.interfaces import io as nio
-from nilearn.input_data import NiftiLabelsMasker
-from nilearn.connectome import ConnectivityMeasure
-from nibabel.affines import apply_affine
-from nipype.interfaces.base import isdefined, Undefined
-from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
-from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
-from pynets import nodemaker, thresholding, plotting, graphestimation
-try:
-    import cPickle as pickle
-except ImportError:
-    import _pickle as pickle
+import numpy as np
 
-def wb_connectome_with_us_atlas_coords(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir):
-    nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
+def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering):
 
-    ##Input is nifti file
-    func_file=input_file
+    import_list=[ "import sys", "import os", "from sklearn.model_selection import train_test_split",
+    "from pynets.utils import export_to_pandas", "import warnings", "import gzip", "import nilearn", "import numpy as np",
+    "import networkx as nx", "import pandas as pd", "import nibabel as nib",
+    "import seaborn as sns", "import numpy.linalg as npl", "import matplotlib",
+    "matplotlib.use('Agg')", "import matplotlib.pyplot as plt", "from numpy import genfromtxt",
+    "from matplotlib import colors", "from nipype import Node, Workflow",
+    "from nilearn import input_data, masking, datasets", "from nilearn import plotting as niplot",
+    "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu",
+    "from nipype.interfaces import io as nio", "from nilearn.input_data import NiftiLabelsMasker",
+    "from nilearn.connectome import ConnectivityMeasure", "from nibabel.affines import apply_affine",
+    "from nipype.interfaces.base import isdefined, Undefined",
+    "from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso",
+    "from pynets import nodemaker, thresholding, graphestimation, plotting",
+    "from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits",
+    "import _pickle as pickle", "from pynets.utils import nilearn_atlas_helper", "import scipy as sp", 
+    "import time", "from sklearn.feature_extraction import image",
+    "from sklearn.cluster import FeatureAgglomeration", "from pynets.utils import do_dir_path"]
 
-    ##Test if atlas_select is a nilearn atlas
-    if atlas_select in nilearn_atlases:
-        try:
-            parlistfile=getattr(datasets, 'fetch_%s' % atlas_select)().maps
-            try:
-                label_names=getattr(datasets, 'fetch_%s' % atlas_select)().labels
-            except:
-                label_names=None
-            try:
-                networks_list = getattr(datasets, 'fetch_%s' % atlas_select)().networks
-            except:
-                networks_list = None
-        except:
-            print('PyNets is not ready for multi-scale atlases like BASC just yet!')
-            sys.exit()
+    wb_functional_connectometry_wf = pe.Workflow(name='wb_functional_connectometry')
+    wb_functional_connectometry_wf.base_directory='/tmp/pynets'
+    
+    ##Create input/output nodes
+    #1) Add variable to IdentityInterface if user-set
+    inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID', 
+                                                      'atlas_select', 'network', 
+                                                      'node_size', 'mask', 'thr', 
+                                                      'parlistfile', 'multi_nets', 
+                                                      'conn_model', 'dens_thresh', 
+                                                      'conf', 'adapt_thresh', 
+                                                      'plot_switch', 'parc', 'ref_txt', 
+                                                      'procmem', 'dir_path', 'k', 
+                                                      'clust_mask', 'k_min', 'k_max', 
+                                                      'k_step', 'k_clustering']), name='inputnode')
 
-    ##Fetch user-specified atlas coords
-    [coords, atlas_name, par_max] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
-    atlas_select=atlas_name
+    #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
+    inputnode.inputs.func_file = func_file
+    inputnode.inputs.ID = ID
+    inputnode.inputs.atlas_select = atlas_select
+    inputnode.inputs.network = network
+    inputnode.inputs.node_size = node_size
+    inputnode.inputs.mask = mask
+    inputnode.inputs.thr = thr
+    inputnode.inputs.parlistfile = parlistfile
+    inputnode.inputs.conn_model = conn_model
+    inputnode.inputs.dens_thresh = dens_thresh
+    inputnode.inputs.conf = conf
+    inputnode.inputs.adapt_thresh = adapt_thresh
+    inputnode.inputs.plot_switch = plot_switch
+    inputnode.inputs.parc = parc
+    inputnode.inputs.ref_txt = ref_txt
+    inputnode.inputs.procmem = procmem
+    inputnode.inputs.dir_path = dir_path
+    inputnode.inputs.k = k
+    inputnode.inputs.clust_mask = clust_mask
+    inputnode.inputs.k_min = k_min
+    inputnode.inputs.k_max = k_max
+    inputnode.inputs.k_step = k_step
+    inputnode.inputs.k_clustering = k_clustering
 
-    try:
-        label_names
-    except:
-
-
-        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-
-    ##Get subject directory path
-    dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_select
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
-
-    ##Describe user atlas coords
-    print('\n' + atlas_name + ' comes with {0} '.format(par_max) + 'parcels' + '\n')
-    print('\n'+ 'Stacked atlas coordinates in array of shape {0}.'.format(coords.shape) + '\n')
-
-    ##Mask coordinates
+    #3) Add variable to function nodes
+    ##Create function nodes
+    clustering_node = pe.Node(niu.Function(input_names = ['ID', 'clust_mask', 'k', 'func_file'], 
+                                                          output_names = ['parlistfile', 'atlas_select', 'dir_path'], 
+                                                          function=utils.ward_clustering, imports = import_list), name = "clustering_node")  
+    
+    WB_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names = ['atlas_select', 'parlistfile', 'ref_txt', 'parc'], 
+                                                          output_names = ['label_names', 'coords', 'atlas_select', 'networks_list', 'parcel_list', 'par_max', 'parlistfile'], 
+                                                          function=nodemaker.WB_fetch_nodes_and_labels, imports = import_list), name = "WB_fetch_nodes_and_labels_node")    
+    
+    ##Node generation
     if mask is not None:
-        [coords, label_names] = nodemaker.coord_masker(mask, coords, label_names)
-
-    ##Save coords and label_names to pickles
-    coord_path = dir_path + '/coords_wb_' + str(thr) + '.pkl'
-    with open(coord_path, 'wb') as f:
-        pickle.dump(coords, f)
-
-    labels_path = dir_path + '/labelnames_wb_' + str(thr) + '.pkl'
-    with open(labels_path, 'wb') as f:
-        pickle.dump(label_names, f)
-
-    if bedpostx_dir is not None:
-        from pynets.diffconnectometry import run_struct_mapping
-        FSLDIR = os.environ['FSLDIR']
-        try:
-            FSLDIR
-        except NameError:
-            print('FSLDIR environment variable not set!')
-        try:
-            est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, network, coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
-        except RuntimeError:
-            print('Whole-brain Structural Graph Estimation Failed!')
-
-    ##extract time series from whole brain parcellaions:
-    parcellation = nib.load(parlistfile)
-    parcel_masker = input_data.NiftiLabelsMasker(labels_img=parcellation, background_label=0, memory='nilearn_cache', memory_level=10, standardize=True)
-    ts_within_parcels = parcel_masker.fit_transform(func_file, confounds=conf)
-    print('\n' + 'Time series has {0} samples'.format(ts_within_parcels.shape[0]) + '\n')
-
-    ##Save time series as txt file
-    out_path_ts=dir_path + '/' + ID + '_whole_brain_ts_within_parcels.txt'
-    np.savetxt(out_path_ts, ts_within_parcels)
-
-    ##Fit connectivity model
-    if adapt_thresh is not False:
-        try:
-            est_path2
-            if os.path.isfile(est_path2) == True:
-                [conn_matrix, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_parcels, conn_model, network, ID, est_path2, dir_path)
-            else:
-                print('No structural mx found! Exiting...')
-                sys.exit()
-        except:
-            print('No structural mx assigned! Exiting...')
-            sys.exit()
-
-    elif dens_thresh is None:
-        edge_threshold = str(float(thr)*100) +'%'
-        [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_parcels, conn_model, network, ID, dir_path, thr)
-        conn_matrix = thresholding.threshold_proportional(conn_matrix, float(thr), dir_path)
-        conn_matrix = thresholding.normalize(conn_matrix)
-    elif dens_thresh is not None:
-        [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_parcels, conn_model, network, ID, dens_thresh, dir_path)
-
-    if plot_switch == True:
-        ##Plot connectogram
-        plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
-
-        ##Plot adj. matrix based on determined inputs
-        atlas_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names, mask)
-
-        ##Plot connectome viz for all Yeo networks
-        out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
-        niplot.plot_connectome(conn_matrix, coords, title=atlas_graph_title, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
-    return est_path, thr
-
-def wb_connectome_with_nl_atlas_coords(input_file, ID, atlas_select, network, node_size, mask, thr, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir):
-    nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
-
-    ##Input is nifti file
-    func_file=input_file
-
-    ##Fetch nilearn atlas coords
-    [coords, atlas_name, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
-
-    ##Get subject directory path
-    dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_select
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
-
-    ##Mask coordinates
-    if mask is not None:
-        [coords, label_names] = nodemaker.coord_masker(mask, coords, label_names)
-
-    ##Save coords and label_names to pickles
-    coord_path = dir_path + '/coords_wb_' + str(thr) + '.pkl'
-    with open(coord_path, 'wb') as f:
-        pickle.dump(coords, f)
-
-    labels_path = dir_path + '/labelnames_wb_' + str(thr) + '.pkl'
-    with open(labels_path, 'wb') as f:
-        pickle.dump(label_names, f)
-
-    if bedpostx_dir is not None:
-        from pynets.diffconnectometry import run_struct_mapping
-        FSLDIR = os.environ['FSLDIR']
-        try:
-            FSLDIR
-        except NameError:
-            print('FSLDIR environment variable not set!')
-        try:
-            est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, network, coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
-        except RuntimeError:
-            print('Whole-brain Structural Graph Estimation Failed!')
-
-    ##Extract within-spheres time-series from funct file
-    spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), memory='nilearn_cache', memory_level=10, verbose=2, standardize=True)
-    ts_within_spheres = spheres_masker.fit_transform(func_file, confounds=conf)
-    print('\n' + 'Time series has {0} samples'.format(ts_within_spheres.shape[0]) + '\n')
-
-    ##Save time series as txt file
-    out_path_ts=dir_path + '/' + ID + '_whole_brain_ts_within_spheres.txt'
-    np.savetxt(out_path_ts, ts_within_spheres)
-
-    ##Fit connectivity model
-    if adapt_thresh is not False:
-        try:
-            est_path2
-            if os.path.isfile(est_path2) == True:
-                [conn_matrix, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_spheres, conn_model, network, ID, est_path2, dir_path)
-            else:
-                print('No structural mx found! Exiting...')
-                sys.exit()
-        except:
-            print('No structural mx assigned! Exiting...')
-            sys.exit()
-
-    elif dens_thresh is None:
-        edge_threshold = str(float(thr)*100) +'%'
-        [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, network, ID, dir_path, thr)
-        conn_matrix = thresholding.threshold_proportional(conn_matrix, float(thr), dir_path)
-        conn_matrix = thresholding.normalize(conn_matrix)
-    elif dens_thresh is not None:
-        [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_spheres, conn_model, network, ID, dens_thresh, dir_path)
-
-    if plot_switch == True:
-        ##Plot connectogram
-        plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
-
-        ##Plot adj. matrix based on determined inputs
-        plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names, mask)
-
-        ##Plot connectome viz for all Yeo networks
-        out_path_fig=dir_path + '/' + ID + '_' + atlas_name + '_connectome_viz.png'
-        niplot.plot_connectome(conn_matrix, coords, title=atlas_name, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
-    return est_path, thr
-
-def network_connectome(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, all_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir):
-    nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
-
-    ##Input is nifti file
-    func_file=input_file
-
-    ##Test if atlas_select is a nilearn atlas
-    if atlas_select in nilearn_atlases:
-        atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
-        try:
-            parlistfile=atlas.maps
-            try:
-                label_names=atlas.labels
-            except:
-                label_names=None
-            try:
-                networks_list = atlas.networks
-            except:
-                networks_list = None
-        except RuntimeError:
-            print('Error, atlas fetching failed.')
-            sys.exit()
-
-    if parlistfile == None and atlas_select not in nilearn_atlases:
-        ##Fetch nilearn atlas coords
-        [coords, atlas_name, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
-
-        try:
-            networks_list
-        except:
-            networks_list = None
-
-        net_coords = nodemaker.get_membership_from_coords(network, func_file, coords, networks_list)
-        ix_labels = list(np.arange(len(net_coords)) + 1)[:-1]
-
-        try:
-            label_names=label_names.tolist()
-        except:
-            label_names=ix_labels
-
-        ##Get subject directory path
-        dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_select
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
-
-        ##If masking, remove those coords that fall outside of the mask
-        if mask != None:
-            [net_coords, label_names] = nodemaker.coord_masker(mask, net_coords, label_names)
-
-        ##Save coords and label_names to pickles
-        coord_path = dir_path + '/coords_' + network + '_' + str(thr) + '.pkl'
-        with open(coord_path, 'wb') as f:
-            pickle.dump(net_coords, f)
-
-        labels_path = dir_path + '/labelnames_' + network + '_' + str(thr) + '.pkl'
-        with open(labels_path, 'wb') as f:
-            pickle.dump(label_names, f)
-
-        if bedpostx_dir is not None:
-            from pynets.diffconnectometry import run_struct_mapping
-            FSLDIR = os.environ['FSLDIR']
-            try:
-                FSLDIR
-            except NameError:
-                print('FSLDIR environment variable not set!')
-            try:
-                est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, network, net_coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
-            except RuntimeError:
-                print('Whole-brain Structural Graph Estimation Failed!')
-
+        node_gen_node = pe.Node(niu.Function(input_names = ['mask', 'coords', 'parcel_list', 'label_names', 'dir_path', 'ID', 'parc'], 
+                                                     output_names=['net_parcels_map_nifti', 'coords', 'label_names'], 
+                                                     function=nodemaker.node_gen_masking, imports = import_list), name = "node_gen_masking_node")   
     else:
-        ##Fetch user-specified atlas coords
-        [coords_all, atlas_name, par_max] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
-        coords = list(tuple(x) for x in coords_all)
+        node_gen_node = pe.Node(niu.Function(input_names = ['coords', 'parcel_list', 'label_names', 'dir_path', 'ID', 'parc'], 
+                                                     output_names=['net_parcels_map_nifti', 'coords', 'label_names'], 
+                                                     function=nodemaker.node_gen, imports = import_list), name = "node_gen_node")
+    
+    ##Extract time-series from nodes
+    if parc == True:
+        ##extract time series from whole brain parcellaions:        
+        extract_ts_wb_node = pe.Node(niu.Function(input_names = ['net_parcels_map_nifti', 'conf', 'func_file', 'coords', 'mask', 'dir_path', 'ID', 'network'], 
+                                                     output_names=['ts_within_nodes'], 
+                                                     function=graphestimation.extract_ts_wb_parc, imports = import_list), name = "extract_ts_wb_parc_node")   
+    else:
+        ##Extract within-spheres time-series from funct file
+        extract_ts_wb_node = pe.Node(niu.Function(input_names = ['node_size', 'conf', 'func_file', 'coords', 'dir_path', 'ID', 'mask', 'thr', 'network'], 
+                                             output_names=['ts_within_nodes'], 
+                                             function=graphestimation.extract_ts_wb_coords, imports = import_list), name = "extract_ts_wb_coords_node")        
 
-        ##Get subject directory path
-        dir_path = os.path.dirname(os.path.realpath(func_file)) + '/' + atlas_name
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
+    thresh_and_fit_node = pe.Node(niu.Function(input_names = ['adapt_thresh', 'dens_thresh', 'thr', 'ts_within_nodes', 'conn_model', 'network', 'ID', 'dir_path', 'mask'], 
+                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr'], 
+                                         function=thresholding.thresh_and_fit, imports = import_list), name = "thresh_and_fit_node")
 
-        ##Get coord membership dictionary
-        try:
-            networks_list
-        except:
-            networks_list = None
+    ##Plotting
+    plot_all_node = pe.Node(niu.Function(input_names = ['conn_matrix', 'conn_model', 'atlas_select', 'dir_path', 'ID', 'network', 'label_names', 'mask', 'coords', 'edge_threshold', 'plot_switch'],
+                                 output_names='None',
+                                 function=plotting.plot_all, imports = import_list), name = "plot_all_node")
 
-        net_coords = nodemaker.get_membership_from_coords(network, func_file, coords, networks_list)
-        ix_labels = list(np.arange(len(net_coords)) + 1)[:-1]
+    outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr']), name='outputnode')
+   
+    if multi_thr == True:
+        thresh_and_fit_node_iterables = []
+        print('Iterating pipeline for ' + str(ID) + ' across multiple thresholds...')
+        iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
+        float(max_thr), float(step_thr)),decimals=2).tolist()]
+        thresh_and_fit_node_iterables.append(("thr", iter_thresh))
+        thresh_and_fit_node.iterables = thresh_and_fit_node_iterables 
+    if multi_atlas==True:
+        WB_fetch_nodes_and_labels_node_iterables = []
+        print('Iterating pipeline for ' + str(ID) + ' across multiple atlases...')
+        atlas_iterables = ("atlas_select", ['coords_power_2011',
+        'coords_dosenbach_2010', 'atlas_destrieux_2009', 'atlas_aal'])
+        WB_fetch_nodes_and_labels_node_iterables.append(atlas_iterables)
+        WB_fetch_nodes_and_labels_node.iterables = WB_fetch_nodes_and_labels_node_iterables
+    if k_clustering==2:
+        k_cluster_iterables = []
+        print('Iterating pipeline for ' + str(ID) + ' across multiple clustering resolutions...')
+        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+        k_cluster_iterables.append(("k", k_list))
+        clustering_node.iterables = k_cluster_iterables
 
-        try:
-            label_names
-        except:
-            label_names=ix_labels
+    ##Connect nodes of workflow
+    wb_functional_connectometry_wf.connect([
+        (inputnode, WB_fetch_nodes_and_labels_node, [('atlas_select', 'atlas_select'),
+                                                    ('parlistfile', 'parlistfile'),
+                                                    ('parc', 'parc'),
+                                                    ('ref_txt', 'ref_txt')]),
+        (inputnode, node_gen_node, [('ID', 'ID'),
+                                    ('mask', 'mask'),
+                                    ('parc', 'parc'),
+                                    ('ref_txt', 'ref_txt'),
+                                    ('dir_path', 'dir_path'),
+                                    ('atlas_select', 'atlas_select'),
+                                    ('parlistfile', 'parlistfile')]),
+        (WB_fetch_nodes_and_labels_node, node_gen_node, [('coords', 'coords'),
+                                                        ('label_names', 'label_names'),
+                                                        ('parcel_list', 'parcel_list'),
+                                                        ('par_max', 'par_max'),
+                                                        ('networks_list', 'networks_list')]),
+        (inputnode, extract_ts_wb_node, [('conf', 'conf'),
+                                        ('func_file', 'func_file'),
+                                        ('mask', 'mask'),
+                                        ('dir_path', 'dir_path'),
+                                        ('ID', 'ID'),
+                                        ('network', 'network'),
+                                        ('node_size', 'node_size'),
+                                        ('thr', 'thr')]),
+        (node_gen_node, extract_ts_wb_node, [('net_parcels_map_nifti', 'net_parcels_map_nifti'),
+                                             ('coords', 'coords')]),
+        (inputnode, thresh_and_fit_node, [('adapt_thresh', 'adapt_thresh'),
+                                            ('dens_thresh', 'dens_thresh'),
+                                            ('thr', 'thr'),
+                                            ('ID', 'ID'),
+                                            ('dir_path', 'dir_path'),
+                                            ('mask', 'mask'),
+                                            ('network', 'network'),
+                                            ('conn_model', 'conn_model')]),
+        (extract_ts_wb_node, thresh_and_fit_node, [('ts_within_nodes', 'ts_within_nodes')]),
+        (inputnode, plot_all_node, [('ID', 'ID'),
+                                    ('dir_path', 'dir_path'),
+                                    ('mask', 'mask'),
+                                    ('network', 'network'),
+                                    ('conn_model', 'conn_model'),
+                                    ('atlas_select', 'atlas_select'),
+                                    ('plot_switch', 'plot_switch')]),
+        (node_gen_node, plot_all_node, [('label_names', 'label_names'),
+                                              ('coords', 'coords')]),
+        (thresh_and_fit_node, plot_all_node, [('conn_matrix_thr', 'conn_matrix'),
+                                              ('edge_threshold', 'edge_threshold')]),        
+        (thresh_and_fit_node, outputnode, [('est_path', 'est_path'),
+                                           ('thr', 'thr')]),
+        ])
+        
+    if k_clustering == 2 or k_clustering == 1:
+        wb_functional_connectometry_wf.add_nodes([clustering_node])
+        wb_functional_connectometry_wf.disconnect([(inputnode, WB_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                   (inputnode, plot_all_node, [('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
+                                                   (inputnode, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
+                                                   (inputnode, thresh_and_fit_node, [('dir_path', 'dir_path')]),
+                                                   (inputnode, extract_ts_wb_node, [('dir_path', 'dir_path')])
+                                                   ])
+        wb_functional_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('func_file', 'func_file'), ('clust_mask', 'clust_mask'), ('k', 'k')]),
+                                                (clustering_node, WB_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                (clustering_node, plot_all_node, [('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
+                                                (clustering_node, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
+                                                (clustering_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
+                                                (clustering_node, extract_ts_wb_node, [('dir_path', 'dir_path')])
+                                                ])
+    
+    wb_functional_connectometry_wf.config['execution']['crashdump_dir']='/tmp'
+    wb_functional_connectometry_wf.config['execution']['remove_unnecessary_outputs']='false'
+    wb_functional_connectometry_wf.write_graph()
+    res = wb_functional_connectometry_wf.run()
+    
+    thr=list(res.nodes())[3].result.outputs.thr
+    est_path=list(res.nodes())[3].result.outputs.est_path
+    
+    return(est_path, thr)
 
-        if mask != None:
-            [net_coords, label_names] = nodemaker.coord_masker(mask, net_coords, label_names)
+def RSN_functional_connectometry(func_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering):
 
-        ##Save coords and label_names to pickles
-        coord_path = dir_path + '/coords_' + network + '_' + str(thr) + '.pkl'
-        with open(coord_path, 'wb') as f:
-            pickle.dump(net_coords, f)
+    import_list=[ "import sys", "import os", "from sklearn.model_selection import train_test_split",
+    "from pynets.utils import export_to_pandas", "import warnings", "import gzip", "import nilearn", "import numpy as np",
+    "import networkx as nx", "import pandas as pd", "import nibabel as nib",
+    "import seaborn as sns", "import numpy.linalg as npl", "import matplotlib",
+    "matplotlib.use('Agg')", "import matplotlib.pyplot as plt", "from numpy import genfromtxt",
+    "from matplotlib import colors", "from nipype import Node, Workflow",
+    "from nilearn import input_data, masking, datasets", "from nilearn import plotting as niplot",
+    "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu",
+    "from nipype.interfaces import io as nio", "from nilearn.input_data import NiftiLabelsMasker",
+    "from nilearn.connectome import ConnectivityMeasure", "from nibabel.affines import apply_affine",
+    "from nipype.interfaces.base import isdefined, Undefined",
+    "from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso",
+    "from pynets import nodemaker, thresholding, graphestimation, plotting",
+    "from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits",
+    "import _pickle as pickle", "import pkg_resources", "from pynets.nodemaker import get_sphere", 
+    "from pynets.utils import nilearn_atlas_helper", "import scipy as sp", 
+    "import time", "from sklearn.feature_extraction import image",
+    "from sklearn.cluster import FeatureAgglomeration", "from pynets.utils import do_dir_path"]
 
-        labels_path = dir_path + '/labelnames_' + network + '_' + str(thr) + '.pkl'
-        with open(labels_path, 'wb') as f:
-            pickle.dump(label_names, f)
+    rsn_functional_connectometry_wf = pe.Workflow(name='rsn_functional_connectometry')
+    rsn_functional_connectometry_wf.base_directory = '/tmp/pynets'
+    
+    ##Create input/output nodes
+    #1) Add variable to IdentityInterface if user-set
+    inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID', 
+                                                      'atlas_select', 'network', 
+                                                      'node_size', 'mask', 'thr', 
+                                                      'parlistfile', 'multi_nets', 
+                                                      'conn_model', 'dens_thresh', 
+                                                      'conf', 'adapt_thresh', 
+                                                      'plot_switch', 'parc', 'ref_txt', 
+                                                      'procmem', 'dir_path', 'k', 
+                                                      'clust_mask', 'k_min', 'k_max', 
+                                                      'k_step', 'k_clustering']), name='inputnode')
 
-        if bedpostx_dir is not None:
-            from pynets.diffconnectometry import run_struct_mapping
-            try:
-                est_path2 = run_struct_mapping(FSLDIR, ID, bedpostx_dir, dir_path, network, net_coords, node_size, atlas_select, atlas_name, label_names, plot_switch)
-            except RuntimeError:
-                print('Network Structural Graph Estimation Failed!')
+    #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
+    inputnode.inputs.func_file = func_file
+    inputnode.inputs.ID = ID
+    inputnode.inputs.atlas_select = atlas_select
+    inputnode.inputs.network = network
+    inputnode.inputs.node_size = node_size
+    inputnode.inputs.mask = mask
+    inputnode.inputs.thr = thr
+    inputnode.inputs.parlistfile = parlistfile
+    inputnode.inputs.conn_model = conn_model
+    inputnode.inputs.dens_thresh = dens_thresh
+    inputnode.inputs.conf = conf
+    inputnode.inputs.adapt_thresh = adapt_thresh
+    inputnode.inputs.plot_switch = plot_switch
+    inputnode.inputs.parc = parc
+    inputnode.inputs.ref_txt = ref_txt
+    inputnode.inputs.procmem = procmem
+    inputnode.inputs.dir_path = dir_path
+    inputnode.inputs.k = k
+    inputnode.inputs.clust_mask = clust_mask
+    inputnode.inputs.k_min = k_min
+    inputnode.inputs.k_max = k_max
+    inputnode.inputs.k_step = k_step
+    inputnode.inputs.k_clustering = k_clustering
+    
+    #3) Add variable to function nodes
+    ##Create function nodes
+    clustering_node = pe.Node(niu.Function(input_names = ['ID', 'clust_mask', 'k', 'dir_path', 'func_file'], 
+                                                          output_names = ['parlistfile'], 
+                                                          function=utils.ward_clustering, imports = import_list), name = "clustering_node")  
 
-        ##Generate network parcels image (through refinement, this could be used
-        ##in place of the 3 lines above)
-        #net_parcels_img_path = gen_network_parcels(parlistfile, network, labels)
-        #parcellation = nib.load(net_parcels_img_path)
-        #parcel_masker = input_data.NiftiLabelsMasker(labels_img=parcellation, background_label=0, memory='nilearn_cache', memory_level=5, standardize=True)
-        #ts_within_parcels = parcel_masker.fit_transform(func_file)
-        #net_ts = ts_within_parcels
 
-    ##Grow ROIs
-    masker = input_data.NiftiSpheresMasker(seeds=net_coords, radius=float(node_size), allow_overlap=True, memory_level=10, memory='nilearn_cache', verbose=2, standardize=True)
-    ts_within_spheres = masker.fit_transform(func_file, confounds=conf)
-    net_ts = ts_within_spheres
+    RSN_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names = ['atlas_select', 'parlistfile', 'ref_txt', 'parc'], 
+                                                          output_names = ['label_names', 'coords', 'atlas_select', 'networks_list', 'parcel_list', 'par_max', 'parlistfile'], 
+                                                          function=nodemaker.WB_fetch_nodes_and_labels, imports = import_list), name = "RSN_fetch_nodes_and_labels_node")    
 
-    ##Save time series as txt file
-    out_path_ts=dir_path + '/' + ID + '_' + network + '_net_ts.txt'
-    np.savetxt(out_path_ts, net_ts)
+    get_node_membership_node = pe.Node(niu.Function(input_names = ['network', 'func_file', 'coords', 'label_names', 'parc', 'parcel_list'], 
+                                                      output_names = ['net_coords', 'net_parcel_list', 'net_label_names'], 
+                                                      function=nodemaker.get_node_membership, imports = import_list), name = "get_node_membership_node")
+    
+    ##Node generation
+    if mask is not None:
+        node_gen_node = pe.Node(niu.Function(input_names = ['mask', 'coords', 'parcel_list', 'label_names', 'dir_path', 'ID', 'parc'], 
+                                                     output_names=['net_parcels_map_nifti', 'coords', 'label_names'], 
+                                                     function=nodemaker.node_gen_masking, imports = import_list), name = "node_gen_masking_node")   
+    else:
+        node_gen_node = pe.Node(niu.Function(input_names = ['coords', 'parcel_list', 'label_names', 'dir_path', 'ID', 'parc'], 
+                                                     output_names=['net_parcels_map_nifti', 'coords', 'label_names'], 
+                                                     function=nodemaker.node_gen, imports = import_list), name = "node_gen_node")
+    
+    ##Extract time-series from nodes
+    if parc == True:
+        ##extract time series from whole brain parcellaions:        
+        extract_ts_rsn_node = pe.Node(niu.Function(input_names = ['net_parcels_map_nifti', 'conf', 'func_file', 'coords', 'mask', 'dir_path', 'ID', 'network'], 
+                                                     output_names=['ts_within_nodes'], 
+                                                     function=graphestimation.extract_ts_wb_parc, imports = import_list), name = "extract_ts_wb_parc_node")   
+    else:
+        ##Extract within-spheres time-series from funct file
+        extract_ts_rsn_node = pe.Node(niu.Function(input_names = ['node_size', 'conf', 'func_file', 'coords', 'dir_path', 'ID', 'mask', 'thr', 'network'], 
+                                             output_names=['ts_within_nodes'], 
+                                             function=graphestimation.extract_ts_wb_coords, imports = import_list), name = "extract_ts_wb_coords_node")        
 
-    ##Fit connectivity model
-    if adapt_thresh is not False:
-        try:
-            est_path2
-            if os.path.isfile(est_path2) == True:
-                [conn_matrix, est_path, edge_threshold, thr] = thresholding.adaptive_thresholding(ts_within_spheres, conn_model, network, ID, est_path2, dir_path)
-            else:
-                print('No structural mx found! Exiting...')
-                sys.exit()
-        except:
-            print('No structural mx assigned! Exiting...')
-            sys.exit()
-    elif dens_thresh is None:
-        edge_threshold = str(float(thr)*100) +'%'
-        [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, network, ID, dir_path, thr)
-        conn_matrix = thresholding.threshold_proportional(conn_matrix, float(thr), dir_path)
-        conn_matrix = thresholding.normalize(conn_matrix)
-    elif dens_thresh is not None:
-        [conn_matrix, est_path, edge_threshold, thr] = thresholding.density_thresholding(ts_within_spheres, conn_model, network, ID, dens_thresh, dir_path)
+    thresh_and_fit_node = pe.Node(niu.Function(input_names = ['adapt_thresh', 'dens_thresh', 'thr', 'ts_within_nodes', 'conn_model', 'network', 'ID', 'dir_path', 'mask'], 
+                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr'], 
+                                         function=thresholding.thresh_and_fit, imports = import_list), name = "thresh_and_fit_node")
 
-    if plot_switch == True:
-        ##Plot connectogram
-        plotting.plot_connectogram(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names)
+    ##Plotting
+    plot_all_node = pe.Node(niu.Function(input_names = ['conn_matrix', 'conn_model', 'atlas_select', 'dir_path', 'ID', 'network', 'label_names', 'mask', 'coords', 'edge_threshold', 'plot_switch'],
+                                 output_names='None',
+                                 function=plotting.plot_all, imports = import_list), name = "plot_all_node")
 
-        ##Plot adj. matrix based on determined inputs
-        plotting.plot_conn_mat(conn_matrix, conn_model, atlas_name, dir_path, ID, network, label_names, mask)
+    outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr']), name='outputnode')
+   
+    if multi_thr == True:
+        thresh_and_fit_node_iterables = []
+        print('Iterating pipeline for ' + str(ID) + ' across multiple thresholds...')
+        iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
+        float(max_thr), float(step_thr)),decimals=2).tolist()]
+        thresh_and_fit_node_iterables.append(("thr", iter_thresh))
+        thresh_and_fit_node.iterables = thresh_and_fit_node_iterables 
+    if multi_atlas==True:
+        RSN_fetch_nodes_and_labels_node_iterables = []
+        print('Iterating pipeline for ' + str(ID) + ' across multiple atlases...')
+        atlas_iterables = ("atlas_select", ['coords_power_2011',
+        'coords_dosenbach_2010', 'atlas_destrieux_2009', 'atlas_aal'])
+        RSN_fetch_nodes_and_labels_node_iterables.append(atlas_iterables)
+        RSN_fetch_nodes_and_labels_node.iterables = RSN_fetch_nodes_and_labels_node_iterables
+    if multi_nets==True:
+        get_node_membership_node_iterables = []
+        print('Iterating pipeline for ' + str(ID) + ' across all Yeo 7 networks...')
+        network_iterables = ("network", ['SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default'])
+        get_node_membership_node_iterables.append(network_iterables)
+        get_node_membership_node.iterables = get_node_membership_node_iterables
+    if k_clustering==2:
+        k_cluster_iterables = []
+        print('Iterating pipeline for ' + str(ID) + ' across multiple clustering resolutions...')
+        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+        k_cluster_iterables.append(("k", k_list))
+        clustering_node.iterables = k_cluster_iterables
 
-        ##Plot network time-series
-        plotting.plot_timeseries(net_ts, network, ID, dir_path, atlas_name, label_names)
+    ##Connect nodes of workflow
+    rsn_functional_connectometry_wf.connect([
+        (inputnode, RSN_fetch_nodes_and_labels_node, [('atlas_select', 'atlas_select'),
+                                                    ('parlistfile', 'parlistfile'),
+                                                    ('parc', 'parc'),
+                                                    ('ref_txt', 'ref_txt')]),
+        (inputnode, get_node_membership_node, [('network', 'network'),
+                                    ('func_file', 'func_file'),
+                                    ('parc', 'parc')]),   
+        (RSN_fetch_nodes_and_labels_node, get_node_membership_node, [('coords', 'coords'),
+                                                        ('label_names', 'label_names'),
+                                                        ('parcel_list', 'parcel_list'),
+                                                        ('par_max', 'par_max'),
+                                                        ('networks_list', 'networks_list')]),                                                
+        (inputnode, node_gen_node, [('ID', 'ID'),
+                                    ('mask', 'mask'),
+                                    ('parc', 'parc'),
+                                    ('ref_txt', 'ref_txt'),
+                                    ('dir_path', 'dir_path'),
+                                    ('atlas_select', 'atlas_select'),
+                                    ('parlistfile', 'parlistfile')]),
+        (get_node_membership_node, node_gen_node, [('net_coords', 'coords'),
+                                                    ('net_label_names', 'label_names'),
+                                                    ('net_parcel_list', 'parcel_list')]),
+        (inputnode, extract_ts_rsn_node, [('conf', 'conf'),
+                                        ('func_file', 'func_file'),
+                                        ('mask', 'mask'),
+                                        ('dir_path', 'dir_path'),
+                                        ('ID', 'ID'),
+                                        ('network', 'network'),
+                                        ('node_size', 'node_size'),
+                                        ('thr', 'thr')]),
+        (node_gen_node, extract_ts_rsn_node, [('net_parcels_map_nifti', 'net_parcels_map_nifti'),
+                                             ('coords', 'coords')]),
+        (inputnode, thresh_and_fit_node, [('adapt_thresh', 'adapt_thresh'),
+                                            ('dens_thresh', 'dens_thresh'),
+                                            ('thr', 'thr'),
+                                            ('ID', 'ID'),
+                                            ('dir_path', 'dir_path'),
+                                            ('mask', 'mask'),
+                                            ('network', 'network'),
+                                            ('conn_model', 'conn_model')]),
+        (extract_ts_rsn_node, thresh_and_fit_node, [('ts_within_nodes', 'ts_within_nodes')]),
+        (inputnode, plot_all_node, [('ID', 'ID'),
+                                    ('dir_path', 'dir_path'),
+                                    ('mask', 'mask'),
+                                    ('network', 'network'),
+                                    ('conn_model', 'conn_model'),
+                                    ('atlas_select', 'atlas_select'),
+                                    ('plot_switch', 'plot_switch')]),
+        (node_gen_node, plot_all_node, [('label_names', 'label_names'),
+                                              ('coords', 'coords')]),
+        (thresh_and_fit_node, plot_all_node, [('conn_matrix_thr', 'conn_matrix'),
+                                              ('edge_threshold', 'edge_threshold')]),        
+        (thresh_and_fit_node, outputnode, [('est_path', 'est_path'),
+                                           ('thr', 'thr')]),
+        ])
+ 
+    if k_clustering == 2 or k_clustering == 1:
+        rsn_functional_connectometry_wf.add_nodes([clustering_node])
+        rsn_functional_connectometry_wf.disconnect([(inputnode, RSN_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                   (inputnode, plot_all_node, [('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
+                                                   (inputnode, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
+                                                   (inputnode, thresh_and_fit_node, [('dir_path', 'dir_path')]),
+                                                   (inputnode, extract_ts_rsn_node, [('dir_path', 'dir_path')])
+                                                   ])
+        rsn_functional_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('func_file', 'func_file'), ('clust_mask', 'clust_mask'), ('k', 'k')]),
+                                                (clustering_node, RSN_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                (clustering_node, plot_all_node, [('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
+                                                (clustering_node, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
+                                                (clustering_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
+                                                (clustering_node, extract_ts_rsn_node, [('dir_path', 'dir_path')])
+                                                ])      
+        
+    rsn_functional_connectometry_wf.config['execution']['crashdump_dir']='/tmp'
+    rsn_functional_connectometry_wf.config['execution']['remove_unnecessary_outputs']='false'
+    rsn_functional_connectometry_wf.write_graph()
+    res = rsn_functional_connectometry_wf.run()
+    
+    thr=list(res.nodes())[4].result.outputs.thr
+    est_path=list(res.nodes())[4].result.outputs.est_path
 
-        ##Plot connectome viz for specific Yeo networks
-        title = "Connectivity Projected on the " + network
-        out_path_fig=dir_path + '/' + ID + '_' + network + '_connectome_plot.png'
-        niplot.plot_connectome(conn_matrix, net_coords, edge_threshold=edge_threshold, title=title, display_mode='lyrz', output_file=out_path_fig)
     return est_path, thr
+
+def wb_structural_connectometry(ID, bedpostx_dir, network, node_size, atlas_select, parlistfile, label_names, plot_switch, parcels, dict_df, anat_loc, ref_txt, threads, mask, dir_path, clust_mask):
+    
+    [label_names, coords, atlas_select, networks_list, parcel_list, par_max, parlistfile] = utils.WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parcels)
+        
+    ##Node generation
+    if mask is not None:
+        [net_parcels_map_nifti, coords, label_names] = nodemaker.node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parcels)
+    else:
+        [net_parcels_map_nifti, coords, label_names] = nodemaker.node_gen(coords, parcel_list, label_names, dir_path, ID, parcels)
+
+    ##Prepare Volumes
+    if parcels == True:
+        print('\n' + 'Converting 3d atlas image file to 4d image of atlas volume masks...' + '\n')
+        volumes_dir = utils.convert_atlas_to_volumes(parlistfile, parcel_list)
+        coords=None
+    else:
+        volumes_dir=None
+
+    ##Prepare seed, avoidance, and waypoint masks
+    print('\n' + 'Running node preparation...' + '\n')
+    [vent_CSF_diff_mask_path, WM_diff_mask_path] = prepare_masks(ID, bedpostx_dir, network, coords, node_size, atlas_select, label_names, plot_switch, parcels, dict_df, anat_loc, volumes_dir, threads)
+
+    ##Run all stages of probabilistic structural connectometry
+    print('\n' + 'Running probabilistic structural connectometry...' + '\n')
+    est_path2 = run_struct_mapping(ID, bedpostx_dir, network, coords, node_size, atlas_select, label_names, plot_switch, parcels, dict_df, anat_loc, volumes_dir, threads, vent_CSF_diff_mask_path, WM_diff_mask_path)
+
+    return est_path2
+            
+def RSN_structural_connectometry(ID, bedpostx_dir, network, node_size, atlas_select, parlistfile, label_names, plot_switch, parcels, dict_df, anat_loc, ref_txt, threads, mask, dir_path, clust_mask):
+
+    nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
+    
+    [label_names, coords, atlas_select, networks_list, parcel_list, par_max, parlistfile] = utils.RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parcels)    
+     
+    ##Get coord membership dictionary
+    [net_coords, net_parcel_list, net_label_names] = nodemaker.get_node_membership(network, nodif_brain_mask_path, coords, label_names, parcels, parcel_list)
+
+    ##Node generation
+    if mask is not None:
+        [net_parcels_map_nifti, net_coords, net_label_names] = nodemaker.node_gen_masking(mask, net_coords, net_parcel_list, net_label_names, dir_path, ID, parcels)            
+    else:
+        [net_parcels_map_nifti, net_coords, net_label_names] = nodemaker.node_gen(net_coords, net_parcel_list, net_label_names, dir_path, ID, parcels)
+            
+    ##Prepare Volumes
+    if parcels == True:
+        print('\n' + 'Converting 3d atlas image file to 4d image of atlas volume masks...' + '\n')
+        volumes_dir = utils.convert_atlas_to_volumes(parlistfile, net_parcel_list)
+        net_coords=None
+    else:
+        volumes_dir=None
+
+    ##Prepare seed, avoidance, and waypoint masks
+    print('\n' + 'Running node preparation...' + '\n')
+    [vent_CSF_diff_mask_path, WM_diff_mask_path] = prepare_masks(ID, bedpostx_dir, network, net_coords, node_size, atlas_select, label_names, plot_switch, parcels, dict_df, anat_loc, volumes_dir, threads)
+
+    ##Run all stages of probabilistic structural connectometry
+    print('\n' + 'Running probabilistic structural connectometry...' + '\n')
+    est_path2 = run_struct_mapping(ID, bedpostx_dir, network, net_coords, node_size, atlas_select, label_names, plot_switch, parcels, dict_df, anat_loc, volumes_dir, threads, vent_CSF_diff_mask_path, WM_diff_mask_path)
+
+    return est_path2

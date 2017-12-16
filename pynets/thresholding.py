@@ -1,34 +1,14 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov  7 10:40:07 2017
+
+@author: Derek Pisner
+"""
 import sys
-import argparse
 import os
-import nilearn
 import numpy as np
 import networkx as nx
-import pandas as pd
-import nibabel as nib
-import seaborn as sns
-import numpy.linalg as npl
-import matplotlib
-import sklearn
-import matplotlib
-import warnings
-import pynets
 #warnings.simplefilter("ignore")
-import matplotlib.pyplot as plt
-from numpy import genfromtxt
-from matplotlib import colors
-from nipype import Node, Workflow
-from nilearn import input_data, masking, datasets
-from nilearn import plotting as niplot
-from nipype.pipeline import engine as pe
-from nipype.interfaces import utility as niu
-from nipype.interfaces import io as nio
-from nilearn.input_data import NiftiLabelsMasker
-from nilearn.connectome import ConnectivityMeasure
-from nibabel.affines import apply_affine
-from nipype.interfaces.base import isdefined, Undefined
-from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso
-from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
 from pynets import graphestimation
 
 def threshold_absolute(W, thr, copy=True):
@@ -72,9 +52,8 @@ def normalize(W, copy=True):
     W /= np.max(np.abs(W))
     return W
 
-def density_thresholding(ts_within_spheres, conn_model, network, ID, dens_thresh, dir_path):
+def density_thresholding(conn_matrix, dens_thresh):
     thr=0.0
-    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, network, ID, dir_path, thr)
     conn_matrix = normalize(conn_matrix)
     np.fill_diagonal(conn_matrix, 0)
     i = 1
@@ -89,10 +68,7 @@ def density_thresholding(ts_within_spheres, conn_model, network, ID, dens_thresh
 
         print('Iteratively thresholding -- Iteration ' + str(i) + ' -- with absolute thresh: ' + str(thr) + ' and Density: ' + str(density) + '...')
         i = i + 1
-    edge_threshold = str(float(thr)*100) +'%'
-    est_path2 = est_path.split('_0.')[0] + '_' + str(dens_thresh) + '.txt'
-    os.rename(est_path, est_path2)
-    return(conn_matrix, est_path2, edge_threshold, dens_thresh)
+    return(conn_matrix)
 
 ##Calculate density
 def est_density(func_mat):
@@ -118,7 +94,7 @@ def binarize(W, copy=True):
     W[W != 0] = 1
     return W
 
-def adaptive_thresholding(ts_within_spheres, conn_model, network, ID, struct_mat_path, dir_path):
+def adaptive_thresholding(ts_within_nodes, conn_model, network, ID, struct_mat_path, dir_path):
     import collections
     from pynets import binarize, thr2prob, est_density
 
@@ -142,7 +118,7 @@ def adaptive_thresholding(ts_within_spheres, conn_model, network, ID, struct_mat
         total_err = float(float(FP + FN)/diffs.size)
         return(FP_error, FN_error, total_err, density)
 
-    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, network, ID, dir_path, thr)
+    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_nodes, conn_model, network, ID, dir_path, thr)
     struct_mat = np.genfromtxt(struct_mat_path)
     print('Using reference structural matrix from: ' + struct_mat_path)
 
@@ -151,7 +127,6 @@ def adaptive_thresholding(ts_within_spheres, conn_model, network, ID, struct_mat
     np.fill_diagonal(conn_matrix, 0)
     func_mat = conn_matrix
     func_mat_bin = binarize(func_mat)
-    fG=nx.from_numpy_matrix(func_mat)
     density = est_density(func_mat)
 
     ##Prep Structural mx
@@ -189,7 +164,7 @@ def adaptive_thresholding(ts_within_spheres, conn_model, network, ID, struct_mat
         if value[0] == value[1]:
             good_threshes.append(float(key))
 
-    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_spheres, conn_model, network, ID, dir_path, thr)
+    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_nodes, conn_model, network, ID, dir_path, thr)
     conn_matrix = normalize(conn_matrix)
     np.fill_diagonal(conn_matrix, 0)
     min_thresh = min(good_threshes)
@@ -205,14 +180,6 @@ def adaptive_thresholding(ts_within_spheres, conn_model, network, ID, struct_mat
     conn_matrix = threshold_absolute(conn_matrix, min_thresh)
     edge_threshold = str(float(min_thresh)*100) +'%'
     return(conn_matrix, est_path, edge_threshold, min_thresh)
-
-def binarize(W, copy=True):
-    '''##Adapted from bctpy
-    '''
-    if copy:
-        W = W.copy()
-    W[W != 0] = 1
-    return W
 
 def invert(W, copy=False):
     '''##Adapted from bctpy
@@ -251,3 +218,43 @@ def autofix(W, copy=True):
     if np.allclose(W, W.T):
         W = np.around(W, decimals=5)
     return W
+
+def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, network, ID, dir_path, mask):
+    from pynets import utils
+    from pynets import thresholding
+   
+    ##Adaptive thresholding scenario
+    if adapt_thresh is not False:
+        try:
+            est_path2 = dir_path + '/' + ID + '_structural_est.txt'
+            if os.path.isfile(est_path2) == True:
+                [conn_matrix_thr, est_path, edge_threshold, thr] = adaptive_thresholding(ts_within_nodes, conn_model, network, ID, est_path2, dir_path)
+                ##Save unthresholded
+                unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
+                np.savetxt(unthr_path, conn_matrix_thr, delimiter='\t')
+                edge_threshold = str(float(thr)*100) +'%'
+            else:
+                print('No structural mx found! Exiting...')
+                sys.exit()
+        except:
+            print('No structural mx assigned! Exiting...')
+            sys.exit()
+    else:        
+        ##Fit mat
+        conn_matrix = graphestimation.get_conn_matrix(ts_within_nodes, conn_model)
+        
+        ##Save unthresholded
+        unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
+        np.savetxt(unthr_path, conn_matrix, delimiter='\t')
+
+        if not dens_thresh:
+            ##Save thresholded
+            conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
+            edge_threshold = str(float(thr)*100) +'%'
+            est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path) 
+        else:
+            conn_matrix_thr = thresholding.density_thresholding(conn_matrix, dens_thresh)
+            edge_threshold = str((1-float(dens_thresh))*100) +'%'
+            est_path = utils.create_est_path(ID, network, conn_model, dens_thresh, mask, dir_path)
+        np.savetxt(est_path, conn_matrix_thr, delimiter='\t')
+    return(conn_matrix_thr, edge_threshold, est_path, thr)

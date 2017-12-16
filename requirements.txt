@@ -1,0 +1,16 @@
+#basc==1.0.0
+nibabel>=2.2.0
+scipy>=0.19.0
+numpy>=1.12.1
+nipype>=0.12.1
+setuptools>=36.2.7
+nilearn>=0.2.6
+seaborn>=0.7.1
+pytest>=3.2.1
+matplotlib>=2.0.0
+click>=6.7
+pandas>=0.19.2
+networkx>=1.11
+#brainiak==0.6
+scikit_learn>=0.19.1
+#PyYAML==3.12
