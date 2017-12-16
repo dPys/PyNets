@@ -15,6 +15,7 @@ from nipype.utils.filemanip import save_json
 from pynets.thresholding import normalize
 from pathlib import Path
 from networkx.readwrite import json_graph
+from nilearn import plotting as niplot
 
 def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask):
     ##Set title for adj. matrix based on connectivity model used
@@ -44,7 +45,8 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, 
             
     rois_num=conn_matrix.shape[0]
     plt.figure(figsize=(10, 10))
-    plt.imshow(conn_matrix, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
+    [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
+    plt.imshow(conn_matrix, interpolation="nearest", vmax=z_max, vmin=z_min, cmap=plt.cm.RdBu_r)
     ##And display the labels
     if rois_num < 50:
         if all(isinstance(item, int) for item in label_names)==False:
@@ -60,11 +62,22 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, 
     return(atlast_graph_title)
 
 def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names):
+    from pynets.netstats import most_important
     comm = 'nodes'
 
     conn_matrix = normalize(conn_matrix)
     G=nx.from_numpy_matrix(conn_matrix)
+    [G, pruned_nodes, pruned_edges] = most_important(G)
+    conn_matrix = nx.to_numpy_array(G)
 
+    pruned_nodes.sort(reverse = True)
+    for j in pruned_nodes:
+        del label_names[label_names.index(label_names[j])]
+    
+    pruned_edges.sort(reverse = True)
+    for j in pruned_edges:
+        del label_names[label_names.index(label_names[j])]
+        
     def doClust(X, clust_levels):
         ##get the linkage diagram
         Z = linkage(X, 'ward', )
@@ -274,3 +287,51 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
         out_path_fig=dir_path + '/' + ID + '_Whole_Brain_TS_plot.png'
     plt.savefig(out_path_fig)
     plt.close()
+
+def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold, plot_switch):
+    if plot_switch == True:
+        import pkg_resources
+        import networkx as nx
+        from pynets import plotting
+        from pynets.netstats import most_important
+        G_pre=nx.from_numpy_matrix(conn_matrix)
+        [G, pruned_nodes, pruned_edges] = most_important(G_pre)
+        conn_matrix = nx.to_numpy_array(G)
+        
+        pruned_nodes.sort(reverse = True)
+        for j in pruned_nodes:
+            del label_names[label_names.index(label_names[j])]
+            del coords[coords.index(coords[j])]
+        
+        pruned_edges.sort(reverse = True)
+        for j in pruned_edges:
+            del label_names[label_names.index(label_names[j])]
+            del coords[coords.index(coords[j])]
+        
+        ##Plot connectogram
+        if len(conn_matrix) > 20:
+            try:
+                plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
+            except RuntimeError:
+                print('\n\n\nError: Connectogram plotting failed!')
+        else:
+            print('Error: Cannot plot connectogram for graphs smaller than 20 x 20!')
+    
+        ##Plot adj. matrix based on determined inputs
+        plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask)
+    
+        ##Plot connectome
+        if mask != None:
+            out_path_fig=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
+        else:
+            out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
+        #niplot.plot_connectome(conn_matrix, coords, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
+        ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
+        connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=False, node_size=0.0001)
+        connectome.add_overlay(ch2better_loc, alpha=0.4)
+        [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
+        connectome.add_graph(conn_matrix, coords, edge_threshold = edge_threshold, edge_cmap = 'Blues', edge_vmax=z_max, edge_vmin=z_min, node_size=4)
+        connectome.savefig(out_path_fig)
+    else:
+        pass
+    return

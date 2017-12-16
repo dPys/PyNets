@@ -179,8 +179,9 @@ def smallworldness_measure(G, rG):
     lam = float(L_g) / float(L_r)
     swm = gam / lam
     return swm
-
+    
 def smallworldness(G, rep = 100):
+    #import multiprocessing
     n = nx.number_of_nodes(G)
     m = nx.number_of_edges(G)
     p = float(m) * 2 /(n*(n-1))
@@ -189,9 +190,20 @@ def smallworldness(G, rep = 100):
         rG = create_random_graph(G, n, p)
         swm = smallworldness_measure(G, rG)
         ss.append(swm)
+    #def small_iters(bb):
+    #    rG = create_random_graph(G, n, p)
+    #    swm = smallworldness_measure(G, rG)
+    #    return swm
+    #number_processes = int(multiprocessing.cpu_count()-1)
+    #pool = multiprocessing.Pool(number_processes)
+    #bb = range(rep)
+    #result = pool.map_async(small_iters, bb)
+    #pool.close()
+    #pool.join()
+    #ss = result.get()
     mean_s = np.mean(ss)
     return mean_s
-
+        
 def create_communities(node_comm_aff_mat, node_num):
     com_assign = np.zeros((node_num,1))
     for i in range(len(node_comm_aff_mat)):
@@ -758,7 +770,46 @@ def modularity_louvain_dir(W, gamma=1, hierarchy=False, seed=None):
         return ci, q
     else:
         return ci[h - 1], q[h - 1]
-    
+
+def most_important(G):
+     """ returns a copy of G with
+         the most important nodes
+         according to the pagerank """
+     ranking = nx.betweenness_centrality(G).items()
+     #print(ranking)
+     r = [x[1] for x in ranking]
+     m = sum(r)/len(r) - 3*np.std(r)
+     Gt = G.copy()
+     pruned_nodes = []
+     i = 0
+     for k, v in ranking:
+        if v < m:
+            Gt.remove_node(k)
+            pruned_nodes.append(i)
+        i = i + 1
+     pruned_edges = []
+     ##Remove near-zero isolates
+     s = 0
+     components = list(nx.connected_components(Gt)) # list because it returns a generator
+     components.sort(key=len, reverse=True)
+     components_isolated = list(components[0])
+
+     for node,degree in list(Gt.degree()):
+         if degree < 0.001:
+             try:
+                 Gt.remove_node(node)
+                 pruned_edges.append(s)
+             except:
+                 pass
+         if node not in components_isolated:
+             try:
+                 Gt.remove_node(node)
+                 pruned_edges.append(s)
+             except:
+                 pass
+         s = s + 1
+     return(Gt, pruned_nodes, pruned_edges)
+         
 ##Extract network metrics interface
 def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None):
     from pynets import thresholding
@@ -773,6 +824,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
     ##Get hyperbolic tangent of matrix if non-sparse (i.e. fischer r-to-z transform)
     if conn_model == 'corr':
         in_mat = np.arctanh(in_mat)
+        in_mat[np.isnan(in_mat)] = 0
+        in_mat[np.isinf(in_mat)] = 1
 
     ##Get dir_path
     dir_path = os.path.dirname(os.path.realpath(est_path))
@@ -781,6 +834,10 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
     mat_wei = in_mat
     ##Load numpy matrix as networkx graph
     G=nx.from_numpy_matrix(mat_wei)
+
+    ##Prune irrelevant nodes    
+    [G, _, _] = most_important(G)
+    in_mat = nx.to_numpy_array(G)
     
     ##Print graph summary
     print('\n\nThreshold: ' + str(thr))
@@ -799,8 +856,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         print('Graph is CONNECTED with ' + str(num_conn_comp) + ' connected component(s)\n\n')
     else:
         print('Graph is DISCONNECTED\n\n')
-    
-        
+
     ##Create Length matrix
     mat_len = thresholding.weight_conversion(in_mat, 'lengths')
     ##Load numpy matrix as networkx graph
@@ -821,14 +877,14 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
     ###############################################################
     ########### Calculate graph metrics from graph G ##############
     ###############################################################
-    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, rich_club_coefficient, eigenvector_centrality, communicability_betweenness_centrality, clustering, degree_centrality
+    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, rich_club_coefficient, eigenvector_centrality_numpy, communicability_betweenness_centrality, clustering, degree_centrality
     from pynets.netstats import average_local_efficiency, global_efficiency, local_efficiency, modularity_louvain_dir, smallworldness
     ##For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the function  (with a G-only input) to the netstats module.
     metric_list = [global_efficiency, average_local_efficiency, smallworldness, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
 
-    ##Custom Parameters
-    #custom_params = 'weight = 0.25'
-    custom_params = None
+    ##Custom Weight Parameter
+    #custom_weight = 0.25
+    custom_weight = None
 
     ##Iteratively run functions from above metric list that generate single scalar output
     num_mets = len(metric_list)
@@ -844,8 +900,9 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
                 except:
                     ##case where G is not fully connected
                     net_met_val = float(average_shortest_path_length_for_all(G))
-            if custom_params is not None and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
-                net_met_val = float(i(G, custom_params))
+            if custom_weight is not None and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
+                custom_weight_param = 'weight = ' + str(custom_weight)
+                net_met_val = float(i(G, custom_weight_param))
             else:
                 net_met_val = float(i(G))
         except:
@@ -953,7 +1010,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         bc_arr = np.zeros([num_nodes + 1, 2], dtype='object')
         j=0
         for i in range(num_nodes):
-            bc_arr[j,0] = str(bc_nodes[j]) + '_betw_cent'
+            bc_arr[j,0] = str(bc_nodes[j]) + '_betweenness_centrality'
             #print('\n' + str(bc_nodes[j]) + '_betw_cent')
             try:
                 bc_arr[j,1] = bc_vals[j]
@@ -971,7 +1028,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
 
     ##Eigenvector Centrality
     try:
-        ec_vector = eigenvector_centrality(G)
+        ec_vector = eigenvector_centrality_numpy(G)
         print('Extracting Eigenvector Centrality vector for all network nodes...')
         ec_vals = list(ec_vector.values())
         ec_nodes = list(ec_vector.keys())
@@ -979,7 +1036,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         ec_arr = np.zeros([num_nodes + 1, 2], dtype='object')
         j=0
         for i in range(num_nodes):
-            ec_arr[j,0] = str(ec_nodes[j]) + '_eig_cent'
+            ec_arr[j,0] = str(ec_nodes[j]) + '_eigenvector_centrality'
             #print('\n' + str(ec_nodes[j]) + '_eig_cent')
             try:
                 ec_arr[j,1] = ec_vals[j]
@@ -1006,7 +1063,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         cc_arr = np.zeros([num_nodes + 1, 2], dtype='object')
         j=0
         for i in range(num_nodes):
-            cc_arr[j,0] = str(cc_nodes[j]) + '_comm_cent'
+            cc_arr[j,0] = str(cc_nodes[j]) + '_communicability_centrality'
             #print('\n' + str(cc_nodes[j]) + '_comm_cent')
             try:
                 cc_arr[j,1] = cc_vals[j]
