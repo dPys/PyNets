@@ -16,7 +16,6 @@ try:
     from brainiak.fcma.util import compute_correlation
 except ImportError:
     pass
-from inverse_covariance import QuicGraphLasso, QuicGraphLassoCV, QuicGraphLassoEBIC, AdaptiveGraphLasso
 
 def get_conn_matrix(time_series, conn_model):
     if conn_model == 'corr':
@@ -76,6 +75,7 @@ def get_conn_matrix(time_series, conn_model):
             except:
                 conn_matrix = estimator_shrunk.covariance_    
     elif conn_model == 'QuicGraphLasso':
+        from inverse_covariance import QuicGraphLasso
         # Compute the sparse inverse covariance via QuicGraphLasso
         # credit: skggm
         model = QuicGraphLasso(
@@ -87,6 +87,7 @@ def get_conn_matrix(time_series, conn_model):
         conn_matrix = model.precision_
         
     elif conn_model == 'QuicGraphLassoCV':
+        from inverse_covariance import QuicGraphLassoCV
         # Compute the sparse inverse covariance via QuicGraphLassoCV
         # credit: skggm
         model = QuicGraphLassoCV(
@@ -96,6 +97,7 @@ def get_conn_matrix(time_series, conn_model):
         conn_matrix = model.precision_
     
     elif conn_model == 'QuicGraphLassoEBIC':
+        from inverse_covariance import QuicGraphLassoEBIC
         # Compute the sparse inverse covariance via QuicGraphLassoEBIC
         # credit: skggm
         model = QuicGraphLassoEBIC(
@@ -105,6 +107,7 @@ def get_conn_matrix(time_series, conn_model):
         conn_matrix = model.precision_
     
     elif conn_model == 'AdaptiveQuicGraphLasso':
+        from inverse_covariance import AdaptiveGraphLasso, QuicGraphLassoEBIC
         # Compute the sparse inverse covariance via
         # AdaptiveGraphLasso + QuicGraphLassoEBIC + method='binary'
         # credit: skggm

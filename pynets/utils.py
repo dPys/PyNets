@@ -286,3 +286,116 @@ def ward_clustering(ID, clust_mask, k, func_file):
     labels_img.to_filename(parlistfile)
     print('Saving file to: ' + str(parlistfile) + '\n')
     return(parlistfile, atlas_select, dir_path)
+    
+def spt_constr_clustering(ID, clust_mask, k, func_file):
+    from pynets import nodemaker
+    from math import sqrt
+    from nipype.interfaces.fsl import Cluster
+    from nilearn.image import new_img_like
+    from subprocess import (PIPE, Popen)
+    from nilearn.regions import connected_label_regions
+    def invoke(command):
+        return Popen(command, stdout=PIPE, shell=True).stdout.read()
+    
+    try:
+        FSLDIR = os.environ['FSLDIR']
+    except NameError:
+        print('FSLDIR environment variable not set!')
+        
+    ##Get spatially distinct clusters as separate volumes using Gaussian Random Field Theory (GRFT)
+    cl = Cluster()
+    clust_command = FSLDIR + '/bin/'
+    cl.inputs.threshold = 0.5
+    cl.inputs.out_index_file = 'clusters.nii.gz'
+    cl.inputs.in_file = clust_mask
+    clst_cmd_final = clust_command + cl.cmdline
+    pre_file_path = clst_cmd_final.split('--in=')[0].split(' --oindex')[0]
+    post_file_path = clst_cmd_final.split('--in=')[1].split(' --oindex')[1]
+    in_file_path = clst_cmd_final.split('--in=')[1].split(' --oindex')[0]
+    in_file_path_quotes = '"%s"' % (in_file_path)
+    cmd = pre_file_path + '--in=' + in_file_path_quotes + ' --oindex' + post_file_path
+    invoke(cmd)  
+    cluster_file_out = cl.inputs.out_index_file
+    region_labels = connected_label_regions(cluster_file_out, min_size=3)
+    
+    ##Further parcellate large clusters using hierarchical clustering
+    bna_data = np.round(region_labels.get_data(),1)
+    ##Get an array of unique parcels
+    bna_data_for_coords_uniq = np.unique(bna_data)
+    ##Number of parcels:
+    par_max = len(bna_data_for_coords_uniq) - 1
+    bna_data = bna_data.astype('int16')
+    img_stack = []
+    for idx in range(1, par_max+1):
+        roi_img = bna_data == bna_data_for_coords_uniq[idx].astype('int16')
+        roi_img = roi_img.astype('int16')
+        img_stack.append(roi_img)
+    img_stack = np.array(img_stack).astype('int16')
+    img_list = []
+    for idy in range(par_max):
+        roi_img_nifti = new_img_like(region_labels, img_stack[idy])
+        img_list.append(roi_img_nifti)
+    
+    labels_list = []
+    for mask_img in img_list:
+        mask_data = mask_img.get_data().astype(bool)       
+        mask_feats = np.sum(mask_data == True)
+        if mask_feats < 10:
+            continue
+        elif mask_feats < 50:
+            labels_list.append(mask_img)
+        else:
+            shape = mask_data.shape
+            nifti_masker = input_data.NiftiMasker(mask_img = mask_img, memory='joblib.Memory',
+                                                  memory_level=1,
+                                                  standardize=False)
+            fmri_masked = nifti_masker.fit_transform(func_file)
+            
+            
+            connectivity = image.grid_to_graph(n_x=shape[0], n_y=shape[1],
+                                               n_z=shape[2], mask=mask_data)
+            
+            K = int(np.round(sqrt(mask_feats),1))
+            start = time.time()
+            ward = FeatureAgglomeration(n_clusters= K, connectivity=connectivity,
+                                        linkage='ward', memory='joblib.Memory')
+            ward.fit(fmri_masked)
+            print('Ward agglomeration for subject ' + str(ID) + ' with '+ str(k) + ' clusters: %.2fs' % (time.time() - start))
+        
+            labels = ward.labels_ + 1
+            labels_img = nifti_masker.inverse_transform(labels)
+            
+            labels_list.append(labels_img)
+
+    ##Reorder all resulting clusters into single list
+    img_list = []
+    for bna_img in labels_list:
+        bna_data = np.round(bna_img.get_data(),1)
+        ##Get an array of unique parcels
+        bna_data_for_coords_uniq = np.unique(bna_data)
+        ##Number of parcels:
+        par_max = len(bna_data_for_coords_uniq) - 1
+        bna_data = bna_data.astype('int16')
+        img_stack = []
+        for idx in range(1, par_max+1):
+            roi_img = bna_data == bna_data_for_coords_uniq[idx].astype('int16')
+            roi_img = roi_img.astype('int16')
+            img_stack.append(roi_img)
+        img_stack = np.array(img_stack).astype('int16')
+        for idy in range(par_max):
+            roi_img_nifti = new_img_like(bna_img, img_stack[idy])
+            img_list.append(roi_img_nifti)
+    
+    ##Create modified atlas
+    [labels_img, _] = nodemaker.create_parcel_atlas(img_list)
+        
+    #first_plot = plotting.plot_roi(labels_img, mask_img, title="Ward parcellation", display_mode='xz')
+    mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+    n_clust = len(img_list)
+    os.remove(cluster_file_out)
+    atlas_select = mask_name + '_clust_' + str(n_clust)
+    dir_path = do_dir_path(atlas_select, func_file)
+    parlistfile = dir_path + '/' + str(ID) + '_' + mask_name + '_parc_clust_' + str(k) + '.nii.gz'
+    labels_img.to_filename(parlistfile)
+    print('Saving file to: ' + str(parlistfile) + '\n')
+    return(parlistfile, atlas_select, dir_path)
