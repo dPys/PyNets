@@ -35,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('-a',
         metavar='atlas',
         default='coords_power_2011',
-        help='Specify a single coordinate atlas parcellation of those availabe in nilearn. Default is coords_power_2011. Available atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011')
+        help='Specify a single coordinate atlas parcellation of those availabe in nilearn. Default is coords_power_2011. Available nilearn atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011')
     parser.add_argument('-basc',
         default=False,
         action='store_true',
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     parser.add_argument('-model',
         metavar='connectivity',
         default='corr',
-        help='Optionally specify matrix estimation type: corr, cov, or sps for correlation, covariance, or sparse-inverse covariance, respectively')
+        help='Optionally specify matrix estimation type: corr, cov, sps, partcorr, or tangent for correlation, covariance, sparse-inverse covariance, partial correlation, and tangent, respectively')
     parser.add_argument('-confounds',
         metavar='confounds',
         default=None,
@@ -297,7 +297,7 @@ if __name__ == '__main__':
     ##Import core modules
     import warnings
     warnings.simplefilter("ignore")
-    from pynets.utils import export_to_pandas
+    from pynets.utils import export_to_pandas, collect_pandas_df
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
@@ -434,6 +434,29 @@ if __name__ == '__main__':
             import os.path as op
             return {'out_file': op.abspath(self.inputs.out_file)}
 
+    class CollectPandasDfsInputSpec(BaseInterfaceInputSpec):
+        est_path = File(exists=False, mandatory=True, desc="")
+        ID = traits.Any(mandatory=True)
+        out_file = File('output_collectpandasdf.csv', usedefault=True)
+
+    class CollectPandasDfsOutputSpec(TraitedSpec):
+        out_file = File()
+
+    class CollectPandasDfs(BaseInterface):
+        input_spec = Export2PandasInputSpec
+        output_spec = Export2PandasOutputSpec
+
+        def _run_interface(self, runtime):
+            collect_pandas_df(
+                self.inputs.est_path,
+                self.inputs.ID,
+                out_file=self.inputs.out_file)
+            return runtime
+
+        def _list_outputs(self):
+            import os.path as op
+            return {'out_file': op.abspath(self.inputs.out_file)}
+        
     def init_wf_single_subject(ID, input_file, dir_path, atlas_select, network,
     node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf,
     adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,

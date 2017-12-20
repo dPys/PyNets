@@ -45,7 +45,6 @@ def test_extract_ts_wb_coords():
     ##Set example inputs##
     base_dir = str(Path(__file__).parent/"examples")
     dir_path= base_dir + '/997'
-    net_parcels_map_nifti_file = dir_path + '/whole_brain_cluster_labels_PCA200/net_parcels_map_nifti.nii.gz'
     func_file = dir_path + '/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz'
     mask = None
     network='SomMotA'
@@ -56,5 +55,5 @@ def test_extract_ts_wb_coords():
     wb_coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/coords_SomMotA_0.95.pkl'
     file_ = open(wb_coords_file,'rb')
     coords = pickle.load(file_)
-    net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
     ts_within_nodes = graphestimation.extract_ts_wb_coords(node_size, conf, func_file, coords, dir_path, ID, mask, thr, network)
+    assert ts_within_nodes is not None
