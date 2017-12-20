@@ -297,7 +297,7 @@ if __name__ == '__main__':
     ##Import core modules
     import warnings
     warnings.simplefilter("ignore")
-    from pynets.utils import export_to_pandas, collect_pandas_df
+    from pynets.utils import export_to_pandas
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
@@ -427,29 +427,6 @@ if __name__ == '__main__':
                 self.inputs.ID,
                 self.inputs.network,
                 self.inputs.mask,
-                out_file=self.inputs.out_file)
-            return runtime
-
-        def _list_outputs(self):
-            import os.path as op
-            return {'out_file': op.abspath(self.inputs.out_file)}
-
-    class CollectPandasDfsInputSpec(BaseInterfaceInputSpec):
-        est_path = File(exists=False, mandatory=True, desc="")
-        ID = traits.Any(mandatory=True)
-        out_file = File('output_collectpandasdf.csv', usedefault=True)
-
-    class CollectPandasDfsOutputSpec(TraitedSpec):
-        out_file = File()
-
-    class CollectPandasDfs(BaseInterface):
-        input_spec = Export2PandasInputSpec
-        output_spec = Export2PandasOutputSpec
-
-        def _run_interface(self, runtime):
-            collect_pandas_df(
-                self.inputs.est_path,
-                self.inputs.ID,
                 out_file=self.inputs.out_file)
             return runtime
 

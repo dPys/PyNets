@@ -11,4 +11,4 @@ python:
 install: pip install -U tox-travis
 
 # command to run tests, e.g. python setup.py test
-script: travis_wait 120 tox
+script: travis_wait 800 tox
