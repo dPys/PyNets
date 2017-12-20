@@ -469,3 +469,4 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f)
     return(net_parcels_map_nifti, coords, label_names)
+
