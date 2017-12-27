@@ -322,9 +322,15 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     
         ##Plot connectome
         if mask != None:
-            out_path_fig=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
+            if network != None:
+                out_path_fig=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_connectome_viz.png'
+            else:
+                out_path_fig=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
         else:
-            out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
+            if network != None:
+                out_path_fig=dir_path + '/' + ID + '_' + str(network) + '_connectome_viz.png'
+            else:
+                out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
         #niplot.plot_connectome(conn_matrix, coords, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
         ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
         connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=False, node_size=0.0001)
