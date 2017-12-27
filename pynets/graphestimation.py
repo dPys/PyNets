@@ -40,7 +40,6 @@ def get_conn_matrix(time_series, conn_model):
         ##Fit estimator to matrix to get sparse matrix
         estimator = GraphLassoCV()
         try:
-            print("Fitting Lasso Estimator...")
             estimator.fit(time_series)
         except RuntimeError:
             print('Unstable Lasso estimation--Attempting to re-run by first applying shrinkage...')
@@ -126,7 +125,7 @@ def extract_ts_wb_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir
     ##extract time series from whole brain parcellaions:
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0, memory='joblib.Memory', memory_level=10, standardize=True)
     ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
-    print('\n' + 'Time series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' volumetric ROI\'s\n')
+    print('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' volumetric ROI\'s\n')
     ##Save time series as txt file
     if mask is None:
         if network is not None:
@@ -144,7 +143,7 @@ def extract_ts_wb_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir
 def extract_ts_wb_coords(node_size, conf, func_file, coords, dir_path, ID, mask, thr, network):
     spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True, memory='joblib.Memory', memory_level=10, standardize=True)
     ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
-    print('\n' + 'Time series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' coordinate ROI\'s\n')
+    print('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' coordinate ROI\'s\n')
     ##Save time series as txt file
     if mask is None:
         out_path_ts=dir_path + '/' + ID + '_wb_net_ts.txt'

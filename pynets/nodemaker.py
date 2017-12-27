@@ -17,7 +17,6 @@ from nilearn import datasets, masking
 from nilearn.image import resample_img, concat_imgs, new_img_like
 from nilearn.plotting import find_xyz_cut_coords
 from pathlib import Path
-from pynets import utils
 try:
     import cPickle as pickle
 except ImportError:
@@ -54,7 +53,7 @@ def fetch_nilearn_atlas_coords(atlas_select):
         atlas_name = atlas_select
     print('\n' + str(atlas_name.decode('utf-8')) + ' comes with {0}'.format(atlas.keys()) + '\n')
     coords = np.vstack((atlas.rois['x'], atlas.rois['y'], atlas.rois['z'])).T
-    print('Stacked atlas coordinates in array of shape {0}.'.format(coords.shape) + '\n')
+    print('\nStacked atlas coordinates in array of shape {0}.'.format(coords.shape) + '\n')
     try:
         networks_list = atlas.networks.astype('U')
     except:
@@ -188,7 +187,7 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
                 net_label_names.append(label_names[i])
             i = i + 1
         coords_mm = list(set(list(tuple(x) for x in coords_with_parc)))
-    return(coords_mm, RSN_parcels, net_label_names)
+    return(coords_mm, RSN_parcels, net_label_names, network)
 
 def parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID):
     from pynets import nodemaker
@@ -333,7 +332,7 @@ def gen_network_parcels(parlistfile, network, labels, dir_path):
     for idy in range(par_max):
         roi_img_nifti = new_img_like(bna_img, img_stack[idy])
         img_list.append(roi_img_nifti)
-    print('Extracting parcels associated with ' + network + ' network locations...')
+    print('\nExtracting parcels associated with ' + network + ' network locations...\n')
     net_parcels = [i for j, i in enumerate(img_list) if j in labels]
     bna_4D = concat_imgs(net_parcels).get_data()
     index_vec = np.array(range(len(net_parcels))) + 1
@@ -343,8 +342,8 @@ def gen_network_parcels(parlistfile, network, labels, dir_path):
     nib.save(net_parcels_map_nifti, out_path)
     return(out_path)
 
-def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc):
-    from pynets import nodemaker
+def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file):
+    from pynets import utils, nodemaker
     ##Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
     nilearn_parc_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
     nilearn_coord_atlases=['harvard_oxford', 'msdl', 'coords_power_2011', 'smith_2009', 'basc_multiscale_2015', 'allen_2011', 'coords_dosenbach_2010']
@@ -366,7 +365,7 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc):
             ##Describe user atlas coords
             print('\n' + str(atlas_select) + ' comes with {0} '.format(par_max) + 'parcels' + '\n')
         except:
-            print('\n\nError: Either you have specified the name of a nilearn atlas the does not exist or you have not supplied a 3d atlas parcellation image!\n\n')
+            print('\n\nError: Either you have specified the name of a nilearn atlas that does not exist or you have not supplied a 3d atlas parcellation image!\n\n')
             sys.exit(0)
 
     ##Labels prep
@@ -391,9 +390,12 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc):
         atlas_name
     except:
         atlas_name = atlas_select
-    return(label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile)
+        
+    dir_path = utils.do_dir_path(atlas_select, func_file)
+    return(label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile, dir_path)
 
-def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc):
+def RSN_fetch_nodes_and_labels(func_file, atlas_select, parlistfile, ref_txt, parc):
+    from pynets import utils, nodemaker
     ##Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
     nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
     if atlas_select in nilearn_atlases:
@@ -403,12 +405,12 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc):
     if parlistfile is None and parc == False:
         print('Fetching coordinates and labels from nilearn coordinate-based atlases')
         ##Fetch nilearn atlas coords
-        [coords, atlas_name, networks_list, label_names] = utils.fetch_nilearn_atlas_coords(atlas_select)
+        [coords, atlas_name, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
         parcel_list = None
         par_max = None
     else:
         ##Fetch user-specified atlas coords
-        [coords, atlas_select, par_max, parcel_list] = get_names_and_coords_of_parcels(parlistfile)
+        [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
         networks_list = None
 
     ##Labels prep
@@ -427,7 +429,9 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc):
         atlas_name
     except:
         atlas_name = atlas_select
-    return(label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile)
+    
+    dir_path = utils.do_dir_path(atlas_select, func_file)
+    return(label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile, dir_path)
 
 def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc):
     from pynets import nodemaker

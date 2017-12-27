@@ -8,6 +8,7 @@ recursive-include * *.nii.gz
 recursive-include * *.html
 recursive-include * *.js
 recursive-include * *.txt
+recursive-include * *.csv
 recursive-include tests *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
