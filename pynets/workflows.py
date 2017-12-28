@@ -97,6 +97,9 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     
     ##Extract time-series from nodes
     if parc == True:
+        save_nifti_parcels_node = pe.Node(niu.Function(input_names = ['ID', 'dir_path', 'mask', 'network', 'net_parcels_map_nifti'],  
+                                                     function=utils.save_nifti_parcels_map, imports = import_list), name = "save_nifti_parcels_node")
+
         ##extract time series from whole brain parcellaions:        
         extract_ts_wb_node = pe.Node(niu.Function(input_names = ['net_parcels_map_nifti', 'conf', 'func_file', 'coords', 'mask', 'dir_path', 'ID', 'network'], 
                                                      output_names=['ts_within_nodes'], 
@@ -209,7 +212,14 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                 (clustering_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
                                                 (clustering_node, extract_ts_wb_node, [('dir_path', 'dir_path')])
                                                 ])
-    
+    else:
+        wb_functional_connectometry_wf.add_nodes([save_nifti_parcels_node])
+        wb_functional_connectometry_wf.connect([(inputnode, save_nifti_parcels_node, [('ID', 'ID'),('mask', 'mask')]), 
+                                                (inputnode, save_nifti_parcels_node, [('network', 'network')]),
+                                                (WB_fetch_nodes_and_labels_node, save_nifti_parcels_node, [('dir_path', 'dir_path')]),
+                                                (node_gen_node, save_nifti_parcels_node, [('net_parcels_map_nifti', 'net_parcels_map_nifti')])
+                                                ])
+           
     wb_functional_connectometry_wf.config['execution']['crashdump_dir']='/tmp'
     wb_functional_connectometry_wf.config['execution']['remove_unnecessary_outputs']='false'
     wb_functional_connectometry_wf.write_graph()
@@ -309,18 +319,24 @@ def RSN_functional_connectometry(func_file, ID, atlas_select, network, node_size
         node_gen_node = pe.Node(niu.Function(input_names = ['coords', 'parcel_list', 'label_names', 'dir_path', 'ID', 'parc'], 
                                                      output_names=['net_parcels_map_nifti', 'coords', 'label_names'], 
                                                      function=nodemaker.node_gen, imports = import_list), name = "node_gen_node")
+
+    save_coords_and_labels_node = pe.Node(niu.Function(input_names = ['coords', 'label_names', 'dir_path', 'network'],  
+                                                     function=utils.save_RSN_coords_and_labels_to_pickle, imports = import_list), name = "save_coords_and_labels_node")
     
     ##Extract time-series from nodes
     if parc == True:
+        save_nifti_parcels_node = pe.Node(niu.Function(input_names = ['ID', 'dir_path', 'mask', 'network', 'net_parcels_map_nifti'],  
+                                                     function=utils.save_nifti_parcels_map, imports = import_list), name = "save_nifti_parcels_node")
+
         ##extract time series from whole brain parcellaions:        
         extract_ts_rsn_node = pe.Node(niu.Function(input_names = ['net_parcels_map_nifti', 'conf', 'func_file', 'coords', 'mask', 'dir_path', 'ID', 'network'], 
                                                      output_names=['ts_within_nodes'], 
-                                                     function=graphestimation.extract_ts_wb_parc, imports = import_list), name = "extract_ts_wb_parc_node")   
+                                                     function=graphestimation.extract_ts_wb_parc, imports = import_list), name = "extract_ts_rsn_parc_node")   
     else:
         ##Extract within-spheres time-series from funct file
         extract_ts_rsn_node = pe.Node(niu.Function(input_names = ['node_size', 'conf', 'func_file', 'coords', 'dir_path', 'ID', 'mask', 'thr', 'network'], 
                                              output_names=['ts_within_nodes'], 
-                                             function=graphestimation.extract_ts_wb_coords, imports = import_list), name = "extract_ts_wb_coords_node")        
+                                             function=graphestimation.extract_ts_wb_coords, imports = import_list), name = "extract_ts_rsn_coords_node")        
 
     thresh_and_fit_node = pe.Node(niu.Function(input_names = ['adapt_thresh', 'dens_thresh', 'thr', 'ts_within_nodes', 'conn_model', 'network', 'ID', 'dir_path', 'mask'], 
                                          output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr'], 
@@ -361,11 +377,11 @@ def RSN_functional_connectometry(func_file, ID, atlas_select, network, node_size
     
     ##Connect nodes of workflow
     rsn_functional_connectometry_wf.connect([
-        (inputnode, RSN_fetch_nodes_and_labels_node, [('func_file', 'func_file'),
-                                                    ('atlas_select', 'atlas_select'),
+        (inputnode, RSN_fetch_nodes_and_labels_node, [('atlas_select', 'atlas_select'),
                                                     ('parlistfile', 'parlistfile'),
                                                     ('parc', 'parc'),
-                                                    ('ref_txt', 'ref_txt')]),
+                                                    ('ref_txt', 'ref_txt'),
+                                                    ('func_file', 'func_file')]),
         (inputnode, get_node_membership_node, [('network', 'network'),
                                     ('func_file', 'func_file'),
                                     ('parc', 'parc')]),   
@@ -384,6 +400,10 @@ def RSN_functional_connectometry(func_file, ID, atlas_select, network, node_size
         (get_node_membership_node, node_gen_node, [('net_coords', 'coords'),
                                                     ('net_label_names', 'label_names'),
                                                     ('net_parcel_list', 'parcel_list')]),
+        (get_node_membership_node, save_coords_and_labels_node, [('net_coords', 'coords'),
+                                                    ('net_label_names', 'label_names'),
+                                                    ('network', 'network')]),
+        (RSN_fetch_nodes_and_labels_node, save_coords_and_labels_node, [('dir_path', 'dir_path')]),
         (inputnode, extract_ts_rsn_node, [('conf', 'conf'),
                                         ('func_file', 'func_file'),
                                         ('mask', 'mask'),
@@ -434,6 +454,13 @@ def RSN_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                 (clustering_node, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
                                                 (clustering_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
                                                 (clustering_node, extract_ts_rsn_node, [('dir_path', 'dir_path')])
+                                                ])
+    else:
+        rsn_functional_connectometry_wf.add_nodes([save_nifti_parcels_node])
+        rsn_functional_connectometry_wf.connect([(inputnode, save_nifti_parcels_node, [('ID', 'ID'),('mask', 'mask')]), 
+                                                (get_node_membership_node, save_nifti_parcels_node, [('network', 'network')]),
+                                                (RSN_fetch_nodes_and_labels_node, save_nifti_parcels_node, [('dir_path', 'dir_path')]),
+                                                (node_gen_node, save_nifti_parcels_node, [('net_parcels_map_nifti', 'net_parcels_map_nifti')])
                                                 ])
     if multi_nets is not None:
         rsn_functional_connectometry_wf.disconnect([(inputnode, extract_ts_rsn_node, [('network', 'network')]), 

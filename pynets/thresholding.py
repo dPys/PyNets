@@ -94,93 +94,6 @@ def binarize(W, copy=True):
     W[W != 0] = 1
     return W
 
-def adaptive_thresholding(ts_within_nodes, conn_model, network, ID, struct_mat_path, dir_path):
-    import collections
-    from pynets import binarize, thr2prob, est_density
-
-    def thr_step(func_mat, thr):
-        thr = float(thr) + float(0.01)
-        func_mat = threshold_absolute(func_mat, thr)
-        return func_mat
-
-    ##Calculate # False Connections
-    def est_error_rates(func_mat, struct_mat_bin, thr):
-        func_mat = thr_step(func_mat, thr)
-        func_mat_bin = binarize(func_mat)
-        diffs = func_mat_bin - struct_mat_bin
-        density = est_density(func_mat)
-        unique, counts = np.unique(diffs, return_counts=True)
-        accuracy_dict = dict(zip(unique, counts))
-        FN = accuracy_dict.get(-1.0)
-        FP = accuracy_dict.get(1.0)
-        FN_error = float(float(FN)/diffs.size)
-        FP_error = float(float(FP)/diffs.size)
-        total_err = float(float(FP + FN)/diffs.size)
-        return(FP_error, FN_error, total_err, density)
-
-    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_nodes, conn_model, network, ID, dir_path, thr)
-    struct_mat = np.genfromtxt(struct_mat_path)
-    print('Using reference structural matrix from: ' + struct_mat_path)
-
-    ##Prep functional mx
-    conn_matrix = normalize(conn_matrix)
-    np.fill_diagonal(conn_matrix, 0)
-    func_mat = conn_matrix
-    func_mat_bin = binarize(func_mat)
-    density = est_density(func_mat)
-
-    ##Prep Structural mx
-    np.fill_diagonal(struct_mat, 0)
-    struct_mat_thr2bin = thr2prob(struct_mat)
-    struct_mat_bin = binarize(struct_mat_thr2bin)
-    diffs = func_mat_bin - struct_mat_bin
-    unique, counts = np.unique(diffs, return_counts=True)
-    accuracy_dict = dict(zip(unique, counts))
-    FN = accuracy_dict.get(-1.0)
-    ACC = accuracy_dict.get(0.0)
-    FP = accuracy_dict.get(1.0)
-    FN_error = float(float(FN)/float(diffs.size))
-    FP_error = float(float(FP)/float(diffs.size))
-    print('FN Error: ' + str(FN_error))
-    print('FP Error: ' + str(FP_error))
-    ACCUR = float(float(ACC)/float(diffs.size))
-    total_err = float(float(FP + FN)/diffs.size)
-    print('Using Structural Correspondence as Ground Truth. Unthresholded FP Error: ' + str(FP_error*100) + '%' + '; Unthresholded FN Error: ' + str(FN_error*100) + '%' + '; Unthresholded Accuracy: ' + str(ACCUR*100) + '%')
-    print('Adaptively thresholding...')
-
-    thr=0.0
-    ##Create dictionary
-    d = {}
-    d[str(thr)] = [FP_error, FN_error, total_err, density]
-    print('Creating dictionary of thresholds...')
-    while thr < 0.2:
-        [FP_error, FN_error, total_err, density] = est_error_rates(func_mat, struct_mat_bin, thr)
-        d[str(thr)] = [round(FP_error,2), round(FN_error,2), round(total_err,2), round(density,2)]
-        thr = thr + 0.0001
-
-    d = collections.OrderedDict(sorted(d.items()))
-    good_threshes=[]
-    for key, value in d.items():
-        if value[0] == value[1]:
-            good_threshes.append(float(key))
-
-    [conn_matrix, est_path] = graphestimation.get_conn_matrix(ts_within_nodes, conn_model, network, ID, dir_path, thr)
-    conn_matrix = normalize(conn_matrix)
-    np.fill_diagonal(conn_matrix, 0)
-    min_thresh = min(good_threshes)
-    FP = d[str(min_thresh)][0]
-    FN = d[str(min_thresh)][1]
-    FN_error = float(float(FN)/float(diffs.size))
-    FP_error = float(float(FP)/float(diffs.size))
-    density = est_density(conn_matrix)
-    print('\n\n\nBest Threshold: ' + str(min_thresh))
-    print('Graph Density: ' + str(density))
-    print('Final Thresholded FN Error: ' + str(FN_error))
-    print('Final Thresholded FP Error: ' + str(FP_error) + '\n\n\n')
-    conn_matrix = threshold_absolute(conn_matrix, min_thresh)
-    edge_threshold = str(float(min_thresh)*100) +'%'
-    return(conn_matrix, est_path, edge_threshold, min_thresh)
-
 def invert(W, copy=False):
     '''##Adapted from bctpy
     '''
@@ -228,10 +141,10 @@ def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, 
         try:
             est_path2 = dir_path + '/' + ID + '_structural_est.txt'
             if os.path.isfile(est_path2) == True:
-                [conn_matrix_thr, est_path, edge_threshold, thr] = adaptive_thresholding(ts_within_nodes, conn_model, network, ID, est_path2, dir_path)
+                #[conn_matrix_thr, est_path, edge_threshold, thr] = adaptive_thresholding(ts_within_nodes, conn_model, network, ID, est_path2, dir_path)
                 ##Save unthresholded
                 unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
-                np.savetxt(unthr_path, conn_matrix_thr, delimiter='\t')
+                #np.savetxt(unthr_path, conn_matrix_thr, delimiter='\t')
                 edge_threshold = str(float(thr)*100) +'%'
             else:
                 print('No structural mx found! Exiting...')
