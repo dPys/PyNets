@@ -219,8 +219,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
             net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))            
     
     if len(net_pickle_mt_list) > 1:
-        print('\n\n\n' + str(network))
-        print(str(net_pickle_mt_list) + '\n\n\n')
+        print('\n\nList of result files to concatenate:\n' + str(net_pickle_mt_list) + '\n\n')
         subject_path = os.path.dirname(os.path.dirname(net_pickle_mt_list[0]))
         name_of_network_pickle = 'net_metrics_' + net_pickle_mt_list[0].split('_0.')[0].split('net_metrics_')[1]
         net_pickle_mt_list.sort()
@@ -251,7 +250,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                 df_concatted.to_pickle(subject_path + '/' + str(ID) + '_' + name_of_network_pickle + '_mean')
                 df_concatted.to_csv(subject_path + '/' + str(ID) + '_' + name_of_network_pickle + '_mean.csv', index = False)  
         except:
-            print('\nWARNING: DATAFRAME CONCATENATE FAILED FOR ' + str(ID) + '!\n')
+            print('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ' + str(ID) + '!\n')
             pass
     else:
         print('\nNo Dataframe objects to concatenate for ' + str(ID) + '!\n')
@@ -260,3 +259,48 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
 def output_echo(est_path, thr):
     pass
     return(est_path, thr)
+
+def build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list):
+    import numpy as np
+    from pynets import utils    
+    if multi_thr==True:
+        iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr), 
+                                                float(max_thr), float(step_thr)),decimals=2).tolist()]
+        for thr in iter_thresh:
+            est_path_tmp = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path)
+            est_path_list.append(est_path_tmp)                       
+    else:
+        est_path_tmp = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path)
+        est_path_list.append(est_path_tmp)
+        iter_thresh = [thr] * len(est_path_list)
+    return(iter_thresh, est_path_list)
+    
+def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network):
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import _pickle as pickle
+    ##Save coords to pickle
+    coord_path = dir_path + '/' + network + '_func_coords_wb.pkl'
+    with open(coord_path, 'wb') as f:
+        pickle.dump(coords, f)
+    ##Save labels to pickle
+    labels_path = dir_path + '/' + network + '_func_labelnames_wb.pkl'
+    with open(labels_path, 'wb') as f:
+        pickle.dump(label_names, f)
+    return
+
+def save_nifti_parcels_map(ID, dir_path, mask, network, net_parcels_map_nifti):
+    if mask:
+        if network:
+            net_parcels_nii_path = dir_path + '/' + ID + '_parcels_masked_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '.nii.gz'
+        else:
+            net_parcels_nii_path = dir_path + '/' + ID + '_parcels_masked_' + str(os.path.basename(mask).split('.')[0]) + '.nii.gz'
+    else:
+        if network:
+            net_parcels_nii_path = dir_path + '/' + ID + '_parcels_' + network + '.nii.gz'    
+        else:
+            net_parcels_nii_path = dir_path + '/' + ID + '_parcels.nii.gz'
+    
+    nib.save(net_parcels_map_nifti, net_parcels_nii_path)
+    return
