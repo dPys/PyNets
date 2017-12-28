@@ -4,13 +4,14 @@ Created on Tue Nov  7 10:40:07 2017
 
 @author: Derek Pisner
 """
+from __future__ import division
 import sys
 import os
 import math
 import numpy as np
 import networkx as nx
-from numpy import genfromtxt
 from pynets import utils
+from networkx.utils import accumulate
 
 def average_shortest_path_length_for_all(G):
     subgraphs = [sbg for sbg in nx.connected_component_subgraphs(G) if len(sbg) > 1]
@@ -212,6 +213,117 @@ def create_communities(node_comm_aff_mat, node_num):
             if community[j] == 1:
                 com_assign[j,0]=i
     return com_assign
+
+def _compute_rc(G):
+    """Returns the rich-club coefficient for each degree in the graph
+    `G`.
+
+    `G` is an undirected graph without multiedges.
+
+    Returns a dictionary mapping degree to rich-club coefficient for
+    that degree.
+
+    """
+    deghist = nx.degree_histogram(G)
+    total = sum(deghist)
+    # Compute the number of nodes with degree greater than `k`, for each
+    # degree `k` (omitting the last entry, which is zero).
+    nks = (total - cs for cs in accumulate(deghist) if total - cs > 1)
+    # Create a sorted list of pairs of edge endpoint degrees.
+    #
+    # The list is sorted in reverse order so that we can pop from the
+    # right side of the list later, instead of popping from the left
+    # side of the list, which would have a linear time cost.
+    edge_degrees = sorted((sorted(map(G.degree, e)) for e in G.edges()),
+                          reverse=True)
+    ek = G.number_of_edges()
+    k1, k2 = edge_degrees.pop()
+    rc = {}
+    for d, nk in enumerate(nks):
+        while k1 <= d:
+            if len(edge_degrees) == 0:
+                ek = 0
+                break
+            k1, k2 = edge_degrees.pop()
+            ek -= 1
+        rc[d] = 2 * ek / (nk * (nk - 1))
+    return rc
+
+def rich_club_coefficient(G, normalized=True, Q=100):
+    r"""Returns the rich-club coefficient of the graph `G`.
+
+    For each degree *k*, the *rich-club coefficient* is the ratio of the
+    number of actual to the number of potential edges for nodes with
+    degree greater than *k*:
+
+    .. math::
+
+        \phi(k) = \frac{2 E_k}{N_k (N_k - 1)}
+
+    where `N_k` is the number of nodes with degree larger than *k*, and
+    `E_k` is the number of edges among those nodes.
+
+    Parameters
+    ----------
+    G : NetworkX graph
+        Undirected graph with neither parallel edges nor self-loops.
+    normalized : bool (optional)
+        Normalize using randomized network as in [1]_
+    Q : float (optional, default=100)
+        If `normalized` is True, perform `Q * m` double-edge
+        swaps, where `m` is the number of edges in `G`, to use as a
+        null-model for normalization.
+
+    Returns
+    -------
+    rc : dictionary
+       A dictionary, keyed by degree, with rich-club coefficient values.
+
+    Examples
+    --------
+    >>> G = nx.Graph([(0, 1), (0, 2), (1, 2), (1, 3), (1, 4), (4, 5)])
+    >>> rc = nx.rich_club_coefficient(G, normalized=False)
+    >>> rc[0] # doctest: +SKIP
+    0.4
+
+    Notes
+    -----
+    The rich club definition and algorithm are found in [1]_.  This
+    algorithm ignores any edge weights and is not defined for directed
+    graphs or graphs with parallel edges or self loops.
+
+    Estimates for appropriate values of `Q` are found in [2]_.
+
+    References
+    ----------
+    .. [1] Julian J. McAuley, Luciano da Fontoura Costa,
+       and Tibério S. Caetano,
+       "The rich-club phenomenon across complex network hierarchies",
+       Applied Physics Letters Vol 91 Issue 8, August 2007.
+       https://arxiv.org/abs/physics/0701290
+    .. [2] R. Milo, N. Kashtan, S. Itzkovitz, M. E. J. Newman, U. Alon,
+       "Uniform generation of random graphs with arbitrary degree
+       sequences", 2006. https://arxiv.org/abs/cond-mat/0312028
+    """
+    if nx.number_of_selfloops(G) > 0:
+        raise Exception('rich_club_coefficient is not implemented for '
+                        'graphs with self loops.')
+    rc = _compute_rc(G)
+    if normalized:
+        # make R a copy of G, randomize with Q*|E| double edge swaps
+        # and use rich_club coefficient of R to normalize
+        R = G.copy()
+        E = R.number_of_edges()
+        nx.double_edge_swap(R, Q * E, max_tries=Q * E * 10)
+        rcran = _compute_rc(R)
+        rcran = {key:val for key, val in rcran.items() if val != 0}
+        rc = {k: v / rcran[k] for k, v in rcran.items()}
+        #rc_norm = {k: v / rcran[k] for k, v in rcran.items()}
+        #good_nodes = list(rc_norm.keys())
+        #for k in list(rc.items()):
+            #if k[0] not in good_nodes:
+                #del rc[k[0]]
+    return rc
 
 def modularity(W, qtype='sta', seed=42):
     np.random.seed(seed)
@@ -467,7 +579,7 @@ def link_communities(W, type_clustering='single'):
     W = normalize(W)
 
     if type_clustering not in ('single', 'complete'):
-        print('Unrecognized clustering type')
+        print('Error: Unrecognized clustering type')
 
     # set diagonal to mean weights
     np.fill_diagonal(W, 0)
@@ -542,7 +654,7 @@ def link_communities(W, type_clustering='single'):
 
 
     for i in range(m - 1):
-        print('hierarchy %i' % i)
+        print('Hierarchy %i' % i)
 
         #time1 = time.time()
 
@@ -692,8 +804,7 @@ def modularity_louvain_dir(W, gamma=1, hierarchy=False, seed=None):
 
     while True:
         if h > 300:
-            print('Modularity Infinite Loop Style E.  Please '
-                                'contact the developer with this error.')
+            print('Modularity Infinite Loop Style')
             sys.exit(0)
         k_o = np.sum(W, axis=1)  # node in/out degrees
         k_i = np.sum(W, axis=0)
@@ -709,8 +820,7 @@ def modularity_louvain_dir(W, gamma=1, hierarchy=False, seed=None):
         while flag:
             it += 1
             if it > 1000:
-                print('Modularity Infinite Loop Style F.  Please '
-                                    'contact the developer with this error.')
+                print('Modularity Infinite Loop Style')
                 sys.exit(0)
             flag = False
 
@@ -813,9 +923,11 @@ def most_important(G):
 ##Extract network metrics interface
 def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None):
     from pynets import thresholding
+    
+    pruning = False
 
     ##Load and threshold matrix
-    in_mat = np.array(genfromtxt(est_path))
+    in_mat = np.array(np.genfromtxt(est_path))
     in_mat = thresholding.autofix(in_mat)
     
     ##Normalize connectivity matrix (weights between 0-1)
@@ -830,13 +942,24 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
     ##Get dir_path
     dir_path = os.path.dirname(os.path.realpath(est_path))
 
-    ##Assign Weight matrix
-    mat_wei = in_mat
     ##Load numpy matrix as networkx graph
-    G=nx.from_numpy_matrix(mat_wei)
+    G_pre=nx.from_numpy_matrix(in_mat)
 
-    ##Prune irrelevant nodes    
-    [G, _, _] = most_important(G)
+    ##Prune irrelevant nodes (i.e. nodes who are fully disconnected from the graph and/or those whose betweenness centrality are > 3 standard deviations below the mean)
+    if pruning == True:
+        [G_pruned, _, _] = most_important(G_pre)
+    else:
+        G_pruned = G_pre
+    
+    ##Make directed if sparse
+    if conn_model != 'corr' and conn_model != 'cov' and conn_model != 'tangent':
+        G_di = nx.DiGraph(G_pruned)
+        G_dir = G_di.to_directed()
+        G = G_pruned
+    else:
+        G = G_pruned        
+
+    ##Get corresponding matrix
     in_mat = nx.to_numpy_array(G)
     
     ##Print graph summary
@@ -846,30 +969,33 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
     for i in info_list:
         print(i)
         
-    if G.is_directed() == True:
-        print('Graph is DIRECTED')
-    else:
+    try:
+        G_dir
+        print('Analyzing DIRECTED graph counterpart when applicable...')
+    except:
         print('Graph is UNDIRECTED')
 
-    if nx.is_connected(G) == True:
-        num_conn_comp = nx.number_connected_components(G)
-        print('Graph is CONNECTED with ' + str(num_conn_comp) + ' connected component(s)\n\n')
-    else:
-        print('Graph is DISCONNECTED\n\n')
+    if conn_model == 'corr' or conn_model == 'cov' or conn_model == 'tangent':
+        if nx.is_connected(G) == True:
+            num_conn_comp = nx.number_connected_components(G)
+            print('Graph is CONNECTED with ' + str(num_conn_comp) + ' connected component(s)')
+        else:
+            print('Graph is DISCONNECTED')
+    print('\n')
 
     ##Create Length matrix
     mat_len = thresholding.weight_conversion(in_mat, 'lengths')
     ##Load numpy matrix as networkx graph
     G_len=nx.from_numpy_matrix(mat_len)
 
-    ##Save gephi files
-    if mask != None:
-        if network != None:
+    ##Save G as gephi file
+    if mask:
+        if network:
             nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '.graphml')
         else:
             nx.write_graphml(G, dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '.graphml')        
     else:
-        if network != None:
+        if network:
             nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '.graphml')
         else:
             nx.write_graphml(G, dir_path + '/' + ID + '.graphml')
@@ -877,7 +1003,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
     ###############################################################
     ########### Calculate graph metrics from graph G ##############
     ###############################################################
-    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, rich_club_coefficient, eigenvector_centrality_numpy, communicability_betweenness_centrality, clustering, degree_centrality
+    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, eigenvector_centrality, communicability_betweenness_centrality, clustering, degree_centrality
     from pynets.netstats import average_local_efficiency, global_efficiency, local_efficiency, modularity_louvain_dir, smallworldness
     ##For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the function  (with a G-only input) to the netstats module.
     metric_list = [global_efficiency, average_local_efficiency, smallworldness, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
@@ -896,15 +1022,27 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         try:
             if i is 'average_shortest_path_length':
                 try:
-                    net_met_val = float(i(G))
+                    try:
+                        net_met_val = float(i(G_dir))
+                        print('Calculating from directed graph...')
+                    except:
+                        net_met_val = float(i(G))
                 except:
                     ##case where G is not fully connected
                     net_met_val = float(average_shortest_path_length_for_all(G))
             if custom_weight is not None and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
                 custom_weight_param = 'weight = ' + str(custom_weight)
-                net_met_val = float(i(G, custom_weight_param))
+                try:
+                    net_met_val = float(i(G_dir, custom_weight_param))
+                    print('Calculating from directed graph...')
+                except:
+                    net_met_val = float(i(G, custom_weight_param))
             else:
-                net_met_val = float(i(G))
+                try:
+                    net_met_val = float(i(G_dir))
+                    print('Calculating from directed graph...')
+                except:
+                    net_met_val = float(i(G))
         except:
             net_met_val = np.nan
         net_met_arr[j,0] = net_met
@@ -917,15 +1055,18 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
 
     ##Run miscellaneous functions that generate multiple outputs
     ##Calculate modularity using the Louvain algorithm
-    [community_aff, modularity] = modularity_louvain_dir(mat_wei)
+    [community_aff, modularity] = modularity_louvain_dir(in_mat)
 
     ##Calculate core-periphery subdivision
-    [Coreness_vec, Coreness_q] = core_periphery_dir(mat_wei)
+    [Coreness_vec, Coreness_q] = core_periphery_dir(in_mat)
 
     ##Local Efficiency
     try:
-        le_vector = local_efficiency(G)
-        print('Extracting Local Efficiency vector for all network nodes...')
+        try:
+            le_vector = local_efficiency(G_dir)
+        except:
+            le_vector = local_efficiency(G)
+        print('\nExtracting Local Efficiency vector for all network nodes...')
         le_vals = list(le_vector.values())
         le_nodes = list(le_vector.keys())
         num_nodes = len(le_nodes)
@@ -940,18 +1081,18 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
                 le_arr[j,1] = np.nan
             #print(str(le_vals[j]))
             j = j + 1
-        le_val_list = list(le_arr[:,1])
         le_arr[num_nodes,0] = 'MEAN_local_efficiency'
         nonzero_arr_le = np.delete(le_arr[:,1], [0])
         le_arr[num_nodes,1] = np.mean(nonzero_arr_le)
-        print('\n' + 'Local Efficiency across all nodes: ' + str(le_arr[num_nodes,1]) + '\n')
+        print('Local Efficiency across all nodes: ' + str(le_arr[num_nodes,1]))
+        print('\n')
     except:
-        le_val_list = []
+        pass
 
     ##Local Clustering
     try:
         cl_vector = clustering(G)
-        print('Extracting Local Clustering vector for all network nodes...')
+        print('\nExtracting Local Clustering vector for all network nodes...')
         cl_vals = list(cl_vector.values())
         cl_nodes = list(cl_vector.keys())
         num_nodes = len(cl_nodes)
@@ -966,18 +1107,21 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
                 cl_arr[j,1] = np.nan
             #print(str(cl_vals[j]))
             j = j + 1
-        cl_val_list = list(cl_arr[:,1])
         cl_arr[num_nodes,0] = 'MEAN_local_efficiency'
         nonzero_arr_cl = np.delete(cl_arr[:,1], [0])
         cl_arr[num_nodes,1] = np.mean(nonzero_arr_cl)
-        print('\n' + 'Local Efficiency across all nodes: ' + str(cl_arr[num_nodes,1]) + '\n')
+        print('Local Efficiency across all nodes: ' + str(cl_arr[num_nodes,1]))
+        print('\n')
     except:
-        cl_val_list = []
+        pass
 
     ##Degree centrality
     try:
-        dc_vector = degree_centrality(G)
-        print('Extracting Degree Centrality vector for all network nodes...')
+        try:
+            dc_vector = degree_centrality(G_dir)
+        except:
+            dc_vector = degree_centrality(G)
+        print('\nExtracting Degree Centrality vector for all network nodes...')
         dc_vals = list(dc_vector.values())
         dc_nodes = list(dc_vector.keys())
         num_nodes = len(dc_nodes)
@@ -992,18 +1136,18 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
                 dc_arr[j,1] = np.nan
             #print(str(cl_vals[j]))
             j = j + 1
-        dc_val_list = list(dc_arr[:,1])
         dc_arr[num_nodes,0] = 'MEAN_degree_centrality'
         nonzero_arr_dc = np.delete(dc_arr[:,1], [0])
         dc_arr[num_nodes,1] = np.mean(nonzero_arr_dc)
-        print('\n' + 'Degree Centrality across all nodes: ' + str(dc_arr[num_nodes,1]) + '\n')
+        print('Degree Centrality across all nodes: ' + str(dc_arr[num_nodes,1]))
+        print('\n')
     except:
-        dc_val_list = []
+        pass
 
     ##Betweenness Centrality
     try:
-        bc_vector = betweenness_centrality(G_len)
-        print('Extracting Betweeness Centrality vector for all network nodes...')
+        bc_vector = betweenness_centrality(G_len, normalized=True)
+        print('\nExtracting Betweeness Centrality vector for all network nodes...')
         bc_vals = list(bc_vector.values())
         bc_nodes = list(bc_vector.keys())
         num_nodes = len(bc_nodes)
@@ -1018,18 +1162,21 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
                 bc_arr[j,1] = np.nan
             #print(str(bc_vals[j]))
             j = j + 1
-        bc_val_list = list(bc_arr[:,1])
         bc_arr[num_nodes,0] = 'MEAN_betw_cent'
         nonzero_arr_betw_cent = np.delete(bc_arr[:,1], [0])
         bc_arr[num_nodes,1] = np.mean(nonzero_arr_betw_cent)
-        print('\n' + 'Mean Betweenness Centrality across all nodes: ' + str(bc_arr[num_nodes,1]) + '\n')
+        print('Mean Betweenness Centrality across all nodes: ' + str(bc_arr[num_nodes,1]))
+        print('\n')
     except:
-        bc_val_list = []
+        pass
 
     ##Eigenvector Centrality
     try:
-        ec_vector = eigenvector_centrality_numpy(G)
-        print('Extracting Eigenvector Centrality vector for all network nodes...')
+        try:
+            ec_vector = eigenvector_centrality(G_dir, max_iter=1000)
+        except:
+            ec_vector = eigenvector_centrality(G, max_iter=1000)
+        print('\nExtracting Eigenvector Centrality vector for all network nodes...')
         ec_vals = list(ec_vector.values())
         ec_nodes = list(ec_vector.keys())
         num_nodes = len(ec_nodes)
@@ -1044,19 +1191,18 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
                 ec_arr[j,1] = np.nan
             #print(str(ec_vals[j]))
             j = j + 1
-        ec_val_list = list(ec_arr[:,1])
         ec_arr[num_nodes,0] = 'MEAN_eig_cent'
         nonzero_arr_eig_cent = np.delete(ec_arr[:,1], [0])
         ec_arr[num_nodes,1] = np.mean(nonzero_arr_eig_cent)
-        print('\n' + 'Mean Eigenvector Centrality across all nodes: ' + str(ec_arr[num_nodes,1]) + '\n')
+        print('Mean Eigenvector Centrality across all nodes: ' + str(ec_arr[num_nodes,1]))
+        print('\n')
     except:
-        ec_val_list = []
+        pass
 
     ##Communicability Centrality
     try:
-        cc_vector = communicability_betweenness_centrality(G)
-            
-        print('Extracting Communicability Centrality vector for all network nodes...')
+        cc_vector = communicability_betweenness_centrality(G, normalized=True)
+        print('\nExtracting Communicability Centrality vector for all network nodes...')
         cc_vals = list(cc_vector.values())
         cc_nodes = list(cc_vector.keys())
         num_nodes = len(cc_nodes)
@@ -1071,18 +1217,18 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
                 cc_arr[j,1] = np.nan
             #print(str(cc_vals[j]))
             j = j + 1
-        cc_val_list = list(cc_arr[:,1])
         cc_arr[num_nodes,0] = 'MEAN_comm_cent'
         nonzero_arr_comm_cent = np.delete(cc_arr[:,1], [0])
         cc_arr[num_nodes,1] = np.mean(nonzero_arr_comm_cent)
-        print('\n' + 'Mean Communicability Centrality across all nodes: ' + str(cc_arr[num_nodes,1]) + '\n')
+        print('Mean Communicability Centrality across all nodes: ' + str(cc_arr[num_nodes,1]))
+        print('\n')
     except:
-        cc_val_list = []
+        pass
 
     ##Rich club coefficient
     try:
         rc_vector = rich_club_coefficient(G, normalized=True)
-        print('Extracting Rich Club Coefficient vector for all network nodes...')
+        print('\nExtracting Rich Club Coefficient vector for all network nodes...')
         rc_vals = list(rc_vector.values())
         rc_edges = list(rc_vector.keys())
         num_edges = len(rc_edges)
@@ -1098,13 +1244,13 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
             #print(str(rc_vals[j]))
             j = j + 1
         ##Add mean
-        rc_val_list = list(rc_arr[:,1])
         rc_arr[num_edges,0] = 'MEAN_rich_club'
         nonzero_arr_rich_club = np.delete(rc_arr[:,1], [0])
         rc_arr[num_edges,1] = np.mean(nonzero_arr_rich_club)
-        print('\n' + 'Mean Rich Club Coefficient across all edges: ' + str(rc_arr[num_edges,1]) + '\n')
+        print('Mean Rich Club Coefficient across all edges: ' + str(rc_arr[num_edges,1]))
+        print('\n')
     except:
-        rc_val_list = []
+        pass
 
     ##Create a list of metric names for scalar metrics
     metric_list_names = []

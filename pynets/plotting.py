@@ -63,20 +63,33 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, 
 
 def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names):
     from pynets.netstats import most_important
+    
+    ##Advanced Settings
     comm = 'nodes'
-
+    pruned = False
+    #color_scheme = 'interpolateCool'
+    #color_scheme = 'interpolateGnBu'
+    #color_scheme = 'interpolateOrRd'
+    #color_scheme = 'interpolatePuRd'
+    #color_scheme = 'interpolateYlOrRd'
+    #color_scheme = 'interpolateReds'
+    #color_scheme = 'interpolateGreens'
+    color_scheme = 'interpolateBlues'
+    ##Advanced Settings
+    
     conn_matrix = normalize(conn_matrix)
     G=nx.from_numpy_matrix(conn_matrix)
-    [G, pruned_nodes, pruned_edges] = most_important(G)
-    conn_matrix = nx.to_numpy_array(G)
+    if pruned == True:
+        [G, pruned_nodes, pruned_edges] = most_important(G)
+        conn_matrix = nx.to_numpy_array(G)
 
-    pruned_nodes.sort(reverse = True)
-    for j in pruned_nodes:
-        del label_names[label_names.index(label_names[j])]
-    
-    pruned_edges.sort(reverse = True)
-    for j in pruned_edges:
-        del label_names[label_names.index(label_names[j])]
+        pruned_nodes.sort(reverse = True)
+        for j in pruned_nodes:
+            del label_names[label_names.index(label_names[j])]
+            
+        pruned_edges.sort(reverse = True)
+        for j in pruned_edges:
+            del label_names[label_names.index(label_names[j])]   
         
     def doClust(X, clust_levels):
         ##get the linkage diagram
@@ -252,14 +265,6 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
                 line = line.replace(src, target)
             outfile.write(line)
 
-    #color_scheme = 'interpolateCool'
-    #color_scheme = 'interpolateGnBu'
-    #color_scheme = 'interpolateOrRd'
-    #color_scheme = 'interpolatePuRd'
-    #color_scheme = 'interpolateYlOrRd'
-    #color_scheme = 'interpolateReds'
-    #color_scheme = 'interpolateGreens'
-    color_scheme = 'interpolateBlues'
     replacements_js = {'template.json': str(json_file_name), 'interpolateCool': str(color_scheme)}
     with open(conn_js_path) as infile, open(connectogram_js_sub, 'w') as outfile:
         for line in infile:
@@ -275,15 +280,16 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
 
 def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
     for time_serie, label in zip(time_series.T, labels):
-        plt.plot(time_serie, label=label)
-    plt.title(network + ' Network Time Series')
+        plt.plot(time_serie, label=label) 
     plt.xlabel('Scan Number')
     plt.ylabel('Normalized Signal')
     plt.legend()
     #plt.tight_layout()
-    if network != None:
+    if network:
+        plt.title(network + ' Time Series')
         out_path_fig=dir_path + '/' + ID + '_' + network + '_TS_plot.png'
     else:
+        plt.title('Time Series')
         out_path_fig=dir_path + '/' + ID + '_Whole_Brain_TS_plot.png'
     plt.savefig(out_path_fig)
     plt.close()
@@ -322,9 +328,15 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     
         ##Plot connectome
         if mask != None:
-            out_path_fig=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
+            if network != None:
+                out_path_fig=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_connectome_viz.png'
+            else:
+                out_path_fig=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
         else:
-            out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
+            if network != None:
+                out_path_fig=dir_path + '/' + ID + '_' + str(network) + '_connectome_viz.png'
+            else:
+                out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
         #niplot.plot_connectome(conn_matrix, coords, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
         ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
         connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=False, node_size=0.0001)
