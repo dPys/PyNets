@@ -122,7 +122,7 @@ def individual_tcorr_clustering(func_file, clust_mask, ID, k, thresh = 0.5):
     ##write out for group mean clustering
     binfile=working_dir + '/rm_tcorr_indiv_cluster_' + str(ID) + '_' + str(k) + '.npy'        
     mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-    atlas_select = mask_name + '_k' + str(k)
+    atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
     dir_path = utils.do_dir_path(atlas_select, func_file)
     parlistfile = dir_path + '/' + str(ID) + '_' + mask_name + '_parc_k' + str(k) + '.nii.gz'
     make_image_from_bin_renum(parlistfile,binfile,clust_mask)   
