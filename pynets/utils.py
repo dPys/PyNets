@@ -10,7 +10,6 @@ import os
 import nibabel as nib
 import pandas as pd
 from nilearn import datasets
-from nilearn.image import concat_imgs
 try:
     import cPickle as pickle
 except ImportError:
@@ -31,35 +30,7 @@ def nilearn_atlas_helper(atlas_select):
         print('Extraction from nilearn datasets failed!')
         sys.exit()
     return(label_names, networks_list, parlistfile)
-
-def convert_atlas_to_volumes(atlas_path, img_list):
-    atlas_dir = os.path.dirname(atlas_path)
-    ref_txt = atlas_dir + '/' + atlas_path.split('/')[-1:][0].split('.')[0] + '.txt'
-    fourd_file = atlas_dir + '/' + atlas_path.split('/')[-1:][0].split('.')[0] + '_4d.nii.gz'
-    if os.path.isfile(ref_txt):
-        try:
-            all4d = concat_imgs(img_list)
-            nib.save(all4d, fourd_file)
-
-            ##Save individual 3D volumes as individual files
-            volumes_dir = atlas_dir + '/' + atlas_path.split('/')[-1:][0].split('.')[0] + '_volumes'
-            if not os.path.exists(volumes_dir):
-                os.makedirs(volumes_dir)
-
-            j = 0
-            for img in img_list:
-                volume_path = volumes_dir + '/parcel_' + str(j)
-                nib.save(img, volume_path)
-                j = j + 1
-
-        except:
-            print('Image concatenation failed for: ' + str(atlas_path))
-            volumes_dir = None
-    else:
-        print('Atlas reference file not found!')
-        volumes_dir = None
-    return(volumes_dir)
-
+    
 ##save net metric files to pandas dataframes interface
 def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
     if mask != None:
@@ -192,32 +163,64 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
             atlas_select = mask_name + '_k' + str(k)
             if iter_thresh is not None:
                 for thr in iter_thresh:
+                    try:
+                        net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                    except:
+                        print('Missing results path for K=' + str(k) + ' and thr=' + str(thr))
+                        pass
+            else:
+                try:
                     net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
-            else: 
-                net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                except:
+                    print('Missing results path for K=' + str(k))
+                    pass
     elif k_clustering == 1:
         mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
         atlas_select = mask_name + '_k' + str(k)
         if iter_thresh is not None:
             for thr in iter_thresh:
-                net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                try:
+                    net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                except:
+                    print('Missing results path for K=' + str(k) + ' and thr=' + str(thr))
+                    pass
         else:
-            net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+            try:
+                net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+            except:
+                print('Missing results path for K=' + str(k))
+                pass
     elif user_atlas_list:
         for parlistfile in user_atlas_list:
             atlas_select = parlistfile.split('/')[-1].split('.')[0]
             if iter_thresh is not None:
                 for thr in iter_thresh:
+                    try:
+                        net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                    except:
+                        print('Missing results path for atlas=' + str(atlas_select) + ' and thr=' + str(thr))
+                        pass
+            else:
+                try:
                     net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
-            else: 
-                net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                except:
+                    print('Missing results path for atlas=' + str(atlas_select))
+                    pass
     elif k_clustering == 0 and atlas_select is not None:
         if iter_thresh is not None:
             for thr in iter_thresh:
-                net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
-        else: 
-            net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))            
-    
+                try:
+                    net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                except:
+                    print('Missing results path for thr=' + str(thr))
+                    pass
+        else:
+            try:
+                net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))            
+            except:
+                print('Missing results path')
+                pass
+            
     if len(net_pickle_mt_list) > 1:
         print('\n\nList of result files to concatenate:\n' + str(net_pickle_mt_list) + '\n\n')
         subject_path = os.path.dirname(os.path.dirname(net_pickle_mt_list[0]))
@@ -281,11 +284,11 @@ def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network)
     except ImportError:
         import _pickle as pickle
     ##Save coords to pickle
-    coord_path = dir_path + '/' + network + '_func_coords_wb.pkl'
+    coord_path = dir_path + '/' + network + '_func_coords_rsn.pkl'
     with open(coord_path, 'wb') as f:
         pickle.dump(coords, f)
     ##Save labels to pickle
-    labels_path = dir_path + '/' + network + '_func_labelnames_wb.pkl'
+    labels_path = dir_path + '/' + network + '_func_labelnames_rsn.pkl'
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f)
     return

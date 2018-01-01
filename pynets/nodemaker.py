@@ -8,19 +8,13 @@ import os
 import sys
 import nilearn
 import numpy as np
-import pandas as pd
 import nibabel as nib
 import warnings
-import pkg_resources
 warnings.simplefilter("ignore")
 from nilearn import datasets, masking
 from nilearn.image import concat_imgs, new_img_like
 from nilearn.plotting import find_xyz_cut_coords
 from pathlib import Path
-try:
-    import cPickle as pickle
-except ImportError:
-    import _pickle as pickle
     
 def get_sphere(coords, r, vox_dims, dims):
     """##Adapted from Neurosynth
@@ -67,6 +61,9 @@ def fetch_nilearn_atlas_coords(atlas_select):
 
 def get_node_membership(network, func_file, coords, label_names, parc, parcel_list):
     from nilearn.image import resample_img
+    from pynets.nodemaker import get_sphere
+    import pkg_resources
+    import pandas as pd
     ##For parcel membership determination, specify overlap thresh and error cushion in mm voxels
     perc_overlap = 0.75 ##Default is >=90% overlap
     error = 2
@@ -347,6 +344,7 @@ def gen_network_parcels(parlistfile, network, labels, dir_path):
 
 def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file):
     from pynets import utils, nodemaker
+    import pandas as pd
     ##Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
     nilearn_parc_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
     nilearn_coord_atlases=['harvard_oxford', 'msdl', 'coords_power_2011', 'smith_2009', 'basc_multiscale_2015', 'allen_2011', 'coords_dosenbach_2010']
@@ -399,6 +397,7 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
 
 def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file):
     from pynets import utils, nodemaker
+    import pandas as pd
     ##Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
     nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
     if atlas_select in nilearn_atlases:
@@ -438,6 +437,10 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
 
 def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc):
     from pynets import nodemaker
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import _pickle as pickle
     ##Mask Parcels
     if parc == True:
         [coords, label_names, parcel_list_masked] = nodemaker.parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID)
@@ -457,7 +460,11 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc)
     return(net_parcels_map_nifti, coords, label_names)
 
 def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
-    from pynets import nodemaker     
+    from pynets import nodemaker
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import _pickle as pickle
     if parc == True:
         [net_parcels_map_nifti, parcel_list_adj] = nodemaker.create_parcel_atlas(parcel_list)
     else:

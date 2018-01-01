@@ -199,9 +199,12 @@ if __name__ == '__main__':
         multi_thr=False
             
     ##Check required inputs for existence, and configure run
-    if input_file.endswith('.txt'):
-        with open(input_file) as f:
-            subjects_list = f.read().splitlines()
+    if input_file:
+        if input_file.endswith('.txt'):
+            with open(input_file) as f:
+                subjects_list = f.read().splitlines()
+        else:
+            subjects_list = None
     else:
         subjects_list = None
 
@@ -242,37 +245,38 @@ if __name__ == '__main__':
     else:
         k_clustering = 0
 
-    if parlistfile != None and k_clustering == 0 and not user_atlas_list:
-        atlas_select = parlistfile.split('/')[-1].split('.')[0]
-        dir_path = do_dir_path(atlas_select, input_file)
-        print ("ATLAS: " + str(atlas_select))
-    elif parlistfile != None and not user_atlas_list:
-        parlistfile = user_atlas_list[0]
-        atlas_select = parlistfile.split('/')[-1].split('.')[0]
-        dir_path = do_dir_path(atlas_select, input_file)
-        print ("ATLAS: " + str(atlas_select))
-    elif user_atlas_list:
-        print ('Iterating across multiple user atlases...')
-        for parlistfile in user_atlas_list:
+    if input_file:
+        if parlistfile != None and k_clustering == 0 and not user_atlas_list:
             atlas_select = parlistfile.split('/')[-1].split('.')[0]
             dir_path = do_dir_path(atlas_select, input_file)
-        atlas_select = None
-    elif (user_atlas_list or parlistfile != None) and (k_clustering == 2 or k_clustering == 1):
-        print('Error: the -ua flag cannot be used with the clustering option. Use the -cm flag instead.')
-        sys.exit(0)
-    elif k_clustering == 1:
-        cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0] 
-        atlas_select = cl_mask_name + '_k' + str(k)
-        dir_path = do_dir_path(atlas_select, input_file)    
-        print ("Clustering within mask...")
-    elif k_clustering == 2:
-        cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]            
-        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
-        atlas_select = cl_mask_name + '_k' + str(k_list[0])
-        dir_path = do_dir_path(atlas_select, input_file)
-        print ("Clustering within mask at multiple resolutions...")
-    else:
-        dir_path = do_dir_path(atlas_select, input_file)
+            print ("ATLAS: " + str(atlas_select))
+        elif parlistfile != None and not user_atlas_list:
+            parlistfile = user_atlas_list[0]
+            atlas_select = parlistfile.split('/')[-1].split('.')[0]
+            dir_path = do_dir_path(atlas_select, input_file)
+            print ("ATLAS: " + str(atlas_select))
+        elif user_atlas_list:
+            print ('Iterating across multiple user atlases...')
+            for parlistfile in user_atlas_list:
+                atlas_select = parlistfile.split('/')[-1].split('.')[0]
+                dir_path = do_dir_path(atlas_select, input_file)
+            atlas_select = None
+        elif (user_atlas_list or parlistfile != None) and (k_clustering == 2 or k_clustering == 1):
+            print('Error: the -ua flag cannot be used with the clustering option. Use the -cm flag instead.')
+            sys.exit(0)
+        elif k_clustering == 1:
+            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0] 
+            atlas_select = cl_mask_name + '_k' + str(k)
+            dir_path = do_dir_path(atlas_select, input_file)    
+            print ("Clustering within mask...")
+        elif k_clustering == 2:
+            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]            
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+            atlas_select = cl_mask_name + '_k' + str(k_list[0])
+            dir_path = do_dir_path(atlas_select, input_file)
+            print ("Clustering within mask at multiple resolutions...")
+        else:
+            dir_path = do_dir_path(atlas_select, input_file)
         
     if ref_txt != None and os.path.exists(ref_txt):
         atlas_select = os.path.basename(ref_txt).split('.txt')[0]
@@ -288,13 +292,13 @@ if __name__ == '__main__':
     else:
         print("Using whole-brain pipeline..." )
     
-    if input_file is not None and subjects_list is not None:
+    if input_file and subjects_list:
         print("\n")
         print('Running workflow of workflows across subjects:\n')
         print (str(subjects_list))
         ##Set directory path containing input file  
         dir_path = do_dir_path(atlas_select, subjects_list[0])
-    elif input_file is not None and bedpostx_dir is not None and atlas_select != 'Clustered':
+    elif input_file and bedpostx_dir:
         print('Running joint structural-functional connectometry...')
         print ("Functional file: " + input_file)
         print ("Bedpostx Directory: " + bedpostx_dir)
@@ -306,7 +310,7 @@ if __name__ == '__main__':
         nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
         ref_txt = parlistfile.split('/')[-1:][0].split('.')[0] + '.txt'
         dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
-    elif input_file is None and bedpostx_dir is not None and atlas_select != 'Clustered':
+    elif input_file is None and bedpostx_dir:
         print('Running structural connectometry only...')
         print ("Bedpostx Directory: " + bedpostx_dir)
         if anat_loc is not None:
@@ -317,11 +321,11 @@ if __name__ == '__main__':
         nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
         ref_txt = parlistfile.split('/')[-1:][0].split('.')[0] + '.txt'
         dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
-    elif input_file is not None and bedpostx_dir is None and subjects_list is None and atlas_select != 'Clustered':
+    elif input_file and bedpostx_dir is None and subjects_list is None:
         print('Running functional connectometry only...')
         print ("Functional file: " + input_file)
     print('\n-------------------------------------------------------------------------\n\n\n')
-
+    
     ##Import core modules
     import warnings
     warnings.simplefilter("ignore")
@@ -350,13 +354,15 @@ if __name__ == '__main__':
             [est_path, thr] = workflows.wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list)
         ##Workflow 2: RSN functional connectome
         elif bedpostx_dir == None:
-            [est_path, thr] = workflows.RSN_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list)
+            [est_path, thr] = workflows.rsn_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list)
         ##Workflow 3: Whole-brain structural connectome
         elif bedpostx_dir != None and network == None:
-            [est_path, thr] = workflows.wb_structural_connectometry(ID, bedpostx_dir, network, node_size, atlas_select, parlistfile, label_names, plot_switch, parc, dict_df, anat_loc, ref_txt, int(procmem[0]), dir_path, multi_thr, multi_atlas, multi_nets, max_thr, min_thr, k, clust_mask)
+            est_path = workflows.wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc)
+            thr=None
         ##Workflow 4: RSN structural connectome
         elif bedpostx_dir != None:
-            [est_path, thr] = workflows.RSN_structural_connectometry(ID, bedpostx_dir, network, node_size, atlas_select, parlistfile, label_names, plot_switch, parc, dict_df, anat_loc, ref_txt, int(procmem[0]), dir_path, multi_thr, multi_atlas, multi_nets, max_thr, min_thr, k, clust_mask)
+            est_path = workflows.rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc)
+            thr=None
             
         ##Build iterfields
         if multi_atlas is not None or multi_thr==True or multi_nets is not None or k_clustering == 2:
@@ -799,27 +805,24 @@ if __name__ == '__main__':
     #handler = logging.FileHandler(callback_log_path)
     #logger.addHandler(handler)
 
-    if subjects_list is not None:
+    if subjects_list:
         wf_multi = wf_multi_subject(subjects_list, atlas_select, network, node_size,
         mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr,
         anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list)
         #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1]), 'status_callback' : log_nodes_cb}
         plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
-        #wf_multi.run()
         print('\n' + 'Running with ' + str(plugin_args) + '\n')
         wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
+        #wf_multi.run()
     ##Single-subject workflow generator
     else:
         wf = init_wf_single_subject(ID, input_file, dir_path, atlas_select, network,
         node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf,
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list)
-        #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1]), 'status_callback' : log_nodes_cb}
-        plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
-        #wf.run()
-        print('\n' + 'Running with ' + str(plugin_args) + '\n')
-        wf.run(plugin='MultiProc', plugin_args= plugin_args)
+        #plugin_args = {'status_callback' : log_nodes_cb}
+        wf.run()
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)
