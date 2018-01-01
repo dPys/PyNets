@@ -336,25 +336,42 @@ def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, ven
     return max_i
 
 def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_output_dir_path, max_i):
+    ##Wait for all probtrackx runs to complete
+    import os
     import time 
-    filename = probtrackx_output_dir_path + '/' + str(max_i) + '_complete.txt'
-    while not os.path.exists(filename):
-        time.sleep(1)
+    import glob
+    import nibabel as nib
+    tmp_files = []
+    for i in range(int(max_i)):
+        tmp_files.append(probtrackx_output_dir_path + '/' + str(i) + '_complete.txt')
+    
+    while True:
+       if all([os.path.isfile(f) for f in tmp_files]):
+          break
+       else:
+          time.sleep(5)
         
     output_fdts = glob.glob(probtrackx_output_dir_path + '/tmp*/fdt_paths.nii.gz')
     net_mats = glob.glob(probtrackx_output_dir_path + '/tmp*/fdt_network_matrix')
     waytotals = glob.glob(probtrackx_output_dir_path + '/tmp*/waytotal')
     dir_path = os.path.dirname(bedpostx_dir)
-    
-    ##Merge tmp fdt_path niftis
+         
     try:
-        out_file = probtrackx_output_dir_path + '/fdt_paths.nii.gz'
-        args=''
-        for i in output_fdts[1:]:
-            new_arg = ' -add ' + str(i)
-            args = args + new_arg
-        maths = fsl.ImageMaths(output_fdts[1], args, out_file, dir_path, ID, network)
-        os.system(maths.cmdline)
+        ##Add the images
+        out_file = probtrackx_output_dir_path + '/fdt_paths.nii.gz'      
+        fdt_imgs = []
+        for img in output_fdts:
+            fdt_imgs.append(nib.load(img).get_data()) 
+      
+        aff = nib.load(img).affine
+        all_img = fdt_imgs[0]
+        for img in fdt_imgs[1:]:
+            all_img = all_img + img
+            
+        result_img = nib.Nifti1Image(all_img, affine=aff)
+        print('Saving sum of all fdt_paths temporary images...')
+        nib.save(result_img, out_file)
+
     except:
         print('fdt_paths wont merge!')
 
@@ -389,9 +406,18 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
 
     conn_matri = conn_matrices[0]
     for i in range(len(conn_matrices))[1:]:
-        conn_matri = np.add(conn_matri, conn_matrices[i])
+        try:
+            conn_matri = conn_matri + conn_matrices[i]
+        except:
+            print('Matrix ' + str(i + 1) + ' is a different shape: ' + str(conn_matrices[i].shape) + '. Skipping...')
+            continue
 
-    conn_matrix = normalize(conn_matri)
+    try:
+        print('Normalizing array...')
+        conn_matrix = normalize(conn_matri)
+    except:
+        print('Normalization failed...')
+        pass
     conn_matrix_symm = np.maximum(conn_matrix, conn_matrix.transpose())
     
     if parc == False:

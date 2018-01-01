@@ -6,11 +6,9 @@ Created on Tue Nov  7 10:40:07 2017
 """
 
 import sys
-import os
 import numpy as np
 #warnings.simplefilter("ignore")
 from nilearn.connectome import ConnectivityMeasure
-from nilearn import input_data
 from sklearn.covariance import GraphLassoCV
 try:
     from brainiak.fcma.util import compute_correlation
@@ -122,6 +120,8 @@ def get_conn_matrix(time_series, conn_model):
     return(conn_matrix)
 
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network):
+    import os
+    from nilearn import input_data
     ##extract time series from whole brain parcellaions:
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0, standardize=True)
     ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
@@ -141,6 +141,8 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
     return(ts_within_nodes)
     
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network):
+    import os
+    from nilearn import input_data
     spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True, standardize=True)
     ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
     print('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' coordinate ROI\'s\n')

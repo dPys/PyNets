@@ -486,11 +486,6 @@ if __name__ == '__main__':
             conn_model = [conn_model] * len(est_path_list)
             k_clustering = [k_clustering] * len(est_path_list)
             
-            #print('\n\n\n' + str(thr) + '\n')
-            #print('\n' + str(est_path) + '\n')
-            #print('\n' + str(network) + '\n')
-            #print('\n' + str(ID) + '\n\n\n')
-            
         return(est_path, thr, network, ID, mask, conn_model, k_clustering)
         
     class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
@@ -810,6 +805,10 @@ if __name__ == '__main__':
         mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr,
         anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list)
+        wf_multi.config['logging']['log_directory']='/tmp'
+        wf_multi.config['logging']['workflow_level']='DEBUG'
+        wf_multi.config['logging']['utils_level']='DEBUG'
+        wf_multi.config['logging']['interface_level']='DEBUG'
         #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1]), 'status_callback' : log_nodes_cb}
         plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
         print('\n' + 'Running with ' + str(plugin_args) + '\n')
@@ -822,6 +821,10 @@ if __name__ == '__main__':
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list)
         #plugin_args = {'status_callback' : log_nodes_cb}
+        wf.config['logging']['log_directory']='/tmp'
+        wf.config['logging']['workflow_level']='DEBUG'
+        wf.config['logging']['utils_level']='DEBUG'
+        wf.config['logging']['interface_level']='DEBUG'
         wf.run()
 
     print('\n\n------------NETWORK COMPLETE-----------')

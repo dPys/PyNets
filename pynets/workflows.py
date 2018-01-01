@@ -105,7 +105,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                      function=graphestimation.extract_ts_parc, imports = import_list), name = "extract_ts_wb_parc_node")   
     else:
         ##Extract within-spheres time-series from funct file
-        extract_ts_wb_node = pe.Node(niu.Function(input_names = ['node_size', 'conf', 'func_file', 'coords', 'dir_path', 'ID', 'mask', 'thr', 'network'], 
+        extract_ts_wb_node = pe.Node(niu.Function(input_names = ['node_size', 'conf', 'func_file', 'coords', 'dir_path', 'ID', 'mask', 'network'], 
                                              output_names=['ts_within_nodes'], 
                                              function=graphestimation.extract_ts_coords, imports = import_list), name = "extract_ts_wb_coords_node")        
 
@@ -165,18 +165,17 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                         ('mask', 'mask'),
                                         ('ID', 'ID'),
                                         ('network', 'network'),
-                                        ('node_size', 'node_size'),
                                         ('thr', 'thr')]),
         (WB_fetch_nodes_and_labels_node, extract_ts_wb_node, [('dir_path', 'dir_path')]),
         (node_gen_node, extract_ts_wb_node, [('net_parcels_map_nifti', 'net_parcels_map_nifti'),
                                              ('coords', 'coords')]),
         (inputnode, thresh_and_fit_node, [('adapt_thresh', 'adapt_thresh'),
-                                            ('dens_thresh', 'dens_thresh'),
-                                            ('thr', 'thr'),
-                                            ('ID', 'ID'),
-                                            ('mask', 'mask'),
-                                            ('network', 'network'),
-                                            ('conn_model', 'conn_model')]),
+                                          ('dens_thresh', 'dens_thresh'),
+                                          ('thr', 'thr'),
+                                          ('ID', 'ID'),
+                                          ('mask', 'mask'),
+                                          ('network', 'network'),
+                                          ('conn_model', 'conn_model')]),
         (WB_fetch_nodes_and_labels_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
         (extract_ts_wb_node, thresh_and_fit_node, [('ts_within_nodes', 'ts_within_nodes')]),
         (inputnode, plot_all_node, [('ID', 'ID'),
@@ -227,14 +226,16 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
         wb_functional_connectometry_wf.connect([(inputnode, extract_ts_wb_node, [('node_size', 'node_size')])
                                                 ])
            
-    wb_functional_connectometry_wf.config['execution']['crashdump_dir']='/tmp'
-    wb_functional_connectometry_wf.config['execution']['remove_unnecessary_outputs']='false'
-    wb_functional_connectometry_wf.write_graph()
-    plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
-    print('\n' + 'Running with ' + str(plugin_args) + '\n')
-    res = wb_functional_connectometry_wf.run(plugin='MultiProc', plugin_args= plugin_args)
-    #res = wb_functional_connectometry_wf.run(plugin='MultiProc')
-    #res = wb_functional_connectometry_wf.run()
+    wb_functional_connectometry_wf.config['logging']['log_directory']='/tmp'
+    wb_functional_connectometry_wf.config['logging']['workflow_level']='DEBUG'
+    wb_functional_connectometry_wf.config['logging']['utils_level']='DEBUG'
+    wb_functional_connectometry_wf.config['logging']['interface_level']='DEBUG'
+    #wb_functional_connectometry_wf.config['execution']['plugin']='MultiProc'
+    #wb_functional_connectometry_wf.write_graph()
+    #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
+    #print('\n' + 'Running with ' + str(plugin_args) + '\n')
+    #res = wb_functional_connectometry_wf.run(plugin='MultiProc', plugin_args= plugin_args)
+    res = wb_functional_connectometry_wf.run()
 
     try:
         thr=list(res.nodes())[-1].result.outputs.thr
@@ -490,14 +491,16 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                 (get_node_membership_node, plot_all_node, [('network', 'network')])
                                                 ])
                                                    
-    rsn_functional_connectometry_wf.config['execution']['crashdump_dir']='/tmp'
-    rsn_functional_connectometry_wf.config['execution']['remove_unnecessary_outputs']='false'
-    rsn_functional_connectometry_wf.write_graph()
-    plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
-    print('\n' + 'Running with ' + str(plugin_args) + '\n')
-    res = rsn_functional_connectometry_wf.run(plugin='MultiProc', plugin_args= plugin_args)
-    #res = rsn_functional_connectometry_wf.run(plugin='MultiProc')
-    #res = rsn_functional_connectometry_wf.run()
+    rsn_functional_connectometry_wf.config['logging']['log_directory']='/tmp'
+    rsn_functional_connectometry_wf.config['logging']['workflow_level']='DEBUG'
+    rsn_functional_connectometry_wf.config['logging']['utils_level']='DEBUG'
+    rsn_functional_connectometry_wf.config['logging']['interface_level']='DEBUG'
+    #rsn_functional_connectometry_wf.config['execution']['plugin']='MultiProc'
+    #rsn_functional_connectometry_wf.write_graph()
+    #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
+    #print('\n' + 'Running with ' + str(plugin_args) + '\n')
+    #res = rsn_functional_connectometry_wf.run(plugin='MultiProc', plugin_args= plugin_args)
+    res = rsn_functional_connectometry_wf.run()
     
     try:
         thr=list(res.nodes())[-1].result.outputs.thr
@@ -586,9 +589,9 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     ##Connect nodes of workflow
     wb_structural_connectometry_wf.connect([
         (inputnode, WB_fetch_nodes_and_labels_node, [('atlas_select', 'atlas_select'),
-                                                    ('parlistfile', 'parlistfile'),
-                                                    ('parc', 'parc'),
-                                                    ('ref_txt', 'ref_txt')]),
+                                                     ('parlistfile', 'parlistfile'),
+                                                     ('parc', 'parc'),
+                                                     ('ref_txt', 'ref_txt')]),
         (inputnode, node_gen_node, [('ID', 'ID'),
                                     ('mask', 'mask'),
                                     ('parc', 'parc'),
@@ -597,11 +600,11 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                     ('parlistfile', 'parlistfile')]),
         (inputnode, WB_fetch_nodes_and_labels_node, [('nodif_brain_mask_path', 'func_file')]),
         (WB_fetch_nodes_and_labels_node, node_gen_node, [('coords', 'coords'),
-                                                        ('label_names', 'label_names'),
-                                                        ('dir_path', 'dir_path'),
-                                                        ('parcel_list', 'parcel_list'),
-                                                        ('par_max', 'par_max'),
-                                                        ('networks_list', 'networks_list')]),
+                                                         ('label_names', 'label_names'),
+                                                         ('dir_path', 'dir_path'),
+                                                         ('parcel_list', 'parcel_list'),
+                                                         ('par_max', 'par_max'),
+                                                         ('networks_list', 'networks_list')]),
         (WB_fetch_nodes_and_labels_node, grow_nodes_node, [('parcel_list', 'parcel_list')]),
         (node_gen_node, grow_nodes_node, [('net_parcels_map_nifti', 'net_parcels_map_nifti')]),
         (inputnode, prepare_masks_node, [('bedpostx_dir', 'bedpostx_dir'),
@@ -638,13 +641,16 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
         ])
         
     wb_structural_connectometry_wf.config['execution']['crashdump_dir']='/tmp'
-    wb_structural_connectometry_wf.config['execution']['remove_unnecessary_outputs']='false'
-    wb_structural_connectometry_wf.write_graph()
-    plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
-    print('\n' + 'Running with ' + str(plugin_args) + '\n')
-    res = wb_structural_connectometry_wf.run(plugin='MultiProc', plugin_args= plugin_args)
-    #res = wb_structural_connectometry_wf.run(plugin='MultiProc')
-    #res = wb_structural_connectometry_wf.run()
+    wb_structural_connectometry_wf.config['logging']['log_directory']='/tmp'
+    wb_structural_connectometry_wf.config['logging']['workflow_level']='DEBUG'
+    wb_structural_connectometry_wf.config['logging']['utils_level']='DEBUG'
+    wb_structural_connectometry_wf.config['logging']['interface_level']='DEBUG'
+    #wb_structural_connectometry_wf.config['execution']['plugin']='MultiProc'
+    #wb_structural_connectometry_wf.write_graph()
+    #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
+    #print('\n' + 'Running with ' + str(plugin_args) + '\n')
+    #res = wb_structural_connectometry_wf.run(plugin='MultiProc', plugin_args= plugin_args)
+    res = wb_structural_connectometry_wf.run()
     
     try:
         est_path_struct=list(res.nodes())[-1].result.outputs.est_path_struct
@@ -734,17 +740,17 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
     ##Connect nodes of workflow
     rsn_structural_connectometry_wf.connect([
         (inputnode, RSN_fetch_nodes_and_labels_node, [('atlas_select', 'atlas_select'),
-                                                    ('parlistfile', 'parlistfile'),
-                                                    ('parc', 'parc'),
-                                                    ('ref_txt', 'ref_txt')]),
+                                                      ('parlistfile', 'parlistfile'),
+                                                      ('parc', 'parc'),
+                                                      ('ref_txt', 'ref_txt')]),
         (inputnode, get_node_membership_node, [('network', 'network'),
-                                    ('nodif_brain_mask_path', 'func_file'),
-                                    ('parc', 'parc')]),   
+                                               ('nodif_brain_mask_path', 'func_file'),
+                                               ('parc', 'parc')]),   
         (RSN_fetch_nodes_and_labels_node, get_node_membership_node, [('coords', 'coords'),
-                                                        ('label_names', 'label_names'),
-                                                        ('parcel_list', 'parcel_list'),
-                                                        ('par_max', 'par_max'),
-                                                        ('networks_list', 'networks_list')]),      
+                                                                     ('label_names', 'label_names'),
+                                                                     ('parcel_list', 'parcel_list'),
+                                                                     ('par_max', 'par_max'),
+                                                                     ('networks_list', 'networks_list')]),      
         (inputnode, node_gen_node, [('ID', 'ID'),
                                     ('mask', 'mask'),
                                     ('parc', 'parc'),
@@ -753,8 +759,8 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                     ('parlistfile', 'parlistfile')]),
         (inputnode, RSN_fetch_nodes_and_labels_node, [('nodif_brain_mask_path', 'func_file')]),
         (RSN_fetch_nodes_and_labels_node, node_gen_node, [('dir_path', 'dir_path'),
-                                                        ('par_max', 'par_max'),
-                                                        ('networks_list', 'networks_list')]),
+                                                          ('par_max', 'par_max'),
+                                                          ('networks_list', 'networks_list')]),
         (get_node_membership_node, node_gen_node, [('net_coords', 'coords'),
                                                     ('net_label_names', 'label_names'),
                                                     ('net_parcel_list', 'parcel_list')]),
@@ -793,14 +799,16 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
         (collect_struct_mapping_outputs_node, outputnode, [('est_path_struct', 'est_path_struct')]),
         ])
         
-    rsn_structural_connectometry_wf.config['execution']['crashdump_dir']='/tmp'
-    rsn_structural_connectometry_wf.config['execution']['remove_unnecessary_outputs']='false'
-    rsn_structural_connectometry_wf.write_graph()
-    plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
-    print('\n' + 'Running with ' + str(plugin_args) + '\n')
-    res = rsn_structural_connectometry_wf.run(plugin='MultiProc', plugin_args= plugin_args)
-    #res = rsn_structural_connectometry_wf.run(plugin='MultiProc')
-    #res = rsn_structural_connectometry_wf.run()
+    rsn_structural_connectometry_wf.config['logging']['log_directory']='/tmp'
+    rsn_structural_connectometry_wf.config['logging']['workflow_level']='DEBUG'
+    rsn_structural_connectometry_wf.config['logging']['utils_level']='DEBUG'
+    rsn_structural_connectometry_wf.config['logging']['interface_level']='DEBUG'
+    #rsn_structural_connectometry_wf.config['execution']['plugin']='MultiProc'
+    #rsn_structural_connectometry_wf.write_graph()
+    #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
+    #print('\n' + 'Running with ' + str(plugin_args) + '\n')
+    #res = rsn_structural_connectometry_wf.run(plugin='MultiProc', plugin_args= plugin_args)
+    res = rsn_structural_connectometry_wf.run()
     
     try:
         est_path_struct=list(res.nodes())[-1].result.outputs.est_path_struct
