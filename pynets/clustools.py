@@ -143,8 +143,9 @@ def make_local_connectivity_tcorr( func_file, clust_mask, outfile, thresh ):
     print('Finished ',func_file,' len ',m)
 
 def ncut( W, nbEigenValues ):
-    from scipy.sparse.linalg import eigsh, norm
+    from scipy.sparse.linalg import eigsh
     from scipy.sparse import spdiags
+    from numpy.linalg import norm
     # parameters
     offset=.5
     maxiterations=100

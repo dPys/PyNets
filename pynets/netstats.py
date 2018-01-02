@@ -511,8 +511,7 @@ def core_periphery_dir(W, gamma=1, C0=None):
     while flag:
         it += 1
         if it > 100:
-            #print('Infinite Loop aborted')
-            sys.exit(0)
+            raise ValueError('Infinite Loop aborted')
 
         flag = False
         #initial node indices
@@ -803,8 +802,7 @@ def modularity_louvain_dir(W, gamma=1, hierarchy=False, seed=None):
 
     while True:
         if h > 300:
-            print('Modularity Infinite Loop Style')
-            sys.exit(0)
+            raise ValueError('Modularity Infinite Loop Style')
         k_o = np.sum(W, axis=1)  # node in/out degrees
         k_i = np.sum(W, axis=0)
         km_o = k_o.copy()  # module in/out degrees
@@ -819,8 +817,7 @@ def modularity_louvain_dir(W, gamma=1, hierarchy=False, seed=None):
         while flag:
             it += 1
             if it > 1000:
-                print('Modularity Infinite Loop Style')
-                sys.exit(0)
+                raise ValueError('Modularity Infinite Loop Style')
             flag = False
 
             # loop over nodes in random order
@@ -970,7 +967,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         
     try:
         G_dir
-        print('Analyzing DIRECTED graph counterpart when applicable...')
+        print('Analyzing DIRECTED graph when applicable...')
     except:
         print('Graph is UNDIRECTED')
 
@@ -1083,7 +1080,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         le_arr[num_nodes,0] = 'MEAN_local_efficiency'
         nonzero_arr_le = np.delete(le_arr[:,1], [0])
         le_arr[num_nodes,1] = np.mean(nonzero_arr_le)
-        print('Local Efficiency across all nodes: ' + str(le_arr[num_nodes,1]))
+        print('Local Efficiency across nodes: ' + str(le_arr[num_nodes,1]))
         print('\n')
     except:
         pass
@@ -1109,7 +1106,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         cl_arr[num_nodes,0] = 'MEAN_local_efficiency'
         nonzero_arr_cl = np.delete(cl_arr[:,1], [0])
         cl_arr[num_nodes,1] = np.mean(nonzero_arr_cl)
-        print('Local Efficiency across all nodes: ' + str(cl_arr[num_nodes,1]))
+        print('Local Efficiency across nodes: ' + str(cl_arr[num_nodes,1]))
         print('\n')
     except:
         pass
@@ -1138,7 +1135,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         dc_arr[num_nodes,0] = 'MEAN_degree_centrality'
         nonzero_arr_dc = np.delete(dc_arr[:,1], [0])
         dc_arr[num_nodes,1] = np.mean(nonzero_arr_dc)
-        print('Degree Centrality across all nodes: ' + str(dc_arr[num_nodes,1]))
+        print('Degree Centrality across nodes: ' + str(dc_arr[num_nodes,1]))
         print('\n')
     except:
         pass
@@ -1164,7 +1161,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         bc_arr[num_nodes,0] = 'MEAN_betw_cent'
         nonzero_arr_betw_cent = np.delete(bc_arr[:,1], [0])
         bc_arr[num_nodes,1] = np.mean(nonzero_arr_betw_cent)
-        print('Mean Betweenness Centrality across all nodes: ' + str(bc_arr[num_nodes,1]))
+        print('Mean Betweenness Centrality across nodes: ' + str(bc_arr[num_nodes,1]))
         print('\n')
     except:
         pass
@@ -1193,7 +1190,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         ec_arr[num_nodes,0] = 'MEAN_eig_cent'
         nonzero_arr_eig_cent = np.delete(ec_arr[:,1], [0])
         ec_arr[num_nodes,1] = np.mean(nonzero_arr_eig_cent)
-        print('Mean Eigenvector Centrality across all nodes: ' + str(ec_arr[num_nodes,1]))
+        print('Mean Eigenvector Centrality across nodes: ' + str(ec_arr[num_nodes,1]))
         print('\n')
     except:
         pass
@@ -1219,7 +1216,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         cc_arr[num_nodes,0] = 'MEAN_comm_cent'
         nonzero_arr_comm_cent = np.delete(cc_arr[:,1], [0])
         cc_arr[num_nodes,1] = np.mean(nonzero_arr_comm_cent)
-        print('Mean Communicability Centrality across all nodes: ' + str(cc_arr[num_nodes,1]))
+        print('Mean Communicability Centrality across nodes: ' + str(cc_arr[num_nodes,1]))
         print('\n')
     except:
         pass
@@ -1246,7 +1243,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         rc_arr[num_edges,0] = 'MEAN_rich_club'
         nonzero_arr_rich_club = np.delete(rc_arr[:,1], [0])
         rc_arr[num_edges,1] = np.mean(nonzero_arr_rich_club)
-        print('Mean Rich Club Coefficient across all edges: ' + str(rc_arr[num_edges,1]))
+        print('Mean Rich Club Coefficient across edges: ' + str(rc_arr[num_edges,1]))
         print('\n')
     except:
         pass

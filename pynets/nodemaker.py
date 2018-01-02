@@ -94,8 +94,7 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
         nets_ref_txt = None
 
     if not nets_ref_txt:
-        print('Network: ' + str(network) + ' not found!\nSee valid network names using the --help flag with pynets_run.py')
-        sys.exit(0)
+        raise ValueError('Network: ' + str(network) + ' not found!\nSee valid network names using the --help flag with pynets_run.py')
 
     ##Create membership dictionary
     dict_df = pd.read_csv(nets_ref_txt, sep="\t", header=None, names=["Index", "Region", "X", "Y", "Z"])
@@ -369,8 +368,7 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
             ##Describe user atlas coords
             print('\n' + str(atlas_select) + ' comes with {0} '.format(par_max) + 'parcels' + '\n')
         except:
-            print('\n\nError: Either you have specified the name of a nilearn atlas that does not exist or you have not supplied a 3d atlas parcellation image!\n\n')
-            sys.exit(0)
+            raise ValueError('\n\nError: Either you have specified the name of a nilearn atlas that does not exist or you have not supplied a 3d atlas parcellation image!\n\n')
 
     ##Labels prep
     try:
