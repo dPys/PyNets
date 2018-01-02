@@ -23,13 +23,13 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, 
         atlast_graph_title = str(atlast_graph_title) + '_With_Masked_Nodes'
         
     if mask != None:   
-        if network != None:
+        if network != 'None':
             atlast_graph_title = str(atlast_graph_title) + '_' + str(network)
             out_path_fig=dir_path + '/' + str(ID) + '_' + str(network) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_network.png'
         else:
             out_path_fig=dir_path + '/' + str(ID) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '.png'    
     else:
-        if network != None:
+        if network != 'None':
             atlast_graph_title = str(atlast_graph_title) + '_' + str(network)
             out_path_fig=dir_path + '/' + str(ID) + '_' + str(network) + '_adj_mat_' + str(conn_model) + '_network.png'
         else:
@@ -206,7 +206,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
         entry["weights"] = weight_vec
         output.append(entry)
 
-    if network != None:
+    if network != 'None':
         json_file_name = str(ID) + '_' + network + '_connectogram_' + conn_model + '_network.json'
         json_fdg_file_name = str(ID) + '_' + network + '_fdg_' + conn_model + '_network.json'
         connectogram_plot = dir_path + '/' + json_file_name
@@ -328,21 +328,21 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     
         ##Plot connectome
         if mask != None:
-            if network != None:
-                out_path_fig=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_connectome_viz.png'
+            if network != 'None':
+                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_connectome_viz.png'
             else:
-                out_path_fig=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
+                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
         else:
-            if network != None:
-                out_path_fig=dir_path + '/' + ID + '_' + str(network) + '_connectome_viz.png'
+            if network != 'None':
+                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_' + str(network) + '_connectome_viz.png'
             else:
-                out_path_fig=dir_path + '/' + ID + '_connectome_viz.png'
+                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_connectome_viz.png'
         #niplot.plot_connectome(conn_matrix, coords, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
         ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
         connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=False, node_size=0.0001)
         connectome.add_overlay(ch2better_loc, alpha=0.4)
         [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
-        connectome.add_graph(conn_matrix, coords, edge_threshold = edge_threshold, edge_cmap = 'Blues', edge_vmax=z_max, edge_vmin=z_min, node_size=4)
+        connectome.add_graph(conn_matrix, coords, edge_threshold = edge_threshold, edge_vmax=z_max, edge_vmin=z_min, node_size=4)
         connectome.savefig(out_path_fig)
     else:
         pass

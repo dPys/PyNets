@@ -138,7 +138,7 @@ if __name__ == '__main__':
     input_file=args.i
     ID=args.ID
     #basc=args.basc
-    procmem=list(eval(str((args.pm))))      
+    procmem=list(eval(str((args.pm))))
     thr=args.thr
     node_size=args.ns
     mask=args.m
@@ -161,23 +161,23 @@ if __name__ == '__main__':
     k_step=args.k_step
     clust_mask_pre = args.cm
     clust_mask = list(str(clust_mask_pre).split(','))
-    if len(clust_mask) > 1:  
+    if len(clust_mask) > 1:
         clust_mask_list=clust_mask
         clust_mask=None
     else:
         clust_mask = clust_mask[0]
-        clust_mask_list = None      
+        clust_mask_list = None
     network_pre = args.n
     network = list(str(network_pre).split(','))
-    if len(network) > 1:  
+    if len(network) > 1:
         multi_nets=network
         network=None
     else:
         network = network[0]
-        multi_nets=None  
+        multi_nets=None
     parlistfile_pre = args.ua
     parlistfile = list(str(parlistfile_pre).split(','))
-    if len(parlistfile) > 1:  
+    if len(parlistfile) > 1:
         user_atlas_list=parlistfile
         parlistfile=user_atlas_list[0]
     else:
@@ -185,14 +185,14 @@ if __name__ == '__main__':
         user_atlas_list=None
     atlas_select_pre = args.a
     atlas_select = list(str(atlas_select_pre).split(','))
-    if len(atlas_select) > 1:  
+    if len(atlas_select) > 1:
         multi_atlas=atlas_select
         atlas_select=None
     else:
         atlas_select = atlas_select[0]
-        multi_atlas=None  
+        multi_atlas=None
     print('\n\n\n------------------------------------------------------------------------\n')
-        
+
     if min_thr is not None and max_thr is not None and step_thr is not None:
         multi_thr=True
     elif min_thr is not None or max_thr is not None or step_thr is not None:
@@ -200,7 +200,7 @@ if __name__ == '__main__':
         sys.exit(0)
     else:
         multi_thr=False
-            
+
     ##Check required inputs for existence, and configure run
     if input_file:
         if input_file.endswith('.txt'):
@@ -241,82 +241,86 @@ if __name__ == '__main__':
 
     print ("SUBJECT ID: " + str(ID))
 
-    if (k_min != None and k_max != None) and k == None and clust_mask_list != None:
+    if (k_min is not None and k_max is not None) and k is None and clust_mask_list is not None:
         k_clustering = 4
-    elif (k_min != None and k_max != None) and k == None and clust_mask_list == None:
+    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is None:
         k_clustering = 2
-    elif k != None and (k_min == None and k_max == None) and clust_mask_list != None:
+    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is not None:
         k_clustering = 3
-    elif k != None and (k_min == None and k_max == None) and clust_mask_list == None:
+    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is None:
         k_clustering = 1
     else:
         k_clustering = 0
-            
+
     if input_file:
-        if parlistfile != None and k_clustering == 0 and user_atlas_list == None:
+        if parlistfile is not None and k_clustering == 0 and user_atlas_list is None:
             atlas_select = parlistfile.split('/')[-1].split('.')[0]
             dir_path = do_dir_path(atlas_select, input_file)
             print ("ATLAS: " + str(atlas_select))
-        elif parlistfile != None and user_atlas_list == None:
+        elif parlistfile is not None and user_atlas_list is None and k_clustering == 0:
             atlas_select = parlistfile.split('/')[-1].split('.')[0]
             dir_path = do_dir_path(atlas_select, input_file)
             print ("ATLAS: " + str(atlas_select))
-        elif user_atlas_list != None:
+        elif user_atlas_list is not None:
             parlistfile = user_atlas_list[0]
             print ('Iterating across multiple user atlases...')
             for parlistfile in user_atlas_list:
                 atlas_select = parlistfile.split('/')[-1].split('.')[0]
                 dir_path = do_dir_path(atlas_select, input_file)
             atlas_select = None
-        elif (user_atlas_list != None or parlistfile != None) and (k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1):
-            print('Error: the -ua flag cannot be used with the clustering option. Use the -cm flag instead.')
-            sys.exit(0)
         elif k_clustering == 1:
-            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0] 
+            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
             atlas_select = str(ID) + '_' + cl_mask_name + '_k' + str(k)
-            dir_path = do_dir_path(atlas_select, input_file)    
+            print ("ATLAS: " + str(atlas_select))
+            dir_path = do_dir_path(atlas_select, input_file)
             print ("Clustering within mask at a single resolution...")
         elif k_clustering == 2:
-            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]            
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
-            atlas_select = str(ID) + '_' + cl_mask_name + '_k' + str(k_list[0])
-            dir_path = do_dir_path(atlas_select, input_file)
-            print ("Clustering within mask at multiple resolutions...")
+            for k in k_list:
+                cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                atlas_select = str(ID) + '_' + cl_mask_name + '_k' + str(k)
+                print ("ATLAS: " + str(atlas_select))
+                dir_path = do_dir_path(atlas_select, input_file)
+                print ("Clustering within mask at multiple resolutions...")
         elif k_clustering == 3:
             print ("Clustering within multiple masks at a single resolution...")
             for clust_mask in clust_mask_list:
-                cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0] 
+                cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                 atlas_select = str(ID) + '_' + cl_mask_name + '_k' + str(k)
                 dir_path = do_dir_path(atlas_select, input_file)
         elif k_clustering == 4:
             print ("Clustering within multiple masks at multiple resolutions...")
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
             for clust_mask in clust_mask_list:
-                cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                atlas_select = str(ID) + '_' + cl_mask_name + '_k' + str(k_list[0])
-                dir_path = do_dir_path(atlas_select, input_file)
+                for k in k_list:
+                    cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                    atlas_select = str(ID) + '_' + cl_mask_name + '_k' + str(k)
+                    dir_path = do_dir_path(atlas_select, input_file)
+        elif (user_atlas_list is not None or parlistfile is not None) and (k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1) and atlas_select is None:
+            print('Error: the -ua flag cannot be used with the clustering option. Use the -cm flag instead.')
+            sys.exit(0)
         else:
             dir_path = do_dir_path(atlas_select, input_file)
-        
-    if ref_txt != None and os.path.exists(ref_txt):
+
+    if ref_txt is not None and os.path.exists(ref_txt):
         atlas_select = os.path.basename(ref_txt).split('.txt')[0]
         dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
         indices = dict_df.Index.unique().tolist()
         label_names = dict_df['Region'].tolist()
 
-    if network != None:
+    if network is not None:
         print ("NETWORK: " + str(network))
     elif multi_nets is not None:
         network = multi_nets[0]
         print ('Iterating workflow across ' + str(len(multi_nets)) + ' networks: ' + str(', '.join(str(n) for n in multi_nets)) + '...')
     else:
         print("Using whole-brain pipeline..." )
-    
+
     if input_file and subjects_list:
         print("\n")
         print('Running workflow of workflows across subjects:\n')
         print (str(subjects_list))
-        ##Set directory path containing input file  
+        ##Set directory path containing input file
         dir_path = do_dir_path(atlas_select, subjects_list[0])
     elif input_file and bedpostx_dir:
         print('Running joint structural-functional connectometry...')
@@ -345,7 +349,7 @@ if __name__ == '__main__':
         print('Running functional connectometry only...')
         print ("Functional file: " + input_file)
     print('\n-------------------------------------------------------------------------\n\n\n')
-    
+
     ##Import core modules
     import warnings
     warnings.simplefilter("ignore")
@@ -368,29 +372,29 @@ if __name__ == '__main__':
         import os
         import numpy as np
         from pynets import workflows, utils
-        
+
         ##Workflow 1: Whole-brain functional connectome
-        if bedpostx_dir == None and network == None:
+        if bedpostx_dir is None and network == 'None':
             [est_path, thr] = workflows.wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list)
         ##Workflow 2: RSN functional connectome
-        elif bedpostx_dir == None:
+        elif bedpostx_dir is None and network != 'None':
             [est_path, thr] = workflows.rsn_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list)
         ##Workflow 3: Whole-brain structural connectome
-        elif bedpostx_dir != None and network == None:
+        elif bedpostx_dir is not None and network == 'None':
             est_path = workflows.wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc)
             thr=None
         ##Workflow 4: RSN structural connectome
-        elif bedpostx_dir != None:
+        elif bedpostx_dir is not None and network != 'None':
             est_path = workflows.rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc)
             thr=None
-            
+
         ##Build iterfields
         if multi_atlas is not None or multi_thr==True or multi_nets is not None or k_clustering == 2:
-            ##Create est_path_list iterfield based on iterables across atlases, RSN's, k-values, and thresholding ranges          
+            ##Create est_path_list iterfield based on iterables across atlases, RSN's, k-values, and thresholding ranges
             est_path_list = []
             if k_clustering == 2:
                 print('\nIterating pipeline for ' + str(ID) + ' across multiple clustering resolutions...\n')
-                mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]            
+                mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                 k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
                 num_atlases = len(k_list)
                 for k in k_list:
@@ -408,8 +412,8 @@ if __name__ == '__main__':
             elif k_clustering == 3:
                 print('\nIterating pipeline for ' + str(ID) + ' across multiple masks at a single clustering resolution...\n')
                 num_atlases = len(clust_mask_list)
-                for clust_mask in clust_mask_list:                
-                    mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]            
+                for clust_mask in clust_mask_list:
+                    mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                     atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
                     if multi_nets is not None:
                         num_networks = len(multi_nets)
@@ -425,8 +429,8 @@ if __name__ == '__main__':
                 print('\nIterating pipeline for ' + str(ID) + ' across multiple clustering resolutions and masks...\n')
                 k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
                 num_atlases = len(k_list) * len(clust_mask_list)
-                for clust_mask in clust_mask_list:                
-                    mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]            
+                for clust_mask in clust_mask_list:
+                    mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                     for k in k_list:
                         atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
                         if multi_nets is not None:
@@ -489,8 +493,8 @@ if __name__ == '__main__':
                         est_path_list = [est_path]
                         num_networks =  1
                         iter_thresh = [thr]
-        
-            ##Create network_list based on iterables across atlases, RSN's, k-values, and thresholding ranges      
+
+            ##Create network_list based on iterables across atlases, RSN's, k-values, and thresholding ranges
             if multi_nets is not None:
                 print('\nIterating pipeline for ' + str(ID) + ' across networks: ' + '\n'.join(str(n) for n in multi_nets) + '...\n')
                 network_list = []
@@ -544,22 +548,22 @@ if __name__ == '__main__':
                                 network_list.append(network)
                         else:
                             network_list.append(network)
-            elif network is not None and multi_nets is None:             
+            elif network is not None and multi_nets is None:
                 network_list = [network] * len(est_path_list)
-            else:             
+            else:
                 network_list = [None] * len(est_path_list)
-            
+
             if multi_thr == True:
                 thr = iter_thresh * num_atlases * num_networks
             else:
                 thr = iter_thresh
             est_path = est_path_list
-            network = network_list 
+            network = network_list
             ID = [str(ID)] * len(est_path_list)
             mask = [mask] * len(est_path_list)
             conn_model = [conn_model] * len(est_path_list)
             k_clustering = [k_clustering] * len(est_path_list)
-            
+
             '''print('\n\n\n')
             print(thr)
             print(len(thr))
@@ -584,9 +588,9 @@ if __name__ == '__main__':
             print('\n\n\n')
             import sys
             sys.exit(0)'''
-            
+
         return(est_path, thr, network, ID, mask, conn_model, k_clustering)
-        
+
     class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
         ID = traits.Any(mandatory=True)
         network = traits.Any(mandatory=False)
@@ -667,14 +671,14 @@ if __name__ == '__main__':
         user_atlas_list = traits.Any(mandatory=True)
         clust_mask_list = traits.Any(mandatory=True)
         out_file = File('output_collectpandasdf.csv', usedefault=True)
-    
+
     class CollectPandasDfsOutputSpec(TraitedSpec):
         out_file = File()
-    
+
     class CollectPandasDfs(BaseInterface):
         input_spec = CollectPandasDfsInputSpec
         output_spec = CollectPandasDfsOutputSpec
-    
+
         def _run_interface(self, runtime):
             collect_pandas_df(
             self.inputs.input_file,
@@ -699,15 +703,15 @@ if __name__ == '__main__':
             self.inputs.clust_mask_list,
             out_file=self.inputs.out_file)
             return runtime
-    
+
         def _list_outputs(self):
             import os.path as op
             return {'out_file': op.abspath(self.inputs.out_file)}
-        
+
     def init_wf_single_subject(ID, input_file, dir_path, atlas_select, network,
     node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf,
     adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
-    max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, 
+    max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min,
     k_max, k_step, k_clustering, user_atlas_list, clust_mask_list):
         wf = pe.Workflow(name='PyNets_' + str(ID))
         wf.base_directory='/tmp/pynets'
@@ -716,8 +720,8 @@ if __name__ == '__main__':
         inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID',
         'atlas_select', 'network', 'thr', 'node_size', 'mask', 'parlistfile',
         'multi_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch',
-        'bedpostx_dir', 'anat_loc', 'parc', 'ref_txt', 'procmem', 'dir_path', 'multi_thr', 
-        'multi_atlas', 'max_thr', 'min_thr', 'step_thr', 'k', 'clust_mask', 'k_min', 
+        'bedpostx_dir', 'anat_loc', 'parc', 'ref_txt', 'procmem', 'dir_path', 'multi_thr',
+        'multi_atlas', 'max_thr', 'min_thr', 'step_thr', 'k', 'clust_mask', 'k_min',
         'k_max', 'k_step', 'k_clustering', 'user_atlas_list', 'clust_mask_list']), name='inputnode')
 
         #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
@@ -759,33 +763,33 @@ if __name__ == '__main__':
         ##Create function nodes
         imp_est = pe.Node(niu.Function(input_names = ['input_file', 'ID', 'atlas_select',
         'network', 'node_size', 'mask', 'thr', 'parlistfile', 'multi_nets', 'conn_model',
-        'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch', 'bedpostx_dir', 'anat_loc', 
-        'parc', 'ref_txt', 'procmem', 'dir_path', 'multi_thr', 'multi_atlas', 'max_thr', 
-        'min_thr', 'step_thr', 'k', 'clust_mask', 'k_min', 'k_max', 'k_step', 'k_clustering', 
+        'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch', 'bedpostx_dir', 'anat_loc',
+        'parc', 'ref_txt', 'procmem', 'dir_path', 'multi_thr', 'multi_atlas', 'max_thr',
+        'min_thr', 'step_thr', 'k', 'clust_mask', 'k_min', 'k_max', 'k_step', 'k_clustering',
         'user_atlas_list', 'clust_mask_list'],
-        output_names = ['est_path', 'thr', 'network', 'ID', 'mask', 'conn_model', 'k_clustering'], 
+        output_names = ['est_path', 'thr', 'network', 'ID', 'mask', 'conn_model', 'k_clustering'],
         function=workflow_selector),
         name = "imp_est")
 
         ##Create MapNode types for net_mets_node and export_to_pandas_node
-        net_mets_node = pe.MapNode(interface=ExtractNetStats(), name = "ExtractNetStats", 
+        net_mets_node = pe.MapNode(interface=ExtractNetStats(), name = "ExtractNetStats",
                                    iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path', 'mask'])
-        
-        export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name = "export_to_pandas", 
+
+        export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name = "export_to_pandas",
                                            iterfield=['in_csv', 'ID', 'network', 'mask'])
-        
-        collect_pandas_dfs_node = pe.Node(interface=CollectPandasDfs(), name = "CollectPandasDfs", 
-                                           input_files = ['input_file', 'atlas_select', 'clust_mask', 
-                                                          'k_min', 'k_max', 'k', 'k_step', 'min_thr', 
-                                                          'max_thr', 'step_thr', 'multi_thr', 'thr', 
-                                                          'mask', 'ID', 'network', 'k_clustering', 
-                                                          'conn_model', 'in_csv', 'user_atlas_list', 
+
+        collect_pandas_dfs_node = pe.Node(interface=CollectPandasDfs(), name = "CollectPandasDfs",
+                                           input_files = ['input_file', 'atlas_select', 'clust_mask',
+                                                          'k_min', 'k_max', 'k', 'k_step', 'min_thr',
+                                                          'max_thr', 'step_thr', 'multi_thr', 'thr',
+                                                          'mask', 'ID', 'network', 'k_clustering',
+                                                          'conn_model', 'in_csv', 'user_atlas_list',
                                                           'clust_mask_list'])
         if multi_nets:
             collect_pandas_dfs_node_iterables = []
             collect_pandas_dfs_node_iterables.append(("network", multi_nets))
             collect_pandas_dfs_node.iterables = collect_pandas_dfs_node_iterables
-        
+
         ##Connect nodes of workflow
         wf.connect([
             (inputnode, imp_est, [('in_file', 'input_file'),
@@ -824,12 +828,12 @@ if __name__ == '__main__':
             (imp_est, net_mets_node, [('est_path', 'est_path'),
                                       ('network', 'network'),
                                       ('thr', 'thr'),
-                                      ('ID', 'ID'),        
+                                      ('ID', 'ID'),
                                       ('conn_model', 'conn_model'),
                                       ('mask', 'mask')]),
             (imp_est, export_to_pandas_node, [('network', 'network'),
                                               ('ID', 'ID'),
-                                              ('mask', 'mask')]),    
+                                              ('mask', 'mask')]),
             (net_mets_node, export_to_pandas_node, [('out_file', 'in_csv')]),
             (export_to_pandas_node, collect_pandas_dfs_node, [('out_file', 'in_csv')]),
             (inputnode, collect_pandas_dfs_node, [('in_file', 'input_file'),
@@ -843,10 +847,10 @@ if __name__ == '__main__':
                                                 ('max_thr', 'max_thr'),
                                                 ('step_thr', 'step_thr'),
                                                 ('multi_thr', 'multi_thr'),
-                                                ('thr', 'thr'),  
+                                                ('thr', 'thr'),
                                                 ('ID', 'ID'),
                                                 ('mask', 'mask'),
-                                                ('network', 'network'),      
+                                                ('network', 'network'),
                                                 ('k_clustering', 'k_clustering'),
                                                 ('conn_model', 'conn_model'),
                                                 ('user_atlas_list','user_atlas_list'),
@@ -856,8 +860,8 @@ if __name__ == '__main__':
 
     def wf_multi_subject(subjects_list, atlas_select, network, node_size, mask,
     thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh,
-    plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr, 
-    anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, 
+    plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr,
+    anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step, k_clustering,
     user_atlas_list, clust_mask_list):
         wf_multi = pe.Workflow(name='PyNets_multisubject')
         i=0
@@ -891,7 +895,7 @@ if __name__ == '__main__':
                                clust_mask=clust_mask,
                                k_min=k_min,
                                k_max=k_max,
-                               k_step=k_step, 
+                               k_step=k_step,
                                k_clustering=k_clustering,
                                user_atlas_list=user_atlas_list,
                                clust_mask_list=clust_mask_list)
@@ -913,7 +917,7 @@ if __name__ == '__main__':
         wf_multi = wf_multi_subject(subjects_list, atlas_select, network, node_size,
         mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr,
-        anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, 
+        anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step, k_clustering,
         user_atlas_list, clust_mask_list)
         wf_multi.config['logging']['log_directory']='/tmp'
         wf_multi.config['logging']['workflow_level']='DEBUG'
@@ -929,14 +933,15 @@ if __name__ == '__main__':
         wf = init_wf_single_subject(ID, input_file, dir_path, atlas_select, network,
         node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf,
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
-        max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, 
+        max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min,
         k_max, k_step, k_clustering, user_atlas_list, clust_mask_list)
         #plugin_args = {'status_callback' : log_nodes_cb}
         wf.config['logging']['log_directory']='/tmp'
         wf.config['logging']['workflow_level']='DEBUG'
         wf.config['logging']['utils_level']='DEBUG'
         wf.config['logging']['interface_level']='DEBUG'
-        wf.run()
+        wf.run(plugin='MultiProc')
+        #wf.run()
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)
