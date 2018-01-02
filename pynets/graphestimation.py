@@ -8,14 +8,15 @@ Created on Tue Nov  7 10:40:07 2017
 import sys
 import numpy as np
 #warnings.simplefilter("ignore")
-from nilearn.connectome import ConnectivityMeasure
-from sklearn.covariance import GraphLassoCV
-try:
-    from brainiak.fcma.util import compute_correlation
-except ImportError:
-    pass
 
 def get_conn_matrix(time_series, conn_model):
+    from nilearn.connectome import ConnectivityMeasure
+    from sklearn.covariance import GraphLassoCV
+    try:
+        from brainiak.fcma.util import compute_correlation
+    except ImportError:
+        pass
+    
     if conn_model == 'corr':
         # credit: nilearn
         conn_measure = ConnectivityMeasure(kind='correlation')

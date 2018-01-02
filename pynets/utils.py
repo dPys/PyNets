@@ -8,14 +8,9 @@ Created on Fri Nov 10 15:44:46 2017
 import sys
 import os
 import nibabel as nib
-import pandas as pd
-from nilearn import datasets
-try:
-    import cPickle as pickle
-except ImportError:
-    import _pickle as pickle
     
 def nilearn_atlas_helper(atlas_select):
+    from nilearn import datasets
     try:
         parlistfile=getattr(datasets, 'fetch_%s' % atlas_select)().maps
         try:
@@ -33,6 +28,11 @@ def nilearn_atlas_helper(atlas_select):
     
 ##save net metric files to pandas dataframes interface
 def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
+    import pandas as pd
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import _pickle as pickle
     if mask != None:
         if network != None:
             met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + network + '_' + str(os.path.basename(mask).split('.')[0])
@@ -256,7 +256,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
             print('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ' + str(ID) + '!\n')
             pass
     else:
-        print('\nNo Dataframe objects to concatenate for ' + str(ID) + '!\n')
+        print('\nNo objects to collect. Single dataframe for: ' + str(ID) + '\n')
         pass
 
 def output_echo(est_path, thr):

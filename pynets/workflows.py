@@ -4,33 +4,13 @@ Created on Tue Nov  7 10:40:07 2017
 
 @author: Derek Pisner
 """
-import warnings
-warnings.simplefilter("ignore")
-from pynets import nodemaker
-from pynets import utils, graphestimation, plotting, thresholding
-from nipype.pipeline import engine as pe
-from nipype.interfaces import utility as niu
 import numpy as np
 
 def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list):
-
-    import_list=[ "import sys", "import os", "from sklearn.model_selection import train_test_split",
-    "from pynets.utils import export_to_pandas", "import warnings", "import gzip", "import nilearn", "import numpy as np",
-    "import networkx as nx", "import pandas as pd", "import nibabel as nib",
-    "import seaborn as sns", "import numpy.linalg as npl", "import matplotlib",
-    "matplotlib.use('Agg')", "import matplotlib.pyplot as plt", "from numpy import genfromtxt",
-    "from matplotlib import colors", "from nipype import Node, Workflow",
-    "from nilearn import input_data, masking, datasets", "from nilearn import plotting as niplot",
-    "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu",
-    "from nipype.interfaces import io as nio", "from nilearn.input_data import NiftiLabelsMasker",
-    "from nilearn.connectome import ConnectivityMeasure", "from nibabel.affines import apply_affine",
-    "from nipype.interfaces.base import isdefined, Undefined",
-    "from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso",
-    "from pynets import nodemaker, thresholding, graphestimation, plotting",
-    "from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits",
-    "import _pickle as pickle", "from pynets.utils import nilearn_atlas_helper", "import scipy as sp", 
-    "import time", "from sklearn.feature_extraction import image",
-    "from sklearn.cluster import FeatureAgglomeration", "from pynets.utils import do_dir_path"]
+    from nipype.pipeline import engine as pe
+    from nipype.interfaces import utility as niu
+    from pynets import nodemaker, utils, graphestimation, plotting, thresholding
+    import_list=[ "import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib"]
 
     wb_functional_connectometry_wf = pe.Workflow(name='wb_functional_connectometry')
     wb_functional_connectometry_wf.base_directory='/tmp/pynets'
@@ -131,7 +111,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
         atlas_iterables = ("atlas_select", multi_atlas)
         WB_fetch_nodes_and_labels_node_iterables.append(atlas_iterables)
         WB_fetch_nodes_and_labels_node.iterables = WB_fetch_nodes_and_labels_node_iterables
-    elif user_atlas_list:
+    elif user_atlas_list is not None:
         WB_fetch_nodes_and_labels_node_iterables = []
         WB_fetch_nodes_and_labels_node_iterables.append(("parlistfile", user_atlas_list))
         WB_fetch_nodes_and_labels_node.iterables = WB_fetch_nodes_and_labels_node_iterables
@@ -246,25 +226,10 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     return(est_path, thr)
 
 def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list):
-
-    import_list=[ "import sys", "import os", "from sklearn.model_selection import train_test_split",
-    "from pynets.utils import export_to_pandas", "import warnings", "import gzip", "import nilearn", "import numpy as np",
-    "import networkx as nx", "import pandas as pd", "import nibabel as nib",
-    "import seaborn as sns", "import numpy.linalg as npl", "import matplotlib",
-    "matplotlib.use('Agg')", "import matplotlib.pyplot as plt", "from numpy import genfromtxt",
-    "from matplotlib import colors", "from nipype import Node, Workflow",
-    "from nilearn import input_data, masking, datasets", "from nilearn import plotting as niplot",
-    "from nipype.pipeline import engine as pe", "from nipype.interfaces import utility as niu",
-    "from nipype.interfaces import io as nio", "from nilearn.input_data import NiftiLabelsMasker",
-    "from nilearn.connectome import ConnectivityMeasure", "from nibabel.affines import apply_affine",
-    "from nipype.interfaces.base import isdefined, Undefined",
-    "from sklearn.covariance import GraphLassoCV, ShrunkCovariance, graph_lasso",
-    "from pynets import nodemaker, thresholding, graphestimation, plotting",
-    "from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits",
-    "import _pickle as pickle", "import pkg_resources", "from pynets.nodemaker import get_sphere", 
-    "from pynets.utils import nilearn_atlas_helper", "import scipy as sp", 
-    "import time", "from sklearn.feature_extraction import image",
-    "from sklearn.cluster import FeatureAgglomeration", "from pynets.utils import do_dir_path"]
+    from nipype.pipeline import engine as pe
+    from nipype.interfaces import utility as niu
+    from pynets import nodemaker, utils, graphestimation, plotting, thresholding
+    import_list=[ "import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib"]
 
     rsn_functional_connectometry_wf = pe.Workflow(name='rsn_functional_connectometry')
     rsn_functional_connectometry_wf.base_directory = '/tmp/pynets'
@@ -372,7 +337,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
         atlas_iterables = ("atlas_select", multi_atlas)
         RSN_fetch_nodes_and_labels_node_iterables.append(atlas_iterables)
         RSN_fetch_nodes_and_labels_node.iterables = RSN_fetch_nodes_and_labels_node_iterables
-    elif user_atlas_list:
+    elif user_atlas_list is not None:
         RSN_fetch_nodes_and_labels_node_iterables = []
         RSN_fetch_nodes_and_labels_node_iterables.append(("parlistfile", user_atlas_list))
         RSN_fetch_nodes_and_labels_node.iterables = RSN_fetch_nodes_and_labels_node_iterables
@@ -512,12 +477,13 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     return est_path, thr
 
 def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc):
+    from nipype.pipeline import engine as pe
+    from nipype.interfaces import utility as niu
     from pynets import utils, nodemaker, diffconnectometry, plotting
     
     nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
     
-    import_list=[ "import nibabel as nib", "import nipype.interfaces.fsl as fsl","import nipype.pipeline.engine as pe","import numpy as np","import os","import glob","import seaborn as sns","import random","from nipype.interfaces.fsl import ExtractROI","from matplotlib import pyplot as plt","from sklearn.preprocessing import normalize","from matplotlib import colors","from nilearn import plotting, masking"]
-
+    import_list=[ "import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib"]
     wb_structural_connectometry_wf = pe.Workflow(name='wb_structural_connectometry')
     wb_structural_connectometry_wf.base_directory='/tmp/pynets'
     
@@ -659,11 +625,13 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     return est_path_struct
             
 def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc):
+    from nipype.pipeline import engine as pe
+    from nipype.interfaces import utility as niu
     from pynets import utils, nodemaker, diffconnectometry, plotting
     
     nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
     
-    import_list=[ "import nibabel as nib", "import nipype.interfaces.fsl as fsl","import nipype.pipeline.engine as pe","import numpy as np","import os","import glob","import seaborn as sns","import random","from nipype.interfaces.fsl import ExtractROI","from matplotlib import pyplot as plt","from sklearn.preprocessing import normalize","from matplotlib import colors","from nilearn import plotting, masking"]
+    import_list=[ "import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib"]
 
     rsn_structural_connectometry_wf = pe.Workflow(name='wb_structural_connectometry')
     rsn_structural_connectometry_wf.base_directory='/tmp/pynets'

@@ -35,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('-a',
         metavar='Atlas',
         default='coords_power_2011',
-        help='Specify a single coordinate atlas parcellation of those availabe in nilearn. Default is coords_power_2011. Available nilearn atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011')
+        help='Specify a coordinate atlas parcellation of those availabe in nilearn. Default is coords_power_2011. If you wish to iterate your pynets run over multiple nilearn atlases, separate by commas. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011')
     #parser.add_argument('-basc',
         #default=False,
         #action='store_true',
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     parser.add_argument('-ua',
         metavar='Path to parcellation file',
         default=None,
-        help='Path to nifti-formatted parcellation image file')
+        help='Path to nifti-formatted parcellation image file. If specifying a list of paths to multiple user atlases, separate by comma.')
     parser.add_argument('-pm',
         metavar='cores,memory',
         default= '2,4',
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     parser.add_argument('-n',
         metavar='Resting-state network',
         default=None,
-        help='Optionally specify the name of one of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar')
+        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple, separate by commas. e.g. -n \'Default,Cont,SalVentAttn\'')
     parser.add_argument('-thr',
         metavar='graph threshold',
         default='0.95',
@@ -64,10 +64,6 @@ if __name__ == '__main__':
         metavar='Path to mask image',
         default=None,
         help='Optionally specify a thresholded inverse-binarized mask image such as a group ICA-derived network volume, to retain only those network nodes contained within that mask')
-    parser.add_argument('-mn',
-        metavar='List of multiple networks',
-        default=None,
-        help='Optionally use this flag if you wish to activate plotting designations and network statistic extraction for multiple Yeo RSNs in the specified atlas. Create string of RSN names separated by commas.')
     parser.add_argument('-model',
         metavar='Graph estimator',
         default='corr',
@@ -88,10 +84,6 @@ if __name__ == '__main__':
         default=False,
         action='store_true',
         help='Optionally use this flag if you wish to activate plotting of adjacency matrices, connectomes, and time-series')
-    parser.add_argument('-ma',
-        metavar='List of multiple atlases',
-        default=None,
-        help='Optionally use this flag if you wish to iterate your pynets run over multiple nilearn atlases. Create string of nilearn atlas names separated by commas.')
     parser.add_argument('-bpx',
         metavar='Path to bedpostx directory',
         default=None,
@@ -140,37 +132,22 @@ if __name__ == '__main__':
         metavar='Cluster mask',
         default=False,
         help='Specify the path to the mask within which to perform clustering')
-    parser.add_argument('-mua',
-        metavar='List of multiple atlas files',
-        default=None,
-        help='Specify the list of paths to multiple atlases')    
     args = parser.parse_args()
 
     ###Set Arguments to global variables###
     input_file=args.i
     ID=args.ID
-    atlas_select=args.a
     #basc=args.basc
-    parlistfile=args.ua
-    procmem=list(eval(str((args.pm))))
-    network=args.n
+    procmem=list(eval(str((args.pm))))      
     thr=args.thr
     node_size=args.ns
     mask=args.m
-    if args.mn != None:
-        multi_nets=list(str(args.mn).split(','))
-    else:
-        multi_nets=None
     conn_model=args.model
     conf=args.confounds
     dens_thresh=args.dt
 #    adapt_thresh=args.at
     adapt_thresh=False
     plot_switch=args.plt
-    if args.ma != None:
-        multi_atlas=list(str(args.ma).split(','))
-    else:
-        multi_atlas=None
     bedpostx_dir=args.bpx
     min_thr=args.min_thr
     max_thr=args.max_thr
@@ -183,11 +160,27 @@ if __name__ == '__main__':
     k_max=args.k_max
     k_step=args.k_step
     clust_mask=args.cm
-    if args.mua != None:
-        user_atlas_list=list(str(args.mua).split(','))
+    network = list(str(args.n).split(','))
+    if len(network) > 1:  
+        multi_nets=network
+        network=None
     else:
+        network = network[0]
+        multi_nets=None  
+    parlistfile = list(str(args.ua).split(','))
+    if len(parlistfile) > 1:  
+        user_atlas_list=parlistfile
+        parlistfile=None
+    else:
+        parlistfile = parlistfile[0]
         user_atlas_list=None
-
+    atlas_select = list(str(args.a).split(','))
+    if len(atlas_select) > 1:  
+        multi_atlas=atlas_select
+        atlas_select=None
+    else:
+        atlas_select = atlas_select[0]
+        multi_atlas=None  
     print('\n\n\n------------------------------------------------------------------------\n')
 
     if min_thr is not None and max_thr is not None and step_thr is not None:
@@ -427,15 +420,15 @@ if __name__ == '__main__':
                         num_networks =  1
                         [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
                 else:
-                    est_path_list = [est_path]
                     if multi_nets is not None:
                         num_networks = len(multi_nets)
-                        print('\nIterating pipeline for ' + str(ID) + ' across networks: ' + '\n'.join(str(n) for n in multi_nets) + '...\n')
                         for network in multi_nets:
-                            iter_thresh = [thr] * len(est_path_list)
+                            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
+                        iter_thresh = [thr]
                     else:
+                        est_path_list = [est_path]
                         num_networks =  1
-                        iter_thresh = [thr] * len(est_path_list)
+                        iter_thresh = [thr]
         
             ##Create network_list based on iterables across atlases, RSN's, k-values, and thresholding ranges      
             if multi_nets is not None:
@@ -444,7 +437,7 @@ if __name__ == '__main__':
                 if multi_atlas is not None:
                     for atlas in multi_atlas:
                         for network in multi_nets:
-                            if len(iter_thresh) > 1:
+                            if multi_thr == True:
                                 for thr in iter_thresh:
                                     network_list.append(network)
                             else:
@@ -452,7 +445,7 @@ if __name__ == '__main__':
                 elif user_atlas_list:
                     for atlas in user_atlas_list:
                         for network in multi_nets:
-                            if len(iter_thresh) > 1:
+                            if multi_thr == True:
                                 for thr in iter_thresh:
                                     network_list.append(network)
                             else:
@@ -461,30 +454,58 @@ if __name__ == '__main__':
                     k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
                     for k in k_list:
                         for network in multi_nets:
-                            if len(iter_thresh) > 1:
+                            if multi_thr == True:
                                 for thr in iter_thresh:
                                     network_list.append(network)
                             else:
                                 network_list.append(network)
                 else:
                     for network in multi_nets:
-                        if len(iter_thresh) > 1:
+                        if multi_thr == True:
                             for thr in iter_thresh:
                                 network_list.append(network)
                         else:
                             network_list.append(network)
-            elif network is not None:             
+            elif network is not None and multi_nets is None:             
                 network_list = [network] * len(est_path_list)
             else:             
                 network_list = [None] * len(est_path_list)
-                
-            thr = iter_thresh * num_atlases * num_networks
+            
+            if multi_thr == True:
+                thr = iter_thresh * num_atlases * num_networks
+            else:
+                thr = iter_thresh
             est_path = est_path_list
             network = network_list 
             ID = [str(ID)] * len(est_path_list)
             mask = [mask] * len(est_path_list)
             conn_model = [conn_model] * len(est_path_list)
             k_clustering = [k_clustering] * len(est_path_list)
+            
+            '''print('\n\n\n')
+            print(thr)
+            print(len(thr))
+            print('\n\n\n')
+            print(est_path)
+            print(len(est_path))
+            print('\n\n\n')
+            print(network)
+            print(len(network))
+            print('\n\n\n')
+            print(ID)
+            print(len(ID))
+            print('\n\n\n')
+            print(mask)
+            print(len(mask))
+            print('\n\n\n')
+            print(conn_model)
+            print(len(conn_model))
+            print('\n\n\n')
+            print(k_clustering)
+            print(len(k_clustering))
+            print('\n\n\n')
+            import sys
+            sys.exit(0)'''
             
         return(est_path, thr, network, ID, mask, conn_model, k_clustering)
         

@@ -8,8 +8,6 @@ import sys
 import os
 import numpy as np
 import networkx as nx
-#warnings.simplefilter("ignore")
-from pynets import graphestimation
 
 def threshold_absolute(W, thr, copy=True):
     '''##Adapted from bctpy
@@ -133,8 +131,7 @@ def autofix(W, copy=True):
     return W
 
 def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, network, ID, dir_path, mask):
-    from pynets import utils
-    from pynets import thresholding
+    from pynets import utils, thresholding, graphestimation
    
     ##Adaptive thresholding scenario
     if adapt_thresh is not False:

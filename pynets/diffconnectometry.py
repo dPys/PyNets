@@ -5,17 +5,12 @@ Created on Tue Nov  7 10:40:07 2017
 @author: Derek Pisner
 """
 import nibabel as nib
-import nipype.interfaces.fsl as fsl
-import nipype.pipeline.engine as pe
 import numpy as np
 import os
-import glob
-import random
-from nipype.interfaces.fsl import ExtractROI
-from sklearn.preprocessing import normalize
-from nilearn import masking
     
 def create_mni2diff_transforms(merged_f_samples_path, input_MNI, bedpostx_dir):
+    import nipype.interfaces.fsl as fsl
+    import nipype.pipeline.engine as pe
     ##Create transform matrix between diff and MNI using FLIRT
     flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
     flirt.inputs.reference = merged_f_samples_path
@@ -35,6 +30,8 @@ def create_mni2diff_transforms(merged_f_samples_path, input_MNI, bedpostx_dir):
 
 ##Create avoidance and waypoints masks
 def gen_anat_segs(anat_loc, FSLDIR):
+    import nipype.interfaces.fsl as fsl
+    from nipype.interfaces.fsl import ExtractROI
     ##Create MNI ventricle mask
     print('Creating MNI space ventricle mask...')
     anat_dir = os.path.dirname(anat_loc)
@@ -66,6 +63,8 @@ def gen_anat_segs(anat_loc, FSLDIR):
     return(new_file_csf, new_file_wm, mni_csf_loc)
 
 def coreg_vent_CSF_to_diff(nodif_brain_mask_path, bedpostx_dir, csf_loc, mni_csf_loc):
+    import nipype.interfaces.fsl as fsl
+    import nipype.pipeline.engine as pe
     csf_mask_diff_out = bedpostx_dir + '/csf_diff.nii.gz'
     flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
     flirt.inputs.reference = nodif_brain_mask_path
@@ -100,6 +99,8 @@ def coreg_vent_CSF_to_diff(nodif_brain_mask_path, bedpostx_dir, csf_loc, mni_csf
     return out_file_final
 
 def coreg_WM_mask_to_diff(nodif_brain_mask_path, bedpostx_dir, wm_mask_loc):
+    import nipype.interfaces.fsl as fsl
+    import nipype.pipeline.engine as pe
     out_file = bedpostx_dir + '/wm_mask_diff.nii.gz'
     flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
     flirt.inputs.reference = nodif_brain_mask_path
@@ -134,7 +135,10 @@ def prepare_masks(bedpostx_dir, anat_loc):
     return(WM_diff_mask_path, vent_CSF_diff_mask_path)
 
 def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_map_nifti, network):
-        
+    from nilearn import masking
+    import nipype.interfaces.fsl as fsl
+    import nipype.pipeline.engine as pe
+    import glob
     ####Custom inputs####
     try:
         FSLDIR = os.environ['FSLDIR']
@@ -286,6 +290,8 @@ def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_m
     return(seeds_text, probtrackx_output_dir_path)
 
 def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, vent_CSF_diff_mask_path, WM_diff_mask_path, procmem):
+    import random
+    import nipype.interfaces.fsl as fsl
     num_total_samples = 5000
     samples_i = int(round(float(num_total_samples) / float(procmem[0]),0))
     nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
@@ -341,6 +347,8 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
     import time 
     import glob
     import nibabel as nib
+    from sklearn.preprocessing import normalize
+    
     tmp_files = []
     for i in range(int(max_i)):
         tmp_files.append(probtrackx_output_dir_path + '/' + str(i) + '_complete.txt')

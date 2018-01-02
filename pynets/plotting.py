@@ -6,20 +6,10 @@ Created on Tue Nov  7 10:40:07 2017
 """
 import numpy as np
 import networkx as nx
-import seaborn as sns
-import json
 import os
-#warnings.simplefilter("ignore")
-import matplotlib.pyplot as plt
-from scipy.cluster.hierarchy import linkage, fcluster
-from nipype.utils.filemanip import save_json
-from pynets.thresholding import normalize
-from pathlib import Path
-from networkx.readwrite import json_graph
-from nilearn import plotting as niplot
-from matplotlib import colors
 
 def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask):
+    import matplotlib.pyplot as plt
     ##Set title for adj. matrix based on connectivity model used
     if conn_model == 'corr':
         atlast_graph_title = str(atlas_select) + '_Correlation_Graph'
@@ -64,7 +54,13 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, 
     return(atlast_graph_title)
 
 def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names):
+    import json
+    from networkx.readwrite import json_graph
+    from pathlib import Path
+    from pynets.thresholding import normalize
     from pynets.netstats import most_important
+    from scipy.cluster.hierarchy import linkage, fcluster
+    from nipype.utils.filemanip import save_json
     
     ##Advanced Settings
     comm = 'nodes'
@@ -281,6 +277,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
             outfile.write(line)
 
 def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
+    import matplotlib.pyplot as plt
     for time_serie, label in zip(time_series.T, labels):
         plt.plot(time_serie, label=label) 
     plt.xlabel('Scan Number')
@@ -297,6 +294,7 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
     plt.close()
 
 def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold, plot_switch):
+    from nilearn import plotting as niplot
     if plot_switch == True:
         import pkg_resources
         import networkx as nx
@@ -353,7 +351,11 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
 def structural_plotting(conn_matrix, conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, plot_switch, coords):  
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
+    import matplotlib.pyplot as plt
+    import seaborn as sns
     from pynets import plotting as pynplot
+    from matplotlib import colors
+    from nilearn import plotting as niplot
 
     edge_threshold = 0.90
     connectome_fdt_thresh = 1000

@@ -7,13 +7,11 @@ Created on Tue Nov  7 10:40:07 2017
 from __future__ import division
 import sys
 import os
-import math
 import numpy as np
 import networkx as nx
-from pynets import utils
-from networkx.utils import accumulate
 
 def average_shortest_path_length_for_all(G):
+    import math
     subgraphs = [sbg for sbg in nx.connected_component_subgraphs(G) if len(sbg) > 1]
     return math.fsum(nx.average_shortest_path_length(sg) for sg in subgraphs) / len(subgraphs)
 
@@ -215,6 +213,7 @@ def create_communities(node_comm_aff_mat, node_num):
     return com_assign
 
 def _compute_rc(G):
+    from networkx.utils import accumulate
     """Returns the rich-club coefficient for each degree in the graph
     `G`.
 
@@ -922,9 +921,9 @@ def most_important(G):
          
 ##Extract network metrics interface
 def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None):
-    from pynets import thresholding
+    from pynets import thresholding, utils
     
-    pruning = False
+    pruning = True
 
     ##Load and threshold matrix
     in_mat = np.array(np.genfromtxt(est_path))

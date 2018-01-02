@@ -6,15 +6,8 @@ Created on Tue Nov  7 10:40:07 2017
 """
 import os
 import sys
-import nilearn
 import numpy as np
 import nibabel as nib
-import warnings
-warnings.simplefilter("ignore")
-from nilearn import datasets, masking
-from nilearn.image import concat_imgs, new_img_like
-from nilearn.plotting import find_xyz_cut_coords
-from pathlib import Path
     
 def get_sphere(coords, r, vox_dims, dims):
     """##Adapted from Neurosynth
@@ -32,15 +25,17 @@ def get_sphere(coords, r, vox_dims, dims):
                   (np.max(np.subtract(sphere, dims), 1) <= -1), :].astype(int)
 
 def create_parcel_atlas(parcel_list):
+    from nilearn.image import new_img_like, concat_imgs
     parcel_background = new_img_like(parcel_list[0], np.zeros(parcel_list[0].shape, dtype=bool))
     parcel_list_exp = [parcel_background] + parcel_list
-    parcellation = nilearn.image.concat_imgs(parcel_list_exp).get_data()
+    parcellation = concat_imgs(parcel_list_exp).get_data()
     index_vec = np.array(range(len(parcel_list_exp))) + 1
     net_parcels_sum = np.sum(index_vec * parcellation, axis=3)
     net_parcels_map_nifti = nib.Nifti1Image(net_parcels_sum, affine=parcel_list[0].affine)
     return(net_parcels_map_nifti, parcel_list_exp)
 
 def fetch_nilearn_atlas_coords(atlas_select):
+    from nilearn import datasets
     atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
     atlas_name = atlas['description'].splitlines()[0]
     if atlas_name is None:
@@ -95,6 +90,8 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
 
         ##Grab RSN reference file
         nets_ref_txt = pkg_resources.resource_filename("pynets", "rsnrefs/Schaefer2018_1000_7nets_ref.txt")
+    else:
+        nets_ref_txt = None
 
     if not nets_ref_txt:
         print('Network: ' + str(network) + ' not found!\nSee valid network names using the --help flag with pynets_run.py')
@@ -140,7 +137,7 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
             sphere_vol[tuple(coord)] = 1
             i = i + 1
             if (RSNmask.astype('bool') & sphere_vol).any():
-                print(str(coord) + ' falls within mask...')
+                print(str(coord) + ' coord falls within ' + network + '...')
                 RSN_coords_vox.append(coord)
                 net_label_names.append(label_names[i])
                 continue
@@ -148,7 +145,7 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
                 inds = get_sphere(coord, error, (np.abs(x_vox), y_vox, z_vox), RSNmask.shape)
                 sphere_vol[tuple(inds.T)] = 1
                 if (RSNmask.astype('bool') & sphere_vol).any():
-                    print(str(coord) + ' is within a + or - ' + str(error) + ' mm neighborhood...')
+                    print(str(coord) + ' coord is within a + or - ' + str(error) + ' mm neighborhood of ' + network + '...')
                     RSN_coords_vox.append(coord)
                     net_label_names.append(label_names[i])
         coords_mm = []
@@ -191,6 +188,7 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
 def parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID):
     from pynets import nodemaker
     from nilearn.image import resample_img
+    from nilearn import masking
     ##For parcel masking, specify overlap thresh and error cushion in mm voxels
     perc_overlap = 0.75 ##Default is >=90% overlap
 
@@ -240,6 +238,7 @@ def parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID):
     return(coords_adj, label_names_adj, parcel_list_adj)
 
 def coord_masker(mask, coords, label_names):
+    from nilearn import masking
     x_vox = np.diagonal(masking._load_mask_img(mask)[1][:3,0:3])[0]
     y_vox = np.diagonal(masking._load_mask_img(mask)[1][:3,0:3])[1]
     z_vox = np.diagonal(masking._load_mask_img(mask)[1][:3,0:3])[2]
@@ -286,6 +285,8 @@ def coord_masker(mask, coords, label_names):
     return(coords, label_names)
 
 def get_names_and_coords_of_parcels(parlistfile):
+    from nilearn.plotting import find_xyz_cut_coords
+    from nilearn.image import new_img_like
     try:
         atlas_select = parlistfile.split('/')[-1].split('.')[0]
     except:
@@ -315,6 +316,7 @@ def get_names_and_coords_of_parcels(parlistfile):
     return(coords, atlas_select, par_max, img_list)
 
 def gen_network_parcels(parlistfile, network, labels, dir_path):
+    from nilearn.image import new_img_like, concat_imgs
     bna_img = nib.load(parlistfile)
     bna_data = np.round(bna_img.get_data(),1)
     ##Get an array of unique parcels
@@ -345,6 +347,7 @@ def gen_network_parcels(parlistfile, network, labels, dir_path):
 def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file):
     from pynets import utils, nodemaker
     import pandas as pd
+    from pathlib import Path
     ##Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
     nilearn_parc_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
     nilearn_coord_atlases=['harvard_oxford', 'msdl', 'coords_power_2011', 'smith_2009', 'basc_multiscale_2015', 'allen_2011', 'coords_dosenbach_2010']
