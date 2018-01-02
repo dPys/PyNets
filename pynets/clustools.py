@@ -5,15 +5,9 @@ Created on Thu Dec 21 18:07:34 2017
 
 @author: PSYC-dap3463 (adapted from Cameron Craddock's PyClusterROI)
 """
-import scipy as sp
 import sys
 import nibabel as nib
 import numpy as np
-import time as time
-from scipy import divide, prod, rank
-from scipy.sparse import csc_matrix, spdiags
-from scipy.sparse.linalg import eigsh
-from scipy.linalg import norm, svd, LinAlgError
 
 # Craddock, R. C.; James, G. A.; Holtzheimer, P. E.; Hu, X. P. & Mayberg, H. S.
 # A whole brain fMRI atlas generated via spatially constrained spectral
@@ -36,6 +30,7 @@ from scipy.linalg import norm, svd, LinAlgError
     
 ##simple function to translate 1D vector coordinates to 3D matrix coordinates for a 3D matrix of size sz
 def indx_1dto3d(idx,sz):
+    from scipy import divide, prod
     x=divide(idx,prod(sz[1:3]))
     y=divide(idx-x*prod(sz[1:3]),sz[2])
     z=idx-x*prod(sz[1:3])-y*sz[2]
@@ -43,6 +38,7 @@ def indx_1dto3d(idx,sz):
 
 ##simple function to translate 3D matrix coordinates to 1D vector coordinates for a 3D matrix of size sz
 def indx_3dto1d(idx,sz):
+    from scipy import prod, rank
     if( rank(idx) == 1):
         idx1=idx[0]*prod(sz[1:3])+idx[1]*sz[2]+idx[2]
     else:
@@ -50,6 +46,8 @@ def indx_3dto1d(idx,sz):
     return idx1
     
 def make_local_connectivity_tcorr( func_file, clust_mask, outfile, thresh ):
+    from scipy.sparse import csc_matrix
+    from scipy import prod, rank
     # index array used to calculate 3D neigbors
     neighbors=np.array([[-1,-1,-1],[0,-1,-1],[1,-1,-1],
                      [-1, 0,-1],[0, 0,-1],[1, 0,-1],
@@ -145,6 +143,9 @@ def make_local_connectivity_tcorr( func_file, clust_mask, outfile, thresh ):
     print('Finished ',func_file,' len ',m)
 
 def ncut( W, nbEigenValues ):
+    from scipy.sparse.linalg import eigsh
+    from scipy.sparse import spdiags
+    from numpy.linalg import norm
     # parameters
     offset=.5
     maxiterations=100
@@ -193,6 +194,10 @@ def ncut( W, nbEigenValues ):
     return(eigen_val, eigen_vec)
     
 def discretisation( eigen_vec ):
+    import scipy as sp
+    from scipy.sparse import csc_matrix
+    from scipy.linalg import LinAlgError, svd
+    from scipy import divide
     eps=2.2204e-16
 
     # normalize the eigenvectors
@@ -266,6 +271,8 @@ def discretisation( eigen_vec ):
         return(eigenvec_discrete)
     
 def binfile_parcellate( infile, outfile, k ):
+    import time as time
+    from scipy.sparse import csc_matrix
     ##check how long it takes
     start=time.time()
     print('started at ',start)

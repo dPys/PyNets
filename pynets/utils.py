@@ -8,15 +8,9 @@ Created on Fri Nov 10 15:44:46 2017
 import sys
 import os
 import nibabel as nib
-import pandas as pd
-from nilearn import datasets
-from nilearn.image import concat_imgs
-try:
-    import cPickle as pickle
-except ImportError:
-    import _pickle as pickle
     
 def nilearn_atlas_helper(atlas_select):
+    from nilearn import datasets
     try:
         parlistfile=getattr(datasets, 'fetch_%s' % atlas_select)().maps
         try:
@@ -31,37 +25,14 @@ def nilearn_atlas_helper(atlas_select):
         print('Extraction from nilearn datasets failed!')
         sys.exit()
     return(label_names, networks_list, parlistfile)
-
-def convert_atlas_to_volumes(atlas_path, img_list):
-    atlas_dir = os.path.dirname(atlas_path)
-    ref_txt = atlas_dir + '/' + atlas_path.split('/')[-1:][0].split('.')[0] + '.txt'
-    fourd_file = atlas_dir + '/' + atlas_path.split('/')[-1:][0].split('.')[0] + '_4d.nii.gz'
-    if os.path.isfile(ref_txt):
-        try:
-            all4d = concat_imgs(img_list)
-            nib.save(all4d, fourd_file)
-
-            ##Save individual 3D volumes as individual files
-            volumes_dir = atlas_dir + '/' + atlas_path.split('/')[-1:][0].split('.')[0] + '_volumes'
-            if not os.path.exists(volumes_dir):
-                os.makedirs(volumes_dir)
-
-            j = 0
-            for img in img_list:
-                volume_path = volumes_dir + '/parcel_' + str(j)
-                nib.save(img, volume_path)
-                j = j + 1
-
-        except:
-            print('Image concatenation failed for: ' + str(atlas_path))
-            volumes_dir = None
-    else:
-        print('Atlas reference file not found!')
-        volumes_dir = None
-    return(volumes_dir)
-
+    
 ##save net metric files to pandas dataframes interface
 def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
+    import pandas as pd
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import _pickle as pickle
     if mask != None:
         if network != None:
             met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + network + '_' + str(os.path.basename(mask).split('.')[0])
@@ -91,55 +62,59 @@ def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
 
 def do_dir_path(atlas_select, in_file):
     dir_path = os.path.dirname(os.path.realpath(in_file)) + '/' + atlas_select
-    if not os.path.exists(dir_path):
+    if not os.path.exists(dir_path) and atlas_select != None:
         os.makedirs(dir_path)
+    elif atlas_select == None:
+        raise ValueError("Error: cannot create directory for a null atlas!")
     return dir_path
 
 def create_est_path(ID, network, conn_model, thr, mask, dir_path):
     if mask != None:
         if network != None:
-            est_path = dir_path + '/' + ID + '_' + network + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.txt'
+            est_path = dir_path + '/' + str(ID) + '_' + network + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.txt'
         else:
-            est_path = dir_path + '/' + ID + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.txt'       
+            est_path = dir_path + '/' + str(ID) + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.txt'       
     else:
         if network != None:
-            est_path = dir_path + '/' + ID + '_' + network + '_est_' + str(conn_model) + '_' + str(thr) + '.txt'
+            est_path = dir_path + '/' + str(ID) + '_' + network + '_est_' + str(conn_model) + '_' + str(thr) + '.txt'
         else:
-            est_path = dir_path + '/' + ID + '_est_' + str(conn_model) + '_' + str(thr) + '.txt'
+            est_path = dir_path + '/' + str(ID) + '_est_' + str(conn_model) + '_' + str(thr) + '.txt'
     return est_path
 
 def create_unthr_path(ID, network, conn_model, mask, dir_path):
     if mask != None:
         if network != None:
-            unthr_path = dir_path + '/' + ID + '_' + network + '_est_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_unthresh_mat.txt'
+            unthr_path = dir_path + '/' + str(ID) + '_' + network + '_est_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_unthresh_mat.txt'
         else:
-            unthr_path = dir_path + '/' + ID + '_est_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_unthresh_mat.txt'       
+            unthr_path = dir_path + '/' + str(ID) + '_est_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_unthresh_mat.txt'       
     else:
         if network != None:
-            unthr_path = dir_path + '/' + ID + '_' + network + '_est_' + str(conn_model) + '_unthresholded_mat.txt'
+            unthr_path = dir_path + '/' + str(ID) + '_' + network + '_est_' + str(conn_model) + '_unthresholded_mat.txt'
         else:
-            unthr_path = dir_path + '/' + ID + '_est_' + str(conn_model) + '_unthresh_mat.txt'
+            unthr_path = dir_path + '/' + str(ID) + '_est_' + str(conn_model) + '_unthresh_mat.txt'
     return unthr_path
 
 def create_csv_path(ID, network, conn_model, thr, mask, dir_path):
     if mask != None:
         if network != None:
-            out_path = dir_path + '/' + ID + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.csv'
+            out_path = dir_path + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.csv'
         else:
-            out_path = dir_path + '/' + ID + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.csv'
+            out_path = dir_path + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '.csv'
     else:
         if network != None:
-            out_path = dir_path + '/' + ID + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '.csv'
+            out_path = dir_path + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '.csv'
         else:
-            out_path = dir_path + '/' + ID + '_net_metrics_' + conn_model + '_' + str(thr) + '.csv'
+            out_path = dir_path + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '.csv'
     return out_path
 
 def individual_tcorr_clustering(func_file, clust_mask, ID, k, thresh = 0.5):
     import os
     from pynets import utils
     from pynets.clustools import make_image_from_bin_renum, binfile_parcellate, make_local_connectivity_tcorr
-    
-    print('\nCreating atlas at cluster level ' + str(k) + '...\n')
+
+    mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+    atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
+    print('\nCreating atlas at cluster level ' + str(k) + ' for ' + str(atlas_select) + '...\n')
     working_dir = os.path.dirname(func_file)
     outfile = working_dir + '/rm_tcorr_conn_' + str(ID) + '.npy'
     outfile_parc = working_dir + '/rm_tcorr_indiv_cluster_' + str(ID)
@@ -150,8 +125,6 @@ def individual_tcorr_clustering(func_file, clust_mask, ID, k, thresh = 0.5):
     
     ##write out for group mean clustering
     binfile=working_dir + '/rm_tcorr_indiv_cluster_' + str(ID) + '_' + str(k) + '.npy'        
-    mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-    atlas_select = mask_name + '_k' + str(k)
     dir_path = utils.do_dir_path(atlas_select, func_file)
     parlistfile = dir_path + '/' + str(ID) + '_' + mask_name + '_parc_k' + str(k) + '.nii.gz'
     make_image_from_bin_renum(parlistfile,binfile,clust_mask)   
@@ -162,17 +135,17 @@ def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mas
     ID_dir = str(os.path.dirname(input_file).split('.')[0])
     if mask != None:
         if network != None:
-            out_path = ID_dir + '/' + str(atlas_select) + '/' + ID + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0])
+            out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0])
         else:
-            out_path = ID_dir + '/' + str(atlas_select) + '/' + ID + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0])
+            out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0])
     else:
         if network != None:
-            out_path = ID_dir + '/' + str(atlas_select) + '/' + ID + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr)
+            out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr)
         else:
-            out_path = ID_dir + '/' + str(atlas_select) + '/' + ID + '_net_metrics_' + conn_model + '_' + str(thr)
+            out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr)
     return out_path
 
-def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_step, min_thr, max_thr, step_thr, multi_thr, thr, mask, ID, network, k_clustering, conn_model, in_csv, user_atlas_list, out_file=None):
+def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_step, min_thr, max_thr, step_thr, multi_thr, thr, mask, ID, network, k_clustering, conn_model, in_csv, user_atlas_list, clust_mask_list, out_file=None):
     import pandas as pd
     import numpy as np
     import os
@@ -185,39 +158,107 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
         iter_thresh = None
         
     net_pickle_mt_list = []
-    if k_clustering == 2:
+    if k_clustering == 4:
+        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+        for clust_mask in clust_mask_list:
+            mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+            for k in k_list:
+                atlas_select = mask_name + '_k' + str(k)
+                if iter_thresh is not None:
+                    for thr in iter_thresh:
+                        try:
+                            net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                        except:
+                            print('Missing results path for K=' + str(k) + ' and thr=' + str(thr))
+                            pass
+                else:
+                    try:
+                        net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                    except:
+                        print('Missing results path for K=' + str(k))
+                        pass
+    elif k_clustering == 2:
         k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
         mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
         for k in k_list:
             atlas_select = mask_name + '_k' + str(k)
             if iter_thresh is not None:
                 for thr in iter_thresh:
+                    try:
+                        net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                    except:
+                        print('Missing results path for K=' + str(k) + ' and thr=' + str(thr))
+                        pass
+            else:
+                try:
                     net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
-            else: 
-                net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                except:
+                    print('Missing results path for K=' + str(k))
+                    pass
     elif k_clustering == 1:
         mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
         atlas_select = mask_name + '_k' + str(k)
         if iter_thresh is not None:
             for thr in iter_thresh:
-                net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                try:
+                    net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                except:
+                    print('Missing results path for K=' + str(k) + ' and thr=' + str(thr))
+                    pass
         else:
-            net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+            try:
+                net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+            except:
+                print('Missing results path for K=' + str(k))
+                pass
+    elif k_clustering == 3:
+        for clust_mask in clust_mask_list:
+            mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+            atlas_select = mask_name + '_k' + str(k)
+            if iter_thresh is not None:
+                for thr in iter_thresh:
+                    try:
+                        net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                    except:
+                        print('Missing results path for K=' + str(k) + ' and thr=' + str(thr))
+                        pass
+            else:
+                try:
+                    net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                except:
+                    print('Missing results path for K=' + str(k))
+                    pass
     elif user_atlas_list:
         for parlistfile in user_atlas_list:
             atlas_select = parlistfile.split('/')[-1].split('.')[0]
             if iter_thresh is not None:
                 for thr in iter_thresh:
+                    try:
+                        net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                    except:
+                        print('Missing results path for atlas=' + str(atlas_select) + ' and thr=' + str(thr))
+                        pass
+            else:
+                try:
                     net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
-            else: 
-                net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                except:
+                    print('Missing results path for atlas=' + str(atlas_select))
+                    pass
     elif k_clustering == 0 and atlas_select is not None:
         if iter_thresh is not None:
             for thr in iter_thresh:
-                net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
-        else: 
-            net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))            
-    
+                try:
+                    net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                except:
+                    print('Missing results path for thr=' + str(thr))
+                    pass
+        else:
+            try:
+                net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))            
+            except:
+                print('Missing results path')
+                pass
+            
     if len(net_pickle_mt_list) > 1:
         print('\n\nList of result files to concatenate:\n' + str(net_pickle_mt_list) + '\n\n')
         subject_path = os.path.dirname(os.path.dirname(net_pickle_mt_list[0]))
@@ -253,7 +294,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
             print('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ' + str(ID) + '!\n')
             pass
     else:
-        print('\nNo Dataframe objects to concatenate for ' + str(ID) + '!\n')
+        print('\nNo objects to collect. Single dataframe for: ' + str(ID) + '\n')
         pass
 
 def output_echo(est_path, thr):
@@ -281,11 +322,11 @@ def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network)
     except ImportError:
         import _pickle as pickle
     ##Save coords to pickle
-    coord_path = dir_path + '/' + network + '_func_coords_wb.pkl'
+    coord_path = dir_path + '/' + network + '_func_coords_rsn.pkl'
     with open(coord_path, 'wb') as f:
         pickle.dump(coords, f)
     ##Save labels to pickle
-    labels_path = dir_path + '/' + network + '_func_labelnames_wb.pkl'
+    labels_path = dir_path + '/' + network + '_func_labelnames_rsn.pkl'
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f)
     return
@@ -293,14 +334,14 @@ def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network)
 def save_nifti_parcels_map(ID, dir_path, mask, network, net_parcels_map_nifti):
     if mask:
         if network:
-            net_parcels_nii_path = dir_path + '/' + ID + '_parcels_masked_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '.nii.gz'
+            net_parcels_nii_path = dir_path + '/' + str(ID) + '_parcels_masked_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '.nii.gz'
         else:
-            net_parcels_nii_path = dir_path + '/' + ID + '_parcels_masked_' + str(os.path.basename(mask).split('.')[0]) + '.nii.gz'
+            net_parcels_nii_path = dir_path + '/' + str(ID) + '_parcels_masked_' + str(os.path.basename(mask).split('.')[0]) + '.nii.gz'
     else:
         if network:
-            net_parcels_nii_path = dir_path + '/' + ID + '_parcels_' + network + '.nii.gz'    
+            net_parcels_nii_path = dir_path + '/' + str(ID) + '_parcels_' + network + '.nii.gz'    
         else:
-            net_parcels_nii_path = dir_path + '/' + ID + '_parcels.nii.gz'
+            net_parcels_nii_path = dir_path + '/' + str(ID) + '_parcels.nii.gz'
     
     nib.save(net_parcels_map_nifti, net_parcels_nii_path)
     return
