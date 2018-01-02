@@ -6,19 +6,17 @@ Created on Tue Nov  7 10:40:07 2017
 """
 
 import sys
-import os
 import numpy as np
 #warnings.simplefilter("ignore")
-from nilearn.connectome import ConnectivityMeasure
-from nilearn import input_data
-from sklearn.covariance import GraphLassoCV
-try:
-    from brainiak.fcma.util import compute_correlation
-except ImportError:
-    pass
-from inverse_covariance import QuicGraphLasso, QuicGraphLassoCV, QuicGraphLassoEBIC, AdaptiveGraphLasso
 
 def get_conn_matrix(time_series, conn_model):
+    from nilearn.connectome import ConnectivityMeasure
+    from sklearn.covariance import GraphLassoCV
+    try:
+        from brainiak.fcma.util import compute_correlation
+    except ImportError:
+        pass
+    
     if conn_model == 'corr':
         # credit: nilearn
         conn_measure = ConnectivityMeasure(kind='correlation')
@@ -41,7 +39,6 @@ def get_conn_matrix(time_series, conn_model):
         ##Fit estimator to matrix to get sparse matrix
         estimator = GraphLassoCV()
         try:
-            print("Fitting Lasso Estimator...")
             estimator.fit(time_series)
         except RuntimeError:
             print('Unstable Lasso estimation--Attempting to re-run by first applying shrinkage...')
@@ -76,6 +73,7 @@ def get_conn_matrix(time_series, conn_model):
             except:
                 conn_matrix = estimator_shrunk.covariance_    
     elif conn_model == 'QuicGraphLasso':
+        from inverse_covariance import QuicGraphLasso
         # Compute the sparse inverse covariance via QuicGraphLasso
         # credit: skggm
         model = QuicGraphLasso(
@@ -87,6 +85,7 @@ def get_conn_matrix(time_series, conn_model):
         conn_matrix = model.precision_
         
     elif conn_model == 'QuicGraphLassoCV':
+        from inverse_covariance import QuicGraphLassoCV
         # Compute the sparse inverse covariance via QuicGraphLassoCV
         # credit: skggm
         model = QuicGraphLassoCV(
@@ -96,6 +95,7 @@ def get_conn_matrix(time_series, conn_model):
         conn_matrix = model.precision_
     
     elif conn_model == 'QuicGraphLassoEBIC':
+        from inverse_covariance import QuicGraphLassoEBIC
         # Compute the sparse inverse covariance via QuicGraphLassoEBIC
         # credit: skggm
         model = QuicGraphLassoEBIC(
@@ -105,6 +105,7 @@ def get_conn_matrix(time_series, conn_model):
         conn_matrix = model.precision_
     
     elif conn_model == 'AdaptiveQuicGraphLasso':
+        from inverse_covariance import AdaptiveGraphLasso, QuicGraphLassoEBIC
         # Compute the sparse inverse covariance via
         # AdaptiveGraphLasso + QuicGraphLassoEBIC + method='binary'
         # credit: skggm
@@ -119,11 +120,13 @@ def get_conn_matrix(time_series, conn_model):
 
     return(conn_matrix)
 
-def extract_ts_wb_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network):
+def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network):
+    import os
+    from nilearn import input_data
     ##extract time series from whole brain parcellaions:
-    parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0, memory='joblib.Memory', memory_level=10, standardize=True)
+    parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0, standardize=True)
     ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
-    print('\n' + 'Time series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' volumetric ROI\'s\n')
+    print('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' volumetric ROI\'s\n')
     ##Save time series as txt file
     if mask is None:
         if network is not None:
@@ -132,20 +135,28 @@ def extract_ts_wb_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir
             out_path_ts=dir_path + '/' + ID + '_wb_net_ts.txt'
     else:
         if network is not None:
-            out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_rsn_net_ts.txt'
+            out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + network + '_rsn_net_ts.txt'
         else:
             out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_wb_net_ts.txt'
     np.savetxt(out_path_ts, ts_within_nodes)
     return(ts_within_nodes)
     
-def extract_ts_wb_coords(node_size, conf, func_file, coords, dir_path, ID, mask, thr, network):
-    spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True, memory='joblib.Memory', memory_level=10, standardize=True)
+def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network):
+    import os
+    from nilearn import input_data
+    spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True, standardize=True)
     ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
-    print('\n' + 'Time series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' coordinate ROI\'s\n')
+    print('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' coordinate ROI\'s\n')
     ##Save time series as txt file
     if mask is None:
-        out_path_ts=dir_path + '/' + ID + '_wb_net_ts.txt'
+        if network is not None:
+            out_path_ts=dir_path + '/' + ID + '_' + network + '_rsn_net_ts.txt'
+        else:
+            out_path_ts=dir_path + '/' + ID + '_wb_net_ts.txt'
     else:
-        out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_net_ts.txt'
+        if network is not None:
+            out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + network + '_rsn_net_ts.txt'
+        else:
+            out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_wb_net_ts.txt'
     np.savetxt(out_path_ts, ts_within_nodes)
     return(ts_within_nodes)
