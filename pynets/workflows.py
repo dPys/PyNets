@@ -127,7 +127,8 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     elif k_clustering==4:
         k_cluster_iterables = []
         k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
-        k_cluster_iterables.append(("k", k_list), ("clust_mask", clust_mask_list))
+        k_cluster_iterables.append(("k", k_list))
+        k_cluster_iterables.append(("clust_mask", clust_mask_list))
         clustering_node.iterables = k_cluster_iterables
 
        
@@ -369,7 +370,8 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     elif k_clustering==4:
         k_cluster_iterables = []
         k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
-        k_cluster_iterables.append(("k", k_list), ("clust_mask", clust_mask_list))
+        k_cluster_iterables.append(("k", k_list))
+        k_cluster_iterables.append(("clust_mask", clust_mask_list))
         clustering_node.iterables = k_cluster_iterables
     
     ##Connect nodes of workflow
