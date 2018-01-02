@@ -309,10 +309,10 @@ if __name__ == '__main__':
         label_names = dict_df['Region'].tolist()
 
     if network is not None:
-        print ("NETWORK: " + str(network))
+        print("Using RSN pipeline for: " + str(network))
     elif multi_nets is not None:
         network = multi_nets[0]
-        print ('Iterating workflow across ' + str(len(multi_nets)) + ' networks: ' + str(', '.join(str(n) for n in multi_nets)) + '...')
+        print('Iterating workflow across ' + str(len(multi_nets)) + ' networks: ' + str(', '.join(str(n) for n in multi_nets)) + '...')
     else:
         print("Using whole-brain pipeline..." )
 

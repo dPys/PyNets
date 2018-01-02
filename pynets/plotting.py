@@ -342,7 +342,7 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
         connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=False, node_size=0.0001)
         connectome.add_overlay(ch2better_loc, alpha=0.4)
         [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
-        connectome.add_graph(conn_matrix, coords, edge_threshold = edge_threshold, edge_vmax=z_max, edge_vmin=z_min, node_size=4)
+        connectome.add_graph(conn_matrix, coords, edge_threshold = edge_threshold, edge_cmap = 'Blues', edge_vmax=z_max, edge_vmin=z_min, node_size=4)
         connectome.savefig(out_path_fig)
     else:
         pass
