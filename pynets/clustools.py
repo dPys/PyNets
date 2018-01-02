@@ -45,7 +45,7 @@ def indx_3dto1d(idx,sz):
         idx1=idx[:,0]*prod(sz[1:3])+idx[:,1]*sz[2]+idx[:,2]
     return idx1
     
-def make_local_connectivity_tcorr( func_file, clust_mask, outfile, thresh ):
+def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
     from scipy.sparse import csc_matrix
     from scipy import prod, rank
     # index array used to calculate 3D neigbors
@@ -142,7 +142,7 @@ def make_local_connectivity_tcorr( func_file, clust_mask, outfile, thresh ):
 
     print('Finished ',func_file,' len ',m)
 
-def ncut( W, nbEigenValues ):
+def ncut(W, nbEigenValues):
     from scipy.sparse.linalg import eigsh
     from scipy.sparse import spdiags
     from numpy.linalg import norm
@@ -193,7 +193,7 @@ def ncut( W, nbEigenValues ):
 
     return(eigen_val, eigen_vec)
     
-def discretisation( eigen_vec ):
+def discretisation(eigen_vec):
     import scipy as sp
     from scipy.sparse import csc_matrix
     from scipy.linalg import LinAlgError, svd
@@ -270,7 +270,7 @@ def discretisation( eigen_vec ):
     else:
         return(eigenvec_discrete)
     
-def binfile_parcellate( infile, outfile, k ):
+def binfile_parcellate(infile, outfile, k):
     import time as time
     from scipy.sparse import csc_matrix
     ##check how long it takes
@@ -314,7 +314,7 @@ def binfile_parcellate( infile, outfile, k ):
     outname=outfile+'_'+str(k)+'.npy'
     np.save(outname,group_img.todense())
     
-def make_image_from_bin_renum( image, binfile, mask ):
+def make_image_from_bin_renum(image, binfile, mask):
     # read in the mask
     nim=nib.load(mask)
 
