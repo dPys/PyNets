@@ -5,7 +5,6 @@ Created on Tue Nov  7 10:40:07 2017
 @author: Derek Pisner
 """
 from __future__ import division
-import sys
 import os
 import numpy as np
 import networkx as nx
@@ -1080,7 +1079,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         le_arr[num_nodes,0] = 'MEAN_local_efficiency'
         nonzero_arr_le = np.delete(le_arr[:,1], [0])
         le_arr[num_nodes,1] = np.mean(nonzero_arr_le)
-        print('Local Efficiency across nodes: ' + str(le_arr[num_nodes,1]))
+        print('Mean Local Efficiency across nodes: ' + str(le_arr[num_nodes,1]))
         print('\n')
     except:
         pass
@@ -1106,7 +1105,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         cl_arr[num_nodes,0] = 'MEAN_local_efficiency'
         nonzero_arr_cl = np.delete(cl_arr[:,1], [0])
         cl_arr[num_nodes,1] = np.mean(nonzero_arr_cl)
-        print('Local Efficiency across nodes: ' + str(cl_arr[num_nodes,1]))
+        print('Mean Local Clustering across nodes: ' + str(cl_arr[num_nodes,1]))
         print('\n')
     except:
         pass
@@ -1135,7 +1134,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         dc_arr[num_nodes,0] = 'MEAN_degree_centrality'
         nonzero_arr_dc = np.delete(dc_arr[:,1], [0])
         dc_arr[num_nodes,1] = np.mean(nonzero_arr_dc)
-        print('Degree Centrality across nodes: ' + str(dc_arr[num_nodes,1]))
+        print('Mean Degree Centrality across nodes: ' + str(dc_arr[num_nodes,1]))
         print('\n')
     except:
         pass
