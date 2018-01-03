@@ -8,6 +8,7 @@ Created on Fri Nov 10 15:44:46 2017
 import sys
 import os
 import nibabel as nib
+import numpy as np
 
 def nilearn_atlas_helper(atlas_select):
     from nilearn import datasets
@@ -115,18 +116,18 @@ def individual_tcorr_clustering(func_file, clust_mask, ID, k, thresh = 0.5):
     mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
     atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
     print('\nCreating atlas at cluster level ' + str(k) + ' for ' + str(atlas_select) + '...\n')
-    working_dir = os.path.dirname(func_file)
+    working_dir = os.path.dirname(func_file) + '/' + atlas_select
     outfile = working_dir + '/rm_tcorr_conn_' + str(ID) + '.npy'
     outfile_parc = working_dir + '/rm_tcorr_indiv_cluster_' + str(ID)
-
+    binfile=working_dir + '/rm_tcorr_indiv_cluster_' + str(ID) + '_' + str(k) + '.npy'
+    dir_path = utils.do_dir_path(atlas_select, func_file)
+    parlistfile = dir_path + '/' + str(ID) + '_' + mask_name + '_k' + str(k) + '.nii.gz'
+    
     make_local_connectivity_tcorr( func_file, clust_mask, outfile, thresh )
 
     binfile_parcellate(outfile, outfile_parc, int(k))
 
     ##write out for group mean clustering
-    binfile=working_dir + '/' + atlas_select + '/rm_tcorr_indiv_cluster_' + str(ID) + '_' + str(k) + '.npy'
-    dir_path = utils.do_dir_path(atlas_select, func_file)
-    parlistfile = dir_path + '/' + str(ID) + '_' + mask_name + '_k' + str(k) + '.nii.gz'
     make_image_from_bin_renum(parlistfile,binfile,clust_mask)
 
     return(parlistfile, atlas_select, dir_path)
@@ -345,3 +346,6 @@ def save_nifti_parcels_map(ID, dir_path, mask, network, net_parcels_map_nifti):
 
     nib.save(net_parcels_map_nifti, net_parcels_nii_path)
     return
+
+def cuberoot(x):
+    return np.sign(x) * np.abs(x)**(1 / 3)
