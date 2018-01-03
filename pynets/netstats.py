@@ -201,7 +201,38 @@ def smallworldness(G, rep = 100):
     #ss = result.get()
     mean_s = np.mean(ss)
     return mean_s
-        
+
+def clustering_coef_wd(W):
+    from pynets.utils import cuberoot
+    '''
+    The weighted clustering coefficient is the average "intensity" of
+    triangles around a node.
+    Parameters
+    ----------
+    W : NxN np.ndarray
+        weighted directed connection matrix
+    Returns
+    -------
+    C : Nx1 np.ndarray
+        clustering coefficient vector
+    Notes
+    -----
+    Methodological note (also see clustering_coef_bd)
+    The weighted modification is as follows:
+    - The numerator: adjacency matrix is replaced with weights matrix ^ 1/3
+    - The denominator: no changes from the binary version
+    The above reduces to symmetric and/or binary versions of the clustering
+    coefficient for respective graphs.
+    '''
+    A = np.logical_not(W == 0).astype(float)
+    S = cuberoot(W) + cuberoot(W.T)
+    K = np.sum(A + A.T, axis=1)
+    cyc3 = np.diag(np.dot(S, np.dot(S, S))) / 2
+    K[np.where(cyc3 == 0)] = np.inf
+    CYC3 = K * (K - 1) - 2 * np.diag(np.dot(A, A))
+    C = cyc3 / CYC3
+    return C
+       
 def create_communities(node_comm_aff_mat, node_num):
     com_assign = np.zeros((node_num,1))
     for i in range(len(node_comm_aff_mat)):
@@ -213,15 +244,6 @@ def create_communities(node_comm_aff_mat, node_num):
 
 def _compute_rc(G):
     from networkx.utils import accumulate
-    """Returns the rich-club coefficient for each degree in the graph
-    `G`.
-
-    `G` is an undirected graph without multiedges.
-
-    Returns a dictionary mapping degree to rich-club coefficient for
-    that degree.
-
-    """
     deghist = nx.degree_histogram(G)
     total = sum(deghist)
     # Compute the number of nodes with degree greater than `k`, for each
@@ -248,7 +270,7 @@ def _compute_rc(G):
     return rc
 
 def rich_club_coefficient(G, normalized=True, Q=100):
-    r"""Returns the rich-club coefficient of the graph `G`.
+    """Returns the rich-club coefficient of the graph `G`.
 
     For each degree *k*, the *rich-club coefficient* is the ratio of the
     number of actual to the number of potential edges for nodes with
@@ -1024,7 +1046,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
                         net_met_val = float(i(G))
                 except:
                     ##case where G is not fully connected
-                    net_met_val = float(average_shortest_path_length_for_all(G))
+                    net_met_val = float(average_shortest_path_length_for_all(G))                    
             if custom_weight is not None and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
                 custom_weight_param = 'weight = ' + str(custom_weight)
                 try:

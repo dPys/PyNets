@@ -12,9 +12,6 @@ import pandas as pd
 import numpy as np
 from pynets.utils import do_dir_path
 
-##Start time clock
-start_time = timeit.default_timer()
-
 ####Parse arguments####
 if __name__ == '__main__':
     if len(sys.argv) < 1:
@@ -27,7 +24,7 @@ if __name__ == '__main__':
         default=None,
         required=False,
         help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR the path to a text file containing a list of paths to subject files')
-    parser.add_argument('-ID',
+    parser.add_argument('-id',
         metavar='Subject ID',
         default=None,
         required=False,
@@ -35,7 +32,7 @@ if __name__ == '__main__':
     parser.add_argument('-a',
         metavar='Atlas',
         default='coords_power_2011',
-        help='Specify a coordinate atlas parcellation of those availabe in nilearn. Default is coords_power_2011. If you wish to iterate your pynets run over multiple nilearn atlases, separate by commas. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011')
+        help='Specify a coordinate atlas parcellation of those availabe in nilearn. Default is coords_power_2011. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011')
     #parser.add_argument('-basc',
         #default=False,
         #action='store_true',
@@ -43,15 +40,15 @@ if __name__ == '__main__':
     parser.add_argument('-ua',
         metavar='Path to parcellation file',
         default=None,
-        help='Path to nifti-formatted parcellation image file. If specifying a list of paths to multiple user atlases, separate by comma.')
+        help='Path to parcellation/atlas file in .nii format. If specifying a list of paths to multiple user atlases, separate them by comma.')
     parser.add_argument('-pm',
-        metavar='cores,memory',
+        metavar='Cores,memory',
         default= '2,4',
-        help='Number of cores to use, number of GB of memory to use, please enter as two integers seperated by a comma')
+        help='Number of cores to use, number of GB of memory to use, entered as two integers seperated by a comma')
     parser.add_argument('-n',
         metavar='Resting-state network',
         default=None,
-        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple, separate by commas. e.g. -n \'Default,Cont,SalVentAttn\'')
+        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple RSNs, separate them by comma. e.g. -n \'Default,Cont,SalVentAttn\'')
     parser.add_argument('-thr',
         metavar='graph threshold',
         default='0.95',
@@ -59,19 +56,19 @@ if __name__ == '__main__':
     parser.add_argument('-ns',
         metavar='Node size',
         default='2',
-        help='Optionally specify a coordinate-based node radius size. Default is 3 voxels')
+        help='Optionally specify a coordinate-based node radius size. Default is 2 voxels')
     parser.add_argument('-m',
         metavar='Path to mask image',
         default=None,
-        help='Optionally specify a thresholded inverse-binarized mask image such as a group ICA-derived network volume, to retain only those network nodes contained within that mask')
-    parser.add_argument('-model',
-        metavar='Graph estimator',
-        default='corr',
-        help='Optionally specify matrix estimation type: corr, cov, sps, partcorr, or tangent for correlation, covariance, sparse-inverse covariance, partial correlation, and tangent, respectively')
+        help='Optionally specify a thresholded binarized mask image such as an ICA-derived mask) and retain only those nodes contained within that mask')
+    parser.add_argument('-mod',
+        metavar='Graph estimator type',
+        default='sps',
+        help='Optionally specify matrix estimation type: corr, cov, sps, partcorr, or tangent for correlation, covariance, sparse-inverse covariance, partial correlation, and tangent, respectively. sps type is used by default')
     parser.add_argument('-confounds',
         metavar='Confounds',
         default=None,
-        help='Optionally specify a path to a confound regressor file to improve in the signal estimation for the graph')
+        help='Optionally specify a path to a confound regressor file to reduce noise in the time-series estimation for the graph')
     parser.add_argument('-dt',
         metavar='Density threshold',
         default=None,
@@ -89,7 +86,7 @@ if __name__ == '__main__':
         default=None,
         help='Formatted according to the FSL default tree structure found at https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX')
     parser.add_argument('-anat',
-        metavar='Path to subject anatomical image (skull-stripped and normalized to MNI space)',
+        metavar='Path to preprocessed anatomical image',
         default=None,
         help='Optional with the -bpx flag to initiate probabilistic connectome estimation using parcels (recommended) as opposed to coordinate-based spherical volumes')
     parser.add_argument('-min_thr',
@@ -125,24 +122,27 @@ if __name__ == '__main__':
         default=None,
         help='Specify the maximum k clusters')
     parser.add_argument('-k_step',
-        metavar='k cluster step size',
+        metavar='K cluster step size',
         default=None,
         help='Specify the step size of k cluster iterables')
     parser.add_argument('-cm',
         metavar='Cluster mask',
         default=None,
-        help='Specify the path to the mask within which to perform clustering. If specifying a list of paths to multiple cluster masks, separate by comma.')
+        help='Specify the path to the mask within which to perform clustering. If specifying a list of paths to multiple cluster masks, separate them by comma.')
     args = parser.parse_args()
+
+    ##Start time clock
+    start_time = timeit.default_timer()
 
     ###Set Arguments to global variables###
     input_file=args.i
-    ID=args.ID
+    ID=args.id
     #basc=args.basc
     procmem=list(eval(str((args.pm))))
     thr=args.thr
     node_size=args.ns
     mask=args.m
-    conn_model=args.model
+    conn_model=args.mod
     conf=args.confounds
     dens_thresh=args.dt
 #    adapt_thresh=args.at
@@ -935,12 +935,14 @@ if __name__ == '__main__':
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min,
         k_max, k_step, k_clustering, user_atlas_list, clust_mask_list)
-        #plugin_args = {'status_callback' : log_nodes_cb}
         wf.config['logging']['log_directory']='/tmp'
         wf.config['logging']['workflow_level']='DEBUG'
         wf.config['logging']['utils_level']='DEBUG'
         wf.config['logging']['interface_level']='DEBUG'
-        wf.run(plugin='MultiProc')
+        #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1]), 'status_callback' : log_nodes_cb}
+        plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
+        print('\n' + 'Running with ' + str(plugin_args) + '\n')
+        wf.run(plugin='MultiProc', plugin_args= plugin_args)
         #wf.run()
 
     print('\n\n------------NETWORK COMPLETE-----------')
