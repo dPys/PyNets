@@ -133,20 +133,34 @@ def individual_tcorr_clustering(func_file, clust_mask, ID, k, thresh = 0.5):
     return(parlistfile, atlas_select, dir_path)
 
 def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask):
+    nilearn_parc_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
+    nilearn_coord_atlases=['harvard_oxford', 'msdl', 'coords_power_2011', 'smith_2009', 'basc_multiscale_2015', 'allen_2011', 'coords_dosenbach_2010']
     ID_dir = str(os.path.dirname(input_file).split('.')[0])
     if mask is not None:
         if network is not None:
-            out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0])
+            if atlas_select in nilearn_parc_atlases or atlas_select in nilearn_coord_atlases:
+                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0])
+            else:
+                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0])
         else:
-            out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0])
+            if atlas_select in nilearn_parc_atlases or atlas_select in nilearn_coord_atlases:
+                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0])
+            else:
+                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0])
     else:
         if network is not None:
-            out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr)
+            if atlas_select in nilearn_parc_atlases or atlas_select in nilearn_coord_atlases:
+                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr)
+            else:
+                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr)
         else:
-            out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr)
+            if atlas_select in nilearn_parc_atlases or atlas_select in nilearn_coord_atlases:
+                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr)
+            else:
+                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr)
     return out_path
 
-def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_step, min_thr, max_thr, step_thr, multi_thr, thr, mask, ID, network, k_clustering, conn_model, in_csv, user_atlas_list, clust_mask_list, out_file=None):
+def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_step, min_thr, max_thr, step_thr, multi_thr, thr, mask, ID, network, k_clustering, conn_model, in_csv, user_atlas_list, clust_mask_list, multi_atlas, out_file=None):
     import pandas as pd
     import numpy as np
     import os
@@ -232,6 +246,21 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
     elif user_atlas_list:
         for parlistfile in user_atlas_list:
             atlas_select = parlistfile.split('/')[-1].split('.')[0]
+            if iter_thresh is not None:
+                for thr in iter_thresh:
+                    try:
+                        net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                    except:
+                        print('Missing results path for atlas=' + str(atlas_select) + ' and thr=' + str(thr))
+                        pass
+            else:
+                try:
+                    net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask))
+                except:
+                    print('Missing results path for atlas=' + str(atlas_select))
+                    pass
+    elif multi_atlas:
+        for atlas_select in multi_atlas:
             if iter_thresh is not None:
                 for thr in iter_thresh:
                     try:

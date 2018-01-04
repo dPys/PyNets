@@ -280,6 +280,11 @@ if __name__ == '__main__':
                 atlas_select = parlistfile.split('/')[-1].split('.')[0]
                 dir_path = do_dir_path(atlas_select, input_file)
             atlas_select = None
+        elif multi_atlas is not None:
+            print ('Iterating across multiple nilearn atlases...')
+            for atlas_select in multi_atlas:
+                dir_path = do_dir_path(atlas_select, input_file)
+            atlas_select = None
         elif k_clustering == 1:
             cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
             atlas_select = str(ID) + '_' + cl_mask_name + '_k' + str(k)
@@ -682,6 +687,7 @@ if __name__ == '__main__':
         in_csv = traits.Any(mandatory=True)
         user_atlas_list = traits.Any(mandatory=True)
         clust_mask_list = traits.Any(mandatory=True)
+        multi_atlas = traits.Any(mandatory=True)
         out_file = File('output_collectpandasdf.csv', usedefault=True)
 
     class CollectPandasDfsOutputSpec(TraitedSpec):
@@ -713,6 +719,7 @@ if __name__ == '__main__':
             self.inputs.in_csv,
             self.inputs.user_atlas_list,
             self.inputs.clust_mask_list,
+            self.inputs.multi_atlas,
             out_file=self.inputs.out_file)
             return runtime
 
@@ -796,7 +803,7 @@ if __name__ == '__main__':
                                                           'max_thr', 'step_thr', 'multi_thr', 'thr',
                                                           'mask', 'ID', 'network', 'k_clustering',
                                                           'conn_model', 'in_csv', 'user_atlas_list',
-                                                          'clust_mask_list'])
+                                                          'clust_mask_list', 'multi_atlas'])
         if multi_nets:
             collect_pandas_dfs_node_iterables = []
             collect_pandas_dfs_node_iterables.append(("network", multi_nets))
@@ -866,7 +873,8 @@ if __name__ == '__main__':
                                                 ('k_clustering', 'k_clustering'),
                                                 ('conn_model', 'conn_model'),
                                                 ('user_atlas_list','user_atlas_list'),
-                                                ('clust_mask_list','clust_mask_list')])
+                                                ('clust_mask_list','clust_mask_list'),
+                                                ('multi_atlas','multi_atlas')])
         ])
         return wf
 
