@@ -25,15 +25,15 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, 
     if mask != None:   
         if network != 'None':
             atlast_graph_title = str(atlast_graph_title) + '_' + str(network)
-            out_path_fig=dir_path + '/' + str(ID) + '_' + str(network) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_network.png'
+            out_path_fig=dir_path + '/' + str(ID) + '_' + atlas_select + '_' + str(network) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_network.png'
         else:
-            out_path_fig=dir_path + '/' + str(ID) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '.png'    
+            out_path_fig=dir_path + '/' + str(ID) + '_' + atlas_select + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '.png'    
     else:
         if network != 'None':
             atlast_graph_title = str(atlast_graph_title) + '_' + str(network)
-            out_path_fig=dir_path + '/' + str(ID) + '_' + str(network) + '_adj_mat_' + str(conn_model) + '_network.png'
+            out_path_fig=dir_path + '/' + str(ID) + '_' + atlas_select + '_' + str(network) + '_adj_mat_' + str(conn_model) + '_network.png'
         else:
-            out_path_fig=dir_path + '/' + str(ID) + '_adj_mat_' + str(conn_model) + '.png'
+            out_path_fig=dir_path + '/' + str(ID) + '_' + atlas_select + '_adj_mat_' + str(conn_model) + '.png'
             
     rois_num=conn_matrix.shape[0]
     plt.figure(figsize=(10, 10))

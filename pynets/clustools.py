@@ -88,7 +88,7 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
 
     ##loop over all of the voxels in the mask 	
     for i in range(0,m):
-        if i % 1000 == 0: print('Voxel #:', i)
+        if i % 1000 == 0: print('Voxels:', i)
         ##calculate the voxels that are in the 3D neighborhood of the center voxel
         ndx3d=indx_1dto3d(iv[i],sz[:-1])+neighbors
         ndx1d=indx_3dto1d(ndx3d,sz[:-1])
@@ -265,8 +265,7 @@ def discretisation(eigen_vec):
                 R=np.matrix(Vh).transpose()*np.matrix(U).transpose()
 
     if exitLoop == 0:
-        print("SVD did not converge after 30 retries")
-        sys.exit(0)
+        raise ValueError("SVD did not converge after 30 retries")
     else:
         return(eigenvec_discrete)
     

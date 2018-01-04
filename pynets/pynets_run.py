@@ -162,35 +162,47 @@ if __name__ == '__main__':
     clust_mask_pre = args.cm
     clust_mask = list(str(clust_mask_pre).split(','))
     if len(clust_mask) > 1:
-        clust_mask_list=clust_mask
-        clust_mask=None
+        clust_mask_list = clust_mask
+        clust_mask = None
+    elif clust_mask == ['None']:
+        clust_mask = None
+        clust_mask_list = None
     else:
         clust_mask = clust_mask[0]
         clust_mask_list = None
     network_pre = args.n
     network = list(str(network_pre).split(','))
     if len(network) > 1:
-        multi_nets=network
-        network=None
+        multi_nets = network
+        network = None
+    elif network == ['None']:
+        network = None
+        multi_nets = None
     else:
         network = network[0]
-        multi_nets=None
+        multi_nets = None
     parlistfile_pre = args.ua
     parlistfile = list(str(parlistfile_pre).split(','))
     if len(parlistfile) > 1:
-        user_atlas_list=parlistfile
-        parlistfile=user_atlas_list[0]
+        user_atlas_list = parlistfile
+        parlistfile = user_atlas_list[0]
+    elif parlistfile == ['None']:
+        parlistfile = None
+        user_atlas_list = None
     else:
         parlistfile = parlistfile[0]
-        user_atlas_list=None
+        user_atlas_list = None
     atlas_select_pre = args.a
     atlas_select = list(str(atlas_select_pre).split(','))
     if len(atlas_select) > 1:
-        multi_atlas=atlas_select
-        atlas_select=None
+        multi_atlas = atlas_select
+        atlas_select = None
+    elif atlas_select == ['None']:
+        atlas_select = None
+        multi_atlas = None
     else:
         atlas_select = atlas_select[0]
-        multi_atlas=None
+        multi_atlas = None
     print('\n\n\n------------------------------------------------------------------------\n')
 
     if min_thr is not None and max_thr is not None and step_thr is not None:
@@ -374,17 +386,17 @@ if __name__ == '__main__':
         from pynets import workflows, utils
 
         ##Workflow 1: Whole-brain functional connectome
-        if bedpostx_dir is None and network == 'None':
+        if bedpostx_dir is None and network is None:
             [est_path, thr] = workflows.wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list)
         ##Workflow 2: RSN functional connectome
-        elif bedpostx_dir is None and network != 'None':
+        elif bedpostx_dir is None and network is not None:
             [est_path, thr] = workflows.rsn_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list)
         ##Workflow 3: Whole-brain structural connectome
-        elif bedpostx_dir is not None and network == 'None':
+        elif bedpostx_dir is not None and network is None:
             est_path = workflows.wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc)
             thr=None
         ##Workflow 4: RSN structural connectome
-        elif bedpostx_dir is not None and network != 'None':
+        elif bedpostx_dir is not None and network is not None:
             est_path = workflows.rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc)
             thr=None
 
