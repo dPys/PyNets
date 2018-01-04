@@ -299,6 +299,7 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
         import pkg_resources
         import networkx as nx
         from pynets import plotting
+        import matplotlib.pyplot as plt
         from pynets.netstats import most_important
         G_pre=nx.from_numpy_matrix(conn_matrix)
         [G, pruned_nodes, pruned_edges] = most_important(G_pre)
@@ -339,11 +340,11 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
                 out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_connectome_viz.png'
         #niplot.plot_connectome(conn_matrix, coords, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
         ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
-        connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=False, node_size=0.0001)
-        connectome.add_overlay(ch2better_loc, alpha=0.4)
+        connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=True, node_size=0.0001)
+        connectome.add_overlay(ch2better_loc, alpha=0.4, cmap=plt.cm.gray)
         [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
         connectome.add_graph(conn_matrix, coords, edge_threshold = edge_threshold, edge_cmap = 'Blues', edge_vmax=z_max, edge_vmin=z_min, node_size=4)
-        connectome.savefig(out_path_fig)
+        connectome.savefig(out_path_fig, dpi=1200)
     else:
         pass
     return
