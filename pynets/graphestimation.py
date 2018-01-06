@@ -4,8 +4,6 @@ Created on Tue Nov  7 10:40:07 2017
 
 @author: Derek Pisner
 """
-
-import sys
 import numpy as np
 #warnings.simplefilter("ignore")
 
@@ -40,27 +38,28 @@ def get_conn_matrix(time_series, conn_model):
         estimator = GraphLassoCV()
         try:
             estimator.fit(time_series)
-        except RuntimeError:
-            print('Unstable Lasso estimation--Attempting to re-run by first applying shrinkage...')
-            from sklearn.covariance import GraphLasso, empirical_covariance, shrunk_covariance
-            emp_cov = empirical_covariance(time_series)
-            for i in np.arange(0.8, 0.99, 0.01):
-                shrunk_cov = shrunk_covariance(emp_cov, shrinkage=i)
-                alphaRange = 10.0 ** np.arange(-8,0)
-                for alpha in alphaRange:
-                    try:
-                        estimator_shrunk = GraphLasso(alpha)
-                        estimator_shrunk.fit(shrunk_cov)
-                        print("Calculated graph-lasso covariance matrix for alpha=%s"%alpha)
+        except:
+            try:
+                print('Unstable Lasso estimation--Attempting to re-run by first applying shrinkage...')
+                from sklearn.covariance import GraphLasso, empirical_covariance, shrunk_covariance
+                emp_cov = empirical_covariance(time_series)
+                for i in np.arange(0.8, 0.99, 0.01):
+                    shrunk_cov = shrunk_covariance(emp_cov, shrinkage=i)
+                    alphaRange = 10.0 ** np.arange(-8,0)
+                    for alpha in alphaRange:
+                        try:
+                            estimator_shrunk = GraphLasso(alpha)
+                            estimator_shrunk.fit(shrunk_cov)
+                            print("Calculated graph-lasso covariance matrix for alpha=%s"%alpha)
+                            break
+                        except FloatingPointError:
+                            print("Failed at alpha=%s"%alpha)
+                    if estimator_shrunk == None:
+                        pass
+                    else:
                         break
-                    except FloatingPointError:
-                        print("Failed at alpha=%s"%alpha)
-                if estimator_shrunk == None:
-                    pass
-                else:
-                    break
-                print('Unstable Lasso estimation. Try again!')
-                sys.exit()
+            except:
+                raise ValueError('Unstable Lasso estimation! Shrinkage failed.')
 
         if conn_model == 'sps':
             try:
