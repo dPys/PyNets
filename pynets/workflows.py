@@ -223,7 +223,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     wb_functional_connectometry_wf.config['logging']['utils_level']='DEBUG'
     wb_functional_connectometry_wf.config['logging']['interface_level']='DEBUG'
     wb_functional_connectometry_wf.config['execution']['plugin']='MultiProc'
-    wb_functional_connectometry_wf.write_graph()
+    #wb_functional_connectometry_wf.write_graph()
     res = wb_functional_connectometry_wf.run(plugin='MultiProc')
     #res = wb_functional_connectometry_wf.run()
 
@@ -481,7 +481,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     rsn_functional_connectometry_wf.config['logging']['utils_level']='DEBUG'
     rsn_functional_connectometry_wf.config['logging']['interface_level']='DEBUG'
     rsn_functional_connectometry_wf.config['execution']['plugin']='MultiProc'
-    rsn_functional_connectometry_wf.write_graph()
+    #rsn_functional_connectometry_wf.write_graph()
     res = rsn_functional_connectometry_wf.run(plugin='MultiProc')
     #res = rsn_functional_connectometry_wf.run()
 
@@ -630,7 +630,7 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     wb_structural_connectometry_wf.config['logging']['utils_level']='DEBUG'
     wb_structural_connectometry_wf.config['logging']['interface_level']='DEBUG'
     wb_structural_connectometry_wf.config['execution']['plugin']='MultiProc'
-    wb_structural_connectometry_wf.write_graph()
+    #wb_structural_connectometry_wf.write_graph()
     res = wb_structural_connectometry_wf.run(plugin='MultiProc')
     #res = wb_structural_connectometry_wf.run()
 
@@ -788,7 +788,7 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
     rsn_structural_connectometry_wf.config['logging']['utils_level']='DEBUG'
     rsn_structural_connectometry_wf.config['logging']['interface_level']='DEBUG'
     rsn_structural_connectometry_wf.config['execution']['plugin']='MultiProc'
-    rsn_structural_connectometry_wf.write_graph()
+    #rsn_structural_connectometry_wf.write_graph()
     res = rsn_structural_connectometry_wf.run(plugin='MultiProc')
     #res = rsn_structural_connectometry_wf.run()
 

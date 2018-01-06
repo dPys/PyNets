@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
@@ -32,7 +33,7 @@ if __name__ == '__main__':
     parser.add_argument('-a',
         metavar='Atlas',
         default='coords_power_2011',
-        help='Specify a coordinate atlas parcellation of those availabe in nilearn. Default is coords_power_2011. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011')
+        help='Specify a coordinate atlas parcellation of those available in nilearn. Default is coords_power_2011. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011')
     #parser.add_argument('-basc',
         #default=False,
         #action='store_true',
@@ -60,12 +61,12 @@ if __name__ == '__main__':
     parser.add_argument('-m',
         metavar='Path to mask image',
         default=None,
-        help='Optionally specify a thresholded binarized mask image such as an ICA-derived mask) and retain only those nodes contained within that mask')
+        help='Optionally specify a thresholded binarized mask image (such as an ICA-derived mask) and retain only those nodes contained within that mask')
     parser.add_argument('-mod',
         metavar='Graph estimator type',
         default='sps',
         help='Optionally specify matrix estimation type: corr, cov, sps, partcorr, or tangent for correlation, covariance, sparse-inverse covariance, partial correlation, and tangent, respectively. sps type is used by default')
-    parser.add_argument('-confounds',
+    parser.add_argument('-conf',
         metavar='Confounds',
         default=None,
         help='Optionally specify a path to a confound regressor file to reduce noise in the time-series estimation for the graph')
@@ -143,7 +144,7 @@ if __name__ == '__main__':
     node_size=args.ns
     mask=args.m
     conn_model=args.mod
-    conf=args.confounds
+    conf=args.conf
     dens_thresh=args.dt
 #    adapt_thresh=args.at
     adapt_thresh=False
