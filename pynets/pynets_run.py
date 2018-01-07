@@ -1,22 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Nov  7 10:40:07 2017
+# Created on Tue Nov  7 10:40:07 2017
+# @author: Derek Pisner
 
-@author: Derek Pisner
-"""
 import sys
 import argparse
 import os
 import timeit
+import warnings
+warnings.simplefilter("ignore")
 import pandas as pd
 import numpy as np
-from pynets.utils import do_dir_path
+try:
+    from pynets.utils import do_dir_path
+except ImportError:
+    print('PyNets not installed! Ensure that you are using the correct python version.')
 
 ####Parse arguments####
 if __name__ == '__main__':
     if len(sys.argv) < 1:
-        print("\nMissing command-line inputs! See help options with the -h flag")
+        print("\nMissing command-line inputs! See help options with the -h flag.\n")
         sys.exit()
 
     parser = argparse.ArgumentParser()
@@ -24,16 +27,16 @@ if __name__ == '__main__':
         metavar='Path to input file',
         default=None,
         required=False,
-        help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR the path to a text file containing a list of paths to subject files')
+        help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR the path to a text file containing a list of paths to subject files.\n')
     parser.add_argument('-id',
         metavar='Subject ID',
         default=None,
         required=False,
-        help='A subject ID that is also the name of the directory containing the input file')
+        help='A subject ID that is also the name of the directory containing the input file.\n')
     parser.add_argument('-a',
         metavar='Atlas',
         default='coords_power_2011',
-        help='Specify a coordinate atlas parcellation of those available in nilearn. Default is coords_power_2011. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011')
+        help='Specify a coordinate atlas parcellation of those available in nilearn. Default is coords_power_2011. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011.\n')
     #parser.add_argument('-basc',
         #default=False,
         #action='store_true',
@@ -41,39 +44,39 @@ if __name__ == '__main__':
     parser.add_argument('-ua',
         metavar='Path to parcellation file',
         default=None,
-        help='Path to parcellation/atlas file in .nii format. If specifying a list of paths to multiple user atlases, separate them by comma.')
+        help='Path to parcellation/atlas file in .nii format. If specifying a list of paths to multiple user atlases, separate them by comma.\n')
     parser.add_argument('-pm',
         metavar='Cores,memory',
         default= '2,4',
-        help='Number of cores to use, number of GB of memory to use, entered as two integers seperated by a comma')
+        help='Number of cores to use, number of GB of memory to use, entered as two integers seperated by a comma.\n')
     parser.add_argument('-n',
         metavar='Resting-state network',
         default=None,
-        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple RSNs, separate them by comma. e.g. -n \'Default,Cont,SalVentAttn\'')
+        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple RSNs, separate them by comma. e.g. -n \'Default,Cont,SalVentAttn\'\n')
     parser.add_argument('-thr',
         metavar='graph threshold',
         default='0.95',
-        help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is 0.95')
+        help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is 0.95.\n')
     parser.add_argument('-ns',
         metavar='Node size',
         default='2',
-        help='Optionally specify a coordinate-based node radius size. Default is 2 voxels')
+        help='Optionally specify a coordinate-based node radius size. Default is 2 voxels.\n')
     parser.add_argument('-m',
         metavar='Path to mask image',
         default=None,
-        help='Optionally specify a thresholded binarized mask image (such as an ICA-derived mask) and retain only those nodes contained within that mask')
+        help='Optionally specify a thresholded binarized mask image (such as an ICA-derived mask) and retain only those nodes contained within that mask.\n')
     parser.add_argument('-mod',
         metavar='Graph estimator type',
         default='sps',
-        help='Optionally specify matrix estimation type: corr, cov, sps, partcorr, or tangent for correlation, covariance, sparse-inverse covariance, partial correlation, and tangent, respectively. sps type is used by default')
+        help='Optionally specify matrix estimation type: corr, cov, sps, partcorr, or tangent for correlation, covariance, sparse-inverse covariance, partial correlation, and tangent, respectively. sps type is used by default.\n')
     parser.add_argument('-conf',
         metavar='Confounds',
         default=None,
-        help='Optionally specify a path to a confound regressor file to reduce noise in the time-series estimation for the graph')
+        help='Optionally specify a path to a confound regressor file to reduce noise in the time-series estimation for the graph.\n')
     parser.add_argument('-dt',
         metavar='Density threshold',
         default=None,
-        help='Optionally indicate a target density of graph edges to be achieved through iterative absolute thresholding. In group analysis, this could be determined by finding the mean density of all unthresholded graphs across subjects, for instance.')
+        help='Optionally indicate a target density of graph edges to be achieved through iterative absolute thresholding. In group analysis, this could be determined by finding the mean density of all unthresholded graphs across subjects, for instance.\n')
 #    parser.add_argument('-at',
 #        default=False,
 #        action='store_true',
@@ -81,51 +84,51 @@ if __name__ == '__main__':
     parser.add_argument('-plt',
         default=False,
         action='store_true',
-        help='Optionally use this flag if you wish to activate plotting of adjacency matrices, connectomes, and time-series')
+        help='Optionally use this flag if you wish to activate plotting of adjacency matrices, connectomes, and time-series.\n')
     parser.add_argument('-bpx',
         metavar='Path to bedpostx directory',
         default=None,
-        help='Formatted according to the FSL default tree structure found at https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX')
+        help='Formatted according to the FSL default tree structure found at https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX.\n')
     parser.add_argument('-anat',
         metavar='Path to preprocessed anatomical image',
         default=None,
-        help='Optional with the -bpx flag to initiate probabilistic connectome estimation using parcels (recommended) as opposed to coordinate-based spherical volumes')
+        help='Optional with the -bpx flag to initiate probabilistic connectome estimation using parcels (recommended) as opposed to coordinate-based spherical volumes.\n')
     parser.add_argument('-min_thr',
         metavar='Multi-thresholding minimum threshold',
         default=None,
-        help='Minimum threshold for multi-thresholding.')
+        help='Minimum threshold for multi-thresholding.\n')
     parser.add_argument('-max_thr',
         metavar='Multi-thresholding maximum threshold',
         default=None,
-        help='Maximum threshold for multi-thresholding.')
+        help='Maximum threshold for multi-thresholding.v')
     parser.add_argument('-step_thr',
         metavar='Multi-thresholding step size',
         default=None,
-        help='Threshold step value for multi-thresholding. Default is 0.01.')
+        help='Threshold step value for multi-thresholding. Default is 0.01.\n')
     parser.add_argument('-parc',
         default=False,
         action='store_true',
-        help='Include this flag to use parcels instead of coordinates as nodes.')
+        help='Include this flag to use parcels instead of coordinates as nodes.\n')
     parser.add_argument('-ref',
         metavar='atlas reference file path',
         default=None,
-        help='Specify the path to the atlas reference .txt file')
+        help='Specify the path to the atlas reference .txt file\n')
     parser.add_argument('-k',
-        metavar='Number of clusters',
+        metavar='Number of k clusters',
         default=None,
-        help='Specify a number of clusters to produce')
+        help='Specify a number of clusters to produce\n')
     parser.add_argument('-k_min',
         metavar='Min k clusters',
         default=None,
-        help='Specify the minimum k clusters')
+        help='Specify the minimum k clusters\n')
     parser.add_argument('-k_max',
         metavar='Max k clusters',
         default=None,
-        help='Specify the maximum k clusters')
+        help='Specify the maximum k clusters\n')
     parser.add_argument('-k_step',
         metavar='K cluster step size',
         default=None,
-        help='Specify the step size of k cluster iterables')
+        help='Specify the step size of k cluster iterables\n')
     parser.add_argument('-cm',
         metavar='Cluster mask',
         default=None,
