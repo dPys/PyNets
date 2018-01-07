@@ -5,7 +5,6 @@ Created on Tue Nov  7 10:40:07 2017
 @author: Derek Pisner
 """
 import numpy as np
-#warnings.simplefilter("ignore")
 
 def get_conn_matrix(time_series, conn_model):
     from nilearn.connectome import ConnectivityMeasure

@@ -14,7 +14,7 @@ with open('HISTORY.rst') as history_file:
 requirements = [
     'Click>=6.0',
     'scipy>=0.19.0',
-    'nipype>=0.12.1',
+    'nipype>=0.14.0',
     'numpy>=1.12.1',
     'nilearn>=0.2.6',
     'seaborn>=0.7.1',
@@ -40,7 +40,7 @@ test_requirements = [
 
 setup(
     name='pynets',
-    version='0.2.5',
+    version='0.2.9',
     description="A Python-Powered Workflow for Network Analysis of rsfMRI and dMRI",
     long_description=readme + '\n\n' + history,
     author="Derek Pisner",
