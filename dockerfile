@@ -24,7 +24,7 @@ RUN python3.4 -m pip install Cython>=0.24 nilearn>=0.2.4 numpy>=1.12.1 scikit-le
 
 # Install requirements for Python 3
 RUN python3.4 -m pip install skggm --upgrade
-RUN python3.4 -m pip install pynets>=0.4.2 --upgrade
+RUN python3.4 -m pip install pynets>=0.3.5 --upgrade
 
 RUN chmod 777 -R /usr/local/lib/python3.4
 RUN chown root:main -R /usr/local/lib/python3.4

@@ -190,8 +190,9 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     if k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1:
         wb_functional_connectometry_wf.add_nodes([clustering_node])
         if plot_switch == True:
+            wb_functional_connectometry_wf.add_nodes([plot_all_node])
             wb_functional_connectometry_wf.disconnect([(inputnode, WB_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
-                                                       (WB_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'),('atlas_select', 'atlas_select')]),
+                                                       (WB_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'), ('atlas_select', 'atlas_select')]),
                                                        (inputnode, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
                                                        (WB_fetch_nodes_and_labels_node, node_gen_node, [('dir_path', 'dir_path')]),
                                                        (WB_fetch_nodes_and_labels_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
@@ -459,6 +460,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     if k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1:
         rsn_functional_connectometry_wf.add_nodes([clustering_node])
         if plot_switch == True:
+            rsn_functional_connectometry_wf.add_nodes([plot_all_node])
             rsn_functional_connectometry_wf.disconnect([(inputnode, RSN_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
                                                        (RSN_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'), ('atlas_select', 'atlas_select')]),
                                                        (inputnode, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
