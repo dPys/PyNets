@@ -29,9 +29,7 @@ def test_plot_conn_mat_nonet_no_mask():
     labels_file = open(labels_file_path,'rb')
     label_names = pickle.load(labels_file)
     
-    atlast_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask)
-
-    assert atlast_graph_title is not None
+    plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask)
 
 def test_plot_conn_mat_nonet_mask():
     ##Set example inputs##
@@ -48,9 +46,8 @@ def test_plot_conn_mat_nonet_mask():
     labels_file = open(labels_file_path,'rb')
     label_names = pickle.load(labels_file)
     
-    atlast_graph_title = plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask)
+    plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask)
 
-    assert atlast_graph_title is not None
     
 def test_plot_all_nonet_no_mask():
     ##Set example inputs##
@@ -63,7 +60,6 @@ def test_plot_all_nonet_no_mask():
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     mask = None
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_est_sps_0.94.txt')
-    plot_switch = True
     edge_threshold='95%'
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path,'rb')
@@ -72,7 +68,7 @@ def test_plot_all_nonet_no_mask():
     coord_file = open(coord_file_path,'rb')
     coords = pickle.load(coord_file)
     
-    plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold, plot_switch)
+    plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold)
 
 def test_plot_all_nonet_with_mask():
     ##Set example inputs##
@@ -85,7 +81,6 @@ def test_plot_all_nonet_with_mask():
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     mask = None
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_est_sps_0.94.txt')
-    plot_switch = True
     edge_threshold='95%'
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path,'rb')
@@ -94,7 +89,7 @@ def test_plot_all_nonet_with_mask():
     coord_file = open(coord_file_path,'rb')
     coords = pickle.load(coord_file)
     
-    plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold, plot_switch)
+    plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold)
 
         
 def test_plot_connectogram():
