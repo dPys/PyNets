@@ -1072,10 +1072,16 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
 
     ##Run miscellaneous functions that generate multiple outputs
     ##Calculate modularity using the Louvain algorithm
-    [community_aff, modularity] = modularity_louvain_dir(in_mat)
+    try:
+        [community_aff, modularity] = modularity_louvain_dir(in_mat)
+    except:
+        pass
 
     ##Calculate core-periphery subdivision
-    [Coreness_vec, Coreness_q] = core_periphery_dir(in_mat)
+    try:
+        [Coreness_vec, Coreness_q] = core_periphery_dir(in_mat)
+    except:
+        pass
 
     ##Local Efficiency
     try:
