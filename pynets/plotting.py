@@ -14,14 +14,14 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, 
     from matplotlib import pyplot as plt
     if mask:
         if network:
-            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select, 'utf-8') + '_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_network.png'
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_network.png'
         else:
-            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select, 'utf-8') + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '.png'    
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '.png'    
     else:
         if network:
-            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select, 'utf-8') + '_' + network + '_adj_mat_' + str(conn_model) + '_network.png'
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + network + '_adj_mat_' + str(conn_model) + '_network.png'
         else:
-            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select, 'utf-8') + '_adj_mat_' + str(conn_model) + '.png'
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_adj_mat_' + str(conn_model) + '.png'
             
     rois_num=conn_matrix.shape[0]
     plt.figure(figsize=(10, 10))
@@ -326,14 +326,14 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     ##Plot connectome
     if mask:
         if network:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select, 'utf-8') + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_connectome_viz.png'
         else:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select, 'utf-8') + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
     else:
         if network:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select, 'utf-8') + '_' + str(conn_model) + '_' + str(network) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(network) + '_connectome_viz.png'
         else:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select, 'utf-8') + '_' + str(conn_model) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_connectome_viz.png'
     #niplot.plot_connectome(conn_matrix, coords, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
     connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=True, node_size=0.0001)
@@ -375,7 +375,7 @@ def structural_plotting(conn_matrix, conn_matrix_symm, label_names, atlas_select
     plt.imshow(conn_matrix, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
     plt.xticks(range(len(label_names)), label_names, size='xx-small', rotation=90)
     plt.yticks(range(len(label_names)), label_names, size='xx-small')
-    plt_title = str(atlas_select, 'utf-8') + ' Structural Connectivity of: ' + str(ID)
+    plt_title = str(atlas_select) + ' Structural Connectivity of: ' + str(ID)
     plt.title(plt_title)
     plt.grid(False)
     plt.gcf().subplots_adjust(left=0.8)
