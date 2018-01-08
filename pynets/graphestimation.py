@@ -7,6 +7,8 @@ Created on Tue Nov  7 10:40:07 2017
 import numpy as np
 
 def get_conn_matrix(time_series, conn_model):
+    import warnings
+    warnings.simplefilter("ignore")
     from nilearn.connectome import ConnectivityMeasure
     from sklearn.covariance import GraphLassoCV
     try:
@@ -16,26 +18,31 @@ def get_conn_matrix(time_series, conn_model):
     
     if conn_model == 'corr':
         # credit: nilearn
+        print('\nComputing correlation matrix...\n')
         conn_measure = ConnectivityMeasure(kind='correlation')
         conn_matrix = conn_measure.fit_transform([time_series])[0]
     elif conn_model == 'corr_fast':
         # credit: brainiak
         try:
+            print('\nComputing accelerated fcma correlation matrix...\n')
             conn_matrix = compute_correlation(time_series,time_series)
         except RuntimeError:
             print('Cannot run accelerated correlation computation due to a missing dependency. You need brainiak installed!')
     elif conn_model == 'partcorr':
         # credit: nilearn
+        print('\nComputing partial correlation matrix...\n')
         conn_measure = ConnectivityMeasure(kind='partial correlation')
         conn_matrix = conn_measure.fit_transform([time_series])[0]
     elif conn_model == 'tangent':
         # credit: nilearn
+        print('\nComputing tangent matrix...\n')
         conn_measure = ConnectivityMeasure(kind='tangent')
         conn_matrix = conn_measure.fit_transform([time_series])[0]
     elif conn_model == 'cov' or conn_model == 'sps':
         ##Fit estimator to matrix to get sparse matrix
         estimator = GraphLassoCV()
         try:
+            print('\nComputing covariance...\n')
             estimator.fit(time_series)
         except:
             try:
@@ -62,11 +69,14 @@ def get_conn_matrix(time_series, conn_model):
 
         if conn_model == 'sps':
             try:
+                print('\nFetching precision matrix from covariance estimator...\n')
                 conn_matrix = -estimator.precision_
             except:
+                print('\nFetching shrunk precision matrix from covariance estimator...\n')
                 conn_matrix = -estimator_shrunk.precision_
         elif conn_model == 'cov':
             try:
+                print('\nFetching covariance matrix from covariance estimator...\n')
                 conn_matrix = estimator.covariance_
             except:
                 conn_matrix = estimator_shrunk.covariance_    
@@ -79,8 +89,9 @@ def get_conn_matrix(time_series, conn_model):
             lam=0.5,
             mode='default',
             verbose=1)
+        print('\nCalculating QuicGraphLasso precision matrix using skggm...\n')
         model.fit(time_series)
-        conn_matrix = model.precision_
+        conn_matrix = -model.precision_
         
     elif conn_model == 'QuicGraphLassoCV':
         from inverse_covariance import QuicGraphLassoCV
@@ -89,8 +100,9 @@ def get_conn_matrix(time_series, conn_model):
         model = QuicGraphLassoCV(
             init_method='cov',
             verbose=1)
+        print('\nCalculating QuicGraphLassoCV precision matrix using skggm...\n')
         model.fit(time_series)
-        conn_matrix = model.precision_
+        conn_matrix = -model.precision_
     
     elif conn_model == 'QuicGraphLassoEBIC':
         from inverse_covariance import QuicGraphLassoEBIC
@@ -99,8 +111,9 @@ def get_conn_matrix(time_series, conn_model):
         model = QuicGraphLassoEBIC(
             init_method='cov',
             verbose=1)
+        print('\nCalculating QuicGraphLassoEBIC precision matrix using skggm...\n')
         model.fit(time_series)
-        conn_matrix = model.precision_
+        conn_matrix = -model.precision_
     
     elif conn_model == 'AdaptiveQuicGraphLasso':
         from inverse_covariance import AdaptiveGraphLasso, QuicGraphLassoEBIC
@@ -113,8 +126,9 @@ def get_conn_matrix(time_series, conn_model):
                 ),
                 method='binary',
             )
+        print('\nCalculating AdaptiveQuicGraphLasso precision matrix using skggm...\n')
         model.fit(time_series)
-        conn_matrix = model.estimator_.precision_
+        conn_matrix = -model.estimator_.precision_
 
     return(conn_matrix)
 

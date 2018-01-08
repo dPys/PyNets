@@ -230,9 +230,13 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     try:
         thr=list(res.nodes())[-1].result.outputs.thr
         est_path=list(res.nodes())[-1].result.outputs.est_path
-    except:
-        thr=list(res.nodes())[-2].result.outputs.thr
-        est_path=list(res.nodes())[-2].result.outputs.est_path
+    except AttributeError:
+        try:
+            thr=list(res.nodes())[-2].result.outputs.thr
+            est_path=list(res.nodes())[-2].result.outputs.est_path
+        except AttributeError:
+            thr=list(res.nodes())[-3].result.outputs.thr
+            est_path=list(res.nodes())[-3].result.outputs.est_path
     return(est_path, thr)
 
 def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list):
@@ -488,10 +492,13 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     try:
         thr=list(res.nodes())[-1].result.outputs.thr
         est_path=list(res.nodes())[-1].result.outputs.est_path
-    except:
-        thr=list(res.nodes())[-2].result.outputs.thr
-        est_path=list(res.nodes())[-2].result.outputs.est_path
-
+    except AttributeError:
+        try:
+            thr=list(res.nodes())[-2].result.outputs.thr
+            est_path=list(res.nodes())[-2].result.outputs.est_path
+        except AttributeError:
+            thr=list(res.nodes())[-3].result.outputs.thr
+            est_path=list(res.nodes())[-3].result.outputs.est_path
     return est_path, thr
 
 def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc):
@@ -636,8 +643,13 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
 
     try:
         est_path_struct=list(res.nodes())[-1].result.outputs.est_path_struct
-    except:
+    except AttributeError:
         est_path_struct=list(res.nodes())[-2].result.outputs.est_path_struct
+        try:
+            est_path_struct=list(res.nodes())[-2].result.outputs.est_path_struct
+        except AttributeError:
+            est_path_struct=list(res.nodes())[-3].result.outputs.est_path_struct
+
     return est_path_struct
 
 def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc):
@@ -794,6 +806,10 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
 
     try:
         est_path_struct=list(res.nodes())[-1].result.outputs.est_path_struct
-    except:
+    except AttributeError:
         est_path_struct=list(res.nodes())[-2].result.outputs.est_path_struct
+        try:
+            est_path_struct=list(res.nodes())[-2].result.outputs.est_path_struct
+        except AttributeError:
+            est_path_struct=list(res.nodes())[-3].result.outputs.est_path_struct
     return est_path_struct

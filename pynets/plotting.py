@@ -9,28 +9,14 @@ import networkx as nx
 import os
 
 def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask):
-    import matplotlib.pyplot as plt
-    ##Set title for adj. matrix based on connectivity model used
-    if conn_model == 'corr':
-        atlast_graph_title = str(atlas_select) + '_Correlation_Graph'
-    elif conn_model == 'partcorr':
-        atlast_graph_title = str(atlas_select) + '_Partial_Correlation_Graph'
-    elif conn_model == 'sps':
-        atlast_graph_title = str(atlas_select) + '_Sparse_Covariance_Graph'
-    elif conn_model == 'cov':
-        atlast_graph_title = str(atlas_select) + '_Covariance_Graph'
+    import matplotlib.pyplot as plt        
     if mask != None:
-        atlast_graph_title = str(atlast_graph_title) + '_With_Masked_Nodes'
-        
-    if mask != None:   
         if network != 'None':
-            atlast_graph_title = str(atlast_graph_title) + '_' + str(network)
             out_path_fig=dir_path + '/' + str(ID) + '_' + atlas_select + '_' + str(network) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_network.png'
         else:
             out_path_fig=dir_path + '/' + str(ID) + '_' + atlas_select + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '.png'    
     else:
         if network != 'None':
-            atlast_graph_title = str(atlast_graph_title) + '_' + str(network)
             out_path_fig=dir_path + '/' + str(ID) + '_' + atlas_select + '_' + str(network) + '_adj_mat_' + str(conn_model) + '_network.png'
         else:
             out_path_fig=dir_path + '/' + str(ID) + '_' + atlas_select + '_adj_mat_' + str(conn_model) + '.png'
@@ -47,11 +33,10 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, 
         else:
             plt.xticks(range(rois_num), rotation=90)
             plt.yticks(range(rois_num))
-    plt.title(atlast_graph_title)
     plt.grid(False)
     plt.savefig(out_path_fig)
     plt.close()
-    return(atlast_graph_title)
+    return
 
 def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names):
     import json
@@ -295,6 +280,8 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
 
 def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold, plot_switch):
     from nilearn import plotting as niplot
+    pruning=True
+    dpi_resolution=1000
     if plot_switch == True:
         import pkg_resources
         import networkx as nx
@@ -302,7 +289,10 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
         import matplotlib.pyplot as plt
         from pynets.netstats import most_important
         G_pre=nx.from_numpy_matrix(conn_matrix)
-        [G, pruned_nodes, pruned_edges] = most_important(G_pre)
+        if pruning == True:
+            [G, pruned_nodes, pruned_edges] = most_important(G_pre)
+        else:
+            G = G_pre
         conn_matrix = nx.to_numpy_array(G)
         
         pruned_nodes.sort(reverse = True)
@@ -330,21 +320,21 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
         ##Plot connectome
         if mask != None:
             if network != 'None':
-                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_connectome_viz.png'
+                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_connectome_viz.png'
             else:
-                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
+                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
         else:
             if network != 'None':
-                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_' + str(network) + '_connectome_viz.png'
+                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_' + str(conn_model) + '_' + str(network) + '_connectome_viz.png'
             else:
-                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_connectome_viz.png'
+                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_' + str(conn_model) + '_connectome_viz.png'
         #niplot.plot_connectome(conn_matrix, coords, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
         ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
         connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=True, node_size=0.0001)
         connectome.add_overlay(ch2better_loc, alpha=0.4, cmap=plt.cm.gray)
         [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
         connectome.add_graph(conn_matrix, coords, edge_threshold = edge_threshold, edge_cmap = 'Blues', edge_vmax=z_max, edge_vmin=z_min, node_size=4)
-        connectome.savefig(out_path_fig, dpi=1200)
+        connectome.savefig(out_path_fig, dpi=dpi_resolution)
     else:
         pass
     return
