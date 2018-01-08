@@ -57,5 +57,5 @@ def test_extract_ts_rsn_coords():
     wb_coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     file_ = open(wb_coords_file,'rb')
     coords = pickle.load(file_)
-    ts_within_nodes = graphestimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, thr, network)
+    ts_within_nodes = graphestimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network)
     assert ts_within_nodes is not None
