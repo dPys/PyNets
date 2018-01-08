@@ -324,13 +324,13 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask)
 
     ##Plot connectome
-    if mask != None:
-        if network != 'None':
+    if mask:
+        if network:
             out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select, 'utf-8') + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_connectome_viz.png'
         else:
             out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select, 'utf-8') + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
     else:
-        if network != 'None':
+        if network:
             out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select, 'utf-8') + '_' + str(conn_model) + '_' + str(network) + '_connectome_viz.png'
         else:
             out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select, 'utf-8') + '_' + str(conn_model) + '_connectome_viz.png'
@@ -343,7 +343,7 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     connectome.savefig(out_path_fig, dpi=dpi_resolution)
     return
 
-def structural_plotting(conn_matrix, conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, plot_switch, coords):  
+def structural_plotting(conn_matrix, conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, coords):  
     import matplotlib
     matplotlib.use('Agg')
     from matplotlib import pyplot as plt
@@ -371,64 +371,61 @@ def structural_plotting(conn_matrix, conn_matrix_symm, label_names, atlas_select
     dir_path = os.path.dirname(bedpostx_dir)
     ####Auto-set INPUTS####
     
-    if plot_switch == True:
-        plt.figure(figsize=(8, 8))
-        plt.imshow(conn_matrix, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
-        plt.xticks(range(len(label_names)), label_names, size='xx-small', rotation=90)
-        plt.yticks(range(len(label_names)), label_names, size='xx-small')
-        plt_title = str(atlas_select, 'utf-8') + ' Structural Connectivity of: ' + str(ID)
-        plt.title(plt_title)
-        plt.grid(False)
-        plt.gcf().subplots_adjust(left=0.8)
+    plt.figure(figsize=(8, 8))
+    plt.imshow(conn_matrix, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
+    plt.xticks(range(len(label_names)), label_names, size='xx-small', rotation=90)
+    plt.yticks(range(len(label_names)), label_names, size='xx-small')
+    plt_title = str(atlas_select, 'utf-8') + ' Structural Connectivity of: ' + str(ID)
+    plt.title(plt_title)
+    plt.grid(False)
+    plt.gcf().subplots_adjust(left=0.8)
 
-        out_path_fig=dir_path + '/structural_adj_mat_' + str(ID) + '.png'
-        plt.savefig(out_path_fig)
-        plt.close()
+    out_path_fig=dir_path + '/structural_adj_mat_' + str(ID) + '.png'
+    plt.savefig(out_path_fig)
+    plt.close()
 
-        ##Prepare glass brain figure
-        fdt_paths_loc = probtrackx_output_dir_path + '/fdt_paths.nii.gz'
+    ##Prepare glass brain figure
+    fdt_paths_loc = probtrackx_output_dir_path + '/fdt_paths.nii.gz'
 
-        ##Create transform matrix between diff and MNI using FLIRT
-        flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
-        flirt.inputs.reference = input_MNI
-        flirt.inputs.in_file = nodif_brain_mask_path
-        flirt.inputs.out_matrix_file = bedpostx_dir + '/xfms/diff2MNI.mat'
-        flirt.run()
+    ##Create transform matrix between diff and MNI using FLIRT
+    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
+    flirt.inputs.reference = input_MNI
+    flirt.inputs.in_file = nodif_brain_mask_path
+    flirt.inputs.out_matrix_file = bedpostx_dir + '/xfms/diff2MNI.mat'
+    flirt.run()
 
-        ##Apply transform between diff and MNI using FLIRT
-        flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
-        flirt.inputs.reference = input_MNI
-        flirt.inputs.in_file = nodif_brain_mask_path
-        flirt.inputs.apply_xfm = True
-        flirt.inputs.in_matrix_file = bedpostx_dir + '/xfms/diff2MNI.mat'
-        flirt.inputs.out_file = bedpostx_dir + '/xfms/diff2MNI_affine.nii.gz'
-        flirt.run()
+    ##Apply transform between diff and MNI using FLIRT
+    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
+    flirt.inputs.reference = input_MNI
+    flirt.inputs.in_file = nodif_brain_mask_path
+    flirt.inputs.apply_xfm = True
+    flirt.inputs.in_matrix_file = bedpostx_dir + '/xfms/diff2MNI.mat'
+    flirt.inputs.out_file = bedpostx_dir + '/xfms/diff2MNI_affine.nii.gz'
+    flirt.run()
 
-        flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
-        flirt.inputs.reference = input_MNI
-        flirt.inputs.in_file = fdt_paths_loc
-        out_file_MNI = fdt_paths_loc.split('.nii')[0] + '_MNI.nii.gz'
-        flirt.inputs.out_file = out_file_MNI
-        flirt.inputs.apply_xfm = True
-        flirt.inputs.in_matrix_file = bedpostx_dir + '/xfms/diff2MNI.mat'
-        flirt.run()
+    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
+    flirt.inputs.reference = input_MNI
+    flirt.inputs.in_file = fdt_paths_loc
+    out_file_MNI = fdt_paths_loc.split('.nii')[0] + '_MNI.nii.gz'
+    flirt.inputs.out_file = out_file_MNI
+    flirt.inputs.apply_xfm = True
+    flirt.inputs.in_matrix_file = bedpostx_dir + '/xfms/diff2MNI.mat'
+    flirt.run()
 
-        fdt_paths_MNI_loc = probtrackx_output_dir_path + '/fdt_paths_MNI.nii.gz'
+    fdt_paths_MNI_loc = probtrackx_output_dir_path + '/fdt_paths_MNI.nii.gz'
 
-        colors.Normalize(vmin=-1, vmax=1)
-        clust_pal = sns.color_palette("Blues_r", 4)
-        clust_colors = colors.to_rgba_array(clust_pal)
+    colors.Normalize(vmin=-1, vmax=1)
+    clust_pal = sns.color_palette("Blues_r", 4)
+    clust_colors = colors.to_rgba_array(clust_pal)
 
-        ##Plotting with glass brain
-        connectome = niplot.plot_connectome(conn_matrix_symm, coords, edge_threshold=edge_threshold, node_color=clust_colors, edge_cmap=niplot.cm.black_blue_r)
-        connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=niplot.cm.cyan_copper_r)
-        out_file_path = dir_path + '/structural_connectome_fig_' + network + '_' + str(ID) + '.png'
-        plt.savefig(out_file_path)
-        plt.close()
+    ##Plotting with glass brain
+    connectome = niplot.plot_connectome(conn_matrix_symm, coords, edge_threshold=edge_threshold, node_color=clust_colors, edge_cmap=niplot.cm.black_blue_r)
+    connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=niplot.cm.cyan_copper_r)
+    out_file_path = dir_path + '/structural_connectome_fig_' + network + '_' + str(ID) + '.png'
+    plt.savefig(out_file_path)
+    plt.close()
 
-        network = network + '_structural'
-        conn_model = 'struct'
-        pynplot.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
-    else:
-        pass
+    network = network + '_structural'
+    conn_model = 'struct'
+    pynplot.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
     return

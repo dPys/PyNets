@@ -94,9 +94,10 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                          function=thresholding.thresh_and_fit, imports = import_list), name = "thresh_and_fit_node")
 
     ##Plotting
-    plot_all_node = pe.Node(niu.Function(input_names = ['conn_matrix', 'conn_model', 'atlas_select', 'dir_path', 'ID', 'network', 'label_names', 'mask', 'coords', 'edge_threshold'],
-                                 output_names='None',
-                                 function=plotting.plot_all, imports = import_list), name = "plot_all_node")
+    if plot_switch == True:
+        plot_all_node = pe.Node(niu.Function(input_names = ['conn_matrix', 'conn_model', 'atlas_select', 'dir_path', 'ID', 'network', 'label_names', 'mask', 'coords', 'edge_threshold'],
+                                     output_names='None',
+                                     function=plotting.plot_all, imports = import_list), name = "plot_all_node")
 
     outputnode = pe.Node(niu.Function(function=utils.output_echo, input_names=['est_path', 'thr'], output_names=['est_path', 'thr']), name='outputnode')
 
@@ -179,28 +180,43 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                                             ('mask', 'mask'),
                                                                             ('network', 'network'),
                                                                             ('conn_model', 'conn_model')]),
-                                                (WB_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'), ('atlas_select', 'atlas_select')]),
+                                                (WB_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'),
+                                                                                                 ('atlas_select', 'atlas_select')]),
                                                 (node_gen_node, plot_all_node, [('label_names', 'label_names'),
-                                                                                      ('coords', 'coords')]),
+                                                                                ('coords', 'coords')]),
                                                 (thresh_and_fit_node, plot_all_node, [('conn_matrix_thr', 'conn_matrix'),
                                                                                       ('edge_threshold', 'edge_threshold')]),
                                                 ])
     if k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1:
         wb_functional_connectometry_wf.add_nodes([clustering_node])
-        wb_functional_connectometry_wf.disconnect([(inputnode, WB_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
-                                                   (WB_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'),('atlas_select', 'atlas_select')]),
-                                                   (inputnode, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
-                                                   (WB_fetch_nodes_and_labels_node, node_gen_node, [('dir_path', 'dir_path')]),
-                                                   (WB_fetch_nodes_and_labels_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
-                                                   (WB_fetch_nodes_and_labels_node, extract_ts_wb_node, [('dir_path', 'dir_path')])
-                                                   ])
-        wb_functional_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('func_file', 'func_file'), ('clust_mask', 'clust_mask'), ('k', 'k')]),
-                                                (clustering_node, WB_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
-                                                (clustering_node, plot_all_node, [('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
-                                                (clustering_node, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
-                                                (clustering_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
-                                                (clustering_node, extract_ts_wb_node, [('dir_path', 'dir_path')])
-                                                ])
+        if plot_switch == True:
+            wb_functional_connectometry_wf.disconnect([(inputnode, WB_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                       (WB_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'),('atlas_select', 'atlas_select')]),
+                                                       (inputnode, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                       (WB_fetch_nodes_and_labels_node, node_gen_node, [('dir_path', 'dir_path')]),
+                                                       (WB_fetch_nodes_and_labels_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
+                                                       (WB_fetch_nodes_and_labels_node, extract_ts_wb_node, [('dir_path', 'dir_path')])
+                                                       ])
+            wb_functional_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('func_file', 'func_file'), ('clust_mask', 'clust_mask'), ('k', 'k')]),
+                                                    (clustering_node, WB_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                    (clustering_node, plot_all_node, [('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
+                                                    (clustering_node, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
+                                                    (clustering_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
+                                                    (clustering_node, extract_ts_wb_node, [('dir_path', 'dir_path')])
+                                                    ])
+        else:
+            wb_functional_connectometry_wf.disconnect([(inputnode, WB_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                       (inputnode, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                       (WB_fetch_nodes_and_labels_node, node_gen_node, [('dir_path', 'dir_path')]),
+                                                       (WB_fetch_nodes_and_labels_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
+                                                       (WB_fetch_nodes_and_labels_node, extract_ts_wb_node, [('dir_path', 'dir_path')])
+                                                       ])
+            wb_functional_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('func_file', 'func_file'), ('clust_mask', 'clust_mask'), ('k', 'k')]),
+                                                    (clustering_node, WB_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                    (clustering_node, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
+                                                    (clustering_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
+                                                    (clustering_node, extract_ts_wb_node, [('dir_path', 'dir_path')])
+                                                    ])
 
     if parc == True:
         wb_functional_connectometry_wf.add_nodes([save_nifti_parcels_node])
@@ -334,9 +350,10 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                          function=thresholding.thresh_and_fit, imports = import_list), name = "thresh_and_fit_node")
 
     ##Plotting
-    plot_all_node = pe.Node(niu.Function(input_names = ['conn_matrix', 'conn_model', 'atlas_select', 'dir_path', 'ID', 'network', 'label_names', 'mask', 'coords', 'edge_threshold'],
-                                 output_names='None',
-                                 function=plotting.plot_all, imports = import_list), name = "plot_all_node")
+    if plot_switch == True:
+        plot_all_node = pe.Node(niu.Function(input_names = ['conn_matrix', 'conn_model', 'atlas_select', 'dir_path', 'ID', 'network', 'label_names', 'mask', 'coords', 'edge_threshold'],
+                                     output_names='None',
+                                     function=plotting.plot_all, imports = import_list), name = "plot_all_node")
 
     outputnode = pe.Node(niu.Function(function=utils.output_echo, input_names=['est_path', 'thr'], output_names=['est_path', 'thr']), name='outputnode')
 
@@ -432,7 +449,8 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                                             ('mask', 'mask'),
                                                                             ('network', 'network'),
                                                                             ('conn_model', 'conn_model')]),
-                                                (RSN_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'), ('atlas_select', 'atlas_select')]),
+                                                (RSN_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'), 
+                                                                                                  ('atlas_select', 'atlas_select')]),
                                                 (node_gen_node, plot_all_node, [('label_names', 'label_names'),
                                                                                       ('coords', 'coords')]),
                                                 (thresh_and_fit_node, plot_all_node, [('conn_matrix_thr', 'conn_matrix'),
@@ -440,20 +458,34 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                 ])
     if k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1:
         rsn_functional_connectometry_wf.add_nodes([clustering_node])
-        rsn_functional_connectometry_wf.disconnect([(inputnode, RSN_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
-                                                   (RSN_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'), ('atlas_select', 'atlas_select')]),
-                                                   (inputnode, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
-                                                   (RSN_fetch_nodes_and_labels_node, node_gen_node, [('dir_path', 'dir_path')]),
-                                                   (RSN_fetch_nodes_and_labels_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
-                                                   (RSN_fetch_nodes_and_labels_node, extract_ts_rsn_node, [('dir_path', 'dir_path')])
-                                                   ])
-        rsn_functional_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('func_file', 'func_file'), ('clust_mask', 'clust_mask'), ('k', 'k')]),
-                                                (clustering_node, RSN_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
-                                                (clustering_node, plot_all_node, [('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
-                                                (clustering_node, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
-                                                (clustering_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
-                                                (clustering_node, extract_ts_rsn_node, [('dir_path', 'dir_path')])
-                                                ])
+        if plot_switch == True:
+            rsn_functional_connectometry_wf.disconnect([(inputnode, RSN_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                       (RSN_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'), ('atlas_select', 'atlas_select')]),
+                                                       (inputnode, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                       (RSN_fetch_nodes_and_labels_node, node_gen_node, [('dir_path', 'dir_path')]),
+                                                       (RSN_fetch_nodes_and_labels_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
+                                                       (RSN_fetch_nodes_and_labels_node, extract_ts_rsn_node, [('dir_path', 'dir_path')])
+                                                       ])
+            rsn_functional_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('func_file', 'func_file'), ('clust_mask', 'clust_mask'), ('k', 'k')]),
+                                                    (clustering_node, RSN_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                    (clustering_node, plot_all_node, [('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
+                                                    (clustering_node, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
+                                                    (clustering_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
+                                                    (clustering_node, extract_ts_rsn_node, [('dir_path', 'dir_path')])
+                                                    ])
+        else:
+            rsn_functional_connectometry_wf.disconnect([(inputnode, RSN_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                       (inputnode, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                       (RSN_fetch_nodes_and_labels_node, node_gen_node, [('dir_path', 'dir_path')]),
+                                                       (RSN_fetch_nodes_and_labels_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
+                                                       (RSN_fetch_nodes_and_labels_node, extract_ts_rsn_node, [('dir_path', 'dir_path')])
+                                                       ])
+            rsn_functional_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('func_file', 'func_file'), ('clust_mask', 'clust_mask'), ('k', 'k')]),
+                                                    (clustering_node, RSN_fetch_nodes_and_labels_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select')]),
+                                                    (clustering_node, node_gen_node, [('parlistfile', 'parlistfile'), ('atlas_select', 'atlas_select'), ('dir_path', 'dir_path')]),
+                                                    (clustering_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
+                                                    (clustering_node, extract_ts_rsn_node, [('dir_path', 'dir_path')])
+                                                    ])            
     if parc == True:
         rsn_functional_connectometry_wf.add_nodes([save_nifti_parcels_node])
         rsn_functional_connectometry_wf.connect([(inputnode, save_nifti_parcels_node, [('ID', 'ID'),('mask', 'mask')]),
@@ -471,15 +503,23 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                 ])
 
     if multi_nets is not None:
-        rsn_functional_connectometry_wf.disconnect([(inputnode, extract_ts_rsn_node, [('network', 'network')]),
-                                                    (inputnode, thresh_and_fit_node, [('network', 'network')]),
-                                                    (inputnode, plot_all_node, [('network', 'network')])
+        if plot_switch == True:
+            rsn_functional_connectometry_wf.disconnect([(inputnode, extract_ts_rsn_node, [('network', 'network')]),
+                                                        (inputnode, thresh_and_fit_node, [('network', 'network')]),
+                                                        (inputnode, plot_all_node, [('network', 'network')])
+                                                        ])
+            rsn_functional_connectometry_wf.connect([(get_node_membership_node, extract_ts_rsn_node, [('network', 'network')]),
+                                                    (get_node_membership_node, thresh_and_fit_node, [('network', 'network')]),
+                                                    (get_node_membership_node, plot_all_node, [('network', 'network')])
                                                     ])
-        rsn_functional_connectometry_wf.connect([(get_node_membership_node, extract_ts_rsn_node, [('network', 'network')]),
-                                                (get_node_membership_node, thresh_and_fit_node, [('network', 'network')]),
-                                                (get_node_membership_node, plot_all_node, [('network', 'network')])
-                                                ])
-
+        else:
+            rsn_functional_connectometry_wf.disconnect([(inputnode, extract_ts_rsn_node, [('network', 'network')]),
+                                                        (inputnode, thresh_and_fit_node, [('network', 'network')]),
+                                                        ])
+            rsn_functional_connectometry_wf.connect([(get_node_membership_node, extract_ts_rsn_node, [('network', 'network')]),
+                                                    (get_node_membership_node, thresh_and_fit_node, [('network', 'network')]),
+                                                    ])
+    
     rsn_functional_connectometry_wf.config['logging']['log_directory']='/tmp'
     rsn_functional_connectometry_wf.config['logging']['workflow_level']='DEBUG'
     rsn_functional_connectometry_wf.config['logging']['utils_level']='DEBUG'
@@ -571,9 +611,9 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                               output_names=['conn_matrix', 'conn_matrix_symm', 'est_path_struct'],
                                          function=diffconnectometry.collect_struct_mapping_outputs, imports = import_list), name = "collect_struct_mapping_outputs_node")
 
-
-    structural_plotting_node = pe.Node(niu.Function(input_names = ['conn_matrix', 'conn_matrix_symm', 'label_names', 'atlas_select', 'ID', 'bedpostx_dir', 'network', 'parc', 'plot_switch', 'coords'],
-                                         function=plotting.structural_plotting, imports = import_list), name = "structural_plotting_node")
+    if plot_switch == True:
+        structural_plotting_node = pe.Node(niu.Function(input_names = ['conn_matrix', 'conn_matrix_symm', 'label_names', 'atlas_select', 'ID', 'bedpostx_dir', 'network', 'parc', 'coords'],
+                                             function=plotting.structural_plotting, imports = import_list), name = "structural_plotting_node")
 
     outputnode = pe.Node(niu.Function(function=utils.output_echo, input_names=['est_path_struct'], output_names=['est_path_struct']), name='outputnode')
 
@@ -618,19 +658,23 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                                           ('network', 'network'),
                                                           ('ID', 'ID')]),
         (run_probtrackx2_node, collect_struct_mapping_outputs_node, [('max_i', 'max_i')]),
-        (collect_struct_mapping_outputs_node, structural_plotting_node, [('conn_matrix', 'conn_matrix'),
-                                                                         ('conn_matrix_symm', 'conn_matrix_symm')]),
-        (inputnode, structural_plotting_node, [('label_names', 'label_names'),
-                                               ('atlas_select', 'atlas_select'),
-                                               ('ID', 'ID'),
-                                               ('bedpostx_dir', 'bedpostx_dir'),
-                                               ('network', 'network'),
-                                               ('parc', 'parc'),
-                                               ('plot_switch', 'plot_switch')]),
-        (WB_fetch_nodes_and_labels_node, structural_plotting_node, [('coords', 'coords')]),
         (collect_struct_mapping_outputs_node, outputnode, [('est_path_struct', 'est_path_struct')]),
         ])
 
+    if plot_switch == True:
+        wb_structural_connectometry_wf.add_nodes([structural_plotting_node])
+        wb_structural_connectometry_wf.connect([(collect_struct_mapping_outputs_node, structural_plotting_node, [('conn_matrix', 'conn_matrix'),
+                                                                         ('conn_matrix_symm', 'conn_matrix_symm')]),
+                                                (inputnode, structural_plotting_node, [('label_names', 'label_names'),
+                                                                                       ('atlas_select', 'atlas_select'),
+                                                                                       ('ID', 'ID'),
+                                                                                       ('bedpostx_dir', 'bedpostx_dir'),
+                                                                                       ('network', 'network'),
+                                                                                       ('parc', 'parc'),
+                                                                                       ('plot_switch', 'plot_switch')]),
+                                                (WB_fetch_nodes_and_labels_node, structural_plotting_node, [('coords', 'coords')])
+                                                ])
+        
     wb_structural_connectometry_wf.config['execution']['crashdump_dir']='/tmp'
     wb_structural_connectometry_wf.config['logging']['log_directory']='/tmp'
     wb_structural_connectometry_wf.config['logging']['workflow_level']='DEBUG'
@@ -727,9 +771,9 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                               output_names=['conn_matrix', 'conn_matrix_symm', 'est_path_struct'],
                                          function=diffconnectometry.collect_struct_mapping_outputs, imports = import_list), name = "collect_struct_mapping_outputs_node")
 
-
-    structural_plotting_node = pe.Node(niu.Function(input_names = ['conn_matrix', 'conn_matrix_symm', 'label_names', 'atlas_select', 'ID', 'bedpostx_dir', 'network', 'parc', 'plot_switch', 'coords'],
-                                         function=plotting.structural_plotting, imports = import_list), name = "structural_plotting_node")
+    if plot_switch == True:
+        structural_plotting_node = pe.Node(niu.Function(input_names = ['conn_matrix', 'conn_matrix_symm', 'label_names', 'atlas_select', 'ID', 'bedpostx_dir', 'network', 'parc', 'coords'],
+                                             function=plotting.structural_plotting, imports = import_list), name = "structural_plotting_node")
 
     outputnode = pe.Node(niu.Function(function=utils.output_echo, input_names=['est_path_struct'], output_names=['est_path_struct']), name='outputnode')
 
@@ -782,19 +826,23 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                                           ('network', 'network'),
                                                           ('ID', 'ID')]),
         (run_probtrackx2_node, collect_struct_mapping_outputs_node, [('max_i', 'max_i')]),
-        (collect_struct_mapping_outputs_node, structural_plotting_node, [('conn_matrix', 'conn_matrix'),
-                                                                         ('conn_matrix_symm', 'conn_matrix_symm')]),
-        (inputnode, structural_plotting_node, [('label_names', 'label_names'),
-                                               ('atlas_select', 'atlas_select'),
-                                               ('ID', 'ID'),
-                                               ('bedpostx_dir', 'bedpostx_dir'),
-                                               ('network', 'network'),
-                                               ('parc', 'parc'),
-                                               ('plot_switch', 'plot_switch')]),
-        (RSN_fetch_nodes_and_labels_node, structural_plotting_node, [('coords', 'coords')]),
         (collect_struct_mapping_outputs_node, outputnode, [('est_path_struct', 'est_path_struct')]),
         ])
 
+    if plot_switch == True:
+        rsn_structural_connectometry_wf.add_nodes([structural_plotting_node])
+        rsn_structural_connectometry_wf.connect([(collect_struct_mapping_outputs_node, structural_plotting_node, [('conn_matrix', 'conn_matrix'),
+                                                                         ('conn_matrix_symm', 'conn_matrix_symm')]),
+                                                (inputnode, structural_plotting_node, [('label_names', 'label_names'),
+                                                                                       ('atlas_select', 'atlas_select'),
+                                                                                       ('ID', 'ID'),
+                                                                                       ('bedpostx_dir', 'bedpostx_dir'),
+                                                                                       ('network', 'network'),
+                                                                                       ('parc', 'parc'),
+                                                                                       ('plot_switch', 'plot_switch')]),
+                                                (RSN_fetch_nodes_and_labels_node, structural_plotting_node, [('coords', 'coords')])
+                                                ])
+    
     rsn_structural_connectometry_wf.config['logging']['log_directory']='/tmp'
     rsn_structural_connectometry_wf.config['logging']['workflow_level']='DEBUG'
     rsn_structural_connectometry_wf.config['logging']['utils_level']='DEBUG'
