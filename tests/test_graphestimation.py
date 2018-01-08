@@ -40,7 +40,7 @@ def test_extract_ts_rsn_parc():
     file_ = open(wb_coords_file,'rb')
     coords = pickle.load(file_)
     net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
-    ts_within_nodes = graphestimation.extract_ts_wb_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network)
+    ts_within_nodes = graphestimation.extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network)
     assert ts_within_nodes is not None
     
 def test_extract_ts_rsn_coords():
@@ -57,5 +57,5 @@ def test_extract_ts_rsn_coords():
     wb_coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     file_ = open(wb_coords_file,'rb')
     coords = pickle.load(file_)
-    ts_within_nodes = graphestimation.extract_ts_wb_coords(node_size, conf, func_file, coords, dir_path, ID, mask, thr, network)
+    ts_within_nodes = graphestimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, thr, network)
     assert ts_within_nodes is not None
