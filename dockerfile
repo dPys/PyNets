@@ -24,13 +24,16 @@ RUN python3.4 -m pip install Cython>=0.24 nilearn>=0.2.4 numpy>=1.12.1 scikit-le
 
 # Install requirements for Python 3
 RUN python3.4 -m pip install skggm --upgrade
-RUN python3.4 -m pip install pynets>=0.2.9 --upgrade
+RUN python3.4 -m pip install pynets>=0.3.1 --upgrade
 
 RUN chmod 775 -R /usr/local/lib/python3.4
 RUN chown root:main -R /usr/local/lib/python3.4
+RUN chmod 777 /usr/local/bin/pynets_run.py
 
 USER main
 RUN python3.4 -m pip install pandas --upgrade --user
+
+#ENV PYTHONPATH /usr/local/lib/python3.4/dist-packages:$PYTHONPATH
 
 # Environment variable try to fix lapack issue
 ENV LD_PRELOAD /usr/lib/x86_64-linux-gnu/libgfortran.so.3

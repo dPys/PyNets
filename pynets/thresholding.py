@@ -124,7 +124,7 @@ def autofix(W, copy=True):
     # ensure exact binarity
     u = np.unique(W)
     if np.all(np.logical_or(np.abs(u) < 1e-8, np.abs(u - 1) < 1e-8)):
-        W = np.around(W, decimal=5)
+        W = np.around(W, decimals=5)
     # ensure exact symmetry
     if np.allclose(W, W.T):
         W = np.around(W, decimals=5)

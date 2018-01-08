@@ -48,7 +48,7 @@ if __name__ == '__main__':
     parser.add_argument('-pm',
         metavar='Cores,memory',
         default= '2,4',
-        help='Number of cores to use, number of GB of memory to use, entered as two integers seperated by a comma.\n')
+        help='Number of cores to use, number of GB of memory to use for single subject run, entered as two integers seperated by a comma.\n')
     parser.add_argument('-n',
         metavar='Resting-state network',
         default=None,
@@ -888,6 +888,8 @@ if __name__ == '__main__':
     anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step, k_clustering,
     user_atlas_list, clust_mask_list):
         wf_multi = pe.Workflow(name='PyNets_multisubject')
+        cores=[]
+        ram=[]
         i=0
         for _file in subjects_list:
             wf_single_subject = init_wf_single_subject(ID=os.path.dirname(os.path.realpath(subjects_list[i])).split('/')[-1],
@@ -924,8 +926,12 @@ if __name__ == '__main__':
                                user_atlas_list=user_atlas_list,
                                clust_mask_list=clust_mask_list)
             wf_multi.add_nodes([wf_single_subject])
+            cores.append(int(procmem[0]))
+            ram.append(int(procmem[1]))
             i = i + 1
-        return wf_multi
+        total_cores = sum(cores)
+        total_ram = sum(ram)
+        return(wf_multi, total_cores, total_ram)
 
     ##Workflow generation
     #import logging
@@ -938,7 +944,8 @@ if __name__ == '__main__':
     #logger.addHandler(handler)
 
     if subjects_list:
-        wf_multi = wf_multi_subject(subjects_list, atlas_select, network, node_size,
+        import multiprocessing
+        [wf_multi, total_cores, total_ram] = wf_multi_subject(subjects_list, atlas_select, network, node_size,
         mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr,
         anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step, k_clustering,
@@ -947,9 +954,12 @@ if __name__ == '__main__':
         wf_multi.config['logging']['workflow_level']='DEBUG'
         wf_multi.config['logging']['utils_level']='DEBUG'
         wf_multi.config['logging']['interface_level']='DEBUG'
-        #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1]), 'status_callback' : log_nodes_cb}
-        plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
-        print('\n' + 'Running with ' + str(plugin_args) + '\n')
+        #plugin_args = { 'n_procs': int(total_cores),'memory_gb': int(total_ram), 'status_callback' : log_nodes_cb}
+        plugin_args = { 'n_procs': int(total_cores),'memory_gb': int(total_ram)}
+        print('\nRunning with ' + str(plugin_args) + '\n')
+        number_processes = int(multiprocessing.cpu_count()-1)
+        if number_processes < int(total_cores):
+            raise ValueError('\nNot enough cores (' + str(number_processes) + ') found on this machine to handle requested load: (' + str(int(total_cores)) + ')')
         wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
         #wf_multi.run()
     ##Single-subject workflow generator
@@ -965,7 +975,7 @@ if __name__ == '__main__':
         wf.config['logging']['interface_level']='DEBUG'
         #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1]), 'status_callback' : log_nodes_cb}
         plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
-        print('\n' + 'Running with ' + str(plugin_args) + '\n')
+        print('\nRunning with ' + str(plugin_args) + '\n')
         wf.run(plugin='MultiProc', plugin_args= plugin_args)
         #wf.run()
 
