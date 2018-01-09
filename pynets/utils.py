@@ -354,11 +354,11 @@ def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network)
     ##Save coords to pickle
     coord_path = dir_path + '/' + network + '_func_coords_rsn.pkl'
     with open(coord_path, 'wb') as f:
-        pickle.dump(coords, f)
+        pickle.dump(coords, f, protocol=2)
     ##Save labels to pickle
     labels_path = dir_path + '/' + network + '_func_labelnames_rsn.pkl'
     with open(labels_path, 'wb') as f:
-        pickle.dump(label_names, f)
+        pickle.dump(label_names, f, protocol=2)
     return
 
 def save_nifti_parcels_map(ID, dir_path, mask, network, net_parcels_map_nifti):

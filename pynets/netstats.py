@@ -1347,9 +1347,9 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
 
     ##Save metric names as pickle
     try:
-        import cPickle
+        import cPickle as pickle
     except ImportError:
-        import _pickle as cPickle
+        import _pickle as pickle
         
     if mask != None:
         if network != None:
@@ -1361,7 +1361,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
             met_list_picke_path = os.path.dirname(os.path.abspath(est_path)) + '/net_metric_list_' + network
         else:
             met_list_picke_path = os.path.dirname(os.path.abspath(est_path)) + '/net_metric_list'
-    cPickle.dump(metric_list_names, open(met_list_picke_path, 'wb'))
+    pickle.dump(metric_list_names, open(met_list_picke_path, 'wb'), protocol=2)
 
     ##And save results to csv
     out_path = utils.create_csv_path(ID, network, conn_model, thr, mask, dir_path)
