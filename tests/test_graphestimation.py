@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Created on Wed Dec 20 12:26:34 2017
@@ -7,8 +7,6 @@ Created on Wed Dec 20 12:26:34 2017
 """
 import numpy as np
 import nibabel as nib
-import warnings
-warnings.simplefilter("ignore")
 from pynets import graphestimation
 from pathlib import Path
 try:

@@ -3,7 +3,7 @@ import os
 import pandas as pd
 ###
 working_path = r'/work/04171/dpisner/data/ABM/network_analysis/' # use your path
-name_of_network_pickle = 'net_metrics_sps_None_mean'
+name_of_network_pickle = 'net_metrics_sps_mean'
 ###
 
 allFiles = []

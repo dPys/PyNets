@@ -938,10 +938,8 @@ def most_important(G):
      return(Gt, pruned_nodes, pruned_edges)
          
 ##Extract network metrics interface
-def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None):
+def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, out_file=None):
     from pynets import thresholding, utils
-    
-    pruning = True
 
     ##Load and threshold matrix
     in_mat = np.array(np.genfromtxt(est_path))
@@ -963,13 +961,13 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
     G_pre=nx.from_numpy_matrix(in_mat)
 
     ##Prune irrelevant nodes (i.e. nodes who are fully disconnected from the graph and/or those whose betweenness centrality are > 3 standard deviations below the mean)
-    if pruning == True:
+    if prune == True:
         [G_pruned, _, _] = most_important(G_pre)
     else:
         G_pruned = G_pre
     
     ##Make directed if sparse
-    if conn_model != 'corr' and conn_model != 'cov' and conn_model != 'tangent':
+    if conn_model == 'effective':
         G_di = nx.DiGraph(G_pruned)
         G_dir = G_di.to_directed()
         G = G_pruned
@@ -991,14 +989,14 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         print('Analyzing DIRECTED graph when applicable...')
     except:
         print('Graph is UNDIRECTED')
-
-    if conn_model == 'corr' or conn_model == 'cov' or conn_model == 'tangent':
-        if nx.is_connected(G) == True:
-            num_conn_comp = nx.number_connected_components(G)
-            print('Graph is CONNECTED with ' + str(num_conn_comp) + ' connected component(s)')
-        else:
-            print('Graph is DISCONNECTED')
-    print('\n')
+        try:
+            if nx.is_connected(G) == True:
+                print('Graph is CONNECTED')
+            else:
+                print('Graph is DISCONNECTED')
+                print('\n')
+        except:
+            pass
 
     ##Create Length matrix
     mat_len = thresholding.weight_conversion(in_mat, 'lengths')
