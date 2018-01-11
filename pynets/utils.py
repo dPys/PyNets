@@ -166,6 +166,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
     import os
     import re
     from itertools import chain
+    from pynets import utils
 
     if multi_thr==True:
         iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr), float(max_thr), float(step_thr)),decimals=2).tolist()]
@@ -289,6 +290,9 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                 print('Missing results path')
                 pass
 
+    ##Check for existence of net_pickle files, condensing final list to only those that were actually produced.
+    [net_pickle_mt_list, _] = utils.check_est_path_existence(net_pickle_mt_list)
+    
     if len(net_pickle_mt_list) > 1:
         print('\n\nList of result files to concatenate:\n' + str(net_pickle_mt_list) + '\n\n')
         subject_path = os.path.dirname(os.path.dirname(net_pickle_mt_list[0]))
@@ -346,6 +350,21 @@ def build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn
         iter_thresh = [thr] * len(est_path_list)
     return(iter_thresh, est_path_list)
 
+def check_est_path_existence(est_path_list):
+    import os
+    est_path_list_ex = []
+    bad_ixs = []
+    i = -1
+    for est_path in est_path_list:
+        i = i + 1
+        if os.path.isfile(est_path) == True:
+            est_path_list_ex.append(est_path)
+        else:
+            print('\nWarning: Missing ' + est_path + '...')
+            bad_ixs.append(i)
+            continue
+    return(est_path_list_ex, bad_ixs)
+
 def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network):
     try:
         import cPickle as pickle
@@ -354,11 +373,11 @@ def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network)
     ##Save coords to pickle
     coord_path = dir_path + '/' + network + '_func_coords_rsn.pkl'
     with open(coord_path, 'wb') as f:
-        pickle.dump(coords, f)
+        pickle.dump(coords, f, protocol=2)
     ##Save labels to pickle
     labels_path = dir_path + '/' + network + '_func_labelnames_rsn.pkl'
     with open(labels_path, 'wb') as f:
-        pickle.dump(label_names, f)
+        pickle.dump(label_names, f, protocol=2)
     return
 
 def save_nifti_parcels_map(ID, dir_path, mask, network, net_parcels_map_nifti):

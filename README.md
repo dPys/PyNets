@@ -18,7 +18,7 @@ Learn more about Nilearn: http://nilearn.github.io/
 
 Learn more about Networkx: https://networkx.github.io/
 
-More specifically: PyNets utilizes a suite of network analysis tools in a nipype workflow to automatically generate rsfMRI networks and dMRI structural networks based on a variety of node parcellation and thresholding solutions, and then extract graph theoretical measures from the resulting graphs to be averaged into highly data-driven connectomes.
+More specifically: PyNets utilizes a suite of network analysis tools in a nipype workflow to automatically generate rsfMRI networks and dMRI structural networks based on a variety of node parcellation and thresholding solutions, and then extract graph theoretical measures from the resulting graphs to be averaged into "multi-simulation" connectomes.
 
 -----
 
@@ -63,6 +63,9 @@ python3 setup.py install
 
 #Or within the PyNets parent directory:
 pip3 install -e .
+
+#Or install from PyPi (recommended)
+pip3 install pynets
 ```
 
 2. Usage:\
@@ -75,9 +78,9 @@ python pynets_run.py '/Users/dpisner453/PyNets_examples/997/filtered_func_data_c
 python pynets_run.py -i '/Users/dpisner453/PyNets_examples/997/filtered_func_data_clean_standard.nii.gz' -id '997' -a 'coords_power_2011' -n 'Default' -dt '0.3' -ns '4' -mod 'sps'
 ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation C) You have a fully preprocessed (normalized and skull stripped!) functional rsfMRI image  called "filtered_func_data_clean_standard.nii.gz" where the subject id=997, you wish to extract network metrics for the Default network, using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011', you define your node radius as 4 voxels in size, and you wish to fit model with sparse inverse covariance, and you wish to iterate the pipeline over a range of proportional thresholds (i.e. 0.90-0.99 with 1% step):
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Situation C) You have a fully preprocessed (normalized and skull stripped!) functional rsfMRI image  called "filtered_func_data_clean_standard.nii.gz" where the subject id=997, you wish to extract network metrics for the Executive Control Network, using an atlas file called DesikanKlein2012.nii.gz, you define your node radius as 4 voxels in size, and you wish to fit model with partial correlation, and you wish to iterate the pipeline over a range of proportional thresholds (i.e. 0.90-0.99 with 1% step):
 ```python
-python pynets_run.py -i '/Users/dpisner453/PyNets_examples/997/filtered_func_data_clean_standard.nii.gz' -id '997' -a 'coords_power_2011' -n 'Default' -dt '0.3' -ns '4' -mod 'sps' -mt
+python pynets_run.py -i '/Users/dpisner453/PyNets_examples/997/filtered_func_data_clean_standard.nii.gz' -id '997' -ua '/Users/dpisner453/PyNets_example_atlases/DesikanKlein2012.nii.gz' -n 'Cont' -dt '0.3' -ns '4' -mod 'partcorr' -min_thr 0.90 -max_thr 0.99 -step_thr 0.01 
 ```
 
 3. Viewing outputs:\
@@ -99,13 +102,12 @@ import os
 import pandas as pd
 ###
 working_path = r'/work/04171/dpisner/data/ABM/network_analysis/' # use your path
-name_of_network_pickle = 'DMN_net_mets_inv_sps_cov'
-atlas_name='Power 2011 atlas'
+name_of_network_pickle = 'net_metrics_sps_Default_mean'
 ###
 
 allFiles = []
 for ID in os.listdir(working_path):
-    path_name = working_path + ID + '/' + atlas_name + '/' + ID + '_' + name_of_network_pickle + '_' + ID
+    path_name = working_path + ID + '/' + ID + '_' + name_of_network_pickle
     if os.path.isfile(path_name):
         print(path_name)
         allFiles.append(path_name)
