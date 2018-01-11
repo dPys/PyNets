@@ -9,17 +9,19 @@ import networkx as nx
 import os
 
 def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask):
-    import matplotlib.pyplot as plt        
-    if mask != None:
-        if network != 'None':
-            out_path_fig=dir_path + '/' + str(ID) + '_' + atlas_select + '_' + str(network) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_network.png'
+    import matplotlib
+    matplotlib.use('Agg')
+    from matplotlib import pyplot as plt
+    if mask:
+        if network:
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_network.png'
         else:
-            out_path_fig=dir_path + '/' + str(ID) + '_' + atlas_select + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '.png'    
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '.png'    
     else:
-        if network != 'None':
-            out_path_fig=dir_path + '/' + str(ID) + '_' + atlas_select + '_' + str(network) + '_adj_mat_' + str(conn_model) + '_network.png'
+        if network:
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + network + '_adj_mat_' + str(conn_model) + '_network.png'
         else:
-            out_path_fig=dir_path + '/' + str(ID) + '_' + atlas_select + '_adj_mat_' + str(conn_model) + '.png'
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_adj_mat_' + str(conn_model) + '.png'
             
     rois_num=conn_matrix.shape[0]
     plt.figure(figsize=(10, 10))
@@ -191,7 +193,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
         entry["weights"] = weight_vec
         output.append(entry)
 
-    if network != 'None':
+    if network:
         json_file_name = str(ID) + '_' + network + '_connectogram_' + conn_model + '_network.json'
         json_fdg_file_name = str(ID) + '_' + network + '_fdg_' + conn_model + '_network.json'
         connectogram_plot = dir_path + '/' + json_file_name
@@ -262,7 +264,10 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
             outfile.write(line)
 
 def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
-    import matplotlib.pyplot as plt
+    import matplotlib
+    matplotlib.use('Agg')
+    from matplotlib import pyplot as plt
+    
     for time_serie, label in zip(time_series.T, labels):
         plt.plot(time_serie, label=label) 
     plt.xlabel('Scan Number')
@@ -278,71 +283,72 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
     plt.savefig(out_path_fig)
     plt.close()
 
-def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold, plot_switch):
+def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold):
+    import matplotlib
+    matplotlib.use('Agg')
+    from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
     pruning=True
     dpi_resolution=1000
-    if plot_switch == True:
-        import pkg_resources
-        import networkx as nx
-        from pynets import plotting
-        import matplotlib.pyplot as plt
-        from pynets.netstats import most_important
-        G_pre=nx.from_numpy_matrix(conn_matrix)
-        if pruning == True:
-            [G, pruned_nodes, pruned_edges] = most_important(G_pre)
-        else:
-            G = G_pre
-        conn_matrix = nx.to_numpy_array(G)
-        
-        pruned_nodes.sort(reverse = True)
-        for j in pruned_nodes:
-            del label_names[label_names.index(label_names[j])]
-            del coords[coords.index(coords[j])]
-        
-        pruned_edges.sort(reverse = True)
-        for j in pruned_edges:
-            del label_names[label_names.index(label_names[j])]
-            del coords[coords.index(coords[j])]
-        
-        ##Plot connectogram
-        if len(conn_matrix) > 20:
-            try:
-                plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
-            except RuntimeError:
-                print('\n\n\nError: Connectogram plotting failed!')
-        else:
-            print('Error: Cannot plot connectogram for graphs smaller than 20 x 20!')
-    
-        ##Plot adj. matrix based on determined inputs
-        plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask)
-    
-        ##Plot connectome
-        if mask != None:
-            if network != 'None':
-                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_connectome_viz.png'
-            else:
-                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
-        else:
-            if network != 'None':
-                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_' + str(conn_model) + '_' + str(network) + '_connectome_viz.png'
-            else:
-                out_path_fig=dir_path + '/' + ID + '_' + atlas_select + '_' + str(conn_model) + '_connectome_viz.png'
-        #niplot.plot_connectome(conn_matrix, coords, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
-        ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
-        connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=True, node_size=0.0001)
-        connectome.add_overlay(ch2better_loc, alpha=0.4, cmap=plt.cm.gray)
-        [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
-        connectome.add_graph(conn_matrix, coords, edge_threshold = edge_threshold, edge_cmap = 'Blues', edge_vmax=z_max, edge_vmin=z_min, node_size=4)
-        connectome.savefig(out_path_fig, dpi=dpi_resolution)
+    import pkg_resources
+    import networkx as nx
+    from pynets import plotting
+    from pynets.netstats import most_important
+    G_pre=nx.from_numpy_matrix(conn_matrix)
+    if pruning == True:
+        [G, pruned_nodes, pruned_edges] = most_important(G_pre)
     else:
-        pass
+        G = G_pre
+    conn_matrix = nx.to_numpy_array(G)
+    
+    pruned_nodes.sort(reverse = True)
+    for j in pruned_nodes:
+        del label_names[label_names.index(label_names[j])]
+        del coords[coords.index(coords[j])]
+    
+    pruned_edges.sort(reverse = True)
+    for j in pruned_edges:
+        del label_names[label_names.index(label_names[j])]
+        del coords[coords.index(coords[j])]
+    
+    ##Plot connectogram
+    if len(conn_matrix) > 20:
+        try:
+            plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
+        except RuntimeError:
+            print('\n\n\nError: Connectogram plotting failed!')
+    else:
+        print('Error: Cannot plot connectogram for graphs smaller than 20 x 20!')
+
+    ##Plot adj. matrix based on determined inputs
+    plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask)
+
+    ##Plot connectome
+    if mask:
+        if network:
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_connectome_viz.png'
+        else:
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
+    else:
+        if network:
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(network) + '_connectome_viz.png'
+        else:
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_connectome_viz.png'
+    #niplot.plot_connectome(conn_matrix, coords, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
+    ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
+    connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=True, node_size=0.0001)
+    connectome.add_overlay(ch2better_loc, alpha=0.4, cmap=plt.cm.gray)
+    [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
+    connectome.add_graph(conn_matrix, coords, edge_threshold = edge_threshold, edge_cmap = 'Blues', edge_vmax=z_max, edge_vmin=z_min, node_size=4)
+    connectome.savefig(out_path_fig, dpi=dpi_resolution)
     return
 
-def structural_plotting(conn_matrix, conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, plot_switch, coords):  
+def structural_plotting(conn_matrix, conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, coords):  
+    import matplotlib
+    matplotlib.use('Agg')
+    from matplotlib import pyplot as plt
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
-    import matplotlib.pyplot as plt
     import seaborn as sns
     from pynets import plotting as pynplot
     from matplotlib import colors
@@ -365,64 +371,61 @@ def structural_plotting(conn_matrix, conn_matrix_symm, label_names, atlas_select
     dir_path = os.path.dirname(bedpostx_dir)
     ####Auto-set INPUTS####
     
-    if plot_switch == True:
-        plt.figure(figsize=(8, 8))
-        plt.imshow(conn_matrix, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
-        plt.xticks(range(len(label_names)), label_names, size='xx-small', rotation=90)
-        plt.yticks(range(len(label_names)), label_names, size='xx-small')
-        plt_title = atlas_select + ' Structural Connectivity of: ' + str(ID)
-        plt.title(plt_title)
-        plt.grid(False)
-        plt.gcf().subplots_adjust(left=0.8)
+    plt.figure(figsize=(8, 8))
+    plt.imshow(conn_matrix, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
+    plt.xticks(range(len(label_names)), label_names, size='xx-small', rotation=90)
+    plt.yticks(range(len(label_names)), label_names, size='xx-small')
+    plt_title = str(atlas_select) + ' Structural Connectivity of: ' + str(ID)
+    plt.title(plt_title)
+    plt.grid(False)
+    plt.gcf().subplots_adjust(left=0.8)
 
-        out_path_fig=dir_path + '/structural_adj_mat_' + str(ID) + '.png'
-        plt.savefig(out_path_fig)
-        plt.close()
+    out_path_fig=dir_path + '/structural_adj_mat_' + str(ID) + '.png'
+    plt.savefig(out_path_fig)
+    plt.close()
 
-        ##Prepare glass brain figure
-        fdt_paths_loc = probtrackx_output_dir_path + '/fdt_paths.nii.gz'
+    ##Prepare glass brain figure
+    fdt_paths_loc = probtrackx_output_dir_path + '/fdt_paths.nii.gz'
 
-        ##Create transform matrix between diff and MNI using FLIRT
-        flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
-        flirt.inputs.reference = input_MNI
-        flirt.inputs.in_file = nodif_brain_mask_path
-        flirt.inputs.out_matrix_file = bedpostx_dir + '/xfms/diff2MNI.mat'
-        flirt.run()
+    ##Create transform matrix between diff and MNI using FLIRT
+    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
+    flirt.inputs.reference = input_MNI
+    flirt.inputs.in_file = nodif_brain_mask_path
+    flirt.inputs.out_matrix_file = bedpostx_dir + '/xfms/diff2MNI.mat'
+    flirt.run()
 
-        ##Apply transform between diff and MNI using FLIRT
-        flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
-        flirt.inputs.reference = input_MNI
-        flirt.inputs.in_file = nodif_brain_mask_path
-        flirt.inputs.apply_xfm = True
-        flirt.inputs.in_matrix_file = bedpostx_dir + '/xfms/diff2MNI.mat'
-        flirt.inputs.out_file = bedpostx_dir + '/xfms/diff2MNI_affine.nii.gz'
-        flirt.run()
+    ##Apply transform between diff and MNI using FLIRT
+    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
+    flirt.inputs.reference = input_MNI
+    flirt.inputs.in_file = nodif_brain_mask_path
+    flirt.inputs.apply_xfm = True
+    flirt.inputs.in_matrix_file = bedpostx_dir + '/xfms/diff2MNI.mat'
+    flirt.inputs.out_file = bedpostx_dir + '/xfms/diff2MNI_affine.nii.gz'
+    flirt.run()
 
-        flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
-        flirt.inputs.reference = input_MNI
-        flirt.inputs.in_file = fdt_paths_loc
-        out_file_MNI = fdt_paths_loc.split('.nii')[0] + '_MNI.nii.gz'
-        flirt.inputs.out_file = out_file_MNI
-        flirt.inputs.apply_xfm = True
-        flirt.inputs.in_matrix_file = bedpostx_dir + '/xfms/diff2MNI.mat'
-        flirt.run()
+    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
+    flirt.inputs.reference = input_MNI
+    flirt.inputs.in_file = fdt_paths_loc
+    out_file_MNI = fdt_paths_loc.split('.nii')[0] + '_MNI.nii.gz'
+    flirt.inputs.out_file = out_file_MNI
+    flirt.inputs.apply_xfm = True
+    flirt.inputs.in_matrix_file = bedpostx_dir + '/xfms/diff2MNI.mat'
+    flirt.run()
 
-        fdt_paths_MNI_loc = probtrackx_output_dir_path + '/fdt_paths_MNI.nii.gz'
+    fdt_paths_MNI_loc = probtrackx_output_dir_path + '/fdt_paths_MNI.nii.gz'
 
-        colors.Normalize(vmin=-1, vmax=1)
-        clust_pal = sns.color_palette("Blues_r", 4)
-        clust_colors = colors.to_rgba_array(clust_pal)
+    colors.Normalize(vmin=-1, vmax=1)
+    clust_pal = sns.color_palette("Blues_r", 4)
+    clust_colors = colors.to_rgba_array(clust_pal)
 
-        ##Plotting with glass brain
-        connectome = niplot.plot_connectome(conn_matrix_symm, coords, edge_threshold=edge_threshold, node_color=clust_colors, edge_cmap=niplot.cm.black_blue_r)
-        connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=niplot.cm.cyan_copper_r)
-        out_file_path = dir_path + '/structural_connectome_fig_' + network + '_' + str(ID) + '.png'
-        plt.savefig(out_file_path)
-        plt.close()
+    ##Plotting with glass brain
+    connectome = niplot.plot_connectome(conn_matrix_symm, coords, edge_threshold=edge_threshold, node_color=clust_colors, edge_cmap=niplot.cm.black_blue_r)
+    connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=niplot.cm.cyan_copper_r)
+    out_file_path = dir_path + '/structural_connectome_fig_' + network + '_' + str(ID) + '.png'
+    plt.savefig(out_file_path)
+    plt.close()
 
-        network = network + '_structural'
-        conn_model = 'struct'
-        pynplot.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
-    else:
-        pass
+    network = network + '_structural'
+    conn_model = 'struct'
+    pynplot.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
     return

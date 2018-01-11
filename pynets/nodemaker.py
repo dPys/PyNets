@@ -451,12 +451,12 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc)
         ##Save coords to pickle
         coord_path = dir_path + '/whole_brain_atlas_coords_' + str(os.path.basename(mask).split('.')[0]) + '.pkl'
         with open(coord_path, 'wb') as f:
-            pickle.dump(coords, f)
+            pickle.dump(coords, f, protocol=2)
         net_parcels_map_nifti = None
     ##Save labels to pickle
     labels_path = dir_path + '/whole_brain_atlas_labelnames_' + str(os.path.basename(mask).split('.')[0]) + '.pkl'
     with open(labels_path, 'wb') as f:
-        pickle.dump(label_names, f)
+        pickle.dump(label_names, f, protocol=2)
     return(net_parcels_map_nifti, coords, label_names)
 
 def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
@@ -473,9 +473,9 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
     ##Save coords to pickle
     coord_path = dir_path + '/whole_brain_atlas_coords_wb.pkl'
     with open(coord_path, 'wb') as f:
-        pickle.dump(coords, f)
+        pickle.dump(coords, f, protocol=2)
     ##Save labels to pickle
     labels_path = dir_path + '/whole_brain_atlas_labelnames_wb.pkl'
     with open(labels_path, 'wb') as f:
-        pickle.dump(label_names, f)
+        pickle.dump(label_names, f, protocol=2)
     return(net_parcels_map_nifti, coords, label_names)

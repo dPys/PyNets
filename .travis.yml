@@ -5,7 +5,7 @@ language: python
 python:
   - 3.6
   - 3.5
-  - 2.7
+  - 3.4
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: 
@@ -16,6 +16,6 @@ install:
 # command to run tests, e.g. python setup.py test
 script: 
 #  - tox
-   - travis_wait 120 pytest tests/test_nodemaker.py
-#  - travis_wait 120 pytest tests/test_plotting.py
-   - travis_wait 120 pytest tests/test_graphestimation.py
+   - travis_wait 1200 pytest tests/test_nodemaker.py
+   - travis_wait 1200 pytest tests/test_plotting.py
+   - travis_wait 1200 pytest tests/test_graphestimation.py
