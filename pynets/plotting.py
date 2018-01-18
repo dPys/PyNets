@@ -1,27 +1,27 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-
+Copyright (C) 2018
 @author: Derek Pisner
 """
 import numpy as np
 import networkx as nx
 import os
 
-def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask):
+def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr, node_size):
     import matplotlib
     matplotlib.use('Agg')
     from matplotlib import pyplot as plt
     if mask:
         if network:
-            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_network.png'
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '_network.png'
         else:
-            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '.png'    
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '.png'    
     else:
         if network:
-            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + network + '_adj_mat_' + str(conn_model) + '_network.png'
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + network + '_adj_mat_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '_network.png'
         else:
-            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_adj_mat_' + str(conn_model) + '.png'
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_adj_mat_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '.png'
             
     rois_num=conn_matrix.shape[0]
     plt.figure(figsize=(10, 10))
@@ -283,7 +283,7 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
     plt.savefig(out_path_fig)
     plt.close()
 
-def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold):
+def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, thr, node_size, edge_threshold):
     import matplotlib
     matplotlib.use('Agg')
     from matplotlib import pyplot as plt
@@ -321,19 +321,19 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
         print('Error: Cannot plot connectogram for graphs smaller than 20 x 20!')
 
     ##Plot adj. matrix based on determined inputs
-    plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask)
+    plotting.plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr, node_size)
 
     ##Plot connectome
     if mask:
         if network:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_' + str(thr) + '_' + str(node_size) + '_connectome_viz.png'
         else:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(thr) + '_' + str(node_size) + '_connectome_viz.png'
     else:
         if network:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(network) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(network) + '_' + str(thr) + '_' + str(node_size) + '_connectome_viz.png'
         else:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '_connectome_viz.png'
     #niplot.plot_connectome(conn_matrix, coords, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
     connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=True, node_size=0.0001)

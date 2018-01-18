@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Created on Tue Nov  7 10:40:07 2017
+# Copyright (C) 2018
 # @author: Derek Pisner
 
 import sys
@@ -59,8 +60,8 @@ if __name__ == '__main__':
         help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is 0.95.\n')
     parser.add_argument('-ns',
         metavar='Node size',
-        default='2',
-        help='Optionally specify a coordinate-based node radius size. Default is 2 voxels.\n')
+        default=4,
+        help='Optionally coordinate-based node radius size(s). Default is 4 mm. If you wish to iterate the pipeline across multiple node sizes, separate the list by comma (e.g. 2,4,6)\n')
     parser.add_argument('-m',
         metavar='Path to mask image',
         default=None,
@@ -148,7 +149,17 @@ if __name__ == '__main__':
     #basc=args.basc
     procmem=list(eval(str((args.pm))))
     thr=args.thr
-    node_size=args.ns
+    node_size_pre = args.ns
+    node_size = list(str(node_size_pre).split(','))
+    if len(node_size) > 1:
+        node_size_list = node_size
+        node_size = None
+    elif node_size == ['None']:
+        node_size = None
+        node_size_list = None
+    else:
+        node_size = node_size[0]
+        node_size_list = None
     mask=args.m
     conn_model=args.mod
     conf=args.conf
@@ -213,7 +224,7 @@ if __name__ == '__main__':
         atlas_select = atlas_select[0]
         multi_atlas = None
     print('\n\n\n------------------------------------------------------------------------\n')
-
+    
     if min_thr is not None and max_thr is not None and step_thr is not None:
         multi_thr=True
     elif min_thr is not None or max_thr is not None or step_thr is not None:
@@ -302,12 +313,12 @@ if __name__ == '__main__':
             print ("Clustering within mask at a single resolution...")
         elif k_clustering == 2:
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+            print ("Clustering within mask at multiple resolutions...")
             for k in k_list:
                 cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                 atlas_select = str(ID) + '_' + cl_mask_name + '_k' + str(k)
                 print ("ATLAS: " + str(atlas_select))
                 dir_path = do_dir_path(atlas_select, input_file)
-                print ("Clustering within mask at multiple resolutions...")
         elif k_clustering == 3:
             print ("Clustering within multiple masks at a single resolution...")
             for clust_mask in clust_mask_list:
@@ -342,16 +353,21 @@ if __name__ == '__main__':
     else:
         print("Using whole-brain pipeline..." )
 
+    if node_size_list:
+        print("Growing spherical nodes across multiple radius sizes: " + str(', '.join(str(n) for n in node_size_list)) + '...')
+    else:
+        print("Using node size of: " + str(node_size))
+        
     if input_file and subjects_list:
         print("\n")
         print('Running workflow of workflows across subjects:\n')
-        print (str(subjects_list))
+        print(str(subjects_list))
         ##Set directory path containing input file
         dir_path = do_dir_path(atlas_select, subjects_list[0])
     elif input_file and bedpostx_dir:
         print('Running joint structural-functional connectometry...')
-        print ("Functional file: " + input_file)
-        print ("Bedpostx Directory: " + bedpostx_dir)
+        print("Functional file: " + input_file)
+        print("Bedpostx Directory: " + bedpostx_dir)
         if anat_loc is not None:
             print ("Anatomical Image: " + anat_loc)
         if network is not None:
@@ -359,16 +375,18 @@ if __name__ == '__main__':
         ##Set directory path containing input file
         nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
         ref_txt = parlistfile.split('/')[-1:][0].split('.')[0] + '.txt'
+        atlas_select = parlistfile.split('/')[-1].split('.')[0]
         dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
     elif input_file is None and bedpostx_dir:
         print('Running structural connectometry only...')
-        print ("Bedpostx Directory: " + bedpostx_dir)
+        print("Bedpostx Directory: " + bedpostx_dir)
         if anat_loc is not None:
-            print ("Anatomical Image: " + anat_loc)
+            print("Anatomical Image: " + anat_loc)
         if network is not None:
             print('RSN: ' + network)
         ##Set directory path containing input file
         nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
+        atlas_select = parlistfile.split('/')[-1].split('.')[0]
         ref_txt = parlistfile.split('/')[-1:][0].split('.')[0] + '.txt'
         dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
     elif input_file and bedpostx_dir is None and subjects_list is None:
@@ -394,17 +412,17 @@ if __name__ == '__main__':
        #basc_run.basc_run(subjects_list, basc_config)
        #parlistfile=Path(__file__)/'pynets'/'rsnrefs'/'group_stability_clusters.nii.gz'
 
-    def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune):
+    def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list):
         import os
         import numpy as np
         from pynets import workflows, utils
 
         ##Workflow 1: Whole-brain functional connectome
         if bedpostx_dir is None and network is None:
-            [est_path, thr] = workflows.wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list)
+            [est_path, thr] = workflows.wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, node_size_list)
         ##Workflow 2: RSN functional connectome
         elif bedpostx_dir is None and network is not None:
-            [est_path, thr] = workflows.rsn_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list)
+            [est_path, thr] = workflows.rsn_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, node_size_list)
         ##Workflow 3: Whole-brain structural connectome
         elif bedpostx_dir is not None and network is None:
             est_path = workflows.wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc)
@@ -415,7 +433,7 @@ if __name__ == '__main__':
             thr=None
 
         ##Build iterfields
-        if multi_atlas is not None or multi_thr==True or multi_nets is not None or k_clustering == 2:
+        if multi_atlas is not None or multi_thr==True or multi_nets is not None or k_clustering == 2 or node_size_list is not None:
             ##Create est_path_list iterfield based on iterables across atlases, RSN's, k-values, and thresholding ranges
             est_path_list = []
             if k_clustering == 2:
@@ -425,32 +443,14 @@ if __name__ == '__main__':
                 num_atlases = len(k_list)
                 for k in k_list:
                     atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
-                    if multi_nets is not None:
-                        num_networks = len(multi_nets)
-                        print('\nIterating pipeline for ' + str(ID) + ' across networks: ' + '\n'.join(str(n) for n in multi_nets) + '...\n')
-                        for network in multi_nets:
-                            dir_path = utils.do_dir_path(atlas_select, input_file)
-                            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
-                    else:
-                        num_networks =  1
-                        dir_path = utils.do_dir_path(atlas_select, input_file)
-                        [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
+                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
             elif k_clustering == 3:
                 print('\nIterating pipeline for ' + str(ID) + ' across multiple masks at a single clustering resolution...\n')
                 num_atlases = len(clust_mask_list)
                 for clust_mask in clust_mask_list:
                     mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                     atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
-                    if multi_nets is not None:
-                        num_networks = len(multi_nets)
-                        print('\nIterating pipeline for ' + str(ID) + ' across networks: ' + '\n'.join(str(n) for n in multi_nets) + '...\n')
-                        for network in multi_nets:
-                            dir_path = utils.do_dir_path(atlas_select, input_file)
-                            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
-                    else:
-                        num_networks =  1
-                        dir_path = utils.do_dir_path(atlas_select, input_file)
-                        [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
+                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
             elif k_clustering == 4:
                 print('\nIterating pipeline for ' + str(ID) + ' across multiple clustering resolutions and masks...\n')
                 k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
@@ -459,67 +459,42 @@ if __name__ == '__main__':
                     mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                     for k in k_list:
                         atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
-                        if multi_nets is not None:
-                            num_networks = len(multi_nets)
-                            print('\nIterating pipeline for ' + str(ID) + ' across networks: ' + '\n'.join(str(n) for n in multi_nets) + '...\n')
-                            for network in multi_nets:
-                                dir_path = utils.do_dir_path(atlas_select, input_file)
-                                [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
-                        else:
-                            num_networks =  1
-                            dir_path = utils.do_dir_path(atlas_select, input_file)
-                            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
+                        [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
             elif multi_atlas is not None:
                 num_atlases = len(multi_atlas)
                 print('\nIterating pipeline for ' + str(ID) + ' across multiple atlases: ' + '\n'.join(str(n) for n in multi_atlas) + '...\n')
                 for atlas_select in multi_atlas:
-                    if multi_nets is not None:
-                        num_networks = len(multi_nets)
-                        print('\nIterating pipeline for ' + str(ID) + ' across networks: ' + '\n'.join(str(n) for n in multi_nets) + '...\n')
-                        for network in multi_nets:
-                            dir_path = utils.do_dir_path(atlas_select, input_file)
-                            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
-                    else:
-                        num_networks =  1
-                        dir_path = utils.do_dir_path(atlas_select, input_file)
-                        [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
+                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
             elif user_atlas_list:
                 num_atlases = len(user_atlas_list)
                 print('\nIterating pipeline for ' + str(ID) + ' across multiple atlases: ' + '\n'.join(str(a) for a in user_atlas_list) + '...\n')
                 for parlistfile in user_atlas_list:
                     atlas_select = parlistfile.split('/')[-1].split('.')[0]
-                    if multi_nets is not None:
-                        num_networks = len(multi_nets)
-                        print('\nIterating pipeline for ' + str(ID) + ' across networks: ' + '\n'.join(str(n) for n in multi_nets) + '...\n')
-                        for network in multi_nets:
-                            dir_path = utils.do_dir_path(atlas_select, input_file)
-                            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
-                    else:
-                        num_networks =  1
-                        dir_path = utils.do_dir_path(atlas_select, input_file)
-                        [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
+                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
             else:
                 num_atlases = 1
                 if multi_thr==True:
-                    if multi_nets is not None:
-                        num_networks = len(multi_nets)
-                        print('\nIterating pipeline for ' + str(ID) + ' across networks: ' + '\n'.join(str(n) for n in multi_nets) + '...\n')
-                        for network in multi_nets:
-                            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
-                    else:
-                        num_networks =  1
-                        [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
+                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
                 else:
                     if multi_nets is not None:
                         num_networks = len(multi_nets)
                         for network in multi_nets:
-                            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list)
+                            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
                         iter_thresh = [thr]
                     else:
-                        est_path_list = [est_path]
-                        num_networks =  1
-                        iter_thresh = [thr]
-
+                        if node_size_list:
+                            num_networks =  1
+                            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
+                        else:
+                            est_path_list = [est_path]
+                            num_networks =  1
+                            iter_thresh = [thr]
+                        
+            if node_size_list:
+                num_node_sizes = len(node_size_list)
+            else:
+                num_node_sizes = 1
+        
             ##Check existence of each est_path in est_path_list, returning a modified list with only those paths that do exist.
             [est_path_list, bad_ixs] = utils.check_est_path_existence(est_path_list)
 
@@ -530,53 +505,29 @@ if __name__ == '__main__':
                 if multi_atlas is not None:
                     for atlas in multi_atlas:
                         for network in multi_nets:
-                            if multi_thr == True:
-                                for thr in iter_thresh:
-                                    network_list.append(network)
-                            else:
-                                network_list.append(network)
+                            network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh)
                 elif user_atlas_list:
                     for atlas in user_atlas_list:
                         for network in multi_nets:
-                            if multi_thr == True:
-                                for thr in iter_thresh:
-                                    network_list.append(network)
-                            else:
-                                network_list.append(network)
+                            network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh)
                 elif k_clustering == 2:
                     k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
                     for k in k_list:
                         for network in multi_nets:
-                            if multi_thr == True:
-                                for thr in iter_thresh:
-                                    network_list.append(network)
-                            else:
-                                network_list.append(network)
+                            network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh)
                 elif k_clustering == 4:
                     k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
                     for clust_mask in clust_mask_list:
                         for k in k_list:
                             for network in multi_nets:
-                                if multi_thr == True:
-                                    for thr in iter_thresh:
-                                        network_list.append(network)
-                                else:
-                                    network_list.append(network)
+                                network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh)  
                 elif k_clustering == 3:
                     for clust_mask in clust_mask_list:
                         for network in multi_nets:
-                            if multi_thr == True:
-                                for thr in iter_thresh:
-                                    network_list.append(network)
-                            else:
-                                network_list.append(network)
+                            network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh)
                 else:
                     for network in multi_nets:
-                        if multi_thr == True:
-                            for thr in iter_thresh:
-                                network_list.append(network)
-                        else:
-                            network_list.append(network)
+                        network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh)
             elif network is not None and multi_nets is None:
                 network_list = [network] * len(est_path_list)
             else:
@@ -586,11 +537,17 @@ if __name__ == '__main__':
             if len(bad_ixs) > 0:
                 for i in bad_ixs:
                     network_list.pop(i)
-                    
-            if multi_thr == True:
-                thr = iter_thresh * num_atlases * num_networks
+                
+            if multi_thr == True:               
+                thr = [iter_thresh[i//num_node_sizes] for i in range(len(iter_thresh)*num_node_sizes)] * num_atlases * num_networks
             else:
                 thr = iter_thresh
+            
+            if num_node_sizes > 1:
+                node_size = node_size_list * int(float(len(est_path_list))/float(num_node_sizes))
+            else:
+                node_size = [node_size] * len(est_path_list)
+                
             est_path = est_path_list
             network = network_list
             ID = [str(ID)] * len(est_path_list)
@@ -621,10 +578,13 @@ if __name__ == '__main__':
             print(k_clustering)
             print(len(k_clustering))
             print('\n\n\n')
+            print(node_size)
+            print(len(node_size))
+            print('\n\n\n')
             import sys
             sys.exit(0)'''
 
-        return(est_path, thr, network, ID, mask, conn_model, k_clustering, prune)
+        return(est_path, thr, network, ID, mask, conn_model, k_clustering, prune, node_size)
 
     class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
         ID = traits.Any(mandatory=True)
@@ -634,6 +594,7 @@ if __name__ == '__main__':
         est_path = File(exists=True, mandatory=True, desc="")
         mask = traits.Any(mandatory=False)
         prune = traits.Any(mandatory=False)
+        node_size = traits.Any(mandatory=False)
 
     class ExtractNetStatsOutputSpec(TraitedSpec):
         out_file = File()
@@ -651,7 +612,8 @@ if __name__ == '__main__':
                 self.inputs.conn_model,
                 self.inputs.est_path,
                 self.inputs.mask,
-                self.inputs.prune)
+                self.inputs.prune,
+                self.inputs.node_size)
             setattr(self, '_outpath', out)
             return runtime
 
@@ -708,6 +670,8 @@ if __name__ == '__main__':
         user_atlas_list = traits.Any(mandatory=True)
         clust_mask_list = traits.Any(mandatory=True)
         multi_atlas = traits.Any(mandatory=True)
+        node_size = traits.Any(mandatory=True)
+        node_size_list = traits.Any(mandatory=True)
         out_file = File('output_collectpandasdf.csv', usedefault=True)
 
     class CollectPandasDfsOutputSpec(TraitedSpec):
@@ -740,6 +704,8 @@ if __name__ == '__main__':
             self.inputs.user_atlas_list,
             self.inputs.clust_mask_list,
             self.inputs.multi_atlas,
+            self.inputs.node_size,
+            self.inputs.node_size_list,
             out_file=self.inputs.out_file)
             return runtime
 
@@ -751,7 +717,7 @@ if __name__ == '__main__':
     node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf,
     adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
     max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min,
-    k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune):
+    k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list):
         wf = pe.Workflow(name='PyNets_' + str(ID))
         wf.base_directory='/tmp/pynets'
         ##Create input/output nodes
@@ -761,7 +727,8 @@ if __name__ == '__main__':
         'multi_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch',
         'bedpostx_dir', 'anat_loc', 'parc', 'ref_txt', 'procmem', 'dir_path', 'multi_thr',
         'multi_atlas', 'max_thr', 'min_thr', 'step_thr', 'k', 'clust_mask', 'k_min',
-        'k_max', 'k_step', 'k_clustering', 'user_atlas_list', 'clust_mask_list', 'prune']), name='inputnode')
+        'k_max', 'k_step', 'k_clustering', 'user_atlas_list', 'clust_mask_list', 'prune', 
+        'node_size_list']), name='inputnode')
 
         #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
         inputnode.inputs.in_file = input_file
@@ -798,6 +765,7 @@ if __name__ == '__main__':
         inputnode.inputs.user_atlas_list = user_atlas_list
         inputnode.inputs.clust_mask_list = clust_mask_list
         inputnode.inputs.prune = prune
+        inputnode.inputs.node_size_list = node_size_list
 
         #3) Add variable to function nodes
         ##Create function nodes
@@ -806,14 +774,16 @@ if __name__ == '__main__':
         'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch', 'bedpostx_dir', 'anat_loc',
         'parc', 'ref_txt', 'procmem', 'dir_path', 'multi_thr', 'multi_atlas', 'max_thr',
         'min_thr', 'step_thr', 'k', 'clust_mask', 'k_min', 'k_max', 'k_step', 'k_clustering',
-        'user_atlas_list', 'clust_mask_list', 'prune'],
-        output_names = ['est_path', 'thr', 'network', 'ID', 'mask', 'conn_model', 'k_clustering', 'prune'],
+        'user_atlas_list', 'clust_mask_list', 'prune', 'node_size_list'],
+        output_names = ['est_path', 'thr', 'network', 'ID', 'mask', 'conn_model', 'k_clustering', 
+                        'prune', 'node_size'],
         function=workflow_selector),
         name = "imp_est")
 
         ##Create MapNode types for net_mets_node and export_to_pandas_node
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name = "ExtractNetStats",
-                                   iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path', 'mask', 'prune'])
+                                   iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path', 
+                                              'mask', 'prune', 'node_size'])
 
         export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name = "export_to_pandas",
                                            iterfield=['in_csv', 'ID', 'network', 'mask'])
@@ -824,12 +794,13 @@ if __name__ == '__main__':
                                                           'max_thr', 'step_thr', 'multi_thr', 'thr',
                                                           'mask', 'ID', 'network', 'k_clustering',
                                                           'conn_model', 'in_csv', 'user_atlas_list',
-                                                          'clust_mask_list', 'multi_atlas'])
+                                                          'clust_mask_list', 'multi_atlas', 'node_size', 
+                                                          'node_size_list'])
         if multi_nets:
             collect_pandas_dfs_node_iterables = []
             collect_pandas_dfs_node_iterables.append(("network", multi_nets))
             collect_pandas_dfs_node.iterables = collect_pandas_dfs_node_iterables
-
+            
         ##Connect nodes of workflow
         wf.connect([
             (inputnode, imp_est, [('in_file', 'input_file'),
@@ -865,14 +836,16 @@ if __name__ == '__main__':
                                   ('k_clustering', 'k_clustering'),
                                   ('user_atlas_list', 'user_atlas_list'),
                                   ('clust_mask_list', 'clust_mask_list'),
-                                  ('prune', 'prune')]),
+                                  ('prune', 'prune'),
+                                  ('node_size_list', 'node_size_list')]),
             (imp_est, net_mets_node, [('est_path', 'est_path'),
                                       ('network', 'network'),
                                       ('thr', 'thr'),
                                       ('ID', 'ID'),
                                       ('conn_model', 'conn_model'),
                                       ('mask', 'mask'),
-                                      ('prune', 'prune')]),
+                                      ('prune', 'prune'),
+                                      ('node_size', 'node_size')]),
             (imp_est, export_to_pandas_node, [('network', 'network'),
                                               ('ID', 'ID'),
                                               ('mask', 'mask')]),
@@ -897,7 +870,9 @@ if __name__ == '__main__':
                                                 ('conn_model', 'conn_model'),
                                                 ('user_atlas_list','user_atlas_list'),
                                                 ('clust_mask_list','clust_mask_list'),
-                                                ('multi_atlas','multi_atlas')])
+                                                ('multi_atlas','multi_atlas'),
+                                                ('node_size','node_size'),
+                                                ('node_size_list','node_size_list')])
         ])
         return wf
 
@@ -905,7 +880,7 @@ if __name__ == '__main__':
     thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh,
     plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr,
     anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step, k_clustering,
-    user_atlas_list, clust_mask_list, prune):
+    user_atlas_list, clust_mask_list, prune, node_size_list):
         wf_multi = pe.Workflow(name='PyNets_multisubject')
         cores=[]
         ram=[]
@@ -944,7 +919,8 @@ if __name__ == '__main__':
                                k_clustering=k_clustering,
                                user_atlas_list=user_atlas_list,
                                clust_mask_list=clust_mask_list,
-                               prune=prune)
+                               prune=prune,
+                               node_size_list=node_size_list)
             wf_multi.add_nodes([wf_single_subject])
             cores.append(int(procmem[0]))
             ram.append(int(procmem[1]))
@@ -964,22 +940,18 @@ if __name__ == '__main__':
     #logger.addHandler(handler)
 
     if subjects_list:
-        import multiprocessing
         [wf_multi, total_cores, total_ram] = wf_multi_subject(subjects_list, atlas_select, network, node_size,
         mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr,
         anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step, k_clustering,
-        user_atlas_list, clust_mask_list, prune)
+        user_atlas_list, clust_mask_list, prune, node_size_list)
         wf_multi.config['logging']['log_directory']='/tmp'
         wf_multi.config['logging']['workflow_level']='DEBUG'
         wf_multi.config['logging']['utils_level']='DEBUG'
         wf_multi.config['logging']['interface_level']='DEBUG'
-        #plugin_args = { 'n_procs': int(total_cores),'memory_gb': int(total_ram), 'status_callback' : log_nodes_cb}
-        plugin_args = { 'n_procs': int(total_cores),'memory_gb': int(total_ram)}
+        #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1]), 'status_callback' : log_nodes_cb}
+        plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
         print('\nRunning with ' + str(plugin_args) + '\n')
-        number_processes = int(multiprocessing.cpu_count()-1)
-        if number_processes < int(total_cores):
-            raise ValueError('\nNot enough cores (' + str(number_processes) + ') found on this machine to handle requested load: (' + str(int(total_cores)) + ')')
         wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
         #wf_multi.run()
     ##Single-subject workflow generator
@@ -988,7 +960,7 @@ if __name__ == '__main__':
         node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf,
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min,
-        k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune)
+        k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list)
         wf.config['logging']['log_directory']='/tmp'
         wf.config['logging']['workflow_level']='DEBUG'
         wf.config['logging']['utils_level']='DEBUG'

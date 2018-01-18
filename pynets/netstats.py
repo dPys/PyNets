@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-
+Copyright (C) 2018
 @author: Derek Pisner
 """
 from __future__ import division
@@ -938,7 +938,7 @@ def most_important(G):
      return(Gt, pruned_nodes, pruned_edges)
          
 ##Extract network metrics interface
-def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, out_file=None):
+def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_size, out_file=None):
     from pynets import thresholding, utils
 
     ##Load and threshold matrix
@@ -966,13 +966,13 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, out_fil
     else:
         G_pruned = G_pre
     
-    ##Make directed if sparse
+    ##Make directed if model is effective type
     if conn_model == 'effective':
         G_di = nx.DiGraph(G_pruned)
         G_dir = G_di.to_directed()
         G = G_pruned
     else:
-        G = G_pruned        
+        G = G_pruned 
 
     ##Get corresponding matrix
     in_mat = nx.to_numpy_array(G)
@@ -1006,14 +1006,14 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, out_fil
     ##Save G as gephi file
     if mask:
         if network:
-            nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '.graphml')
+            nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(thr) + '_' + str(node_size) + '.graphml')
         else:
-            nx.write_graphml(G, dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '.graphml')        
+            nx.write_graphml(G, dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(thr) + '_' + str(node_size) + '.graphml')        
     else:
         if network:
-            nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '.graphml')
+            nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '_' + str(thr) + '_' + str(node_size) + '.graphml')
         else:
-            nx.write_graphml(G, dir_path + '/' + ID + '.graphml')
+            nx.write_graphml(G, dir_path + '/' + ID + '_' + str(thr) + '_' + str(node_size) + '.graphml')
 
     ###############################################################
     ########### Calculate graph metrics from graph G ##############
@@ -1362,7 +1362,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, out_fil
     pickle.dump(metric_list_names, open(met_list_picke_path, 'wb'), protocol=2)
 
     ##And save results to csv
-    out_path = utils.create_csv_path(ID, network, conn_model, thr, mask, dir_path)
+    out_path = utils.create_csv_path(ID, network, conn_model, thr, mask, dir_path, node_size)
     np.savetxt(out_path, net_met_val_list_final)
 
     return(out_path)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-
+Copyright (C) 2018
 @author: Derek Pisner
 """
 import sys
@@ -130,7 +130,7 @@ def autofix(W, copy=True):
         W = np.around(W, decimals=5)
     return W
 
-def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, network, ID, dir_path, mask):
+def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, network, ID, dir_path, mask, node_size):
     from pynets import utils, thresholding, graphestimation
    
     ##Adaptive thresholding scenario
@@ -165,10 +165,10 @@ def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, 
             ##Save thresholded
             conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
             edge_threshold = str(float(thr)*100) +'%'
-            est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path) 
+            est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size) 
         else:
             conn_matrix_thr = thresholding.density_thresholding(conn_matrix, dens_thresh)
             edge_threshold = str((1-float(dens_thresh))*100) +'%'
-            est_path = utils.create_est_path(ID, network, conn_model, dens_thresh, mask, dir_path)
+            est_path = utils.create_est_path(ID, network, conn_model, dens_thresh, mask, dir_path, node_size)
         np.savetxt(est_path, conn_matrix_thr, delimiter='\t')
     return(conn_matrix_thr, edge_threshold, est_path, thr)
