@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-
+Copyright (C) 2018
 @author: Derek Pisner
 """
 import numpy as np
@@ -132,12 +132,113 @@ def get_conn_matrix(time_series, conn_model):
 
     return(conn_matrix)
 
+def generate_mask_from_voxels(voxel_coords, volume_dims):
+    mask = np.zeros(volume_dims)
+    for voxel in voxel_coords:
+        mask[tuple(voxel)] = 1
+    return mask
+
+def normalize(v):
+    norm=np.linalg.norm(v, ord=1)
+    if norm==0:
+        norm=np.finfo(v.dtype).eps
+    return v/norm
+
+def extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path):
+    import nibabel as nib
+    import time
+    import subprocess
+    try:
+        from StringIO import StringIO
+    except ImportError:
+        from io import BytesIO as StringIO
+    from pynets.nodemaker import get_sphere
+    from pynets.graphestimation import generate_mask_from_voxels, normalize
+    start_time=time.time()
+    data = nib.load(func_file)
+    activity_data = data.get_data()
+    volume_dims = np.shape(activity_data)[0:3]
+    ref_affine = data.get_qform()
+    ref_header = data.header
+    vox_dims = tuple(ref_header['pixdim'][1:4])
+    #print('Data loaded: t+'+str(time.time()-start_time)+'s')
+    label_mask = np.zeros(volume_dims)
+    label_file = dir_path + '/label_file_tmp.nii.gz'
+    
+    [x_vox, y_vox, z_vox] = vox_dims
+    # finding sphere voxels 
+    print(len(coords))
+    def mmToVox(mmcoords):
+        voxcoords = ['','','']
+        voxcoords[0] = int((round(int(mmcoords[0])/x_vox))+45)
+        voxcoords[1] = int((round(int(mmcoords[1])/y_vox))+63)
+        voxcoords[2] = int((round(int(mmcoords[2])/z_vox))+36)
+        return voxcoords
+    
+    coords_vox = []
+    for i in coords:
+        coords_vox.append(mmToVox(i))
+    coords = list(tuple(x) for x in coords_vox)
+    
+    for coord in range(len(coords)):
+        sphere_voxels = get_sphere(coords=coords[coord], r=node_size, vox_dims=vox_dims, dims=volume_dims)
+        # creating mask from found voxels
+        sphere_mask = generate_mask_from_voxels(sphere_voxels,volume_dims)
+        label_mask = label_mask + (coord+1)*sphere_mask
+        #print('Sphere voxels found: t+'+str(time.time()-start_time)+'s')
+
+    nib.save(nib.Nifti1Image(label_mask, ref_affine, header=ref_header), label_file)
+    #print('Sphere mask saved: t+'+str(time.time()-start_time)+'s')
+    cmd ='fslmeants -i '+ func_file + ' --label=' + label_file
+    stdout_extracted_ts = subprocess.check_output(cmd, shell=True)
+    ts_within_nodes = np.loadtxt(StringIO(stdout_extracted_ts))
+    ts_within_nodes = normalize(ts_within_nodes)
+    #print('Mean time series extracted: '+str(time.time()-start_time)+'s')
+    #print('Number of ROIs expected: '+str(len(coords)))
+    #print('Number of ROIs found: '+str(ts_within_nodes.shape[1]))
+    return(ts_within_nodes)
+    
+def extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path):
+    import nibabel as nib
+    import time
+    import subprocess
+    from pynets.graphestimation import normalize
+    try:
+        from StringIO import StringIO
+    except ImportError:
+        from io import BytesIO as StringIO
+    start_time=time.time()
+    data = nib.load(func_file)
+    activity_data = data.get_data()
+    volume_dims = np.shape(activity_data)[0:3]
+    ref_affine = data.get_qform()
+    ref_header = data.header
+    #print('Data loaded: t+'+str(time.time()-start_time)+'s')
+    label_mask = np.zeros(volume_dims)
+
+    nib.save(nib.Nifti1Image(label_mask, ref_affine, header=ref_header), net_parcels_map_nifti)
+    #print('Sphere mask saved: t+'+str(time.time()-start_time)+'s')
+    cmd ='fslmeants -i '+ func_file + ' --label=' + net_parcels_map_nifti
+    stdout_extracted_ts = subprocess.check_output(cmd, shell=True)
+    ts_within_nodes = np.loadtxt(StringIO(stdout_extracted_ts))
+    ts_within_nodes = normalize(ts_within_nodes)
+    #print('Mean time series extracted: t+'+str(time.time()-start_time)+'s')
+    #print('Number of ROIs found: '+str(ts_within_nodes.shape[1]))
+    return(ts_within_nodes)
+    
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network):
     import os
     from nilearn import input_data
+    from pynets.graphestimation import extract_ts_parc_fast
     ##extract time series from whole brain parcellaions:
-    parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0, standardize=True)
-    ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
+    fast=False
+    #import time
+    #start_time = time.time()
+    if fast==True:
+        ts_within_nodes = extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path)
+    else:
+        parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0, standardize=True)
+        ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
     print('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' volumetric ROI\'s\n')
     ##Save time series as txt file
     if mask is None:
@@ -156,8 +257,18 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network):
     import os
     from nilearn import input_data
-    spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True, standardize=True)
-    ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
+    from pynets.graphestimation import extract_ts_coords_fast
+    
+    fast=False
+    #import time
+    #start_time = time.time()
+    if fast==True:
+        ts_within_nodes = extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path)
+    else:
+        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True, standardize=True, verbose=1) 
+        ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
+        
+    #print(time.time()-start_time)
     print('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' coordinate ROI\'s\n')
     ##Save time series as txt file
     if mask is None:

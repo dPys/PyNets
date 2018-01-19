@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-
+Copyright (C) 2018
 @author: Derek Pisner
 """
 import os
@@ -451,31 +451,35 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc)
         ##Save coords to pickle
         coord_path = dir_path + '/whole_brain_atlas_coords_' + str(os.path.basename(mask).split('.')[0]) + '.pkl'
         with open(coord_path, 'wb') as f:
-            pickle.dump(coords, f)
+            pickle.dump(coords, f, protocol=2)
         net_parcels_map_nifti = None
     ##Save labels to pickle
     labels_path = dir_path + '/whole_brain_atlas_labelnames_' + str(os.path.basename(mask).split('.')[0]) + '.pkl'
     with open(labels_path, 'wb') as f:
-        pickle.dump(label_names, f)
+        pickle.dump(label_names, f, protocol=2)
     return(net_parcels_map_nifti, coords, label_names)
 
 def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
-    from pynets import nodemaker
     try:
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
+    from pynets import nodemaker
+    pick_dump = False
+    
     if parc == True:
         [net_parcels_map_nifti, parcel_list_adj] = nodemaker.create_parcel_atlas(parcel_list)
     else:
         net_parcels_map_nifti = None
         print('No additional masking...')
-    ##Save coords to pickle
-    coord_path = dir_path + '/whole_brain_atlas_coords_wb.pkl'
-    with open(coord_path, 'wb') as f:
-        pickle.dump(coords, f)
-    ##Save labels to pickle
-    labels_path = dir_path + '/whole_brain_atlas_labelnames_wb.pkl'
-    with open(labels_path, 'wb') as f:
-        pickle.dump(label_names, f)
+    
+    if pick_dump == True:
+        ##Save coords to pickle
+        coord_path = dir_path + '/whole_brain_atlas_coords_wb.pkl'
+        with open(coord_path, 'wb') as f:
+            pickle.dump(coords, f, protocol=2)
+        ##Save labels to pickle
+        labels_path = dir_path + '/whole_brain_atlas_labelnames_wb.pkl'
+        with open(labels_path, 'wb') as f:
+            pickle.dump(label_names, f, protocol=2)
     return(net_parcels_map_nifti, coords, label_names)

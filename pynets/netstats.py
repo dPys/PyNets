@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-
+Copyright (C) 2018
 @author: Derek Pisner
 """
 from __future__ import division
@@ -938,10 +938,8 @@ def most_important(G):
      return(Gt, pruned_nodes, pruned_edges)
          
 ##Extract network metrics interface
-def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None):
+def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_size, out_file=None):
     from pynets import thresholding, utils
-    
-    pruning = True
 
     ##Load and threshold matrix
     in_mat = np.array(np.genfromtxt(est_path))
@@ -963,18 +961,18 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
     G_pre=nx.from_numpy_matrix(in_mat)
 
     ##Prune irrelevant nodes (i.e. nodes who are fully disconnected from the graph and/or those whose betweenness centrality are > 3 standard deviations below the mean)
-    if pruning == True:
+    if prune == True:
         [G_pruned, _, _] = most_important(G_pre)
     else:
         G_pruned = G_pre
     
-    ##Make directed if sparse
-    if conn_model != 'corr' and conn_model != 'cov' and conn_model != 'tangent':
+    ##Make directed if model is effective type
+    if conn_model == 'effective':
         G_di = nx.DiGraph(G_pruned)
         G_dir = G_di.to_directed()
         G = G_pruned
     else:
-        G = G_pruned        
+        G = G_pruned 
 
     ##Get corresponding matrix
     in_mat = nx.to_numpy_array(G)
@@ -991,14 +989,14 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
         print('Analyzing DIRECTED graph when applicable...')
     except:
         print('Graph is UNDIRECTED')
-
-    if conn_model == 'corr' or conn_model == 'cov' or conn_model == 'tangent':
-        if nx.is_connected(G) == True:
-            num_conn_comp = nx.number_connected_components(G)
-            print('Graph is CONNECTED with ' + str(num_conn_comp) + ' connected component(s)')
-        else:
-            print('Graph is DISCONNECTED')
-    print('\n')
+        try:
+            if nx.is_connected(G) == True:
+                print('Graph is CONNECTED')
+            else:
+                print('Graph is DISCONNECTED')
+                print('\n')
+        except:
+            pass
 
     ##Create Length matrix
     mat_len = thresholding.weight_conversion(in_mat, 'lengths')
@@ -1008,14 +1006,14 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
     ##Save G as gephi file
     if mask:
         if network:
-            nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '.graphml')
+            nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(thr) + '_' + str(node_size) + '.graphml')
         else:
-            nx.write_graphml(G, dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '.graphml')        
+            nx.write_graphml(G, dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(thr) + '_' + str(node_size) + '.graphml')        
     else:
         if network:
-            nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '.graphml')
+            nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '_' + str(thr) + '_' + str(node_size) + '.graphml')
         else:
-            nx.write_graphml(G, dir_path + '/' + ID + '.graphml')
+            nx.write_graphml(G, dir_path + '/' + ID + '_' + str(thr) + '_' + str(node_size) + '.graphml')
 
     ###############################################################
     ########### Calculate graph metrics from graph G ##############
@@ -1072,10 +1070,16 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
 
     ##Run miscellaneous functions that generate multiple outputs
     ##Calculate modularity using the Louvain algorithm
-    [community_aff, modularity] = modularity_louvain_dir(in_mat)
+    try:
+        [community_aff, modularity] = modularity_louvain_dir(in_mat)
+    except:
+        pass
 
     ##Calculate core-periphery subdivision
-    [Coreness_vec, Coreness_q] = core_periphery_dir(in_mat)
+    try:
+        [Coreness_vec, Coreness_q] = core_periphery_dir(in_mat)
+    except:
+        pass
 
     ##Local Efficiency
     try:
@@ -1341,9 +1345,9 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
 
     ##Save metric names as pickle
     try:
-        import cPickle
+        import cPickle as pickle
     except ImportError:
-        import _pickle as cPickle
+        import _pickle as pickle
         
     if mask != None:
         if network != None:
@@ -1355,10 +1359,10 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, out_file=None)
             met_list_picke_path = os.path.dirname(os.path.abspath(est_path)) + '/net_metric_list_' + network
         else:
             met_list_picke_path = os.path.dirname(os.path.abspath(est_path)) + '/net_metric_list'
-    cPickle.dump(metric_list_names, open(met_list_picke_path, 'wb'))
+    pickle.dump(metric_list_names, open(met_list_picke_path, 'wb'), protocol=2)
 
     ##And save results to csv
-    out_path = utils.create_csv_path(ID, network, conn_model, thr, mask, dir_path)
+    out_path = utils.create_csv_path(ID, network, conn_model, thr, mask, dir_path, node_size)
     np.savetxt(out_path, net_met_val_list_final)
 
     return(out_path)

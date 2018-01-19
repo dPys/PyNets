@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Dec 27 16:19:14 2017
+
+@author: PSYC-dap3463
+
+"""
 from pathlib import Path
 from pynets import nodemaker
 import numpy as np

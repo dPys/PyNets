@@ -3,7 +3,7 @@ import os
 import pandas as pd
 ###
 working_path = r'/work/04171/dpisner/data/ABM/network_analysis/' # use your path
-name_of_network_pickle = 'net_metrics_sps_None_mean'
+name_of_network_pickle = 'net_metrics_QuicGraphLassoCV_SalVentAttn_mean'
 ###
 
 allFiles = []
@@ -18,6 +18,8 @@ list_ = []
 
 for file_ in allFiles:
     df = pd.read_pickle(file_)
+    node_cols = [s for s in list(df.columns) if isinstance(s, int) or any(c.isdigit() for c in s)]
+    df = df.drop(node_cols, axis=1)
     list_.append(df)
 
 frame = pd.concat(list_)

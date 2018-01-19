@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-
+Copyright (C) 2018
 @author: Derek Pisner
 """
 import nibabel as nib
@@ -248,14 +248,23 @@ def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_m
         except:
             pass
     else:
+        import re
+        volumes_list = os.listdir(volumes_dir)
+
+        def atoi(text):
+            return int(text) if text.isdigit() else text
+        
+        def natural_keys(text):
+            return [ atoi(c) for c in re.split('(\d+)', text) ]
+        
+        volumes_list.sort(key=natural_keys)
         i = 0
-        for parcel in os.listdir(volumes_dir):
+        for parcel in volumes_list:
             out_file = volumes_dir + '/roi_parcel_' + str(i) +'_diff.nii.gz'
             flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
             flirt.inputs.reference = nodif_brain_mask_path
             flirt.inputs.in_file = volumes_dir + '/' + parcel
-            out_file_diff = out_file.split('.nii')[0] + '_diff.nii.gz'
-            flirt.inputs.out_file = out_file_diff
+            flirt.inputs.out_file = out_file
             flirt.inputs.apply_xfm = True
             flirt.inputs.in_matrix_file = bedpostx_dir + '/xfms/MNI2diff.mat'
             flirt.run()

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Dec 21 18:07:34 2017
-
+Copyright (C) 2018
 @author: PSYC-dap3463 (adapted from Cameron Craddock's PyClusterROI)
 """
 import sys
