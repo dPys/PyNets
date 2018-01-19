@@ -193,9 +193,9 @@ def extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path):
     stdout_extracted_ts = subprocess.check_output(cmd, shell=True)
     ts_within_nodes = np.loadtxt(StringIO(stdout_extracted_ts))
     ts_within_nodes = normalize(ts_within_nodes)
-    print('Mean time series extracted: '+str(time.time()-start_time)+'s')
-    print('Number of ROIs expected: '+str(len(coords)))
-    print('Number of ROIs found: '+str(ts_within_nodes.shape[1]))
+    #print('Mean time series extracted: '+str(time.time()-start_time)+'s')
+    #print('Number of ROIs expected: '+str(len(coords)))
+    #print('Number of ROIs found: '+str(ts_within_nodes.shape[1]))
     return(ts_within_nodes)
     
 def extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path):
@@ -222,8 +222,8 @@ def extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path):
     stdout_extracted_ts = subprocess.check_output(cmd, shell=True)
     ts_within_nodes = np.loadtxt(StringIO(stdout_extracted_ts))
     ts_within_nodes = normalize(ts_within_nodes)
-    print('Mean time series extracted: t+'+str(time.time()-start_time)+'s')
-    print('Number of ROIs found: '+str(ts_within_nodes.shape[1]))
+    #print('Mean time series extracted: t+'+str(time.time()-start_time)+'s')
+    #print('Number of ROIs found: '+str(ts_within_nodes.shape[1]))
     return(ts_within_nodes)
     
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network):

@@ -250,20 +250,14 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     wb_functional_connectometry_wf.config['logging']['utils_level']='DEBUG'
     wb_functional_connectometry_wf.config['logging']['interface_level']='DEBUG'
     wb_functional_connectometry_wf.config['execution']['plugin']='MultiProc'
-    #wb_functional_connectometry_wf.write_graph()
     res = wb_functional_connectometry_wf.run(plugin='MultiProc')
-    #res = wb_functional_connectometry_wf.run()
 
+    out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'outputnode' in x][-1]][0]
     try:
-        thr=list(res.nodes())[-1].result.outputs.thr
-        est_path=list(res.nodes())[-1].result.outputs.est_path
+        thr=out_node.result.outputs.thr
+        est_path=out_node.result.outputs.est_path
     except AttributeError:
-        try:
-            thr=list(res.nodes())[-2].result.outputs.thr
-            est_path=list(res.nodes())[-2].result.outputs.est_path
-        except AttributeError:
-            thr=list(res.nodes())[-3].result.outputs.thr
-            est_path=list(res.nodes())[-3].result.outputs.est_path
+        print('Workflow failed!')
     return(est_path, thr)
 
 def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, node_size_list):
@@ -552,20 +546,14 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     rsn_functional_connectometry_wf.config['logging']['utils_level']='DEBUG'
     rsn_functional_connectometry_wf.config['logging']['interface_level']='DEBUG'
     rsn_functional_connectometry_wf.config['execution']['plugin']='MultiProc'
-    #rsn_functional_connectometry_wf.write_graph()
     res = rsn_functional_connectometry_wf.run(plugin='MultiProc')
-    #res = rsn_functional_connectometry_wf.run()
 
+    out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'outputnode' in x][-1]][0]
     try:
-        thr=list(res.nodes())[-1].result.outputs.thr
-        est_path=list(res.nodes())[-1].result.outputs.est_path
+        thr=out_node.result.outputs.thr
+        est_path=out_node.result.outputs.est_path
     except AttributeError:
-        try:
-            thr=list(res.nodes())[-2].result.outputs.thr
-            est_path=list(res.nodes())[-2].result.outputs.est_path
-        except AttributeError:
-            thr=list(res.nodes())[-3].result.outputs.thr
-            est_path=list(res.nodes())[-3].result.outputs.est_path
+        print('Workflow failed!')
     return est_path, thr
 
 def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc):
@@ -708,19 +696,13 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     wb_structural_connectometry_wf.config['logging']['utils_level']='DEBUG'
     wb_structural_connectometry_wf.config['logging']['interface_level']='DEBUG'
     wb_structural_connectometry_wf.config['execution']['plugin']='MultiProc'
-    #wb_structural_connectometry_wf.write_graph()
     res = wb_structural_connectometry_wf.run(plugin='MultiProc')
-    #res = wb_structural_connectometry_wf.run()
 
+    out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'outputnode' in x][-1]][0]
     try:
-        est_path_struct=list(res.nodes())[-1].result.outputs.est_path_struct
+        est_path_struct=out_node.result.outputs.est_path
     except AttributeError:
-        est_path_struct=list(res.nodes())[-2].result.outputs.est_path_struct
-        try:
-            est_path_struct=list(res.nodes())[-2].result.outputs.est_path_struct
-        except AttributeError:
-            est_path_struct=list(res.nodes())[-3].result.outputs.est_path_struct
-
+        print('Workflow failed!')
     return est_path_struct
 
 def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc):
@@ -875,16 +857,11 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
     rsn_structural_connectometry_wf.config['logging']['utils_level']='DEBUG'
     rsn_structural_connectometry_wf.config['logging']['interface_level']='DEBUG'
     rsn_structural_connectometry_wf.config['execution']['plugin']='MultiProc'
-    #rsn_structural_connectometry_wf.write_graph()
     res = rsn_structural_connectometry_wf.run(plugin='MultiProc')
-    #res = rsn_structural_connectometry_wf.run()
 
+    out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'outputnode' in x][-1]][0]
     try:
-        est_path_struct=list(res.nodes())[-1].result.outputs.est_path_struct
+        est_path_struct=out_node.result.outputs.est_path
     except AttributeError:
-        est_path_struct=list(res.nodes())[-2].result.outputs.est_path_struct
-        try:
-            est_path_struct=list(res.nodes())[-2].result.outputs.est_path_struct
-        except AttributeError:
-            est_path_struct=list(res.nodes())[-3].result.outputs.est_path_struct
+        print('Workflow failed!')
     return est_path_struct
