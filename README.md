@@ -134,11 +134,9 @@ Visualize adjacency matrices
 Feed the path to your bedpostx directory into the pipeline to get a corresponding structural connectome
 ![Diffusion](docs/pynets_diffusion.png)
 Visualize communities of networks alongside white matter pathways or mask contours
-![Communities](docs/glass brain communities.png)
+![Communities](docs/glass_brain_communities.png)
 Generate force-directed visualizations
 ![Force-directed](docs/force-directed.png)
-Generate interactive connectograms
-![Connectogram](docs/interactivity.png)
 Use connectograms to visualize community structure (including link communities)
 ![Link Connectogram](docs/link_communities.png)
 
