@@ -19,7 +19,7 @@ def test_get_conn_matrix():
     dir_path= base_dir + '/997'
     time_series_file = dir_path + '/coords_power_2011/997_wb_net_ts.txt'
     time_series = np.genfromtxt(time_series_file)
-    conn_model_list = ['sps', 'cov', 'corr', 'partcorr', 'tangent']
+    conn_model_list = ['sps', 'cov', 'corr', 'partcorr']
     for conn_model in conn_model_list:
         conn_matrix = graphestimation.get_conn_matrix(time_series, conn_model)
         assert conn_matrix is not None
@@ -51,7 +51,6 @@ def test_extract_ts_rsn_coords():
     ID='997'
     conf = None
     node_size = 2
-    thr = 0.95
     wb_coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     file_ = open(wb_coords_file,'rb')
     coords = pickle.load(file_)

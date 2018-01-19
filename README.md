@@ -1,4 +1,4 @@
-![pynets](docs/PyNets_logo.png)
+![](docs/PyNets_logo.png)
 
 About
 -----
@@ -32,7 +32,7 @@ Required User Inputs:
 Features of the PyNets Pipeline:
 -Grows nodes based on any parcellation scheme (nilearn-defined or user-defined with an atlas file) and node style (spheres of a given radius, several radii, or parcels), and then extract the subject's time series from those nodes. Alternatively, use spectral clustering to generate and use a functional parcellation for any value of k or iteratively across several values of k.
 
--Model a functional connectivity matrix for the rsfMRI data (based on a wide variety of correlation, tangent, and covariance family of estimators)
+-Model a functional connectivity matrix for the rsfMRI data (based on a wide variety of correlation and covariance family of estimators)
 
 -Threshold the graphs using either of proportional thresholding, target-density thresholding, or multi-thresholding (i.e. iterative pynets runs over a range of proportional or density thresholds).
 
@@ -129,6 +129,8 @@ frame.to_csv(out_path)
 ```
 Generate a glass brain plot
 ![Glass ](tests/examples/997/997_whole_brain_cluster_labels_PCA200_sps_connectome_viz.png)
+Visualize adjacency matrices
+![Adj. Matrix](docs/structural_adj_mat.png)
 Feed the path to your bedpostx directory into the pipeline to get a corresponding structural connectome
 ![Diffusion](docs/pynets_diffusion.png)
 Visualize communities of networks alongside white matter pathways or mask contours
