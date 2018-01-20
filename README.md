@@ -1,4 +1,6 @@
-![](docs/PyNets_logo.png)
+======
+PyNets
+======
 
 About
 -----
