@@ -7,9 +7,10 @@ A Python-Powered Workflow for Network Analysis of Resting-State fMRI (rsfMRI) an
 
 Problem: A comprehensive, flexible, and fully-automated intra-subject network analysis package for neuroimaging has yet to be implemented.
 
-Solution: In PyNets, we harness the power of nipype and networkx python packages to automatically generate a range of graph theory metrics on a subject-by-subject basis and using any combination of network construction parameters. Uniquely, PyNets utilities can be integrated with ANY existing preprocessing workflow for your data.
+Solution: In PyNets, we harness the power of nipype, Nilearn, and networkx python packages to automatically generate a range of graph theory metrics on a subject-by-subject basis and using any combination of network construction parameters. Uniquely, PyNets utilities can be integrated with ANY existing preprocessing workflow for your data.
 
-Learn more about Nipype: http://nipype.readthedocs.io/en/latest/index.html
+Learn more about Nipype: http://nipype.readthedocs.io/
+Learn more about Nilearn http://nilearn.github.io/
 Learn more about Networkx: https://networkx.github.io/
 
 PyNets utilizes a suite of network analysis tools in a nipype workflow to automatically generate rsfMRI networks and dMRI structural networks based on a variety of node parcellation and thresholding solutions, and then extract graph theoretical measures from the resulting graphs to be averaged into "multi-simulation" connectomes.
@@ -126,17 +127,17 @@ out_path = working_path + '/' + name_of_network_pickle + '_output.csv'
 frame.to_csv(out_path)
 ```
 Generate a glass brain plot
-![Glass ](tests/examples/997/997_whole_brain_cluster_labels_PCA200_sps_connectome_viz.png)
+![](tests/examples/997/997_whole_brain_cluster_labels_PCA200_sps_connectome_viz.png)
 Visualize adjacency matrices
-![Adj. Matrix](docs/structural_adj_mat.png)
+![](docs/structural_adj_mat.png)
 Feed the path to your bedpostx directory into the pipeline to get a corresponding structural connectome
-![Diffusion](docs/pynets_diffusion.png)
-Visualize communities of networks alongside white matter pathways or mask contours
-![Communities](docs/glass_brain_communities.png)
+![](docs/pynets_diffusion.png)
+Visualize communities of networks
+![](docs/glass_brain_communities.png)
 Generate force-directed visualizations
-![Force-directed](docs/force-directed.png)
+![](docs/force-directed.png)
 Use connectograms to visualize community structure (including link communities)
-![Link Connectogram](docs/link_communities.png)
+![](docs/link_communities.png)
 
 Happy Netting!
 

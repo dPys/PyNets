@@ -18,4 +18,4 @@ script:
 #  - tox
    - travis_wait 1200 pytest tests/test_nodemaker.py
    - travis_wait 1200 pytest tests/test_plotting.py
-   - travis_wait 1200 pytest tests/test_graphestimation.py
+   - travis_wait 2000 pytest tests/test_graphestimation.py
