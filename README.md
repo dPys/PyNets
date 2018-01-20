@@ -7,7 +7,7 @@ A Python-Powered Workflow for Network Analysis of Resting-State fMRI (rsfMRI) an
 
 Problem: A comprehensive, flexible, and fully-automated intra-subject network analysis package for neuroimaging has yet to be implemented.
 
-Solution: In PyNets, we harness the power of nipype, Nilearn, and networkx python packages to automatically generate a range of graph theory metrics on a subject-by-subject basis and using any combination of network construction parameters. Uniquely, PyNets utilities can be integrated with ANY existing preprocessing workflow for your data.
+Solution: In PyNets, we harness the power of Nipype, Nilearn, and Networkx python packages to automatically generate a range of graph theory metrics on a subject-by-subject basis and using any combination of network construction parameters. Uniquely, PyNets utilities can be integrated with ANY existing preprocessing workflow for your data.
 
 Learn more about Nipype: http://nipype.readthedocs.io/
 Learn more about Nilearn http://nilearn.github.io/
@@ -126,11 +126,11 @@ frame = pd.concat(list_)
 out_path = working_path + '/' + name_of_network_pickle + '_output.csv'
 frame.to_csv(out_path)
 ```
-Generate a glass brain plot
+Generate a glass brain plot for a functional or structural connectome
 ![](tests/examples/997/997_whole_brain_cluster_labels_PCA200_sps_connectome_viz.png)
-Visualize adjacency matrices
+Visualize adjacency matrices for structural or functional connectomes
 ![](docs/structural_adj_mat.png)
-Feed the path to your bedpostx directory into the pipeline to get a corresponding structural connectome
+Feed the path to your bedpostx directory into the pipeline to get a structural connectome
 ![](docs/pynets_diffusion.png)
 Visualize communities of networks
 ![](docs/glass_brain_communities.png)
