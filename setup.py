@@ -40,7 +40,7 @@ test_requirements = [
 
 setup(
     name='pynets',
-    version='0.4.0',
+    version='0.4.1',
     description="A Python-Powered Workflow for Network Analysis of rsfMRI and dMRI",
     long_description=readme + '\n\n' + history,
     author="Derek Pisner",
@@ -63,6 +63,7 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
