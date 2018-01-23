@@ -32,8 +32,16 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && conda clean -tipsy \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh
 
+# Install conda build and deployment tools.
+RUN export PATH="/opt/conda/bin:${PATH}" && \
+    conda install --yes --quiet conda-build anaconda-client jinja2 setuptools && \
+    conda install --yes git && \
+    conda clean -tipsy
+
 # Install pynets.
-COPY --chown=neuro:users . /opt/pynets
+RUN cd /opt \
+    && git clone https://github.com/dpisner453/PyNets.git
+COPY --chown=neuro:users . /opt/PyNets
 RUN conda install -yq \
       python=3.6 \
       matplotlib>=2.0.0 \
@@ -43,7 +51,10 @@ RUN conda install -yq \
       setuptools>=38.2.4 \
       traits \
     && conda clean -tipsy \
-    && pip install --no-cache-dir -e /opt/pynets
+    && cd /opt/PyNets \
+    && pip install --no-cache-dir -e . \
+    && sed -i '/mpl_patches = _get/,+1 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
+    && sed -i '/for mpl_patch in mpl_patches:/,+1 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
 
 # Install skggm
 RUN conda install -yq \
@@ -53,5 +64,3 @@ RUN conda install -yq \
         openblas \
     && conda clean -tipsy \
     && pip install --no-cache-dir https://dl.dropbox.com/s/ghgl6lff2fmtldn/skggm-0.2.7-cp36-cp36m-linux_x86_64.whl
-
-
