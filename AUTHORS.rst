@@ -9,4 +9,4 @@ Development Lead
 
 Contributors
 ------------
-Aki Nikolaidis, Andrew Reineberg, Charles Laidi, Grace Shearrer, josh faskowitz, James Kunert-Graf, Daniel Moyer
+Aki Nikolaidis, Andrew Reineberg, Charles Laidi, Josh Faskowitz, James Kunert-Graf, Cameron Craddock

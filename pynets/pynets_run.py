@@ -8,8 +8,8 @@ import sys
 import argparse
 import os
 import timeit
-import warnings
-warnings.simplefilter("ignore")
+#import warnings
+#warnings.simplefilter("ignore")
 import pandas as pd
 import numpy as np
 try:
