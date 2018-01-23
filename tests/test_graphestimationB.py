@@ -14,16 +14,6 @@ try:
 except ImportError:
     import _pickle as pickle
 
-def test_get_conn_matrix():
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path= base_dir + '/997'
-    time_series_file = dir_path + '/coords_power_2011/997_wb_net_ts.txt'
-    time_series = np.genfromtxt(time_series_file)
-    conn_model_list = ['sps', 'cov', 'corr', 'partcorr']
-    for conn_model in conn_model_list:
-        conn_matrix = graphestimation.get_conn_matrix(time_series, conn_model)
-        assert conn_matrix is not None
-
 def test_extract_ts_rsn_parc():
     ##Set example inputs##
     base_dir = str(Path(__file__).parent/"examples")
@@ -40,7 +30,7 @@ def test_extract_ts_rsn_parc():
     net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
     ts_within_nodes = graphestimation.extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network)
     assert ts_within_nodes is not None
-    
+
 def test_extract_ts_rsn_coords():
     ##Set example inputs##
     base_dir = str(Path(__file__).parent/"examples")

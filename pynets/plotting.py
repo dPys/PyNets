@@ -10,7 +10,6 @@ import os
 
 def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr, node_size):
     import matplotlib
-    matplotlib.use('Agg')
     from matplotlib import pyplot as plt
     if mask:
         if network:
@@ -265,7 +264,6 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
 
 def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
     import matplotlib
-    matplotlib.use('Agg')
     from matplotlib import pyplot as plt
     
     for time_serie, label in zip(time_series.T, labels):
@@ -285,7 +283,6 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
 
 def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, thr, node_size, edge_threshold):
     import matplotlib
-    matplotlib.use('Agg')
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
     pruning=True
@@ -345,7 +342,6 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
 
 def structural_plotting(conn_matrix, conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, coords):  
     import matplotlib
-    matplotlib.use('Agg')
     from matplotlib import pyplot as plt
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe

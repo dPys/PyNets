@@ -9,14 +9,16 @@ python:
   - 2.7
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-install: travis_wait mvn install
+install:
   - pip install -U tox-travis
   - pip install -r requirements.txt
   - python setup.py install
 
 # command to run tests, e.g. python setup.py test
 script: 
-   - travis_wait 30 tox
-   - travis_wait 30 pytest tests/test_nodemaker.py
-   - travis_wait 30 pytest tests/test_plotting.py
-   - travis_wait 30 pytest tests/test_graphestimation.py
+   - tox
+   - pytest tests/test_nodemakerA.py
+   - pytest tests/test_nodemakerB.py
+   - pytest tests/test_plotting.py
+   - pytest tests/test_graphestimationA.py
+   - pytest tests/test_graphestimationB.py
