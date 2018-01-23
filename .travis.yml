@@ -13,11 +13,11 @@ install:
   - pip install -U tox-travis
   - pip install -r requirements.txt
   - python setup.py install
+  - travis_wait 30 mvn install
 
 # command to run tests, e.g. python setup.py test
 script: 
-   - install: travis_wait 30 mvn install
    - tox
-   - travis_wait 1200 pytest tests/test_nodemaker.py
-   - travis_wait 1200 pytest tests/test_plotting.py
-   - travis_wait 2000 pytest tests/test_graphestimation.py
+   - travis_wait 30 pytest tests/test_nodemaker.py
+   - travis_wait 30 pytest tests/test_plotting.py
+   - travis_wait 30 pytest tests/test_graphestimation.py
