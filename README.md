@@ -29,6 +29,7 @@ Required User Inputs:
         -Choice of atlas labels as nodes or spheres (of any radius or multiple radii) as nodes
 
 Features of the PyNets Pipeline:
+
 -Grows nodes based on any parcellation scheme (nilearn-defined or user-defined with an atlas file) and node style (spheres of a given radius, several radii, or parcels), and then extract the subject's time series from those nodes. Alternatively, use spectral clustering to generate and use a functional parcellation for any value of k or iteratively across several values of k.
 
 -Model a functional connectivity matrix for the rsfMRI data (based on a wide variety of correlation and covariance family of estimators)
