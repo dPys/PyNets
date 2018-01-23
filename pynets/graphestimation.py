@@ -146,7 +146,7 @@ def normalize(v):
 
 def extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path):
     import nibabel as nib
-    import time
+    #import time
     import subprocess
     try:
         from StringIO import StringIO
@@ -154,7 +154,7 @@ def extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path):
         from io import BytesIO as StringIO
     from pynets.nodemaker import get_sphere
     from pynets.graphestimation import generate_mask_from_voxels, normalize
-    start_time=time.time()
+    #start_time=time.time()
     data = nib.load(func_file)
     activity_data = data.get_data()
     volume_dims = np.shape(activity_data)[0:3]
@@ -200,14 +200,14 @@ def extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path):
     
 def extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path):
     import nibabel as nib
-    import time
+    #import time
     import subprocess
     from pynets.graphestimation import normalize
     try:
         from StringIO import StringIO
     except ImportError:
         from io import BytesIO as StringIO
-    start_time=time.time()
+    #start_time=time.time()
     data = nib.load(func_file)
     activity_data = data.get_data()
     volume_dims = np.shape(activity_data)[0:3]

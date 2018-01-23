@@ -14,6 +14,42 @@ try:
 except ImportError:
     import _pickle as pickle
 
+def test_get_conn_matrix_sps():
+    base_dir = str(Path(__file__).parent/"examples")
+    dir_path= base_dir + '/997'
+    time_series_file = dir_path + '/coords_power_2011/997_wb_net_ts.txt'
+    time_series = np.genfromtxt(time_series_file)
+    conn_model = 'sps'
+    conn_matrix = graphestimation.get_conn_matrix(time_series, conn_model)
+    assert conn_matrix is not None
+        
+def test_get_conn_matrix_cov():
+    base_dir = str(Path(__file__).parent/"examples")
+    dir_path= base_dir + '/997'
+    time_series_file = dir_path + '/coords_power_2011/997_wb_net_ts.txt'
+    time_series = np.genfromtxt(time_series_file)
+    conn_model = 'cov'
+    conn_matrix = graphestimation.get_conn_matrix(time_series, conn_model)
+    assert conn_matrix is not None
+
+def test_get_conn_matrix_corr():
+    base_dir = str(Path(__file__).parent/"examples")
+    dir_path= base_dir + '/997'
+    time_series_file = dir_path + '/coords_power_2011/997_wb_net_ts.txt'
+    time_series = np.genfromtxt(time_series_file)
+    conn_model = 'corr'
+    conn_matrix = graphestimation.get_conn_matrix(time_series, conn_model)
+    assert conn_matrix is not None
+
+def test_get_conn_matrix_partcorr():
+    base_dir = str(Path(__file__).parent/"examples")
+    dir_path= base_dir + '/997'
+    time_series_file = dir_path + '/coords_power_2011/997_wb_net_ts.txt'
+    time_series = np.genfromtxt(time_series_file)
+    conn_model = 'partcorr'
+    conn_matrix = graphestimation.get_conn_matrix(time_series, conn_model)
+    assert conn_matrix is not None
+
 def test_extract_ts_rsn_parc():
     ##Set example inputs##
     base_dir = str(Path(__file__).parent/"examples")
