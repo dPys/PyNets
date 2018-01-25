@@ -3,17 +3,17 @@ PyNets
 
 About
 -----
-A Python-Powered Workflow for Network Analysis of Resting-State fMRI (rsfMRI) and Diffusion MRI (dMRI)
+A Python-Powered Workflow for Fully-Reproducible Network Analysis of Resting-State fMRI (rsfMRI) and Diffusion MRI (dMRI)
 
 Problem: A comprehensive, flexible, and fully-automated intra-subject network analysis package for neuroimaging has yet to be implemented.
 
-Solution: In PyNets, we harness the power of Nipype, Nilearn, and Networkx python packages to automatically generate a range of graph theory metrics on a subject-by-subject basis and using any combination of network construction parameters. Uniquely, PyNets utilities can be integrated with ANY existing preprocessing workflow for your data.
+Solution: In PyNets, we harness the power of Nipype, Nilearn, and Networkx python packages to automatically generate a range of graph theory metrics on a subject-by-subject basis and using any combination of network construction parameters. Uniquely, PyNets utilities can be integrated with ANY existing preprocessing workflow for your data and provides a docker container to facilitate complete reproducibility of findings.
 
 Learn more about Nipype: http://nipype.readthedocs.io/
 Learn more about Nilearn http://nilearn.github.io/
 Learn more about Networkx: https://networkx.github.io/
 
-PyNets utilizes a suite of network analysis tools in a nipype workflow to automatically generate rsfMRI networks and dMRI structural networks based on a variety of node parcellation and thresholding solutions, and then extract graph theoretical measures from the resulting graphs to be averaged into "multi-simulation" connectomes.
+PyNets utilizes a suite of network analysis tools in a nipype workflow to automatically generate rsfMRI networks and dMRI structural networks based on a variety of node parcellation and thresholding solutions, and then extract graph theoretical measures from the resulting graphs to be represented as composite "meta-connectomes".
 
 -----
 
@@ -21,12 +21,12 @@ Walkthrough of the pipeline:
 
 Required User Inputs:
 
-	-Subject's data- Any 4D preprocessed fMRI file or diffusion weighted image file with completed bedpostx outputs, or both
-	-A subject ID (ideally the same name as the directory containing the input data)
-	-Any one or multiple atlases by name from the nilearn 'fetch' collection, one or multiple atlas files, one or multiple individual parcellation files generated at various resolutions of k using PyClusterROI routines and masks, a group parcellation file generated using Bootstrap Analysis of Stable Clusters (BASC) for subject-level parcellation (in construction).
-	-Graph or subgraph specification: Whole-brain, restricted networks with affinity to custom masks, Yeo 7 and 17 resting-state networks)
-        -Graph model estimation type (e.g. covariance, precision, correlation, partial correlation)
-        -Choice of atlas labels as nodes or spheres (of any radius or multiple radii) as nodes
+    -Subject's data- Any 4D preprocessed fMRI file or diffusion weighted image file with completed bedpostx outputs, or both
+    -A subject ID (ideally the same name as the directory containing the input data)
+    -Any one or multiple atlases by name from the nilearn 'fetch' collection, one or multiple atlas files, one or multiple individual parcellation files generated at various resolutions of k using PyClusterROI routines and masks, a group parcellation file generated using Bootstrap Analysis of Stable Clusters (BASC) for subject-level parcellation (in construction).
+    -Graph or subgraph specification: Whole-brain, restricted networks with affinity to custom masks, Yeo 7 and 17 resting-state networks)
+    -Graph model estimation type (e.g. covariance, precision, correlation, partial correlation)
+    -Choice of atlas labels as nodes or spheres (of any radius or multiple radii) as nodes
 
 Features of the PyNets Pipeline:
 
