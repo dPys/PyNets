@@ -34,6 +34,11 @@ def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
+    
+    ##Check for existence of csv_loc
+    if os.path.isfile(csv_loc) == False:
+        raise FileNotFoundError('\n\n\nERROR: Missing netmetrics csv file output. Cannot export to pandas df!')
+
     if mask is not None:
         if network is not None:
             met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + network + '_' + str(os.path.basename(mask).split('.')[0])
@@ -58,7 +63,7 @@ def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
     df['id'] = df['id'].astype('object')
     df.id = df.id.replace(1,ID)
     out_file = csv_loc.split('.csv')[0]
-    df.to_pickle(out_file)
+    df.to_pickle(out_file, protocol=2)
     return(out_file)
 
 def do_dir_path(atlas_select, in_file):

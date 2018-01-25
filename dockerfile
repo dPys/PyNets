@@ -26,6 +26,11 @@ RUN apt-get update -qq \
     && chmod a+s /opt \
     && chmod 777 -R /opt
 
+RUN wget http://ftp.us.debian.org/debian/pool/main/g/glibc/multiarch-support_2.19-18+deb8u10_amd64.deb --directory-prefix=/tmp \
+RUN dpkg -i /tmp/multiarch-support_2.19-18+deb8u10_amd64.deb || true \
+RUN apt-get install -y -f \
+RUN dpkg -i /tmp/multiarch-support_2.19-18+deb8u10_amd64.deb 
+
 USER neuro
 WORKDIR /home/neuro
 
@@ -50,7 +55,7 @@ RUN conda install -yq \
       setuptools>=38.2.4 \
       traits \
     && conda clean -tipsy \
-    && pip install pynets==0.4.1
+    && pip install pynets==0.4.2
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py

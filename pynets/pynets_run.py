@@ -539,12 +539,18 @@ if __name__ == '__main__':
                     network_list.pop(i)
                 
             if multi_thr == True:               
-                thr = [iter_thresh[i//num_node_sizes] for i in range(len(iter_thresh)*num_node_sizes)] * num_atlases * num_networks
+                #thr = [iter_thresh[i//num_node_sizes] for i in range(len(iter_thresh)*num_node_sizes)] * num_atlases * num_networks
+                thr = []
+                for path in est_path_list:
+                    thr.append(path.split('.txt')[0].rsplit('_',2)[-2])
             else:
                 thr = iter_thresh
             
             if num_node_sizes > 1:
-                node_size = node_size_list * int(float(len(est_path_list))/float(num_node_sizes))
+                #node_size = node_size_list * int(float(len(est_path_list))/float(num_node_sizes))
+                node_size = []
+                for path in est_path_list:
+                    node_size.append(int(path.split('.txt')[0].rsplit('_',1)[-1]))
             else:
                 node_size = [node_size] * len(est_path_list)
                 
