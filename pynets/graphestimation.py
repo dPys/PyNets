@@ -282,4 +282,4 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
         else:
             out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_wb_net_ts.txt'
     np.savetxt(out_path_ts, ts_within_nodes, delimiter='\t')
-    return(ts_within_nodes)
+    return(ts_within_nodes, node_size)
