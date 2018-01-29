@@ -34,6 +34,11 @@ def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
+    
+    ##Check for existence of csv_loc
+    if os.path.isfile(csv_loc) == False:
+        raise FileNotFoundError('\n\n\nERROR: Missing netmetrics csv file output. Cannot export to pandas df!')
+
     if mask is not None:
         if network is not None:
             met_list_picke_path = os.path.dirname(os.path.abspath(csv_loc)) + '/net_metric_list_' + network + '_' + str(os.path.basename(mask).split('.')[0])
@@ -58,7 +63,7 @@ def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
     df['id'] = df['id'].astype('object')
     df.id = df.id.replace(1,ID)
     out_file = csv_loc.split('.csv')[0]
-    df.to_pickle(out_file)
+    df.to_pickle(out_file, protocol=2)
     return(out_file)
 
 def do_dir_path(atlas_select, in_file):
@@ -141,23 +146,23 @@ def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mas
             if atlas_select in nilearn_parc_atlases or atlas_select in nilearn_coord_atlases:
                 out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size)
             else:
-                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size)
+                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size)
         else:
             if atlas_select in nilearn_parc_atlases or atlas_select in nilearn_coord_atlases:
                 out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size)
             else:
-                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size)
+                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size)
     else:
         if network is not None:
             if atlas_select in nilearn_parc_atlases or atlas_select in nilearn_coord_atlases:
                 out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
             else:
-                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
+                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
         else:
             if atlas_select in nilearn_parc_atlases or atlas_select in nilearn_coord_atlases:
                 out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
             else:
-                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
+                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
     return out_path
 
 def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_step, min_thr, max_thr, step_thr, multi_thr, thr, mask, ID, network, k_clustering, conn_model, in_csv, user_atlas_list, clust_mask_list, multi_atlas, node_size, node_size_list, out_file=None):
@@ -446,7 +451,7 @@ def output_echo(est_path, thr):
     pass
     return(est_path, thr)
 
-def build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list):
+def build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size):
     import numpy as np
     from pynets import utils
     if multi_thr==True:
@@ -473,17 +478,17 @@ def build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn
             iter_thresh = [thr] * len(est_path_list)
     return(iter_thresh, est_path_list)
 
-def build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list):
+def build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size):
     from pynets import utils
     if multi_nets is not None:
         num_networks = len(multi_nets)
         for network in multi_nets:
             dir_path = utils.do_dir_path(atlas_select, input_file)
-            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
+            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
     else:
         num_networks =  1
         dir_path = utils.do_dir_path(atlas_select, input_file)
-        [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
+        [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
     return(iter_thresh, est_path_list, num_networks, dir_path)
 
 def create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh):

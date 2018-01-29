@@ -251,7 +251,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
             out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + network + '_rsn_net_ts.txt'
         else:
             out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_wb_net_ts.txt'
-    np.savetxt(out_path_ts, ts_within_nodes)
+    np.savetxt(out_path_ts, ts_within_nodes, delimiter=',')
     return(ts_within_nodes)
     
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network):
@@ -281,5 +281,5 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
             out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + network + '_rsn_net_ts.txt'
         else:
             out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_wb_net_ts.txt'
-    np.savetxt(out_path_ts, ts_within_nodes)
+    np.savetxt(out_path_ts, ts_within_nodes, delimiter='\t')
     return(ts_within_nodes)

@@ -13,7 +13,7 @@ Learn more about Nipype: http://nipype.readthedocs.io/
 Learn more about Nilearn http://nilearn.github.io/
 Learn more about Networkx: https://networkx.github.io/
 
-PyNets utilizes a suite of network analysis tools in a nipype workflow to automatically generate rsfMRI networks and dMRI structural networks based on a variety of node parcellation and thresholding solutions, and then extract graph theoretical measures from the resulting graphs to be represented as composite "meta-connectomes".
+PyNets utilizes a suite of network analysis tools in a nipype workflow to automatically generate rsfMRI functional networks and dMRI structural networks based on a variety of node parcellation and thresholding solutions, and then extract graph theoretical measures from the resulting graphs to be represented as composite "meta-connectomes".
 
 -----
 
