@@ -94,7 +94,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
             extract_ts_wb_node.iterables = node_size_iterables  
             
     thresh_and_fit_node = pe.Node(niu.Function(input_names = ['adapt_thresh', 'dens_thresh', 'thr', 'ts_within_nodes', 'conn_model', 'network', 'ID', 'dir_path', 'mask', 'node_size'],
-                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr'],
+                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr', 'node_size'],
                                          function=thresholding.thresh_and_fit, imports = import_list), name = "thresh_and_fit_node")
             
     ##Plotting
@@ -189,15 +189,15 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
         wb_functional_connectometry_wf.connect([(inputnode, plot_all_node, [('ID', 'ID'),
                                                                             ('mask', 'mask'),
                                                                             ('network', 'network'),
-                                                                            ('conn_model', 'conn_model'),
-                                                                            ('node_size', 'node_size')]),
+                                                                            ('conn_model', 'conn_model')]),
                                                 (WB_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'),
                                                                                                  ('atlas_select', 'atlas_select')]),
                                                 (node_gen_node, plot_all_node, [('label_names', 'label_names'),
                                                                                 ('coords', 'coords')]),
                                                 (thresh_and_fit_node, plot_all_node, [('conn_matrix_thr', 'conn_matrix'),
                                                                                       ('edge_threshold', 'edge_threshold'),
-                                                                                      ('thr', 'thr')
+                                                                                      ('thr', 'thr'),
+                                                                                      ('node_size', 'node_size')
                                                                                       ]),
                                                 ])
     if k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1:
@@ -356,7 +356,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
             extract_ts_rsn_node.iterables = node_size_iterables  
             
     thresh_and_fit_node = pe.Node(niu.Function(input_names = ['adapt_thresh', 'dens_thresh', 'thr', 'ts_within_nodes', 'conn_model', 'network', 'ID', 'dir_path', 'mask', 'node_size'],
-                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr'],
+                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr', 'node_size'],
                                          function=thresholding.thresh_and_fit, imports = import_list), name = "thresh_and_fit_node")
     if node_size_list and parc==False:
         node_size_iterables = []
@@ -469,15 +469,15 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
         rsn_functional_connectometry_wf.connect([(inputnode, plot_all_node, [('ID', 'ID'),
                                                                             ('mask', 'mask'),
                                                                             ('network', 'network'),
-                                                                            ('conn_model', 'conn_model'),
-                                                                            ('node_size', 'node_size')]),
+                                                                            ('conn_model', 'conn_model')]),
                                                 (RSN_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'), 
                                                                                                   ('atlas_select', 'atlas_select')]),
                                                 (node_gen_node, plot_all_node, [('label_names', 'label_names'),
                                                                                       ('coords', 'coords')]),
                                                 (thresh_and_fit_node, plot_all_node, [('conn_matrix_thr', 'conn_matrix'),
                                                                                       ('edge_threshold', 'edge_threshold'),
-                                                                                      ('thr', 'thr')])
+                                                                                      ('thr', 'thr'),
+                                                                                      ('node_size')])
                                                 ])
     if k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1:
         rsn_functional_connectometry_wf.add_nodes([clustering_node])

@@ -18,6 +18,7 @@ RUN apt-get update -qq \
         lib32ncurses5 \
         libxmu-dev \
         vim \
+        wget \
         libgl1-mesa-glx \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
@@ -25,11 +26,6 @@ RUN apt-get update -qq \
     && useradd --no-user-group --create-home --shell /bin/bash neuro \
     && chmod a+s /opt \
     && chmod 777 -R /opt
-
-RUN wget http://ftp.us.debian.org/debian/pool/main/g/glibc/multiarch-support_2.19-18+deb8u10_amd64.deb --directory-prefix=/tmp \
-RUN dpkg -i /tmp/multiarch-support_2.19-18+deb8u10_amd64.deb || true \
-RUN apt-get install -y -f \
-RUN dpkg -i /tmp/multiarch-support_2.19-18+deb8u10_amd64.deb 
 
 USER neuro
 WORKDIR /home/neuro
@@ -48,14 +44,10 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
 # Install pynets.
 RUN conda install -yq \
       python=3.6 \
-      matplotlib>=2.0.0 \
-      numpy>=1.13.3 \
-      scikit-learn>=0.19.1 \
-      scipy>=1.0.0 \
       setuptools>=38.2.4 \
       traits \
     && conda clean -tipsy \
-    && pip install pynets==0.4.2
+    && pip install pynets==0.4.4
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py

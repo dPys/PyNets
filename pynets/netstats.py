@@ -942,7 +942,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     from pynets import thresholding, utils
 
     ##Load and threshold matrix
-    in_mat = np.array(np.genfromtxt(est_path))
+    in_mat = np.array(np.genfromtxt(est_path, delimiter='\t'))
     in_mat = thresholding.autofix(in_mat)
     
     ##Normalize connectivity matrix (weights between 0-1)
@@ -1363,6 +1363,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
 
     ##And save results to csv
     out_path = utils.create_csv_path(ID, network, conn_model, thr, mask, dir_path, node_size)
-    np.savetxt(out_path, net_met_val_list_final)
+    np.savetxt(out_path, net_met_val_list_final, delimiter='\t')
 
     return(out_path)

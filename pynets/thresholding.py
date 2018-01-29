@@ -171,4 +171,4 @@ def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, 
             edge_threshold = str((1-float(dens_thresh))*100) +'%'
             est_path = utils.create_est_path(ID, network, conn_model, dens_thresh, mask, dir_path, node_size)
         np.savetxt(est_path, conn_matrix_thr, delimiter='\t')
-    return(conn_matrix_thr, edge_threshold, est_path, thr)
+    return(conn_matrix_thr, edge_threshold, est_path, thr, node_size)

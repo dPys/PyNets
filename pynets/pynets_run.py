@@ -433,61 +433,52 @@ if __name__ == '__main__':
             thr=None
 
         ##Build iterfields
-        if multi_atlas is not None or multi_thr==True or multi_nets is not None or k_clustering == 2 or node_size_list is not None:
+        if multi_atlas is not None or user_atlas_list is not None or multi_thr==True or multi_nets is not None or k_clustering != 1 or k_clustering != 0 or node_size_list is not None:
             ##Create est_path_list iterfield based on iterables across atlases, RSN's, k-values, and thresholding ranges
             est_path_list = []
             if k_clustering == 2:
                 print('\nIterating pipeline for ' + str(ID) + ' across multiple clustering resolutions...\n')
                 mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                 k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
-                num_atlases = len(k_list)
                 for k in k_list:
                     atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
-                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
+                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
             elif k_clustering == 3:
                 print('\nIterating pipeline for ' + str(ID) + ' across multiple masks at a single clustering resolution...\n')
-                num_atlases = len(clust_mask_list)
                 for clust_mask in clust_mask_list:
                     mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                     atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
-                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
+                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
             elif k_clustering == 4:
                 print('\nIterating pipeline for ' + str(ID) + ' across multiple clustering resolutions and masks...\n')
                 k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
-                num_atlases = len(k_list) * len(clust_mask_list)
                 for clust_mask in clust_mask_list:
                     mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                     for k in k_list:
                         atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
-                        [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
+                        [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
             elif multi_atlas is not None:
-                num_atlases = len(multi_atlas)
                 print('\nIterating pipeline for ' + str(ID) + ' across multiple atlases: ' + '\n'.join(str(n) for n in multi_atlas) + '...\n')
                 for atlas_select in multi_atlas:
-                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
+                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
             elif user_atlas_list:
-                num_atlases = len(user_atlas_list)
                 print('\nIterating pipeline for ' + str(ID) + ' across multiple atlases: ' + '\n'.join(str(a) for a in user_atlas_list) + '...\n')
                 for parlistfile in user_atlas_list:
                     atlas_select = parlistfile.split('/')[-1].split('.')[0]
-                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
+                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
             else:
-                num_atlases = 1
                 if multi_thr==True:
-                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
+                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
                 else:
                     if multi_nets is not None:
-                        num_networks = len(multi_nets)
                         for network in multi_nets:
-                            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
+                            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
                         iter_thresh = [thr]
                     else:
                         if node_size_list:
-                            num_networks =  1
-                            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list)
+                            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
                         else:
                             est_path_list = [est_path]
-                            num_networks =  1
                             iter_thresh = [thr]
                         
             if node_size_list:
@@ -539,7 +530,6 @@ if __name__ == '__main__':
                     network_list.pop(i)
                 
             if multi_thr == True:               
-                #thr = [iter_thresh[i//num_node_sizes] for i in range(len(iter_thresh)*num_node_sizes)] * num_atlases * num_networks
                 thr = []
                 for path in est_path_list:
                     thr.append(path.split('.txt')[0].rsplit('_',2)[-2])
@@ -547,7 +537,6 @@ if __name__ == '__main__':
                 thr = iter_thresh
             
             if num_node_sizes > 1:
-                #node_size = node_size_list * int(float(len(est_path_list))/float(num_node_sizes))
                 node_size = []
                 for path in est_path_list:
                     node_size.append(int(path.split('.txt')[0].rsplit('_',1)[-1]))
