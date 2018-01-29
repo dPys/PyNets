@@ -50,21 +50,21 @@ def normalize(W, copy=True):
     W /= np.max(np.abs(W))
     return W
 
-def density_thresholding(conn_matrix, dens_thresh):
-    thr=0.0
+def density_thresholding(conn_matrix, thr):
+    abs_thr=0.0
     conn_matrix = normalize(conn_matrix)
     np.fill_diagonal(conn_matrix, 0)
     i = 1
-    thr_max=0.40
+    thr_max=0.50
     G=nx.from_numpy_matrix(conn_matrix)
     density=nx.density(G)
-    while float(thr) <= float(thr_max) and float(density) > float(dens_thresh):
-        thr = float(thr) + float(0.01)
-        conn_matrix = threshold_absolute(conn_matrix, thr)
+    while float(abs_thr) <= float(thr_max) and float(density) > float(thr):
+        abs_thr = float(abs_thr) + float(0.01)
+        conn_matrix = threshold_absolute(conn_matrix, abs_thr)
         G=nx.from_numpy_matrix(conn_matrix)
         density=nx.density(G)
 
-        print('Iteratively thresholding -- Iteration ' + str(i) + ' -- with absolute thresh: ' + str(thr) + ' and Density: ' + str(density) + '...')
+        print('Iteratively thresholding -- Iteration ' + str(i) + ' -- with absolute thresh: ' + str(abs_thr) + ' and Density: ' + str(density) + '...')
         i = i + 1
     return(conn_matrix)
 
@@ -161,14 +161,14 @@ def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, 
         unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
         np.savetxt(unthr_path, conn_matrix, delimiter='\t')
 
-        if not dens_thresh:
+        if dens_thresh == False:
             ##Save thresholded
             conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
             edge_threshold = str(float(thr)*100) +'%'
             est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size) 
         else:
-            conn_matrix_thr = thresholding.density_thresholding(conn_matrix, dens_thresh)
-            edge_threshold = str((1-float(dens_thresh))*100) +'%'
-            est_path = utils.create_est_path(ID, network, conn_model, dens_thresh, mask, dir_path, node_size)
+            conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
+            edge_threshold = str(float(thr)*100) +'%'
+            est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
         np.savetxt(est_path, conn_matrix_thr, delimiter='\t')
-    return(conn_matrix_thr, edge_threshold, est_path, thr, node_size)
+    return(conn_matrix_thr, edge_threshold, est_path, thr)

@@ -75,9 +75,9 @@ if __name__ == '__main__':
         default=None,
         help='Optionally specify a path to a confound regressor file to reduce noise in the time-series estimation for the graph.\n')
     parser.add_argument('-dt',
-        metavar='Density threshold',
-        default=None,
-        help='Optionally indicate a target density of graph edges to be achieved through iterative absolute thresholding. In group analysis, this could be determined by finding the mean density of all unthresholded graphs across subjects, for instance.\n')
+        default=False,
+        action='store_true',
+        help='Optionally use this flag if you wish to threshold to achieve a given density or densities indicated by the -thr and -min_thr, -max_thr, -step_thr flags, respectively.\n')
 #    parser.add_argument('-at',
 #        default=False,
 #        action='store_true',
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     ID=args.id
     #basc=args.basc
     procmem=list(eval(str((args.pm))))
-    thr=args.thr
+    thr=float(args.thr)
     node_size_pre = args.ns
     node_size = list(str(node_size_pre).split(','))
     if len(node_size) > 1:
@@ -251,20 +251,13 @@ if __name__ == '__main__':
         print("Error: You must include a subject ID in your command line call")
         sys.exit()
 
-    if dens_thresh is not None or adapt_thresh != False:
-        thr=None
-    else:
-        thr=float(thr)
-
     if anat_loc is not None and bedpostx_dir is None:
         print('Warning: anatomical image specified, but not bedpostx directory specified. Anatomical images are only supported for structural connectome estimation at this time.')
 
     if multi_thr==True:
-        dens_thresh=None
         adapt_thresh=False
     elif multi_thr==False and min_thr is not None and max_thr is not None:
         multi_thr=True
-        dens_thresh=None
         adapt_thresh=False
     else:
         min_thr=None

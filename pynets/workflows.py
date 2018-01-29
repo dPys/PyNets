@@ -86,7 +86,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     else:
         ##Extract within-spheres time-series from funct file
         extract_ts_wb_node = pe.Node(niu.Function(input_names = ['node_size', 'conf', 'func_file', 'coords', 'dir_path', 'ID', 'mask', 'network'],
-                                             output_names=['ts_within_nodes'],
+                                             output_names=['ts_within_nodes', 'node_size'],
                                              function=graphestimation.extract_ts_coords, imports = import_list), name = "extract_ts_wb_coords_node")
         if node_size_list:
             node_size_iterables = []
@@ -94,7 +94,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
             extract_ts_wb_node.iterables = node_size_iterables  
             
     thresh_and_fit_node = pe.Node(niu.Function(input_names = ['adapt_thresh', 'dens_thresh', 'thr', 'ts_within_nodes', 'conn_model', 'network', 'ID', 'dir_path', 'mask', 'node_size'],
-                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr', 'node_size'],
+                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr'],
                                          function=thresholding.thresh_and_fit, imports = import_list), name = "thresh_and_fit_node")
             
     ##Plotting
@@ -190,15 +190,14 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                                             ('mask', 'mask'),
                                                                             ('network', 'network'),
                                                                             ('conn_model', 'conn_model')]),
+                                                (extract_ts_wb_node, plot_all_node, [('node_size', 'node_size')]),
                                                 (WB_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'),
                                                                                                  ('atlas_select', 'atlas_select')]),
                                                 (node_gen_node, plot_all_node, [('label_names', 'label_names'),
                                                                                 ('coords', 'coords')]),
                                                 (thresh_and_fit_node, plot_all_node, [('conn_matrix_thr', 'conn_matrix'),
                                                                                       ('edge_threshold', 'edge_threshold'),
-                                                                                      ('thr', 'thr'),
-                                                                                      ('node_size', 'node_size')
-                                                                                      ]),
+                                                                                      ('thr', 'thr')]),
                                                 ])
     if k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1:
         wb_functional_connectometry_wf.add_nodes([clustering_node])
@@ -250,7 +249,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     wb_functional_connectometry_wf.config['logging']['utils_level']='DEBUG'
     wb_functional_connectometry_wf.config['logging']['interface_level']='DEBUG'
     wb_functional_connectometry_wf.config['execution']['plugin']='MultiProc'
-    res = wb_functional_connectometry_wf.run(plugin='MultiProc')
+    res = wb_functional_connectometry_wf.run()
 
     out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'outputnode' in x][-1]][0]
     try:
@@ -347,7 +346,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     else:
         ##Extract within-spheres time-series from funct file
         extract_ts_rsn_node = pe.Node(niu.Function(input_names = ['node_size', 'conf', 'func_file', 'coords', 'dir_path', 'ID', 'mask', 'network'],
-                                             output_names=['ts_within_nodes'],
+                                             output_names=['ts_within_nodes', 'node_size'],
                                              function=graphestimation.extract_ts_coords, imports = import_list), name = "extract_ts_rsn_coords_node")
 
         if node_size_list:
@@ -356,7 +355,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
             extract_ts_rsn_node.iterables = node_size_iterables  
             
     thresh_and_fit_node = pe.Node(niu.Function(input_names = ['adapt_thresh', 'dens_thresh', 'thr', 'ts_within_nodes', 'conn_model', 'network', 'ID', 'dir_path', 'mask', 'node_size'],
-                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr', 'node_size'],
+                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr'],
                                          function=thresholding.thresh_and_fit, imports = import_list), name = "thresh_and_fit_node")
     if node_size_list and parc==False:
         node_size_iterables = []
@@ -470,14 +469,14 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                                             ('mask', 'mask'),
                                                                             ('network', 'network'),
                                                                             ('conn_model', 'conn_model')]),
+                                                (extract_ts_rsn_node, plot_all_node, [('node_size', 'node_size')]),   
                                                 (RSN_fetch_nodes_and_labels_node, plot_all_node, [('dir_path', 'dir_path'), 
                                                                                                   ('atlas_select', 'atlas_select')]),
                                                 (node_gen_node, plot_all_node, [('label_names', 'label_names'),
                                                                                       ('coords', 'coords')]),
                                                 (thresh_and_fit_node, plot_all_node, [('conn_matrix_thr', 'conn_matrix'),
                                                                                       ('edge_threshold', 'edge_threshold'),
-                                                                                      ('thr', 'thr'),
-                                                                                      ('node_size')])
+                                                                                      ('thr', 'thr')])
                                                 ])
     if k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1:
         rsn_functional_connectometry_wf.add_nodes([clustering_node])
@@ -546,7 +545,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     rsn_functional_connectometry_wf.config['logging']['utils_level']='DEBUG'
     rsn_functional_connectometry_wf.config['logging']['interface_level']='DEBUG'
     rsn_functional_connectometry_wf.config['execution']['plugin']='MultiProc'
-    res = rsn_functional_connectometry_wf.run(plugin='MultiProc')
+    res = rsn_functional_connectometry_wf.run()
 
     out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'outputnode' in x][-1]][0]
     try:
@@ -696,7 +695,7 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     wb_structural_connectometry_wf.config['logging']['utils_level']='DEBUG'
     wb_structural_connectometry_wf.config['logging']['interface_level']='DEBUG'
     wb_structural_connectometry_wf.config['execution']['plugin']='MultiProc'
-    res = wb_structural_connectometry_wf.run(plugin='MultiProc')
+    res = wb_structural_connectometry_wf.run()
 
     out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'outputnode' in x][-1]][0]
     try:
@@ -857,7 +856,7 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
     rsn_structural_connectometry_wf.config['logging']['utils_level']='DEBUG'
     rsn_structural_connectometry_wf.config['logging']['interface_level']='DEBUG'
     rsn_structural_connectometry_wf.config['execution']['plugin']='MultiProc'
-    res = rsn_structural_connectometry_wf.run(plugin='MultiProc')
+    res = rsn_structural_connectometry_wf.run()
 
     out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'outputnode' in x][-1]][0]
     try:
