@@ -153,7 +153,7 @@ def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, 
         if not dens_thresh:
             print('\nRunning graph estimation and thresholding proportionally at: ' + str(thr) + '% ...\n')
         else:
-            print('\nRunning graph estimation and thresholding to achieve density of: ' + str(100*dens_thresh) + '% ...\n')
+            print('\nRunning graph estimation and thresholding to achieve density of: ' + str(100*thr) + '% ...\n')
         ##Fit mat
         conn_matrix = graphestimation.get_conn_matrix(ts_within_nodes, conn_model)
         

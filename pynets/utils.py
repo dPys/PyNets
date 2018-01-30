@@ -447,10 +447,6 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
         print('\nNo objects to collect. Single dataframe for: ' + str(ID) + '\n')
         pass
 
-def output_echo(est_path, thr):
-    pass
-    return(est_path, thr)
-
 def build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size):
     import numpy as np
     from pynets import utils
@@ -554,3 +550,125 @@ def save_nifti_parcels_map(ID, dir_path, mask, network, net_parcels_map_nifti):
 
 def cuberoot(x):
     return np.sign(x) * np.abs(x)**(1 / 3)
+
+def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, est_path):
+    from pynets import utils
+    ##Build iterfields
+    if multi_atlas is not None or user_atlas_list is not None or multi_thr==True or multi_nets is not None or k_clustering != 1 or k_clustering != 0 or node_size_list is not None:
+        ##Create est_path_list iterfield based on iterables across atlases, RSN's, k-values, and thresholding ranges
+        est_path_list = []
+        if k_clustering == 2:
+            print('\nIterating pipeline for ' + str(ID) + ' across multiple clustering resolutions...\n')
+            mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+            for k in k_list:
+                atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
+                [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
+        elif k_clustering == 3:
+            print('\nIterating pipeline for ' + str(ID) + ' across multiple masks at a single clustering resolution...\n')
+            for clust_mask in clust_mask_list:
+                mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
+                [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
+        elif k_clustering == 4:
+            print('\nIterating pipeline for ' + str(ID) + ' across multiple clustering resolutions and masks...\n')
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+            for clust_mask in clust_mask_list:
+                mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                for k in k_list:
+                    atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
+                    [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
+        elif multi_atlas is not None:
+            print('\nIterating pipeline for ' + str(ID) + ' across multiple atlases: ' + '\n'.join(str(n) for n in multi_atlas) + '...\n')
+            for atlas_select in multi_atlas:
+                [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
+        elif user_atlas_list:
+            print('\nIterating pipeline for ' + str(ID) + ' across multiple atlases: ' + '\n'.join(str(a) for a in user_atlas_list) + '...\n')
+            for parlistfile in user_atlas_list:
+                atlas_select = parlistfile.split('/')[-1].split('.')[0]
+                [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
+        else:
+            if multi_thr==True:
+                [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
+            else:
+                if multi_nets is not None:
+                    for network in multi_nets:
+                        [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
+                    iter_thresh = [thr]
+                else:
+                    if node_size_list:
+                        [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
+                    else:
+                        est_path_list = [est_path]
+                        iter_thresh = [thr]
+                    
+        if node_size_list:
+            num_node_sizes = len(node_size_list)
+        else:
+            num_node_sizes = 1
+    
+        ##Check existence of each est_path in est_path_list, returning a modified list with only those paths that do exist.
+        [est_path_list, bad_ixs] = utils.check_est_path_existence(est_path_list)
+
+        ##Create network_list based on iterables across atlases, RSN's, k-values, and thresholding ranges
+        if multi_nets is not None:
+            print('\nIterating pipeline for ' + str(ID) + ' across networks: ' + '\n'.join(str(n) for n in multi_nets) + '...\n')
+            network_list = []
+            if multi_atlas is not None:
+                for atlas in multi_atlas:
+                    for network in multi_nets:
+                        network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh)
+            elif user_atlas_list:
+                for atlas in user_atlas_list:
+                    for network in multi_nets:
+                        network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh)
+            elif k_clustering == 2:
+                k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+                for k in k_list:
+                    for network in multi_nets:
+                        network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh)
+            elif k_clustering == 4:
+                k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+                for clust_mask in clust_mask_list:
+                    for k in k_list:
+                        for network in multi_nets:
+                            network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh)  
+            elif k_clustering == 3:
+                for clust_mask in clust_mask_list:
+                    for network in multi_nets:
+                        network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh)
+            else:
+                for network in multi_nets:
+                    network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh)
+        elif network is not None and multi_nets is None:
+            network_list = [network] * len(est_path_list)
+        else:
+            network_list = [None] * len(est_path_list)
+
+        ##Remove network from network_list based on bad ixs found for est_path_list
+        if len(bad_ixs) > 0:
+            for i in bad_ixs:
+                network_list.pop(i)
+            
+        if multi_thr == True:               
+            thr = []
+            for path in est_path_list:
+                thr.append(path.split('.txt')[0].rsplit('_',2)[-2])
+        else:
+            thr = iter_thresh
+        
+        if num_node_sizes > 1:
+            node_size = []
+            for path in est_path_list:
+                node_size.append(int(path.split('.txt')[0].rsplit('_',1)[-1]))
+        else:
+            node_size = [node_size] * len(est_path_list)
+            
+        est_path = est_path_list
+        network = network_list
+        ID = [str(ID)] * len(est_path_list)
+        mask = [mask] * len(est_path_list)
+        conn_model = [conn_model] * len(est_path_list)
+        k_clustering = [k_clustering] * len(est_path_list)
+        prune = [prune] * len(est_path_list)     
+    return(est_path, thr, network, ID, mask, conn_model, k_clustering, prune, node_size)
