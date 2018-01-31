@@ -63,7 +63,6 @@ def density_thresholding(conn_matrix, thr):
         conn_matrix = threshold_absolute(conn_matrix, abs_thr)
         G=nx.from_numpy_matrix(conn_matrix)
         density=nx.density(G)
-
         print('Iteratively thresholding -- Iteration ' + str(i) + ' -- with absolute thresh: ' + str(abs_thr) + ' and Density: ' + str(density) + '...')
         i = i + 1
     return(conn_matrix)
