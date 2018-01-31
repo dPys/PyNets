@@ -144,25 +144,25 @@ def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mas
     if mask is not None:
         if network is not None:
             if atlas_select in nilearn_parc_atlases or atlas_select in nilearn_coord_atlases:
-                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size)
+                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size)
             else:
-                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size)
+                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size)
         else:
             if atlas_select in nilearn_parc_atlases or atlas_select in nilearn_coord_atlases:
-                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size)
+                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size)
             else:
-                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size)
+                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size)
     else:
         if network is not None:
             if atlas_select in nilearn_parc_atlases or atlas_select in nilearn_coord_atlases:
-                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
+                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
             else:
-                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
+                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_' + network + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
         else:
             if atlas_select in nilearn_parc_atlases or atlas_select in nilearn_coord_atlases:
-                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
+                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
             else:
-                out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
+                out_path = ID_dir + '/' + str(ID) + '_' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
     return out_path
 
 def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_step, min_thr, max_thr, step_thr, multi_thr, thr, mask, ID, network, k_clustering, conn_model, in_csv, user_atlas_list, clust_mask_list, multi_atlas, node_size, node_size_list, out_file=None):
@@ -553,6 +553,7 @@ def cuberoot(x):
 
 def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, est_path):
     from pynets import utils
+    
     ##Build iterfields
     if multi_atlas is not None or user_atlas_list is not None or multi_thr==True or multi_nets is not None or k_clustering != 1 or k_clustering != 0 or node_size_list is not None:
         ##Create est_path_list iterfield based on iterables across atlases, RSN's, k-values, and thresholding ranges
@@ -648,7 +649,7 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
         ##Remove network from network_list based on bad ixs found for est_path_list
         if len(bad_ixs) > 0 and len(network_list) > 1:
             for i in bad_ixs:
-                network_list.pop(i)
+                 network_list.pop(i)
             
         if multi_thr == True:               
             thr = []
@@ -670,5 +671,5 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
         mask = [mask] * len(est_path_list)
         conn_model = [conn_model] * len(est_path_list)
         k_clustering = [k_clustering] * len(est_path_list)
-        prune = [prune] * len(est_path_list)     
+        prune = [prune] * len(est_path_list)   
     return(est_path, thr, network, ID, mask, conn_model, k_clustering, prune, node_size)

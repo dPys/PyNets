@@ -406,7 +406,7 @@ if __name__ == '__main__':
        #parlistfile=Path(__file__)/'pynets'/'rsnrefs'/'group_stability_clusters.nii.gz'
 
     def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list):
-        from pynets import workflows
+        from pynets import workflows, utils
 
         ##Workflow 1: Whole-brain functional connectome
         if bedpostx_dir is None and network is None:
@@ -423,27 +423,22 @@ if __name__ == '__main__':
             
         if sub_func_wf:
             res = sub_func_wf.run(plugin='MultiProc')
-            out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'compile_iterfields_node' in x][-1]][0]
+            out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'thresh_and_fit_node' in x][-1]][0]
             try:
-                thr=out_node.result.outputs.thr
-                ID=out_node.result.outputs.ID
                 est_path=out_node.result.outputs.est_path
-                network=out_node.result.outputs.network
-                conn_model=out_node.result.outputs.conn_model
-                mask=out_node.result.outputs.mask
-                prune=out_node.result.outputs.prune
-                node_size=out_node.result.outputs.node_size
             except AttributeError:
                 print('Workflow failed!')
         elif sub_struct_wf:
             res = sub_struct_wf.run(plugin='MultiProc')
-            out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'compile_iterfields_node' in x][-1]][0]
+            out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'thresh_and_fit_node' in x][-1]][0]
             try:
                 thr=out_node.result.outputs.thr
                 est_path=out_node.result.outputs.est_path
             except AttributeError:
                 print('Workflow failed!')            
                 
+        [est_path, thr, network, ID, mask, conn_model, k_clustering, prune, node_size] = utils.compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, est_path)
+
         return(thr, est_path, ID, network, conn_model, mask, prune, node_size)
 
     class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
