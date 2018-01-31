@@ -646,7 +646,7 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
             network_list = [None] * len(est_path_list)
 
         ##Remove network from network_list based on bad ixs found for est_path_list
-        if len(bad_ixs) > 0 and network_list is not None:
+        if len(bad_ixs) > 0 and len(network_list) > 1:
             for i in bad_ixs:
                 network_list.pop(i)
             
