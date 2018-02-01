@@ -69,7 +69,7 @@ if __name__ == '__main__':
     parser.add_argument('-mod',
         metavar='Graph estimator type',
         default='sps',
-        help='Optionally specify matrix estimation type: corr, cov, sps, partcorr, or tangent for correlation, covariance, sparse-inverse covariance, partial correlation, and tangent, respectively. sps type is used by default.\n')
+        help='Optionally specify matrix estimation type: corr, cov, sps, partcorr for correlation, covariance, sparse-inverse covariance, and partial correlation, respectively. sps type is used by default.\n')
     parser.add_argument('-conf',
         metavar='Confounds',
         default=None,
@@ -264,7 +264,7 @@ if __name__ == '__main__':
         max_thr=None
         step_thr=None
 
-    print ("SUBJECT ID: " + str(ID))
+    print("%s%s" % ('SUBJECT ID: ', ID))
 
     if (k_min is not None and k_max is not None) and k is None and clust_mask_list is not None:
         k_clustering = 4
@@ -281,50 +281,50 @@ if __name__ == '__main__':
         if parlistfile is not None and k_clustering == 0 and user_atlas_list is None:
             atlas_select = parlistfile.split('/')[-1].split('.')[0]
             dir_path = do_dir_path(atlas_select, input_file)
-            print ("ATLAS: " + str(atlas_select))
+            print("%s%s" % ("ATLAS: ", atlas_select))
         elif parlistfile is not None and user_atlas_list is None and k_clustering == 0:
             atlas_select = parlistfile.split('/')[-1].split('.')[0]
             dir_path = do_dir_path(atlas_select, input_file)
-            print ("ATLAS: " + str(atlas_select))
+            print("%s%s" % ("ATLAS: ", atlas_select))
         elif user_atlas_list is not None:
             parlistfile = user_atlas_list[0]
-            print ('Iterating across multiple user atlases...')
+            print('Iterating across multiple user atlases...')
             for parlistfile in user_atlas_list:
                 atlas_select = parlistfile.split('/')[-1].split('.')[0]
                 dir_path = do_dir_path(atlas_select, input_file)
             atlas_select = None
         elif multi_atlas is not None:
-            print ('Iterating across multiple nilearn atlases...')
+            print('Iterating across multiple nilearn atlases...')
             for atlas_select in multi_atlas:
                 dir_path = do_dir_path(atlas_select, input_file)
             atlas_select = None
         elif k_clustering == 1:
             cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-            atlas_select = str(ID) + '_' + cl_mask_name + '_k' + str(k)
-            print ("ATLAS: " + str(atlas_select))
+            atlas_select = "%s%s%s%s%s" % (ID, '_', cl_mask_name, '_k', k)
+            print("%s%s" % ("ATLAS: ", atlas_select))
             dir_path = do_dir_path(atlas_select, input_file)
-            print ("Clustering within mask at a single resolution...")
+            print("Clustering within mask at a single resolution...")
         elif k_clustering == 2:
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
-            print ("Clustering within mask at multiple resolutions...")
+            print("Clustering within mask at multiple resolutions...")
             for k in k_list:
                 cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                atlas_select = str(ID) + '_' + cl_mask_name + '_k' + str(k)
-                print ("ATLAS: " + str(atlas_select))
+                atlas_select = "%s%s%s%s%s" % (ID, '_', cl_mask_name, '_k', k)
+                print("%s%s" % ("ATLAS: ", atlas_select))
                 dir_path = do_dir_path(atlas_select, input_file)
         elif k_clustering == 3:
-            print ("Clustering within multiple masks at a single resolution...")
+            print("Clustering within multiple masks at a single resolution...")
             for clust_mask in clust_mask_list:
                 cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                atlas_select = str(ID) + '_' + cl_mask_name + '_k' + str(k)
+                atlas_select = "%s%s%s%s%s" % (ID, '_', cl_mask_name, '_k', k)
                 dir_path = do_dir_path(atlas_select, input_file)
         elif k_clustering == 4:
-            print ("Clustering within multiple masks at multiple resolutions...")
+            print("Clustering within multiple masks at multiple resolutions...")
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
             for clust_mask in clust_mask_list:
                 for k in k_list:
                     cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                    atlas_select = str(ID) + '_' + cl_mask_name + '_k' + str(k)
+                    atlas_select = "%s%s%s%s%s" % (ID, '_', cl_mask_name, '_k', k)
                     dir_path = do_dir_path(atlas_select, input_file)
         elif (user_atlas_list is not None or parlistfile is not None) and (k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1) and atlas_select is None:
             print('Error: the -ua flag cannot be used with the clustering option. Use the -cm flag instead.')
@@ -339,44 +339,43 @@ if __name__ == '__main__':
         label_names = dict_df['Region'].tolist()
 
     if network is not None:
-        print("Using RSN pipeline for: " + str(network))
+        print("%s%s" % ('Using RSN pipeline for: ', network))
     elif multi_nets is not None:
         network = multi_nets[0]
-        print('Iterating workflow across ' + str(len(multi_nets)) + ' networks: ' + str(', '.join(str(n) for n in multi_nets)) + '...')
+        print("%s%d%s%s%s" % ('Iterating workflow across ', len(multi_nets), ' networks: ', str(', '.join(str(n) for n in multi_nets)), '...'))
     else:
         print("Using whole-brain pipeline..." )
 
     if node_size_list:
-        print("Growing spherical nodes across multiple radius sizes: " + str(', '.join(str(n) for n in node_size_list)) + '...')
+        print("%s%s%s" % ('Growing spherical nodes across multiple radius sizes: ', str(', '.join(str(n) for n in node_size_list)), '...'))
     else:
-        print("Using node size of: " + str(node_size))
+        print("%s%s" % ("Using node size of: ", node_size))
         
     if input_file and subjects_list:
-        print("\n")
-        print('Running workflow of workflows across subjects:\n')
+        print('\nRunning workflow of workflows across subjects:\n')
         print(str(subjects_list))
         ##Set directory path containing input file
         dir_path = do_dir_path(atlas_select, subjects_list[0])
     elif input_file and bedpostx_dir:
         print('Running joint structural-functional connectometry...')
-        print("Functional file: " + input_file)
-        print("Bedpostx Directory: " + bedpostx_dir)
+        print("%s%s" % ('Functional file: ', input_file))
+        print("%s%s" % ('Bedpostx Directory: ', bedpostx_dir))
         if anat_loc is not None:
-            print ("Anatomical Image: " + anat_loc)
+            print("%s%s" % ('Anatomical Image: ', anat_loc))
         if network is not None:
-            print('RSN: ' + network)
+            print("%s%s" % ('RSN: ', network))
         ##Set directory path containing input file
-        nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
-        ref_txt = parlistfile.split('/')[-1:][0].split('.')[0] + '.txt'
+        nodif_brain_mask_path = "%s%s" % (bedpostx_dir, '/nodif_brain_mask.nii.gz')
+        ref_txt = "%s%s" % (parlistfile.split('/')[-1:][0].split('.')[0], '.txt')
         atlas_select = parlistfile.split('/')[-1].split('.')[0]
         dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
     elif input_file is None and bedpostx_dir:
         print('Running structural connectometry only...')
-        print("Bedpostx Directory: " + bedpostx_dir)
+        print("%s%s" % ('Bedpostx Directory: ', bedpostx_dir))
         if anat_loc is not None:
-            print("Anatomical Image: " + anat_loc)
+            print("%s%s" % ('Anatomical Image: ', anat_loc))
         if network is not None:
-            print('RSN: ' + network)
+            print("%s%s" % ('RSN: ', network))
         ##Set directory path containing input file
         nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
         atlas_select = parlistfile.split('/')[-1].split('.')[0]
@@ -384,12 +383,10 @@ if __name__ == '__main__':
         dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
     elif input_file and bedpostx_dir is None and subjects_list is None:
         print('Running functional connectometry only...')
-        print ("Functional file: " + input_file)
+        print("%s%s" % ('Functional file: ', input_file))
     print('\n-------------------------------------------------------------------------\n\n\n')
 
     ##Import core modules
-    import warnings
-    warnings.simplefilter("ignore")
     from pynets.utils import export_to_pandas, collect_pandas_df
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -432,7 +429,6 @@ if __name__ == '__main__':
             res = sub_struct_wf.run(plugin='MultiProc')
             out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'thresh_and_fit_node' in x][-1]][0]
             try:
-                thr=out_node.result.outputs.thr
                 est_path=out_node.result.outputs.est_path
             except AttributeError:
                 print('Workflow failed!')            
@@ -786,7 +782,7 @@ if __name__ == '__main__':
     ##Workflow generation
     import logging
     from time import gmtime, strftime
-    callback_log_path = '/tmp/run_stats' + '_' + str(ID) + '_' + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + '.log'
+    callback_log_path = "%s%s%s%s%s" % ('/tmp/pynets_run_stats_', ID, '_', strftime("%Y-%m-%d %H:%M:%S", gmtime()), '.log')
     logger = logging.getLogger('callback')
     logger.setLevel(logging.DEBUG)
     handler = logging.FileHandler(callback_log_path)
@@ -802,9 +798,8 @@ if __name__ == '__main__':
         wf_multi.config['logging']['workflow_level']='DEBUG'
         wf_multi.config['logging']['utils_level']='DEBUG'
         wf_multi.config['logging']['interface_level']='DEBUG'
-        #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1]), 'status_callback' : log_nodes_cb}
         plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
-        print('\nRunning with ' + str(plugin_args) + '\n')
+        print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf_multi.run(plugin='MultiProc', plugin_args= plugin_args)
         #wf_multi.run()
     ##Single-subject workflow generator
@@ -818,9 +813,8 @@ if __name__ == '__main__':
         wf.config['logging']['workflow_level']='DEBUG'
         wf.config['logging']['utils_level']='DEBUG'
         wf.config['logging']['interface_level']='DEBUG'
-        #plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1]), 'status_callback' : log_nodes_cb}
         plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
-        print('\nRunning with ' + str(plugin_args) + '\n')
+        print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf.run(plugin='MultiProc', plugin_args= plugin_args)
         #wf.run()
 

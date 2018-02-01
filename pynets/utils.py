@@ -3,7 +3,7 @@
 """
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2018
-@author: PSYC-dap3463
+@author: Derek Pisner
 """
 import sys
 import os
@@ -673,3 +673,20 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
         k_clustering = [k_clustering] * len(est_path_list)
         prune = [prune] * len(est_path_list)   
     return(est_path, thr, network, ID, mask, conn_model, k_clustering, prune, node_size)
+
+
+def save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes):
+    import os
+    ##Save time series as txt file
+    if mask is None:
+        if network is not None: 
+            out_path_ts="%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_wb_net_ts.txt')
+        else:
+            out_path_ts="%s%s%s%s" % (dir_path, '/', ID, '_wb_net_ts.txt')
+    else:
+        if network is not None:
+            out_path_ts="%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_', network, '_rsn_net_ts.txt')
+        else:
+            out_path_ts="%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_wb_net_ts.txt')
+    np.savetxt(out_path_ts, ts_within_nodes, delimiter='\t')
+    return
