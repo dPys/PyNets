@@ -77,27 +77,27 @@ def do_dir_path(atlas_select, in_file):
 def create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size):
     if mask is not None:
         if network is not None:
-            est_path = dir_path + '/' + str(ID) + '_' + network + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size) + '.txt'
+            est_path = dir_path + '/' + str(ID) + '_' + network + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size) + '.npy'
         else:
-            est_path = dir_path + '/' + str(ID) + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size) + '.txt'
+            est_path = dir_path + '/' + str(ID) + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(node_size) + '.npy'
     else:
         if network is not None:
-            est_path = dir_path + '/' + str(ID) + '_' + network + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '.txt'
+            est_path = dir_path + '/' + str(ID) + '_' + network + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '.npy'
         else:
-            est_path = dir_path + '/' + str(ID) + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '.txt'
+            est_path = dir_path + '/' + str(ID) + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '.npy'
     return est_path
 
 def create_unthr_path(ID, network, conn_model, mask, dir_path):
     if mask is not None:
         if network is not None:
-            unthr_path = dir_path + '/' + str(ID) + '_' + network + '_est_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_unthresh_mat.txt'
+            unthr_path = dir_path + '/' + str(ID) + '_' + network + '_est_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_unthresh_mat.npy'
         else:
-            unthr_path = dir_path + '/' + str(ID) + '_est_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_unthresh_mat.txt'
+            unthr_path = dir_path + '/' + str(ID) + '_est_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_unthresh_mat.npy'
     else:
         if network is not None:
-            unthr_path = dir_path + '/' + str(ID) + '_' + network + '_est_' + str(conn_model) + '_unthresholded_mat.txt'
+            unthr_path = dir_path + '/' + str(ID) + '_' + network + '_est_' + str(conn_model) + '_unthresholded_mat.npy'
         else:
-            unthr_path = dir_path + '/' + str(ID) + '_est_' + str(conn_model) + '_unthresh_mat.txt'
+            unthr_path = dir_path + '/' + str(ID) + '_est_' + str(conn_model) + '_unthresh_mat.npy'
     return unthr_path
 
 def create_csv_path(ID, network, conn_model, thr, mask, dir_path, node_size):
@@ -679,13 +679,13 @@ def save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes):
     ##Save time series as txt file
     if mask is None:
         if network is not None: 
-            out_path_ts="%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_wb_net_ts.txt')
+            out_path_ts="%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_wb_net_ts.npy')
         else:
-            out_path_ts="%s%s%s%s" % (dir_path, '/', ID, '_wb_net_ts.txt')
+            out_path_ts="%s%s%s%s" % (dir_path, '/', ID, '_wb_net_ts.npy')
     else:
         if network is not None:
-            out_path_ts="%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_', network, '_rsn_net_ts.txt')
+            out_path_ts="%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_', network, '_rsn_net_ts.npy')
         else:
-            out_path_ts="%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_wb_net_ts.txt')
-    np.savetxt(out_path_ts, ts_within_nodes, delimiter='\t')
+            out_path_ts="%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_wb_net_ts.npy')
+    np.save(out_path_ts, ts_within_nodes)
     return

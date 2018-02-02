@@ -140,7 +140,7 @@ def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, 
                 #[conn_matrix_thr, est_path, edge_threshold, thr] = adaptive_thresholding(ts_within_nodes, conn_model, network, ID, est_path2, dir_path)
                 ##Save unthresholded
                 unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
-                #np.savetxt(unthr_path, conn_matrix_thr, delimiter='\t')
+                #np.save(unthr_path, conn_matrix_thr)
                 edge_threshold = str(float(thr)*100) +'%'
             else:
                 print('No structural mx found! Exiting...')
@@ -158,7 +158,7 @@ def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, 
         
         ##Save unthresholded
         unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
-        np.savetxt(unthr_path, conn_matrix, delimiter='\t')
+        np.save(unthr_path, conn_matrix)
 
         if dens_thresh == False:
             ##Save thresholded
@@ -169,5 +169,5 @@ def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, 
             conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
             edge_threshold = str(float(thr)*100) +'%'
             est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
-        np.savetxt(est_path, conn_matrix_thr, delimiter='\t')
+        np.save(est_path, conn_matrix_thr)
     return(conn_matrix_thr, edge_threshold, est_path, thr)

@@ -450,11 +450,11 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
             pass
 
     if network != None:
-        est_path_struct = dir_path + '/' + ID + '_' + network + '_structural_est.txt'
+        est_path_struct = dir_path + '/' + ID + '_' + network + '_structural_est.npy'
     else:
-        est_path_struct = dir_path + '/' + ID + '_structural_est.txt'
+        est_path_struct = dir_path + '/' + ID + '_structural_est.npy'
     try:
-        np.savetxt(est_path_struct, conn_matrix_symm, delimiter='\t')
+        np.save(est_path_struct, conn_matrix_symm)
     except RuntimeError:
         print('Workflow error. Exiting...')
     return(conn_matrix, conn_matrix_symm, est_path_struct)
