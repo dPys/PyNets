@@ -300,7 +300,7 @@ if __name__ == '__main__':
             atlas_select = None
         elif k_clustering == 1:
             cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-            atlas_select = "%s%s%s%s%s" % (ID, '_', cl_mask_name, '_k', k)
+            atlas_select = "%s%s%s" % (cl_mask_name, '_k', k)
             print("%s%s" % ("ATLAS: ", atlas_select))
             dir_path = do_dir_path(atlas_select, input_file)
             print("Clustering within mask at a single resolution...")
@@ -309,14 +309,14 @@ if __name__ == '__main__':
             print("Clustering within mask at multiple resolutions...")
             for k in k_list:
                 cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                atlas_select = "%s%s%s%s%s" % (ID, '_', cl_mask_name, '_k', k)
+                atlas_select = "%s%s%s" % (cl_mask_name, '_k', k)
                 print("%s%s" % ("ATLAS: ", atlas_select))
                 dir_path = do_dir_path(atlas_select, input_file)
         elif k_clustering == 3:
             print("Clustering within multiple masks at a single resolution...")
             for clust_mask in clust_mask_list:
                 cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                atlas_select = "%s%s%s%s%s" % (ID, '_', cl_mask_name, '_k', k)
+                atlas_select = "%s%s%s" % (cl_mask_name, '_k', k)
                 dir_path = do_dir_path(atlas_select, input_file)
         elif k_clustering == 4:
             print("Clustering within multiple masks at multiple resolutions...")
@@ -324,7 +324,7 @@ if __name__ == '__main__':
             for clust_mask in clust_mask_list:
                 for k in k_list:
                     cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                    atlas_select = "%s%s%s%s%s" % (ID, '_', cl_mask_name, '_k', k)
+                    atlas_select = "%s%s%s" % (cl_mask_name, '_k', k)
                     dir_path = do_dir_path(atlas_select, input_file)
         elif (user_atlas_list is not None or parlistfile is not None) and (k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1) and atlas_select is None:
             print('Error: the -ua flag cannot be used with the clustering option. Use the -cm flag instead.')
