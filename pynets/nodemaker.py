@@ -142,7 +142,7 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
                 inds = get_sphere(coord, error, (np.abs(x_vox), y_vox, z_vox), RSNmask.shape)
                 sphere_vol[tuple(inds.T)] = 1
                 if (RSNmask.astype('bool') & sphere_vol).any():
-                    print("%s%s%.2f%s%s%s" % (coord, ' coord is within a + or - ', error, ' mm neighborhood of ', network, '...'))
+                    print("%s%s%.2f%s%s%s" % (coord, ' coord is within a + or - ', float(error), ' mm neighborhood of ', network, '...'))
                     RSN_coords_vox.append(coord)
                     net_label_names.append(label_names[i])
         coords_mm = []
@@ -264,7 +264,7 @@ def coord_masker(mask, coords, label_names):
         inds = get_sphere(coord, error, (np.abs(x_vox), y_vox, z_vox), mask_data.shape)
         sphere_vol[tuple(inds.T)] = 1
         if (mask_data & sphere_vol).any():
-            print("%s%s%.2f%s" % (coord, ' is within a + or - ', error, ' mm neighborhood...'))
+            print("%s%s%.2f%s" % (coord, ' is within a + or - ', float(error), ' mm neighborhood...'))
             continue
         bad_coords.append(coord)
 

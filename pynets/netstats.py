@@ -979,7 +979,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     in_mat = nx.to_numpy_array(G)
     
     ##Print graph summary
-    print("%s%.2f%s" % ('\n\nThreshold: ',100*thr,'%'))
+    print("%s%.2f%s" % ('\n\nThreshold: ',100*float(thr),'%'))
     print("%s%s" % ('Source File: ', est_path))
     info_list = list(nx.info(G).split('\n'))[2:]
     for i in info_list:

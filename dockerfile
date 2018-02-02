@@ -45,9 +45,10 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
 RUN conda install -yq \
       python=3.6 \
       setuptools>=38.2.4 \
+      nipype==0.14.0 \
       traits \
     && conda clean -tipsy \
-    && pip install pynets --upgrade
+    && pip install pynets==0.5.2
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py

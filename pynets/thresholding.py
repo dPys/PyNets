@@ -63,7 +63,7 @@ def density_thresholding(conn_matrix, thr):
         conn_matrix = threshold_absolute(conn_matrix, abs_thr)
         G=nx.from_numpy_matrix(conn_matrix)
         density=nx.density(G)
-        print("%s%d%s%.2f%s%.2f%s" % ('Iteratively thresholding -- Iteration ', i, ' -- with absolute thresh: ', abs_thr, ' and Density: ', density, '...'))
+        print("%s%d%s%.2f%s%.2f%s" % ('Iteratively thresholding -- Iteration ', i, ' -- with absolute thresh: ', float(abs_thr), ' and Density: ', float(density), '...'))
         i = i + 1
     return(conn_matrix)
 
@@ -150,9 +150,9 @@ def thresh_and_fit(adapt_thresh, dens_thresh, thr, ts_within_nodes, conn_model, 
             sys.exit()
     else:
         if not dens_thresh:
-            print("%s%.2f%s" % ('\nRunning graph estimation and thresholding proportionally at: ', 100*thr, '% ...\n'))
+            print("%s%.2f%s" % ('\nRunning graph estimation and thresholding proportionally at: ', 100*float(thr), '% ...\n'))
         else:
-            print("%s%.2f%s" % ('\nRunning graph estimation and thresholding to achieve density of: ', 100*thr, '% ...\n'))
+            print("%s%.2f%s" % ('\nRunning graph estimation and thresholding to achieve density of: ', 100*float(thr), '% ...\n'))
         ##Fit mat
         conn_matrix = graphestimation.get_conn_matrix(ts_within_nodes, conn_model)
         
