@@ -404,6 +404,7 @@ if __name__ == '__main__':
 
     def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, bedpostx_dir, anat_loc, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list):
         from pynets import workflows, utils
+        from nipype import Node, Workflow, Function
 
         ##Workflow 1: Whole-brain functional connectome
         if bedpostx_dir is None and network is None:
@@ -418,24 +419,65 @@ if __name__ == '__main__':
         elif bedpostx_dir is not None and network is not None:
             sub_struct_wf = workflows.rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc, prune)
             
-        if sub_func_wf:
-            res = sub_func_wf.run(plugin='MultiProc')
-            out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'thresh_and_fit_node' in x][-1]][0]
-            try:
-                est_path=out_node.result.outputs.est_path
-            except AttributeError:
-                print('Workflow failed!')
-        elif sub_struct_wf:
-            res = sub_struct_wf.run(plugin='MultiProc')
-            out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'thresh_and_fit_node' in x][-1]][0]
-            try:
-                est_path=out_node.result.outputs.est_path
-            except AttributeError:
-                print('Workflow failed!')            
-                
-        [est_path, thr, network, ID, mask, conn_model, k_clustering, prune, node_size] = utils.compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, est_path)
+        base_wf = sub_func_wf if sub_func_wf else sub_struct_wf
 
-        return(thr, est_path, ID, network, conn_model, mask, prune, node_size)
+        ##Create meta-workflow to organize graph simulation sets in prep for analysis
+        meta_wf = Workflow(name='meta')
+        meta_wf.add_nodes([base_wf])
+        
+        import_list = ['import sys',
+                   'import os',
+                   'import nibabel as nib'
+                   'import numpy as np',
+                   'from pynets import utils']
+        
+        comp_iter = Node(Function(function=utils.compile_iterfields, 
+                                  input_names = ['input_file', 'ID', 'atlas_select', 
+                                                 'network', 'node_size', 'mask', 'thr', 
+                                                 'parlistfile', 'multi_nets', 'conn_model', 
+                                                 'dens_thresh', 'dir_path', 'multi_thr', 
+                                                 'multi_atlas', 'max_thr', 'min_thr', 'step_thr', 
+                                                 'k', 'clust_mask', 'k_min', 'k_max', 'k_step', 
+                                                 'k_clustering', 'user_atlas_list', 'clust_mask_list', 
+                                                 'prune', 'node_size_list', 'est_path'], 
+                                  output_names = ['est_path', 'thr', 'network', 'ID', 'mask', 'conn_model', 
+                                                  'k_clustering', 'prune', 'node_size']), 
+                         name='compile_iterfields', imports = import_list)
+        
+        comp_iter.inputs.input_file = input_file
+        comp_iter.inputs.ID = ID
+        comp_iter.inputs.atlas_select = atlas_select
+        comp_iter.inputs.network = network
+        comp_iter.inputs.node_size = node_size
+        comp_iter.inputs.mask = mask
+        comp_iter.inputs.thr = thr
+        comp_iter.inputs.parlistfile = parlistfile
+        comp_iter.inputs.multi_nets = multi_nets
+        comp_iter.inputs.conn_model = conn_model
+        comp_iter.inputs.dens_thresh = dens_thresh
+        comp_iter.inputs.dir_path = dir_path
+        comp_iter.inputs.multi_thr = multi_thr
+        comp_iter.inputs.multi_atlas = multi_atlas
+        comp_iter.inputs.max_thr = max_thr
+        comp_iter.inputs.min_thr = min_thr
+        comp_iter.inputs.step_thr = step_thr
+        comp_iter.inputs.k = k
+        comp_iter.inputs.clust_mask = clust_mask
+        comp_iter.inputs.k_min = k_min
+        comp_iter.inputs.k_max = k_max
+        comp_iter.inputs.k_step = k_step
+        comp_iter.inputs.k_clustering = k_clustering
+        comp_iter.inputs.user_atlas_list = user_atlas_list
+        comp_iter.inputs.clust_mask_list = clust_mask_list
+        comp_iter.inputs.prune = prune
+        comp_iter.inputs.node_size_list = node_size_list
+
+        meta_wf.connect(base_wf, "thresh_and_fit_node.est_path", comp_iter, "est_path")
+        
+        egg = meta_wf.run(plugin="MultiProc")
+        outputs = [x for x in egg.nodes() if x.name == 'compile_iterfields'][0].result.outputs
+
+        return(outputs.thr, outputs.est_path, outputs.ID, outputs.network, outputs.conn_model, outputs.mask, outputs.prune, outputs.node_size)
 
     class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
         ID = traits.Any(mandatory=True)
@@ -626,7 +668,8 @@ if __name__ == '__main__':
         'parc', 'ref_txt', 'procmem', 'dir_path', 'multi_thr', 'multi_atlas', 'max_thr',
         'min_thr', 'step_thr', 'k', 'clust_mask', 'k_min', 'k_max', 'k_step', 'k_clustering',
         'user_atlas_list', 'clust_mask_list', 'prune', 'node_size_list'],
-        output_names = ['thr', 'est_path', 'ID', 'network', 'conn_model', 'mask', 'prune', 'node_size'],
+        output_names = ['outputs.thr', 'outputs.est_path', 'outputs.ID', 'outputs.network', 
+                        'outputs.conn_model', 'outputs.mask', 'outputs.prune', 'outputs.node_size'],
         function=workflow_selector),
         name = "imp_est")
     
@@ -688,17 +731,17 @@ if __name__ == '__main__':
                                   ('clust_mask_list', 'clust_mask_list'),
                                   ('prune', 'prune'),
                                   ('node_size_list', 'node_size_list')]),
-            (imp_est, net_mets_node, [('est_path', 'est_path'),
-                                      ('network', 'network'),
-                                      ('thr', 'thr'),
-                                      ('ID', 'ID'),
-                                      ('conn_model', 'conn_model'),
-                                      ('mask', 'mask'),
-                                      ('prune', 'prune'),
-                                      ('node_size', 'node_size')]),
-            (imp_est, export_to_pandas_node, [('network', 'network'),
-                                              ('ID', 'ID'),
-                                              ('mask', 'mask')]),
+            (imp_est, net_mets_node, [('outputs.est_path', 'est_path'),
+                                      ('outputs.network', 'network'),
+                                      ('outputs.thr', 'thr'),
+                                      ('outputs.ID', 'ID'),
+                                      ('outputs.conn_model', 'conn_model'),
+                                      ('outputs.mask', 'mask'),
+                                      ('outputs.prune', 'prune'),
+                                      ('outputs.node_size', 'node_size')]),
+            (imp_est, export_to_pandas_node, [('outputs.network', 'network'),
+                                              ('outputs.ID', 'ID'),
+                                              ('outputs.mask', 'mask')]),
             (net_mets_node, export_to_pandas_node, [('out_file', 'in_csv')]),
             (export_to_pandas_node, collect_pandas_dfs_node, [('out_file', 'in_csv')]),
             (inputnode, collect_pandas_dfs_node, [('in_file', 'input_file'),
