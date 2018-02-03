@@ -426,10 +426,10 @@ if __name__ == '__main__':
         meta_wf.add_nodes([base_wf])
         
         import_list = ['import sys',
-                   'import os',
-                   'import nibabel as nib'
-                   'import numpy as np',
-                   'from pynets import utils']
+                       'import os',
+                       'import nibabel as nib'
+                       'import numpy as np',
+                       'from pynets import utils']
         
         comp_iter = Node(Function(function=utils.compile_iterfields, 
                                   input_names = ['input_file', 'ID', 'atlas_select', 
@@ -472,7 +472,7 @@ if __name__ == '__main__':
         comp_iter.inputs.prune = prune
         comp_iter.inputs.node_size_list = node_size_list
 
-        meta_wf.connect(base_wf, "thresh_and_fit_node.est_path", comp_iter, "est_path")
+        meta_wf.connect(base_wf, "outputnode.est_path", comp_iter, "est_path")
         
         egg = meta_wf.run(plugin="MultiProc")
         outputs = [x for x in egg.nodes() if x.name == 'compile_iterfields'][0].result.outputs

@@ -552,6 +552,8 @@ def cuberoot(x):
     return np.sign(x) * np.abs(x)**(1 / 3)
 
 def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, est_path):
+    import numpy as np
+    import os
     from pynets import utils
     
     ##Build iterfields
@@ -563,13 +565,13 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
             mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
             for k in k_list:
-                atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
+                atlas_select = mask_name + '_k' + str(k)
                 [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
         elif k_clustering == 3:
             print('\nIterating pipeline for ' + str(ID) + ' across multiple masks at a single clustering resolution...\n')
             for clust_mask in clust_mask_list:
                 mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
+                atlas_select = mask_name + '_k' + str(k)
                 [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
         elif k_clustering == 4:
             print('\nIterating pipeline for ' + str(ID) + ' across multiple clustering resolutions and masks...\n')
@@ -577,7 +579,7 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
             for clust_mask in clust_mask_list:
                 mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                 for k in k_list:
-                    atlas_select = str(ID) + '_' + mask_name + '_k' + str(k)
+                    atlas_select = mask_name + '_k' + str(k)
                     [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
         elif multi_atlas is not None:
             print('\nIterating pipeline for ' + str(ID) + ' across multiple atlases: ' + '\n'.join(str(n) for n in multi_atlas) + '...\n')
@@ -650,7 +652,7 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
             for i in bad_ixs:
                  network_list.pop(i)
             
-        if multi_thr == True:               
+        if multi_thr == True:       
             thr = []
             for path in est_path_list:
                 thr.append(path.split('.npy')[0].rsplit('_',2)[-2])
