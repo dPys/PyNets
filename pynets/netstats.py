@@ -11,6 +11,7 @@ import networkx as nx
 
 def average_shortest_path_length_for_all(G):
     import math
+    print('WARNING: Calculating average shortest path length for a disconnected graph. This might take awhile...')
     subgraphs = [sbg for sbg in nx.connected_component_subgraphs(G) if len(sbg) > 1]
     return math.fsum(nx.average_shortest_path_length(sg) for sg in subgraphs) / len(subgraphs)
 
@@ -942,7 +943,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     from pynets import thresholding, utils
 
     ##Load and threshold matrix
-    in_mat = np.array(np.genfromtxt(est_path, delimiter='\t'))
+    in_mat = np.array(np.load(est_path))
     in_mat = thresholding.autofix(in_mat)
     
     ##Normalize connectivity matrix (weights between 0-1)
@@ -978,8 +979,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     in_mat = nx.to_numpy_array(G)
     
     ##Print graph summary
-    print('\n\nThreshold: ' + str(thr))
-    print('Source File: ' + str(est_path))
+    print("%s%.2f%s" % ('\n\nThreshold: ',100*float(thr),'%'))
+    print("%s%s" % ('Source File: ', est_path))
     info_list = list(nx.info(G).split('\n'))[2:]
     for i in info_list:
         print(i)
@@ -993,8 +994,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
             if nx.is_connected(G) == True:
                 print('Graph is CONNECTED')
             else:
-                print('Graph is DISCONNECTED')
-                print('\n')
+                print('Graph is DISCONNECTED\n')
         except:
             pass
 
@@ -1006,14 +1006,14 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     ##Save G as gephi file
     if mask:
         if network:
-            nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(thr) + '_' + str(node_size) + '.graphml')
+            nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_', os.path.basename(mask).split('.')[0], '_', thr, '_', node_size, '.graphml'))
         else:
-            nx.write_graphml(G, dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(thr) + '_' + str(node_size) + '.graphml')        
+            nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_', thr, '_', node_size, '.graphml'))            
     else:
         if network:
-            nx.write_graphml(G, dir_path + '/' + ID + '_' + network + '_' + str(thr) + '_' + str(node_size) + '.graphml')
+            nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_', thr, '_', node_size, '.graphml'))            
         else:
-            nx.write_graphml(G, dir_path + '/' + ID + '_' + str(thr) + '_' + str(node_size) + '.graphml')
+            nx.write_graphml(G, "%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', thr, '_', node_size, '.graphml'))
 
     ###############################################################
     ########### Calculate graph metrics from graph G ##############
@@ -1106,7 +1106,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
         nonzero_arr_le = np.delete(le_arr[:,1], [0])
         le_arr[num_nodes,1] = np.mean(nonzero_arr_le)
         print('Mean Local Efficiency across nodes: ' + str(le_arr[num_nodes,1]))
-        print('\n')
     except:
         pass
 
@@ -1132,7 +1131,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
         nonzero_arr_cl = np.delete(cl_arr[:,1], [0])
         cl_arr[num_nodes,1] = np.mean(nonzero_arr_cl)
         print('Mean Local Clustering across nodes: ' + str(cl_arr[num_nodes,1]))
-        print('\n')
     except:
         pass
 
@@ -1161,7 +1159,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
         nonzero_arr_dc = np.delete(dc_arr[:,1], [0])
         dc_arr[num_nodes,1] = np.mean(nonzero_arr_dc)
         print('Mean Degree Centrality across nodes: ' + str(dc_arr[num_nodes,1]))
-        print('\n')
     except:
         pass
 
@@ -1187,7 +1184,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
         nonzero_arr_betw_cent = np.delete(bc_arr[:,1], [0])
         bc_arr[num_nodes,1] = np.mean(nonzero_arr_betw_cent)
         print('Mean Betweenness Centrality across nodes: ' + str(bc_arr[num_nodes,1]))
-        print('\n')
     except:
         pass
 
@@ -1216,7 +1212,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
         nonzero_arr_eig_cent = np.delete(ec_arr[:,1], [0])
         ec_arr[num_nodes,1] = np.mean(nonzero_arr_eig_cent)
         print('Mean Eigenvector Centrality across nodes: ' + str(ec_arr[num_nodes,1]))
-        print('\n')
     except:
         pass
 
@@ -1242,7 +1237,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
         nonzero_arr_comm_cent = np.delete(cc_arr[:,1], [0])
         cc_arr[num_nodes,1] = np.mean(nonzero_arr_comm_cent)
         print('Mean Communicability Centrality across nodes: ' + str(cc_arr[num_nodes,1]))
-        print('\n')
     except:
         pass
 
@@ -1269,7 +1263,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
         nonzero_arr_rich_club = np.delete(rc_arr[:,1], [0])
         rc_arr[num_edges,1] = np.mean(nonzero_arr_rich_club)
         print('Mean Rich Club Coefficient across edges: ' + str(rc_arr[num_edges,1]))
-        print('\n')
     except:
         pass
 
@@ -1351,14 +1344,14 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
         
     if mask != None:
         if network != None:
-            met_list_picke_path = os.path.dirname(os.path.abspath(est_path)) + '/net_metric_list_' + network + '_' + str(os.path.basename(mask).split('.')[0])
+            met_list_picke_path = "%s%s%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list_', network, '_', os.path.basename(mask).split('.')[0])
         else:
-            met_list_picke_path = os.path.dirname(os.path.abspath(est_path)) + '/net_metric_list_' + str(os.path.basename(mask).split('.')[0])
+            met_list_picke_path = "%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list_', os.path.basename(mask).split('.')[0])
     else:
         if network != None:
-            met_list_picke_path = os.path.dirname(os.path.abspath(est_path)) + '/net_metric_list_' + network
+            met_list_picke_path = "%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list_', network)
         else:
-            met_list_picke_path = os.path.dirname(os.path.abspath(est_path)) + '/net_metric_list'
+            met_list_picke_path = "%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list')
     pickle.dump(metric_list_names, open(met_list_picke_path, 'wb'), protocol=2)
 
     ##And save results to csv

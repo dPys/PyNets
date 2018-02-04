@@ -6,7 +6,7 @@ Copyright (C) 2018
 """
 import numpy as np
 
-def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, node_size_list):
+def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, node_size_list, prune):
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets import nodemaker, utils, graphestimation, plotting, thresholding
@@ -26,7 +26,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                       'plot_switch', 'parc', 'ref_txt',
                                                       'procmem', 'dir_path', 'k',
                                                       'clust_mask', 'k_min', 'k_max',
-                                                      'k_step', 'k_clustering', 'user_atlas_list']), name='inputnode')
+                                                      'k_step', 'k_clustering', 'user_atlas_list', 'prune']), name='inputnode')
 
     #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
     inputnode.inputs.func_file = func_file
@@ -53,7 +53,16 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     inputnode.inputs.k_step = k_step
     inputnode.inputs.k_clustering = k_clustering
     inputnode.inputs.user_atlas_list = user_atlas_list
-
+    inputnode.inputs.multi_thr = multi_thr
+    inputnode.inputs.multi_atlas = multi_atlas
+    inputnode.inputs.max_thr = max_thr
+    inputnode.inputs.min_thr = min_thr
+    inputnode.inputs.step_thr = step_thr
+    inputnode.inputs.clust_mask_list = clust_mask_list
+    inputnode.inputs.prune = prune
+    inputnode.inputs.node_size_list = node_size_list
+    inputnode.inputs.multi_nets = None
+    
     #3) Add variable to function nodes
     ##Create function nodes
     clustering_node = pe.Node(niu.Function(input_names = ['func_file', 'clust_mask', 'ID', 'k'],
@@ -94,7 +103,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
             extract_ts_wb_node.iterables = node_size_iterables  
             
     thresh_and_fit_node = pe.Node(niu.Function(input_names = ['adapt_thresh', 'dens_thresh', 'thr', 'ts_within_nodes', 'conn_model', 'network', 'ID', 'dir_path', 'mask', 'node_size'],
-                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr'],
+                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr', 'node_size', 'network'],
                                          function=thresholding.thresh_and_fit, imports = import_list), name = "thresh_and_fit_node")
             
     ##Plotting
@@ -103,7 +112,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                      output_names='None',
                                      function=plotting.plot_all, imports = import_list), name = "plot_all_node")
 
-    outputnode = pe.Node(niu.Function(function=utils.output_echo, input_names=['est_path', 'thr'], output_names=['est_path', 'thr']), name='outputnode')
+    outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network']), name='outputnode')
 
     if multi_thr == True:
         thresh_and_fit_node_iterables = []
@@ -180,11 +189,13 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                           ('conn_model', 'conn_model'),
                                           ('node_size', 'node_size')]),
         (WB_fetch_nodes_and_labels_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
-        (extract_ts_wb_node, thresh_and_fit_node, [('ts_within_nodes', 'ts_within_nodes')]),
+        (extract_ts_wb_node, thresh_and_fit_node, [('ts_within_nodes', 'ts_within_nodes')]),       
         (thresh_and_fit_node, outputnode, [('est_path', 'est_path'),
-                                           ('thr', 'thr')]),
+                                           ('thr', 'thr'),
+                                           ('node_size', 'node_size'),
+                                           ('network', 'network')]),
         ])
-
+    
     if plot_switch == True:
         wb_functional_connectometry_wf.connect([(inputnode, plot_all_node, [('ID', 'ID'),
                                                                             ('mask', 'mask'),
@@ -248,18 +259,9 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     wb_functional_connectometry_wf.config['logging']['workflow_level']='DEBUG'
     wb_functional_connectometry_wf.config['logging']['utils_level']='DEBUG'
     wb_functional_connectometry_wf.config['logging']['interface_level']='DEBUG'
-    wb_functional_connectometry_wf.config['execution']['plugin']='MultiProc'
-    res = wb_functional_connectometry_wf.run()
+    return wb_functional_connectometry_wf
 
-    out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'outputnode' in x][-1]][0]
-    try:
-        thr=out_node.result.outputs.thr
-        est_path=out_node.result.outputs.est_path
-    except AttributeError:
-        print('Workflow failed!')
-    return(est_path, thr)
-
-def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, node_size_list):
+def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, node_size_list, prune):
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets import nodemaker, utils, graphestimation, plotting, thresholding
@@ -306,7 +308,16 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     inputnode.inputs.k_step = k_step
     inputnode.inputs.k_clustering = k_clustering
     inputnode.inputs.user_atlas_list = user_atlas_list
-
+    inputnode.inputs.multi_thr = multi_thr
+    inputnode.inputs.multi_atlas = multi_atlas
+    inputnode.inputs.max_thr = max_thr
+    inputnode.inputs.min_thr = min_thr
+    inputnode.inputs.step_thr = step_thr
+    inputnode.inputs.clust_mask_list = clust_mask_list
+    inputnode.inputs.prune = prune
+    inputnode.inputs.node_size_list = node_size_list
+    inputnode.inputs.multi_nets = multi_nets
+    
     #3) Add variable to function nodes
     ##Create function nodes
     clustering_node = pe.Node(niu.Function(input_names = ['func_file', 'clust_mask', 'ID', 'k'],
@@ -355,7 +366,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
             extract_ts_rsn_node.iterables = node_size_iterables  
             
     thresh_and_fit_node = pe.Node(niu.Function(input_names = ['adapt_thresh', 'dens_thresh', 'thr', 'ts_within_nodes', 'conn_model', 'network', 'ID', 'dir_path', 'mask', 'node_size'],
-                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr'],
+                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr', 'node_size', 'network'],
                                          function=thresholding.thresh_and_fit, imports = import_list), name = "thresh_and_fit_node")
     if node_size_list and parc==False:
         node_size_iterables = []
@@ -367,8 +378,8 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
         plot_all_node = pe.Node(niu.Function(input_names = ['conn_matrix', 'conn_model', 'atlas_select', 'dir_path', 'ID', 'network', 'label_names', 'mask', 'coords', 'thr', 'node_size', 'edge_threshold'],
                                      output_names='None',
                                      function=plotting.plot_all, imports = import_list), name = "plot_all_node")
-
-    outputnode = pe.Node(niu.Function(function=utils.output_echo, input_names=['est_path', 'thr'], output_names=['est_path', 'thr']), name='outputnode')
+           
+    outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network']), name='outputnode')
 
     if multi_thr == True:
         thresh_and_fit_node_iterables = []
@@ -459,11 +470,13 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                           ('conn_model', 'conn_model'),
                                           ('node_size', 'node_size')]),
         (RSN_fetch_nodes_and_labels_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
-        (extract_ts_rsn_node, thresh_and_fit_node, [('ts_within_nodes', 'ts_within_nodes')]),
+        (extract_ts_rsn_node, thresh_and_fit_node, [('ts_within_nodes', 'ts_within_nodes')]),    
         (thresh_and_fit_node, outputnode, [('est_path', 'est_path'),
-                                           ('thr', 'thr')]),
+                                           ('thr', 'thr'),
+                                           ('node_size', 'node_size'),
+                                           ('network', 'network')])
         ])
-
+    
     if plot_switch == True:
         rsn_functional_connectometry_wf.connect([(inputnode, plot_all_node, [('ID', 'ID'),
                                                                             ('mask', 'mask'),
@@ -545,15 +558,8 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     rsn_functional_connectometry_wf.config['logging']['utils_level']='DEBUG'
     rsn_functional_connectometry_wf.config['logging']['interface_level']='DEBUG'
     rsn_functional_connectometry_wf.config['execution']['plugin']='MultiProc'
-    res = rsn_functional_connectometry_wf.run()
 
-    out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'outputnode' in x][-1]][0]
-    try:
-        thr=out_node.result.outputs.thr
-        est_path=out_node.result.outputs.est_path
-    except AttributeError:
-        print('Workflow failed!')
-    return est_path, thr
+    return rsn_functional_connectometry_wf
 
 def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc):
     from nipype.pipeline import engine as pe
@@ -694,15 +700,7 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     wb_structural_connectometry_wf.config['logging']['workflow_level']='DEBUG'
     wb_structural_connectometry_wf.config['logging']['utils_level']='DEBUG'
     wb_structural_connectometry_wf.config['logging']['interface_level']='DEBUG'
-    wb_structural_connectometry_wf.config['execution']['plugin']='MultiProc'
-    res = wb_structural_connectometry_wf.run()
-
-    out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'outputnode' in x][-1]][0]
-    try:
-        est_path_struct=out_node.result.outputs.est_path
-    except AttributeError:
-        print('Workflow failed!')
-    return est_path_struct
+    return wb_structural_connectometry_wf
 
 def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc):
     from nipype.pipeline import engine as pe
@@ -855,12 +853,4 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
     rsn_structural_connectometry_wf.config['logging']['workflow_level']='DEBUG'
     rsn_structural_connectometry_wf.config['logging']['utils_level']='DEBUG'
     rsn_structural_connectometry_wf.config['logging']['interface_level']='DEBUG'
-    rsn_structural_connectometry_wf.config['execution']['plugin']='MultiProc'
-    res = rsn_structural_connectometry_wf.run()
-
-    out_node = [x for x in list(res.nodes()) if str(x) == [x for x in [str(i) for i in list(res.nodes())] if 'outputnode' in x][-1]][0]
-    try:
-        est_path_struct=out_node.result.outputs.est_path
-    except AttributeError:
-        print('Workflow failed!')
-    return est_path_struct
+    return rsn_structural_connectometry_wf

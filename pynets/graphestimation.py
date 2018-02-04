@@ -7,8 +7,6 @@ Copyright (C) 2018
 import numpy as np
 
 def get_conn_matrix(time_series, conn_model):
-    import warnings
-    warnings.simplefilter("ignore")
     from nilearn.connectome import ConnectivityMeasure
     from sklearn.covariance import GraphLassoCV
     try:
@@ -163,7 +161,7 @@ def extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path):
     vox_dims = tuple(ref_header['pixdim'][1:4])
     #print('Data loaded: t+'+str(time.time()-start_time)+'s')
     label_mask = np.zeros(volume_dims)
-    label_file = dir_path + '/label_file_tmp.nii.gz'
+    label_file = "%s%s" % (dir_path, '/label_file_tmp.nii.gz')
     
     [x_vox, y_vox, z_vox] = vox_dims
     # finding sphere voxels 
@@ -189,7 +187,7 @@ def extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path):
 
     nib.save(nib.Nifti1Image(label_mask, ref_affine, header=ref_header), label_file)
     #print('Sphere mask saved: t+'+str(time.time()-start_time)+'s')
-    cmd ='fslmeants -i '+ func_file + ' --label=' + label_file
+    cmd ="%s%s%s%s" % ('fslmeants -i ', func_file, ' --label=', label_file)
     stdout_extracted_ts = subprocess.check_output(cmd, shell=True)
     ts_within_nodes = np.loadtxt(StringIO(stdout_extracted_ts))
     ts_within_nodes = normalize(ts_within_nodes)
@@ -218,7 +216,7 @@ def extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path):
 
     nib.save(nib.Nifti1Image(label_mask, ref_affine, header=ref_header), net_parcels_map_nifti)
     #print('Sphere mask saved: t+'+str(time.time()-start_time)+'s')
-    cmd ='fslmeants -i '+ func_file + ' --label=' + net_parcels_map_nifti
+    cmd ="%s%s%s%s" % ('fslmeants -i ', func_file, ' --label=', net_parcels_map_nifti)
     stdout_extracted_ts = subprocess.check_output(cmd, shell=True)
     ts_within_nodes = np.loadtxt(StringIO(stdout_extracted_ts))
     ts_within_nodes = normalize(ts_within_nodes)
@@ -227,9 +225,9 @@ def extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path):
     return(ts_within_nodes)
     
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network):
-    import os
     from nilearn import input_data
     from pynets.graphestimation import extract_ts_parc_fast
+    from pynets import utils
     ##extract time series from whole brain parcellaions:
     fast=False
     #import time
@@ -239,25 +237,15 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
     else:
         parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0, standardize=True)
         ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
-    print('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' volumetric ROI\'s\n')
+    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords), ' volumetric ROI\'s\n'))
     ##Save time series as txt file
-    if mask is None:
-        if network is not None:
-            out_path_ts=dir_path + '/' + ID + '_' + network + '_rsn_net_ts.txt'
-        else:
-            out_path_ts=dir_path + '/' + ID + '_wb_net_ts.txt'
-    else:
-        if network is not None:
-            out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + network + '_rsn_net_ts.txt'
-        else:
-            out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_wb_net_ts.txt'
-    np.savetxt(out_path_ts, ts_within_nodes, delimiter=',')
+    utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)
     return(ts_within_nodes)
     
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network):
-    import os
     from nilearn import input_data
     from pynets.graphestimation import extract_ts_coords_fast
+    from pynets import utils
     
     fast=False
     #import time
@@ -269,17 +257,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
         ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
         
     #print(time.time()-start_time)
-    print('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]) + ' and ' + str(len(coords)) + ' coordinate ROI\'s\n')
+    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords), ' coordinate ROI\'s\n'))
     ##Save time series as txt file
-    if mask is None:
-        if network is not None:
-            out_path_ts=dir_path + '/' + ID + '_' + network + '_rsn_net_ts.txt'
-        else:
-            out_path_ts=dir_path + '/' + ID + '_wb_net_ts.txt'
-    else:
-        if network is not None:
-            out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + network + '_rsn_net_ts.txt'
-        else:
-            out_path_ts=dir_path + '/' + ID + '_' + str(os.path.basename(mask).split('.')[0]) + '_wb_net_ts.txt'
-    np.savetxt(out_path_ts, ts_within_nodes, delimiter='\t')
+    utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)
     return(ts_within_nodes, node_size)

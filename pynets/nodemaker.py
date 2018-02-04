@@ -39,16 +39,15 @@ def fetch_nilearn_atlas_coords(atlas_select):
     atlas_name = atlas['description'].splitlines()[0]
     if atlas_name is None:
         atlas_name = atlas_select
-    print('\n' + str(atlas_name.decode('utf-8')) + ' comes with {0}'.format(atlas.keys()) + '\n')
+    print("%s%s%s%s" % ('\n', str(atlas_name.decode('utf-8')), ' comes with {0}'.format(atlas.keys()), '\n'))
     coords = np.vstack((atlas.rois['x'], atlas.rois['y'], atlas.rois['z'])).T
-    print('\nStacked atlas coordinates in array of shape {0}.'.format(coords.shape) + '\n')
+    print("%s%s" % ('\nStacked atlas coordinates in array of shape {0}.'.format(coords.shape), '\n'))
     try:
-        networks_list = atlas.networks.astype('U')
+        networks_list = atlas.networks.astype('U').tolist()
     except:
         networks_list = None
     try:
-        label_names=atlas.labels.astype('U')
-        label_names=np.array([s.strip('b\'') for s in label_names]).astype('U')
+        label_names=np.array([s.strip('b\'') for s in atlas.labels.astype('U')]).tolist()
     except:
         label_names=None
     return(coords, atlas_name, networks_list, label_names)
@@ -135,7 +134,7 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
             sphere_vol[tuple(coord)] = 1
             i = i + 1
             if (RSNmask.astype('bool') & sphere_vol).any():
-                print(str(coord) + ' coord falls within ' + network + '...')
+                print("%s%s%s%s" % (coord, ' coord falls within ', network, '...'))
                 RSN_coords_vox.append(coord)
                 net_label_names.append(label_names[i])
                 continue
@@ -143,7 +142,7 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
                 inds = get_sphere(coord, error, (np.abs(x_vox), y_vox, z_vox), RSNmask.shape)
                 sphere_vol[tuple(inds.T)] = 1
                 if (RSNmask.astype('bool') & sphere_vol).any():
-                    print(str(coord) + ' coord is within a + or - ' + str(error) + ' mm neighborhood of ' + network + '...')
+                    print("%s%s%.2f%s%s%s" % (coord, ' coord is within a + or - ', float(error), ' mm neighborhood of ', network, '...'))
                     RSN_coords_vox.append(coord)
                     net_label_names.append(label_names[i])
         coords_mm = []
@@ -174,7 +173,7 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
                 overlap = float(0)
             
             if overlap >=perc_overlap:
-                print(str(round(100*overlap,1)) + '% of parcel ' + str(label_names[i]) + ' falls within ' + str(network) + ' mask...')
+                print("%.2f%s%s%s%s%s" % (100*overlap, '% of parcel ', label_names[i], ' falls within ', str(network), ' mask...'))
                 RSN_parcels.append(parcel)
                 coords_with_parc.append(coords[i])
                 net_label_names.append(label_names[i])
@@ -214,7 +213,7 @@ def parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID):
             overlap = float(0)
         
         if overlap >= perc_overlap:
-            print(str(round(100*overlap,1)) + '% of parcel ' + str(label_names[i]) + ' falls within mask...')
+            print("%.2f%s%s%s" % (100*overlap, '% of parcel ', label_names[i], ' falls within mask...'))
         else:
             indices.append(i)
         i = i + 1
@@ -223,13 +222,13 @@ def parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID):
     coords_adj = list(tuple(x) for x in coords)
     parcel_list_adj = parcel_list
     for ix in sorted(indices, reverse=True):
-        print('Removing: ' + str(label_names_adj[ix]) + ' at ' + str(coords_adj[ix]))
+        print("%s%s%s%s" % ('Removing: ', label_names_adj[ix], ' at ', coords_adj[ix]))
         label_names_adj.pop(ix)
         coords_adj.pop(ix)
         parcel_list_adj.pop(ix)
         
     ##Create a resampled 3D atlas that can be viewed alongside mask img for QA
-    resampled_parcels_nii_path = dir_path + '/' + ID + '_parcels_resampled2mask_' + str(os.path.basename(mask).split('.')[0]) + '.nii.gz'
+    resampled_parcels_nii_path = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_parcels_resampled2mask_', os.path.basename(mask).split('.')[0], '.nii.gz')
     resampled_parcels_atlas, _ = nodemaker.create_parcel_atlas(parcel_list_adj)
     resampled_parcels_map_nifti = resample_img(resampled_parcels_atlas, target_affine=mask_img.affine, target_shape=mask_data.shape)
     nib.save(resampled_parcels_map_nifti, resampled_parcels_nii_path)
@@ -260,12 +259,12 @@ def coord_masker(mask, coords, label_names):
         sphere_vol = np.zeros(mask_data.shape, dtype=bool)
         sphere_vol[tuple(coord)] = 1
         if (mask_data & sphere_vol).any():
-            print(str(coord) + ' falls within mask...')
+            print("%s%s" % (coord, ' falls within mask...'))
             continue
         inds = get_sphere(coord, error, (np.abs(x_vox), y_vox, z_vox), mask_data.shape)
         sphere_vol[tuple(inds.T)] = 1
         if (mask_data & sphere_vol).any():
-            print(str(coord) + ' is within a + or - ' + str(error) + ' mm neighborhood...')
+            print("%s%s%.2f%s" % (coord, ' is within a + or - ', float(error), ' mm neighborhood...'))
             continue
         bad_coords.append(coord)
 
@@ -277,7 +276,7 @@ def coord_masker(mask, coords, label_names):
     label_names=list(label_names)
     coords = list(tuple(x) for x in coords)
     for ix in sorted(indices, reverse=True):
-        print('Removing: ' + str(label_names[ix]) + ' at ' + str(coords[ix]))
+        print("%s%s%s%s" % ('Removing: ', label_names[ix], ' at ', coords[ix]))
         label_names.pop(ix)
         coords.pop(ix)
     return(coords, label_names)
@@ -332,13 +331,13 @@ def gen_network_parcels(parlistfile, network, labels, dir_path):
     for idy in range(par_max):
         roi_img_nifti = new_img_like(bna_img, img_stack[idy])
         img_list.append(roi_img_nifti)
-    print('\nExtracting parcels associated with ' + network + ' network locations...\n')
+    print("%s%s%s" % ('\nExtracting parcels associated with ', network, ' network locations...\n'))
     net_parcels = [i for j, i in enumerate(img_list) if j in labels]
     bna_4D = concat_imgs(net_parcels).get_data()
     index_vec = np.array(range(len(net_parcels))) + 1
     net_parcels_sum = np.sum(index_vec * bna_4D, axis=3)
     net_parcels_map_nifti = nib.Nifti1Image(net_parcels_sum, affine=np.eye(4))
-    out_path = dir_path + '/' + network + '_parcels.nii.gz'
+    out_path = "%s%s%s%s" % (dir_path, '/', network, '_parcels.nii.gz')
     nib.save(net_parcels_map_nifti, out_path)
     return(out_path)
 
@@ -365,7 +364,7 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
             [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
             networks_list = None
             ##Describe user atlas coords
-            print('\n' + str(atlas_select) + ' comes with {0} '.format(par_max) + 'parcels' + '\n')
+            print("%s%s%s%s" % ('\n', atlas_select, ' comes with {0} '.format(par_max), 'parcels\n'))
         except:
             raise ValueError('\n\nError: Either you have specified the name of a nilearn atlas that does not exist or you have not supplied a 3d atlas parcellation image!\n\n')
 
@@ -449,12 +448,12 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc)
     elif parc == False:
         [coords, label_names] = nodemaker.coord_masker(mask, coords, label_names)
         ##Save coords to pickle
-        coord_path = dir_path + '/whole_brain_atlas_coords_' + str(os.path.basename(mask).split('.')[0]) + '.pkl'
+        coord_path = "%s%s%s%s" % (dir_path, '/whole_brain_atlas_coords_', os.path.basename(mask).split('.')[0], '.pkl')
         with open(coord_path, 'wb') as f:
             pickle.dump(coords, f, protocol=2)
         net_parcels_map_nifti = None
     ##Save labels to pickle
-    labels_path = dir_path + '/whole_brain_atlas_labelnames_' + str(os.path.basename(mask).split('.')[0]) + '.pkl'
+    labels_path = "%s%s%s%s" % (dir_path, '/whole_brain_atlas_labelnames_', os.path.basename(mask).split('.')[0], '.pkl')
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f, protocol=2)
     return(net_parcels_map_nifti, coords, label_names)
@@ -475,11 +474,11 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
     
     if pick_dump == True:
         ##Save coords to pickle
-        coord_path = dir_path + '/whole_brain_atlas_coords_wb.pkl'
+        coord_path = "%s%s" % (dir_path, '/whole_brain_atlas_coords_wb.pkl')
         with open(coord_path, 'wb') as f:
             pickle.dump(coords, f, protocol=2)
         ##Save labels to pickle
-        labels_path = dir_path + '/whole_brain_atlas_labelnames_wb.pkl'
+        labels_path = "%s%s" % (dir_path, '/whole_brain_atlas_labelnames_wb.pkl')
         with open(labels_path, 'wb') as f:
             pickle.dump(label_names, f, protocol=2)
     return(net_parcels_map_nifti, coords, label_names)
