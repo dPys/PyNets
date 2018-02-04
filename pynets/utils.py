@@ -126,7 +126,7 @@ def individual_tcorr_clustering(func_file, clust_mask, ID, k, thresh = 0.5):
     outfile_parc = working_dir + '/rm_tcorr_indiv_cluster_' + str(ID)
     binfile=working_dir + '/rm_tcorr_indiv_cluster_' + str(ID) + '_' + str(k) + '.npy'
     dir_path = utils.do_dir_path(atlas_select, func_file)
-    parlistfile = dir_path + '/' + str(ID) + '_' + mask_name + '_k' + str(k) + '.nii.gz'
+    parlistfile = dir_path + '/' + mask_name + '_k' + str(k) + '.nii.gz'
     
     make_local_connectivity_tcorr( func_file, clust_mask, outfile, thresh )
 
@@ -513,7 +513,7 @@ def check_est_path_existence(est_path_list):
         if os.path.isfile(est_path) == True:
             est_path_list_ex.append(est_path)
         else:
-            print('\n\nWarning: Missing ' + est_path + '...\n\n')
+            #print('\n\nWarning: Missing ' + est_path + '...\n\n')
             bad_ixs.append(i)
             continue
     return(est_path_list_ex, bad_ixs)
@@ -611,7 +611,7 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
     
         ##Check existence of each est_path in est_path_list, returning a modified list with only those paths that do exist.
         [est_path_list, bad_ixs] = utils.check_est_path_existence(est_path_list)
-
+            
         ##Create network_list based on iterables across atlases, RSN's, k-values, and thresholding ranges
         if multi_nets is not None:
             print('\nIterating pipeline for ' + str(ID) + ' across networks: ' + '\n'.join(str(n) for n in multi_nets) + '...\n')
@@ -672,7 +672,8 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
         mask = [mask] * len(est_path_list)
         conn_model = [conn_model] * len(est_path_list)
         k_clustering = [k_clustering] * len(est_path_list)
-        prune = [prune] * len(est_path_list)   
+        prune = [prune] * len(est_path_list)
+        
     return(est_path, thr, network, ID, mask, conn_model, k_clustering, prune, node_size)
 
 

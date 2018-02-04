@@ -447,8 +447,6 @@ if __name__ == '__main__':
         comp_iter.inputs.input_file = input_file
         comp_iter.inputs.ID = ID
         comp_iter.inputs.atlas_select = atlas_select
-        comp_iter.inputs.network = network
-        comp_iter.inputs.node_size = node_size
         comp_iter.inputs.mask = mask
         comp_iter.inputs.parlistfile = parlistfile
         comp_iter.inputs.multi_nets = multi_nets
@@ -473,8 +471,10 @@ if __name__ == '__main__':
 
         meta_wf.connect(base_wf, "outputnode.est_path", comp_iter, "est_path")
         meta_wf.connect(base_wf, "outputnode.thr", comp_iter, "thr")
+        meta_wf.connect(base_wf, "outputnode.network", comp_iter, "network")
+        meta_wf.connect(base_wf, "outputnode.node_size", comp_iter, "node_size")
         
-        egg = meta_wf.run(plugin="MultiProc")
+        egg = meta_wf.run('MultiProc')
         outputs = [x for x in egg.nodes() if x.name == 'compile_iterfields'][0].result.outputs
 
         return(outputs.thr, outputs.est_path, outputs.ID, outputs.network, outputs.conn_model, outputs.mask, outputs.prune, outputs.node_size)

@@ -18,7 +18,6 @@ RUN apt-get update -qq \
         lib32ncurses5 \
         libxmu-dev \
         vim \
-        wget \
         libgl1-mesa-glx \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
@@ -48,7 +47,7 @@ RUN conda install -yq \
       nipype==0.14.0 \
       traits \
     && conda clean -tipsy \
-    && pip install pynets==0.5.2
+    && pip install pynets==0.5.3
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py

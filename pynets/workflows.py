@@ -103,7 +103,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
             extract_ts_wb_node.iterables = node_size_iterables  
             
     thresh_and_fit_node = pe.Node(niu.Function(input_names = ['adapt_thresh', 'dens_thresh', 'thr', 'ts_within_nodes', 'conn_model', 'network', 'ID', 'dir_path', 'mask', 'node_size'],
-                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr'],
+                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr', 'node_size', 'network'],
                                          function=thresholding.thresh_and_fit, imports = import_list), name = "thresh_and_fit_node")
             
     ##Plotting
@@ -112,7 +112,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                      output_names='None',
                                      function=plotting.plot_all, imports = import_list), name = "plot_all_node")
 
-    outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr']), name='outputnode')
+    outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network']), name='outputnode')
 
     if multi_thr == True:
         thresh_and_fit_node_iterables = []
@@ -191,7 +191,9 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
         (WB_fetch_nodes_and_labels_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
         (extract_ts_wb_node, thresh_and_fit_node, [('ts_within_nodes', 'ts_within_nodes')]),       
         (thresh_and_fit_node, outputnode, [('est_path', 'est_path'),
-                                           ('thr', 'thr')]),
+                                           ('thr', 'thr'),
+                                           ('node_size', 'node_size'),
+                                           ('network', 'network')]),
         ])
     
     if plot_switch == True:
@@ -364,7 +366,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
             extract_ts_rsn_node.iterables = node_size_iterables  
             
     thresh_and_fit_node = pe.Node(niu.Function(input_names = ['adapt_thresh', 'dens_thresh', 'thr', 'ts_within_nodes', 'conn_model', 'network', 'ID', 'dir_path', 'mask', 'node_size'],
-                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr'],
+                                         output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr', 'node_size', 'network'],
                                          function=thresholding.thresh_and_fit, imports = import_list), name = "thresh_and_fit_node")
     if node_size_list and parc==False:
         node_size_iterables = []
@@ -377,7 +379,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                      output_names='None',
                                      function=plotting.plot_all, imports = import_list), name = "plot_all_node")
            
-    outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr']), name='outputnode')
+    outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network']), name='outputnode')
 
     if multi_thr == True:
         thresh_and_fit_node_iterables = []
@@ -470,7 +472,9 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
         (RSN_fetch_nodes_and_labels_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
         (extract_ts_rsn_node, thresh_and_fit_node, [('ts_within_nodes', 'ts_within_nodes')]),    
         (thresh_and_fit_node, outputnode, [('est_path', 'est_path'),
-                                           ('thr', 'thr')])
+                                           ('thr', 'thr'),
+                                           ('node_size', 'node_size'),
+                                           ('network', 'network')])
         ])
     
     if plot_switch == True:
