@@ -11,7 +11,6 @@ import networkx as nx
 
 def average_shortest_path_length_for_all(G):
     import math
-    print('WARNING: Calculating average shortest path length for a disconnected graph. This might take awhile...')
     subgraphs = [sbg for sbg in nx.connected_component_subgraphs(G) if len(sbg) > 1]
     return math.fsum(nx.average_shortest_path_length(sg) for sg in subgraphs) / len(subgraphs)
 
@@ -1044,7 +1043,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
                         net_met_val = float(i(G))
                 except:
                     ##case where G is not fully connected
-                    net_met_val = float(average_shortest_path_length_for_all(G))                    
+                    print('WARNING: Calculating average shortest path length for a disconnected graph. This might take awhile...')
+                    net_met_val = float(average_shortest_path_length_for_all(G))                   
             if custom_weight is not None and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
                 custom_weight_param = 'weight = ' + str(custom_weight)
                 try:

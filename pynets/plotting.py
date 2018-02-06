@@ -351,12 +351,11 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     import nipype.pipeline.engine as pe
     import seaborn as sns
     import pkg_resources
-    from pynets import plotting as pynplot
     from matplotlib import colors
     from nilearn import plotting as niplot
 
-    edge_threshold = 0.90
-    connectome_fdt_thresh = 1000
+    edge_threshold = 0.80
+    connectome_fdt_thresh = 0.10
     dpi_resolution = 1000
     
     ####Auto-set INPUTS####
@@ -427,8 +426,8 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
 
     ##Plotting with glass brain
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
-    connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=True, node_size=0.0001)
-    connectome.add_overlay(ch2better_loc, alpha=0.4, cmap=plt.cm.gray)
+    connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=False, node_size=0.0001)
+    connectome.add_overlay(ch2better_loc, alpha=0.5, cmap=plt.cm.gray)
     [z_min, z_max] = -np.abs(conn_matrix_symm).max(), np.abs(conn_matrix_symm).max()
     connectome.add_graph(conn_matrix_symm, coords, edge_threshold = edge_threshold, node_color=clust_colors, edge_cmap=niplot.cm.black_blue_r, edge_vmax=z_max, edge_vmin=z_min, node_size=4)    
     connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=niplot.cm.cyan_copper_r)
@@ -443,6 +442,6 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
             out_file_path = dir_path + '/structural_connectome_fig_' + str(network) + '_' + str(ID) + '.png'
         else:
             out_file_path = dir_path + '/structural_connectome_fig_wb_' + str(ID) + '.png'        
-    plt.savefig(out_file_path)
-    plt.close()
+    connectome.savefig(out_file_path, dpi=dpi_resolution)
+    connectome.close()
     return
