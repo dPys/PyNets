@@ -26,6 +26,15 @@ RUN apt-get update -qq \
     && chmod a+s /opt \
     && chmod 777 -R /opt
 
+# Add Neurodebian package repositories (i.e. for FSL)
+RUN curl -sSL http://neuro.debian.net/lists/trusty.us-nh.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
+    apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
+    apt-get update
+
+# Setup neurodebian repo and install FSL
+RUN apt-get install -y fsl-core && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 USER neuro
 WORKDIR /home/neuro
 
@@ -44,10 +53,9 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
 RUN conda install -yq \
       python=3.6 \
       setuptools>=38.2.4 \
-      nipype==0.14.0 \
       traits \
     && conda clean -tipsy \
-    && pip install pynets==0.5.3
+    && pip install pynets==0.5.5
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
@@ -68,4 +76,17 @@ RUN chown -R neuro:users /opt \
     && find /opt -type f -iname "*.py" -exec chmod 777 {} \;
 
 USER neuro
+
+# PyNets ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets:$PATH"
+
+# FSL ENV Config
+ENV FSLDIR=/usr/share/fsl/5.0
+ENV FSLOUTPUTTYPE=NIFTI_GZ
+ENV PATH=/usr/lib/fsl/5.0:$PATH
+ENV FSLMULTIFILEQUIT=TRUE
+ENV POSSUMDIR=/usr/share/fsl/5.0
+ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
+ENV FSLTCLSH=/usr/bin/tclsh
+ENV FSLWISH=/usr/bin/wish
+ENV FSLOUTPUTTYPE=NIFTI_GZ

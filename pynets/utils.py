@@ -610,7 +610,7 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
             num_node_sizes = 1
     
         ##Check existence of each est_path in est_path_list, returning a modified list with only those paths that do exist.
-        [est_path_list, bad_ixs] = utils.check_est_path_existence(est_path_list)
+        #[est_path_list, bad_ixs] = utils.check_est_path_existence(est_path_list)
             
         ##Create network_list based on iterables across atlases, RSN's, k-values, and thresholding ranges
         if multi_nets is not None:
@@ -648,9 +648,9 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
             network_list = [None] * len(est_path_list)
 
         ##Remove network from network_list based on bad ixs found for est_path_list
-        if len(bad_ixs) > 0 and len(network_list) > 1:
-            for i in bad_ixs:
-                 network_list.pop(i)
+        #if len(bad_ixs) > 0 and len(network_list) > 1:
+            #for i in bad_ixs:
+                 #network_list.pop(i)
             
         if multi_thr == True:       
             thr = []

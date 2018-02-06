@@ -10,7 +10,6 @@ import os
 import timeit
 import warnings
 warnings.simplefilter("ignore")
-import pandas as pd
 import numpy as np
 try:
     from pynets.utils import do_dir_path
@@ -332,12 +331,6 @@ if __name__ == '__main__':
         else:
             dir_path = do_dir_path(atlas_select, input_file)
 
-    if ref_txt is not None and os.path.exists(ref_txt):
-        atlas_select = os.path.basename(ref_txt).split('.txt')[0]
-        dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
-        indices = dict_df.Index.unique().tolist()
-        label_names = dict_df['Region'].tolist()
-
     if network is not None:
         print("%s%s" % ('Using RSN pipeline for: ', network))
     elif multi_nets is not None:
@@ -369,6 +362,7 @@ if __name__ == '__main__':
         ref_txt = "%s%s" % (parlistfile.split('/')[-1:][0].split('.')[0], '.txt')
         atlas_select = parlistfile.split('/')[-1].split('.')[0]
         dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+        conn_model = 'prob'
     elif input_file is None and bedpostx_dir:
         print('Running structural connectometry only...')
         print("%s%s" % ('Bedpostx Directory: ', bedpostx_dir))
@@ -381,6 +375,7 @@ if __name__ == '__main__':
         atlas_select = parlistfile.split('/')[-1].split('.')[0]
         ref_txt = parlistfile.split('/')[-1:][0].split('.')[0] + '.txt'
         dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+        conn_model = 'prob'
     elif input_file and bedpostx_dir is None and subjects_list is None:
         print('Running functional connectometry only...')
         print("%s%s" % ('Functional file: ', input_file))
@@ -408,20 +403,25 @@ if __name__ == '__main__':
 
         ##Workflow 1: Whole-brain functional connectome
         if bedpostx_dir is None and network is None:
-            sub_func_wf = workflows.wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, node_size_list, prune)
+            sub_func_wf = workflows.wb_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, conn_model, dens_thresh, conf, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, node_size_list)
+            sub_struct_wf = None
         ##Workflow 2: RSN functional connectome
         elif bedpostx_dir is None and network is not None:
-            sub_func_wf = workflows.rsn_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, node_size_list, prune)
+            sub_func_wf = workflows.rsn_functional_connectometry(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, node_size_list)
+            sub_struct_wf = None
         ##Workflow 3: Whole-brain structural connectome
         elif bedpostx_dir is not None and network is None:
-            sub_struct_wf = workflows.wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc, prune)
+            sub_struct_wf = workflows.wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, anat_loc, thr, dens_thresh, conn_model)
+            sub_func_wf = None
         ##Workflow 4: RSN structural connectome
         elif bedpostx_dir is not None and network is not None:
-            sub_struct_wf = workflows.rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, label_names, anat_loc, prune)
+            sub_struct_wf = workflows.rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, anat_loc, thr, dens_thresh, conn_model)
+            sub_func_wf = None
             
         base_wf = sub_func_wf if sub_func_wf else sub_struct_wf
 
         ##Create meta-workflow to organize graph simulation sets in prep for analysis
+        ##Credit: @Mathias Goncalves
         meta_wf = Workflow(name='meta')
         meta_wf.add_nodes([base_wf])
         
@@ -689,6 +689,7 @@ if __name__ == '__main__':
                                                           'conn_model', 'in_csv', 'user_atlas_list',
                                                           'clust_mask_list', 'multi_atlas', 'node_size', 
                                                           'node_size_list'])
+        
         if multi_nets:
             collect_pandas_dfs_node_iterables = []
             collect_pandas_dfs_node_iterables.append(("network", multi_nets))
