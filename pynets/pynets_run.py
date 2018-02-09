@@ -55,8 +55,8 @@ if __name__ == '__main__':
         help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple RSNs, separate them by comma. e.g. -n \'Default,Cont,SalVentAttn\'\n')
     parser.add_argument('-thr',
         metavar='graph threshold',
-        default='0.95',
-        help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is 0.95.\n')
+        default='1.00',
+        help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is no thresholding.\n')
     parser.add_argument('-ns',
         metavar='Node size',
         default=4,

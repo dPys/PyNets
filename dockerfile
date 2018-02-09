@@ -18,7 +18,9 @@ RUN apt-get update -qq \
         lib32ncurses5 \
         libxmu-dev \
         vim \
+        wget \
         libgl1-mesa-glx \
+        libpng-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     # Add new user.
@@ -27,13 +29,12 @@ RUN apt-get update -qq \
     && chmod 777 -R /opt
 
 # Add Neurodebian package repositories (i.e. for FSL)
-RUN curl -sSL http://neuro.debian.net/lists/trusty.us-nh.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
-    apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
-    apt-get update
-
-# Setup neurodebian repo and install FSL
-RUN apt-get install -y fsl-core && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apt-get update && apt-get install -my wget gnupg
+ENV NEURODEBIAN_URL http://neuro.debian.net/lists/stretch.us-tn.full
+RUN wget -O- $NEURODEBIAN_URL | tee /etc/apt/sources.list.d/neurodebian.sources.list && \
+    apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9 && \
+    apt-get update -qq
+RUN apt-get update -qq && apt-get install -y --no-install-recommends fsl-complete
 
 USER neuro
 WORKDIR /home/neuro
@@ -55,7 +56,7 @@ RUN conda install -yq \
       setuptools>=38.2.4 \
       traits \
     && conda clean -tipsy \
-    && pip install pynets==0.5.5
+    && pip install pynets==0.5.6
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
