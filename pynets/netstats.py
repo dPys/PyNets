@@ -178,7 +178,7 @@ def smallworldness_measure(G, rG):
     swm = gam / lam
     return swm
     
-def smallworldness(G, rep = 100):
+def smallworldness(G, rep = 1000):
     #import multiprocessing
     n = nx.number_of_nodes(G)
     m = nx.number_of_edges(G)
