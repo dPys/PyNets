@@ -7,13 +7,11 @@ A Python-Powered Workflow for Fully-Reproducible Network Analysis of Resting-Sta
 
 Problem: A comprehensive, flexible, and fully-automated intra-subject network analysis package for neuroimaging has yet to be implemented.
 
-Solution: In PyNets, we harness the power of Nipype, Nilearn, and Networkx python packages to automatically generate a range of graph theory metrics on a subject-by-subject basis and using any combination of network construction parameters. Uniquely, PyNets utilities can be integrated with ANY existing preprocessing workflow for your data and provides a docker container to facilitate complete reproducibility of findings.
+Solution: In PyNets, we harness the power of Nipype, Nilearn, and Networkx python packages to automatically generate a variety of meta-connectomic solutions on a subject-by-subject basis, using any combination of network construction parameters. PyNets utilities can be integrated with any existing preprocessing workflow for your data and provides a docker container to uniquely facilitate complete reproducibility of executions.
 
 Learn more about Nipype: http://nipype.readthedocs.io/
 Learn more about Nilearn http://nilearn.github.io/
 Learn more about Networkx: https://networkx.github.io/
-
-PyNets utilizes a suite of network analysis tools in a nipype workflow to automatically generate rsfMRI functional networks and dMRI structural networks based on a variety of node parcellation and thresholding solutions, and then extract graph theoretical measures from the resulting graphs to be represented as composite "meta-connectomes".
 
 -----
 
@@ -135,8 +133,6 @@ Feed the path to your bedpostx directory into the pipeline to get a structural c
 ![](docs/pynets_diffusion.png)
 Visualize communities of networks
 ![](docs/glass_brain_communities.png)
-Generate force-directed visualizations
-![](docs/force-directed.png)
 Use connectograms to visualize community structure (including link communities)
 ![](docs/link_communities.png)
 
