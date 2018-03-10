@@ -477,7 +477,7 @@ if __name__ == '__main__':
         meta_wf.config['logging']['workflow_level']='DEBUG'
         meta_wf.config['logging']['utils_level']='DEBUG'
         meta_wf.config['logging']['interface_level']='DEBUG'
-        meta_wf.write_graph(graph2use='flat', format='png', dotfilename='meta_wf.dot')
+        meta_wf.write_graph(graph2use='exec', format='png', dotfilename='meta_wf.dot')
         egg = meta_wf.run('MultiProc')
         outputs = [x for x in egg.nodes() if x.name == 'compile_iterfields'][0].result.outputs
 
