@@ -64,6 +64,18 @@ pip install -e .
 pip install pynets
 ```
 
+To install using the included dockerfile, ensure you have installed Docker (https://www.docker.com/) and then run:
+```
+BUILDIR=$(pwd)
+mkdir -p ${BUILDIR}/pynets_images
+docker build -t pynets_docker .
+
+docker run -ti --rm --privileged \
+    -v /tmp:/tmp \
+    -v /var/tmp:/var/tmp \
+    pynets_docker
+``` 
+
 2. Usage:\
 
 See pynets_run.py -h for help options.

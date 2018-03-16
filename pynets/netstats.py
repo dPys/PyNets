@@ -948,7 +948,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     ##Normalize connectivity matrix (weights between 0-1)
     in_mat = thresholding.normalize(in_mat)
 
-    ##Get hyperbolic tangent of matrix if non-sparse (i.e. fischer r-to-z transform)
+    ##Get hyperbolic tangent (i.e. fischer r-to-z transform) of matrix if non-covariance 
     if conn_model == 'corr':
         in_mat = np.arctanh(in_mat)
         in_mat[np.isnan(in_mat)] = 0
