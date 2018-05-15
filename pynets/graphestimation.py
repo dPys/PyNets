@@ -6,6 +6,7 @@ Copyright (C) 2018
 """
 import numpy as np
 
+
 def get_conn_matrix(time_series, conn_model):
     from nilearn.connectome import ConnectivityMeasure
     from sklearn.covariance import GraphLassoCV
@@ -13,7 +14,7 @@ def get_conn_matrix(time_series, conn_model):
         from brainiak.fcma.util import compute_correlation
     except ImportError:
         pass
-    
+
     if conn_model == 'corr':
         # credit: nilearn
         print('\nComputing correlation matrix...\n')
@@ -77,7 +78,7 @@ def get_conn_matrix(time_series, conn_model):
                 print('\nFetching covariance matrix from covariance estimator...\n')
                 conn_matrix = estimator.covariance_
             except:
-                conn_matrix = estimator_shrunk.covariance_    
+                conn_matrix = estimator_shrunk.covariance_
     elif conn_model == 'QuicGraphLasso':
         from inverse_covariance import QuicGraphLasso
         # Compute the sparse inverse covariance via QuicGraphLasso
@@ -90,7 +91,7 @@ def get_conn_matrix(time_series, conn_model):
         print('\nCalculating QuicGraphLasso precision matrix using skggm...\n')
         model.fit(time_series)
         conn_matrix = -model.precision_
-        
+
     elif conn_model == 'QuicGraphLassoCV':
         from inverse_covariance import QuicGraphLassoCV
         # Compute the sparse inverse covariance via QuicGraphLassoCV
@@ -101,7 +102,7 @@ def get_conn_matrix(time_series, conn_model):
         print('\nCalculating QuicGraphLassoCV precision matrix using skggm...\n')
         model.fit(time_series)
         conn_matrix = -model.precision_
-    
+
     elif conn_model == 'QuicGraphLassoEBIC':
         from inverse_covariance import QuicGraphLassoEBIC
         # Compute the sparse inverse covariance via QuicGraphLassoEBIC
@@ -112,7 +113,7 @@ def get_conn_matrix(time_series, conn_model):
         print('\nCalculating QuicGraphLassoEBIC precision matrix using skggm...\n')
         model.fit(time_series)
         conn_matrix = -model.precision_
-    
+
     elif conn_model == 'AdaptiveQuicGraphLasso':
         from inverse_covariance import AdaptiveGraphLasso, QuicGraphLassoEBIC
         # Compute the sparse inverse covariance via
@@ -128,7 +129,8 @@ def get_conn_matrix(time_series, conn_model):
         model.fit(time_series)
         conn_matrix = -model.estimator_.precision_
 
-    return(conn_matrix)
+    return conn_matrix
+
 
 def generate_mask_from_voxels(voxel_coords, volume_dims):
     mask = np.zeros(volume_dims)
@@ -136,11 +138,13 @@ def generate_mask_from_voxels(voxel_coords, volume_dims):
         mask[tuple(voxel)] = 1
     return mask
 
+
 def normalize(v):
     norm=np.linalg.norm(v, ord=1)
     if norm==0:
         norm=np.finfo(v.dtype).eps
     return v/norm
+
 
 def extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path):
     import nibabel as nib
@@ -162,9 +166,9 @@ def extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path):
     #print('Data loaded: t+'+str(time.time()-start_time)+'s')
     label_mask = np.zeros(volume_dims)
     label_file = "%s%s" % (dir_path, '/label_file_tmp.nii.gz')
-    
+
     [x_vox, y_vox, z_vox] = vox_dims
-    # finding sphere voxels 
+    # finding sphere voxels
     print(len(coords))
     def mmToVox(mmcoords):
         voxcoords = ['','','']
@@ -172,12 +176,12 @@ def extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path):
         voxcoords[1] = int((round(int(mmcoords[1])/y_vox))+63)
         voxcoords[2] = int((round(int(mmcoords[2])/z_vox))+36)
         return voxcoords
-    
+
     coords_vox = []
     for i in coords:
         coords_vox.append(mmToVox(i))
     coords = list(tuple(x) for x in coords_vox)
-    
+
     for coord in range(len(coords)):
         sphere_voxels = get_sphere(coords=coords[coord], r=node_size, vox_dims=vox_dims, dims=volume_dims)
         # creating mask from found voxels
@@ -194,8 +198,9 @@ def extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path):
     #print('Mean time series extracted: '+str(time.time()-start_time)+'s')
     #print('Number of ROIs expected: '+str(len(coords)))
     #print('Number of ROIs found: '+str(ts_within_nodes.shape[1]))
-    return(ts_within_nodes)
-    
+    return ts_within_nodes
+
+
 def extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path):
     import nibabel as nib
     #import time
@@ -222,8 +227,9 @@ def extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path):
     ts_within_nodes = normalize(ts_within_nodes)
     #print('Mean time series extracted: t+'+str(time.time()-start_time)+'s')
     #print('Number of ROIs found: '+str(ts_within_nodes.shape[1]))
-    return(ts_within_nodes)
-    
+    return ts_within_nodes
+
+
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network):
     from nilearn import input_data
     from pynets.graphestimation import extract_ts_parc_fast
@@ -240,24 +246,25 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords), ' volumetric ROI\'s\n'))
     ##Save time series as txt file
     utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)
-    return(ts_within_nodes)
-    
+    return ts_within_nodes
+
+
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network):
     from nilearn import input_data
     from pynets.graphestimation import extract_ts_coords_fast
     from pynets import utils
-    
+
     fast=False
     #import time
     #start_time = time.time()
     if fast==True:
         ts_within_nodes = extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path)
     else:
-        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True, standardize=True, verbose=1) 
+        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True, standardize=True, verbose=1)
         ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
-        
+
     #print(time.time()-start_time)
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords), ' coordinate ROI\'s\n'))
     ##Save time series as txt file
     utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)
-    return(ts_within_nodes, node_size)
+    return ts_within_nodes, node_size

@@ -172,12 +172,12 @@ def smallworldness_measure(G, rG):
         L_r = nx.average_shortest_path_length(rG)
     except:
         L_g = average_shortest_path_length_for_all(G)
-        L_r = average_shortest_path_length_for_all(rG)        
+        L_r = average_shortest_path_length_for_all(rG)
     gam = float(C_g) / float(C_r)
     lam = float(L_g) / float(L_r)
     swm = gam / lam
     return swm
-    
+
 def smallworldness(G, rep = 1000):
     #import multiprocessing
     n = nx.number_of_nodes(G)
@@ -232,7 +232,7 @@ def clustering_coef_wd(W):
     CYC3 = K * (K - 1) - 2 * np.diag(np.dot(A, A))
     C = cyc3 / CYC3
     return C
-       
+
 def create_communities(node_comm_aff_mat, node_num):
     com_assign = np.zeros((node_num,1))
     for i in range(len(node_comm_aff_mat)):
@@ -487,8 +487,8 @@ def diversity_coef_sign(W, ci):
     return Hpos, Hneg
 
 def core_periphery_dir(W, gamma=1, C0=None):
-    ''' 
-    The optimal core/periphery subdivision is a partition of the network 
+    '''
+    The optimal core/periphery subdivision is a partition of the network
     into two nonoverlapping groups of nodes, a core group and a periphery
     group. The number of core-group edges is maximized, and the number of
     within periphery edges is minimized.
@@ -936,7 +936,8 @@ def most_important(G):
                  pass
          s = s + 1
      return(Gt, pruned_nodes, pruned_edges)
-         
+
+
 ##Extract network metrics interface
 def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_size, out_file=None):
     from pynets import thresholding, utils
@@ -944,11 +945,11 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     ##Load and threshold matrix
     in_mat = np.array(np.load(est_path))
     in_mat = thresholding.autofix(in_mat)
-    
+
     ##Normalize connectivity matrix (weights between 0-1)
     in_mat = thresholding.normalize(in_mat)
 
-    ##Get hyperbolic tangent (i.e. fischer r-to-z transform) of matrix if non-covariance 
+    ##Get hyperbolic tangent (i.e. fischer r-to-z transform) of matrix if non-covariance
     if conn_model == 'corr':
         in_mat = np.arctanh(in_mat)
         in_mat[np.isnan(in_mat)] = 0
@@ -961,29 +962,29 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     G_pre=nx.from_numpy_matrix(in_mat)
 
     ##Prune irrelevant nodes (i.e. nodes who are fully disconnected from the graph and/or those whose betweenness centrality are > 3 standard deviations below the mean)
-    if prune == True:
+    if prune is True:
         [G_pruned, _, _] = most_important(G_pre)
     else:
         G_pruned = G_pre
-    
+
     ##Make directed if model is effective type
     if conn_model == 'effective':
         G_di = nx.DiGraph(G_pruned)
         G_dir = G_di.to_directed()
         G = G_pruned
     else:
-        G = G_pruned 
+        G = G_pruned
 
     ##Get corresponding matrix
     in_mat = nx.to_numpy_array(G)
-    
+
     ##Print graph summary
     print("%s%.2f%s" % ('\n\nThreshold: ',100*float(thr),'%'))
     print("%s%s" % ('Source File: ', est_path))
     info_list = list(nx.info(G).split('\n'))[2:]
     for i in info_list:
         print(i)
-        
+
     try:
         G_dir
         print('Analyzing DIRECTED graph when applicable...')
@@ -1000,17 +1001,17 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     ##Create Length matrix
     mat_len = thresholding.weight_conversion(in_mat, 'lengths')
     ##Load numpy matrix as networkx graph
-    G_len=nx.from_numpy_matrix(mat_len)
+    G_len = nx.from_numpy_matrix(mat_len)
 
     ##Save G as gephi file
     if mask:
         if network:
             nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_', os.path.basename(mask).split('.')[0], '_', thr, '_', node_size, '.graphml'))
         else:
-            nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_', thr, '_', node_size, '.graphml'))            
+            nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_', thr, '_', node_size, '.graphml'))
     else:
         if network:
-            nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_', thr, '_', node_size, '.graphml'))            
+            nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_', thr, '_', node_size, '.graphml'))
         else:
             nx.write_graphml(G, "%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', thr, '_', node_size, '.graphml'))
 
@@ -1044,7 +1045,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
                 except:
                     ##case where G is not fully connected
                     print('WARNING: Calculating average shortest path length for a disconnected graph. This might take awhile...')
-                    net_met_val = float(average_shortest_path_length_for_all(G))                   
+                    net_met_val = float(average_shortest_path_length_for_all(G))
             if custom_weight is not None and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
                 custom_weight_param = 'weight = ' + str(custom_weight)
                 try:
@@ -1341,7 +1342,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
-        
+
     if mask != None:
         if network != None:
             met_list_picke_path = "%s%s%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list_', network, '_', os.path.basename(mask).split('.')[0])

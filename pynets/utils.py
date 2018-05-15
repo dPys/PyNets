@@ -10,6 +10,7 @@ import os
 import nibabel as nib
 import numpy as np
 
+
 def nilearn_atlas_helper(atlas_select):
     from nilearn import datasets
     try:
@@ -25,7 +26,8 @@ def nilearn_atlas_helper(atlas_select):
     except:
         print('Extraction from nilearn datasets failed!')
         sys.exit()
-    return(label_names, networks_list, parlistfile)
+    return label_names, networks_list, parlistfile
+
 
 ##save net metric files to pandas dataframes interface
 def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
@@ -34,7 +36,7 @@ def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
-    
+
     ##Check for existence of csv_loc
     if os.path.isfile(csv_loc) == False:
         raise FileNotFoundError('\n\n\nERROR: Missing netmetrics csv file output. Cannot export to pandas df!')
@@ -64,7 +66,8 @@ def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
     df.id = df.id.replace(1,ID)
     out_file = csv_loc.split('.csv')[0]
     df.to_pickle(out_file, protocol=2)
-    return(out_file)
+    return out_file
+
 
 def do_dir_path(atlas_select, in_file):
     dir_path = os.path.dirname(os.path.realpath(in_file)) + '/' + atlas_select
@@ -73,6 +76,7 @@ def do_dir_path(atlas_select, in_file):
     elif atlas_select is None:
         raise ValueError("Error: cannot create directory for a null atlas!")
     return dir_path
+
 
 def create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size):
     if mask is not None:
@@ -87,6 +91,7 @@ def create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size):
             est_path = dir_path + '/' + str(ID) + '_est_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '.npy'
     return est_path
 
+
 def create_unthr_path(ID, network, conn_model, mask, dir_path):
     if mask is not None:
         if network is not None:
@@ -100,6 +105,7 @@ def create_unthr_path(ID, network, conn_model, mask, dir_path):
             unthr_path = dir_path + '/' + str(ID) + '_est_' + str(conn_model) + '_unthresh_mat.npy'
     return unthr_path
 
+
 def create_csv_path(ID, network, conn_model, thr, mask, dir_path, node_size):
     if mask is not None:
         if network is not None:
@@ -112,6 +118,7 @@ def create_csv_path(ID, network, conn_model, thr, mask, dir_path, node_size):
         else:
             out_path = dir_path + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size) + '.csv'
     return out_path
+
 
 def individual_tcorr_clustering(func_file, clust_mask, ID, k, thresh = 0.5):
     import os
@@ -127,7 +134,7 @@ def individual_tcorr_clustering(func_file, clust_mask, ID, k, thresh = 0.5):
     binfile=working_dir + '/rm_tcorr_indiv_cluster_' + str(ID) + '_' + str(k) + '.npy'
     dir_path = utils.do_dir_path(atlas_select, func_file)
     parlistfile = dir_path + '/' + mask_name + '_k' + str(k) + '.nii.gz'
-    
+
     make_local_connectivity_tcorr( func_file, clust_mask, outfile, thresh )
 
     binfile_parcellate(outfile, outfile_parc, int(k))
@@ -135,7 +142,8 @@ def individual_tcorr_clustering(func_file, clust_mask, ID, k, thresh = 0.5):
     ##write out for group mean clustering
     make_image_from_bin_renum(parlistfile,binfile,clust_mask)
 
-    return(parlistfile, atlas_select, dir_path)
+    return parlistfile, atlas_select, dir_path
+
 
 def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask, node_size):
     nilearn_parc_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
@@ -164,6 +172,7 @@ def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mas
             else:
                 out_path = ID_dir + '/' + str(atlas_select) + '/' + str(ID) + '_net_metrics_' + conn_model + '_' + str(thr) + '_' + str(node_size)
     return out_path
+
 
 def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_step, min_thr, max_thr, step_thr, multi_thr, thr, mask, ID, network, k_clustering, conn_model, in_csv, user_atlas_list, clust_mask_list, multi_atlas, node_size, node_size_list, out_file=None):
     import pandas as pd
@@ -212,7 +221,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                             net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask, node_size))
                         except:
                             print('Missing results path for K=' + str(k))
-                            pass                    
+                            pass
     elif k_clustering == 2:
         k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
         mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
@@ -246,7 +255,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                         net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask, node_size))
                     except:
                         print('Missing results path for K=' + str(k))
-                        pass                
+                        pass
     elif k_clustering == 1:
         mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
         atlas_select = mask_name + '_k' + str(k)
@@ -278,7 +287,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                     net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask, node_size))
                 except:
                     print('Missing results path for K=' + str(k))
-                    pass            
+                    pass
     elif k_clustering == 3:
         for clust_mask in clust_mask_list:
             mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
@@ -311,7 +320,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                         net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask, node_size))
                     except:
                         print('Missing results path for K=' + str(k))
-                        pass                
+                        pass
     elif user_atlas_list:
         for parlistfile in user_atlas_list:
             atlas_select = parlistfile.split('/')[-1].split('.')[0]
@@ -343,7 +352,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                         net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask, node_size))
                     except:
                         print('Missing results path for atlas=' + str(atlas_select))
-                        pass                
+                        pass
     elif multi_atlas:
         for atlas_select in multi_atlas:
             if node_size_list:
@@ -374,7 +383,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                         net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask, node_size))
                     except:
                         print('Missing results path for atlas=' + str(atlas_select))
-                        pass                
+                        pass
     elif k_clustering == 0 and atlas_select is not None:
         if node_size_list:
             for node_size in node_size_list:
@@ -404,11 +413,11 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                     net_pickle_mt_list.append(assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask, node_size))
                 except:
                     print('Missing results path')
-                    pass            
+                    pass
 
     ##Check for existence of net_pickle files, condensing final list to only those that were actually produced.
     [net_pickle_mt_list, _] = utils.check_est_path_existence(net_pickle_mt_list)
-    
+
     if len(net_pickle_mt_list) > 1:
         print('\n\nList of result files to concatenate:\n' + str(net_pickle_mt_list) + '\n\n')
         subject_path = os.path.dirname(os.path.dirname(net_pickle_mt_list[0]))
@@ -447,6 +456,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
         print('\nSingle dataframe for: ' + str(ID) + '\n')
         pass
 
+
 def build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size):
     import numpy as np
     from pynets import utils
@@ -472,7 +482,8 @@ def build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn
             est_path_tmp = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
             est_path_list.append(est_path_tmp)
             iter_thresh = [thr] * len(est_path_list)
-    return(iter_thresh, est_path_list)
+    return iter_thresh, est_path_list
+
 
 def build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size):
     from pynets import utils
@@ -485,7 +496,8 @@ def build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_t
         num_networks =  1
         dir_path = utils.do_dir_path(atlas_select, input_file)
         [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
-    return(iter_thresh, est_path_list, num_networks, dir_path)
+    return iter_thresh, est_path_list, num_networks, dir_path
+
 
 def create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh):
     if node_size_list:
@@ -503,6 +515,7 @@ def create_net_list(node_size_list, network, network_list, multi_thr, iter_thres
             network_list.append(network)
     return network_list
 
+
 def check_est_path_existence(est_path_list):
     import os
     est_path_list_ex = []
@@ -517,6 +530,7 @@ def check_est_path_existence(est_path_list):
             bad_ixs.append(i)
             continue
     return(est_path_list_ex, bad_ixs)
+
 
 def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network):
     try:
@@ -533,6 +547,7 @@ def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network)
         pickle.dump(label_names, f, protocol=2)
     return
 
+
 def save_nifti_parcels_map(ID, dir_path, mask, network, net_parcels_map_nifti):
     if mask:
         if network:
@@ -548,16 +563,18 @@ def save_nifti_parcels_map(ID, dir_path, mask, network, net_parcels_map_nifti):
     nib.save(net_parcels_map_nifti, net_parcels_nii_path)
     return
 
+
 def cuberoot(x):
     return np.sign(x) * np.abs(x)**(1 / 3)
+
 
 def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, est_path):
     import numpy as np
     import os
     from pynets import utils
-    
+
     ##Build iterfields
-    if multi_atlas is not None or user_atlas_list is not None or multi_thr==True or multi_nets is not None or k_clustering != 1 or k_clustering != 0 or node_size_list is not None:
+    if multi_atlas is not None or user_atlas_list is not None or multi_thr is True or multi_nets is not None or k_clustering != 1 or k_clustering != 0 or node_size_list is not None:
         ##Create est_path_list iterfield based on iterables across atlases, RSN's, k-values, and thresholding ranges
         est_path_list = []
         if k_clustering == 2:
@@ -591,7 +608,7 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
                 atlas_select = parlistfile.split('/')[-1].split('.')[0]
                 [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
         else:
-            if multi_thr==True:
+            if multi_thr is True:
                 [iter_thresh, est_path_list, num_networks, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size)
             else:
                 if multi_nets is not None:
@@ -603,15 +620,15 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
                     else:
                         est_path_list = [est_path]
                         iter_thresh = [thr]
-                    
+
         if node_size_list:
             num_node_sizes = len(node_size_list)
         else:
             num_node_sizes = 1
-    
+
         ##Check existence of each est_path in est_path_list, returning a modified list with only those paths that do exist.
         #[est_path_list, bad_ixs] = utils.check_est_path_existence(est_path_list)
-            
+
         ##Create network_list based on iterables across atlases, RSN's, k-values, and thresholding ranges
         if multi_nets is not None:
             print('\nIterating pipeline for ' + str(ID) + ' across networks: ' + '\n'.join(str(n) for n in multi_nets) + '...\n')
@@ -634,7 +651,7 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
                 for clust_mask in clust_mask_list:
                     for k in k_list:
                         for network in multi_nets:
-                            network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh)  
+                            network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh)
             elif k_clustering == 3:
                 for clust_mask in clust_mask_list:
                     for network in multi_nets:
@@ -651,21 +668,21 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
         #if len(bad_ixs) > 0 and len(network_list) > 1:
             #for i in bad_ixs:
                  #network_list.pop(i)
-            
-        if multi_thr == True:       
+
+        if multi_thr is True:
             thr = []
             for path in est_path_list:
                 thr.append(path.split('.npy')[0].rsplit('_',2)[-2])
         else:
             thr = iter_thresh
-        
+
         if num_node_sizes > 1:
             node_size = []
             for path in est_path_list:
                 node_size.append(path.split('.npy')[0].rsplit('_',1)[-1])
         else:
             node_size = [node_size] * len(est_path_list)
-            
+
         est_path = est_path_list
         network = network_list
         ID = [str(ID)] * len(est_path_list)
@@ -673,15 +690,15 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
         conn_model = [conn_model] * len(est_path_list)
         k_clustering = [k_clustering] * len(est_path_list)
         prune = [prune] * len(est_path_list)
-        
-    return(est_path, thr, network, ID, mask, conn_model, k_clustering, prune, node_size)
+
+    return est_path, thr, network, ID, mask, conn_model, k_clustering, prune, node_size
 
 
 def save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes):
     import os
     ##Save time series as txt file
     if mask is None:
-        if network is not None: 
+        if network is not None:
             out_path_ts="%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_wb_net_ts.npy')
         else:
             out_path_ts="%s%s%s%s" % (dir_path, '/', ID, '_wb_net_ts.npy')

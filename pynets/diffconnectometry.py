@@ -8,6 +8,7 @@ import nibabel as nib
 import numpy as np
 import os
 
+
 def create_mni2diff_transforms(bedpostx_dir):
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
@@ -40,6 +41,7 @@ def create_mni2diff_transforms(bedpostx_dir):
     flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
     flirt.run()
     return out_aff
+
 
 ##Create avoidance and waypoints masks
 def gen_anat_segs(anat_loc, out_aff):
@@ -89,7 +91,8 @@ def gen_anat_segs(anat_loc, out_aff):
     #new_file_wm_res = resample_img(new_file_wm, target_affine=targ_aff)
     #nib.save(new_file_csf_res, new_file_csf)
     #nib.save(new_file_wm_res, new_file_wm)
-    return(new_file_csf, mni_csf_loc, new_file_wm)
+    return new_file_csf, mni_csf_loc, new_file_wm
+
 
 def coreg_vent_CSF_to_diff(bedpostx_dir, csf_loc, mni_csf_loc):
     import nipype.interfaces.fsl as fsl
@@ -123,13 +126,14 @@ def coreg_vent_CSF_to_diff(bedpostx_dir, csf_loc, mni_csf_loc):
     maths = fsl.ImageMaths(in_file=csf_mask_diff_out, op_string=args, out_file=vent_csf_diff_out)
     os.system(maths.cmdline)
 
-    print('Eroding CSF mask...')
+    print('Eroding and binarizing CSF mask...')
     ##Erode CSF mask
     out_file_final=vent_csf_diff_out.split('.nii.gz')[0] + '_ero.nii.gz'
     args = '-ero -bin'
     maths = fsl.ImageMaths(in_file=vent_csf_diff_out, op_string=args, out_file=out_file_final)
     os.system(maths.cmdline)
     return out_file_final
+
 
 def coreg_WM_mask_to_diff(bedpostx_dir, wm_mask_loc):
     import nipype.interfaces.fsl as fsl
@@ -145,7 +149,13 @@ def coreg_WM_mask_to_diff(bedpostx_dir, wm_mask_loc):
     flirt.inputs.in_matrix_file = bedpostx_dir + '/xfms/MNI2diff.mat'
     flirt.inputs.apply_xfm = True
     flirt.run()
+
+    args = '-bin'
+    maths = fsl.ImageMaths(in_file=out_file, op_string=args, out_file=out_file)
+    print('\nBinarizing WM mask...')
+    os.system(maths.cmdline)
     return out_file
+
 
 def reg_coords2diff(coords, bedpostx_dir, node_size, dir_path):
     try:
@@ -217,6 +227,7 @@ def reg_coords2diff(coords, bedpostx_dir, node_size, dir_path):
     spheres_list = [i for i in os.listdir(volumes_dir) if 'diff.nii' in i]
     return spheres_list
 
+
 def reg_parcels2diff(bedpostx_dir, dir_path):
     import re
     import nipype.interfaces.fsl as fsl
@@ -247,9 +258,11 @@ def reg_parcels2diff(bedpostx_dir, dir_path):
     volumes_list = [i for i in os.listdir(volumes_dir) if 'diff.nii' in i]
     return volumes_list
 
+
 def create_seed_mask_file(bedpostx_dir, network, dir_path):
     import glob
     import re
+
     def atoi(text):
         return int(text) if text.isdigit() else text
 
@@ -280,7 +293,8 @@ def create_seed_mask_file(bedpostx_dir, network, dir_path):
     l1=map(lambda x:x+'\n', seeds_file_list)
     f.writelines(l1)
     f.close()
-    return(seeds_text, probtrackx_output_dir_path)
+    return seeds_text, probtrackx_output_dir_path
+
 
 def save_parcel_vols(bedpostx_dir, parcel_list, net_parcels_map_nifti, dir_path):
     import os
@@ -303,6 +317,7 @@ def save_parcel_vols(bedpostx_dir, parcel_list, net_parcels_map_nifti, dir_path)
         num_vols_pres = float(len(next(os.walk(volumes_dir))[2]))
     return num_vols_pres
 
+
 def prepare_masks(bedpostx_dir, csf_loc, mni_csf_loc, wm_mask_loc):
     from pynets import diffconnectometry
     if (csf_loc and mni_csf_loc) is None:
@@ -314,14 +329,15 @@ def prepare_masks(bedpostx_dir, csf_loc, mni_csf_loc, wm_mask_loc):
         WM_diff_mask_path = None
     else:
         WM_diff_mask_path = diffconnectometry.coreg_WM_mask_to_diff(bedpostx_dir, wm_mask_loc)
-    return(vent_CSF_diff_mask_path, WM_diff_mask_path)
+    return vent_CSF_diff_mask_path, WM_diff_mask_path
+
 
 def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_map_nifti, network, dir_path):
     import shutil
     from pynets import diffconnectometry
 
     volumes_dir = dir_path + '/volumes'
-    if os.path.exists(volumes_dir) == True:
+    if os.path.exists(volumes_dir) is True:
         shutil.rmtree(volumes_dir)
     num_vols_pres = diffconnectometry.save_parcel_vols(bedpostx_dir, parcel_list, net_parcels_map_nifti, dir_path)
 
@@ -331,12 +347,13 @@ def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_m
         volumes_list = diffconnectometry.reg_parcels2diff(bedpostx_dir, dir_path)
 
     [seeds_text, probtrackx_output_dir_path] = diffconnectometry.create_seed_mask_file(bedpostx_dir, network, dir_path)
-    return(seeds_text, probtrackx_output_dir_path)
+    return seeds_text, probtrackx_output_dir_path
+
 
 def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, vent_CSF_diff_mask_path, WM_diff_mask_path, procmem):
     import random
     import nipype.interfaces.fsl as fsl
-    num_total_samples = 5000
+    num_total_samples = 10
     samples_i = int(round(float(num_total_samples) / float(procmem[0]),0))
     nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
     merged_th_samples_path = bedpostx_dir + '/merged_th1samples.nii.gz'
@@ -359,7 +376,7 @@ def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, ven
     probtrackx2.inputs.dist_thresh=0.0
     probtrackx2.inputs.opd=True
     probtrackx2.inputs.loop_check=True
-    probtrackx2.inputs.omatrix1=True
+    probtrackx2.inputs.omatrix1=False
     probtrackx2.overwrite=True
     probtrackx2.inputs.verbose=True
     probtrackx2.inputs.mask=nodif_brain_mask_path
@@ -367,7 +384,7 @@ def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, ven
     probtrackx2.inputs.thsamples=merged_th_samples_path
     probtrackx2.inputs.fsamples=merged_f_samples_path
     probtrackx2.inputs.phsamples=merged_ph_samples_path
-    probtrackx2.inputs.use_anisotropy=True
+    probtrackx2.inputs.use_anisotropy=False
     try:
         probtrackx2.inputs.avoid_mp=vent_CSF_diff_mask_path
     except:
@@ -384,6 +401,7 @@ def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, ven
     filename = probtrackx_output_dir_path + '/' + str(i) + '_complete.txt'
     open(filename, 'w').close()
     return max_i
+
 
 def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_output_dir_path, max_i):
     ##Wait for all probtrackx runs to complete
@@ -472,7 +490,7 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
         pass
     conn_matrix_symm = np.maximum(conn_matrix, conn_matrix.transpose())
 
-    if parc == False:
+    if parc is False:
         del_files_spheres = glob.glob(bedpostx_dir + '/roi_sphere*')
         for i in del_files_spheres:
             os.remove(i)
@@ -484,7 +502,7 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
         except:
             pass
 
-    if network != None:
+    if network is not None:
         est_path_struct = dir_path + '/' + ID + '_' + network + '_struct_est_unthr_unsymm.npy'
     else:
         est_path_struct = dir_path + '/' + ID + '_struct_est_unthr_unsymm.npy'
