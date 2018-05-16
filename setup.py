@@ -8,9 +8,6 @@ from setuptools import setup, find_packages
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
-
 requirements = [
     'Click>=6.0',
     'scipy>=0.19.0',
@@ -40,9 +37,9 @@ test_requirements = [
 
 setup(
     name='pynets',
-    version='0.5.6',
+    version='0.5.61',
     description="A Fully-Reproducible Workflow for Network Analysis of rsfMRI and dMRI",
-    long_description=readme + '\n\n' + history,
+    long_description=readme + '\n\n',
     author="Derek Pisner",
     author_email='dpisner@utexas.edu',
     url='https://github.com/dpisner453/pynets',

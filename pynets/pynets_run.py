@@ -223,7 +223,7 @@ if __name__ == '__main__':
         atlas_select = atlas_select[0]
         multi_atlas = None
     print('\n\n\n------------------------------------------------------------------------\n')
-    
+
     if min_thr is not None and max_thr is not None and step_thr is not None:
         multi_thr=True
     elif min_thr is not None or max_thr is not None or step_thr is not None:
@@ -343,7 +343,7 @@ if __name__ == '__main__':
         print("%s%s%s" % ('Growing spherical nodes across multiple radius sizes: ', str(', '.join(str(n) for n in node_size_list)), '...'))
     else:
         print("%s%s" % ("Using node size of: ", node_size))
-        
+
     if input_file and subjects_list:
         print('\nRunning workflow of workflows across subjects:\n')
         print(str(subjects_list))
@@ -359,9 +359,22 @@ if __name__ == '__main__':
             print("%s%s" % ('RSN: ', network))
         ##Set directory path containing input file
         nodif_brain_mask_path = "%s%s" % (bedpostx_dir, '/nodif_brain_mask.nii.gz')
-        ref_txt = "%s%s" % (parlistfile.split('/')[-1:][0].split('.')[0], '.txt')
-        atlas_select = parlistfile.split('/')[-1].split('.')[0]
-        dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+        if user_atlas_list is not None:
+            parlistfile = user_atlas_list[0]
+            print('Iterating across multiple user atlases...')
+            for parlistfile in user_atlas_list:
+                atlas_select = parlistfile.split('/')[-1].split('.')[0]
+                dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+            atlas_select = None
+        elif multi_atlas is not None:
+            print('Iterating across multiple nilearn atlases...')
+            for atlas_select in multi_atlas:
+                dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+            atlas_select = None
+        else:
+            dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+            atlas_select = parlistfile.split('/')[-1].split('.')[0]
+            ref_txt = parlistfile.split('/')[-1:][0].split('.')[0] + '.txt'
         conn_model = 'prob'
     elif input_file is None and bedpostx_dir:
         print('Running structural connectometry only...')
@@ -372,9 +385,23 @@ if __name__ == '__main__':
             print("%s%s" % ('RSN: ', network))
         ##Set directory path containing input file
         nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
-        atlas_select = parlistfile.split('/')[-1].split('.')[0]
-        ref_txt = parlistfile.split('/')[-1:][0].split('.')[0] + '.txt'
-        dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+        input_file = nodif_brain_mask_path
+        if user_atlas_list is not None:
+            parlistfile = user_atlas_list[0]
+            print('Iterating across multiple user atlases...')
+            for parlistfile in user_atlas_list:
+                atlas_select = parlistfile.split('/')[-1].split('.')[0]
+                dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+            atlas_select = None
+        elif multi_atlas is not None:
+            print('Iterating across multiple nilearn atlases...')
+            for atlas_select in multi_atlas:
+                dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+            atlas_select = None
+        else:
+            dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+            atlas_select = parlistfile.split('/')[-1].split('.')[0]
+            ref_txt = parlistfile.split('/')[-1:][0].split('.')[0] + '.txt'
         conn_model = 'prob'
     elif input_file and bedpostx_dir is None and subjects_list is None:
         print('Running functional connectometry only...')
@@ -411,39 +438,39 @@ if __name__ == '__main__':
             sub_struct_wf = None
         ##Workflow 3: Whole-brain structural connectome
         elif bedpostx_dir is not None and network is None:
-            sub_struct_wf = workflows.wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, anat_loc, thr, dens_thresh, conn_model)
+            sub_struct_wf = workflows.wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, anat_loc, thr, dens_thresh, conn_model, user_atlas_list)
             sub_func_wf = None
         ##Workflow 4: RSN structural connectome
         elif bedpostx_dir is not None and network is not None:
-            sub_struct_wf = workflows.rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, anat_loc, thr, dens_thresh, conn_model)
+            sub_struct_wf = workflows.rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, anat_loc, thr, dens_thresh, conn_model, user_atlas_list)
             sub_func_wf = None
-            
+
         base_wf = sub_func_wf if sub_func_wf else sub_struct_wf
 
         ##Create meta-workflow to organize graph simulation sets in prep for analysis
         ##Credit: @Mathias Goncalves
         meta_wf = Workflow(name='meta')
         meta_wf.add_nodes([base_wf])
-        
+
         import_list = ['import sys',
                        'import os',
                        'import nibabel as nib'
                        'import numpy as np',
                        'from pynets import utils']
-        
-        comp_iter = Node(Function(function=utils.compile_iterfields, 
-                                  input_names = ['input_file', 'ID', 'atlas_select', 
-                                                 'network', 'node_size', 'mask', 'thr', 
-                                                 'parlistfile', 'multi_nets', 'conn_model', 
-                                                 'dens_thresh', 'dir_path', 'multi_thr', 
-                                                 'multi_atlas', 'max_thr', 'min_thr', 'step_thr', 
-                                                 'k', 'clust_mask', 'k_min', 'k_max', 'k_step', 
-                                                 'k_clustering', 'user_atlas_list', 'clust_mask_list', 
-                                                 'prune', 'node_size_list', 'est_path'], 
-                                  output_names = ['est_path', 'thr', 'network', 'ID', 'mask', 'conn_model', 
-                                                  'k_clustering', 'prune', 'node_size']), 
-                         name='compile_iterfields', imports = import_list)
-        
+
+        comp_iter = Node(Function(function=utils.compile_iterfields,
+                                  input_names=['input_file', 'ID', 'atlas_select',
+                                                 'network', 'node_size', 'mask', 'thr',
+                                                 'parlistfile', 'multi_nets', 'conn_model',
+                                                 'dens_thresh', 'dir_path', 'multi_thr',
+                                                 'multi_atlas', 'max_thr', 'min_thr', 'step_thr',
+                                                 'k', 'clust_mask', 'k_min', 'k_max', 'k_step',
+                                                 'k_clustering', 'user_atlas_list', 'clust_mask_list',
+                                                 'prune', 'node_size_list', 'est_path'],
+                                  output_names = ['est_path', 'thr', 'network', 'ID', 'mask', 'conn_model',
+                                                  'k_clustering', 'prune', 'node_size']),
+                         name='compile_iterfields', imports=import_list)
+
         comp_iter.inputs.input_file = input_file
         comp_iter.inputs.ID = ID
         comp_iter.inputs.atlas_select = atlas_select
@@ -481,7 +508,7 @@ if __name__ == '__main__':
         egg = meta_wf.run('MultiProc')
         outputs = [x for x in egg.nodes() if x.name == 'compile_iterfields'][0].result.outputs
 
-        return(outputs.thr, outputs.est_path, outputs.ID, outputs.network, outputs.conn_model, outputs.mask, outputs.prune, outputs.node_size)
+        return outputs.thr, outputs.est_path, outputs.ID, outputs.network, outputs.conn_model, outputs.mask, outputs.prune, outputs.node_size
 
     class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
         ID = traits.Any(mandatory=True)
@@ -624,7 +651,7 @@ if __name__ == '__main__':
         'multi_nets', 'conn_model', 'dens_thresh', 'conf', 'adapt_thresh', 'plot_switch',
         'bedpostx_dir', 'anat_loc', 'parc', 'ref_txt', 'procmem', 'dir_path', 'multi_thr',
         'multi_atlas', 'max_thr', 'min_thr', 'step_thr', 'k', 'clust_mask', 'k_min',
-        'k_max', 'k_step', 'k_clustering', 'user_atlas_list', 'clust_mask_list', 'prune', 
+        'k_max', 'k_step', 'k_clustering', 'user_atlas_list', 'clust_mask_list', 'prune',
         'node_size_list']), name='inputnode')
 
         #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
@@ -672,14 +699,14 @@ if __name__ == '__main__':
         'parc', 'ref_txt', 'procmem', 'dir_path', 'multi_thr', 'multi_atlas', 'max_thr',
         'min_thr', 'step_thr', 'k', 'clust_mask', 'k_min', 'k_max', 'k_step', 'k_clustering',
         'user_atlas_list', 'clust_mask_list', 'prune', 'node_size_list'],
-        output_names = ['outputs.thr', 'outputs.est_path', 'outputs.ID', 'outputs.network', 
+        output_names = ['outputs.thr', 'outputs.est_path', 'outputs.ID', 'outputs.network',
                         'outputs.conn_model', 'outputs.mask', 'outputs.prune', 'outputs.node_size'],
         function=workflow_selector),
         name = "imp_est")
-    
+
         ##Create MapNode types for net_mets_node and export_to_pandas_node
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name = "ExtractNetStats",
-                                   iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path', 
+                                   iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
                                               'mask', 'prune', 'node_size'])
 
         export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name = "export_to_pandas",
@@ -691,14 +718,14 @@ if __name__ == '__main__':
                                                           'max_thr', 'step_thr', 'multi_thr', 'thr',
                                                           'mask', 'ID', 'network', 'k_clustering',
                                                           'conn_model', 'in_csv', 'user_atlas_list',
-                                                          'clust_mask_list', 'multi_atlas', 'node_size', 
+                                                          'clust_mask_list', 'multi_atlas', 'node_size',
                                                           'node_size_list'])
-        
+
         if multi_nets:
             collect_pandas_dfs_node_iterables = []
             collect_pandas_dfs_node_iterables.append(("network", multi_nets))
             collect_pandas_dfs_node.iterables = collect_pandas_dfs_node_iterables
-            
+
         ##Connect nodes of workflow
         wf.connect([
             (inputnode, imp_est, [('in_file', 'input_file'),
@@ -825,7 +852,7 @@ if __name__ == '__main__':
             i = i + 1
         total_cores = sum(cores)
         total_ram = sum(ram)
-        return(wf_multi, total_cores, total_ram)
+        return wf_multi, total_cores, total_ram
 
     ##Workflow generation
     import logging

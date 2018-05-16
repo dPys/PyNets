@@ -34,7 +34,7 @@ Features of the PyNets Pipeline:
 
 -Threshold the graphs using either of proportional thresholding, target-density thresholding, or multi-thresholding (i.e. iterative pynets runs over a range of proportional or density thresholds).
 
--Optionally model a probabilistic (i.e. weighted and directed) structural connectivity matrix using dMRI bedpostx outputs.
+-Optionally model a probabilistic structural connectivity matrix using dMRI bedpostx outputs.
 
 -Optionally generate connectome glass brain plots, adjacency matrices, D3 visualizations, and gephi-compatible .graphml files
 
@@ -64,7 +64,19 @@ pip install -e .
 pip install pynets
 ```
 
-2. Usage:\
+To install using the included dockerfile, ensure you have installed Docker (https://www.docker.com/) and then run:
+```
+BUILDIR=$(pwd)
+mkdir -p ${BUILDIR}/pynets_images
+docker build -t pynets_docker .
+
+docker run -ti --rm --privileged \
+    -v /tmp:/tmp \
+    -v /var/tmp:/var/tmp \
+    pynets_docker
+``` 
+
+2. Usage:
 
 See pynets_run.py -h for help options.
 
