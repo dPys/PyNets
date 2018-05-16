@@ -16,13 +16,13 @@ def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, 
         if network:
             out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '_network.png'
         else:
-            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '.png'    
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + str(os.path.basename(mask).split('.')[0]) + '_adj_mat_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '.png'
     else:
         if network:
             out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + network + '_adj_mat_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '_network.png'
         else:
             out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_adj_mat_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '.png'
-            
+
     rois_num=conn_matrix.shape[0]
     plt.figure(figsize=(10, 10))
     [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
@@ -48,7 +48,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
     from pynets.netstats import most_important
     from scipy.cluster.hierarchy import linkage, fcluster
     from nipype.utils.filemanip import save_json
-    
+
     ##Advanced Settings
     comm = 'nodes'
     pruned = False
@@ -61,7 +61,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
     #color_scheme = 'interpolateGreens'
     color_scheme = 'interpolateBlues'
     ##Advanced Settings
-    
+
     conn_matrix = normalize(conn_matrix)
     G=nx.from_numpy_matrix(conn_matrix)
     if pruned == True:
@@ -71,11 +71,11 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
         pruned_nodes.sort(reverse = True)
         for j in pruned_nodes:
             del label_names[label_names.index(label_names[j])]
-            
+
         pruned_edges.sort(reverse = True)
         for j in pruned_edges:
-            del label_names[label_names.index(label_names[j])]   
-        
+            del label_names[label_names.index(label_names[j])]
+
     def doClust(X, clust_levels):
         ##get the linkage diagram
         Z = linkage(X, 'ward', )
@@ -105,7 +105,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
             gamma=0.5
         else:
             gamma=1
-            
+
         [node_comm_aff_mat, q] = modularity_louvain_dir(conn_matrix, hierarchy=True, gamma=gamma)
         print('Found ' + str(len(np.unique(node_comm_aff_mat))) + ' communities with gamma=' + str(gamma) + '...')
         clust_levels = len(node_comm_aff_mat)
@@ -173,13 +173,13 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
         return ".".join(["{}{}".format(abet[i],int(l)) for i, l in enumerate(node_labels)])+".{}".format(label_names[node_idx])
 
     output = []
-    
+
     adj_dict = {}
     for i in list(G.adjacency()):
         source = list(i)[0]
         target = list(list(i)[1])
         adj_dict[source] = target
-    
+
     for node_idx, connections in adj_dict.items():
         weight_vec = []
         for i in connections:
@@ -212,30 +212,30 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
     save_json(connectogram_plot, output)
 
     ##Force-directed graphing
-    G=nx.from_numpy_matrix(np.round(conn_matrix.astype('float64'),6))        
+    G=nx.from_numpy_matrix(np.round(conn_matrix.astype('float64'),6))
     data = json_graph.node_link_data(G)
     data.pop('directed', None)
     data.pop('graph', None)
     data.pop('multigraph', None)
     for k in range(len(data['links'])):
-        data['links'][k]['value'] = data['links'][k].pop('weight')      
-    for k in range(len(data['nodes'])):  
+        data['links'][k]['value'] = data['links'][k].pop('weight')
+    for k in range(len(data['nodes'])):
         data['nodes'][k]['id'] = str(data['nodes'][k]['id'])
-    for k in range(len(data['links'])):  
+    for k in range(len(data['links'])):
         data['links'][k]['source'] = str(data['links'][k]['source'])
         data['links'][k]['target'] = str(data['links'][k]['target'])
-        
+
     ##Add community structure
-    for k in range(len(data['nodes'])):  
+    for k in range(len(data['nodes'])):
         data['nodes'][k]['group'] = str(label_arr[0][k])
 
     ##Add node labels
-    for k in range(len(data['nodes'])):  
+    for k in range(len(data['nodes'])):
         data['nodes'][k]['name'] = str(label_names[k])
 
-    out_file = str(dir_path + '/' + json_fdg_file_name)            
+    out_file = str(dir_path + '/' + json_fdg_file_name)
     save_json(out_file, data)
- 
+
     ##Copy index.html and json to dir_path
     #conn_js_path = '/Users/PSYC-dap3463/Applications/PyNets/pynets/connectogram.js'
     #index_html_path = '/Users/PSYC-dap3463/Applications/PyNets/pynets/index.html'
@@ -256,7 +256,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
             for src, target in replacements_js.items():
                 line = line.replace(src, target)
             outfile.write(line)
-            
+
     with open(fdg_js_path) as infile, open(fdg_js_sub, 'w') as outfile:
         for line in infile:
             for src, target in fdg_replacements_js.items():
@@ -267,9 +267,9 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
     import matplotlib
     matplotlib.use('Agg')
     from matplotlib import pyplot as plt
-    
+
     for time_serie, label in zip(time_series.T, labels):
-        plt.plot(time_serie, label=label) 
+        plt.plot(time_serie, label=label)
     plt.xlabel('Scan Number')
     plt.ylabel('Normalized Signal')
     plt.legend()
@@ -300,17 +300,17 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     else:
         G = G_pre
     conn_matrix = nx.to_numpy_array(G)
-    
+
     pruned_nodes.sort(reverse = True)
     for j in pruned_nodes:
         del label_names[label_names.index(label_names[j])]
         del coords[coords.index(coords[j])]
-    
+
     pruned_edges.sort(reverse = True)
     for j in pruned_edges:
         del label_names[label_names.index(label_names[j])]
         del coords[coords.index(coords[j])]
-    
+
     ##Plot connectogram
     if len(conn_matrix) > 20:
         try:
@@ -343,7 +343,7 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     connectome.savefig(out_path_fig, dpi=dpi_resolution)
     return
 
-def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, mask, coords, dir_path, conn_model):  
+def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, mask, coords, dir_path, conn_model):
     import matplotlib
     matplotlib.use('Agg')
     from matplotlib import pyplot as plt
@@ -354,10 +354,10 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     from matplotlib import colors
     from nilearn import plotting as niplot
 
-    edge_threshold = 0.80
-    connectome_fdt_thresh = 0.10
-    dpi_resolution = 1000
-    
+    edge_threshold = 0.50
+    connectome_fdt_thresh = 0.50
+    dpi_resolution = 500
+
     ####Auto-set INPUTS####
     try:
         FSLDIR = os.environ['FSLDIR']
@@ -365,11 +365,11 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
         print('FSLDIR environment variable not set!')
     nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
     if network:
-        probtrackx_output_dir_path = bedpostx_dir + '/probtrackx_' + str(network)
+        probtrackx_output_dir_path = dir_path + '/probtrackx_' + str(network)
     else:
-        probtrackx_output_dir_path = bedpostx_dir + '/probtrackx_Whole_brain'
+        probtrackx_output_dir_path = dir_path + '/probtrackx_Whole_brain'
     ####Auto-set INPUTS####
-    
+
     plt.figure(figsize=(10, 10))
     plt.imshow(conn_matrix_symm, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
     if label_names:
@@ -377,8 +377,8 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
         plt.yticks(range(len(label_names)), label_names, size='xx-small')
     else:
         plt.xticks(range(conn_matrix_symm.shape[0]), rotation=90)
-        plt.yticks(range(conn_matrix_symm.shape[0]))     
-    plt_title = str(atlas_select) + ' Structural Connectivity of: ' + str(ID)
+        plt.yticks(range(conn_matrix_symm.shape[0]))
+    plt_title = str(os.path.basename(dir_path)) + ' Structural Connectivity of: ' + str(ID)
     plt.title(plt_title)
     plt.grid(False)
     #plt.gcf().subplots_adjust(left=0.8)
@@ -429,9 +429,9 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=False, node_size=0.0001)
     connectome.add_overlay(ch2better_loc, alpha=0.5, cmap=plt.cm.gray)
     [z_min, z_max] = -np.abs(conn_matrix_symm).max(), np.abs(conn_matrix_symm).max()
-    connectome.add_graph(conn_matrix_symm, coords, edge_threshold = edge_threshold, node_color=clust_colors, edge_cmap=niplot.cm.black_blue_r, edge_vmax=z_max, edge_vmin=z_min, node_size=4)    
+    connectome.add_graph(conn_matrix_symm, coords, edge_threshold=edge_threshold, node_color=clust_colors, edge_cmap=niplot.cm.black_blue_r, edge_vmax=z_max, edge_vmin=z_min, node_size=4)
     connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=niplot.cm.cyan_copper_r)
-    
+
     if mask:
         if network is not None:
             out_file_path = dir_path + '/structural_connectome_fig_' + str(network) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(ID) + '.png'
@@ -441,7 +441,7 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
         if network is not None:
             out_file_path = dir_path + '/structural_connectome_fig_' + str(network) + '_' + str(ID) + '.png'
         else:
-            out_file_path = dir_path + '/structural_connectome_fig_wb_' + str(ID) + '.png'        
+            out_file_path = dir_path + '/structural_connectome_fig_wb_' + str(ID) + '.png'
     connectome.savefig(out_file_path, dpi=dpi_resolution)
     connectome.close()
     return

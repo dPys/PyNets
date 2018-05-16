@@ -398,8 +398,6 @@ def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, ven
     os.chdir(bedpostx_dir)
     os.system(probtrackx2.cmdline + rseed_arg)
     del(probtrackx2)
-    filename = probtrackx_output_dir_path + '/' + str(i) + '_complete.txt'
-    open(filename, 'w').close()
     return max_i
 
 
@@ -413,7 +411,7 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
 
     tmp_files = []
     for i in range(int(max_i)):
-        tmp_files.append(probtrackx_output_dir_path + '/' + str(i) + '_complete.txt')
+        tmp_files.append(probtrackx_output_dir_path + '/tmp_samples_' + str(i) + '/fdt_paths.nii.gz')
 
     while True:
        if all([os.path.isfile(f) for f in tmp_files]):
