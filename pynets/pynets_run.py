@@ -504,7 +504,7 @@ if __name__ == '__main__':
         meta_wf.config['logging']['workflow_level']='DEBUG'
         meta_wf.config['logging']['utils_level']='DEBUG'
         meta_wf.config['logging']['interface_level']='DEBUG'
-        meta_wf.write_graph(graph2use='exec', format='png', dotfilename='meta_wf.dot')
+        #meta_wf.write_graph(graph2use='exec', format='png', dotfilename='meta_wf.dot')
         egg = meta_wf.run('MultiProc')
         outputs = [x for x in egg.nodes() if x.name == 'compile_iterfields'][0].result.outputs
 
@@ -889,7 +889,7 @@ if __name__ == '__main__':
         wf.config['logging']['workflow_level']='DEBUG'
         wf.config['logging']['utils_level']='DEBUG'
         wf.config['logging']['interface_level']='DEBUG'
-        wf.write_graph(graph2use='flat', format='png', dotfilename='indiv_wf.dot')
+        #wf.write_graph(graph2use='flat', format='png', dotfilename='indiv_wf.dot')
         plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf.run(plugin='MultiProc', plugin_args= plugin_args)

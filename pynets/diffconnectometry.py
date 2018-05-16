@@ -353,7 +353,7 @@ def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_m
 def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, vent_CSF_diff_mask_path, WM_diff_mask_path, procmem):
     import random
     import nipype.interfaces.fsl as fsl
-    num_total_samples = 10
+    num_total_samples = 5000
     samples_i = int(round(float(num_total_samples) / float(procmem[0]),0))
     nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
     merged_th_samples_path = bedpostx_dir + '/merged_th1samples.nii.gz'
