@@ -4,13 +4,7 @@
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/diffconnectometry.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/diffconnectometry.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/graphestimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/graphestimation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/netstats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/setup.cfg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -25,8 +19,8 @@
       <file leaf-file-name="diffconnectometry.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/diffconnectometry.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="643">
-              <caret line="349" column="49" selection-start-line="349" selection-start-column="49" selection-end-line="349" selection-end-column="49" />
+            <state relative-caret-position="277">
+              <caret line="507" column="8" selection-start-line="507" selection-start-column="8" selection-end-line="507" selection-end-column="8" />
               <folding>
                 <element signature="e#109#130#0" expanded="true" />
               </folding>
@@ -37,8 +31,8 @@
       <file leaf-file-name="workflows.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="405">
-              <caret line="938" column="9" selection-start-line="938" selection-start-column="9" selection-end-line="938" selection-end-column="9" />
+            <state relative-caret-position="257">
+              <caret line="911" column="52" selection-start-line="911" selection-start-column="52" selection-end-line="911" selection-end-column="52" />
             </state>
           </provider>
         </entry>
@@ -64,8 +58,8 @@
       <file leaf-file-name="pynets_run.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="276">
-              <caret line="446" selection-start-line="446" selection-end-line="446" />
+            <state relative-caret-position="3017">
+              <caret line="443" column="62" selection-start-line="443" selection-start-column="62" selection-end-line="443" selection-end-column="62" />
               <folding>
                 <element signature="e#130#140#0" expanded="true" />
               </folding>
@@ -94,7 +88,6 @@
   <component name="FindInProjectRecents">
     <findStrings>
       <find>volumes</find>
-      <find>dir_path</find>
       <find>create_seed_mask_file</find>
       <find>save_parcel_vols</find>
       <find>reg_coords2diff</find>
@@ -105,6 +98,8 @@
       <find>input_names = [</find>
       <find>build_multi_net_paths</find>
       <find>input_file</find>
+      <find>dir_path</find>
+      <find>collect_struct_mapping_outputs</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -401,30 +396,30 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="276">
-          <caret line="446" selection-start-line="446" selection-end-line="446" />
-          <folding>
-            <element signature="e#130#140#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/diffconnectometry.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="643">
-          <caret line="349" column="49" selection-start-line="349" selection-start-column="49" selection-end-line="349" selection-end-column="49" />
+        <state relative-caret-position="277">
+          <caret line="507" column="8" selection-start-line="507" selection-start-column="8" selection-end-line="507" selection-end-column="8" />
           <folding>
             <element signature="e#109#130#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3017">
+          <caret line="443" column="62" selection-start-line="443" selection-start-column="62" selection-end-line="443" selection-end-column="62" />
+          <folding>
+            <element signature="e#130#140#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="405">
-          <caret line="938" column="9" selection-start-line="938" selection-start-column="9" selection-end-line="938" selection-end-column="9" />
+        <state relative-caret-position="257">
+          <caret line="911" column="52" selection-start-line="911" selection-start-column="52" selection-end-line="911" selection-end-column="52" />
         </state>
       </provider>
     </entry>

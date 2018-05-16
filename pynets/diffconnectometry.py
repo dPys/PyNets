@@ -403,7 +403,7 @@ def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, ven
     return max_i
 
 
-def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_output_dir_path, max_i):
+def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_output_dir_path, max_i, dir_path):
     ##Wait for all probtrackx runs to complete
     import os
     import time
@@ -424,7 +424,6 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
     output_fdts = glob.glob(probtrackx_output_dir_path + '/tmp*/fdt_paths.nii.gz')
     net_mats = glob.glob(probtrackx_output_dir_path + '/tmp*/fdt_network_matrix')
     waytotals = glob.glob(probtrackx_output_dir_path + '/tmp*/waytotal')
-    dir_path = os.path.dirname(bedpostx_dir)
 
     try:
         ##Add the images
@@ -491,11 +490,11 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
     conn_matrix_symm = np.maximum(conn_matrix, conn_matrix.transpose())
 
     if parc is False:
-        del_files_spheres = glob.glob(bedpostx_dir + '/roi_sphere*')
+        del_files_spheres = glob.glob(dir_path + '/volumes/roi_sphere*')
         for i in del_files_spheres:
             os.remove(i)
     else:
-        del_files_parcels = glob.glob(bedpostx_dir + '/roi_parcel*')
+        del_files_parcels = glob.glob(dir_path + '/volumes/roi_parcel*')
         try:
             for i in del_files_parcels:
                 os.remove(i)
