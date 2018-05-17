@@ -166,7 +166,12 @@ def reg_coords2diff(coords, bedpostx_dir, node_size, dir_path):
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
     from nilearn import masking
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import _pickle as pickle
 
+    pick_dump = True
     volumes_dir = dir_path + '/volumes'
     nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
     merged_f_samples_path = bedpostx_dir + '/merged_f1samples.nii.gz'
@@ -225,6 +230,12 @@ def reg_coords2diff(coords, bedpostx_dir, node_size, dir_path):
         pass
 
     spheres_list = [i for i in os.listdir(volumes_dir) if 'diff.nii' in i]
+    if pick_dump == True:
+        ##Save coords to pickle
+        coord_path = "%s%s" % (dir_path, '/coords.pkl')
+        with open(coord_path, 'wb') as f:
+            pickle.dump(coords, f, protocol=2)
+
     return spheres_list
 
 
@@ -359,7 +370,6 @@ def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, ven
     merged_th_samples_path = bedpostx_dir + '/merged_th1samples.nii.gz'
     merged_f_samples_path = bedpostx_dir + '/merged_f1samples.nii.gz'
     merged_ph_samples_path = bedpostx_dir + '/merged_ph1samples.nii.gz'
-    max_i = max(range(int(procmem[0])))
 
     tmp_dir = probtrackx_output_dir_path + '/tmp_samples_' + str(i)
     if not os.path.exists(tmp_dir):
@@ -398,12 +408,10 @@ def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, ven
     os.chdir(bedpostx_dir)
     os.system(probtrackx2.cmdline + rseed_arg)
     del(probtrackx2)
-    filename = probtrackx_output_dir_path + '/' + str(i) + '_complete.txt'
-    open(filename, 'w').close()
-    return max_i
+    return
 
 
-def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_output_dir_path, max_i, dir_path):
+def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_output_dir_path, dir_path, procmem):
     ##Wait for all probtrackx runs to complete
     import os
     import time
@@ -411,15 +419,17 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
     import nibabel as nib
     from sklearn.preprocessing import normalize
 
+    max_i = max(range(int(procmem[0])))
     tmp_files = []
     for i in range(int(max_i)):
-        tmp_files.append(probtrackx_output_dir_path + '/' + str(i) + '_complete.txt')
+        tmp_files.append(probtrackx_output_dir_path + '/tmp_samples_' + str(i) + '/fdt_paths.nii.gz')
 
     while True:
        if all([os.path.isfile(f) for f in tmp_files]):
           break
        else:
-          time.sleep(5)
+          print('Waiting on all fdt_paths!')
+          time.sleep(10)
 
     output_fdts = glob.glob(probtrackx_output_dir_path + '/tmp*/fdt_paths.nii.gz')
     net_mats = glob.glob(probtrackx_output_dir_path + '/tmp*/fdt_network_matrix')
@@ -438,10 +448,10 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
             all_img = all_img + img
 
         result_img = nib.Nifti1Image(all_img, affine=aff)
-        print('Saving sum of all fdt_paths temporary images...')
+        print('\nSaving sum of all fdt_paths temporary images...\n')
         nib.save(result_img, out_file)
 
-    except:
+    except RuntimeError:
         print('fdt_paths wont merge!')
 
     ##Merge output mat files
@@ -484,7 +494,7 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
     try:
         print('Normalizing array...')
         conn_matrix = normalize(conn_matri)
-    except:
+    except RuntimeError:
         print('Normalization failed...')
         pass
     conn_matrix_symm = np.maximum(conn_matrix, conn_matrix.transpose())

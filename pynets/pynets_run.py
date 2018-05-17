@@ -341,6 +341,8 @@ if __name__ == '__main__':
 
     if node_size_list:
         print("%s%s%s" % ('Growing spherical nodes across multiple radius sizes: ', str(', '.join(str(n) for n in node_size_list)), '...'))
+    elif parc is True:
+        print("Using parcels as nodes")
     else:
         print("%s%s" % ("Using node size of: ", node_size))
 
@@ -479,7 +481,6 @@ if __name__ == '__main__':
         comp_iter.inputs.multi_nets = multi_nets
         comp_iter.inputs.conn_model = conn_model
         comp_iter.inputs.dens_thresh = dens_thresh
-        comp_iter.inputs.dir_path = dir_path
         comp_iter.inputs.multi_thr = multi_thr
         comp_iter.inputs.multi_atlas = multi_atlas
         comp_iter.inputs.max_thr = max_thr
@@ -500,11 +501,12 @@ if __name__ == '__main__':
         meta_wf.connect(base_wf, "outputnode.thr", comp_iter, "thr")
         meta_wf.connect(base_wf, "outputnode.network", comp_iter, "network")
         meta_wf.connect(base_wf, "outputnode.node_size", comp_iter, "node_size")
+        meta_wf.connect(base_wf, "outputnode.dir_path", comp_iter, "dir_path")
         meta_wf.config['logging']['log_directory']='/tmp'
         meta_wf.config['logging']['workflow_level']='DEBUG'
         meta_wf.config['logging']['utils_level']='DEBUG'
         meta_wf.config['logging']['interface_level']='DEBUG'
-        meta_wf.write_graph(graph2use='exec', format='png', dotfilename='meta_wf.dot')
+        #meta_wf.write_graph(graph2use='exec', format='png', dotfilename='meta_wf.dot')
         egg = meta_wf.run('MultiProc')
         outputs = [x for x in egg.nodes() if x.name == 'compile_iterfields'][0].result.outputs
 
@@ -889,7 +891,7 @@ if __name__ == '__main__':
         wf.config['logging']['workflow_level']='DEBUG'
         wf.config['logging']['utils_level']='DEBUG'
         wf.config['logging']['interface_level']='DEBUG'
-        wf.write_graph(graph2use='flat', format='png', dotfilename='indiv_wf.dot')
+        #wf.write_graph(graph2use='flat', format='png', dotfilename='indiv_wf.dot')
         plugin_args = { 'n_procs': int(procmem[0]),'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf.run(plugin='MultiProc', plugin_args= plugin_args)
