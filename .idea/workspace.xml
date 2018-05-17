@@ -2,14 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/diffconnectometry.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/diffconnectometry.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/setup.cfg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -24,8 +17,8 @@
       <file leaf-file-name="diffconnectometry.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/diffconnectometry.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="383">
-              <caret line="419" column="23" lean-forward="true" selection-start-line="419" selection-start-column="23" selection-end-line="419" selection-end-column="23" />
+            <state relative-caret-position="238">
+              <caret line="355" column="28" selection-start-line="355" selection-start-column="28" selection-end-line="355" selection-end-column="28" />
               <folding>
                 <element signature="e#109#130#0" expanded="true" />
               </folding>
@@ -36,8 +29,8 @@
       <file leaf-file-name="workflows.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="404">
-              <caret line="846" column="107" selection-start-line="846" selection-start-column="107" selection-end-line="846" selection-end-column="107" />
+            <state relative-caret-position="-4">
+              <caret line="719" column="55" selection-start-line="719" selection-start-column="55" selection-end-line="719" selection-end-column="55" />
             </state>
           </provider>
         </entry>
@@ -120,8 +113,8 @@
       <find>_wf.dot'</find>
       <find>dir_path</find>
       <find>parc</find>
-      <find>max_i</find>
       <find>fdt_path</find>
+      <find>max_i</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -135,10 +128,10 @@
         <option value="$PROJECT_DIR$/pynets/netstats.py" />
         <option value="$PROJECT_DIR$/pynets/graphestimation.py" />
         <option value="$PROJECT_DIR$/pynets/utils.py" />
-        <option value="$PROJECT_DIR$/pynets/workflows.py" />
         <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
-        <option value="$PROJECT_DIR$/pynets/diffconnectometry.py" />
         <option value="$PROJECT_DIR$/pynets/plotting.py" />
+        <option value="$PROJECT_DIR$/pynets/workflows.py" />
+        <option value="$PROJECT_DIR$/pynets/diffconnectometry.py" />
       </list>
     </option>
   </component>
@@ -419,13 +412,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="404">
-          <caret line="846" column="107" selection-start-line="846" selection-start-column="107" selection-end-line="846" selection-end-column="107" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3310">
@@ -446,10 +432,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-4">
+          <caret line="719" column="55" selection-start-line="719" selection-start-column="55" selection-end-line="719" selection-end-column="55" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/diffconnectometry.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="383">
-          <caret line="419" column="23" lean-forward="true" selection-start-line="419" selection-start-column="23" selection-end-line="419" selection-end-column="23" />
+        <state relative-caret-position="238">
+          <caret line="355" column="28" selection-start-line="355" selection-start-column="28" selection-end-line="355" selection-end-column="28" />
           <folding>
             <element signature="e#109#130#0" expanded="true" />
           </folding>

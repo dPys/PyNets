@@ -730,12 +730,12 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                                                                        ('bedpostx_dir', 'bedpostx_dir'),
                                                                                        ('network', 'network'),
                                                                                        ('parc', 'parc'),
-                                                                                       ('dir_path', 'dir_path'),
                                                                                        ('conn_model', 'conn_model'),
                                                                                        ('mask', 'mask'),
                                                                                        ('plot_switch', 'plot_switch')]),
                                                 (node_gen_node, structural_plotting_node, [('label_names', 'label_names')]),
-                                                (WB_fetch_nodes_and_labels_node, structural_plotting_node, [('coords', 'coords')])
+                                                (WB_fetch_nodes_and_labels_node, structural_plotting_node, [('coords', 'coords'),
+                                                                                                            ('dir_path', 'dir_path')])
                                                 ])
 
     wb_structural_connectometry_wf.config['execution']['crashdump_dir']='/tmp'
@@ -932,11 +932,11 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                                                                        ('network', 'network'),
                                                                                        ('mask', 'mask'),
                                                                                        ('parc', 'parc'),
-                                                                                       ('dir_path', 'dir_path'),
                                                                                        ('conn_model', 'conn_model'),
                                                                                        ('plot_switch', 'plot_switch')]),
                                                 (node_gen_node, structural_plotting_node, [('label_names', 'label_names')]),
-                                                (RSN_fetch_nodes_and_labels_node, structural_plotting_node, [('coords', 'coords')])
+                                                (RSN_fetch_nodes_and_labels_node, structural_plotting_node, [('coords', 'coords'),
+                                                                                                             ('dir_path', 'dir_path')])
                                                 ])
 
     rsn_structural_connectometry_wf.config['logging']['log_directory']='/tmp'
