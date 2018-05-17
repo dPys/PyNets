@@ -631,7 +631,6 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                          function=diffconnectometry.grow_nodes, imports=import_list), name="grow_nodes_node")
 
     run_probtrackx2_node = pe.Node(niu.Function(input_names=['i', 'seeds_text', 'bedpostx_dir', 'probtrackx_output_dir_path', 'vent_CSF_diff_mask_path', 'WM_diff_mask_path', 'procmem'],
-                                                output_names=['max_i'],
                                          function=diffconnectometry.run_probtrackx2, imports=import_list), name="run_probtrackx2_node")
 
     run_probtrackx2_iterables = []
@@ -639,7 +638,7 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     run_probtrackx2_iterables.append(("i", iter_i))
     run_probtrackx2_node.iterables = run_probtrackx2_iterables
 
-    collect_struct_mapping_outputs_node = pe.Node(niu.Function(input_names=['parc', 'bedpostx_dir', 'network', 'ID', 'probtrackx_output_dir_path', 'max_i', 'dir_path'],
+    collect_struct_mapping_outputs_node = pe.Node(niu.Function(input_names=['parc', 'bedpostx_dir', 'network', 'ID', 'probtrackx_output_dir_path', 'dir_path', 'procmem'],
                                               output_names=['conn_matrix_symm'],
                                          function=diffconnectometry.collect_struct_mapping_outputs, imports=import_list), name="collect_struct_mapping_outputs_node")
 
@@ -705,8 +704,8 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                                           ('node_size', 'node_size'),
                                                           ('parc', 'parc'),
                                                           ('network', 'network'),
+                                                          ('procmem', 'procmem'),
                                                           ('ID', 'ID')]),
-        (run_probtrackx2_node, collect_struct_mapping_outputs_node, [('max_i', 'max_i')]),
         (inputnode, thresh_diff_node, [('dens_thresh', 'dens_thresh'),
                                        ('thr', 'thr'),
                                        ('network', 'network'),
@@ -824,7 +823,6 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                          function=diffconnectometry.grow_nodes, imports = import_list), name = "grow_nodes_node")
 
     run_probtrackx2_node = pe.Node(niu.Function(input_names=['i', 'seeds_text', 'bedpostx_dir', 'probtrackx_output_dir_path', 'vent_CSF_diff_mask_path', 'WM_diff_mask_path', 'procmem'],
-                                                output_names=['max_i'],
                                          function=diffconnectometry.run_probtrackx2, imports = import_list), name = "run_probtrackx2_node")
 
     run_probtrackx2_iterables = []
@@ -832,7 +830,7 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
     run_probtrackx2_iterables.append(("i", iter_i))
     run_probtrackx2_node.iterables = run_probtrackx2_iterables
 
-    collect_struct_mapping_outputs_node = pe.Node(niu.Function(input_names=['parc', 'bedpostx_dir', 'network', 'ID', 'probtrackx_output_dir_path', 'max_i', 'dir_path'],
+    collect_struct_mapping_outputs_node = pe.Node(niu.Function(input_names=['parc', 'bedpostx_dir', 'network', 'ID', 'probtrackx_output_dir_path', 'dir_path', 'procmem'],
                                               output_names=['conn_matrix_symm'],
                                          function=diffconnectometry.collect_struct_mapping_outputs, imports = import_list), name = "collect_struct_mapping_outputs_node")
 
@@ -906,8 +904,8 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                                           ('node_size', 'node_size'),
                                                           ('parc', 'parc'),
                                                           ('network', 'network'),
+                                                          ('procmem', 'procmem'),
                                                           ('ID', 'ID')]),
-        (run_probtrackx2_node, collect_struct_mapping_outputs_node, [('max_i', 'max_i')]),
         (inputnode, thresh_diff_node, [('dens_thresh', 'dens_thresh'),
                                        ('thr', 'thr'),
                                        ('network', 'network'),
