@@ -419,9 +419,8 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
     import nibabel as nib
     from sklearn.preprocessing import normalize
 
-    max_i = max(range(int(procmem[0])))
     tmp_files = []
-    for i in range(int(max_i)):
+    for i in [str(x) for x in range(int(procmem[0]))]:
         tmp_files.append(probtrackx_output_dir_path + '/tmp_samples_' + str(i) + '/fdt_paths.nii.gz')
 
     while True:
@@ -429,6 +428,7 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
           break
        else:
           print('Waiting on all fdt_paths!')
+          print(str(sum([os.path.isfile(f) for f in tmp_files])) + str(' tmp files produced out of ') + str(len(tmp_files)) + ' expected...')
           time.sleep(10)
 
     output_fdts = glob.glob(probtrackx_output_dir_path + '/tmp*/fdt_paths.nii.gz')
@@ -493,7 +493,7 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
 
     try:
         print('Normalizing array...')
-        conn_matrix = normalize(conn_matri)
+        conn_matrix = normalize(np.nan_to_num(conn_matri))
     except RuntimeError:
         print('Normalization failed...')
         pass

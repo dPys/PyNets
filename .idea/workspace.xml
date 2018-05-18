@@ -2,13 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/dockerfile" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/diffconnectometry.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/diffconnectometry.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/setup.cfg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -23,8 +17,8 @@
       <file leaf-file-name="diffconnectometry.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/diffconnectometry.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="280">
-              <caret line="236" column="46" lean-forward="true" selection-start-line="236" selection-start-column="46" selection-end-line="236" selection-end-column="46" />
+            <state relative-caret-position="276">
+              <caret line="12" column="24" lean-forward="true" selection-start-line="12" selection-start-column="24" selection-end-line="12" selection-end-column="24" />
               <folding>
                 <element signature="e#109#130#0" expanded="true" />
               </folding>
@@ -35,7 +29,7 @@
       <file leaf-file-name="workflows.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="26">
+            <state relative-caret-position="-330">
               <caret line="701" column="73" selection-start-line="701" selection-start-column="73" selection-end-line="701" selection-end-column="73" />
             </state>
           </provider>
@@ -44,8 +38,8 @@
       <file leaf-file-name="plotting.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/plotting.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="295">
-              <caret line="363" column="21" lean-forward="true" selection-start-line="363" selection-start-column="21" selection-end-line="363" selection-end-column="21" />
+            <state relative-caret-position="713">
+              <caret line="363" column="21" selection-start-line="363" selection-start-column="21" selection-end-line="363" selection-end-column="21" />
               <folding>
                 <element signature="e#109#127#0" expanded="true" />
               </folding>
@@ -86,8 +80,8 @@
       <file leaf-file-name="utils.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="105">
-              <caret line="565" selection-start-line="565" selection-end-line="565" />
+            <state relative-caret-position="161">
+              <caret line="7" column="10" selection-start-line="7" selection-start-column="10" selection-end-line="7" selection-end-column="10" />
             </state>
           </provider>
         </entry>
@@ -122,8 +116,8 @@
       <find>fdt_path</find>
       <find>collect_struct_mapping_outputs_node</find>
       <find>procmem</find>
-      <find>max_i</find>
       <find>coords</find>
+      <find>max_i</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -151,7 +145,7 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="176" />
+    <option name="x" value="155" />
     <option name="y" value="23" />
     <option name="width" value="1387" />
     <option name="height" value="828" />
@@ -290,7 +284,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="176" y="23" width="1387" height="828" extended-state="0" />
+    <frame x="155" y="23" width="1387" height="828" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -467,20 +461,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="26">
-          <caret line="701" column="73" selection-start-line="701" selection-start-column="73" selection-end-line="701" selection-end-column="73" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="105">
-          <caret line="565" selection-start-line="565" selection-end-line="565" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="128">
@@ -498,10 +478,24 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="161">
+          <caret line="7" column="10" selection-start-line="7" selection-start-column="10" selection-end-line="7" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-330">
+          <caret line="701" column="73" selection-start-line="701" selection-start-column="73" selection-end-line="701" selection-end-column="73" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/plotting.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="295">
-          <caret line="363" column="21" lean-forward="true" selection-start-line="363" selection-start-column="21" selection-end-line="363" selection-end-column="21" />
+        <state relative-caret-position="713">
+          <caret line="363" column="21" selection-start-line="363" selection-start-column="21" selection-end-line="363" selection-end-column="21" />
           <folding>
             <element signature="e#109#127#0" expanded="true" />
           </folding>
@@ -510,8 +504,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/diffconnectometry.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="280">
-          <caret line="236" column="46" lean-forward="true" selection-start-line="236" selection-start-column="46" selection-end-line="236" selection-end-column="46" />
+        <state relative-caret-position="276">
+          <caret line="12" column="24" lean-forward="true" selection-start-line="12" selection-start-column="24" selection-end-line="12" selection-end-column="24" />
           <folding>
             <element signature="e#109#130#0" expanded="true" />
           </folding>
