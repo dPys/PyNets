@@ -131,14 +131,14 @@ def autofix(W, copy=True):
 
 def thresh_and_fit(dens_thresh, thr, ts_within_nodes, conn_model, network, ID, dir_path, mask, node_size):
     from pynets import utils, thresholding, graphestimation
-   
+
     if not dens_thresh:
         print("%s%.2f%s" % ('\nRunning graph estimation and thresholding proportionally at: ', 100*float(thr), '% ...\n'))
     else:
         print("%s%.2f%s" % ('\nRunning graph estimation and thresholding to achieve density of: ', 100*float(thr), '% ...\n'))
     ##Fit mat
     conn_matrix = graphestimation.get_conn_matrix(ts_within_nodes, conn_model)
-    
+
     ##Save unthresholded
     unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
     np.save(unthr_path, conn_matrix)
@@ -147,17 +147,19 @@ def thresh_and_fit(dens_thresh, thr, ts_within_nodes, conn_model, network, ID, d
         ##Save thresholded
         conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         edge_threshold = str(float(thr)*100) +'%'
-        est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size) 
+        est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
     else:
         conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
         edge_threshold = str(float(thr)*100) +'%'
         est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
     np.save(est_path, conn_matrix_thr)
     return(conn_matrix_thr, edge_threshold, est_path, thr, node_size, network)
-    
-def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_size, conn_matrix):
+
+def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_size, conn_matrix, parc):
     from pynets import utils, thresholding
-   
+
+    if parc == True:
+        node_size = 'parc'
     if not dens_thresh:
         print("%s%.2f%s" % ('\nThresholding proportionally at: ', 100*float(thr), '% ...\n'))
     else:
@@ -167,7 +169,7 @@ def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_
         ##Save thresholded
         conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         edge_threshold = str(float(thr)*100) +'%'
-        est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size) 
+        est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
     else:
         conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
         edge_threshold = str(float(thr)*100) +'%'

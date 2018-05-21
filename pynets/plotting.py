@@ -289,11 +289,15 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
     pruning=True
-    dpi_resolution=1000
+    dpi_resolution=500
     import pkg_resources
     import networkx as nx
     from pynets import plotting
     from pynets.netstats import most_important
+
+    if parc == True:
+        node_size = 'parc'
+
     G_pre=nx.from_numpy_matrix(conn_matrix)
     if pruning == True:
         [G, pruned_nodes, pruned_edges] = most_important(G_pre)
@@ -326,14 +330,14 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     ##Plot connectome
     if mask:
         if network:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_' + str(thr) + '_' + str(node_size) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_' + str(thr) + '_' + str(node_size) + '_functional_connectome_viz.png'
         else:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(thr) + '_' + str(node_size) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(thr) + '_' + str(node_size) + '_functional_connectome_viz.png'
     else:
         if network:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(network) + '_' + str(thr) + '_' + str(node_size) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(network) + '_' + str(thr) + '_' + str(node_size) + '_functional_connectome_viz.png'
         else:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '_functional_connectome_viz.png'
     #niplot.plot_connectome(conn_matrix, coords, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
     connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=True, node_size=0.0001)
@@ -343,7 +347,7 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     connectome.savefig(out_path_fig, dpi=dpi_resolution)
     return
 
-def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, mask, coords, dir_path, conn_model):
+def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, mask, coords, dir_path, conn_model, thr, node_size):
     import matplotlib
     matplotlib.use('Agg')
     from matplotlib import pyplot as plt
@@ -369,6 +373,8 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     else:
         probtrackx_output_dir_path = dir_path + '/probtrackx_Whole_brain'
     ####Auto-set INPUTS####
+    if parc == True:
+        node_size = 'parc'
 
     plt.figure(figsize=(10, 10))
     plt.imshow(conn_matrix_symm, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
@@ -430,18 +436,19 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     connectome.add_overlay(ch2better_loc, alpha=0.5, cmap=plt.cm.gray)
     [z_min, z_max] = -np.abs(conn_matrix_symm).max(), np.abs(conn_matrix_symm).max()
     connectome.add_graph(conn_matrix_symm, coords, edge_threshold=edge_threshold, node_color=clust_colors, edge_cmap=plt.cm.binary, edge_vmax=z_max, edge_vmin=z_min, node_size=4)
-    connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=niplot.cm.cyan_copper_r, alpha=0.6)
+    #connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=niplot.cm.cyan_copper_r, alpha=0.6)
 
+    ##Plot connectome
     if mask:
-        if network is not None:
-            out_file_path = dir_path + '/structural_connectome_fig_' + str(network) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(ID) + '.png'
+        if network:
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_' + str(thr) + '_' + str(node_size) + '_structural_viz.png'
         else:
-            out_file_path = dir_path + '/structural_connectome_fig_wb_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(ID) + '.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(thr) + '_' + str(node_size) + '_structural_viz.png'
     else:
-        if network is not None:
-            out_file_path = dir_path + '/structural_connectome_fig_' + str(network) + '_' + str(ID) + '.png'
+        if network:
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(network) + '_' + str(thr) + '_' + str(node_size) + '_structural_connectome_viz.png'
         else:
-            out_file_path = dir_path + '/structural_connectome_fig_wb_' + str(ID) + '.png'
-    connectome.savefig(out_file_path, dpi=dpi_resolution)
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '_structural_connectome_viz.png'
+    connectome.savefig(out_path_fig, dpi=dpi_resolution)
     connectome.close()
     return

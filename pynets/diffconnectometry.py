@@ -273,6 +273,7 @@ def reg_parcels2diff(bedpostx_dir, dir_path):
 def create_seed_mask_file(bedpostx_dir, network, dir_path):
     import glob
     import re
+    import shutil
 
     def atoi(text):
         return int(text) if text.isdigit() else text
@@ -285,10 +286,11 @@ def create_seed_mask_file(bedpostx_dir, network, dir_path):
     if network:
         probtrackx_output_dir_path = dir_path + '/probtrackx_' + network
     else:
-        probtrackx_output_dir_path = dir_path + '/probtrackx_Whole_brain'
+        probtrackx_output_dir_path = dir_path + '/probtrackx_WB'
 
-    if not os.path.exists(probtrackx_output_dir_path):
-        os.makedirs(probtrackx_output_dir_path)
+    if os.path.exists(probtrackx_output_dir_path):
+        shutil.rmtree(probtrackx_output_dir_path)
+    os.makedirs(probtrackx_output_dir_path)
 
     seed_files = glob.glob(volumes_dir + '/region*diff.nii.gz')
     seeds_text = probtrackx_output_dir_path + '/masks.txt'
@@ -361,10 +363,9 @@ def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_m
     return seeds_text, probtrackx_output_dir_path
 
 
-def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, vent_CSF_diff_mask_path, WM_diff_mask_path, procmem):
+def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, vent_CSF_diff_mask_path, WM_diff_mask_path, procmem, num_total_samples):
     import random
     import nipype.interfaces.fsl as fsl
-    num_total_samples = 10
     samples_i = int(round(float(num_total_samples) / float(procmem[0]),0))
     nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
     merged_th_samples_path = bedpostx_dir + '/merged_th1samples.nii.gz'
