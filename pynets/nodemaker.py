@@ -7,7 +7,8 @@ Copyright (C) 2018
 import os
 import numpy as np
 import nibabel as nib
-    
+
+
 def get_sphere(coords, r, vox_dims, dims):
     """##Adapted from Neurosynth
     Return all points within r mm of coordinates. Generates a cube
@@ -23,6 +24,7 @@ def get_sphere(coords, r, vox_dims, dims):
     return sphere[(np.min(sphere, 1) >= 0) &
                   (np.max(np.subtract(sphere, dims), 1) <= -1), :].astype(int)
 
+
 def create_parcel_atlas(parcel_list):
     from nilearn.image import new_img_like, concat_imgs
     parcel_background = new_img_like(parcel_list[0], np.zeros(parcel_list[0].shape, dtype=bool))
@@ -31,7 +33,8 @@ def create_parcel_atlas(parcel_list):
     index_vec = np.array(range(len(parcel_list_exp))) + 1
     net_parcels_sum = np.sum(index_vec * parcellation, axis=3)
     net_parcels_map_nifti = nib.Nifti1Image(net_parcels_sum, affine=parcel_list[0].affine)
-    return(net_parcels_map_nifti, parcel_list_exp)
+    return net_parcels_map_nifti, parcel_list_exp
+
 
 def fetch_nilearn_atlas_coords(atlas_select):
     from nilearn import datasets
@@ -50,7 +53,8 @@ def fetch_nilearn_atlas_coords(atlas_select):
         label_names=np.array([s.strip('b\'') for s in atlas.labels.astype('U')]).tolist()
     except:
         label_names=None
-    return(coords, atlas_name, networks_list, label_names)
+    return coords, atlas_name, networks_list, label_names
+
 
 def get_node_membership(network, func_file, coords, label_names, parc, parcel_list):
     from nilearn.image import resample_img
@@ -159,19 +163,19 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
             parcel_data_reshaped = resample_img(parcel, target_affine=par_img.affine,
                                target_shape=RSNmask.shape).get_data()
             parcel_vol[parcel_data_reshaped==1] = 1
-            
+
             ##Count number of unique voxels where overlap of parcel and mask occurs
             overlap_count = len(np.unique(np.where((RSNmask.astype('uint8')==1) & (parcel_vol.astype('uint8')==1))))
-            
+
             ##Count number of total unique voxels within the parcel
             total_count = len(np.unique(np.where(((parcel_vol.astype('uint8')==1)))))
-       
-            ##Calculate % overlap  
+
+            ##Calculate % overlap
             try:
                 overlap = float(overlap_count/total_count)
             except:
                 overlap = float(0)
-            
+
             if overlap >=perc_overlap:
                 print("%.2f%s%s%s%s%s" % (100*overlap, '% of parcel ', label_names[i], ' falls within ', str(network), ' mask...'))
                 RSN_parcels.append(parcel)
@@ -179,15 +183,14 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
                 net_label_names.append(label_names[i])
             i = i + 1
         coords_mm = list(set(list(tuple(x) for x in coords_with_parc)))
-        
-    return(coords_mm, RSN_parcels, net_label_names, network)
-        
-def parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID):
+
+    return coords_mm, RSN_parcels, net_label_names, network
+
+
+def parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID, perc_overlap):
     from pynets import nodemaker
     from nilearn.image import resample_img
     from nilearn import masking
-    ##For parcel masking, specify overlap thresh and error cushion in mm voxels
-    perc_overlap = 0.75 ##Default is >=90% overlap
 
     mask_img = nib.load(mask)
     mask_data, _ = masking._load_mask_img(mask)
@@ -199,19 +202,19 @@ def parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID):
         parcel_data_reshaped = resample_img(parcel, target_affine=mask_img.affine,
                                target_shape=mask_data.shape).get_data()
         parcel_vol[parcel_data_reshaped==1] = 1
-        
+
         ##Count number of unique voxels where overlap of parcel and mask occurs
         overlap_count = len(np.unique(np.where((mask_data.astype('uint8')==1) & (parcel_vol.astype('uint8')==1))))
-        
+
         ##Count number of total unique voxels within the parcel
         total_count = len(np.unique(np.where(((parcel_vol.astype('uint8')==1)))))
-        
+
         ##Calculate % overlap
         try:
             overlap = float(overlap_count/total_count)
         except:
             overlap = float(0)
-        
+
         if overlap >= perc_overlap:
             print("%.2f%s%s%s" % (100*overlap, '% of parcel ', label_names[i], ' falls within mask...'))
         else:
@@ -226,7 +229,7 @@ def parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID):
         label_names_adj.pop(ix)
         coords_adj.pop(ix)
         parcel_list_adj.pop(ix)
-        
+
     ##Create a resampled 3D atlas that can be viewed alongside mask img for QA
     resampled_parcels_nii_path = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_parcels_resampled2mask_', os.path.basename(mask).split('.')[0], '.nii.gz')
     resampled_parcels_atlas, _ = nodemaker.create_parcel_atlas(parcel_list_adj)
@@ -234,7 +237,8 @@ def parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID):
     nib.save(resampled_parcels_map_nifti, resampled_parcels_nii_path)
     return(coords_adj, label_names_adj, parcel_list_adj)
 
-def coord_masker(mask, coords, label_names):
+
+def coord_masker(mask, coords, label_names, error):
     from nilearn import masking
     x_vox = np.diagonal(masking._load_mask_img(mask)[1][:3,0:3])[0]
     y_vox = np.diagonal(masking._load_mask_img(mask)[1][:3,0:3])[1]
@@ -254,7 +258,6 @@ def coord_masker(mask, coords, label_names):
     coords_vox = list(tuple(x) for x in coords_vox)
 
     bad_coords = []
-    error=2
     for coord in coords_vox:
         sphere_vol = np.zeros(mask_data.shape, dtype=bool)
         sphere_vol[tuple(coord)] = 1
@@ -279,16 +282,12 @@ def coord_masker(mask, coords, label_names):
         print("%s%s%s%s" % ('Removing: ', label_names[ix], ' at ', coords[ix]))
         label_names.pop(ix)
         coords.pop(ix)
-    return(coords, label_names)
+    return coords, label_names
 
-def get_names_and_coords_of_parcels(parlistfile):
+
+def get_names_and_coords_of_parcels_from_img(bna_img):
     from nilearn.plotting import find_xyz_cut_coords
     from nilearn.image import new_img_like
-    try:
-        atlas_select = parlistfile.split('/')[-1].split('.')[0]
-    except:
-        atlas_select = 'User_specified_atlas'
-    bna_img = nib.load(parlistfile)
     bna_data = np.round(bna_img.get_data(),1)
     ##Get an array of unique parcels
     bna_data_for_coords_uniq = np.unique(bna_data)
@@ -310,7 +309,19 @@ def get_names_and_coords_of_parcels(parlistfile):
         coord = find_xyz_cut_coords(roiin)
         coords.append(coord)
     coords = list(tuple(x) for x in np.array(coords))
-    return(coords, atlas_select, par_max, img_list)
+    return coords, par_max, img_list
+
+
+def get_names_and_coords_of_parcels(parlistfile):
+    from pynets import nodemaker
+    try:
+        atlas_select = parlistfile.split('/')[-1].split('.')[0]
+    except:
+        atlas_select = 'User_specified_atlas'
+    bna_img = nib.load(parlistfile)
+    [coords, par_max, img_list] = nodemaker.get_names_and_coords_of_parcels_from_img(bna_img)
+    return coords, atlas_select, par_max, img_list
+
 
 def gen_network_parcels(parlistfile, network, labels, dir_path):
     from nilearn.image import new_img_like, concat_imgs
@@ -339,7 +350,8 @@ def gen_network_parcels(parlistfile, network, labels, dir_path):
     net_parcels_map_nifti = nib.Nifti1Image(net_parcels_sum, affine=np.eye(4))
     out_path = "%s%s%s%s" % (dir_path, '/', network, '_parcels.nii.gz')
     nib.save(net_parcels_map_nifti, out_path)
-    return(out_path)
+    return out_path
+
 
 def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file):
     from pynets import utils, nodemaker
@@ -390,9 +402,10 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
         atlas_name
     except:
         atlas_name = atlas_select
-        
+
     dir_path = utils.do_dir_path(atlas_select, func_file)
-    return(label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile, dir_path)
+    return label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile, dir_path
+
 
 def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file):
     from pynets import utils, nodemaker
@@ -430,9 +443,10 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
         atlas_name
     except:
         atlas_name = atlas_select
-    
+
     dir_path = utils.do_dir_path(atlas_select, func_file)
-    return(label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile, dir_path)
+    return label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile, dir_path
+
 
 def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc):
     from pynets import nodemaker
@@ -441,12 +455,21 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc)
     except ImportError:
         import _pickle as pickle
     ##Mask Parcels
-    if parc == True:
-        [coords, label_names, parcel_list_masked] = nodemaker.parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID)
-        [net_parcels_map_nifti, parcel_list_adj] = nodemaker.create_parcel_atlas(parcel_list_masked)     
+    if parc is True:
+        ##For parcel masking, specify overlap thresh and error cushion in mm voxels
+        if 'bedpostX' in dir_path:
+            perc_overlap = 0.01
+        else:
+            perc_overlap = 0.75
+        [coords, label_names, parcel_list_masked] = nodemaker.parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID, perc_overlap)
+        [net_parcels_map_nifti, parcel_list_adj] = nodemaker.create_parcel_atlas(parcel_list_masked)
     ##Mask Coordinates
-    elif parc == False:
-        [coords, label_names] = nodemaker.coord_masker(mask, coords, label_names)
+    elif parc is False:
+        if 'bedpostX' in dir_path:
+            error = 20
+        else:
+            error = 2
+        [coords, label_names] = nodemaker.coord_masker(mask, coords, label_names, error)
         ##Save coords to pickle
         coord_path = "%s%s%s%s" % (dir_path, '/whole_brain_atlas_coords_', os.path.basename(mask).split('.')[0], '.pkl')
         with open(coord_path, 'wb') as f:
@@ -456,7 +479,8 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc)
     labels_path = "%s%s%s%s" % (dir_path, '/whole_brain_atlas_labelnames_', os.path.basename(mask).split('.')[0], '.pkl')
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f, protocol=2)
-    return(net_parcels_map_nifti, coords, label_names)
+    return net_parcels_map_nifti, coords, label_names
+
 
 def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
     try:
@@ -465,14 +489,14 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
         import _pickle as pickle
     from pynets import nodemaker
     pick_dump = False
-    
-    if parc == True:
+
+    if parc is True:
         [net_parcels_map_nifti, parcel_list_adj] = nodemaker.create_parcel_atlas(parcel_list)
     else:
         net_parcels_map_nifti = None
         print('No additional masking...')
-    
-    if pick_dump == True:
+
+    if pick_dump is True:
         ##Save coords to pickle
         coord_path = "%s%s" % (dir_path, '/whole_brain_atlas_coords_wb.pkl')
         with open(coord_path, 'wb') as f:
@@ -481,4 +505,4 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
         labels_path = "%s%s" % (dir_path, '/whole_brain_atlas_labelnames_wb.pkl')
         with open(labels_path, 'wb') as f:
             pickle.dump(label_names, f, protocol=2)
-    return(net_parcels_map_nifti, coords, label_names)
+    return net_parcels_map_nifti, coords, label_names

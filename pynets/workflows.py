@@ -601,6 +601,7 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     inputnode.inputs.node_size_list = node_size_list
     inputnode.inputs.num_total_samples = num_total_samples
 
+
     #3) Add variable to function nodes
     ##Create function nodes
     WB_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt', 'parc', 'func_file'],
@@ -634,11 +635,11 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                               output_names=['vent_CSF_diff_mask_path', 'WM_diff_mask_path'],
                                          function=diffconnectometry.prepare_masks, imports=import_list), name="prepare_masks_node")
 
-    grow_nodes_node = pe.Node(niu.Function(input_names=['bedpostx_dir', 'coords', 'node_size', 'parc', 'parcel_list', 'net_parcels_map_nifti', 'network', 'dir_path'],
+    grow_nodes_node = pe.Node(niu.Function(input_names=['bedpostx_dir', 'coords', 'node_size', 'parc', 'parcel_list', 'net_parcels_map_nifti', 'network', 'dir_path', 'mask'],
                                            output_names=['seeds_text', 'probtrackx_output_dir_path'],
                                          function=diffconnectometry.grow_nodes, imports=import_list), name="grow_nodes_node")
 
-    run_probtrackx2_node = pe.Node(niu.Function(input_names=['i', 'seeds_text', 'bedpostx_dir', 'probtrackx_output_dir_path', 'vent_CSF_diff_mask_path', 'WM_diff_mask_path', 'procmem', 'num_total_samples'],
+    run_probtrackx2_node = pe.Node(niu.Function(input_names=['i', 'seeds_text', 'bedpostx_dir', 'probtrackx_output_dir_path', 'vent_CSF_diff_mask_path', 'WM_diff_mask_path', 'procmem', 'num_total_samples', 'mask'],
                                          function=diffconnectometry.run_probtrackx2, imports=import_list), name="run_probtrackx2_node")
 
     run_probtrackx2_iterables = []
@@ -656,6 +657,7 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
 
     if plot_switch is True:
         structural_plotting_node = pe.Node(niu.Function(input_names=['conn_matrix_symm', 'label_names', 'atlas_select', 'ID', 'bedpostx_dir', 'network', 'parc', 'coords', 'mask', 'dir_path', 'conn_model', 'thr', 'node_size'],
+                                             output_names=['thr'],
                                              function=plotting.structural_plotting, imports=import_list), name="structural_plotting_node")
 
     outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network', 'dir_path']), name='outputnode')
@@ -712,10 +714,12 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
         (inputnode, grow_nodes_node, [('bedpostx_dir', 'bedpostx_dir'),
                                       ('node_size', 'node_size'),
                                       ('parc', 'parc'),
+                                      ('mask', 'mask'),
                                       ('network', 'network')]),
         (inputnode, run_probtrackx2_node, [('bedpostx_dir', 'bedpostx_dir'),
                                            ('procmem', 'procmem'),
-                                           ('num_total_samples', 'num_total_samples')]),
+                                           ('num_total_samples', 'num_total_samples'),
+                                           ('mask', 'mask')]),
         (prepare_masks_node, run_probtrackx2_node, [('vent_CSF_diff_mask_path', 'vent_CSF_diff_mask_path'),
                                                     ('WM_diff_mask_path', 'WM_diff_mask_path')]),
         (grow_nodes_node, run_probtrackx2_node, [('seeds_text', 'seeds_text'),
@@ -747,6 +751,7 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
 
     if plot_switch is True:
         wb_structural_connectometry_wf.add_nodes([structural_plotting_node])
+        wb_structural_connectometry_wf.disconnect([(thresh_diff_node, outputnode, [('thr', 'thr')])])
         wb_structural_connectometry_wf.connect([(collect_struct_mapping_outputs_node, structural_plotting_node, [('conn_matrix_symm', 'conn_matrix_symm')]),
                                                 (inputnode, structural_plotting_node, [('atlas_select', 'atlas_select'),
                                                                                        ('ID', 'ID'),
@@ -758,10 +763,11 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                                                                        ('plot_switch', 'plot_switch')]),
                                                 (thresh_diff_node, structural_plotting_node, [('thr', 'thr'),
                                                                                               ('node_size', 'node_size')]),
-                                                (node_gen_node, structural_plotting_node, [('label_names', 'label_names')]),
-                                                (WB_fetch_nodes_and_labels_node, structural_plotting_node, [('coords', 'coords'),
-                                                                                                            ('dir_path', 'dir_path')])
+                                                (node_gen_node, structural_plotting_node, [('label_names', 'label_names'),
+                                                                                           ('coords', 'coords')]),
+                                                (WB_fetch_nodes_and_labels_node, structural_plotting_node, [('dir_path', 'dir_path')])
                                                 ])
+        wb_structural_connectometry_wf.connect([(structural_plotting_node, outputnode, [('thr', 'thr')])])
 
     wb_structural_connectometry_wf.config['execution']['crashdump_dir']='/tmp'
     wb_structural_connectometry_wf.config['logging']['log_directory']='/tmp'
@@ -853,11 +859,11 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                               output_names=['vent_CSF_diff_mask_path', 'WM_diff_mask_path'],
                                          function=diffconnectometry.prepare_masks, imports = import_list), name = "prepare_masks_node")
 
-    grow_nodes_node = pe.Node(niu.Function(input_names=['bedpostx_dir', 'coords', 'node_size', 'parc', 'parcel_list', 'net_parcels_map_nifti', 'network', 'dir_path'],
+    grow_nodes_node = pe.Node(niu.Function(input_names=['bedpostx_dir', 'coords', 'node_size', 'parc', 'parcel_list', 'net_parcels_map_nifti', 'network', 'dir_path', 'mask'],
                                            output_names=['seeds_text', 'probtrackx_output_dir_path'],
                                          function=diffconnectometry.grow_nodes, imports = import_list), name = "grow_nodes_node")
 
-    run_probtrackx2_node = pe.Node(niu.Function(input_names=['i', 'seeds_text', 'bedpostx_dir', 'probtrackx_output_dir_path', 'vent_CSF_diff_mask_path', 'WM_diff_mask_path', 'procmem', 'num_total_samples'],
+    run_probtrackx2_node = pe.Node(niu.Function(input_names=['i', 'seeds_text', 'bedpostx_dir', 'probtrackx_output_dir_path', 'vent_CSF_diff_mask_path', 'WM_diff_mask_path', 'procmem', 'num_total_samples', 'mask'],
                                          function=diffconnectometry.run_probtrackx2, imports = import_list), name = "run_probtrackx2_node")
 
     run_probtrackx2_iterables = []
@@ -875,6 +881,7 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
 
     if plot_switch is True:
         structural_plotting_node = pe.Node(niu.Function(input_names=['conn_matrix_symm', 'label_names', 'atlas_select', 'ID', 'bedpostx_dir', 'network', 'parc', 'coords', 'mask', 'dir_path', 'conn_model', 'thr', 'node_size'],
+                                             output_names=['thr'],
                                              function=plotting.structural_plotting, imports = import_list), name = "structural_plotting_node")
 
     outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network', 'dir_path']), name='outputnode')
@@ -939,10 +946,12 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
         (inputnode, grow_nodes_node, [('bedpostx_dir', 'bedpostx_dir'),
                                       ('node_size', 'node_size'),
                                       ('parc', 'parc'),
+                                      ('mask', 'mask')
                                       ('network', 'network')]),
         (inputnode, run_probtrackx2_node, [('bedpostx_dir', 'bedpostx_dir'),
                                            ('procmem', 'procmem'),
-                                           ('num_total_samples', 'num_total_samples')]),
+                                           ('num_total_samples', 'num_total_samples'),
+                                           ('mask', 'mask')]),
         (prepare_masks_node, run_probtrackx2_node, [('vent_CSF_diff_mask_path', 'vent_CSF_diff_mask_path'),
                                                     ('WM_diff_mask_path', 'WM_diff_mask_path')]),
         (grow_nodes_node, run_probtrackx2_node, [('seeds_text', 'seeds_text'),
@@ -974,6 +983,7 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
 
     if plot_switch is True:
         rsn_structural_connectometry_wf.add_nodes([structural_plotting_node])
+        rsn_structural_connectometry_wf.disconnect([(thresh_diff_node, outputnode, [('thr', 'thr')])])
         rsn_structural_connectometry_wf.connect([(collect_struct_mapping_outputs_node, structural_plotting_node, [('conn_matrix_symm', 'conn_matrix_symm')]),
                                                 (inputnode, structural_plotting_node, [('atlas_select', 'atlas_select'),
                                                                                        ('ID', 'ID'),
@@ -985,10 +995,11 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                                                                        ('plot_switch', 'plot_switch')]),
                                                 (thresh_diff_node, structural_plotting_node, [('thr', 'thr'),
                                                                                               ('node_size', 'node_size')]),
-                                                (node_gen_node, structural_plotting_node, [('label_names', 'label_names')]),
-                                                (RSN_fetch_nodes_and_labels_node, structural_plotting_node, [('coords', 'coords'),
-                                                                                                             ('dir_path', 'dir_path')])
+                                                (node_gen_node, structural_plotting_node, [('label_names', 'label_names'),
+                                                                                           ('coords', 'coords')]),
+                                                (RSN_fetch_nodes_and_labels_node, structural_plotting_node, [('dir_path', 'dir_path')])
                                                 ])
+        rsn_structural_connectometry_wf.connect([(structural_plotting_node, outputnode, [('thr', 'thr')])])
 
     rsn_structural_connectometry_wf.config['logging']['log_directory']='/tmp'
     rsn_structural_connectometry_wf.config['logging']['workflow_level']='DEBUG'

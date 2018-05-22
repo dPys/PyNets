@@ -345,9 +345,13 @@ def prepare_masks(bedpostx_dir, csf_loc, mni_csf_loc, wm_mask_loc):
     return vent_CSF_diff_mask_path, WM_diff_mask_path
 
 
-def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_map_nifti, network, dir_path):
+def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_map_nifti, network, dir_path, mask):
     import shutil
-    from pynets import diffconnectometry
+    from pynets import diffconnectometry, nodemaker
+
+    ##If masking was performed, get reduced list
+    if mask or network:
+        [coords, _, parcel_list] = nodemaker.get_names_and_coords_of_parcels_from_img(net_parcels_map_nifti)
 
     volumes_dir = dir_path + '/volumes'
     if os.path.exists(volumes_dir) is True:
@@ -363,9 +367,10 @@ def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_m
     return seeds_text, probtrackx_output_dir_path
 
 
-def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, vent_CSF_diff_mask_path, WM_diff_mask_path, procmem, num_total_samples):
+def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, vent_CSF_diff_mask_path, WM_diff_mask_path, procmem, num_total_samples, mask):
     import random
     import nipype.interfaces.fsl as fsl
+    from pynets import diffconnectometry
     samples_i = int(round(float(num_total_samples) / float(procmem[0]),0))
     nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
     merged_th_samples_path = bedpostx_dir + '/merged_th1samples.nii.gz'
@@ -375,6 +380,13 @@ def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, ven
     tmp_dir = probtrackx_output_dir_path + '/tmp_samples_' + str(i)
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
+
+    ##Use custom waypoint mask (if present)
+    if mask is not None:
+        WM_diff_mask_custom_path = diffconnectometry.coreg_WM_mask_to_diff(bedpostx_dir, mask)
+        way_mask = WM_diff_mask_custom_path
+    else:
+        way_mask = WM_diff_mask_path
 
     probtrackx2 = fsl.ProbTrackX2()
     probtrackx2.inputs.network=True
@@ -401,7 +413,7 @@ def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, ven
     except:
         pass
     try:
-        probtrackx2.inputs.waypoints=WM_diff_mask_path
+        probtrackx2.inputs.waypoints=way_mask
         probtrackx2.inputs.waycond='OR'
     except:
         pass

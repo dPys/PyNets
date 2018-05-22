@@ -64,7 +64,7 @@ if __name__ == '__main__':
     parser.add_argument('-m',
         metavar='Path to mask image',
         default=None,
-        help='Optionally specify a thresholded binarized mask image (such as an ICA-derived mask) and retain only those nodes contained within that mask.\n')
+        help='Optionally specify a thresholded binarized mask image and retain only those nodes contained within that mask for functional connectome estimation, or constrain the tractography in the case of structural connectome estimation.\n')
     parser.add_argument('-mod',
         metavar='Graph estimator type',
         default='sps',
