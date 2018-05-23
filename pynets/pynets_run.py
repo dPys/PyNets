@@ -28,6 +28,14 @@ if __name__ == '__main__':
         default=None,
         required=False,
         help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR the path to a text file containing a list of paths to subject files.\n')
+    parser.add_argument('-g',
+        metavar='Path to graph',
+        default=None,
+        help='In either .txt or .npy format. This skips rsfMRI and dMRI graph estimation workflows and begins at the graph analysis stage.\n')
+    parser.add_argument('-bpx',
+        metavar='Path to bedpostx directory',
+        default=None,
+        help='Formatted according to the FSL default tree structure found at https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX.\n')
     parser.add_argument('-id',
         metavar='Subject ID',
         default=None,
@@ -85,10 +93,6 @@ if __name__ == '__main__':
         default=False,
         action='store_true',
         help='Optionally use this flag if you wish to activate plotting of adjacency matrices, connectomes, and time-series.\n')
-    parser.add_argument('-bpx',
-        metavar='Path to bedpostx directory',
-        default=None,
-        help='Formatted according to the FSL default tree structure found at https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX.\n')
     parser.add_argument('-anat',
         metavar='Path to preprocessed anatomical image',
         default=None,
@@ -148,6 +152,8 @@ if __name__ == '__main__':
 
     ###Set Arguments to global variables###
     input_file=args.i
+    bedpostx_dir=args.bpx
+    graph=args.g
     ID=args.id
     #basc=args.basc
     procmem=list(eval(str((args.pm))))
@@ -170,7 +176,6 @@ if __name__ == '__main__':
 #    adapt_thresh=args.at
     adapt_thresh=False
     plot_switch=args.plt
-    bedpostx_dir=args.bpx
     min_thr=args.min_thr
     max_thr=args.max_thr
     step_thr=args.step_thr
@@ -268,8 +273,6 @@ if __name__ == '__main__':
         max_thr = None
         step_thr = None
 
-    print("%s%s" % ('SUBJECT ID: ', ID))
-
     if (k_min is not None and k_max is not None) and k is None and clust_mask_list is not None:
         k_clustering = 4
     elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is None:
@@ -280,6 +283,8 @@ if __name__ == '__main__':
         k_clustering = 1
     else:
         k_clustering = 0
+
+    print("%s%s" % ('SUBJECT ID: ', ID))
 
     if input_file:
         if parlistfile is not None and k_clustering == 0 and user_atlas_list is None:
@@ -335,6 +340,16 @@ if __name__ == '__main__':
             sys.exit(0)
         else:
             dir_path = do_dir_path(atlas_select, input_file)
+    elif graph:
+        if '.txt' in graph:
+            graph_name = os.path.basename(graph).split('.txt')[0]
+        elif '.npy' in graph:
+            graph_name = os.path.basename(graph).split('.npy')[0]
+        else:
+            print('Error: input graph file format not recognized. See -help for supported formats.')
+            sys.exit(0)
+        atlas_select = "%s%s%s" % (graph_name, '_', ID)
+        dir_path = do_dir_path(atlas_select, graph)
 
     if network is not None:
         print("%s%s" % ('Using RSN pipeline for: ', network))
@@ -415,6 +430,54 @@ if __name__ == '__main__':
         print('Running functional connectometry only...')
         print("%s%s" % ('Functional file: ', input_file))
     print('\n-------------------------------------------------------------------------\n\n\n')
+
+    if graph:
+        print('Using custom graph input!')
+        print('\n\n\n-------------------------------------------------------------------------\n')
+        network = 'NA'
+        thr = 1.0
+        conn_model = 'NA'
+        mask = 'NA'
+        k_clustering = 'NA'
+        node_size = 'NA'
+
+    # print(str(ID))
+    # print(str(input_file))
+    # print(str(dir_path))
+    # print(str(atlas_select))
+    # print(str(network))
+    # print(str(node_size))
+    # print(str(mask))
+    # print(str(thr))
+    # print(str(parlistfile))
+    # print(str(multi_nets))
+    # print(str(conn_model))
+    # print(str(dens_thresh))
+    # print(str(conf))
+    # print(str(adapt_thresh))
+    # print(str(plot_switch))
+    # print(str(bedpostx_dir))
+    # print(str(multi_thr))
+    # print(str(multi_atlas))
+    # print(str(min_thr))
+    # print(str(max_thr))
+    # print(str(step_thr))
+    # print(str(anat_loc))
+    # print(str(parc))
+    # print(str(ref_txt))
+    # print(str(procmem))
+    # print(str(k))
+    # print(str(clust_mask))
+    # print(str(k_min))
+    # print(str(k_max))
+    # print(str(k_step))
+    # print(str(k_clustering))
+    # print(str(user_atlas_list))
+    # print(str(clust_mask_list))
+    # print(str(prune))
+    # print(str(node_size_list))
+    # print(str(num_total_samples))
+    # print(str(graph))
 
     ##Import core modules
     from pynets.utils import export_to_pandas, collect_pandas_df
@@ -651,7 +714,7 @@ if __name__ == '__main__':
     node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf,
     adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
     max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min,
-    k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, num_total_samples):
+    k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, num_total_samples, graph):
         wf = pe.Workflow(name='PyNets_' + str(ID))
         wf.base_directory='/tmp/pynets'
         ##Create input/output nodes
@@ -662,7 +725,7 @@ if __name__ == '__main__':
         'bedpostx_dir', 'anat_loc', 'parc', 'ref_txt', 'procmem', 'dir_path', 'multi_thr',
         'multi_atlas', 'max_thr', 'min_thr', 'step_thr', 'k', 'clust_mask', 'k_min',
         'k_max', 'k_step', 'k_clustering', 'user_atlas_list', 'clust_mask_list', 'prune',
-        'node_size_list', 'num_total_samples']), name='inputnode')
+        'node_size_list', 'num_total_samples', 'graph']), name='inputnode')
 
         #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
         inputnode.inputs.in_file = input_file
@@ -701,6 +764,7 @@ if __name__ == '__main__':
         inputnode.inputs.prune = prune
         inputnode.inputs.node_size_list = node_size_list
         inputnode.inputs.num_total_samples = num_total_samples
+        inputnode.inputs.graph = graph
 
         #3) Add variable to function nodes
         ##Create function nodes
@@ -812,13 +876,79 @@ if __name__ == '__main__':
                                                   ('node_size_list','node_size_list'),
                                                   ('parc', 'parc')])
         ])
+        if graph:
+            wf.disconnect([
+                (inputnode, imp_est, [('in_file', 'input_file'),
+                                      ('ID', 'ID'),
+                                      ('atlas_select', 'atlas_select'),
+                                      ('network', 'network'),
+                                      ('node_size', 'node_size'),
+                                      ('mask', 'mask'),
+                                      ('thr', 'thr'),
+                                      ('parlistfile', 'parlistfile'),
+                                      ('multi_nets', 'multi_nets'),
+                                      ('conn_model', 'conn_model'),
+                                      ('dens_thresh', 'dens_thresh'),
+                                      ('conf', 'conf'),
+                                      ('adapt_thresh', 'adapt_thresh'),
+                                      ('plot_switch', 'plot_switch'),
+                                      ('bedpostx_dir', 'bedpostx_dir'),
+                                      ('anat_loc', 'anat_loc'),
+                                      ('parc', 'parc'),
+                                      ('ref_txt', 'ref_txt'),
+                                      ('procmem', 'procmem'),
+                                      ('dir_path', 'dir_path'),
+                                      ('multi_thr', 'multi_thr'),
+                                      ('multi_atlas', 'multi_atlas'),
+                                      ('max_thr', 'max_thr'),
+                                      ('min_thr', 'min_thr'),
+                                      ('step_thr', 'step_thr'),
+                                      ('k', 'k'),
+                                      ('clust_mask', 'clust_mask'),
+                                      ('k_min', 'k_min'),
+                                      ('k_max', 'k_max'),
+                                      ('k_step', 'k_step'),
+                                      ('k_clustering', 'k_clustering'),
+                                      ('user_atlas_list', 'user_atlas_list'),
+                                      ('clust_mask_list', 'clust_mask_list'),
+                                      ('prune', 'prune'),
+                                      ('node_size_list', 'node_size_list'),
+                                      ('num_total_samples', 'num_total_samples')])
+                            ])
+            wf.disconnect([(imp_est, net_mets_node, [('outputs.est_path', 'est_path'),
+                                                    ('outputs.network', 'network'),
+                                                    ('outputs.thr', 'thr'),
+                                                    ('outputs.ID', 'ID'),
+                                                    ('outputs.conn_model', 'conn_model'),
+                                                    ('outputs.mask', 'mask'),
+                                                    ('outputs.prune', 'prune'),
+                                                    ('outputs.node_size', 'node_size')])
+                           ])
+            wf.disconnect([(imp_est, export_to_pandas_node, [('outputs.network', 'network'),
+                                                            ('outputs.ID', 'ID'),
+                                                            ('outputs.mask', 'mask')])
+                           ])
+            wf.connect([(inputnode, net_mets_node, [('graph', 'est_path'),
+                                                    ('network', 'network'),
+                                                    ('thr', 'thr'),
+                                                    ('ID', 'ID'),
+                                                    ('conn_model', 'conn_model'),
+                                                    ('mask', 'mask'),
+                                                    ('prune', 'prune'),
+                                                    ('node_size', 'node_size')])
+                        ])
+            wf.connect([(inputnode, export_to_pandas_node, [('network', 'network'),
+                                                            ('ID', 'ID'),
+                                                            ('mask', 'mask')])
+                       ])
+            wf.remove_nodes([imp_est])
         return wf
 
     def wf_multi_subject(subjects_list, atlas_select, network, node_size, mask,
     thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh,
     plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr,
     anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step, k_clustering,
-    user_atlas_list, clust_mask_list, prune, node_size_list, num_total_samples):
+    user_atlas_list, clust_mask_list, prune, node_size_list, num_total_samples, graph):
         wf_multi = pe.Workflow(name='PyNets_multisubject')
         cores=[]
         ram=[]
@@ -859,7 +989,8 @@ if __name__ == '__main__':
                                clust_mask_list=clust_mask_list,
                                prune=prune,
                                node_size_list=node_size_list,
-                               num_total_samples=num_total_samples)
+                               num_total_samples=num_total_samples,
+                               graph=graph)
             wf_multi.add_nodes([wf_single_subject])
             cores.append(int(procmem[0]))
             ram.append(int(procmem[1]))
@@ -883,7 +1014,7 @@ if __name__ == '__main__':
         mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf, adapt_thresh,
         plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr, max_thr, step_thr,
         anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step, k_clustering,
-        user_atlas_list, clust_mask_list, prune, node_size_list, num_total_samples)
+        user_atlas_list, clust_mask_list, prune, node_size_list, num_total_samples, graph)
         wf_multi.config['logging']['log_directory']='/tmp'
         wf_multi.config['logging']['workflow_level']='DEBUG'
         wf_multi.config['logging']['utils_level']='DEBUG'
@@ -898,7 +1029,7 @@ if __name__ == '__main__':
         node_size, mask, thr, parlistfile, multi_nets, conn_model, dens_thresh, conf,
         adapt_thresh, plot_switch, bedpostx_dir, multi_thr, multi_atlas, min_thr,
         max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask, k_min,
-        k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, num_total_samples)
+        k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, num_total_samples, graph)
         wf.config['logging']['log_directory']='/tmp'
         wf.config['logging']['workflow_level']='DEBUG'
         wf.config['logging']['utils_level']='DEBUG'

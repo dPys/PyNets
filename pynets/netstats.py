@@ -943,11 +943,13 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     from pynets import thresholding, utils
 
     ##Load and threshold matrix
-    in_mat = np.array(np.load(est_path))
-    in_mat = thresholding.autofix(in_mat)
+    if '.txt' in est_path:
+        in_mat_raw = np.array(np.genfromtxt(est_path))
+    else:
+        in_mat_raw = np.array(np.load(est_path))
 
-    ##Normalize connectivity matrix (weights between 0-1)
-    in_mat = thresholding.normalize(in_mat)
+    ##De-diagnal and Normalize connectivity matrix (weights between 0-1)
+    in_mat = np.array(thresholding.normalize(np.array(thresholding.autofix(in_mat_raw))))
 
     ##Get hyperbolic tangent (i.e. fischer r-to-z transform) of matrix if non-covariance
     if conn_model == 'corr':
@@ -1343,13 +1345,13 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     except ImportError:
         import _pickle as pickle
 
-    if mask != None:
-        if network != None:
+    if mask:
+        if network:
             met_list_picke_path = "%s%s%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list_', network, '_', os.path.basename(mask).split('.')[0])
         else:
             met_list_picke_path = "%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list_', os.path.basename(mask).split('.')[0])
     else:
-        if network != None:
+        if network:
             met_list_picke_path = "%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list_', network)
         else:
             met_list_picke_path = "%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list')

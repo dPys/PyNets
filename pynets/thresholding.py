@@ -170,7 +170,7 @@ def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_
 
     if parc is True:
         node_size = 'parc'
-    if not dens_thresh:
+    if dens_thresh is False:
         print("%s%.2f%s" % ('\nThresholding proportionally at: ', 100*float(thr), '% ...\n'))
     else:
         print("%s%.2f%s" % ('\nThresholding to achieve density of: ', 100*float(thr), '% ...\n'))

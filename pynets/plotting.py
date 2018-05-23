@@ -387,7 +387,7 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     edge_threshold = 0.10
     connectome_fdt_thresh = 90
     dpi_resolution = 500
-    pruning = True
+    #pruning = False
 
     ####Auto-set INPUTS####
     try:
@@ -403,22 +403,22 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     if parc is True:
         node_size = 'parc'
 
-    G_pre=nx.from_numpy_matrix(conn_matrix_symm)
-    if pruning is True:
-        [G, pruned_nodes, pruned_edges] = most_important(G_pre)
-    else:
-        G = G_pre
-    conn_matrix = nx.to_numpy_array(G)
-
-    pruned_nodes.sort(reverse=True)
-    for j in pruned_nodes:
-        del label_names[label_names.index(label_names[j])]
-        del coords[coords.index(coords[j])]
-
-    pruned_edges.sort(reverse=True)
-    for j in pruned_edges:
-        del label_names[label_names.index(label_names[j])]
-        del coords[coords.index(coords[j])]
+    # G_pre=nx.from_numpy_matrix(conn_matrix_symm)
+    # if pruning is True:
+    #     [G, pruned_nodes, pruned_edges] = most_important(G_pre)
+    # else:
+    #     G = G_pre
+    # conn_matrix = nx.to_numpy_array(G)
+    #
+    # pruned_nodes.sort(reverse=True)
+    # for j in pruned_nodes:
+    #     del label_names[label_names.index(label_names[j])]
+    #     del coords[coords.index(coords[j])]
+    #
+    # pruned_edges.sort(reverse=True)
+    # for j in pruned_edges:
+    #     del label_names[label_names.index(label_names[j])]
+    #     del coords[coords.index(coords[j])]
 
     plt.figure(figsize=(10, 10))
     plt.imshow(conn_matrix_symm, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
@@ -522,4 +522,4 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
             pickle.dump(label_names, f, protocol=2)
     connectome.savefig(out_path_fig, dpi=dpi_resolution)
     connectome.close()
-    return thr
+    return

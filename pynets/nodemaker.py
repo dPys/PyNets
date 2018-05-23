@@ -466,7 +466,7 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc)
     ##Mask Coordinates
     elif parc is False:
         if 'bedpostX' in dir_path:
-            error = 20
+            error = 10
         else:
             error = 2
         [coords, label_names] = nodemaker.coord_masker(mask, coords, label_names, error)

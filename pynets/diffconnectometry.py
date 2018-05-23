@@ -138,7 +138,7 @@ def coreg_vent_CSF_to_diff(bedpostx_dir, csf_loc, mni_csf_loc):
 def coreg_WM_mask_to_diff(bedpostx_dir, wm_mask_loc):
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
-    print('\nTransforming WM mask to diffusion space...')
+    print('\nTransforming White-Matter waypoint mask to diffusion space...')
     merged_f_samples_path = bedpostx_dir + '/merged_f1samples.nii.gz'
     out_file = bedpostx_dir + '/wm_mask_diff.nii.gz'
     flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
@@ -149,10 +149,30 @@ def coreg_WM_mask_to_diff(bedpostx_dir, wm_mask_loc):
     flirt.inputs.in_matrix_file = bedpostx_dir + '/xfms/MNI2diff.mat'
     flirt.inputs.apply_xfm = True
     flirt.run()
-
     args = '-bin'
     maths = fsl.ImageMaths(in_file=out_file, op_string=args, out_file=out_file)
     print('\nBinarizing WM mask...')
+    os.system(maths.cmdline)
+    return out_file
+
+
+def coreg_mask_to_diff(bedpostx_dir, mask):
+    import nipype.interfaces.fsl as fsl
+    import nipype.pipeline.engine as pe
+    print('\nTransforming custom waypoint mask to diffusion space...')
+    merged_f_samples_path = bedpostx_dir + '/merged_f1samples.nii.gz'
+    out_file = bedpostx_dir + '/mask_custom_diff.nii.gz'
+    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
+    flirt.inputs.reference = merged_f_samples_path
+    flirt.inputs.in_file = mask
+    flirt.inputs.out_file = out_file
+    flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
+    flirt.inputs.in_matrix_file = bedpostx_dir + '/xfms/MNI2diff.mat'
+    flirt.inputs.apply_xfm = True
+    flirt.run()
+    args = '-bin'
+    maths = fsl.ImageMaths(in_file=out_file, op_string=args, out_file=out_file)
+    print('\nBinarizing custom mask...')
     os.system(maths.cmdline)
     return out_file
 
@@ -257,7 +277,7 @@ def reg_parcels2diff(bedpostx_dir, dir_path):
     i = 0
     for parcel in volumes_list:
         out_file = volumes_dir + '/region_' + str(i) + '_diff.nii.gz'
-        flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
+        flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
         flirt.inputs.reference = merged_f_samples_path
         flirt.inputs.in_file = volumes_dir + '/' + parcel
         flirt.inputs.out_file = out_file
@@ -331,18 +351,22 @@ def save_parcel_vols(bedpostx_dir, parcel_list, net_parcels_map_nifti, dir_path)
     return num_vols_pres
 
 
-def prepare_masks(bedpostx_dir, csf_loc, mni_csf_loc, wm_mask_loc):
+def prepare_masks(bedpostx_dir, csf_loc, mni_csf_loc, wm_mask_loc, mask):
     from pynets import diffconnectometry
     if (csf_loc and mni_csf_loc) is None:
         vent_CSF_diff_mask_path = None
     else:
         vent_CSF_diff_mask_path = diffconnectometry.coreg_vent_CSF_to_diff(bedpostx_dir, csf_loc, mni_csf_loc)
 
-    if wm_mask_loc is None:
-        WM_diff_mask_path = None
+    ##Use custom waypoint mask (if present)
+    if mask:
+        way_mask = diffconnectometry.coreg_mask_to_diff(bedpostx_dir, mask)
+    elif wm_mask_loc is None:
+        way_mask = None
     else:
-        WM_diff_mask_path = diffconnectometry.coreg_WM_mask_to_diff(bedpostx_dir, wm_mask_loc)
-    return vent_CSF_diff_mask_path, WM_diff_mask_path
+        way_mask = diffconnectometry.coreg_WM_mask_to_diff(bedpostx_dir, wm_mask_loc)
+
+    return vent_CSF_diff_mask_path, way_mask
 
 
 def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_map_nifti, network, dir_path, mask):
@@ -358,7 +382,7 @@ def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_m
         shutil.rmtree(volumes_dir)
     num_vols_pres = diffconnectometry.save_parcel_vols(bedpostx_dir, parcel_list, net_parcels_map_nifti, dir_path)
 
-    if parc == False:
+    if parc is False:
         spheres_list = diffconnectometry.reg_coords2diff(coords, bedpostx_dir, node_size, dir_path)
     else:
         volumes_list = diffconnectometry.reg_parcels2diff(bedpostx_dir, dir_path)
@@ -367,10 +391,9 @@ def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_m
     return seeds_text, probtrackx_output_dir_path
 
 
-def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, vent_CSF_diff_mask_path, WM_diff_mask_path, procmem, num_total_samples, mask):
+def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, vent_CSF_diff_mask_path, way_mask, procmem, num_total_samples):
     import random
     import nipype.interfaces.fsl as fsl
-    from pynets import diffconnectometry
     samples_i = int(round(float(num_total_samples) / float(procmem[0]),0))
     nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
     merged_th_samples_path = bedpostx_dir + '/merged_th1samples.nii.gz'
@@ -381,51 +404,43 @@ def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, ven
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
 
-    ##Use custom waypoint mask (if present)
-    if mask is not None:
-        WM_diff_mask_custom_path = diffconnectometry.coreg_WM_mask_to_diff(bedpostx_dir, mask)
-        way_mask = WM_diff_mask_custom_path
-    else:
-        way_mask = WM_diff_mask_path
-
     probtrackx2 = fsl.ProbTrackX2()
-    probtrackx2.inputs.network=True
-    probtrackx2.inputs.seed=seeds_text
-    probtrackx2.inputs.onewaycondition=True
-    probtrackx2.inputs.c_thresh=0.2
-    probtrackx2.inputs.n_steps=2000
-    probtrackx2.inputs.step_length=0.5
-    probtrackx2.inputs.n_samples=samples_i
-    probtrackx2.inputs.dist_thresh=0.0
-    probtrackx2.inputs.opd=True
-    probtrackx2.inputs.loop_check=True
-    probtrackx2.inputs.omatrix1=False
-    probtrackx2.overwrite=True
-    probtrackx2.inputs.verbose=True
-    probtrackx2.inputs.mask=nodif_brain_mask_path
-    probtrackx2.inputs.out_dir=tmp_dir
-    probtrackx2.inputs.thsamples=merged_th_samples_path
-    probtrackx2.inputs.fsamples=merged_f_samples_path
-    probtrackx2.inputs.phsamples=merged_ph_samples_path
-    probtrackx2.inputs.use_anisotropy=False
+    probtrackx2.inputs.network = True
+    probtrackx2.inputs.seed = seeds_text
+    probtrackx2.inputs.onewaycondition = True
+    probtrackx2.inputs.c_thresh = 0.2
+    probtrackx2.inputs.n_steps = 2000
+    probtrackx2.inputs.step_length = 0.5
+    probtrackx2.inputs.n_samples = samples_i
+    probtrackx2.inputs.dist_thresh = 0.0
+    probtrackx2.inputs.opd = True
+    probtrackx2.inputs.loop_check = True
+    probtrackx2.inputs.omatrix1 = False
+    probtrackx2.overwrite = True
+    probtrackx2.inputs.verbose = False
+    probtrackx2.inputs.mask = nodif_brain_mask_path
+    probtrackx2.inputs.out_dir = tmp_dir
+    probtrackx2.inputs.thsamples = merged_th_samples_path
+    probtrackx2.inputs.fsamples = merged_f_samples_path
+    probtrackx2.inputs.phsamples = merged_ph_samples_path
+    probtrackx2.inputs.use_anisotropy = False
     try:
-        probtrackx2.inputs.avoid_mp=vent_CSF_diff_mask_path
+        probtrackx2.inputs.avoid_mp = vent_CSF_diff_mask_path
     except:
         pass
     try:
-        probtrackx2.inputs.waypoints=way_mask
-        probtrackx2.inputs.waycond='OR'
+        probtrackx2.inputs.waypoints = way_mask
+        probtrackx2.inputs.waycond = 'OR'
     except:
         pass
     rseed_arg=' --rseed=' + str(random.randint(1,1000))
     os.chdir(bedpostx_dir)
     os.system(probtrackx2.cmdline + rseed_arg)
-    del(probtrackx2)
+    del probtrackx2
     return
 
 
 def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_output_dir_path, dir_path, procmem):
-    ##Wait for all probtrackx runs to complete
     import os
     import time
     import glob
