@@ -3,17 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/diffconnectometry.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/diffconnectometry.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/netstats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/nodemaker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/thresholding.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/setup.cfg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -71,11 +61,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="utils.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="utils.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="572">
-              <caret line="708" column="66" lean-forward="true" selection-start-line="708" selection-start-column="66" selection-end-line="708" selection-end-column="66" />
+            <state relative-caret-position="155">
+              <caret line="685" column="25" lean-forward="true" selection-start-line="685" selection-start-column="25" selection-end-line="685" selection-end-column="25" />
               <folding>
                 <element signature="e#132#142#0" expanded="true" />
               </folding>
@@ -83,11 +73,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="netstats.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="netstats.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/netstats.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="289">
-              <caret line="983" column="4" lean-forward="true" selection-start-line="983" selection-start-column="4" selection-end-line="983" selection-end-column="4" />
+            <state relative-caret-position="269">
+              <caret line="983" column="4" selection-start-line="983" selection-start-column="4" selection-end-line="983" selection-end-column="4" />
               <folding>
                 <element signature="e#109#140#0" expanded="true" />
               </folding>
@@ -99,7 +89,7 @@
         <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="467">
-              <caret line="575" column="56" lean-forward="true" selection-start-line="575" selection-start-column="56" selection-end-line="575" selection-end-column="56" />
+              <caret line="575" column="56" selection-start-line="575" selection-start-column="56" selection-end-line="575" selection-end-column="56" />
               <folding>
                 <element signature="e#130#140#0" expanded="true" />
               </folding>
@@ -133,13 +123,13 @@
       <find>k_clustering</find>
       <find>workflow_selector</find>
       <find>add_node</find>
-      <find />
+      <find>if '.txt' in graph:</find>
       <find>flirt</find>
-      <find />
+      <find>function=diffconnectometry.grow_nodes, imports = import_list), name = &quot;grow_nodes_node&quot;)</find>
       <find>grow_nodes</find>
       <find>reg_parcels2diff</find>
       <find>grow_nodes_node</find>
-      <find />
+      <find>if graph</find>
       <find>create_csv_path</find>
       <find>run_probtrackx2_node</find>
       <find>iterables</find>
@@ -166,8 +156,8 @@
         <option value="$PROJECT_DIR$/pynets/workflows.py" />
         <option value="$PROJECT_DIR$/pynets/thresholding.py" />
         <option value="$PROJECT_DIR$/pynets/diffconnectometry.py" />
-        <option value="$PROJECT_DIR$/pynets/utils.py" />
         <option value="$PROJECT_DIR$/pynets/netstats.py" />
+        <option value="$PROJECT_DIR$/pynets/utils.py" />
       </list>
     </option>
   </component>
@@ -177,7 +167,7 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
+  <component name="ProjectFrameBounds">
     <option name="x" value="481" />
     <option name="y" value="23" />
     <option name="width" value="959" />
@@ -585,20 +575,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="572">
-          <caret line="708" column="66" lean-forward="true" selection-start-line="708" selection-start-column="66" selection-end-line="708" selection-end-column="66" />
-          <folding>
-            <element signature="e#132#142#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="467">
-          <caret line="575" column="56" lean-forward="true" selection-start-line="575" selection-start-column="56" selection-end-line="575" selection-end-column="56" />
+          <caret line="575" column="56" selection-start-line="575" selection-start-column="56" selection-end-line="575" selection-end-column="56" />
           <folding>
             <element signature="e#130#140#0" expanded="true" />
           </folding>
@@ -607,10 +587,20 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/netstats.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="289">
-          <caret line="983" column="4" lean-forward="true" selection-start-line="983" selection-start-column="4" selection-end-line="983" selection-end-column="4" />
+        <state relative-caret-position="269">
+          <caret line="983" column="4" selection-start-line="983" selection-start-column="4" selection-end-line="983" selection-end-column="4" />
           <folding>
             <element signature="e#109#140#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="155">
+          <caret line="685" column="25" lean-forward="true" selection-start-line="685" selection-start-column="25" selection-end-line="685" selection-end-column="25" />
+          <folding>
+            <element signature="e#132#142#0" expanded="true" />
           </folding>
         </state>
       </provider>

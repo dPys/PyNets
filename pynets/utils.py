@@ -688,12 +688,11 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
             thr = iter_thresh
 
         if num_node_sizes > 1:
-            node_size_lst = []
+            node_size = []
             for path in est_path_list:
-                node_size_lst.append(node_size)
-            node_size = node_size_lst
+                node_size.append(path.split('.npy')[0].rsplit('_',1)[-1])
         else:
-            node_size = [node_size] * len(path.split('.npy')[0].rsplit('_',1)[-1])
+            node_size = [node_size] * len(est_path_list)
 
         est_path = est_path_list
         network = network_list
