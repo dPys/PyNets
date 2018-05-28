@@ -192,7 +192,7 @@ def reg_coords2diff(coords, bedpostx_dir, node_size, dir_path):
         import _pickle as pickle
 
     pick_dump = True
-    volumes_dir = dir_path + '/volumes'
+    volumes_dir = dir_path + '/volumes_' + str(node_size)
     nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
     merged_f_samples_path = bedpostx_dir + '/merged_f1samples.nii.gz'
 
@@ -242,14 +242,19 @@ def reg_coords2diff(coords, bedpostx_dir, node_size, dir_path):
         flirt.run()
         j = j + 1
 
+    args = '-bin'
+    maths = fsl.ImageMaths(in_file=out_file_diff, op_string=args, out_file=out_file_diff)
+    print('\nBinarizing custom mask...')
+    os.system(maths.cmdline)
+
     del_files_points = glob.glob(volumes_dir + '/roi_point*')
     try:
         for i in del_files_points:
             os.remove(i)
-    except:
+    except FileNotFoundError:
         pass
 
-    spheres_list = [i for i in os.listdir(volumes_dir) if 'diff.nii' in i]
+    spheres_list = [i for i in os.listdir(volumes_dir) if 'diff.nii.gz' in i]
     if pick_dump == True:
         ##Save coords to pickle
         coord_path = "%s%s" % (dir_path, '/coords.pkl')
@@ -259,19 +264,19 @@ def reg_coords2diff(coords, bedpostx_dir, node_size, dir_path):
     return spheres_list
 
 
-def reg_parcels2diff(bedpostx_dir, dir_path):
+def reg_parcels2diff(bedpostx_dir, dir_path, node_size):
     import re
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
     merged_f_samples_path = bedpostx_dir + '/merged_f1samples.nii.gz'
-    volumes_dir = dir_path + '/volumes'
+    volumes_dir = dir_path + '/volumes_' + str(node_size)
     volumes_list = [i for i in os.listdir(volumes_dir) if '.nii' in i]
 
     def atoi(text):
         return int(text) if text.isdigit() else text
 
     def natural_keys(text):
-        return [ atoi(c) for c in re.split('(\d+)', text) ]
+        return [atoi(c) for c in re.split('(\d+)', text)]
 
     volumes_list.sort(key=natural_keys)
     i = 0
@@ -290,7 +295,7 @@ def reg_parcels2diff(bedpostx_dir, dir_path):
     return volumes_list
 
 
-def create_seed_mask_file(bedpostx_dir, network, dir_path):
+def create_seed_mask_file(node_size, network, dir_path, parc):
     import glob
     import re
     import shutil
@@ -301,12 +306,15 @@ def create_seed_mask_file(bedpostx_dir, network, dir_path):
     def natural_keys(text):
         return [ atoi(c) for c in re.split('(\d+)', text) ]
 
-    volumes_dir = dir_path + '/volumes'
+    volumes_dir = dir_path + '/volumes_' + str(node_size)
+
+    if parc is True:
+        node_size = 'parc'
 
     if network:
-        probtrackx_output_dir_path = dir_path + '/probtrackx_' + network
+        probtrackx_output_dir_path = dir_path + '/probtrackx_' + str(node_size) + '_' + network
     else:
-        probtrackx_output_dir_path = dir_path + '/probtrackx_WB'
+        probtrackx_output_dir_path = dir_path + '/probtrackx_WB_' + str(node_size)
 
     if os.path.exists(probtrackx_output_dir_path):
         shutil.rmtree(probtrackx_output_dir_path)
@@ -322,20 +330,20 @@ def create_seed_mask_file(bedpostx_dir, network, dir_path):
     for seed_file in seed_files:
         seeds_file_list.append(seed_file)
     seeds_file_list.sort(key=natural_keys)
-    f=open(seeds_text,'w')
-    l1=map(lambda x:x+'\n', seeds_file_list)
+    f = open(seeds_text, 'w')
+    l1 = map(lambda x:x+'\n', seeds_file_list)
     f.writelines(l1)
     f.close()
     return seeds_text, probtrackx_output_dir_path
 
 
-def save_parcel_vols(bedpostx_dir, parcel_list, net_parcels_map_nifti, dir_path):
+def save_parcel_vols(node_size, parcel_list, net_parcels_map_nifti, dir_path):
     import os
     import time
     if net_parcels_map_nifti:
         net_parcels_map_file = dir_path + '/net_parcels_map_nifti.nii.gz'
         nib.save(net_parcels_map_nifti, net_parcels_map_file)
-    volumes_dir = dir_path + '/volumes'
+    volumes_dir = dir_path + '/volumes_' + str(node_size)
     if not os.path.exists(volumes_dir):
         os.mkdir(volumes_dir)
     num_vols = len(parcel_list)
@@ -373,22 +381,24 @@ def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_m
     import shutil
     from pynets import diffconnectometry, nodemaker
 
-    ##If masking was performed, get reduced list
-    if mask or network:
-        [coords, _, parcel_list] = nodemaker.get_names_and_coords_of_parcels_from_img(net_parcels_map_nifti)
-
-    volumes_dir = dir_path + '/volumes'
+    volumes_dir = dir_path + '/volumes_' + str(node_size)
     if os.path.exists(volumes_dir) is True:
         shutil.rmtree(volumes_dir)
-    num_vols_pres = diffconnectometry.save_parcel_vols(bedpostx_dir, parcel_list, net_parcels_map_nifti, dir_path)
+    if not os.path.exists(volumes_dir):
+        os.mkdir(volumes_dir)
 
-    if parc is False:
-        spheres_list = diffconnectometry.reg_coords2diff(coords, bedpostx_dir, node_size, dir_path)
+    if parc is True:
+        ##If masking was performed, get reduced list
+        if mask or network:
+            [_, _, parcel_list] = nodemaker.get_names_and_coords_of_parcels_from_img(net_parcels_map_nifti)
+
+        diffconnectometry.save_parcel_vols(node_size, parcel_list, net_parcels_map_nifti, dir_path)
+        diffconnectometry.reg_parcels2diff(bedpostx_dir, dir_path, node_size)
     else:
-        volumes_list = diffconnectometry.reg_parcels2diff(bedpostx_dir, dir_path)
+        diffconnectometry.reg_coords2diff(coords, bedpostx_dir, node_size, dir_path)
 
-    [seeds_text, probtrackx_output_dir_path] = diffconnectometry.create_seed_mask_file(bedpostx_dir, network, dir_path)
-    return seeds_text, probtrackx_output_dir_path
+    [seeds_text, probtrackx_output_dir_path] = diffconnectometry.create_seed_mask_file(node_size, network, dir_path, parc)
+    return seeds_text, probtrackx_output_dir_path, node_size
 
 
 def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, vent_CSF_diff_mask_path, way_mask, procmem, num_total_samples):

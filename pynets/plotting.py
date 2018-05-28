@@ -395,13 +395,15 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     except NameError:
         print('FSLDIR environment variable not set!')
     nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
-    if network:
-        probtrackx_output_dir_path = dir_path + '/probtrackx_' + str(network)
-    else:
-        probtrackx_output_dir_path = dir_path + '/probtrackx_WB'
-    ####Auto-set INPUTS####
+
     if parc is True:
         node_size = 'parc'
+
+    if network:
+        probtrackx_output_dir_path = dir_path + '/probtrackx_' + str(node_size) + '_' + str(network)
+    else:
+        probtrackx_output_dir_path = dir_path + '/probtrackx_WB_' + str(node_size)
+    ####Auto-set INPUTS####
 
     # G_pre=nx.from_numpy_matrix(conn_matrix_symm)
     # if pruning is True:

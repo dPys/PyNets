@@ -288,7 +288,7 @@ def coord_masker(mask, coords, label_names, error):
 def get_names_and_coords_of_parcels_from_img(bna_img):
     from nilearn.plotting import find_xyz_cut_coords
     from nilearn.image import new_img_like
-    bna_data = np.round(bna_img.get_data(),1)
+    bna_data = np.round(bna_img.get_data(), 1)
     ##Get an array of unique parcels
     bna_data_for_coords_uniq = np.unique(bna_data)
     ##Number of parcels:
@@ -466,7 +466,7 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc)
     ##Mask Coordinates
     elif parc is False:
         if 'bedpostX' in dir_path:
-            error = 10
+            error = 60
         else:
             error = 2
         [coords, label_names] = nodemaker.coord_masker(mask, coords, label_names, error)
