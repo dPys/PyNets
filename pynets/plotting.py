@@ -8,6 +8,7 @@ import numpy as np
 import networkx as nx
 import os
 
+
 def plot_conn_mat(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr, node_size):
     import matplotlib
     matplotlib.use('Agg')
@@ -263,6 +264,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
                 line = line.replace(src, target)
             outfile.write(line)
 
+
 def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
     import matplotlib
     matplotlib.use('Agg')
@@ -283,17 +285,23 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
     plt.savefig(out_path_fig)
     plt.close()
 
+
 def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, thr, node_size, edge_threshold):
     import matplotlib
     matplotlib.use('Agg')
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
     pruning=True
-    dpi_resolution=1000
+    dpi_resolution=500
     import pkg_resources
     import networkx as nx
     from pynets import plotting
     from pynets.netstats import most_important
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import _pickle as pickle
+
     G_pre=nx.from_numpy_matrix(conn_matrix)
     if pruning == True:
         [G, pruned_nodes, pruned_edges] = most_important(G_pre)
@@ -301,12 +309,12 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
         G = G_pre
     conn_matrix = nx.to_numpy_array(G)
 
-    pruned_nodes.sort(reverse = True)
+    pruned_nodes.sort(reverse=True)
     for j in pruned_nodes:
         del label_names[label_names.index(label_names[j])]
         del coords[coords.index(coords[j])]
 
-    pruned_edges.sort(reverse = True)
+    pruned_edges.sort(reverse=True)
     for j in pruned_edges:
         del label_names[label_names.index(label_names[j])]
         del coords[coords.index(coords[j])]
@@ -326,24 +334,41 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     ##Plot connectome
     if mask:
         if network:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_' + str(thr) + '_' + str(node_size) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_' + str(thr) + '_' + str(node_size) + '_functional_connectome_viz.png'
         else:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(thr) + '_' + str(node_size) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(thr) + '_' + str(node_size) + '_functional_connectome_viz.png'
+        ##Save coords to pickle
+        coord_path = "%s%s%s%s" % (dir_path, '/coords_', os.path.basename(mask).split('.')[0], '_plotting.pkl')
+        with open(coord_path, 'wb') as f:
+            pickle.dump(coords, f, protocol=2)
+        net_parcels_map_nifti = None
+        ##Save labels to pickle
+        labels_path = "%s%s%s%s" % (dir_path, '/labelnames_', os.path.basename(mask).split('.')[0], '_plotting.pkl')
+        with open(labels_path, 'wb') as f:
+            pickle.dump(label_names, f, protocol=2)
     else:
         if network:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(network) + '_' + str(thr) + '_' + str(node_size) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(network) + '_' + str(thr) + '_' + str(node_size) + '_functional_connectome_viz.png'
         else:
-            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '_connectome_viz.png'
+            out_path_fig=dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '_functional_connectome_viz.png'
+        ##Save coords to pickle
+        coord_path = "%s%s" % (dir_path, '/coords_plotting.pkl')
+        with open(coord_path, 'wb') as f:
+            pickle.dump(coords, f, protocol=2)
+        ##Save labels to pickle
+        labels_path = "%s%s" % (dir_path, '/labelnames_plotting.pkl')
+        with open(labels_path, 'wb') as f:
+            pickle.dump(label_names, f, protocol=2)
     #niplot.plot_connectome(conn_matrix, coords, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
-    connectome = niplot.plot_connectome(np.zeros(shape=(1,1)), [(0,0,0)], black_bg=True, node_size=0.0001)
+    connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], black_bg=True, node_size=0.0001)
     connectome.add_overlay(ch2better_loc, alpha=0.4, cmap=plt.cm.gray)
     [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
-    connectome.add_graph(conn_matrix, coords, edge_threshold = edge_threshold, edge_cmap = 'Greens', edge_vmax=z_max, edge_vmin=z_min, node_size=4)
+    connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, black_bg=True, edge_cmap='Greens', edge_vmax=z_max, edge_vmin=z_min, node_size=4)
     connectome.savefig(out_path_fig, dpi=dpi_resolution)
     return
 
-def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, mask, coords, dir_path, conn_model):
+def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, mask, coords, dir_path, conn_model, thr, node_size):
     import matplotlib
     matplotlib.use('Agg')
     from matplotlib import pyplot as plt
@@ -353,10 +378,16 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     import pkg_resources
     from matplotlib import colors
     from nilearn import plotting as niplot
+    from pynets.netstats import most_important
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import _pickle as pickle
 
     edge_threshold = 0.10
     connectome_fdt_thresh = 90
     dpi_resolution = 500
+    #pruning = False
 
     ####Auto-set INPUTS####
     try:
@@ -364,11 +395,32 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     except NameError:
         print('FSLDIR environment variable not set!')
     nodif_brain_mask_path = bedpostx_dir + '/nodif_brain_mask.nii.gz'
+
+    if parc is True:
+        node_size = 'parc'
+
     if network:
-        probtrackx_output_dir_path = dir_path + '/probtrackx_' + str(network)
+        probtrackx_output_dir_path = dir_path + '/probtrackx_' + str(node_size) + '_' + str(network)
     else:
-        probtrackx_output_dir_path = dir_path + '/probtrackx_Whole_brain'
+        probtrackx_output_dir_path = dir_path + '/probtrackx_WB_' + str(node_size)
     ####Auto-set INPUTS####
+
+    # G_pre=nx.from_numpy_matrix(conn_matrix_symm)
+    # if pruning is True:
+    #     [G, pruned_nodes, pruned_edges] = most_important(G_pre)
+    # else:
+    #     G = G_pre
+    # conn_matrix = nx.to_numpy_array(G)
+    #
+    # pruned_nodes.sort(reverse=True)
+    # for j in pruned_nodes:
+    #     del label_names[label_names.index(label_names[j])]
+    #     del coords[coords.index(coords[j])]
+    #
+    # pruned_edges.sort(reverse=True)
+    # for j in pruned_edges:
+    #     del label_names[label_names.index(label_names[j])]
+    #     del coords[coords.index(coords[j])]
 
     plt.figure(figsize=(10, 10))
     plt.imshow(conn_matrix_symm, interpolation="nearest", vmax=1, vmin=-1, cmap=plt.cm.RdBu_r)
@@ -383,7 +435,17 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     plt.grid(False)
     #plt.gcf().subplots_adjust(left=0.8)
 
-    out_path_fig=dir_path + '/structural_adj_mat_' + str(ID) + '.png'
+    if mask:
+        if network:
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + network + '_' + str(os.path.basename(mask).split('.')[0]) + '_struct_adj_mat_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '_network.png'
+        else:
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + str(os.path.basename(mask).split('.')[0]) + '_struct_adj_mat_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '.png'
+    else:
+        if network:
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_' + network + '_struct_adj_mat_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '_network.png'
+        else:
+            out_path_fig=dir_path + '/' + str(ID) + '_' + str(atlas_select) + '_struct_adj_mat_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '.png'
+
     plt.savefig(out_path_fig, dpi=dpi_resolution)
     plt.close()
 
@@ -391,7 +453,7 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     fdt_paths_loc = probtrackx_output_dir_path + '/fdt_paths.nii.gz'
 
     ##Create transform matrix between diff and MNI using FLIRT
-    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
+    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
     flirt.inputs.reference = FSLDIR + '/data/standard/MNI152_T1_1mm_brain.nii.gz'
     flirt.inputs.in_file = nodif_brain_mask_path
     flirt.inputs.out_matrix_file = bedpostx_dir + '/xfms/diff2MNI.mat'
@@ -399,7 +461,7 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     flirt.run()
 
     ##Apply transform between diff and MNI using FLIRT
-    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
+    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
     flirt.inputs.reference = FSLDIR + '/data/standard/MNI152_T1_1mm_brain.nii.gz'
     flirt.inputs.in_file = nodif_brain_mask_path
     flirt.inputs.apply_xfm = True
@@ -408,7 +470,7 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
     flirt.run()
 
-    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'),name='coregister')
+    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
     flirt.inputs.reference = FSLDIR + '/data/standard/MNI152_T1_1mm_brain.nii.gz'
     flirt.inputs.in_file = fdt_paths_loc
     out_file_MNI = fdt_paths_loc.split('.nii')[0] + '_MNI.nii.gz'
@@ -430,18 +492,36 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     connectome.add_overlay(ch2better_loc, alpha=0.5, cmap=plt.cm.gray)
     [z_min, z_max] = -np.abs(conn_matrix_symm).max(), np.abs(conn_matrix_symm).max()
     connectome.add_graph(conn_matrix_symm, coords, edge_threshold=edge_threshold, node_color=clust_colors, edge_cmap=plt.cm.binary, edge_vmax=z_max, edge_vmin=z_min, node_size=4)
-    connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=niplot.cm.cyan_copper_r, alpha=0.6)
+    #connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=niplot.cm.cyan_copper_r, alpha=0.6)
 
+    ##Plot connectome
     if mask:
-        if network is not None:
-            out_file_path = dir_path + '/structural_connectome_fig_' + str(network) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(ID) + '.png'
+        if network:
+            out_path_fig = dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(network) + '_' + str(thr) + '_' + str(node_size) + '_struct_viz.png'
         else:
-            out_file_path = dir_path + '/structural_connectome_fig_wb_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(ID) + '.png'
+            out_path_fig = dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(os.path.basename(mask).split('.')[0]) + '_' + str(thr) + '_' + str(node_size) + '_struct_viz.png'
+        ##Save coords to pickle
+        coord_path = "%s%s%s%s" % (dir_path, '/struct_coords_', os.path.basename(mask).split('.')[0], '_plotting.pkl')
+        with open(coord_path, 'wb') as f:
+            pickle.dump(coords, f, protocol=2)
+        net_parcels_map_nifti = None
+        ##Save labels to pickle
+        labels_path = "%s%s%s%s" % (dir_path, '/struct_labelnames_', os.path.basename(mask).split('.')[0], '_plotting.pkl')
+        with open(labels_path, 'wb') as f:
+            pickle.dump(label_names, f, protocol=2)
     else:
-        if network is not None:
-            out_file_path = dir_path + '/structural_connectome_fig_' + str(network) + '_' + str(ID) + '.png'
+        if network:
+            out_path_fig = dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(network) + '_' + str(thr) + '_' + str(node_size) + '_struct_viz.png'
         else:
-            out_file_path = dir_path + '/structural_connectome_fig_wb_' + str(ID) + '.png'
-    connectome.savefig(out_file_path, dpi=dpi_resolution)
+            out_path_fig = dir_path + '/' + ID + '_' + str(atlas_select) + '_' + str(conn_model) + '_' + str(thr) + '_' + str(node_size) + '_struct_viz.png'
+        ##Save coords to pickle
+        coord_path = "%s%s" % (dir_path, '/struct_coords_plotting.pkl')
+        with open(coord_path, 'wb') as f:
+            pickle.dump(coords, f, protocol=2)
+        ##Save labels to pickle
+        labels_path = "%s%s" % (dir_path, '/struct_labelnames_plotting.pkl')
+        with open(labels_path, 'wb') as f:
+            pickle.dump(label_names, f, protocol=2)
+    connectome.savefig(out_path_fig, dpi=dpi_resolution)
     connectome.close()
     return

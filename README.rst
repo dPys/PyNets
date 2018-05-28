@@ -51,7 +51,7 @@ global efficiency, local efficiency, transitivity, degree assortativity coeffici
 
 -----
 
-1. Installation
+1. Installation:\
 PyNets is now available for python3 in addition to python2.7! We recommend using python3.
 ```python
 ##Clone the PyNets repo and install dependencies
