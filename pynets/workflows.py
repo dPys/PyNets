@@ -67,6 +67,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                           output_names=['parlistfile', 'atlas_select', 'dir_path'],
                                                           function=utils.individual_tcorr_clustering, imports = import_list), name = "clustering_node")
 
+    clustering_node.interface.mem_gb = 8
     WB_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt', 'parc', 'func_file'],
                                                           output_names=['label_names', 'coords', 'atlas_select', 'networks_list', 'parcel_list', 'par_max', 'parlistfile', 'dir_path'],
                                                           function=nodemaker.WB_fetch_nodes_and_labels, imports = import_list), name = "WB_fetch_nodes_and_labels_node")
@@ -319,7 +320,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     clustering_node = pe.Node(niu.Function(input_names=['func_file', 'clust_mask', 'ID', 'k'],
                                                           output_names=['parlistfile', 'atlas_select', 'dir_path'],
                                                           function=utils.individual_tcorr_clustering, imports = import_list), name = "clustering_node")
-
+    clustering_node.interface.mem_gb = 8
     RSN_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt', 'parc', 'func_file'],
                                                           output_names=['label_names', 'coords', 'atlas_select', 'networks_list', 'parcel_list', 'par_max', 'parlistfile', 'dir_path'],
                                                           function=nodemaker.RSN_fetch_nodes_and_labels, imports = import_list), name = "RSN_fetch_nodes_and_labels_node")
@@ -559,7 +560,6 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
 
 def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, anat_loc, thr, dens_thresh, conn_model, user_atlas_list, multi_thr, multi_atlas, max_thr, min_thr, step_thr, node_size_list, num_total_samples):
     import os.path
-    import shutil
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets import nodemaker, diffconnectometry, plotting, thresholding
@@ -631,7 +631,7 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     if anat_loc and not os.path.isfile(CSF_file) and not os.path.isfile(WM_file):
         gen_anat_segs_node = pe.Node(niu.Function(input_names=['anat_loc', 'out_aff'],
                                                   output_names=['new_file_csf', 'mni_csf_loc', 'new_file_wm'],
-                                             function=diffconnectometry.gen_anat_segs, imports=import_list), name="gen_anat_segs_node")
+                                                  function=diffconnectometry.gen_anat_segs, imports=import_list), name="gen_anat_segs_node")
     else:
         print('\nRunning tractography without tissue maps. This is not recommended. Consider including a T1/T2 anatomical image with the -anat flag instead.\n')
 
