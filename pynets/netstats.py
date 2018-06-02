@@ -52,18 +52,14 @@ def global_efficiency(G, weight=None):
     """
     N = len(G)
     if N < 2:
-        return 0    # facilitates calculation of local_efficiency although
-                    # could reasonably raise nx.NetworkXUnfeasible or
-                    # nx.NetworkXPointlessConcept error instead and force
-                    # testing to occur in local_efficiency
+        return 0
 
     inv_lengths = []
     for node in G:
         if weight is None:
             lengths = nx.single_source_shortest_path_length(G, node)
         else:
-            lengths = nx.single_source_dijkstra_path_length(G, node,
-                                                            weight=weight)
+            lengths = nx.single_source_dijkstra_path_length(G, node, weight=weight)
 
         inv = [1/x for x in lengths.values() if x is not 0]
         inv_lengths.extend(inv)
@@ -246,16 +242,14 @@ def _compute_rc(G):
     from networkx.utils import accumulate
     deghist = nx.degree_histogram(G)
     total = sum(deghist)
-    # Compute the number of nodes with degree greater than `k`, for each
-    # degree `k` (omitting the last entry, which is zero).
+    ##Compute the number of nodes with degree greater than `k`, for each
+    ##degree `k` (omitting the last entry, which is zero).
     nks = (total - cs for cs in accumulate(deghist) if total - cs > 1)
-    # Create a sorted list of pairs of edge endpoint degrees.
-    #
-    # The list is sorted in reverse order so that we can pop from the
-    # right side of the list later, instead of popping from the left
-    # side of the list, which would have a linear time cost.
-    edge_degrees = sorted((sorted(map(G.degree, e)) for e in G.edges()),
-                          reverse=True)
+    ##Create a sorted list of pairs of edge endpoint degrees.
+    ##The list is sorted in reverse order so that we can pop from the
+    ##right side of the list later, instead of popping from the left
+    ##side of the list, which would have a linear time cost.
+    edge_degrees = sorted((sorted(map(G.degree, e)) for e in G.edges()), reverse=True)
     ek = G.number_of_edges()
     k1, k2 = edge_degrees.pop()
     rc = {}
@@ -326,12 +320,11 @@ def rich_club_coefficient(G, normalized=True, Q=100):
        sequences", 2006. https://arxiv.org/abs/cond-mat/0312028
     """
     if nx.number_of_selfloops(G) > 0:
-        raise Exception('rich_club_coefficient is not implemented for '
-                        'graphs with self loops.')
+        raise Exception('rich_club_coefficient is not implemented for graphs with self loops.')
     rc = _compute_rc(G)
     if normalized:
-        # make R a copy of G, randomize with Q*|E| double edge swaps
-        # and use rich_club coefficient of R to normalize
+        ##Make R a copy of G, randomize with Q*|E| double edge swaps
+        ##and use rich_club coefficient of R to normalize
         R = G.copy()
         E = R.number_of_edges()
         nx.double_edge_swap(R, Q * E, max_tries=Q * E * 10)
@@ -401,10 +394,8 @@ def modularity(W, qtype='sta', seed=42):
             flag = False
             for u in np.random.permutation(nh):
                 ma = m[u] - 1
-                dQ0 = (knm0[u, :] + W0[u, u] - knm0[u, ma]) - kn0[u] * (
-                    km0 + kn0[u] - km0[ma]) / s0
-                dQ1 = (knm1[u, :] + W1[u, u] - knm1[u, ma]) - kn1[u] * (
-                    km1 + kn1[u] - km1[ma]) / s1
+                dQ0 = (knm0[u, :] + W0[u, u] - knm0[u, ma]) - kn0[u] * (km0 + kn0[u] - km0[ma]) / s0
+                dQ1 = (knm1[u, :] + W1[u, u] - knm1[u, ma]) - kn1[u] * (km1 + kn1[u] - km1[ma]) / s1
                 dQ = d0 * dQ0 - d1 * dQ1
                 dQ[ma] = 0
                 max_dQ = np.max(dQ)
@@ -462,16 +453,17 @@ def diversity_coef_sign(W, ci):
     Hneg : Nx1 np.ndarray
         diversity coefficient based on negative connections
     '''
-    n = len(W)  # number of nodes
-
+    ##Number of nodes
+    n = len(W)
     _, ci = np.unique(ci, return_inverse=True)
     ci += 1
-
-    m = np.max(ci)  # number of modules
-
+    ##Number of modules
+    m = np.max(ci)
     def entropy(w_):
-        S = np.sum(w_, axis=1)  # strength
-        Snm = np.zeros((n, m))  # node-to-module degree
+        ##Strength
+        S = np.sum(w_, axis=1)
+        ##Node-to-module degree
+        Snm = np.zeros((n, m))
         for i in range(m):
             Snm[:, i] = np.sum(w_[:, ci == i + 1], axis=1)
         pnm = Snm / (np.tile(S, (m, 1)).T)
@@ -479,7 +471,7 @@ def diversity_coef_sign(W, ci):
         pnm[np.logical_not(pnm)] = 1
         return -np.sum(pnm * np.log(pnm), axis=1) / np.log(m)
 
-    #explicitly ignore compiler warning for division by zero
+    ##Explicitly ignore compiler warning for division by zero
     with np.errstate(invalid='ignore'):
         Hpos = entropy(W * (W > 0))
         Hneg = entropy(-W * (W < 0))
@@ -511,7 +503,6 @@ def core_periphery_dir(W, gamma=1, C0=None):
     '''
     n = len(W)
     np.fill_diagonal(W, 0)
-
     if C0 == None:
         C = np.random.randint(2, size=(n,))
     else:
@@ -524,9 +515,7 @@ def core_periphery_dir(W, gamma=1, C0=None):
     cix, = np.where(C)
     ncix, = np.where(np.logical_not(C))
     q = np.sum(B[np.ix_(cix, cix)]) - np.sum(B[np.ix_(ncix, ncix)])
-
     #print(q)
-
     flag = True
     it = 0
     while flag:
@@ -535,16 +524,14 @@ def core_periphery_dir(W, gamma=1, C0=None):
             raise ValueError('Infinite Loop aborted')
 
         flag = False
-        #initial node indices
+        ##Initial node indices
         ixes = np.arange(n)
-
         Ct = C.copy()
         while len(ixes) > 0:
             Qt = np.zeros((n,))
             ctix, = np.where(Ct)
             nctix, = np.where(np.logical_not(Ct))
-            q0 = (np.sum(B[np.ix_(ctix, ctix)]) -
-                  np.sum(B[np.ix_(nctix, nctix)]))
+            q0 = (np.sum(B[np.ix_(ctix, ctix)]) - np.sum(B[np.ix_(nctix, nctix)]))
             Qt[ctix] = q0 - 2 * np.sum(B[ctix, :], axis=1)
             Qt[nctix] = q0 + 2 * np.sum(B[nctix, :], axis=1)
 
@@ -554,19 +541,15 @@ def core_periphery_dir(W, gamma=1, C0=None):
             #print(np.sum(Ct))
             Ct[ixes[u]] = np.logical_not(Ct[ixes[u]])
             #print(np.sum(Ct))
-
             ixes = np.delete(ixes, u)
-
             #print(max_Qt - q)
             #print(len(ixes))
-
             if max_Qt - q > 1e-10:
                 flag = True
                 C = Ct.copy()
                 cix, = np.where(C)
                 ncix, = np.where(np.logical_not(C))
-                q = (np.sum(B[np.ix_(cix, cix)]) -
-                     np.sum(B[np.ix_(ncix, ncix)]))
+                q = (np.sum(B[np.ix_(cix, cix)]) - np.sum(B[np.ix_(ncix, ncix)]))
 
     cix, = np.where(C)
     ncix, = np.where(np.logical_not(C))
@@ -600,17 +583,15 @@ def link_communities(W, type_clustering='single'):
     if type_clustering not in ('single', 'complete'):
         print('Error: Unrecognized clustering type')
 
-    # set diagonal to mean weights
+    ##Set diagonal to mean weights
     np.fill_diagonal(W, 0)
-    W[range(n), range(n)] = (
-        np.sum(W, axis=0) / np.sum(np.logical_not(W), axis=0) +
-        np.sum(W.T, axis=0) / np.sum(np.logical_not(W.T), axis=0)) / 2
+    W[range(n), range(n)] = (np.sum(W, axis=0) / np.sum(np.logical_not(W), axis=0) + np.sum(W.T, axis=0) / np.sum(np.logical_not(W.T), axis=0)) / 2
 
-    # out/in norm squared
+    ##Out/in norm squared
     No = np.sum(W**2, axis=1)
     Ni = np.sum(W**2, axis=0)
 
-    # weighted in/out jaccard
+    ##Weighted in/out jaccard
     Jo = np.zeros((n, n))
     Ji = np.zeros((n, n))
 
@@ -622,18 +603,20 @@ def link_communities(W, type_clustering='single'):
             Di = np.dot(W[:, b].T, W[:, c])
             Ji[b, c] = Di / (Ni[b] + Ni[c] - Di)
 
-    # get link similarity
-    A, B = np.where(np.logical_and(np.logical_or(W, W.T),
-                                   np.triu(np.ones((n, n)), 1)))
+    ##Get link similarity
+    A, B = np.where(np.logical_and(np.logical_or(W, W.T), np.triu(np.ones((n, n)), 1)))
     m = len(A)
-    Ln = np.zeros((m, 2), dtype=np.int32)  # link nodes
-    Lw = np.zeros((m,))  # link weights
+    ##Link nodes
+    Ln = np.zeros((m, 2), dtype=np.int32)
+    ##Link weights
+    Lw = np.zeros((m,))
 
     for i in range(m):
         Ln[i, :] = (A[i], B[i])
         Lw[i] = (W[A[i], B[i]] + W[B[i], A[i]]) / 2
 
-    ES = np.zeros((m, m), dtype=np.float32)  # link similarity
+    ##Link similarity
+    ES = np.zeros((m, m), dtype=np.float32)
     for i in range(m):
         for j in range(m):
             if Ln[i, 0] == Ln[j, 0]:
@@ -655,81 +638,64 @@ def link_communities(W, type_clustering='single'):
             else:
                 continue
 
-            ES[i, j] = (W[a, b] * W[a, c] * Ji[b, c] +
-                        W[b, a] * W[c, a] * Jo[b, c]) / 2
+            ES[i, j] = (W[a, b] * W[a, c] * Ji[b, c] + W[b, a] * W[c, a] * Jo[b, c]) / 2
 
     np.fill_diagonal(ES, 0)
-
-    # perform hierarchical clustering
-
-    C = np.zeros((m, m), dtype=np.int32)  # community affiliation matrix
-
+    ##Perform hierarchical clustering
+    ##Community affiliation matrix
+    C = np.zeros((m, m), dtype=np.int32)
     Nc = C.copy()
     Mc = np.zeros((m, m), dtype=np.float32)
-    Dc = Mc.copy()  # community nodes, links, density
-
-    U = np.arange(m)  # initial community assignments
+    ##Community nodes, links, density
+    Dc = Mc.copy()
+    ##Initial community assignments
+    U = np.arange(m)
     C[0, :] = np.arange(m)
-
 
     for i in range(m - 1):
         print('Hierarchy %i' % i)
-
         #time1 = time.time()
-
-        for j in range(len(U)):  # loop over communities
-            ixes = C[i, :] == U[j]  # get link indices
-
+        ##Loop over communities
+        for j in range(len(U)):
+            ##Get link indices
+            ixes = C[i, :] == U[j]
             links = np.sort(Lw[ixes])
             #nodes = np.sort(Ln[ixes,:].flat)
-
             nodes = np.sort(np.reshape(
                 Ln[ixes, :], 2 * np.size(np.where(ixes))))
-
-            # get unique nodes
+            ##Get unique nodes
             nodulo = np.append(nodes[0], (nodes[1:])[nodes[1:] != nodes[:-1]])
             #nodulo = ((nodes[1:])[nodes[1:] != nodes[:-1]])
-
             nc = len(nodulo)
             #nc = len(nodulo)+1
             mc = np.sum(links)
-            min_mc = np.sum(links[:nc - 1])  # minimal weight
-            dc = (mc - min_mc) / (nc * (nc - 1) /
-                                  2 - min_mc)  # community density
-
+            ##Minimal weight
+            min_mc = np.sum(links[:nc - 1])
+            ##Community density
+            dc = (mc - min_mc) / (nc * (nc - 1) / 2 - min_mc)
             if np.array(dc).shape is not ():
                 print(dc)
                 print(dc.shape)
-
             Nc[i, j] = nc
             Mc[i, j] = mc
             Dc[i, j] = dc if not np.isnan(dc) else 0
-
         #time2 = time.time()
         #print('compute densities time', time2-time1)
-        C[i + 1, :] = C[i, :]  # copy current partition
+        ##Copy current partition
+        C[i + 1, :] = C[i, :]
         #if i in (2693,):
         #    import pdb
         #    pdb.set_trace()
-        # Profiling and debugging show that this line, finding
-        # the max values in this matrix, take about 3x longer than the
-        # corresponding matlab version. Can it be improved?
-
         u1, u2 = np.where(ES[np.ix_(U, U)] == np.max(ES[np.ix_(U, U)]))
-
         if np.size(u1) > 2:
-            # pick one
             wehr, = np.where((u1 == u2[0]))
-
             uc = np.squeeze((u1[0], u2[0]))
             ud = np.squeeze((u1[wehr], u2[wehr]))
-
             u1 = uc
             u2 = ud
 
         #time25 = time.time()
         #print('copy and max time', time25-time2)
-        # get unique links (implementation of matlab sortrows)
         #ugl = np.array((u1,u2))
         ugl = np.sort((u1, u2), axis=1)
         ug_rows = ugl[np.argsort(ugl, axis=0)[:, 0]]
@@ -744,17 +710,14 @@ def link_communities(W, type_clustering='single'):
                 x = np.max(ES[V[j, :], :], axis=0)
             elif type_clustering == 'complete':
                 x = np.min(ES[V[j, :], :], axis=0)
-
-            # assign distances to whole clusters
+            ##Assign distances to whole clusters
 #            import pdb
 #            pdb.set_trace()
             ES[V[j, :], :] = np.array((x, x))
             ES[:, V[j, :]] = np.transpose((x, x))
-
             # clear diagonal
             ES[V[j, 0], V[j, 0]] = 0
             ES[V[j, 1], V[j, 1]] = 0
-
             # merge communities
             C[i + 1, C[i + 1, :] == V[j, 1]] = V[j, 0]
             V[V == V[j, 1]] = V[j, 0]
@@ -811,29 +774,33 @@ def modularity_louvain_dir(W, gamma=1, hierarchy=False, seed=None):
     algorithm. Consequently, it may be worth to compare multiple runs.
     '''
     np.random.seed(seed)
-
-    n = len(W)  # number of nodes
-    s = np.sum(W)  # total weight of edges
-    h = 0  # hierarchy index
+    n = len(W)
+    s = np.sum(W)
+    h = 0
     ci = []
-    ci.append(np.arange(n) + 1)  # hierarchical module assignments
+    ##Hierarchical module assignments
+    ci.append(np.arange(n) + 1)
     q = []
-    q.append(-1)  # hierarchical modularity index
+    ##Hierarchical modularity index
+    q.append(-1)
     n0 = n
 
     while True:
         if h > 300:
             raise ValueError('Modularity Infinite Loop Style')
-        k_o = np.sum(W, axis=1)  # node in/out degrees
+        ##Node in/out degrees
+        k_o = np.sum(W, axis=1)
         k_i = np.sum(W, axis=0)
-        km_o = k_o.copy()  # module in/out degrees
+        ##Module in/out degrees
+        km_o = k_o.copy()
         km_i = k_i.copy()
-        knm_o = W.copy()  # node-to-module in/out degrees
+        ##Node-to-module in/out degrees
+        knm_o = W.copy()
         knm_i = W.copy()
-
-        m = np.arange(n) + 1  # initial module assignments
-
-        flag = True  # flag for within hierarchy search
+        ##Initial module assignments
+        m = np.arange(n) + 1
+        ##Flag for within hierarchy search
+        flag = True
         it = 0
         while flag:
             it += 1
@@ -841,53 +808,59 @@ def modularity_louvain_dir(W, gamma=1, hierarchy=False, seed=None):
                 raise ValueError('Modularity Infinite Loop Style')
             flag = False
 
-            # loop over nodes in random order
+            ##Loop over nodes in random order
             for u in np.random.permutation(n):
                 ma = m[u] - 1
-                # algorithm condition
-                dq_o = ((knm_o[u, :] - knm_o[u, ma] + W[u, u]) -
-                        gamma * k_o[u] * (km_i - km_i[ma] + k_i[u]) / s)
-                dq_i = ((knm_i[u, :] - knm_i[u, ma] + W[u, u]) -
-                        gamma * k_i[u] * (km_o - km_o[ma] + k_o[u]) / s)
+                ##Algorithm condition
+                dq_o = ((knm_o[u, :] - knm_o[u, ma] + W[u, u]) - gamma * k_o[u] * (km_i - km_i[ma] + k_i[u]) / s)
+                dq_i = ((knm_i[u, :] - knm_i[u, ma] + W[u, u]) - gamma * k_i[u] * (km_o - km_o[ma] + k_o[u]) / s)
                 dq = (dq_o + dq_i) / 2
                 dq[ma] = 0
-
-                max_dq = np.max(dq)  # find maximal modularity increase
-                if max_dq > 1e-10:  # if maximal increase positive
-                    mb = np.argmax(dq)  # take only one value
-
-                    knm_o[:, mb] += W[u, :].T  # change node-to-module degrees
+                ##Find maximal modularity increase
+                max_dq = np.max(dq)
+                ##If maximal increase positive
+                if max_dq > 1e-10:
+                    ##Take only one value
+                    mb = np.argmax(dq)
+                    ##Change node-to-module degrees
+                    knm_o[:, mb] += W[u, :].T
                     knm_o[:, ma] -= W[u, :].T
                     knm_i[:, mb] += W[:, u]
                     knm_i[:, ma] -= W[:, u]
-                    km_o[mb] += k_o[u]  # change module out-degrees
+                    ##Change module out-degrees
+                    km_o[mb] += k_o[u]
                     km_o[ma] -= k_o[u]
                     km_i[mb] += k_i[u]
                     km_i[ma] -= k_i[u]
-
-                    m[u] = mb + 1  # reassign module
+                    ##Reassign module
+                    m[u] = mb + 1
                     flag = True
 
         _, m = np.unique(m, return_inverse=True)
         m += 1
         h += 1
         ci.append(np.zeros((n0,)))
-        # for i,mi in enumerate(m):		#loop through module assignments
+        ##Loop through module assignments
+        # for i,mi in enumerate(m):
         for i in range(n):
-            # ci[h][np.where(ci[h-1]==i)]=mi	#assign new modules
+            # ci[h][np.where(ci[h-1]==i)]=mi
+            ##Assign new modules
             ci[h][np.where(ci[h - 1] == i + 1)] = m[i]
 
-        n = np.max(m)  # new number of modules
-        W1 = np.zeros((n, n))  # new weighted matrix
+        ##New number of modules
+        n = np.max(m)
+        ##New weighted matrix
+        W1 = np.zeros((n, n))
         for i in range(n):
             for j in range(n):
-                # pool weights of nodes in same module
+                ##Pool weights of nodes in same module
                 W1[i, j] = np.sum(W[np.ix_(m == i + 1, m == j + 1)])
 
         q.append(0)
-        # compute modularity
+        ##Compute modularity
         q[h] = np.trace(W1) / s - gamma * np.sum(np.dot(W1 / s, W1 / s))
-        if q[h] - q[h - 1] < 1e-10:  # if modularity does not increase
+        ##If modularity does not increase
+        if q[h] - q[h - 1] < 1e-10:
             break
 
     ci = np.array(ci, dtype=int)
@@ -917,7 +890,8 @@ def most_important(G):
      pruned_edges = []
      ##Remove near-zero isolates
      s = 0
-     components = list(nx.connected_components(Gt)) # list because it returns a generator
+     ##List because it returns a generator
+     components = list(nx.connected_components(Gt))
      components.sort(key=len, reverse=True)
      components_isolated = list(components[0])
 
@@ -1004,7 +978,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     mat_len = thresholding.weight_conversion(in_mat, 'lengths')
     ##Load numpy matrix as networkx graph
     G_len = nx.from_numpy_matrix(mat_len)
-
     ##Save G as gephi file
     if mask:
         if network:
@@ -1045,7 +1018,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
                     except:
                         net_met_val = float(i(G))
                 except:
-                    ##case where G is not fully connected
+                    ##Case where G is not fully connected
                     print('WARNING: Calculating average shortest path length for a disconnected graph. This might take awhile...')
                     net_met_val = float(average_shortest_path_length_for_all(G))
             if custom_weight is not None and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
@@ -1074,13 +1047,13 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     ##Run miscellaneous functions that generate multiple outputs
     ##Calculate modularity using the Louvain algorithm
     try:
-        [community_aff, modularity] = modularity_louvain_dir(in_mat)
+        [_, modularity] = modularity_louvain_dir(in_mat)
     except:
         pass
 
     ##Calculate core-periphery subdivision
     try:
-        [Coreness_vec, Coreness_q] = core_periphery_dir(in_mat)
+        [_, Coreness_q] = core_periphery_dir(in_mat)
     except:
         pass
 

@@ -294,7 +294,7 @@ def binfile_parcellate(infile, outfile, k):
     m=max(max(a[0,:]),max(a[1,:]))+1
 
     #Make the sparse matrix, CSC format is supposedly efficient for matrix arithmetic
-    W=csc_matrix((a[2,:],(a[0,:],a[1,:])), shape=(m,m))
+    W=csc_matrix((a[2,:],(a[0,:],a[1,:])), shape=(int(m),int(m)))
 
     #We only have to calculate the eigendecomposition of the LaPlacian once, for the largest number of clusters provided. This provides a significant speedup, without any difference to the results.
     eigenval,eigenvec = ncut(W,k)

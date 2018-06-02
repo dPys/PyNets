@@ -361,7 +361,7 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
     nilearn_parc_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
     nilearn_coord_atlases=['harvard_oxford', 'msdl', 'coords_power_2011', 'smith_2009', 'basc_multiscale_2015', 'allen_2011', 'coords_dosenbach_2010']
     if atlas_select in nilearn_parc_atlases:
-        [label_names, networks_list, parlistfile] = utils.nilearn_atlas_helper(atlas_select)
+        [label_names, _, parlistfile] = utils.nilearn_atlas_helper(atlas_select)
 
     ##Get coordinates and/or parcels from atlas
     if parlistfile is None and parc == False and atlas_select in nilearn_coord_atlases:
@@ -413,10 +413,10 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
     ##Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
     nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
     if atlas_select in nilearn_atlases:
-        [label_names, networks_list, parlistfile] = utils.nilearn_atlas_helper(atlas_select)
+        [label_names, _, parlistfile] = utils.nilearn_atlas_helper(atlas_select)
 
     ##Get coordinates and/or parcels from atlas
-    if parlistfile is None and parc == False:
+    if parlistfile is None and parc is False:
         print('Fetching coordinates and labels from nilearn coordinate-based atlases')
         ##Fetch nilearn atlas coords
         [coords, atlas_name, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
@@ -462,7 +462,7 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc)
         else:
             perc_overlap = 0.75
         [coords, label_names, parcel_list_masked] = nodemaker.parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID, perc_overlap)
-        [net_parcels_map_nifti, parcel_list_adj] = nodemaker.create_parcel_atlas(parcel_list_masked)
+        [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list_masked)
     ##Mask Coordinates
     elif parc is False:
         if 'bedpostX' in dir_path:
@@ -491,7 +491,7 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
     pick_dump = False
 
     if parc is True:
-        [net_parcels_map_nifti, parcel_list_adj] = nodemaker.create_parcel_atlas(parcel_list)
+        [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list)
     else:
         net_parcels_map_nifti = None
         print('No additional masking...')
