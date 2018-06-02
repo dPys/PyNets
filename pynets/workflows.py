@@ -28,7 +28,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                       'clust_mask', 'k_min', 'k_max',
                                                       'k_step', 'k_clustering', 'user_atlas_list']), name='inputnode')
 
-    #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
+    #2) Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
     inputnode.inputs.func_file = func_file
     inputnode.inputs.ID = ID
     inputnode.inputs.atlas_select = atlas_select
@@ -66,6 +66,9 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     clustering_node = pe.Node(niu.Function(input_names=['func_file', 'clust_mask', 'ID', 'k'],
                                                           output_names=['parlistfile', 'atlas_select', 'dir_path'],
                                                           function=utils.individual_tcorr_clustering, imports = import_list), name = "clustering_node")
+    if k_clustering == 2 or k_clustering == 3 or k_clustering == 4:
+        clustering_node.interface.mem_gb = 4
+        clustering_node.interface.num_threads = 2
 
     WB_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt', 'parc', 'func_file'],
                                                           output_names=['label_names', 'coords', 'atlas_select', 'networks_list', 'parcel_list', 'par_max', 'parlistfile', 'dir_path'],
@@ -319,6 +322,9 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     clustering_node = pe.Node(niu.Function(input_names=['func_file', 'clust_mask', 'ID', 'k'],
                                                           output_names=['parlistfile', 'atlas_select', 'dir_path'],
                                                           function=utils.individual_tcorr_clustering, imports = import_list), name = "clustering_node")
+    if k_clustering == 2 or k_clustering == 3 or k_clustering == 4:
+        clustering_node.interface.mem_gb = 4
+        clustering_node.interface.num_threads = 2
 
     RSN_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt', 'parc', 'func_file'],
                                                           output_names=['label_names', 'coords', 'atlas_select', 'networks_list', 'parcel_list', 'par_max', 'parlistfile', 'dir_path'],
@@ -346,7 +352,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
         save_nifti_parcels_node = pe.Node(niu.Function(input_names=['ID', 'dir_path', 'mask', 'network', 'net_parcels_map_nifti'],
                                                      function=utils.save_nifti_parcels_map, imports = import_list), name = "save_nifti_parcels_node")
 
-        ##extract time series from whole brain parcellaions:
+        ##Extract time series from whole brain parcellaions:
         extract_ts_rsn_node = pe.Node(niu.Function(input_names=['net_parcels_map_nifti', 'conf', 'func_file', 'coords', 'mask', 'dir_path', 'ID', 'network'],
                                                      output_names=['ts_within_nodes'],
                                                      function=graphestimation.extract_ts_parc, imports = import_list), name = "extract_ts_rsn_parc_node")
@@ -559,7 +565,6 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
 
 def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt, procmem, dir_path, bedpostx_dir, anat_loc, thr, dens_thresh, conn_model, user_atlas_list, multi_thr, multi_atlas, max_thr, min_thr, step_thr, node_size_list, num_total_samples):
     import os.path
-    import shutil
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets import nodemaker, diffconnectometry, plotting, thresholding
@@ -631,7 +636,7 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     if anat_loc and not os.path.isfile(CSF_file) and not os.path.isfile(WM_file):
         gen_anat_segs_node = pe.Node(niu.Function(input_names=['anat_loc', 'out_aff'],
                                                   output_names=['new_file_csf', 'mni_csf_loc', 'new_file_wm'],
-                                             function=diffconnectometry.gen_anat_segs, imports=import_list), name="gen_anat_segs_node")
+                                                  function=diffconnectometry.gen_anat_segs, imports=import_list), name="gen_anat_segs_node")
     else:
         print('\nRunning tractography without tissue maps. This is not recommended. Consider including a T1/T2 anatomical image with the -anat flag instead.\n')
 
@@ -646,6 +651,8 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     run_probtrackx2_node = pe.Node(niu.Function(input_names=['i', 'seeds_text', 'bedpostx_dir', 'probtrackx_output_dir_path', 'vent_CSF_diff_mask_path', 'way_mask', 'procmem', 'num_total_samples'],
                                          function=diffconnectometry.run_probtrackx2, imports=import_list), name="run_probtrackx2_node")
 
+    run_probtrackx2_node.interface.num_threads = 1
+    run_probtrackx2_node.interface.mem_gb = 2
     run_probtrackx2_iterables = []
     iter_i = range(int(procmem[0]))
     run_probtrackx2_iterables.append(("i", iter_i))
@@ -875,6 +882,8 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
 
     run_probtrackx2_node = pe.Node(niu.Function(input_names=['i', 'seeds_text', 'bedpostx_dir', 'probtrackx_output_dir_path', 'vent_CSF_diff_mask_path', 'way_mask', 'procmem', 'num_total_samples'],
                                          function=diffconnectometry.run_probtrackx2, imports = import_list), name = "run_probtrackx2_node")
+    run_probtrackx2_node.interface.num_threads = 1
+    run_probtrackx2_node.interface.mem_gb = 2
 
     run_probtrackx2_iterables = []
     iter_i = range(int(procmem[0]))

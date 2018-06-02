@@ -63,8 +63,8 @@ if __name__ == '__main__':
         help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple RSNs, separate them by comma. e.g. -n \'Default,Cont,SalVentAttn\'\n')
     parser.add_argument('-thr',
         metavar='graph threshold',
-        default='1.00',
-        help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is no thresholding.\n')
+        default='0.9999',
+        help='Optionally specify a threshold. Without an accompanying -dt flag, this represents the proportion of weights to retain. Default is 99.99% (i.e. no thresholding).\n')
     parser.add_argument('-ns',
         metavar='Node size',
         default=4,
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     parser.add_argument('-mod',
         metavar='Graph estimator type',
         default='sps',
-        help='Optionally specify matrix estimation type: corr, cov, sps, partcorr for correlation, covariance, sparse-inverse covariance, and partial correlation, respectively. sps type is used by default.\n')
+        help='Optionally specify matrix estimation type: corr for correlation, cov for covariance, sps for precision covariance, partcorr for partial correlation. sps type is used by default. If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphLasso, QuicGraphLassoCV, QuicGraphLassoEBIC, and AdaptiveGraphLasso.\n')
     parser.add_argument('-conf',
         metavar='Confounds',
         default=None,
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     parser.add_argument('-max_thr',
         metavar='Multi-thresholding maximum threshold',
         default=None,
-        help='Maximum threshold for multi-thresholding.v')
+        help='Maximum threshold for multi-thresholding.\n')
     parser.add_argument('-step_thr',
         metavar='Multi-thresholding step size',
         default=None,
@@ -143,8 +143,8 @@ if __name__ == '__main__':
         help='Include this flag to prune the resulting graph of any fully disconnected nodes.\n')
     parser.add_argument('-s',
         metavar='Number of samples',
-        default= '500',
-        help='Include this flag to manually specify number of fiber samples for probtrackx2 in structural connectome estimation (default is 500). PyNets parallelizes probtrackx2 by samples, but more samples can increase connectome estimation time considerably.\n')
+        default= '5000',
+        help='Include this flag to manually specify number of fiber samples for probtrackx2 in structural connectome estimation (default is 5000). PyNets parallelizes probtrackx2 by samples, but more samples can increase connectome estimation time considerably. For quick tests, as low as -s 500 is recommended.\n')
     args = parser.parse_args()
 
     ##Start time clock
@@ -576,7 +576,8 @@ if __name__ == '__main__':
         meta_wf.config['logging']['utils_level']='DEBUG'
         meta_wf.config['logging']['interface_level']='DEBUG'
         #meta_wf.write_graph(graph2use='exec', format='png', dotfilename='meta_wf.dot')
-        egg = meta_wf.run('MultiProc')
+        plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+        egg = meta_wf.run('MultiProc', plugin_args= plugin_args)
         outputs = [x for x in egg.nodes() if x.name == 'compile_iterfields'][0].result.outputs
 
         return outputs.thr, outputs.est_path, outputs.ID, outputs.network, outputs.conn_model, outputs.mask, outputs.prune, outputs.node_size

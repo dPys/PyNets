@@ -25,8 +25,8 @@ import numpy as np
 #   address = {Department of Neuroscience, Baylor College of Medicine, Houston,
 #       TX, United States},
 #   pmid = {21769991},
-# } 
-    
+# }
+
 ##simple function to translate 1D vector coordinates to 3D matrix coordinates for a 3D matrix of size sz
 def indx_1dto3d(idx,sz):
     from scipy import divide, prod
@@ -43,7 +43,7 @@ def indx_3dto1d(idx,sz):
     else:
         idx1=idx[:,0]*prod(sz[1:3])+idx[:,1]*sz[2]+idx[:,2]
     return idx1
-    
+
 def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
     from scipy.sparse import csc_matrix
     from scipy import prod, rank
@@ -61,9 +61,9 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
     ##read in the mask
     msk=nib.load(clust_mask)
     msz=np.shape(msk.get_data())
-
+    msk_data = msk.get_data()
     ##convert the 3D mask array into a 1D vector
-    mskdat=np.reshape(msk.get_data(),prod(msz))
+    mskdat=np.reshape(msk_data,prod(msz))
 
     ##determine the 1D coordinates of the non-zero elements of the mask
     iv=np.nonzero(mskdat)[0]
@@ -73,9 +73,10 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
     ##NOTE the format of x,y,z axes and time dimension after reading
     nim=nib.load(func_file)
     sz=nim.shape
-    
-    ##reshape fmri data to a num_voxels x num_timepoints array	
-    imdat=np.reshape(nim.get_data(),(prod(sz[:3]),sz[3]))
+
+    ##reshape fmri data to a num_voxels x num_timepoints array
+    data=nim.get_data()
+    imdat=np.reshape(data,(prod(sz[:3]),sz[3]))
 
     ##construct a sparse matrix from the mask
     msk=csc_matrix((list(range(1,m+1)),(iv,np.zeros(m))),shape=(prod(sz[:-1]),1))
@@ -85,13 +86,13 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
 
     negcount=0
 
-    ##loop over all of the voxels in the mask 	
+    ##loop over all of the voxels in the mask
     for i in range(0,m):
         if i % 1000 == 0: print('Voxels:', i)
         ##calculate the voxels that are in the 3D neighborhood of the center voxel
         ndx3d=indx_1dto3d(iv[i],sz[:-1])+neighbors
         ndx1d=indx_3dto1d(ndx3d,sz[:-1])
-        
+
         ##restrict the neigborhood using the mask
         ondx1d=msk[ndx1d].todense()
         ndx1d=ndx1d[np.nonzero(ondx1d)[0]]
@@ -103,7 +104,7 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
         nndx=np.nonzero(ndx1d==iv[i])[0]
         ##exctract the timecourses for all of the voxels in the neighborhood
         tc=np.matrix(imdat[ndx1d.astype('int'),:])
-	 
+
         ##make sure that the "seed" has variance, if not just skip it
         if np.var(tc[nndx,:]) == 0:
             continue
@@ -124,14 +125,14 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
         R[R<thresh]=0
 
         ##determine the non-zero correlations (matrix weights)
-        ##and add their indices and values to the list 
+        ##and add their indices and values to the list
         nzndx=np.nonzero(R)[0]
         if(len(nzndx)>0):
             sparse_i=np.append(sparse_i,ondx1d[nzndx]-1,0)
             sparse_j=np.append(sparse_j,(ondx1d[nndx]-1)*np.ones(len(nzndx)))
             sparse_w=np.append(sparse_w,R[nzndx],0)
 
-    ##concatenate the i, j and w_ij into a single vector	
+    ##concatenate the i, j and w_ij into a single vector
     outlist=sparse_i
     outlist=np.append(outlist,sparse_j)
     outlist=np.append(outlist,sparse_w)
@@ -191,7 +192,7 @@ def ncut(W, nbEigenValues):
             eigen_vec[:,i] = -1 * eigen_vec[:,i] * np.sign( eigen_vec[0,i] )
 
     return(eigen_val, eigen_vec)
-    
+
 def discretisation(eigen_vec):
     import scipy as sp
     from scipy.sparse import csc_matrix
@@ -226,7 +227,7 @@ def discretisation(eigen_vec):
         nbIterationsDiscretisationMax=20
 
         # iteratively rotate the discretised eigenvectors until they
-        # are maximally similar to the input eignevectors, this 
+        # are maximally similar to the input eignevectors, this
         # converges when the differences between the current solution
         # and the previous solution differs by less than eps or we
         # we have reached the maximum number of itarations
@@ -267,7 +268,7 @@ def discretisation(eigen_vec):
         raise ValueError("SVD did not converge after 30 retries")
     else:
         return(eigenvec_discrete)
-    
+
 def binfile_parcellate(infile, outfile, k):
     import time as time
     from scipy.sparse import csc_matrix
@@ -293,7 +294,7 @@ def binfile_parcellate(infile, outfile, k):
     m=max(max(a[0,:]),max(a[1,:]))+1
 
     #Make the sparse matrix, CSC format is supposedly efficient for matrix arithmetic
-    W=csc_matrix((a[2,:],(a[0,:],a[1,:])), shape=(m,m))
+    W=csc_matrix((a[2,:],(a[0,:],a[1,:])), shape=(int(m),int(m)))
 
     #We only have to calculate the eigendecomposition of the LaPlacian once, for the largest number of clusters provided. This provides a significant speedup, without any difference to the results.
     eigenval,eigenvec = ncut(W,k)
@@ -311,12 +312,12 @@ def binfile_parcellate(infile, outfile, k):
     ##Apply the suffix to the output filename and write out results as a .npy file
     outname=outfile+'_'+str(k)+'.npy'
     np.save(outname,group_img.todense())
-    
+
 def make_image_from_bin_renum(image, binfile, mask):
     # read in the mask
     nim=nib.load(mask)
 
-    # read in the binary data    
+    # read in the binary data
     if( binfile.endswith(".npy") ):
         print("Reading",binfile,"as a npy filetype")
         a=np.load(binfile)
