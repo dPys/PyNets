@@ -37,8 +37,8 @@ test_requirements = [
 
 setup(
     name='pynets',
-    version='0.5.79',
-    description="A Fully-Reproducible Workflow for Network Analysis of rsfMRI and dMRI",
+    version='0.5.80',
+    description="A Fully-Reproducible Workflow for Network Analysis of fMRI and dMRI",
     #long_description=readme + '\n\n',
     author="Derek Pisner",
     author_email='dpisner@utexas.edu',

@@ -3,7 +3,7 @@ PyNets
 
 About
 -----
-A Python-Powered Workflow for Fully-Reproducible Network Analysis of Resting-State fMRI (rsfMRI) and Diffusion MRI (dMRI)
+A Python-Powered Workflow for Fully-Reproducible Network Analysis of Functional and Microstructural Connectomes
 
 Problem: A comprehensive, flexible, and fully-automated intra-subject network analysis package for neuroimaging has yet to be implemented.
 
