@@ -923,7 +923,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
 
     # Advanced options
     save_gephi = False
-    calc_smallworldness = True
+    calc_smallworldness = False
     custom_weight = None
 
     # Load and threshold matrix

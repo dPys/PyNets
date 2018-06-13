@@ -142,7 +142,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     if multi_thr is True:
         thresh_and_fit_node_iterables = []
         iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
-        float(max_thr), float(step_thr)),decimals=2).tolist()]
+        float(max_thr), float(step_thr)), decimals=2).tolist()]
         thresh_and_fit_node_iterables.append(("thr", iter_thresh))
         if node_size_list and parc is False:
             thresh_and_fit_node_iterables.append(("node_size", node_size_list))

@@ -246,4 +246,4 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords), ' coordinate ROI\'s\n'))
     # Save time series as txt file
     utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)
-    return ts_within_nodes
+    return ts_within_nodes, node_size
