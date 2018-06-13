@@ -41,16 +41,18 @@ def get_conn_matrix(time_series, conn_model):
                         try:
                             estimator_shrunk = GraphLasso(alpha)
                             estimator_shrunk.fit(shrunk_cov)
-                            print("Calculated graph-lasso covariance matrix for alpha=%s" % alpha)
+                            print("Retrying covariance matrix estimate with alpha=%s" % alpha)
                             if estimator_shrunk is None:
                                 pass
                             else:
                                 break
                         except RuntimeWarning:
-                            print("Failed at alpha=%s" % alpha)
+                            print("Covariance estimation failed with shrinkage at alpha=%s" % alpha)
                             continue
             except ValueError:
-                print('Unstable Lasso estimation! Shrinkage failed.')
+                print('Unstable Lasso estimation! Shrinkage failed. A different connectivity model may be needed.')
+        if estimator is None and estimator_shrunk is None:
+            raise RuntimeError('ERROR: Covariance estimation failed.')
         if conn_model == 'sps':
             if estimator_shrunk is None:
                 print('\nFetching precision matrix from covariance estimator...\n')
