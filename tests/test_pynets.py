@@ -4,10 +4,7 @@
 """Tests for `pynets` package."""
 
 import pytest
-
 from click.testing import CliRunner
-
-from pynets import pynets_run
 from pynets import cli
 
 
