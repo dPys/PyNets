@@ -915,6 +915,7 @@ def most_important(G):
 
 # Extract network metrics interface
 def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_size, out_file=None):
+    import pandas as pd
     try:
         import cPickle as pickle
     except ImportError:
@@ -1320,5 +1321,9 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     # And save results to csv
     out_path = utils.create_csv_path(ID, network, conn_model, thr, mask, dir_path, node_size)
     np.savetxt(out_path, net_met_val_list_final, delimiter='\t')
+
+    out_path_neat = "%s%s" % (out_path.split('.csv')[0], '_neat.csv')
+    df = pd.DataFrame.from_dict(dict(zip(metric_list_names, net_met_val_list_final)), orient='index').transpose()
+    df.to_csv(out_path_neat, index=False)
 
     return out_path

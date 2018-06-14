@@ -398,6 +398,7 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap='Greens',
                          edge_vmax=z_max, edge_vmin=z_min, node_size=4)
     connectome.savefig(out_path_fig, dpi=dpi_resolution)
+    #connectome.savefig(out_path_fig, dpi=dpi_resolution, facecolor ='k', edgecolor ='k')
     return
 
 def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, mask, coords,
@@ -532,5 +533,6 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f, protocol=2)
     connectome.savefig(out_path_fig, dpi=dpi_resolution)
+    # connectome.savefig(out_path_fig, dpi=dpi_resolution, facecolor ='k', edgecolor ='k')
     connectome.close()
     return

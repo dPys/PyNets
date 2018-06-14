@@ -12,13 +12,11 @@ import os
 def create_mni2diff_transforms(bedpostx_dir):
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
-    # # Custom inputs# #
     try:
         FSLDIR = os.environ['FSLDIR']
     except NameError:
         print('FSLDIR environment variable not set!')
     merged_f_samples_path = "%s%s" % (bedpostx_dir, '/merged_f1samples.nii.gz')
-    # # Custom inputs# #
     print('\nCreating MNI-diffusion space transforms...\n')
     input_MNI = "%s%s" % (FSLDIR, '/data/standard/MNI152_T1_1mm_brain.nii.gz')
     out_aff = "%s%s" % (bedpostx_dir, '/xfms/MNI2diff_affine.nii.gz')
@@ -518,7 +516,7 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
     for mx in mats_list:
         waytotal = waytotals_list[i]
         np.seterr(divide='ignore', invalid='ignore')
-        conn_matrix = np.divide(mx,waytotal)
+        conn_matrix = np.divide(mx, waytotal)
         conn_matrix[np.isnan(conn_matrix)] = 0
         conn_matrix = np.nan_to_num(conn_matrix)
         conn_matrices.append(conn_matrix)
