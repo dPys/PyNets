@@ -8,9 +8,9 @@ import sys
 import argparse
 import os
 import timeit
+import numpy as np
 import warnings
 warnings.simplefilter("ignore")
-import numpy as np
 try:
     from pynets.utils import do_dir_path
 except ImportError:
@@ -19,75 +19,72 @@ except ImportError:
 # Parse args
 if __name__ == '__main__':
     if len(sys.argv) < 1:
-        raise RuntimeError("\nMissing command-line inputs! See help options with the -h flag.\n")
+        print("\nMissing command-line inputs! See help options with the -h flag.\n")
+        sys.exit()
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-i',
-        metavar='Path to input file',
-        default=None,
-        required=False,
-        help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR the path to a text file containing a list of paths to subject files.\n')
+                        metavar='Path to input file',
+                        default=None,
+                        required=False,
+                        help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR the path to a text file containing a list of paths to subject files.\n')
     parser.add_argument('-g',
-        metavar='Path to graph',
-        default=None,
-        help='In either .txt or .npy format. This skips fMRI and dMRI network estimation workflows and begins at the graph analysis stage.\n')
+                        metavar='Path to graph',
+                        default=None,
+                        help='In either .txt or .npy format. This skips fMRI and dMRI graph estimation workflows and begins at the graph analysis stage.\n')
     parser.add_argument('-bpx',
-        metavar='Path to bedpostx directory',
-        default=None,
-        help='Formatted according to the FSL default tree structure found at https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX.\n')
+                        metavar='Path to bedpostx directory',
+                        default=None,
+                        help='Formatted according to the FSL default tree structure found at https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX.\n')
     parser.add_argument('-id',
-        metavar='Subject ID',
-        default=None,
-        required=False,
-        help='A subject ID that is also the name of the directory containing the input file.\n')
+                        metavar='Subject ID',
+                        default=None,
+                        required=False,
+                        help='A subject ID that is also the name of the directory containing the input file.\n')
     parser.add_argument('-a',
-        metavar='Atlas',
-        default='coords_power_2011',
-        help='Specify a coordinate atlas parcellation of those available in nilearn. Default is coords_power_2011. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011.\n')
-    #parser.add_argument('-basc',
-        #default=False,
-        #action='store_true',
-        #help='Specify whether you want to run BASC to calculate a group level set of nodes')
+                        metavar='Atlas',
+                        default='coords_power_2011',
+                        help='Specify a coordinate atlas parcellation of those available in nilearn. Default is coords_power_2011. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011.\n')
     parser.add_argument('-ua',
-        metavar='Path to parcellation file',
-        default=None,
-        help='Path to parcellation/atlas file in .nii format. If specifying a list of paths to multiple user atlases, separate them by comma.\n')
+                        metavar='Path to parcellation file',
+                        default=None,
+                        help='Path to parcellation/atlas file in .nii format. If specifying a list of paths to multiple user atlases, separate them by comma.\n')
     parser.add_argument('-pm',
-        metavar='Cores,memory',
-        default= '2,4',
-        help='Number of cores to use, number of GB of memory to use for single subject run, entered as two integers seperated by a comma.\n')
+                        metavar='Cores,memory',
+                        default='2,4',
+                        help='Number of cores to use, number of GB of memory to use for single subject run, entered as two integers seperated by a comma.\n')
     parser.add_argument('-n',
-        metavar='Resting-state network',
-        default=None,
-        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple RSNs, separate them by comma. e.g. -n \'Default,Cont,SalVentAttn\'\n')
+                        metavar='Resting-state network',
+                        default=None,
+                        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple RSNs, separate them by comma. e.g. -n \'Default,Cont,SalVentAttn\'\n')
     parser.add_argument('-thr',
-        metavar='graph threshold',
-        default='0.9999',
-        help='Optionally specify a threshold. Without an accompanying -dt flag, this represents the proportion of weights to retain. Default is 99.99% (i.e. no thresholding).\n')
+                        metavar='graph threshold',
+                        default='1.00',
+                        help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is no thresholding.\n')
     parser.add_argument('-ns',
-        metavar='Node size',
-        default=4,
-        help='Optionally coordinate-based node radius size(s). Default is 4 mm. If you wish to iterate the pipeline across multiple node sizes, separate the list by comma (e.g. 2,4,6)\n')
+                        metavar='Node size',
+                        default=4,
+                        help='Optionally coordinate-based node radius size(s). Default is 4 mm. If you wish to iterate the pipeline across multiple node sizes, separate the list by comma (e.g. 2,4,6)\n')
     parser.add_argument('-m',
-        metavar='Path to mask image',
-        default=None,
-        help='Optionally specify a thresholded binarized mask image and retain only those nodes contained within that mask for functional connectome estimation, or constrain the tractography in the case of structural connectome estimation.\n')
+                        metavar='Path to mask image',
+                        default=None,
+                        help='Optionally specify a thresholded binarized mask image and retain only those nodes contained within that mask for functional connectome estimation, or constrain the tractography in the case of structural connectome estimation.\n')
     parser.add_argument('-mod',
-        metavar='Graph estimator type',
-        default='sps',
-        help='Optionally specify matrix estimation type: corr for correlation, cov for covariance, sps for precision covariance, partcorr for partial correlation. sps type is used by default. If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphLasso, QuicGraphLassoCV, QuicGraphLassoEBIC, and AdaptiveGraphLasso.\n')
+                        metavar='Graph estimator type',
+                        default='sps',
+                        help='Optionally specify matrix estimation type: corr for correlation, cov for covariance, sps for precision covariance, partcorr for partial correlation. sps type is used by default. If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphLasso, QuicGraphLassoCV, QuicGraphLassoEBIC, and AdaptiveGraphLasso.\n')
     parser.add_argument('-conf',
-        metavar='Confounds',
-        default=None,
-        help='Optionally specify a path to a confound regressor file to reduce noise in the time-series estimation for the graph.\n')
+                        metavar='Confounds',
+                        default=None,
+                        help='Optionally specify a path to a confound regressor file to reduce noise in the time-series estimation for the graph.\n')
     parser.add_argument('-dt',
-        default=False,
-        action='store_true',
-        help='Optionally use this flag if you wish to threshold to achieve a given density or densities indicated by the -thr and -min_thr, -max_thr, -step_thr flags, respectively.\n')
-#    parser.add_argument('-at',
-#        default=False,
-#        action='store_true',
-#        help='Optionally use this flag if you wish to activate adaptive thresholding')
+                        default=False,
+                        action='store_true',
+                        help='Optionally use this flag if you wish to threshold to achieve a given density or densities indicated by the -thr and -min_thr, -max_thr, -step_thr flags, respectively.\n')
+    #    parser.add_argument('-at',
+    #        default=False,
+    #        action='store_true',
+    #        help='Optionally use this flag if you wish to activate adaptive thresholding')
     parser.add_argument('-plt',
                         default=False,
                         action='store_true',
@@ -103,7 +100,7 @@ if __name__ == '__main__':
     parser.add_argument('-max_thr',
                         metavar='Multi-thresholding maximum threshold',
                         default=None,
-                        help='Maximum threshold for multi-thresholding.\n')
+                        help='Maximum threshold for multi-thresholding.v')
     parser.add_argument('-step_thr',
                         metavar='Multi-thresholding step size',
                         default=None,
@@ -143,18 +140,17 @@ if __name__ == '__main__':
     parser.add_argument('-s',
                         metavar='Number of samples',
                         default='5000',
-                        help='Include this flag to manually specify number of fiber samples for probtrackx2 in structural connectome estimation (default is 5000). PyNets parallelizes probtrackx2 by samples, but more samples can increase connectome estimation time considerably. For quick tests, as low as -s 500 is recommended.\n')
+                        help='Include this flag to manually specify number of fiber samples for probtrackx2 in structural connectome estimation (default is 500). PyNets parallelizes probtrackx2 by samples, but more samples can increase connectome estimation time considerably.\n')
     args = parser.parse_args()
 
     # Start time clock
     start_time = timeit.default_timer()
 
-    # #Set Arguments to global variables# #
+    # Set Arguments to global variables
     input_file = args.i
     bedpostx_dir = args.bpx
     graph = args.g
     ID = args.id
-    #basc=args.basc
     procmem = list(eval(str((args.pm))))
     thr = float(args.thr)
     node_size_pre = args.ns
@@ -699,31 +695,31 @@ if __name__ == '__main__':
 
         def _run_interface(self, runtime):
             collect_pandas_df(
-            self.inputs.input_file,
-            self.inputs.atlas_select,
-            self.inputs.clust_mask,
-            self.inputs.k_min,
-            self.inputs.k_max,
-            self.inputs.k,
-            self.inputs.k_step,
-            self.inputs.min_thr,
-            self.inputs.max_thr,
-            self.inputs.step_thr,
-            self.inputs.multi_thr,
-            self.inputs.thr,
-            self.inputs.mask,
-            self.inputs.ID,
-            self.inputs.network,
-            self.inputs.k_clustering,
-            self.inputs.conn_model,
-            self.inputs.in_csv,
-            self.inputs.user_atlas_list,
-            self.inputs.clust_mask_list,
-            self.inputs.multi_atlas,
-            self.inputs.node_size,
-            self.inputs.node_size_list,
-            self.inputs.parc,
-            out_file=self.inputs.out_file)
+                self.inputs.input_file,
+                self.inputs.atlas_select,
+                self.inputs.clust_mask,
+                self.inputs.k_min,
+                self.inputs.k_max,
+                self.inputs.k,
+                self.inputs.k_step,
+                self.inputs.min_thr,
+                self.inputs.max_thr,
+                self.inputs.step_thr,
+                self.inputs.multi_thr,
+                self.inputs.thr,
+                self.inputs.mask,
+                self.inputs.ID,
+                self.inputs.network,
+                self.inputs.k_clustering,
+                self.inputs.conn_model,
+                self.inputs.in_csv,
+                self.inputs.user_atlas_list,
+                self.inputs.clust_mask_list,
+                self.inputs.multi_atlas,
+                self.inputs.node_size,
+                self.inputs.node_size_list,
+                self.inputs.parc,
+                out_file=self.inputs.out_file)
             return runtime
 
         def _list_outputs(self):
