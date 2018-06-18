@@ -883,34 +883,27 @@ def most_important(G):
      Gt = G.copy()
      pruned_nodes = []
      i = 0
+     # Remove near-zero isolates
      for k, v in ranking:
         if v < m:
             Gt.remove_node(k)
             pruned_nodes.append(i)
         i = i + 1
-     pruned_edges = []
-     # Remove near-zero isolates
-     s = 0
+
      # List because it returns a generator
      components = list(nx.connected_components(Gt))
      components.sort(key=len, reverse=True)
      components_isolated = list(components[0])
 
-     for node,degree in list(Gt.degree()):
-         if degree < 0.001:
-             try:
-                 Gt.remove_node(node)
-                 pruned_edges.append(s)
-             except:
-                 pass
+     # Remove disconnected nodes
+     s = 0
+     for node in list(Gt.nodes()):
          if node not in components_isolated:
-             try:
-                 Gt.remove_node(node)
-                 pruned_edges.append(s)
-             except:
-                 pass
+             Gt.remove_node(node)
+             pruned_nodes.append(s)
          s = s + 1
-     return Gt, pruned_nodes, pruned_edges
+
+     return Gt, pruned_nodes
 
 
 # Extract network metrics interface
@@ -950,17 +943,9 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
 
     # Prune irrelevant nodes (i.e. nodes who are fully disconnected from the graph and/or those whose betweenness centrality are > 3 standard deviations below the mean)
     if prune is True:
-        [G_pruned, _, _] = most_important(G_pre)
+        [G, _] = most_important(G_pre)
     else:
-        G_pruned = G_pre
-
-    # Make directed if model is effective type
-    if conn_model == 'effective':
-        G_di = nx.DiGraph(G_pruned)
-        G_dir = G_di.to_directed()
-        G = G_pruned
-    else:
-        G = G_pruned
+        G = G_pre
 
     # Get corresponding matrix
     in_mat = nx.to_numpy_array(G)
@@ -978,10 +963,10 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     # except:
     #     print('Graph is UNDIRECTED')
 
-    if nx.is_connected(G) is True:
-        print('Graph is CONNECTED')
-    else:
-        print('Graph is DISCONNECTED\n')
+    #if nx.is_connected(G) is True:
+        #print('Graph is CONNECTED')
+    #else:
+        #print('Graph is DISCONNECTED\n')
 
     # Create Length matrix
     mat_len = thresholding.weight_conversion(in_mat, 'lengths')
@@ -1021,14 +1006,14 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
         net_met = met_name
         try:
             if i is 'average_shortest_path_length':
-                try:
+                if nx.is_connected(G) is True:
                     # try:
                     #     net_met_val = float(i(G_dir))
                     #     print('Calculating from directed graph...')
                     # except:
                     #     net_met_val = float(i(G))
                     net_met_val = float(i(G))
-                except RuntimeWarning:
+                else:
                     # Case where G is not fully connected
                     print('WARNING: Calculating average shortest path length for a disconnected graph. This might take awhile...')
                     net_met_val = float(average_shortest_path_length_for_all(G))

@@ -93,15 +93,11 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
     conn_matrix = normalize(conn_matrix)
     G = nx.from_numpy_matrix(conn_matrix)
     if pruned is True:
-        [G, pruned_nodes, pruned_edges] = most_important(G)
+        [G, pruned_nodes] = most_important(G)
         conn_matrix = nx.to_numpy_array(G)
 
         pruned_nodes.sort(reverse=True)
         for j in pruned_nodes:
-            del label_names[label_names.index(label_names[j])]
-
-        pruned_edges.sort(reverse=True)
-        for j in pruned_edges:
             del label_names[label_names.index(label_names[j])]
 
     def doClust(X, clust_levels):
@@ -332,22 +328,22 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
 
     pruning = True
     dpi_resolution = 500
-    G_pre=nx.from_numpy_matrix(conn_matrix)
-    if pruning == True:
-        [G, pruned_nodes, pruned_edges] = most_important(G_pre)
-    else:
-        G = G_pre
-    conn_matrix = nx.to_numpy_array(G)
-
-    pruned_nodes.sort(reverse=True)
-    for j in pruned_nodes:
-        del label_names[label_names.index(label_names[j])]
-        del coords[coords.index(coords[j])]
-
-    pruned_edges.sort(reverse=True)
-    for j in pruned_edges:
-        del label_names[label_names.index(label_names[j])]
-        del coords[coords.index(coords[j])]
+    if pruning is True:
+        G_pre = nx.from_numpy_matrix(conn_matrix)
+        [G, pruned_nodes] = most_important(G_pre)
+        pruned_nodes.sort(reverse=True)
+        coords_pre = list(coords)
+        label_names_pre = list(label_names)
+        if len(pruned_nodes) > 0:
+            print('Pruning less central nodes for display...')
+            for j in pruned_nodes:
+                label_names_pre.pop(j)
+                coords_pre.pop(j)
+            conn_matrix = nx.to_numpy_array(G)
+            label_names = label_names_pre
+            coords = coords_pre
+        else:
+            print('No nodes to prune for plot...')
 
     # Plot connectogram
     if len(conn_matrix) > 20:
@@ -392,11 +388,12 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
             pickle.dump(label_names, f, protocol=2)
     #niplot.plot_connectome(conn_matrix, coords, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
-    connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001)
+    connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
     connectome.add_overlay(ch2better_loc, alpha=0.4, cmap=plt.cm.gray)
     [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
-    connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap='Greens',
-                         edge_vmax=z_max, edge_vmin=z_min, node_size=4)
+    node_size_plot = int(node_size)
+    connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap='Greens', edge_vmax=z_max,
+                         edge_vmin=z_min, node_size=node_size_plot)
     connectome.savefig(out_path_fig, dpi=dpi_resolution)
     #connectome.savefig(out_path_fig, dpi=dpi_resolution, facecolor ='k', edgecolor ='k')
     return
@@ -443,7 +440,7 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
 
     # G_pre=nx.from_numpy_matrix(conn_matrix_symm)
     # if pruning is True:
-    #     [G, pruned_nodes, pruned_edges] = most_important(G_pre)
+    #     [G, pruned_nodes] = most_important(G_pre)
     # else:
     #     G = G_pre
     # conn_matrix = nx.to_numpy_array(G)
@@ -502,7 +499,7 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
 
     # Plotting with glass brain
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
-    connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001)
+    connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
     connectome.add_overlay(ch2better_loc, alpha=0.5, cmap=plt.cm.gray)
     [z_min, z_max] = -np.abs(conn_matrix_symm).max(), np.abs(conn_matrix_symm).max()
     connectome.add_graph(conn_matrix_symm, coords, edge_threshold=edge_threshold, node_color=clust_colors,
