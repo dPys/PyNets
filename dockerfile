@@ -31,10 +31,14 @@ RUN apt-get update -qq \
 # Add Neurodebian package repositories (i.e. for FSL)
 RUN apt-get update && apt-get install -my wget gnupg
 ENV NEURODEBIAN_URL http://neuro.debian.net/lists/stretch.us-tn.full
-#RUN wget -O- $NEURODEBIAN_URL | tee /etc/apt/sources.list.d/neurodebian.sources.list && \
-#    apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9 && \
-#    apt-get update -qq
-RUN apt-get update -qq && apt-get install -y --no-install-recommends fsl
+RUN wget -O- $NEURODEBIAN_URL | tee /etc/apt/sources.list.d/neurodebian.sources.list && \
+    apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9 && \
+    apt-get update -qq
+#RUN echo 'deb http://neuro.debian.net/debian stretch main' > /etc/apt/sources.list.d/neurodebian.sources.list
+#RUN echo 'deb http://neuro.debian.net/debian data main' >> /etc/apt/sources.list.d/neurodebian.sources.list
+#RUN echo '#deb-src http://neuro.debian.net/debian-devel stretch main' >> /etc/apt/sources.list.d/neurodebian.sources.list
+#RUN apt-key adv --recv-keys --keyserver pgp.mit.edu 0xA5D32F012649A5A9
+RUN apt-get update -qq && apt-get install -y --no-install-recommends fsl-complete
 
 USER neuro
 WORKDIR /home/neuro
