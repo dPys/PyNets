@@ -133,7 +133,7 @@ def test_plot_timeseries():
     network = None
     ID = '997'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
-    time_series = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_net_ts.txt')
+    time_series = np.load(dir_path + '/997_Default_wb_net_ts.npy')
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path,'rb')
     labels = pickle.load(labels_file)
