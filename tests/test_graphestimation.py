@@ -15,17 +15,17 @@ except ImportError:
 from pynets import graphestimation
 from pathlib import Path
 
-def test_get_conn_matrix_cov():
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/997'
-    time_series_file = dir_path + '/coords_power_2011/997_wb_net_ts.txt'
-    conn_model = 'cov'
-    time_series = np.genfromtxt(time_series_file)
+#def test_get_conn_matrix_cov():
+#    base_dir = str(Path(__file__).parent/"examples")
+#    dir_path = base_dir + '/997'
+#    time_series_file = dir_path + '/coords_power_2011/997_wb_net_ts.txt'
+#    conn_model = 'cov'
+#    time_series = np.genfromtxt(time_series_file)
 
-    start_time = time.time()
-    conn_matrix = graphestimation.get_conn_matrix(time_series, conn_model)
-    print("%s%s%s" % ('get_conn_matrix --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
-    assert conn_matrix is not None
+#    start_time = time.time()
+#    conn_matrix = graphestimation.get_conn_matrix(time_series, conn_model)
+#    print("%s%s%s" % ('get_conn_matrix --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
+#    assert conn_matrix is not None
 
 def test_extract_ts_rsn_parc():
     # Set example inputs

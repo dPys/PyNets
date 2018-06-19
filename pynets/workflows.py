@@ -116,6 +116,9 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                   output_names=['ts_within_nodes', 'node_size'],
                                                   function=graphestimation.extract_ts_coords, imports=import_list),
                                      name="extract_ts_wb_coords_node")
+        extract_ts_wb_node.interface.mem_gb = 4
+        extract_ts_wb_node.interface.num_threads = 2
+
         if node_size_list:
             node_size_iterables = []
             node_size_iterables.append(("node_size", node_size_list))
@@ -450,6 +453,9 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                    output_names=['ts_within_nodes', 'node_size'],
                                                    function=graphestimation.extract_ts_coords, imports=import_list),
                                       name="extract_ts_rsn_coords_node")
+
+        extract_ts_rsn_node.interface.mem_gb = 4
+        extract_ts_rsn_node.interface.num_threads = 2
 
         if node_size_list:
             node_size_iterables = []
