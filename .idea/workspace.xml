@@ -3,15 +3,14 @@
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/graphestimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/graphestimation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/setup.cfg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/997/997_connectogram_sps.json" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_connectogram_sps.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/997/997_fdg_sps.json" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_fdg_sps.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/997_parcels_resampled2mask_pDMN_3_bin.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_parcels_resampled2mask_pDMN_3_bin.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Default_parcels.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/Default_parcels.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/label_file_tmp.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/label_file_tmp.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/997/997_whole_brain_cluster_labels_PCA200_func_adj_mat_sps_0.95_2.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_whole_brain_cluster_labels_PCA200_func_adj_mat_sps_0.95_2.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/997/997_whole_brain_cluster_labels_PCA200_func_adj_mat_sps_99%_0.95.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_whole_brain_cluster_labels_PCA200_func_adj_mat_sps_99%_0.95.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/997/coords_plotting.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/coords_plotting.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/997/labelnames_plotting.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/labelnames_plotting.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/997/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/997/whole_brain_cluster_labels_PCA200/WB_func_coords_wb.pkl" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/test_plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_plotting.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
@@ -61,11 +60,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="plotting.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="plotting.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/plotting.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="342">
-              <caret line="374" column="38" selection-start-line="374" selection-start-column="38" selection-end-line="374" selection-end-column="50" />
+            <state relative-caret-position="272">
+              <caret line="374" column="51" lean-forward="true" selection-start-line="374" selection-start-column="51" selection-end-line="374" selection-end-column="51" />
               <folding>
                 <element signature="e#109#127#0" expanded="true" />
               </folding>
@@ -73,11 +72,14 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="test_plotting.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="test_plotting.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tests/test_plotting.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2967">
-              <caret line="130" column="41" lean-forward="true" selection-start-line="130" selection-start-column="41" selection-end-line="130" selection-end-column="41" />
+            <state relative-caret-position="333">
+              <caret line="69" column="54" lean-forward="true" selection-start-line="69" selection-start-column="54" selection-end-line="69" selection-end-column="54" />
+              <folding>
+                <element signature="e#114#132#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -147,11 +149,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>pickle.</find>
-      <find>raise</find>
-      <find />
-      <find>node_size_list</find>
-      <find>conn_model_list</find>
       <find>workflow_selector</find>
       <find>node</find>
       <find>conn_model_iterables</find>
@@ -177,6 +174,11 @@
       <find>plt.</find>
       <find>pickle</find>
       <find>pickle.load</find>
+      <find>protocol</find>
+      <find>WB</find>
+      <find>997_est</find>
+      <find>.pkl</find>
+      <find>dump</find>
     </findStrings>
     <replaceStrings>
       <replace>#</replace>
@@ -185,6 +187,9 @@
       <replace>'s'))</replace>
       <replace />
       <replace />
+      <replace>Default</replace>
+      <replace>997_Default_est</replace>
+      <replace>_wb.pkl</replace>
       <replace>'Svg'</replace>
     </replaceStrings>
   </component>
@@ -220,9 +225,9 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="167" />
-    <option name="y" value="585" />
+  <component name="ProjectFrameBounds" extendedState="1">
+    <option name="x" value="124" />
+    <option name="y" value="23" />
     <option name="width" value="1123" />
     <option name="height" value="877" />
   </component>
@@ -338,7 +343,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="246" y="23" width="1123" height="877" extended-state="0" />
+    <frame x="124" y="23" width="1123" height="877" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -767,13 +772,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="297">
-          <caret line="344" column="44" selection-start-line="344" selection-start-column="44" selection-end-line="344" selection-end-column="44" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/graphestimation.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="174">
@@ -781,20 +779,30 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/plotting.py">
+    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="342">
-          <caret line="374" column="38" selection-start-line="374" selection-start-column="38" selection-end-line="374" selection-end-column="50" />
-          <folding>
-            <element signature="e#109#127#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="297">
+          <caret line="344" column="44" selection-start-line="344" selection-start-column="44" selection-end-line="344" selection-end-column="44" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_plotting.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2967">
-          <caret line="130" column="41" lean-forward="true" selection-start-line="130" selection-start-column="41" selection-end-line="130" selection-end-column="41" />
+        <state relative-caret-position="333">
+          <caret line="69" column="54" lean-forward="true" selection-start-line="69" selection-start-column="54" selection-end-line="69" selection-end-column="54" />
+          <folding>
+            <element signature="e#114#132#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/plotting.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="374" column="51" lean-forward="true" selection-start-line="374" selection-start-column="51" selection-end-line="374" selection-end-column="51" />
+          <folding>
+            <element signature="e#109#127#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
