@@ -73,10 +73,10 @@ def test_plot_all_nonet_no_mask():
     edge_threshold = '99%'
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path, 'rb')
-    label_names = pickle.load(labels_file)
+    label_names = pickle.load(labels_file, protocol=2)
     coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_coords_wb.pkl'
     coord_file = open(coord_file_path, 'rb')
-    coords = pickle.load(coord_file)
+    coords = pickle.load(coord_file, protocol=2)
 
     start_time = time.time()
     plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold, thr, node_size)
@@ -98,10 +98,10 @@ def test_plot_all_nonet_with_mask():
     edge_threshold = '99%'
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path, 'rb')
-    label_names = pickle.load(labels_file)
+    label_names = pickle.load(labels_file, protocol=2)
     coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_coords_wb.pkl'
     coord_file = open(coord_file_path, 'rb')
-    coords = pickle.load(coord_file)
+    coords = pickle.load(coord_file, protocol=2)
 
     start_time = time.time()
     plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold, thr, node_size)
@@ -119,7 +119,7 @@ def test_plot_connectogram():
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_est_sps_0.94.txt')
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path,'rb')
-    label_names = pickle.load(labels_file)
+    label_names = pickle.load(labels_file, protocol=2)
 
     start_time = time.time()
     plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
@@ -136,7 +136,7 @@ def test_plot_timeseries():
     time_series = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_wb_net_ts.txt')
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path,'rb')
-    labels = pickle.load(labels_file)
+    labels = pickle.load(labels_file, protocol=2)
 
     start_time = time.time()
     plotting.plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels)
