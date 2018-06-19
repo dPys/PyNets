@@ -1053,7 +1053,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     # Calculate modularity using the Louvain algorithm
     try:
         [_, modularity] = modularity_louvain_dir(in_mat)
-        metric_list_names.append('Modularity')
+        metric_list_names.append('modularity')
         net_met_val_list_final.append(modularity)
     except RuntimeWarning:
         print('Louvain modularity calculation is undefined for graph G')
@@ -1062,7 +1062,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     # Calculate core-periphery subdivision
     try:
         [_, Coreness_q] = core_periphery_dir(in_mat)
-        metric_list_names.append('Coreness')
+        metric_list_names.append('coreness')
         net_met_val_list_final.append(Coreness_q)
     except RuntimeWarning:
         print('Coreness calculation is undefined for graph G')
@@ -1091,7 +1091,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
                 le_arr[j, 1] = np.nan
             #print(str(le_vals[j]))
             j = j + 1
-        le_arr[num_nodes, 0] = 'MEAN_local_efficiency'
+        le_arr[num_nodes, 0] = 'average_local_efficiency_nodewise'
         nonzero_arr_le = np.delete(le_arr[:, 1], [0])
         le_arr[num_nodes, 1] = np.mean(nonzero_arr_le)
         print("%s%s" % ('Mean Local Efficiency across nodes: ', str(le_arr[num_nodes, 1])))
@@ -1121,7 +1121,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
                 cl_arr[j, 1] = np.nan
             #print(str(cl_vals[j]))
             j = j + 1
-        cl_arr[num_nodes, 0] = 'MEAN_local_efficiency'
+        cl_arr[num_nodes, 0] = 'average_local_efficiency_nodewise'
         nonzero_arr_cl = np.delete(cl_arr[:, 1], [0])
         cl_arr[num_nodes, 1] = np.mean(nonzero_arr_cl)
         print("%s%s" % ('Mean Local Clustering across nodes: ', str(cl_arr[num_nodes, 1])))
@@ -1155,7 +1155,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
                 dc_arr[j, 1] = np.nan
             #print(str(cl_vals[j]))
             j = j + 1
-        dc_arr[num_nodes, 0] = 'MEAN_degree_cent'
+        dc_arr[num_nodes, 0] = 'average_degree_cent'
         nonzero_arr_dc = np.delete(dc_arr[:, 1], [0])
         dc_arr[num_nodes, 1] = np.mean(nonzero_arr_dc)
         print("%s%s" % ('Mean Degree Centrality across nodes: ', str(dc_arr[num_nodes, 1])))
@@ -1185,7 +1185,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
                 bc_arr[j, 1] = np.nan
             #print(str(bc_vals[j]))
             j = j + 1
-        bc_arr[num_nodes, 0] = 'MEAN_betw_cent'
+        bc_arr[num_nodes, 0] = 'average_betweenness_centrality'
         nonzero_arr_betw_cent = np.delete(bc_arr[:, 1], [0])
         bc_arr[num_nodes, 1] = np.mean(nonzero_arr_betw_cent)
         print("%s%s" % ('Mean Betweenness Centrality across nodes: ', str(bc_arr[num_nodes, 1])))
@@ -1219,7 +1219,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
                 ec_arr[j, 1] = np.nan
             #print(str(ec_vals[j]))
             j = j + 1
-        ec_arr[num_nodes, 0] = 'MEAN_eig_cent'
+        ec_arr[num_nodes, 0] = 'average_eigenvector_centrality'
         nonzero_arr_eig_cent = np.delete(ec_arr[:, 1], [0])
         ec_arr[num_nodes, 1] = np.mean(nonzero_arr_eig_cent)
         print("%s%s" % ('Mean Eigenvector Centrality across nodes: ', str(ec_arr[num_nodes, 1])))
@@ -1249,7 +1249,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
                 cc_arr[j, 1] = np.nan
             #print(str(cc_vals[j]))
             j = j + 1
-        cc_arr[num_nodes, 0] = 'MEAN_comm_cent'
+        cc_arr[num_nodes, 0] = 'average_communicability_centrality'
         nonzero_arr_comm_cent = np.delete(cc_arr[:, 1], [0])
         cc_arr[num_nodes, 1] = np.mean(nonzero_arr_comm_cent)
         print("%s%s" % ('Mean Communicability Centrality across nodes: ', str(cc_arr[num_nodes, 1])))
@@ -1280,7 +1280,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
             #print(str(rc_vals[j]))
             j = j + 1
         # Add mean
-        rc_arr[num_edges, 0] = 'MEAN_rich_club'
+        rc_arr[num_edges, 0] = 'average_rich_club_coefficient'
         nonzero_arr_rich_club = np.delete(rc_arr[:, 1], [0])
         rc_arr[num_edges, 1] = np.mean(nonzero_arr_rich_club)
         print("%s%s" % ('Mean Rich Club Coefficient across edges: ', str(rc_arr[num_edges, 1])))

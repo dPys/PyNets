@@ -13,18 +13,21 @@ import numpy as np
 
 def nilearn_atlas_helper(atlas_select):
     from nilearn import datasets
-    try:
-        parlistfile = getattr(datasets, 'fetch_%s' % atlas_select)().maps
-        try:
-            label_names = getattr(datasets, 'fetch_%s' % atlas_select)().labels
-        except:
+    if len(list(getattr(datasets, 'fetch_%s' % atlas_select)().keys())) > 0:
+        if 'maps' in list(getattr(datasets, 'fetch_%s' % atlas_select)().keys()):
+            parlistfile = [i.decode("utf-8") for i in getattr(datasets, 'fetch_%s' % atlas_select)().maps]
+        else:
+            parlistfile = None
+        if 'labels' in list(getattr(datasets, 'fetch_%s' % atlas_select)().keys()):
+            label_names = [i.decode("utf-8") for i in getattr(datasets, 'fetch_%s' % atlas_select)().labels]
+        else:
             label_names = None
-        try:
-            networks_list = getattr(datasets, 'fetch_%s' % atlas_select)().networks
-        except:
+        if 'networks' in list(getattr(datasets, 'fetch_%s' % atlas_select)().keys()):
+            networks_list = [i.decode("utf-8") for i in getattr(datasets, 'fetch_%s' % atlas_select)().networks]
+        else:
             networks_list = None
-    except RuntimeError:
-        print('Extraction from nilearn datasets failed!')
+    else:
+        raise RuntimeWarning('Extraction from nilearn datasets failed!')
     return label_names, networks_list, parlistfile
 
 
@@ -175,7 +178,6 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
     from matplotlib import pyplot as plt
     from itertools import chain
     from pynets import utils
-    from matplotlib import colors
 
     if parc is True:
         node_size = 'parc'
@@ -719,11 +721,13 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
         net_pickle_mt_list.sort()
 
         list_ = []
+        models = []
         for file_ in net_pickle_mt_list:
             df = pd.read_pickle(file_)
             try:
                 node_cols = [s for s in list(df.columns) if isinstance(s, int) or any(c.isdigit() for c in s)]
                 df = df.drop(node_cols, axis=1)
+                models.append(os.path.basename(file_))
             except RuntimeError:
                 print('Error: Node column removal failed for mean stats file...')
             list_.append(df)
@@ -733,25 +737,38 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
             list_of_dicts = [cur_df.T.to_dict().values() for cur_df in list_]
             #df_concat = pd.concat(list_, axis=1)
             df_concat = pd.DataFrame(list(chain(*list_of_dicts)))
+            df_concat["Model"] = np.array([i.replace('_net_metrics','') for i in models])
             measures = list(df_concat.columns)
             measures.remove('id')
+            measures.remove('Model')
             print('Saving model plots...')
             for name in measures:
                 x = np.array(df_concat[name])
                 fig, ax = plt.subplots(tight_layout=True)
-                ax.hist(x)
+                if True in np.isnan(x):
+                    x = x[~np.isnan(x)]
+                    if len(x) > 0:
+                        print("%s%s%s" % ('NaNs encountered for ', name, '. Plotting and averaging across non-missing values. Checking output is recommended...'))
+                        ax.hist(x)
+                    else:
+                        raise RuntimeWarning("%s%s" % ('No numeric data to plot for ', name))
+                else:
+                    ax.hist(x)
                 out_path_fig = "%s%s%s%s" % (os.path.dirname(os.path.dirname(file_)), '/', name, '_mean_plot.png')
                 fig.savefig(out_path_fig)
-            df_concatted = df_concat.loc[:, df_concat.columns != 'id'].mean().to_frame().transpose()
-            df_concatted['id'] = df_concat['id'].head(1)
-            df_concatted = df_concatted[df_concatted.columns[::-1]]
+                plt.close('all')
+            df_concatted = df_concat.loc[:, measures].mean().to_frame().transpose()
+            df_concatted_std = df_concat.loc[:, measures].std().to_frame().transpose()
+            df_concatted_std.columns = [str(col) + '_std_dev' for col in df_concatted_std.columns]
+            result = pd.concat([df_concatted, df_concatted_std], axis=1)
+            df_concatted_final = result.reindex(sorted(result.columns), axis=1)
             print('\nConcatenating dataframes for ' + str(ID) + '...\n')
             if network:
                 net_pick_out_path = "%s%s%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle, '_', network, '_mean')
             else:
                 net_pick_out_path = "%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle, '_mean')
-            df_concatted.to_pickle(net_pick_out_path)
-            df_concatted.to_csv(net_pick_out_path + '.csv', index=False)
+            df_concatted_final.to_pickle(net_pick_out_path)
+            df_concatted_final.to_csv(net_pick_out_path + '.csv', index=False)
         except RuntimeWarning:
             print("%s%s%s" % ('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ', str(ID), '!\n'))
             pass
