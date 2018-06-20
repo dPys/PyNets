@@ -73,7 +73,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                            imports=import_list), name="clustering_node")
     if k_clustering == 2 or k_clustering == 3 or k_clustering == 4:
         clustering_node.interface.mem_gb = 4
-        clustering_node.interface.num_threads = 2
+        clustering_node.interface.num_threads = 1
 
     WB_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt',
                                                                        'parc', 'func_file'],
@@ -96,8 +96,8 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                              output_names=['net_parcels_map_nifti', 'coords', 'label_names'],
                                              function=nodemaker.node_gen, imports=import_list), name = "node_gen_node")
 
-    node_gen_node.interface.mem_gb = 4
-    node_gen_node.interface.num_threads = 2
+    node_gen_node.interface.mem_gb = 2
+    node_gen_node.interface.num_threads = 1
 
     # Extract time-series from nodes
     if parc is True:
@@ -119,13 +119,14 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                   output_names=['ts_within_nodes', 'node_size'],
                                                   function=graphestimation.extract_ts_coords, imports=import_list),
                                      name="extract_ts_wb_coords_node")
-        extract_ts_wb_node.interface.mem_gb = 4
-        extract_ts_wb_node.interface.num_threads = 1
 
         if node_size_list:
             node_size_iterables = []
             node_size_iterables.append(("node_size", node_size_list))
             extract_ts_wb_node.iterables = node_size_iterables
+
+    extract_ts_wb_node.interface.mem_gb = 2
+    extract_ts_wb_node.interface.num_threads = 1
 
     thresh_and_fit_node = pe.Node(niu.Function(input_names=['dens_thresh', 'thr', 'ts_within_nodes', 'conn_model',
                                                             'network', 'ID', 'dir_path', 'mask', 'node_size'],
@@ -134,8 +135,8 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                function=thresholding.thresh_and_fit, imports=import_list),
                                   name="thresh_and_fit_node")
 
-    thresh_and_fit_node.interface.mem_gb = 4
-    thresh_and_fit_node.interface.num_threads = 2
+    thresh_and_fit_node.interface.mem_gb = 2
+    thresh_and_fit_node.interface.num_threads = 1
 
     if conn_model_list:
         conn_model_iterables = []
@@ -404,7 +405,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                            imports=import_list), name="clustering_node")
     if k_clustering == 2 or k_clustering == 3 or k_clustering == 4:
         clustering_node.interface.mem_gb = 4
-        clustering_node.interface.num_threads = 2
+        clustering_node.interface.num_threads = 1
 
     RSN_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt',
                                                                         'parc', 'func_file'],
@@ -435,8 +436,8 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                              output_names=['net_parcels_map_nifti', 'coords', 'label_names'],
                                              function=nodemaker.node_gen, imports=import_list), name="node_gen_node")
 
-    node_gen_node.interface.mem_gb = 4
-    node_gen_node.interface.num_threads = 2
+    node_gen_node.interface.mem_gb = 2
+    node_gen_node.interface.num_threads = 1
 
     save_coords_and_labels_node = pe.Node(niu.Function(input_names=['coords', 'label_names', 'dir_path', 'network'],
                                                        function=utils.save_RSN_coords_and_labels_to_pickle,
@@ -463,13 +464,13 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                    function=graphestimation.extract_ts_coords, imports=import_list),
                                       name="extract_ts_rsn_coords_node")
 
-        extract_ts_rsn_node.interface.mem_gb = 4
-        extract_ts_rsn_node.interface.num_threads = 2
-
         if node_size_list:
             node_size_iterables = []
             node_size_iterables.append(("node_size", node_size_list))
             extract_ts_rsn_node.iterables = node_size_iterables
+
+    extract_ts_rsn_node.interface.mem_gb = 2
+    extract_ts_rsn_node.interface.num_threads = 1
 
     thresh_and_fit_node = pe.Node(niu.Function(input_names=['dens_thresh', 'thr', 'ts_within_nodes', 'conn_model',
                                                             'network', 'ID', 'dir_path', 'mask', 'node_size'],
@@ -478,8 +479,8 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                function=thresholding.thresh_and_fit, imports=import_list),
                                   name="thresh_and_fit_node")
 
-    thresh_and_fit_node.interface.mem_gb = 4
-    thresh_and_fit_node.interface.num_threads = 2
+    thresh_and_fit_node.interface.mem_gb = 2
+    thresh_and_fit_node.interface.num_threads = 1
 
     if conn_model_list:
         conn_model_iterables = []

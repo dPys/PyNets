@@ -1,9 +1,9 @@
-PyNets
+PyNets™
 ======
 
 About
 -----
-A Python-Powered Workflow for Fully-Reproducible Network Analysis of Functional and Microstructural Connectomes
+A Python-Powered Workflow for Fully-Reproducible Network Analysis of Functional and Structural Connectomes
 
 Problem: A comprehensive, flexible, and fully-automated intra-subject network analysis package for neuroimaging has yet to be implemented.
 
