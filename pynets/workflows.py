@@ -10,7 +10,7 @@ import numpy as np
 def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, conn_model,
                                 dens_thresh, conf, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr,
                                 multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step,
-                                k_clustering, user_atlas_list, clust_mask_list, node_size_list):
+                                k_clustering, user_atlas_list, clust_mask_list, node_size_list, conn_model_list):
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets import nodemaker, utils, graphestimation, plotting, thresholding
@@ -63,6 +63,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     inputnode.inputs.clust_mask_list = clust_mask_list
     inputnode.inputs.node_size_list = node_size_list
     inputnode.inputs.multi_nets = None
+    inputnode.inputs.conn_model_list = conn_model_list
 
     #3) Add variable to function nodes
     # Create function nodes
@@ -95,6 +96,9 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                              output_names=['net_parcels_map_nifti', 'coords', 'label_names'],
                                              function=nodemaker.node_gen, imports=import_list), name = "node_gen_node")
 
+    node_gen_node.interface.mem_gb = 4
+    node_gen_node.interface.num_threads = 2
+
     # Extract time-series from nodes
     if parc is True:
         save_nifti_parcels_node = pe.Node(niu.Function(input_names=['ID', 'dir_path', 'mask', 'network',
@@ -115,6 +119,9 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                   output_names=['ts_within_nodes', 'node_size'],
                                                   function=graphestimation.extract_ts_coords, imports=import_list),
                                      name="extract_ts_wb_coords_node")
+        extract_ts_wb_node.interface.mem_gb = 4
+        extract_ts_wb_node.interface.num_threads = 1
+
         if node_size_list:
             node_size_iterables = []
             node_size_iterables.append(("node_size", node_size_list))
@@ -126,6 +133,14 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                              'node_size', 'network'],
                                                function=thresholding.thresh_and_fit, imports=import_list),
                                   name="thresh_and_fit_node")
+
+    thresh_and_fit_node.interface.mem_gb = 4
+    thresh_and_fit_node.interface.num_threads = 2
+
+    if conn_model_list:
+        conn_model_iterables = []
+        conn_model_iterables.append(("conn_model", conn_model_list))
+        thresh_and_fit_node.iterables = conn_model_iterables
 
     # Plotting
     if plot_switch is True:
@@ -142,10 +157,12 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     if multi_thr is True:
         thresh_and_fit_node_iterables = []
         iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
-        float(max_thr), float(step_thr)), decimals=2).tolist()]
+        float(max_thr), float(step_thr)), decimals=2).tolist()] + [str(float(max_thr))]
         thresh_and_fit_node_iterables.append(("thr", iter_thresh))
         if node_size_list and parc is False:
             thresh_and_fit_node_iterables.append(("node_size", node_size_list))
+        if conn_model_list:
+            thresh_and_fit_node_iterables.append(("conn_model", conn_model_list))
         thresh_and_fit_node.iterables = thresh_and_fit_node_iterables
     if multi_atlas is not None:
         WB_fetch_nodes_and_labels_node_iterables = []
@@ -172,9 +189,16 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
         k_cluster_iterables.append(("clust_mask", clust_mask_list))
         clustering_node.iterables = k_cluster_iterables
     if node_size_list and parc is False and multi_thr is False:
-        node_size_iterables = []
-        node_size_iterables.append(("node_size", node_size_list))
-        thresh_and_fit_node.iterables = node_size_iterables
+        if conn_model_list:
+            conn_model_iterables = []
+            node_size_iterables = []
+            conn_model_iterables.append(("conn_model", conn_model_list))
+            node_size_iterables.append(("node_size", node_size_list))
+            thresh_and_fit_node.iterables = node_size_iterables + conn_model_iterables
+        else:
+            node_size_iterables = []
+            node_size_iterables.append(("node_size", node_size_list))
+            thresh_and_fit_node.iterables = node_size_iterables
 
     # Connect nodes of workflow
     wb_functional_connectometry_wf.connect([
@@ -317,7 +341,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
 def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets,
                                  conn_model, dens_thresh, conf, plot_switch, parc, ref_txt, procmem, dir_path,
                                  multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max,
-                                 k_step, k_clustering, user_atlas_list, clust_mask_list, node_size_list):
+                                 k_step, k_clustering, user_atlas_list, clust_mask_list, node_size_list, conn_model_list):
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets import nodemaker, utils, graphestimation, plotting, thresholding
@@ -370,6 +394,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     inputnode.inputs.clust_mask_list = clust_mask_list
     inputnode.inputs.node_size_list = node_size_list
     inputnode.inputs.multi_nets = multi_nets
+    inputnode.inputs.conn_model_list = conn_model_list
 
     #3) Add variable to function nodes
     # Create function nodes
@@ -410,6 +435,9 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                              output_names=['net_parcels_map_nifti', 'coords', 'label_names'],
                                              function=nodemaker.node_gen, imports=import_list), name="node_gen_node")
 
+    node_gen_node.interface.mem_gb = 4
+    node_gen_node.interface.num_threads = 2
+
     save_coords_and_labels_node = pe.Node(niu.Function(input_names=['coords', 'label_names', 'dir_path', 'network'],
                                                        function=utils.save_RSN_coords_and_labels_to_pickle,
                                                        imports=import_list), name="save_coords_and_labels_node")
@@ -435,6 +463,9 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                    function=graphestimation.extract_ts_coords, imports=import_list),
                                       name="extract_ts_rsn_coords_node")
 
+        extract_ts_rsn_node.interface.mem_gb = 4
+        extract_ts_rsn_node.interface.num_threads = 2
+
         if node_size_list:
             node_size_iterables = []
             node_size_iterables.append(("node_size", node_size_list))
@@ -446,10 +477,14 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                              'node_size', 'network'],
                                                function=thresholding.thresh_and_fit, imports=import_list),
                                   name="thresh_and_fit_node")
-    if node_size_list and parc is False:
-        node_size_iterables = []
-        node_size_iterables.append(("node_size", node_size_list))
-        thresh_and_fit_node.iterables = node_size_iterables
+
+    thresh_and_fit_node.interface.mem_gb = 4
+    thresh_and_fit_node.interface.num_threads = 2
+
+    if conn_model_list:
+        conn_model_iterables = []
+        conn_model_iterables.append(("conn_model", conn_model_list))
+        thresh_and_fit_node.iterables = conn_model_iterables
 
     # Plotting
     if plot_switch is True:
@@ -464,10 +499,12 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     if multi_thr is True:
         thresh_and_fit_node_iterables = []
         iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
-        float(max_thr), float(step_thr)),decimals=2).tolist()]
+        float(max_thr), float(step_thr)), decimals=2).tolist()] + [str(float(max_thr))]
         thresh_and_fit_node_iterables.append(("thr", iter_thresh))
         if node_size_list and parc is False:
             thresh_and_fit_node_iterables.append(("node_size", node_size_list))
+        if conn_model_list:
+            thresh_and_fit_node_iterables.append(("conn_model", conn_model_list))
         thresh_and_fit_node.iterables = thresh_and_fit_node_iterables
     if multi_atlas is not None:
         RSN_fetch_nodes_and_labels_node_iterables = []
@@ -485,7 +522,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
         get_node_membership_node.iterables = get_node_membership_node_iterables
     if k_clustering == 2:
         k_cluster_iterables = []
-        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist()
         k_cluster_iterables.append(("k", k_list))
         clustering_node.iterables = k_cluster_iterables
     elif k_clustering == 3:
@@ -494,14 +531,21 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
         clustering_node.iterables = k_cluster_iterables
     elif k_clustering == 4:
         k_cluster_iterables = []
-        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist()
         k_cluster_iterables.append(("k", k_list))
         k_cluster_iterables.append(("clust_mask", clust_mask_list))
         clustering_node.iterables = k_cluster_iterables
     if node_size_list and parc is False and multi_thr is False:
-        node_size_iterables = []
-        node_size_iterables.append(("node_size", node_size_list))
-        thresh_and_fit_node.iterables = node_size_iterables
+        if conn_model_list:
+            conn_model_iterables = []
+            node_size_iterables = []
+            conn_model_iterables.append(("conn_model", conn_model_list))
+            node_size_iterables.append(("node_size", node_size_list))
+            thresh_and_fit_node.iterables = node_size_iterables + conn_model_iterables
+        else:
+            node_size_iterables = []
+            node_size_iterables.append(("node_size", node_size_list))
+            thresh_and_fit_node.iterables = node_size_iterables
 
     # Connect nodes of workflow
     rsn_functional_connectometry_wf.connect([
@@ -685,7 +729,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
 def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt,
                                 procmem, dir_path, bedpostx_dir, anat_loc, thr, dens_thresh, conn_model,
                                 user_atlas_list, multi_thr, multi_atlas, max_thr, min_thr, step_thr, node_size_list,
-                                num_total_samples):
+                                num_total_samples, conn_model_list):
     import os.path
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -732,6 +776,7 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     inputnode.inputs.step_thr = step_thr
     inputnode.inputs.node_size_list = node_size_list
     inputnode.inputs.num_total_samples = num_total_samples
+    inputnode.inputs.conn_model_list = conn_model_list
 
 
     #3) Add variable to function nodes
@@ -836,7 +881,7 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     if multi_thr is True:
         thresh_diff_node_iterables = []
         iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
-        float(max_thr), float(step_thr)),decimals=2).tolist()]
+        float(max_thr), float(step_thr)), decimals=2).tolist()] + [str(float(max_thr))]
         thresh_diff_node_iterables.append(("thr", iter_thresh))
         thresh_diff_node.iterables = thresh_diff_node_iterables
 
@@ -950,7 +995,7 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
 def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt,
                                  procmem, dir_path, bedpostx_dir, anat_loc, thr, dens_thresh, conn_model,
                                  user_atlas_list, multi_thr, multi_atlas, max_thr, min_thr, step_thr, node_size_list,
-                                 num_total_samples):
+                                 num_total_samples, conn_model_list):
     import os.path
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -998,6 +1043,7 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
     inputnode.inputs.step_thr = step_thr
     inputnode.inputs.node_size_list = node_size_list
     inputnode.inputs.num_total_samples = num_total_samples
+    inputnode.inputs.conn_model_list = conn_model_list
 
     #3) Add variable to function nodes
     # Create function nodes
@@ -1108,7 +1154,7 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
     if multi_thr is True:
         thresh_diff_node_iterables = []
         iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
-        float(max_thr), float(step_thr)),decimals=2).tolist()]
+        float(max_thr), float(step_thr)), decimals=2).tolist()] + [str(float(max_thr))]
         thresh_diff_node_iterables.append(("thr", iter_thresh))
         thresh_diff_node.iterables = thresh_diff_node_iterables
 

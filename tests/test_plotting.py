@@ -27,9 +27,9 @@ def test_plot_conn_mat_nonet_no_mask():
     conn_model = 'sps'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     mask = None
-    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_est_sps_0.94.txt')
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_labelnames_wb.pkl'
-    labels_file = open(labels_file_path,'rb')
+    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.94.txt')
+    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+    labels_file = open(labels_file_path, 'rb')
     label_names = pickle.load(labels_file)
 
     start_time = time.time()
@@ -48,8 +48,8 @@ def test_plot_conn_mat_nonet_mask():
     conn_model = 'sps'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     mask = None
-    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_est_sps_0.94.txt')
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_labelnames_wb.pkl'
+    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.94.txt')
+    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path,'rb')
     label_names = pickle.load(labels_file)
 
@@ -69,12 +69,12 @@ def test_plot_all_nonet_no_mask():
     conn_model = 'sps'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     mask = None
-    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_est_sps_0.94.txt')
+    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.94.txt')
     edge_threshold = '99%'
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_labelnames_wb.pkl'
+    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path, 'rb')
     label_names = pickle.load(labels_file)
-    coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_coords_wb.pkl'
+    coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     coord_file = open(coord_file_path, 'rb')
     coords = pickle.load(coord_file)
 
@@ -94,12 +94,12 @@ def test_plot_all_nonet_with_mask():
     conn_model = 'sps'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     mask = None
-    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_est_sps_0.94.txt')
+    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.94.txt')
     edge_threshold = '99%'
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_labelnames_wb.pkl'
+    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path, 'rb')
     label_names = pickle.load(labels_file)
-    coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_coords_wb.pkl'
+    coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     coord_file = open(coord_file_path, 'rb')
     coords = pickle.load(coord_file)
 
@@ -116,8 +116,8 @@ def test_plot_connectogram():
     ID = '997'
     conn_model = 'sps'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
-    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_est_sps_0.94.txt')
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_labelnames_wb.pkl'
+    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.94.txt')
+    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path,'rb')
     label_names = pickle.load(labels_file)
 
@@ -133,8 +133,8 @@ def test_plot_timeseries():
     network = None
     ID = '997'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
-    time_series = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_wb_net_ts.txt')
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/WB_func_labelnames_wb.pkl'
+    time_series = np.load(dir_path + '/997_Default_wb_net_ts.npy')
+    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path,'rb')
     labels = pickle.load(labels_file)
 

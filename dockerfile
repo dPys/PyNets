@@ -1,4 +1,4 @@
-FROM debian:stretch-slim
+FROM neurodebian:stretch
 
 ARG DEBIAN_FRONTEND="noninteractive"
 
@@ -57,7 +57,7 @@ RUN conda install -yq \
       traits \
       ipython \
     && conda clean -tipsy \
-    && pip install pynets==0.5.81
+    && pip install pynets==0.5.86
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
