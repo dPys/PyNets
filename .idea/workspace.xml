@@ -1,55 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.pytest_cache/v/cache/lastfailed" beforeDir="false" afterPath="$PROJECT_DIR$/.pytest_cache/v/cache/lastfailed" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MANIFEST.in" beforeDir="false" afterPath="$PROJECT_DIR$/MANIFEST.in" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/AAL2zourioMazoyer2002.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/AALTzourioMazoyer2002.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/AICHAJoliot2015.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/AICHAreorderedJoliot2015.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/BrainnetomeAtlasFan2016.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/CorticalAreaParcellationfromRestingStateCorrelationsGordon2014.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/DesikanKlein2012.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/Hammers_mithAtlasn30r83Hammers2003Gousias2008.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/HarvardOxfordThr252mmWholeBrainMakris2006.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/Juelichgmthr252mmEickhoff2005..txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/RandomParcellationsc05meanalll43Craddock2011.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/VoxelwiseParcellationt0435kLeadDBS.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/VoxelwiseParcellationt0515kLeadDBS.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/VoxelwiseParcellationt058kLeadDBS.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/atlases/destrieux2009_rois.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/basc_config.yaml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/clustools.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/clustools.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/diffconnectometry.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/diffconnectometry.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/graphestimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/graphestimation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/netstats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/nodemaker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/thresholding.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/setup.cfg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/997_Default_wb_net_ts.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_Default_wb_net_ts.npy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/997_Whole_Brain_TS_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_Whole_Brain_TS_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/997_connectogram_sps.json" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_connectogram_sps.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/997_fdg_sps.json" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_fdg_sps.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/997_parcels_resampled2mask_pDMN_3_bin.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_parcels_resampled2mask_pDMN_3_bin.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/997_whole_brain_cluster_labels_PCA200_func_adj_mat_sps_0.95_2.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_whole_brain_cluster_labels_PCA200_func_adj_mat_sps_0.95_2.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/997_whole_brain_cluster_labels_PCA200_func_adj_mat_sps_99%_0.95.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_whole_brain_cluster_labels_PCA200_func_adj_mat_sps_99%_0.95.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/997_whole_brain_cluster_labels_PCA200_sps_99%_0.95_func_glass_viz.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_whole_brain_cluster_labels_PCA200_sps_99%_0.95_func_glass_viz.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Default_parcels.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/Default_parcels.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/label_file_tmp.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/label_file_tmp.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_graphestimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_graphestimation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_plotting.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_thresholding.py" afterDir="false" />
-    </list>
+    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="" />
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -143,11 +95,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="utils.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="utils.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="17441">
-              <caret line="766" column="23" selection-start-line="766" selection-start-column="23" selection-end-line="766" selection-end-column="23" />
+            <state relative-caret-position="198">
+              <caret line="741" column="33" lean-forward="true" selection-start-line="741" selection-start-column="33" selection-end-line="741" selection-end-column="33" />
               <folding>
                 <element signature="e#132#141#0" expanded="true" />
               </folding>
@@ -155,11 +107,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="netstats.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="netstats.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/netstats.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="16355">
-              <caret line="1291" column="46" lean-forward="true" selection-start-line="1291" selection-start-column="46" selection-end-line="1291" selection-end-column="46" />
+            <state relative-caret-position="25">
+              <caret line="581" column="14" lean-forward="true" selection-start-line="581" selection-start-column="14" selection-end-line="581" selection-end-column="14" />
               <folding>
                 <element signature="e#109#140#0" expanded="true" />
               </folding>
@@ -190,7 +142,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>save_coords_and_labels_node</find>
       <find>create_seed_mask_file</find>
       <find>probtrackx_output_dir</find>
       <find>seeds_dir</find>
@@ -220,6 +171,7 @@
       <find>RunTimeWarning</find>
       <find>test_plot_all_nonet_no_mask</find>
       <find>RuntimeWarning</find>
+      <find>pandas</find>
     </findStrings>
     <replaceStrings>
       <replace>#</replace>
@@ -839,22 +791,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
+    <entry file="file://$PROJECT_DIR$/pynets/netstats.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="17441">
-          <caret line="766" column="23" selection-start-line="766" selection-start-column="23" selection-end-line="766" selection-end-column="23" />
+        <state relative-caret-position="25">
+          <caret line="581" column="14" lean-forward="true" selection-start-line="581" selection-start-column="14" selection-end-line="581" selection-end-column="14" />
           <folding>
-            <element signature="e#132#141#0" expanded="true" />
+            <element signature="e#109#140#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/netstats.py">
+    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="16355">
-          <caret line="1291" column="46" lean-forward="true" selection-start-line="1291" selection-start-column="46" selection-end-line="1291" selection-end-column="46" />
+        <state relative-caret-position="198">
+          <caret line="741" column="33" lean-forward="true" selection-start-line="741" selection-start-column="33" selection-end-line="741" selection-end-column="33" />
           <folding>
-            <element signature="e#109#140#0" expanded="true" />
+            <element signature="e#132#141#0" expanded="true" />
           </folding>
         </state>
       </provider>
