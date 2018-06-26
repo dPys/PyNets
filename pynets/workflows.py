@@ -845,6 +845,13 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                                              'way_mask', 'procmem', 'num_total_samples'],
                                                 function=diffconnectometry.run_probtrackx2, imports=import_list),
                                    name="run_probtrackx2_node")
+
+    run_dipy_tracking_node = pe.Node(niu.Function(input_names=['dwi_dir', 'node_size', 'dir_path',
+                                                               'conn_model', 'parc', 'atlas_select',
+                                                               'network', 'wm_mask'],
+                                                  function=diffconnectometry.dwi_dipy_run, imports=import_list),
+                                     name="run_dipy_tracking_node")
+
     collect_struct_mapping_outputs_node = pe.Node(niu.Function(input_names=['parc', 'dwi_dir', 'network', 'ID',
                                                                             'probtrackx_output_dir_path', 'dir_path',
                                                                             'procmem', 'seeds_dir'],
@@ -1014,6 +1021,48 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                                  [('dir_path', 'dir_path'),
                                                   ('atlas_select', 'atlas_select')])
                                                 ])
+    dwi_img = "%s%s" % (dwi_dir, '/dwi.nii.gz')
+    nodif_brain_mask_path = "%s%s" % (dwi_dir, '/nodif_brain_mask.nii.gz')
+    bvals = "%s%s" % (dwi_dir, '/bval')
+    bvecs = "%s%s" % (dwi_dir, '/bvec')
+    if '.bedpostX' not in dir_path and os.path.exists(dwi_img) and os.path.exists(bvals) and os.path.exists(bvecs) and os.path.exists(nodif_brain_mask_path):
+        wb_structural_connectometry_wf.disconnect(
+            (inputnode, run_probtrackx2_node, [('dwi_dir', 'dwi_dir'),
+                                               ('procmem', 'procmem'),
+                                               ('num_total_samples', 'num_total_samples')]),
+            (create_seed_mask_file_node, run_probtrackx2_node, [('seeds_text', 'seeds_text'),
+                                                                ('probtrackx_output_dir_path',
+                                                                 'probtrackx_output_dir_path')]),
+            (prepare_masks_node, run_probtrackx2_node, [('vent_CSF_diff_mask_path', 'vent_CSF_diff_mask_path'),
+                                                        ('way_mask', 'way_mask')]),
+            (create_seed_mask_file_node, collect_struct_mapping_outputs_node, [('probtrackx_output_dir_path',
+                                                                                'probtrackx_output_dir_path')]),
+            (WB_fetch_nodes_and_labels_node, collect_struct_mapping_outputs_node, [('dir_path', 'dir_path')]),
+            (inputnode, collect_struct_mapping_outputs_node, [('dwi_dir', 'dwi_dir'),
+                                                          ('parc', 'parc'),
+                                                          ('network', 'network'),
+                                                          ('procmem', 'procmem'),
+                                                          ('ID', 'ID')]),
+            (prep_nodes_node, collect_struct_mapping_outputs_node, [('node_size', 'node_size'),
+                                                                    ('seeds_dir', 'seeds_dir')]),
+            (collect_struct_mapping_outputs_node, thresh_diff_node, [('conn_matrix_symm', 'conn_matrix')]),
+            (collect_struct_mapping_outputs_node, structural_plotting_node, [('conn_matrix_symm',
+                                                                              'conn_matrix_symm')]))
+        wb_structural_connectometry_wf.connect(
+            (inputnode, run_dipy_tracking_node, [('dwi_dir', 'dwi_dir'),
+                                                 ('conn_model', 'conn_model'),
+                                                 ('network', 'network'),
+                                                 ('parc', 'parc')]),
+            (create_seed_mask_file_node, run_dipy_tracking_node, [('seeds_text', 'seeds_text'),
+                                                                ('probtrackx_output_dir_path',
+                                                                 'probtrackx_output_dir_path')]),
+            (prepare_masks_node, run_dipy_tracking_node, [('way_mask', 'wm_mask')]),
+            (prep_nodes_node, run_dipy_tracking_node, [('node_size', 'node_size')]),
+            (WB_fetch_nodes_and_labels_node, run_dipy_tracking_node, [('atlas_select', 'atlas_select'),
+                                                                      ('dir_path', 'dir_path')]),
+            (run_dipy_tracking_node, thresh_diff_node, [('conn_matrix', 'conn_matrix')]),
+            (run_dipy_tracking_node, structural_plotting_node, [('conn_matrix', 'conn_matrix')]))
+
     wb_structural_connectometry_wf.config['execution']['crashdump_dir'] = dir_path
     wb_structural_connectometry_wf.config['logging']['log_directory'] = dir_path
     wb_structural_connectometry_wf.config['logging']['workflow_level'] = 'DEBUG'
@@ -1166,6 +1215,13 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                                              'way_mask', 'procmem', 'num_total_samples'],
                                                 function=diffconnectometry.run_probtrackx2, imports=import_list),
                                    name="run_probtrackx2_node")
+
+    run_dipy_tracking_node = pe.Node(niu.Function(input_names=['dwi_dir', 'node_size', 'dir_path',
+                                                               'conn_model', 'parc', 'atlas_select',
+                                                               'network', 'wm_mask'],
+                                                  function=diffconnectometry.dwi_dipy_run, imports=import_list),
+                                     name="run_dipy_tracking_node")
+
     collect_struct_mapping_outputs_node = pe.Node(niu.Function(input_names=['parc', 'dwi_dir', 'network', 'ID',
                                                                             'probtrackx_output_dir_path', 'dir_path',
                                                                             'procmem', 'seeds_dir'],
@@ -1366,6 +1422,49 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
             rsn_structural_connectometry_wf.connect([(get_node_membership_node, thresh_diff_node,
                                                       [('network', 'network')])
                                                      ])
+
+    dwi_img = "%s%s" % (dwi_dir, '/dwi.nii.gz')
+    nodif_brain_mask_path = "%s%s" % (dwi_dir, '/nodif_brain_mask.nii.gz')
+    bvals = "%s%s" % (dwi_dir, '/bval')
+    bvecs = "%s%s" % (dwi_dir, '/bvec')
+    if '.bedpostX' not in dir_path and os.path.exists(dwi_img) and os.path.exists(bvals) and os.path.exists(bvecs) and os.path.exists(nodif_brain_mask_path):
+        rsn_structural_connectometry_wf.disconnect(
+            (inputnode, run_probtrackx2_node, [('dwi_dir', 'dwi_dir'),
+                                               ('procmem', 'procmem'),
+                                               ('num_total_samples', 'num_total_samples')]),
+            (create_seed_mask_file_node, run_probtrackx2_node, [('seeds_text', 'seeds_text'),
+                                                                ('probtrackx_output_dir_path',
+                                                                 'probtrackx_output_dir_path')]),
+            (prepare_masks_node, run_probtrackx2_node, [('vent_CSF_diff_mask_path', 'vent_CSF_diff_mask_path'),
+                                                        ('way_mask', 'way_mask')]),
+            (create_seed_mask_file_node, collect_struct_mapping_outputs_node, [('probtrackx_output_dir_path',
+                                                                                'probtrackx_output_dir_path')]),
+            (RSN_fetch_nodes_and_labels_node, collect_struct_mapping_outputs_node, [('dir_path', 'dir_path')]),
+            (inputnode, collect_struct_mapping_outputs_node, [('dwi_dir', 'dwi_dir'),
+                                                          ('parc', 'parc'),
+                                                          ('network', 'network'),
+                                                          ('procmem', 'procmem'),
+                                                          ('ID', 'ID')]),
+            (prep_nodes_node, collect_struct_mapping_outputs_node, [('node_size', 'node_size'),
+                                                                    ('seeds_dir', 'seeds_dir')]),
+            (collect_struct_mapping_outputs_node, thresh_diff_node, [('conn_matrix_symm', 'conn_matrix')]),
+            (collect_struct_mapping_outputs_node, structural_plotting_node, [('conn_matrix_symm',
+                                                                              'conn_matrix_symm')]))
+        rsn_structural_connectometry_wf.connect(
+            (inputnode, run_dipy_tracking_node, [('dwi_dir', 'dwi_dir'),
+                                                 ('conn_model', 'conn_model'),
+                                                 ('network', 'network'),
+                                                 ('parc', 'parc')]),
+            (create_seed_mask_file_node, run_dipy_tracking_node, [('seeds_text', 'seeds_text'),
+                                                                ('probtrackx_output_dir_path',
+                                                                 'probtrackx_output_dir_path')]),
+            (prepare_masks_node, run_dipy_tracking_node, [('way_mask', 'wm_mask')]),
+            (prep_nodes_node, run_dipy_tracking_node, [('node_size', 'node_size')]),
+            (RSN_fetch_nodes_and_labels_node, run_dipy_tracking_node, [('atlas_select', 'atlas_select'),
+                                                                      ('dir_path', 'dir_path')]),
+            (run_dipy_tracking_node, thresh_diff_node, [('conn_matrix', 'conn_matrix')]),
+            (run_dipy_tracking_node, structural_plotting_node, [('conn_matrix', 'conn_matrix')]))
+
     rsn_structural_connectometry_wf.config['execution']['crashdump_dir'] = dir_path
     rsn_structural_connectometry_wf.config['logging']['log_directory'] = dir_path
     rsn_structural_connectometry_wf.config['logging']['workflow_level'] = 'DEBUG'

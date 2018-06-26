@@ -505,19 +505,18 @@ def run_probtrackx2(i, seeds_text, dwi_dir, probtrackx_output_dir_path, procmem,
     return
 
 
-def dwi_dipy_run(dwi_dir, node_size, dir_path, conn_model, parc, atlas_select, network, wm_mask=None, num_total_samples):
+def dwi_dipy_run(dwi_dir, node_size, dir_path, conn_model, parc, atlas_select, network, wm_mask=None):
     import os
-    import nibabel as nib
     import glob
     import re
     import nipype.interfaces.fsl as fsl
-    from dipy.reconst.dti import TensorModel, fractional_anisotropy, quantize_evecs
-    from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, auto_response, recursive_response
+    from dipy.reconst.dti import TensorModel, quantize_evecs
+    from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     from dipy.tracking.local import LocalTracking, ThresholdTissueClassifier
     from dipy.tracking import utils
     from dipy.direction import peaks_from_model
     from dipy.tracking.eudx import EuDX
-    from dipy.data import get_sphere, get_data
+    from dipy.data import get_sphere
     from dipy.core.gradients import gradient_table
     from dipy.io import read_bvals_bvecs
 
