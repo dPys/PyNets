@@ -290,6 +290,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
             for src, target in fdg_replacements_js.items():
                 line = line.replace(src, target)
             outfile.write(line)
+
     return
 
 

@@ -424,7 +424,8 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
             label_names = dict_df['Region'].tolist()
         else:
             try:
-                ref_txt = "%s%s%s%s" % (str(Path(__file__).parent), '/labelcharts/', atlas_select, '.txt')
+                ref_txt = "%s%s%s" % ('/Users/PSYC-dap3463/Applications/PyNets/pynets/labelcharts/', atlas_select, '.txt')
+                #ref_txt = "%s%s%s%s" % (str(Path(__file__).parent), '/labelcharts/', atlas_select, '.txt')
                 if os.path.exists(ref_txt):
                     dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
                     label_names = dict_df['Region'].tolist()
@@ -479,7 +480,8 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
             label_names = dict_df['Region'].tolist()
         else:
             try:
-                ref_txt = "%s%s%s%s" % (str(Path(__file__).parent), '/labelcharts/', atlas_select, '.txt')
+                ref_txt = "%s%s%s" % ('/Users/PSYC-dap3463/Applications/PyNets/pynets/labelcharts/', atlas_select, '.txt')
+                #ref_txt = "%s%s%s%s" % (str(Path(__file__).parent), '/labelcharts/', atlas_select, '.txt')
                 if os.path.exists(ref_txt):
                     dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
                     label_names = dict_df['Region'].tolist()
