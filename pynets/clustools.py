@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Dec 21 18:07:34 2017
+
+@author: PSYC-dap3463
 Adapted from Cameron Craddock's PyClusterROI and soon to be replaced with a pypi dependency
 """
-import sys
 import nibabel as nib
 import numpy as np
 
@@ -239,7 +240,7 @@ def discretisation(eigen_vec):
                 [U, S, Vh] = svd(tSVD)
             except LinAlgError:
                 # catch exception and go back to the beginning of the loop
-                print("SVD did not converge, randomizing and trying again", file=sys.stderr)
+                print("SVD did not converge. Randomizing and trying again...")
                 break
 
             # test for convergence

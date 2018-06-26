@@ -29,7 +29,7 @@ def get_conn_matrix(time_series, conn_model):
         try:
             print('\nComputing covariance...\n')
             estimator.fit(time_series)
-        except RuntimeWarning:
+        except:
             print('Unstable Lasso estimation--Attempting to re-run by first applying shrinkage...')
             try:
                 from sklearn.covariance import GraphLasso, empirical_covariance, shrunk_covariance
@@ -46,7 +46,7 @@ def get_conn_matrix(time_series, conn_model):
                                 pass
                             else:
                                 break
-                        except RuntimeWarning:
+                        except:
                             print("Covariance estimation failed with shrinkage at alpha=%s" % alpha)
                             continue
             except ValueError:
@@ -184,8 +184,7 @@ def extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path):
     return ts_within_nodes
 
 
-def extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path):
-    import nibabel as nib
+def extract_ts_parc_fast(label_file, conf, func_file, dir_path):
     import time
     import subprocess
     from pynets.graphestimation import normalize
@@ -194,17 +193,6 @@ def extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path):
     except ImportError:
         from io import BytesIO as StringIO
     start_time = time.time()
-    data = nib.load(func_file)
-    activity_data = data.get_data()
-    volume_dims = np.shape(activity_data)[0:3]
-    ref_affine = data.get_qform()
-    ref_header = data.header
-    print("%s%s%s" % ('Data loaded: ', str(np.round(time.time() - start_time, 1)), 's'))
-    label_mask = np.zeros(volume_dims)
-    label_file = "%s%s" % (dir_path, '/label_file_tmp.nii.gz')
-
-    nib.save(nib.Nifti1Image(label_mask, ref_affine, header=ref_header), label_file)
-    print("%s%s%s" % ('Parcel mask saved: ', str(np.round(time.time() - start_time, 1)), 's'))
     cmd = "%s%s%s%s" % ('fslmeants -i ', func_file, ' --label=', label_file)
     stdout_extracted_ts = subprocess.check_output(cmd, shell=True)
     ts_within_nodes = np.loadtxt(StringIO(stdout_extracted_ts))
@@ -215,18 +203,22 @@ def extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path):
 
 
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network, fast=False):
+    import time
     from nilearn import input_data
     from pynets.graphestimation import extract_ts_parc_fast
     from pynets import utils
+    #from sklearn.externals.joblib import Memory
+
     # extract time series from whole brain parcellaions
     if fast is True:
         ts_within_nodes = extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path)
     else:
-        parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
-                                                     standardize=True, memory="%s%s" % ('SpheresMasker_cache_', str(ID)),
-                                                     memory_level=2)
+        time.sleep(np.random.randint(1, 4))
         #parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
-        #                                             standardize=True)
+        #                                             standardize=True, memory=Memory(cachedir="%s%s" % ('SpheresMasker_cache_', str(ID)), verbose=1),
+        #                                             memory_level=1)
+        parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
+                                                     standardize=True)
         ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords), ' volumetric ROI\'s\n'))
     # Save time series as txt file
@@ -235,18 +227,21 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
 
 
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network, fast=False):
+    import time
     from nilearn import input_data
     from pynets.graphestimation import extract_ts_coords_fast
     from pynets import utils
+    #from sklearn.externals.joblib import Memory
 
     if fast is True:
         ts_within_nodes = extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path)
     else:
-        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
-                                                       standardize=True, verbose=1, memory="%s%s" % ('SpheresMasker_cache_', str(ID)),
-                                                       memory_level=2)
+        time.sleep(np.random.randint(1, 4))
         #spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
-        #                                               standardize=True, verbose=1)
+        #                                               standardize=True, verbose=1, memory=Memory(cachedir="%s%s" % ('SpheresMasker_cache_', str(ID)), verbose=1),
+        #                                               memory_level=1)
+        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
+                                                       standardize=True, verbose=1)
         ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
 
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords), ' coordinate ROI\'s\n'))

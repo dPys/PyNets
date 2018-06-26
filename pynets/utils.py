@@ -5,7 +5,6 @@ Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2018
 @author: Derek Pisner
 """
-import sys
 import os
 import nibabel as nib
 import numpy as np
@@ -189,7 +188,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
 
     net_pickle_mt_list = []
     if k_clustering == 4:
-        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
         for clust_mask in clust_mask_list:
             mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
             for k in k_list:
@@ -204,14 +203,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                             net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select,
                                                                                              network, conn_model, thr, mask,
                                                                                              node_size))
-                                        except RuntimeWarning:
+                                        except:
                                             print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                             pass
                                 else:
                                     try:
                                         net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                          conn_model, thr, mask, node_size))
-                                    except RuntimeWarning:
+                                    except:
                                         print("%s%s" % ('Missing results path for K=', str(k)))
                                         pass
                         else:
@@ -221,7 +220,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                         net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select,
                                                                                          network, conn_model, thr, mask,
                                                                                          node_size))
-                                    except RuntimeWarning:
+                                    except:
                                         print(
                                             "%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                         pass
@@ -230,7 +229,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                     net_pickle_mt_list.append(
                                         utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s" % ('Missing results path for K=', str(k)))
                                     pass
                 else:
@@ -241,14 +240,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                     try:
                                         net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                          conn_model, thr, mask, node_size))
-                                    except RuntimeWarning:
+                                    except:
                                         print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                         pass
                             else:
                                 try:
                                     net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                      conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s" % ('Missing results path for K=', str(k)))
                                     pass
                     else:
@@ -258,18 +257,18 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                     net_pickle_mt_list.append(
                                         utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                     pass
                         else:
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s" % ('Missing results path for K=', str(k)))
                                 pass
     elif k_clustering == 2:
-        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist() + [int(k_max)]
         mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
         for k in k_list:
             atlas_select = "%s%s%s" % (mask_name, '_k', str(k))
@@ -282,14 +281,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                     try:
                                         net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                          conn_model, thr, mask, node_size))
-                                    except RuntimeWarning:
+                                    except:
                                         print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                         pass
                             else:
                                 try:
                                     net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                      conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s" % ('Missing results path for K=', str(k)))
                                     pass
                     else:
@@ -299,14 +298,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                     net_pickle_mt_list.append(
                                         utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                     pass
                         else:
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s" % ('Missing results path for K=', str(k)))
                                 pass
             else:
@@ -317,14 +316,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                 try:
                                     net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                      conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                     pass
                         else:
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s" % ('Missing results path for K=', str(k)))
                                 pass
                 else:
@@ -333,14 +332,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                 pass
                     else:
                         try:
                             net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                              conn_model, thr, mask, node_size))
-                        except RuntimeWarning:
+                        except:
                             print("%s%s" % ('Missing results path for K=', str(k)))
                             pass
     elif k_clustering == 1:
@@ -355,14 +354,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                 try:
                                     net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                      conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                     pass
                         else:
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s" % ('Missing results path for K=', str(k)))
                                 pass
                 else:
@@ -371,14 +370,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                 pass
                     else:
                         try:
                             net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                              conn_model, thr, mask, node_size))
-                        except RuntimeWarning:
+                        except:
                             print("%s%s" % ('Missing results path for K=', str(k)))
                             pass
         else:
@@ -389,14 +388,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                 pass
                     else:
                         try:
                             net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network, conn_model,
                                                                              thr, mask, node_size))
-                        except RuntimeWarning:
+                        except:
                             print("%s%s" % ('Missing results path for K=', str(k)))
                             pass
             else:
@@ -405,7 +404,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                         try:
                             net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                              conn_model, thr, mask, node_size))
-                        except RuntimeWarning:
+                        except:
                             print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                             pass
                 else:
@@ -413,7 +412,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                         net_pickle_mt_list.append(
                             utils.assemble_mt_path(ID, input_file, atlas_select, network, conn_model,
                                                    thr, mask, node_size))
-                    except RuntimeWarning:
+                    except:
                         print("%s%s" % ('Missing results path for K=', str(k)))
                         pass
     elif k_clustering == 3:
@@ -429,14 +428,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                     try:
                                         net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                          conn_model, thr, mask, node_size))
-                                    except RuntimeWarning:
+                                    except:
                                         print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                         pass
                             else:
                                 try:
                                     net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                      conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s" % ('Missing results path for K=', str(k)))
                                     pass
                     else:
@@ -446,14 +445,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                     net_pickle_mt_list.append(
                                         utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                     pass
                         else:
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s" % ('Missing results path for K=', str(k)))
                                 pass
             else:
@@ -464,14 +463,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                 try:
                                     net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                      conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                     pass
                         else:
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s" % ('Missing results path for K=', str(k)))
                                 pass
                 else:
@@ -480,14 +479,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
                                 pass
                     else:
                         try:
                             net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                              conn_model, thr, mask, node_size))
-                        except RuntimeWarning:
+                        except:
                             print("%s%s" % ('Missing results path for K=', str(k)))
                             pass
     elif user_atlas_list and len(user_atlas_list) > 1:
@@ -502,14 +501,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                     try:
                                         net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                          conn_model, thr, mask, node_size))
-                                    except RuntimeWarning:
+                                    except:
                                         print("%s%s%s%s" % ('Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
                                         pass
                             else:
                                 try:
                                     net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                      conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
                                     pass
                     else:
@@ -519,7 +518,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                     net_pickle_mt_list.append(
                                         utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s%s%s" % (
                                     'Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
                                     pass
@@ -527,7 +526,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
                                 pass
             else:
@@ -538,14 +537,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                 try:
                                     net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                      conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s%s%s" % ('Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
                                     pass
                         else:
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
                                 pass
                 else:
@@ -554,7 +553,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s%s%s" % (
                                 'Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
                                 pass
@@ -562,7 +561,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                         try:
                             net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                              conn_model, thr, mask, node_size))
-                        except RuntimeWarning:
+                        except:
                             print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
                             pass
     elif multi_atlas:
@@ -576,14 +575,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                     try:
                                         net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                          conn_model, thr, mask, node_size))
-                                    except RuntimeWarning:
+                                    except:
                                         print("%s%s%s%s" % ('Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
                                         pass
                             else:
                                 try:
                                     net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                      conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
                                     pass
                     else:
@@ -593,15 +592,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                     net_pickle_mt_list.append(
                                         utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
-                                    print("%s%s%s%s" % (
-                                    'Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
+                                except:
+                                    print("%s%s%s%s" % ('Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
                                     pass
                         else:
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
                                 pass
             else:
@@ -612,14 +610,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                 try:
                                     net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                      conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s%s%s" % ('Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
                                     pass
                         else:
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
                                 pass
                 else:
@@ -628,7 +626,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s%s%s" % (
                                 'Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
                                 pass
@@ -636,7 +634,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                         try:
                             net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                              conn_model, thr, mask, node_size))
-                        except RuntimeWarning:
+                        except:
                             print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
                             pass
     elif k_clustering == 0 and atlas_select is not None:
@@ -649,14 +647,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                                 try:
                                     net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                      conn_model, thr, mask, node_size))
-                                except RuntimeWarning:
+                                except:
                                     print("%s%s" % ('Missing results path for thr=', str(thr)))
                                     pass
                         else:
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print('Missing results path')
                                 pass
                 else:
@@ -665,14 +663,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s" % ('Missing results path for thr=', str(thr)))
                                 pass
                     else:
                         try:
                             net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                              conn_model, thr, mask, node_size))
-                        except RuntimeWarning:
+                        except:
                             print('Missing results path')
                             pass
         else:
@@ -683,14 +681,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                             try:
                                 net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                                  conn_model, thr, mask, node_size))
-                            except RuntimeWarning:
+                            except:
                                 print("%s%s" % ('Missing results path for thr=', str(thr)))
                                 pass
                     else:
                         try:
                             net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network, conn_model,
                                                                              thr, mask, node_size))
-                        except RuntimeWarning:
+                        except:
                             print('Missing results path')
                             pass
             else:
@@ -699,7 +697,7 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                         try:
                             net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
                                                                              conn_model, thr, mask, node_size))
-                        except RuntimeWarning:
+                        except:
                             print("%s%s" % ('Missing results path for thr=', str(thr)))
                             pass
                 else:
@@ -707,12 +705,14 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                         net_pickle_mt_list.append(
                             utils.assemble_mt_path(ID, input_file, atlas_select, network, conn_model,
                                                    thr, mask, node_size))
-                    except RuntimeWarning:
+                    except:
                         print('Missing results path')
                         pass
 
     # Check for existence of net_pickle files, condensing final list to only those that were actually produced.
     [net_pickle_mt_list, _] = utils.check_est_path_existence(net_pickle_mt_list)
+    if len(net_pickle_mt_list) > len(net_pickle_mt_list):
+        raise UserWarning('Warning! Number of actual models produced less than expected. Some graphs were excluded')
 
     if len(net_pickle_mt_list) > 1:
         print("%s%s%s" % ('\n\nList of result files to concatenate:\n', str(net_pickle_mt_list), '\n\n'))
@@ -751,7 +751,8 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
                         print("%s%s%s" % ('NaNs encountered for ', name, '. Plotting and averaging across non-missing values. Checking output is recommended...'))
                         ax.hist(x)
                     else:
-                        raise RuntimeWarning("%s%s" % ('No numeric data to plot for ', name))
+                        print("%s%s" % ('Warning! No numeric data to plot for ', name))
+                        continue
                 else:
                     ax.hist(x)
                 out_path_fig = "%s%s%s%s" % (os.path.dirname(os.path.dirname(file_)), '/', name, '_mean_plot.png')
@@ -936,7 +937,7 @@ def cuberoot(x):
 def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets,
                        conn_model, dens_thresh, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                        clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
-                       node_size_list, est_path, conn_model_list):
+                       node_size_list, est_path, conn_model_list, min_span_tree):
     import numpy as np
     import os
     from pynets import utils
@@ -948,7 +949,7 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
         if k_clustering == 2:
             print("%s%s%s" % ('\nPipeline iterated for ', str(ID), ' across multiple clustering resolutions...\n'))
             mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             for k in k_list:
                 atlas_select = "%s%s%s" % (mask_name, '_k', str(k))
                 [iter_thresh, est_path_list, _, dir_path] = utils.build_multi_net_paths(multi_nets, atlas_select,
@@ -970,7 +971,7 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
                                                                                         node_size, conn_model_list)
         elif k_clustering == 4:
             print("%s%s%s" % ('\nPipeline iterated for ', str(ID), ' across multiple clustering resolutions and masks...\n'))
-            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist()
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist() + [int(k_max)]
             for clust_mask in clust_mask_list:
                 mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                 for k in k_list:
@@ -1065,13 +1066,13 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
                         network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr,
                                                              iter_thresh, conn_model_list)
             elif k_clustering == 2:
-                k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist()
+                k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
                 for k in k_list:
                     for network in multi_nets:
                         network_list = utils.create_net_list(node_size_list, network, network_list, multi_thr,
                                                              iter_thresh, conn_model_list)
             elif k_clustering == 4:
-                k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist()
+                k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
                 for clust_mask in clust_mask_list:
                     for k in k_list:
                         for network in multi_nets:

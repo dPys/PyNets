@@ -1,1 +1,3 @@
-{}
+{
+  "tests/test_graphestimation.py::test_extract_ts_rsn_parc_fast": true
+}

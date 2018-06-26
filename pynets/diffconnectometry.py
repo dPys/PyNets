@@ -9,32 +9,41 @@ import numpy as np
 import os
 
 
-def create_mni2diff_transforms(bedpostx_dir):
+def create_mni2diff_transforms(dwi_dir):
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
     try:
         FSLDIR = os.environ['FSLDIR']
-    except NameError:
+    except KeyError:
         print('FSLDIR environment variable not set!')
-    merged_f_samples_path = "%s%s" % (bedpostx_dir, '/merged_f1samples.nii.gz')
+
+    merged_f_samples_path = "%s%s" % (dwi_dir, '/merged_f1samples.nii.gz')
+    if os.path.exists(merged_f_samples_path) is True:
+        dwi_infile = merged_f_samples_path
+    else:
+        dwi_infile = "%s%s" % (dwi_dir, '/dwi.nii.gz')
+
+    if not os.path.exists("%s%s" % (dwi_dir, '/xfms')):
+        os.mkdir("%s%s" % (dwi_dir, '/xfms'))
+
     print('\nCreating MNI-diffusion space transforms...\n')
     input_MNI = "%s%s" % (FSLDIR, '/data/standard/MNI152_T1_1mm_brain.nii.gz')
-    out_aff = "%s%s" % (bedpostx_dir, '/xfms/MNI2diff_affine.nii.gz')
+    out_aff = "%s%s" % (dwi_dir, '/xfms/MNI2diff_affine.nii.gz')
 
     # Create transform matrix between diff and MNI using FLIRT
     flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-    flirt.inputs.reference = merged_f_samples_path
+    flirt.inputs.reference = dwi_infile
     flirt.inputs.in_file = input_MNI
-    flirt.inputs.out_matrix_file = "%s%s" % (bedpostx_dir, '/xfms/MNI2diff.mat')
+    flirt.inputs.out_matrix_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
     flirt.inputs.out_file = '/tmp/out_flirt.nii.gz'
     flirt.run()
 
     # Apply transform between diff and MNI using FLIRT
     flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-    flirt.inputs.reference = merged_f_samples_path
+    flirt.inputs.reference = dwi_infile
     flirt.inputs.in_file = input_MNI
     flirt.inputs.apply_xfm = True
-    flirt.inputs.in_matrix_file = "%s%s" % (bedpostx_dir, '/xfms/MNI2diff.mat')
+    flirt.inputs.in_matrix_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
     flirt.inputs.out_file = out_aff
     flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
     flirt.run()
@@ -46,7 +55,7 @@ def gen_anat_segs(anat_loc, out_aff):
     # # Custom inputs# #
     try:
         FSLDIR = os.environ['FSLDIR']
-    except NameError:
+    except KeyError:
         print('FSLDIR environment variable not set!')
     import nipype.interfaces.fsl as fsl
     #import nibabel as nib
@@ -92,34 +101,39 @@ def gen_anat_segs(anat_loc, out_aff):
     return new_file_csf, mni_csf_loc, new_file_wm
 
 
-def coreg_vent_CSF_to_diff(bedpostx_dir, csf_loc, mni_csf_loc):
+def coreg_vent_CSF_to_diff(dwi_dir, csf_loc, mni_csf_loc):
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
     print('\nTransforming CSF mask to diffusion space...')
-    merged_f_samples_path = "%s%s" % (bedpostx_dir, '/merged_f1samples.nii.gz')
-    csf_mask_diff_out = "%s%s" % (bedpostx_dir, '/csf_diff.nii.gz')
+    merged_f_samples_path = "%s%s" % (dwi_dir, '/merged_f1samples.nii.gz')
+    if os.path.exists(merged_f_samples_path) is True:
+        dwi_infile = merged_f_samples_path
+    else:
+        dwi_infile = "%s%s" % (dwi_dir, '/dwi.nii.gz')
+
+    csf_mask_diff_out = "%s%s" % (dwi_dir, '/csf_diff.nii.gz')
     flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-    flirt.inputs.reference = merged_f_samples_path
+    flirt.inputs.reference = dwi_infile
     flirt.inputs.in_file = csf_loc
     flirt.inputs.out_file = csf_mask_diff_out
     flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
-    flirt.inputs.in_matrix_file = "%s%s" % (bedpostx_dir, '/xfms/MNI2diff.mat')
+    flirt.inputs.in_matrix_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
     flirt.inputs.apply_xfm = True
     flirt.run()
 
-    vent_mask_diff_out = bedpostx_dir + '/ventricle_diff.nii.gz'
+    vent_mask_diff_out = dwi_dir + '/ventricle_diff.nii.gz'
     flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-    flirt.inputs.reference = merged_f_samples_path
+    flirt.inputs.reference = dwi_infile
     flirt.inputs.in_file = mni_csf_loc
     flirt.inputs.out_file = vent_mask_diff_out
     flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
-    flirt.inputs.in_matrix_file = "%s%s" % (bedpostx_dir, '/xfms/MNI2diff.mat')
+    flirt.inputs.in_matrix_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
     flirt.inputs.apply_xfm = True
     flirt.run()
 
     # Mask CSF with MNI ventricle mask
     print('Masking CSF with ventricle mask...')
-    vent_csf_diff_out = "%s%s" % (bedpostx_dir, '/vent_csf_diff.nii.gz')
+    vent_csf_diff_out = "%s%s" % (dwi_dir, '/vent_csf_diff.nii.gz')
     args = "%s%s" % ('-mas ', vent_mask_diff_out)
     maths = fsl.ImageMaths(in_file=csf_mask_diff_out, op_string=args, out_file=vent_csf_diff_out)
     os.system(maths.cmdline)
@@ -133,18 +147,23 @@ def coreg_vent_CSF_to_diff(bedpostx_dir, csf_loc, mni_csf_loc):
     return out_file_final
 
 
-def coreg_WM_mask_to_diff(bedpostx_dir, wm_mask_loc):
+def coreg_WM_mask_to_diff(dwi_dir, wm_mask_loc):
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
     print('\nTransforming White-Matter waypoint mask to diffusion space...')
-    merged_f_samples_path = "%s%s" % (bedpostx_dir, '/merged_f1samples.nii.gz')
-    out_file = "%s%s" % (bedpostx_dir, '/wm_mask_diff.nii.gz')
+    merged_f_samples_path = "%s%s" % (dwi_dir, '/merged_f1samples.nii.gz')
+    if os.path.exists(merged_f_samples_path) is True:
+        dwi_infile = merged_f_samples_path
+    else:
+        dwi_infile = "%s%s" % (dwi_dir, '/dwi.nii.gz')
+
+    out_file = "%s%s" % (dwi_dir, '/wm_mask_diff.nii.gz')
     flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-    flirt.inputs.reference = merged_f_samples_path
+    flirt.inputs.reference = dwi_infile
     flirt.inputs.in_file = wm_mask_loc
     flirt.inputs.out_file = out_file
     flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
-    flirt.inputs.in_matrix_file = "%s%s" % (bedpostx_dir, '/xfms/MNI2diff.mat')
+    flirt.inputs.in_matrix_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
     flirt.inputs.apply_xfm = True
     flirt.run()
     args = '-bin'
@@ -154,18 +173,23 @@ def coreg_WM_mask_to_diff(bedpostx_dir, wm_mask_loc):
     return out_file
 
 
-def coreg_mask_to_diff(bedpostx_dir, mask):
+def coreg_mask_to_diff(dwi_dir, mask):
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
     print('\nTransforming custom waypoint mask to diffusion space...')
-    merged_f_samples_path = "%s%s" % (bedpostx_dir, '/merged_f1samples.nii.gz')
-    out_file = "%s%s" % (bedpostx_dir, '/mask_custom_diff.nii.gz')
+    merged_f_samples_path = "%s%s" % (dwi_dir, '/merged_f1samples.nii.gz')
+    if os.path.exists(merged_f_samples_path) is True:
+        dwi_infile = merged_f_samples_path
+    else:
+        dwi_infile = "%s%s" % (dwi_dir, '/dwi.nii.gz')
+
+    out_file = "%s%s" % (dwi_dir, '/mask_custom_diff.nii.gz')
     flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-    flirt.inputs.reference = merged_f_samples_path
+    flirt.inputs.reference = dwi_infile
     flirt.inputs.in_file = mask
     flirt.inputs.out_file = out_file
     flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
-    flirt.inputs.in_matrix_file = "%s%s" % (bedpostx_dir, '/xfms/MNI2diff.mat')
+    flirt.inputs.in_matrix_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
     flirt.inputs.apply_xfm = True
     flirt.run()
     args = '-bin'
@@ -175,24 +199,14 @@ def coreg_mask_to_diff(bedpostx_dir, mask):
     return out_file
 
 
-def reg_coords2diff(coords, bedpostx_dir, node_size, dir_path):
-    try:
-        FSLDIR = os.environ['FSLDIR']
-    except NameError:
-        print('FSLDIR environment variable not set!')
-    import glob
-    import nipype.interfaces.fsl as fsl
-    import nipype.pipeline.engine as pe
+def build_coord_list(coords, dwi_dir):
     from nilearn import masking
     try:
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
 
-    pick_dump = True
-    volumes_dir = "%s%s%s" % (dir_path, '/volumes_', str(node_size))
-    nodif_brain_mask_path = "%s%s" % (bedpostx_dir, '/nodif_brain_mask.nii.gz')
-    merged_f_samples_path = "%s%s" % (bedpostx_dir, '/merged_f1samples.nii.gz')
+    nodif_brain_mask_path = "%s%s" % (dwi_dir, '/nodif_brain_mask.nii.gz')
 
     x_vox = np.diagonal(masking._load_mask_img(nodif_brain_mask_path)[1][:3, 0:3])[0]
     y_vox = np.diagonal(masking._load_mask_img(nodif_brain_mask_path)[1][:3, 0:3])[1]
@@ -206,24 +220,44 @@ def reg_coords2diff(coords, bedpostx_dir, node_size, dir_path):
         return voxcoords
 
     # Convert coords back to voxels
-    coords_vox=[]
+    coords_vox = []
     for coord in coords:
         coords_vox.append(mmToVox(coord))
     coords = list(tuple(x) for x in coords_vox)
+    coord_num = len(coords)
 
-    j = 0
-    for i in coords:
-        # Grow spheres at ROI
-        X = coords[j][0]
-        Y = coords[j][1]
-        Z = coords[j][2]
-        out_file1 = "%s%s%s%s" % (volumes_dir, '/roi_point_', str(j), '.nii.gz')
+    return coords, coord_num
+
+
+def reg_coords2diff(coords, dwi_dir, node_size, seeds_dir):
+    try:
+        FSLDIR = os.environ['FSLDIR']
+    except KeyError:
+        print('FSLDIR environment variable not set!')
+
+    import nipype.interfaces.fsl as fsl
+    import nipype.pipeline.engine as pe
+
+    merged_f_samples_path = "%s%s" % (dwi_dir, '/merged_f1samples.nii.gz')
+    if os.path.exists(merged_f_samples_path) is True:
+        dwi_infile = merged_f_samples_path
+    else:
+        dwi_infile = "%s%s" % (dwi_dir, '/dwi.nii.gz')
+
+    # #print(coords)
+    # # Grow spheres at ROI
+    for coord in coords[0]:
+        X = coord[0]
+        Y = coord[1]
+        Z = coord[2]
+
+        out_file1 = "%s%s%s%s%s%s%s%s" % (seeds_dir, '/roi_point_', str(X), '_', str(Y), '_', str(Z), '.nii.gz')
         args = "%s%s%s%s%s%s%s" % ('-mul 0 -add 1 -roi ', str(X), ' 1 ', str(Y), ' 1 ', str(Z), ' 1 0 1')
         maths = fsl.ImageMaths(in_file=FSLDIR + '/data/standard/MNI152_T1_1mm_brain.nii.gz', op_string=args,
                                out_file=out_file1)
         os.system(maths.cmdline + ' -odt float')
 
-        out_file2 = "%s%s%s%s" % (volumes_dir, '/region_', str(j), '.nii.gz')
+        out_file2 = "%s%s%s%s%s%s%s%s" % (seeds_dir, '/region_', str(X), '_', str(Y), '_', str(Z), '.nii.gz')
         args = "%s%s%s" % ('-kernel sphere ', str(node_size), ' -fmean -bin')
         maths = fsl.ImageMaths(in_file=out_file1, op_string=args, out_file=out_file2)
         os.system(maths.cmdline + ' -odt float')
@@ -231,43 +265,59 @@ def reg_coords2diff(coords, bedpostx_dir, node_size, dir_path):
         # Map ROIs from Standard Space to diffusion Space:
         # Applying xfm and input matrix to transform ROI's between diff and MNI using FLIRT,
         flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-        flirt.inputs.reference = merged_f_samples_path
+        flirt.inputs.reference = dwi_infile
         flirt.inputs.in_file = out_file2
         out_file_diff = "%s%s" % (out_file2.split('.nii')[0], '_diff.nii.gz')
         flirt.inputs.out_file = out_file_diff
         flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
         flirt.inputs.apply_xfm = True
-        flirt.inputs.in_matrix_file = "%s%s" % (bedpostx_dir, '/xfms/MNI2diff.mat')
+        flirt.inputs.in_matrix_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
         flirt.run()
-        j = j + 1
 
-    args = '-bin'
-    maths = fsl.ImageMaths(in_file=out_file_diff, op_string=args, out_file=out_file_diff)
-    print('\nBinarizing custom mask...')
-    os.system(maths.cmdline)
+        args = '-bin'
+        maths = fsl.ImageMaths(in_file=out_file_diff, op_string=args, out_file=out_file_diff)
+        os.system(maths.cmdline)
 
-    del_files_points = glob.glob(volumes_dir + '/roi_point*')
+    done_nodes = True
+    return done_nodes
+
+
+def cleanup_tmp_nodes(done_nodes, seeds_dir, coords, dir_path):
+    import glob
+    import os
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import _pickle as pickle
+
+    pick_dump = True
+
+    del_files_points = glob.glob(seeds_dir + '/roi_point*')
     if len(del_files_points) > 0:
         for i in del_files_points:
             os.remove(i)
 
-    spheres_list = [i for i in os.listdir(volumes_dir) if 'diff.nii.gz' in i]
+    seeds_list = [i for i in os.listdir(seeds_dir) if 'diff.nii.gz' in i]
     if pick_dump is True:
         # Save coords to pickle
         coord_path = "%s%s" % (dir_path, '/coords.pkl')
         with open(coord_path, 'wb') as f:
             pickle.dump(coords, f, protocol=2)
 
-    return spheres_list
+    return seeds_list
 
 
-def reg_parcels2diff(bedpostx_dir, dir_path, node_size):
+def reg_parcels2diff(dwi_dir, seeds_dir):
     import re
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
-    merged_f_samples_path = "%s%s" % (bedpostx_dir, '/merged_f1samples.nii.gz')
-    volumes_dir = "%s%s%s" % (dir_path, '/volumes_', str(node_size))
-    volumes_list = [i for i in os.listdir(volumes_dir) if '.nii' in i]
+    merged_f_samples_path = "%s%s" % (dwi_dir, '/merged_f1samples.nii.gz')
+    if os.path.exists(merged_f_samples_path) is True:
+        dwi_infile = merged_f_samples_path
+    else:
+        dwi_infile = "%s%s" % (dwi_dir, '/dwi.nii.gz')
+
+    seeds_list = [i for i in os.listdir(seeds_dir) if '.nii' in i]
 
     def atoi(text):
         return int(text) if text.isdigit() else text
@@ -275,24 +325,24 @@ def reg_parcels2diff(bedpostx_dir, dir_path, node_size):
     def natural_keys(text):
         return [atoi(c) for c in re.split('(\d+)', text)]
 
-    volumes_list.sort(key=natural_keys)
+    seeds_list.sort(key=natural_keys)
     i = 0
-    for parcel in volumes_list:
-        out_file = "%s%s%s%s" % (volumes_dir, '/region_', str(i), '_diff.nii.gz')
+    for parcel in seeds_list:
+        out_file = "%s%s%s%s" % (seeds_dir, '/region_', str(i), '_diff.nii.gz')
         flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-        flirt.inputs.reference = merged_f_samples_path
-        flirt.inputs.in_file = "%s%s%s" % (volumes_dir, '/', parcel)
+        flirt.inputs.reference = dwi_infile
+        flirt.inputs.in_file = "%s%s%s" % (seeds_dir, '/', parcel)
         flirt.inputs.out_file = out_file
         flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
         flirt.inputs.apply_xfm = True
-        flirt.inputs.in_matrix_file = "%s%s" % (bedpostx_dir, '/xfms/MNI2diff.mat')
+        flirt.inputs.in_matrix_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
         flirt.run()
         i = i + 1
-    volumes_list = [i for i in os.listdir(volumes_dir) if 'diff.nii' in i]
-    return volumes_list
+    seeds_list = [i for i in os.listdir(seeds_dir) if 'diff.nii' in i]
+    return seeds_list
 
 
-def create_seed_mask_file(node_size, network, dir_path, parc):
+def create_seed_mask_file(node_size, network, dir_path, parc, seeds_list, atlas_select):
     import glob
     import re
     import shutil
@@ -303,10 +353,13 @@ def create_seed_mask_file(node_size, network, dir_path, parc):
     def natural_keys(text):
         return [atoi(c) for c in re.split('(\d+)', text)]
 
-    volumes_dir = "%s%s%s" % (dir_path, '/volumes_', str(node_size))
-
     if parc is True:
         node_size = 'parc'
+
+    if network:
+        seeds_dir = "%s%s%s%s%s%s%s" % (dir_path, '/seeds_', network, '_', atlas_select, '_', str(node_size))
+    else:
+        seeds_dir = "%s%s%s%s%s" % (dir_path, '/seeds_', atlas_select, '_', str(node_size))
 
     if network:
         probtrackx_output_dir_path = "%s%s%s%s%s" % (dir_path, '/probtrackx_', str(node_size), '_', network)
@@ -317,7 +370,7 @@ def create_seed_mask_file(node_size, network, dir_path, parc):
         shutil.rmtree(probtrackx_output_dir_path)
     os.makedirs(probtrackx_output_dir_path)
 
-    seed_files = glob.glob(volumes_dir + '/region*diff.nii.gz')
+    seed_files = glob.glob(seeds_dir + '/region*diff.nii.gz')
     seeds_text = "%s%s" % (probtrackx_output_dir_path, '/masks.txt')
     try:
         os.remove(seeds_text)
@@ -334,80 +387,81 @@ def create_seed_mask_file(node_size, network, dir_path, parc):
     return seeds_text, probtrackx_output_dir_path
 
 
-def save_parcel_vols(node_size, parcel_list, net_parcels_map_nifti, dir_path):
+def save_parcel_vols(parcel_list, net_parcels_map_nifti, dir_path, seeds_dir):
     import os
     import time
     if net_parcels_map_nifti:
         net_parcels_map_file = "%s%s" % (dir_path, '/net_parcels_map_nifti.nii.gz')
         nib.save(net_parcels_map_nifti, net_parcels_map_file)
-    volumes_dir = "%s%s%s" % (dir_path, '/volumes_', str(node_size))
-    if not os.path.exists(volumes_dir):
-        os.mkdir(volumes_dir)
+
+    if not os.path.exists(seeds_dir):
+        os.mkdir(seeds_dir)
     num_vols = len(parcel_list)
     i = 0
     for vol in parcel_list:
-        out_path = "%s%s%s%s" % (volumes_dir, '/region_', str(i), '.nii.gz')
+        out_path = "%s%s%s%s" % (seeds_dir, '/region_', str(i), '.nii.gz')
         nib.save(vol, out_path)
         i = i + 1
-    num_vols_pres = float(len(next(os.walk(volumes_dir))[2]))
+    num_vols_pres = float(len(next(os.walk(seeds_dir))[2]))
     while num_vols_pres < float(num_vols):
         time.sleep(1)
-        num_vols_pres = float(len(next(os.walk(volumes_dir))[2]))
+        num_vols_pres = float(len(next(os.walk(seeds_dir))[2]))
     return num_vols_pres
 
 
-def prepare_masks(bedpostx_dir, csf_loc, mni_csf_loc, wm_mask_loc, mask):
+def prepare_masks(dwi_dir, csf_loc, mni_csf_loc, wm_mask_loc, mask):
     from pynets import diffconnectometry
     if (csf_loc and mni_csf_loc) is None:
         vent_CSF_diff_mask_path = None
     else:
-        vent_CSF_diff_mask_path = diffconnectometry.coreg_vent_CSF_to_diff(bedpostx_dir, csf_loc, mni_csf_loc)
+        vent_CSF_diff_mask_path = diffconnectometry.coreg_vent_CSF_to_diff(dwi_dir, csf_loc, mni_csf_loc)
 
     # Use custom waypoint mask (if present)
     if mask:
-        way_mask = diffconnectometry.coreg_mask_to_diff(bedpostx_dir, mask)
+        way_mask = diffconnectometry.coreg_mask_to_diff(dwi_dir, mask)
     elif wm_mask_loc is None:
         way_mask = None
     else:
-        way_mask = diffconnectometry.coreg_WM_mask_to_diff(bedpostx_dir, wm_mask_loc)
+        way_mask = diffconnectometry.coreg_WM_mask_to_diff(dwi_dir, wm_mask_loc)
 
     return vent_CSF_diff_mask_path, way_mask
 
 
-def grow_nodes(bedpostx_dir, coords, node_size, parc, parcel_list, net_parcels_map_nifti, network, dir_path, mask):
+def prep_nodes(dwi_dir, node_size, parc, parcel_list, net_parcels_map_nifti, network, dir_path, mask, atlas_select):
     import shutil
     from pynets import diffconnectometry, nodemaker
 
-    volumes_dir = "%s%s%s" % (dir_path, '/volumes_', str(node_size))
-    if os.path.exists(volumes_dir) is True:
-        shutil.rmtree(volumes_dir)
-    if not os.path.exists(volumes_dir):
-        os.mkdir(volumes_dir)
+    if parc is True:
+        node_size = 'parc'
+
+    if network:
+        seeds_dir = "%s%s%s%s%s%s%s" % (dir_path, '/seeds_', network, '_', atlas_select, '_', str(node_size))
+    else:
+        seeds_dir = "%s%s%s%s%s" % (dir_path, '/seeds_', atlas_select, '_', str(node_size))
+
+    if os.path.exists(seeds_dir) is True:
+        shutil.rmtree(seeds_dir)
+    if not os.path.exists(seeds_dir):
+        os.mkdir(seeds_dir)
 
     if parc is True:
         # If masking was performed, get reduced list
         if mask or network:
             [_, _, parcel_list] = nodemaker.get_names_and_coords_of_parcels_from_img(net_parcels_map_nifti)
 
-        diffconnectometry.save_parcel_vols(node_size, parcel_list, net_parcels_map_nifti, dir_path)
-        diffconnectometry.reg_parcels2diff(bedpostx_dir, dir_path, node_size)
-    else:
-        diffconnectometry.reg_coords2diff(coords, bedpostx_dir, node_size, dir_path)
+        diffconnectometry.save_parcel_vols(parcel_list, net_parcels_map_nifti, dir_path, seeds_dir)
 
-    [seeds_text, probtrackx_output_dir_path] = diffconnectometry.create_seed_mask_file(node_size, network, dir_path,
-                                                                                       parc)
-    return seeds_text, probtrackx_output_dir_path, node_size
+    return parcel_list, seeds_dir, node_size
 
 
-def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, vent_CSF_diff_mask_path, way_mask, procmem,
-                    num_total_samples):
+def run_probtrackx2(i, seeds_text, dwi_dir, probtrackx_output_dir_path, procmem, num_total_samples, vent_CSF_diff_mask_path=None, way_mask=None):
     import random
     import nipype.interfaces.fsl as fsl
     samples_i = int(round(float(num_total_samples) / float(procmem[0]), 0))
-    nodif_brain_mask_path = "%s%s" % (bedpostx_dir, '/nodif_brain_mask.nii.gz')
-    merged_th_samples_path = "%s%s" % (bedpostx_dir, '/merged_th1samples.nii.gz')
-    merged_f_samples_path = "%s%s" % (bedpostx_dir, '/merged_f1samples.nii.gz')
-    merged_ph_samples_path = "%s%s" % (bedpostx_dir, '/merged_ph1samples.nii.gz')
+    nodif_brain_mask_path = "%s%s" % (dwi_dir, '/nodif_brain_mask.nii.gz')
+    merged_th_samples_path = "%s%s" % (dwi_dir, '/merged_th1samples.nii.gz')
+    merged_f_samples_path = "%s%s" % (dwi_dir, '/merged_f1samples.nii.gz')
+    merged_ph_samples_path = "%s%s" % (dwi_dir, '/merged_ph1samples.nii.gz')
 
     tmp_dir = "%s%s%s" % (probtrackx_output_dir_path, '/tmp_samples_', str(i))
     if not os.path.exists(tmp_dir):
@@ -433,25 +487,112 @@ def run_probtrackx2(i, seeds_text, bedpostx_dir, probtrackx_output_dir_path, ven
     probtrackx2.inputs.fsamples = merged_f_samples_path
     probtrackx2.inputs.phsamples = merged_ph_samples_path
     probtrackx2.inputs.use_anisotropy = False
-    try:
+
+    if vent_CSF_diff_mask_path:
         probtrackx2.inputs.avoid_mp = vent_CSF_diff_mask_path
-    except RuntimeWarning:
+    else:
         print('No ventricular CSF mask used. This is not recommended.')
-        pass
-    try:
+
+    if way_mask:
         probtrackx2.inputs.waypoints = way_mask
         probtrackx2.inputs.waycond = 'OR'
-    except RuntimeWarning:
         print('No waypointmask used. This will instantiate a computationally expensive probtrackx run and is generally not recommended.')
-        pass
+
     rseed_arg = ' --rseed=' + str(random.randint(1, 1000))
-    os.chdir(bedpostx_dir)
+    os.chdir(dwi_dir)
     os.system(probtrackx2.cmdline + rseed_arg)
     del probtrackx2
     return
 
 
-def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_output_dir_path, dir_path, procmem):
+def dwi_ndmg_run(dwi_dir, node_size, dir_path, conn_model, parc, atlas_select, network, way_mask=None, num_total_samples=1000000):
+    import ndmg.graph as mgg
+    import numpy as np
+    import nibabel as nb
+    import networkx as nx
+    import glob
+    import nipype.interfaces.fsl as fsl
+    from dipy.reconst.dti import TensorModel, fractional_anisotropy, quantize_evecs
+    from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, auto_response, recursive_response
+    from dipy.tracking.local import LocalTracking, ThresholdTissueClassifier
+    from dipy.tracking.utils import random_seeds_from_mask
+    from dipy.direction import peaks_from_model
+    from dipy.tracking.eudx import EuDX
+    from dipy.data import get_sphere, get_data
+    from dipy.core.gradients import gradient_table
+    from dipy.io import read_bvals_bvecs
+
+    dwi_img = "%s%s" % (dwi_dir, '/dwi.nii.gz')
+    nodif_brain_mask_path = "%s%s" % (dwi_dir, '/nodif_brain_mask.nii.gz')
+    bvals = "%s%s" % (dwi_dir, '/bval')
+    bvecs = "%s%s" % (dwi_dir, '/bvec')
+
+    img = nib.load(dwi_img)
+    data = img.get_data()
+
+    # Loads mask and ensures it's a true binary mask
+    img = nib.load(nodif_brain_mask_path)
+    mask = img.get_data()
+    mask = mask > 0
+
+    [bvals, bvecs] = read_bvals_bvecs(bvals, bvecs)
+    gtab = gradient_table(bvals, bvecs)
+
+    # Estimates some tensors
+    model = TensorModel(gtab)
+    ten = model.fit(data, mask)
+    sphere = get_sphere('symmetric724')
+    ind = quantize_evecs(ten.evecs, sphere.vertices)
+
+    # Tractography
+    if conn_model == 'csd':
+        trac_mod = 'csd'
+    else:
+        trac_mod = ten.fa
+
+    if conn_model == 'tensor':
+        eu = EuDX(a=trac_mod, ind=ind, seeds=num_total_samples, odf_vertices=sphere.vertices, a_low=0.1)
+        tracks = [e for e in eu]
+    elif conn_model == 'csd':
+        response = recursive_response(gtab, data, mask=way_mask, sh_order=8, peak_thr=0.01, init_fa=0.08,
+                                      init_trace=0.0021, iter=8, convergence=0.001, parallel=True)
+        csd_model = ConstrainedSphericalDeconvModel(gtab, response)
+        csd_peaks = peaks_from_model(model=csd_model, data=data, sphere=sphere, relative_peak_threshold=.5,
+                                     min_separation_angle=25, parallel=True)
+        tissue_classifier = ThresholdTissueClassifier(ten.fa, 0.1)
+        seeds = random_seeds_from_mask(ten.fa > 0.3, seeds_count=1)
+        streamline_generator = LocalTracking(csd_peaks, tissue_classifier, seeds, affine=np.eye(4), step_size=0.5)
+        tracks = [e for e in streamline_generator]
+
+    if parc is True:
+        node_size = 'parc'
+
+    if network:
+        seeds_dir = "%s%s%s%s%s%s%s" % (dir_path, '/seeds_', network, '_', atlas_select, '_', str(node_size))
+    else:
+        seeds_dir = "%s%s%s%s%s" % (dir_path, '/seeds_', atlas_select, '_', str(node_size))
+
+    seed_files = glob.glob("%s%s" % (seeds_dir, '/*diff.nii.gz'))
+
+    label_sum = "%s%s" % (seeds_dir, '/all_rois.nii.gz')
+    args = ''
+    for i in seed_files:
+        args = args + ' -add ' + i
+    maths = fsl.ImageMaths(in_file=seed_files[0], op_string=args, out_file=label_sum)
+    print('\nMerging seed masks into single labels image...')
+    os.system(maths.cmdline)
+
+    labels_im = nb.load(label_sum)
+    graph = mgg(len(np.unique(labels_im.get_data())) - 1, label_sum)
+    graph.make_graph(tracks)
+    g1 = graph.get_graph()
+    graph.summary()
+    conn_matrix = nx.to_numpy_matrix(g1)
+
+    return conn_matrix
+
+
+def collect_struct_mapping_outputs(parc, dwi_dir, network, ID, probtrackx_output_dir_path, dir_path, procmem, seeds_dir):
     import os
     import time
     import glob
@@ -512,7 +653,7 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
         waytotals_list.append(np.genfromtxt(i))
 
     conn_matrices = []
-    i=0
+    i = 0
     for mx in mats_list:
         waytotal = waytotals_list[i]
         np.seterr(divide='ignore', invalid='ignore')
@@ -526,7 +667,7 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
     for i in range(len(conn_matrices))[1:]:
         try:
             conn_matri = conn_matri + conn_matrices[i]
-        except RuntimeWarning:
+        except:
             print("%s%s%s%s%s" % ('Matrix ', str(i + 1), ' is a different shape: ', str(conn_matrices[i].shape), '. Skipping...'))
             continue
 
@@ -539,11 +680,11 @@ def collect_struct_mapping_outputs(parc, bedpostx_dir, network, ID, probtrackx_o
     conn_matrix_symm = np.maximum(conn_matrix, conn_matrix.transpose())
 
     if parc is False:
-        del_files_spheres = glob.glob(dir_path + '/volumes/roi_sphere*')
+        del_files_spheres = glob.glob(seeds_dir + '/roi_sphere*')
         for i in del_files_spheres:
             os.remove(i)
     else:
-        del_files_parcels = glob.glob(dir_path + '/volumes/roi_parcel*')
+        del_files_parcels = glob.glob(seeds_dir + '/roi_parcel*')
         if len(del_files_parcels) > 0:
             for i in del_files_parcels:
                 os.remove(i)

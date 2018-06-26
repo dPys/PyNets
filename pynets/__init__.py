@@ -4,4 +4,3 @@
 
 __author__ = """Derek Pisner"""
 __email__ = 'dpisner@utexas.edu'
-__version__ = '0.1.0'

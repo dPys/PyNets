@@ -37,7 +37,9 @@ def fetch_nilearn_atlas_coords(atlas_select):
     atlas_name = atlas['description'].splitlines()[0]
     if atlas_name is None:
         atlas_name = atlas_select
-    print("%s%s%s%s" % ('\n', str(atlas_name.decode('utf-8')), ' comes with {0}'.format(atlas.keys()), '\n'))
+    if '\'b' in atlas_select:
+        atlas_select = atlas_select.decode('utf-8')
+    print("%s%s%s%s" % ('\n', str(atlas_name), ' comes with {0}'.format(atlas.keys()), '\n'))
     coords = np.vstack((atlas.rois['x'], atlas.rois['y'], atlas.rois['z'])).T
     print("%s%s" % ('\nStacked atlas coordinates in array of shape {0}.'.format(coords.shape), '\n'))
     try:
@@ -104,14 +106,12 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
     RSN_ix = list(ref_dict.keys())[list(ref_dict.values()).index(network)]
     RSNmask = par_data[:, :, :, RSN_ix]
 
-
     def mmToVox(mmcoords):
         voxcoords = ['', '', '']
         voxcoords[0] = int((round(int(mmcoords[0])/x_vox))+45)
         voxcoords[1] = int((round(int(mmcoords[1])/y_vox))+63)
         voxcoords[2] = int((round(int(mmcoords[2])/z_vox))+36)
         return voxcoords
-
 
     def VoxTomm(voxcoords):
         mmcoords = ['', '', '']
@@ -241,11 +241,13 @@ def coord_masker(mask, coords, label_names, error):
     x_vox = np.diagonal(masking._load_mask_img(mask)[1][:3,0:3])[0]
     y_vox = np.diagonal(masking._load_mask_img(mask)[1][:3,0:3])[1]
     z_vox = np.diagonal(masking._load_mask_img(mask)[1][:3,0:3])[2]
+
     def mmToVox(mmcoords):
-        voxcoords = ['','','']
+        voxcoords = ['', '', '']
         voxcoords[0] = int((round(int(mmcoords[0])/x_vox))+45)
         voxcoords[1] = int((round(int(mmcoords[1])/y_vox))+63)
         voxcoords[2] = int((round(int(mmcoords[2])/z_vox))+36)
+
         return voxcoords
 
     mask_data, _ = masking._load_mask_img(mask)
@@ -348,10 +350,47 @@ def gen_network_parcels(parlistfile, network, labels, dir_path):
     return out_path
 
 
+def AAL_naming(coords):
+    import pandas as pd
+    import csv
+    from pathlib import Path
+
+    aal_coords_ix_path = "%s%s" % (str(Path(__file__).parent), '/labelcharts/aal_coords_ix.csv')
+    aal_region_names_path = "%s%s" % (str(Path(__file__).parent), '/labelcharts/aal_dictionary.csv')
+    try:
+        aal_coords_ix = pd.read_csv(aal_coords_ix_path)
+        with open(aal_region_names_path, 'r') as csv_file:
+            reader = csv.reader(csv_file)
+            aal_labs_dict = dict(reader)
+    except FileNotFoundError:
+        print('Loading AAL references failed!')
+
+    label_names_ix = []
+    print('Building region index using AAL MNI coordinates...')
+    for coord in coords:
+        reg_lab = aal_coords_ix.loc[aal_coords_ix['coord_tuple'] == tuple(np.round(coord).astype('int')), 'Region_index']
+        if len(reg_lab) > 0:
+            label_names_ix.append(reg_lab.values[0])
+        else:
+            label_names_ix.append(np.nan)
+
+    print('Building list of label names using AAL dictionary...')
+    label_names = []
+    for region_ix in label_names_ix:
+        if region_ix is np.nan:
+            label_names.append('Unknown')
+        else:
+            label_names.append(aal_labs_dict[region_ix])
+
+    return label_names
+
+
 def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file):
     from pynets import utils, nodemaker
     import pandas as pd
+    import os
     from pathlib import Path
+
     # Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
     nilearn_parc_atlases = ['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
     nilearn_coord_atlases = ['harvard_oxford', 'msdl', 'coords_power_2011', 'smith_2009', 'basc_multiscale_2015', 'allen_2011', 'coords_dosenbach_2010']
@@ -374,39 +413,47 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
             print("%s%s%s%s" % ('\n', atlas_select, ' comes with {0} '.format(par_max), 'parcels\n'))
         except ValueError:
             print('\n\nError: Either you have specified the name of a nilearn atlas that does not exist or you have not supplied a 3d atlas parcellation image!\n\n')
+        label_names = None
 
     # Labels prep
-    try:
-        label_names
-    except:
+    if label_names:
+        pass
+    else:
         if ref_txt is not None and os.path.exists(ref_txt):
-            atlas_select = os.path.basename(ref_txt).split('.txt')[0]
             dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
             label_names = dict_df['Region'].tolist()
         else:
             try:
-                atlas_ref_txt = atlas_select + '.txt'
-                ref_txt = Path(__file__)/'atlases'/atlas_ref_txt
-                dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
-                label_names = dict_df['Region'].tolist()
+                ref_txt = "%s%s%s%s" % (str(Path(__file__).parent), '/labelcharts/', atlas_select, '.txt')
+                if os.path.exists(ref_txt):
+                    dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+                    label_names = dict_df['Region'].tolist()
+                else:
+                    try:
+                        label_names = nodemaker.AAL_naming(coords)
+                    except:
+                        print('AAL reference labeling failed!')
+                        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
             except:
-                label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-    if label_names is None:
-        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-    try:
-        atlas_name
-    except:
-        atlas_name = atlas_select
-
+                try:
+                    label_names = nodemaker.AAL_naming(coords)
+                except:
+                    print('AAL reference labeling failed!')
+                    label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+    atlas_name = atlas_select
     dir_path = utils.do_dir_path(atlas_select, func_file)
+
     return label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile, dir_path
 
 
 def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file):
     from pynets import utils, nodemaker
     import pandas as pd
+    import os
+    from pathlib import Path
+
     # Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
-    nilearn_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
+    nilearn_atlases = ['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
     if atlas_select in nilearn_atlases:
         [label_names, _, parlistfile] = utils.nilearn_atlas_helper(atlas_select)
 
@@ -421,25 +468,36 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
         # Fetch user-specified atlas coords
         [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
         networks_list = None
+        label_names = None
 
     # Labels prep
-    try:
-        label_names
-    except:
+    if label_names:
+        pass
+    else:
         if ref_txt is not None and os.path.exists(ref_txt):
-            atlas_select = os.path.basename(ref_txt).split('.txt')[0]
             dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
             label_names = dict_df['Region'].tolist()
         else:
-            label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-    if label_names is None:
-        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-    try:
-        atlas_name
-    except:
-        atlas_name = atlas_select
-
+            try:
+                ref_txt = "%s%s%s%s" % (str(Path(__file__).parent), '/labelcharts/', atlas_select, '.txt')
+                if os.path.exists(ref_txt):
+                    dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+                    label_names = dict_df['Region'].tolist()
+                else:
+                    try:
+                        label_names = nodemaker.AAL_naming(coords)
+                    except:
+                        print('AAL reference labeling failed!')
+                        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+            except:
+                try:
+                    label_names = nodemaker.AAL_naming(coords)
+                except:
+                    print('AAL reference labeling failed!')
+                    label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+    atlas_name = atlas_select
     dir_path = utils.do_dir_path(atlas_select, func_file)
+
     return label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile, dir_path
 
 
@@ -460,7 +518,7 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc)
                                                                             dir_path, ID, perc_overlap)
         [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list_masked)
     # Mask Coordinates
-    elif parc is False:
+    else:
         if 'bedpostX' in dir_path:
             error = 60
         else:
