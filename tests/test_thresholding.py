@@ -11,6 +11,7 @@ import time
 from pathlib import Path
 from pynets import thresholding
 
+
 def test_thresh_and_fit1():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
@@ -30,7 +31,7 @@ def test_thresh_and_fit1():
     [conn_matrix_thr, edge_threshold, est_path, _, _, _] = thresholding.thresh_and_fit(dens_thresh, thr,
                                                                                        ts_within_nodes, conn_model,
                                                                                        network, ID, dir_path, mask,
-                                                                                       node_size)
+                                                                                       node_size, min_span_tree=False)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     assert conn_matrix_thr is not None
@@ -56,7 +57,7 @@ def test_thresh_and_fit2():
     [conn_matrix_thr, edge_threshold, est_path, _, _, _] = thresholding.thresh_and_fit(dens_thresh, thr,
                                                                                        ts_within_nodes, conn_model,
                                                                                        network, ID, dir_path, mask,
-                                                                                       node_size)
+                                                                                       node_size, min_span_tree=False)
     print("%s%s%s" % ('thresh_and_fit (Functional, density thresholding) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     assert conn_matrix_thr is not None

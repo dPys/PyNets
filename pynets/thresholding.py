@@ -7,6 +7,7 @@ Copyright (C) 2018
 import numpy as np
 import networkx as nx
 
+
 def threshold_absolute(W, thr, copy=True):
     '''# Adapted from bctpy
     '''
@@ -15,6 +16,7 @@ def threshold_absolute(W, thr, copy=True):
     np.fill_diagonal(W, 0)
     W[W < thr] = 0
     return W
+
 
 def threshold_proportional(W, p, copy=True):
     '''# Adapted from bctpy
@@ -64,6 +66,15 @@ def density_thresholding(conn_matrix, thr):
         density = nx.density(G)
         print("%s%d%s%.2f%s%.2f%s" % ('Iteratively thresholding -- Iteration ', i, ' -- with absolute thresh: ', float(abs_thr), ' and Density: ', float(density), '...'))
         i = i + 1
+    return conn_matrix
+
+
+def local_thresholding(conn_matrix):
+    import networkx as nx
+    from pynets import thresholding
+    conn_matrix = thresholding.autofix(conn_matrix, copy=True)
+    G = nx.from_numpy_matrix(conn_matrix)
+    conn_matrix = nx.to_numpy_matrix(nx.algorithms.minimum_spanning_tree(G))
     return conn_matrix
 
 
@@ -135,13 +146,13 @@ def autofix(W, copy=True):
     return W
 
 
-def thresh_and_fit(dens_thresh, thr, ts_within_nodes, conn_model, network, ID, dir_path, mask, node_size):
+def thresh_and_fit(dens_thresh, thr, ts_within_nodes, conn_model, network, ID, dir_path, mask, node_size, min_span_tree):
     from pynets import utils, thresholding, graphestimation
 
     thr_perc = 100 * float(thr)
     edge_threshold = "%s%s" % (str(thr_perc), '%')
 
-    if not dens_thresh:
+    if not dens_thresh and thr != float(0):
         print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
     else:
         print("%s%.2f%s" % ('\nThresholding to achieve density of: ', thr_perc, '% ...\n'))
@@ -156,28 +167,38 @@ def thresh_and_fit(dens_thresh, thr, ts_within_nodes, conn_model, network, ID, d
         conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
     else:
         conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
+
+    if min_span_tree is True:
+        print('Applying local thresholding using the Minimum Spanning Tree (MST)...\n')
+        conn_matrix_thr = thresholding.local_thresholding(conn_matrix_thr)
+
     # Save thresholded mat
     est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
     np.save(est_path, conn_matrix_thr)
     return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network
 
 
-def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_size, conn_matrix, parc):
+def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_size, conn_matrix, parc, min_span_tree):
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
     edge_threshold = "%s%s" % (str(thr_perc), '%')
     if parc is True:
         node_size = 'parc'
-    if dens_thresh is False:
+    if dens_thresh is False and thr != float(0):
         print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
-    else:
+    elif dens_thresh is True:
         print("%s%.2f%s" % ('\nThresholding to achieve density of: ', thr_perc, '% ...\n'))
 
     if dens_thresh is False:
         conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
     else:
         conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
+
+    if min_span_tree is True:
+        print('Applying local thresholding using the Minimum Spanning Tree (MST)...\n')
+        conn_matrix_thr = thresholding.local_thresholding(conn_matrix_thr)
+
     # Save thresholded mat
     est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
     np.save(est_path, conn_matrix_thr)

@@ -4,7 +4,6 @@
 Created on Wed Dec 27 16:19:14 2017
 
 @author: PSYC-dap3463
-
 """
 import numpy as np
 import time
@@ -14,6 +13,7 @@ except ImportError:
     import _pickle as pickle
 from pathlib import Path
 from pynets import plotting
+
 
 def test_plot_conn_mat_nonet_no_mask():
     # Set example inputs
@@ -36,6 +36,7 @@ def test_plot_conn_mat_nonet_no_mask():
     plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr, node_size)
     print("%s%s%s" % ('plot_conn_mat_func --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
+
 def test_plot_conn_mat_nonet_mask():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
@@ -56,6 +57,7 @@ def test_plot_conn_mat_nonet_mask():
     start_time = time.time()
     plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr, node_size)
     print("%s%s%s" % ('plot_conn_mat_func (Masking version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
+
 
 def test_plot_all_nonet_no_mask():
     # Set example inputs
@@ -79,8 +81,10 @@ def test_plot_all_nonet_no_mask():
     coords = pickle.load(coord_file)
 
     start_time = time.time()
-    plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold, thr, node_size)
+    plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords,
+                      edge_threshold, thr, node_size)
     print("%s%s%s" % ('plot_all --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
+
 
 def test_plot_all_nonet_with_mask():
     # Set example inputs
@@ -104,8 +108,10 @@ def test_plot_all_nonet_with_mask():
     coords = pickle.load(coord_file)
 
     start_time = time.time()
-    plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, edge_threshold, thr, node_size)
+    plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords,
+                      edge_threshold, thr, node_size)
     print("%s%s%s" % ('plot_all (Masking version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
+
 
 def test_plot_connectogram():
     # Set example inputs
@@ -124,6 +130,7 @@ def test_plot_connectogram():
     start_time = time.time()
     plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
     print("%s%s%s" % ('plot_connectogram --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
+
 
 def test_plot_timeseries():
     # Set example inputs

@@ -70,8 +70,8 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas_select, dir_path, ID, ne
 
 def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names):
     import json
-    from networkx.readwrite import json_graph
     from pathlib import Path
+    from networkx.readwrite import json_graph
     from pynets.thresholding import normalize
     from pynets.netstats import most_important
     from scipy.cluster.hierarchy import linkage, fcluster
@@ -163,6 +163,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
 
     def get_node_label(node_idx, labels, clust_levels_tmp):
         from collections import OrderedDict
+
         def write_roman(num):
             roman = OrderedDict()
             roman[1000] = "M"
@@ -178,6 +179,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
             roman[5] = "V"
             roman[4] = "IV"
             roman[1] = "I"
+
             def roman_num(num):
                 for r in roman.keys():
                     x, y = divmod(num, r)
@@ -288,6 +290,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
             for src, target in fdg_replacements_js.items():
                 line = line.replace(src, target)
             outfile.write(line)
+    return
 
 
 def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
@@ -328,6 +331,8 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
 
     pruning = True
     dpi_resolution = 500
+    if '\'b' in atlas_select:
+        atlas_select = atlas_select.decode('utf-8')
     if pruning is True:
         G_pre = nx.from_numpy_matrix(conn_matrix)
         [G, pruned_nodes] = most_important(G_pre)
@@ -398,6 +403,7 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     #connectome.savefig(out_path_fig, dpi=dpi_resolution, facecolor ='k', edgecolor ='k')
     return
 
+
 def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, mask, coords,
                         dir_path, conn_model, thr, node_size):
     import matplotlib
@@ -421,6 +427,7 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     dpi_resolution = 500
     #pruning = False
     bpx_trx = False
+    atlas_select = atlas_select.decode('utf-8')
 
     # # Auto-set INPUTS# #
     try:
