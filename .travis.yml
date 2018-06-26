@@ -19,5 +19,5 @@ script:
 #   - tox
 #   - travis_wait 60 pytest tests/test_graphestimation.py -s
    - pytest tests/test_nodemaker.py -s
-   - pytest tests/test_plotting.py -s
-#   - travis_wait 60 pytest tests/test_thresholding.py -s
+#   - pytest tests/test_plotting.py -s
+   - travis_wait 60 pytest tests/test_thresholding.py -s
