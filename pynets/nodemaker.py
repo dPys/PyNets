@@ -391,6 +391,8 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
     import os
     from pathlib import Path
 
+    base_path = utils.get_file()
+
     # Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
     nilearn_parc_atlases = ['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
     nilearn_coord_atlases = ['harvard_oxford', 'msdl', 'coords_power_2011', 'smith_2009', 'basc_multiscale_2015', 'allen_2011', 'coords_dosenbach_2010']
@@ -424,10 +426,11 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
             label_names = dict_df['Region'].tolist()
         else:
             try:
-                ref_txt = "%s%s%s%s" % (str(Path(__file__).parent), '/labelcharts/', atlas_select, '.txt')
+                ref_txt = "%s%s%s%s" % (str(Path(base_path).parent), '/labelcharts/', atlas_select, '.txt')
                 if os.path.exists(ref_txt):
-                    dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+                    dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
                     label_names = dict_df['Region'].tolist()
+                    print(label_names)
                 else:
                     try:
                         label_names = nodemaker.AAL_naming(coords)
@@ -437,6 +440,7 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
             except:
                 try:
                     label_names = nodemaker.AAL_naming(coords)
+                    print(label_names)
                 except:
                     print('AAL reference labeling failed!')
                     label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
@@ -451,6 +455,8 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
     import pandas as pd
     import os
     from pathlib import Path
+
+    base_path = utils.get_file()
 
     # Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
     nilearn_atlases = ['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
@@ -479,13 +485,15 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
             label_names = dict_df['Region'].tolist()
         else:
             try:
-                ref_txt = "%s%s%s%s" % (str(Path(__file__).parent), '/labelcharts/', atlas_select, '.txt')
+                ref_txt = "%s%s%s%s" % (str(Path(base_path).parent), '/labelcharts/', atlas_select, '.txt')
                 if os.path.exists(ref_txt):
-                    dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+                    dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
                     label_names = dict_df['Region'].tolist()
+                    print(label_names)
                 else:
                     try:
                         label_names = nodemaker.AAL_naming(coords)
+                        print(label_names)
                     except:
                         print('AAL reference labeling failed!')
                         label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
@@ -507,6 +515,7 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc)
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
+
     # Mask Parcels
     if parc is True:
         # For parcel masking, specify overlap thresh and error cushion in mm voxels
@@ -533,6 +542,7 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc)
     labels_path = "%s%s%s%s" % (dir_path, '/whole_brain_atlas_labelnames_', os.path.basename(mask).split('.')[0], '.pkl')
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f, protocol=2)
+
     return net_parcels_map_nifti, coords, label_names
 
 
@@ -559,4 +569,5 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
         labels_path = "%s%s" % (dir_path, '/whole_brain_atlas_labelnames_wb.pkl')
         with open(labels_path, 'wb') as f:
             pickle.dump(label_names, f, protocol=2)
+
     return net_parcels_map_nifti, coords, label_names

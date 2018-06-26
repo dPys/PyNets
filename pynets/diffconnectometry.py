@@ -505,22 +505,27 @@ def run_probtrackx2(i, seeds_text, dwi_dir, probtrackx_output_dir_path, procmem,
     return
 
 
-def dwi_ndmg_run(dwi_dir, node_size, dir_path, conn_model, parc, atlas_select, network, way_mask=None, num_total_samples=1000000):
-    import ndmg.graph as mgg
-    import numpy as np
-    import nibabel as nb
-    import networkx as nx
+def dwi_dipy_run(dwi_dir, node_size, dir_path, conn_model, parc, atlas_select, network, wm_mask=None, num_total_samples):
+    import os
+    import nibabel as nib
     import glob
+    import re
     import nipype.interfaces.fsl as fsl
     from dipy.reconst.dti import TensorModel, fractional_anisotropy, quantize_evecs
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, auto_response, recursive_response
     from dipy.tracking.local import LocalTracking, ThresholdTissueClassifier
-    from dipy.tracking.utils import random_seeds_from_mask
+    from dipy.tracking import utils
     from dipy.direction import peaks_from_model
     from dipy.tracking.eudx import EuDX
     from dipy.data import get_sphere, get_data
     from dipy.core.gradients import gradient_table
     from dipy.io import read_bvals_bvecs
+
+    def atoi(text):
+        return int(text) if text.isdigit() else text
+
+    def natural_keys(text):
+        return [atoi(c) for c in re.split('(\d+)', text)]
 
     dwi_img = "%s%s" % (dwi_dir, '/dwi.nii.gz')
     nodif_brain_mask_path = "%s%s" % (dwi_dir, '/nodif_brain_mask.nii.gz')
@@ -548,20 +553,42 @@ def dwi_ndmg_run(dwi_dir, node_size, dir_path, conn_model, parc, atlas_select, n
     if conn_model == 'csd':
         trac_mod = 'csd'
     else:
+        conn_model = 'tensor'
         trac_mod = ten.fa
 
+    affine = img.affine
+    print('Tracking with tensor model...')
+    if wm_mask is None:
+        mask = nib.load(mask).get_data()
+        mask[0, :, :] = False
+        mask[:, 0, :] = False
+        mask[:, :, 0] = False
+        seeds = utils.seeds_from_mask(mask, density=2)
+    else:
+        wm_mask_data = nib.load(wm_mask).get_data()
+        wm_mask_data[0, :, :] = False
+        wm_mask_data[:, 0, :] = False
+        wm_mask_data[:, :, 0] = False
+        seeds = utils.seeds_from_mask(wm_mask_data, density=2)
+    #seeds = random_seeds_from_mask(ten.fa > 0.3, seeds_count=num_total_samples)
+
     if conn_model == 'tensor':
-        eu = EuDX(a=trac_mod, ind=ind, seeds=num_total_samples, odf_vertices=sphere.vertices, a_low=0.1)
+        eu = EuDX(a=trac_mod, ind=ind, seeds=seeds, odf_vertices=sphere.vertices,
+                  a_low=0.05, step_sz=.5)
         tracks = [e for e in eu]
     elif conn_model == 'csd':
-        response = recursive_response(gtab, data, mask=way_mask, sh_order=8, peak_thr=0.01, init_fa=0.08,
-                                      init_trace=0.0021, iter=8, convergence=0.001, parallel=True)
+        print('Tracking with CSD model...')
+        if wm_mask is None:
+            response = recursive_response(gtab, data, mask=mask.astype('bool'), sh_order=8, peak_thr=0.01, init_fa=0.08,
+                                          init_trace=0.0021, iter=8, convergence=0.001, parallel=True)
+        else:
+            response = recursive_response(gtab, data, mask=wm_mask_data.astype('bool'), sh_order=8, peak_thr=0.01,
+                                          init_fa=0.08, init_trace=0.0021, iter=8, convergence=0.001, parallel=True)
         csd_model = ConstrainedSphericalDeconvModel(gtab, response)
         csd_peaks = peaks_from_model(model=csd_model, data=data, sphere=sphere, relative_peak_threshold=.5,
                                      min_separation_angle=25, parallel=True)
         tissue_classifier = ThresholdTissueClassifier(ten.fa, 0.1)
-        seeds = random_seeds_from_mask(ten.fa > 0.3, seeds_count=1)
-        streamline_generator = LocalTracking(csd_peaks, tissue_classifier, seeds, affine=np.eye(4), step_size=0.5)
+        streamline_generator = LocalTracking(csd_peaks, tissue_classifier, seeds, affine=affine, step_size=0.5)
         tracks = [e for e in streamline_generator]
 
     if parc is True:
@@ -574,20 +601,43 @@ def dwi_ndmg_run(dwi_dir, node_size, dir_path, conn_model, parc, atlas_select, n
 
     seed_files = glob.glob("%s%s" % (seeds_dir, '/*diff.nii.gz'))
 
-    label_sum = "%s%s" % (seeds_dir, '/all_rois.nii.gz')
-    args = ''
+    seed_files.sort(key=natural_keys)
+
+    # Binarize ROIs
+    print('\nBinarizing seed masks...')
+    j = 1
     for i in seed_files:
-        args = args + ' -add ' + i
-    maths = fsl.ImageMaths(in_file=seed_files[0], op_string=args, out_file=label_sum)
+        args = ' -bin '
+        out_file = "%s%s" % (i.split('.nii.gz')[0], '_bin.nii.gz')
+        maths = fsl.ImageMaths(in_file=i, op_string=args, out_file=out_file)
+        os.system(maths.cmdline)
+        args = ' -mul ' + str(j)
+        maths = fsl.ImageMaths(in_file=out_file, op_string=args, out_file=out_file)
+        os.system(maths.cmdline)
+        j = j + 1
+
+    # Create atlas from ROIs
+    seed_files = glob.glob("%s%s" % (seeds_dir, '/*diff_bin.nii.gz'))
+
+    seed_files.sort(key=natural_keys)
+
     print('\nMerging seed masks into single labels image...')
+    label_sum = "%s%s" % (seeds_dir, '/all_rois.nii.gz')
+    args = ' -add ' + i
+    maths = fsl.ImageMaths(in_file=seed_files[0], op_string=args, out_file=label_sum)
     os.system(maths.cmdline)
 
-    labels_im = nb.load(label_sum)
-    graph = mgg(len(np.unique(labels_im.get_data())) - 1, label_sum)
-    graph.make_graph(tracks)
-    g1 = graph.get_graph()
-    graph.summary()
-    conn_matrix = nx.to_numpy_matrix(g1)
+    for i in seed_files:
+        args = ' -add ' + i
+        maths = fsl.ImageMaths(in_file=label_sum, op_string=args, out_file=label_sum)
+        os.system(maths.cmdline)
+
+    labels_im = nib.load(label_sum)
+    labels_data = labels_im.get_data().astype('int')
+    conn_matrix, grouping = utils.connectivity_matrix(tracks, labels_data, affine=affine, return_mapping=True,
+                                                      mapping_as_streamlines=True)
+    conn_matrix[:3, :] = 0
+    conn_matrix[:, :3] = 0
 
     return conn_matrix
 

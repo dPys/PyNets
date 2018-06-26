@@ -617,7 +617,7 @@ if __name__ == '__main__':
         meta_wf.config['logging']['utils_level'] = 'DEBUG'
         meta_wf.config['logging']['interface_level'] = 'DEBUG'
         meta_wf.config['execution']['display_variable'] = ':0'
-        meta_wf.config['execution']['job_finished_timeout'] = 65
+        #meta_wf.config['execution']['job_finished_timeout'] = 65
         #meta_wf.write_graph(graph2use='exec', format='png', dotfilename='meta_wf.dot')
         plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         egg = meta_wf.run(plugin='MultiProc', plugin_args=plugin_args)
@@ -1056,8 +1056,8 @@ if __name__ == '__main__':
         wf_multi.config['logging']['utils_level'] = 'DEBUG'
         wf_multi.config['logging']['interface_level'] = 'DEBUG'
         wf_multi.config['execution']['display_variable'] = ':0'
-        wf_multi.config['execution']['job_finished_timeout'] = 65
-        plugin_args = { 'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+        #wf_multi.config['execution']['job_finished_timeout'] = 65
+        plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf_multi.run(plugin='MultiProc', plugin_args=plugin_args)
         #wf_multi.run()
@@ -1076,7 +1076,7 @@ if __name__ == '__main__':
         wf.config['logging']['utils_level'] = 'DEBUG'
         wf.config['logging']['interface_level'] = 'DEBUG'
         wf.config['execution']['display_variable'] = ':0'
-        wf.config['execution']['job_finished_timeout'] = 65
+        #wf.config['execution']['job_finished_timeout'] = 65
         #wf.write_graph(graph2use='flat', format='png', dotfilename='indiv_wf.dot')
         plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))

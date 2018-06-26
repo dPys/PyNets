@@ -10,6 +10,11 @@ import nibabel as nib
 import numpy as np
 
 
+def get_file():
+    base_path = str(__file__)
+    return base_path
+
+
 def nilearn_atlas_helper(atlas_select):
     from nilearn import datasets
     if len(list(getattr(datasets, 'fetch_%s' % atlas_select)().keys())) > 0:
