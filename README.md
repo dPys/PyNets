@@ -54,6 +54,7 @@ docker run -ti --rm --privileged \
 See pynets_run.py -h for help options.
 
 Quick Start:
+
 Example A) You have a preprocessed (minimally -- normalized and skull stripped) functional fMRI dataset called "filtered_func_data_clean_standard.nii.gz" where you assign an arbitrary subject id of 997, you wish to analyze a whole-brain network, using the nilearn atlas 'coords_dosenbach_2010', thresholding the connectivity graph proportionally to retain 0.20% of the strongest connections, and you wish to use partial correlation model estimation:
 ```python
 pynets_run.py '/Users/dpisner453/PyNets_examples/997/filtered_func_data_clean_standard.nii.gz' -id '997' -a 'coords_dosenbach_2010' -mod 'partcorr' -thr '0.20'
@@ -68,9 +69,9 @@ pynets_run.py -i '/Users/dpisner453/PyNets_examples/997/filtered_func_data_clean
 pynets_run.py -i '/Users/dpisner453/PyNets_examples/997/filtered_func_data_clean_standard.nii.gz' -id '997' -ua '/Users/dpisner453/PyNets_example_atlases/DesikanKlein2012.nii.gz' -n 'Default,Cont' -mod 'partcorr' -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -parc -p
 ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Example D) Building upon the previous examples, let's say you now wish to create a subject-specific atlas based on the subject's unique spatial-temporal profile. In this case, you can specify the path to a binarized mask within which to performed spatially-constrained spectral clustering, and you want to try this at multiple resolutions of k clusters (i.e. nodes). You again also wish to define your node radius at both 2 and 4 mm, fitting a partial correlation and sparse inverse covariance model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), you wish to prune disconnected and low importance (3 SD < M) nodes, and you wish to plot your results:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Example D) Building upon the previous examples, let's say you now wish to create a subject-specific atlas based on the subject's unique spatial-temporal profile. In this case, you can specify the path to a binarized mask within which to performed spatially-constrained spectral clustering, and you want to try this at multiple resolutions of k clusters/nodes (i.e. k=50,100,150). You again also wish to define your node radius at both 2 and 4 mm, fitting a partial correlation and sparse inverse covariance model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), you wish to prune disconnected and low importance (3 SD < M) nodes, and you wish to plot your results:
 ```python
-pynets_run.py -i '/Users/dpisner453/PyNets_examples/997/filtered_func_data_clean_standard.nii.gz' -id '997' -cm '/Users/dpisner453/PyNets_example/997_grey_matter_mask_bin.nii.gz' -ns '2,4' -mod 'partcorr,sps' -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p -plt
+pynets_run.py -i '/Users/dpisner453/PyNets_examples/997/filtered_func_data_clean_standard.nii.gz' -id '997' -cm '/Users/dpisner453/PyNets_example/997_grey_matter_mask_bin.nii.gz' -ns '2,4' -mod 'partcorr,sps' -k_min 50 -k_max 150 -k_step 50 -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p -plt
 ```
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Example E) You wish to generate a structural connectome, using probabilistic tractography applied to bedpostx outputs with 5000 streamlines, constrained to a white-matter waypoint mask, and avoiding ventricular CSF as defined by the subject's T1 image. You wish to use atlas parcels as defined by both DesikanKlein2012, and AALTzourioMazoyer2002, iterate over a range of densities (i.e. 0.05-0.10 with 1% step), prune disconnected and low importance (3 SD < M) nodes, and plot your results:
