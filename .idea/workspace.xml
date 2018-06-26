@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="" />
+    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/pynets/plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting.py" afterDir="false" />
+    </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -50,11 +52,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="plotting.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="plotting.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/plotting.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="49">
-              <caret line="272" column="4" selection-start-line="272" selection-start-column="4" selection-end-line="272" selection-end-column="21" />
+            <state relative-caret-position="-2415">
+              <caret line="295" column="40" selection-start-line="295" selection-start-column="40" selection-end-line="295" selection-end-column="40" />
               <folding>
                 <element signature="e#109#127#0" expanded="true" />
               </folding>
@@ -65,8 +67,8 @@
       <file leaf-file-name="test_plotting.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tests/test_plotting.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-697">
-              <caret line="95" column="14" selection-start-line="95" selection-start-column="14" selection-end-line="95" selection-end-column="14" />
+            <state relative-caret-position="322">
+              <caret line="14" column="27" lean-forward="true" selection-start-line="14" selection-start-column="27" selection-end-line="14" selection-end-column="27" />
               <folding>
                 <element signature="e#113#131#0" expanded="true" />
               </folding>
@@ -95,11 +97,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="utils.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="utils.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/utils.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="198">
-              <caret line="741" column="33" lean-forward="true" selection-start-line="741" selection-start-column="33" selection-end-line="741" selection-end-column="33" />
+              <caret line="741" column="33" selection-start-line="741" selection-start-column="33" selection-end-line="741" selection-end-column="33" />
               <folding>
                 <element signature="e#132#141#0" expanded="true" />
               </folding>
@@ -111,7 +113,7 @@
         <entry file="file://$PROJECT_DIR$/pynets/netstats.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="25">
-              <caret line="581" column="14" lean-forward="true" selection-start-line="581" selection-start-column="14" selection-end-line="581" selection-end-column="14" />
+              <caret line="581" column="14" selection-start-line="581" selection-start-column="14" selection-end-line="581" selection-end-column="14" />
               <folding>
                 <element signature="e#109#140#0" expanded="true" />
               </folding>
@@ -142,8 +144,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>create_seed_mask_file</find>
-      <find>probtrackx_output_dir</find>
       <find>seeds_dir</find>
       <find>seeds_dir = &quot;%s</find>
       <find>save_parcel</find>
@@ -169,9 +169,11 @@
       <find>Path(__file__).parent</find>
       <find>dir_path</find>
       <find>RunTimeWarning</find>
-      <find>test_plot_all_nonet_no_mask</find>
       <find>RuntimeWarning</find>
       <find>pandas</find>
+      <find>test_plot_all_nonet_no_mask</find>
+      <find>matplotlib.use('agg')</find>
+      <find>matplotlib.use('Agg')</find>
     </findStrings>
     <replaceStrings>
       <replace>#</replace>
@@ -190,9 +192,10 @@
       <replace>'/seeds</replace>
       <replace>seeds_dir</replace>
       <replace>__file__</replace>
-      <replace>seeds_list</replace>
       <replace>&quot;__file__&quot;</replace>
+      <replace>seeds_list</replace>
       <replace>str(Path(__file__).parent)</replace>
+      <replace>#matplotlib.use('agg')</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -213,11 +216,11 @@
         <option value="$PROJECT_DIR$/tests/test_thresholding.py" />
         <option value="$PROJECT_DIR$/tests/test_graphestimation.py" />
         <option value="$PROJECT_DIR$/tests/test_plotting.py" />
-        <option value="$PROJECT_DIR$/pynets/plotting.py" />
         <option value="$PROJECT_DIR$/pynets/nodemaker.py" />
         <option value="$PROJECT_DIR$/pynets/utils.py" />
         <option value="$PROJECT_DIR$/pynets/diffconnectometry.py" />
         <option value="$PROJECT_DIR$/pynets/netstats.py" />
+        <option value="$PROJECT_DIR$/pynets/plotting.py" />
       </list>
     </option>
   </component>
@@ -744,26 +747,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_plotting.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-697">
-          <caret line="95" column="14" selection-start-line="95" selection-start-column="14" selection-end-line="95" selection-end-column="14" />
-          <folding>
-            <element signature="e#113#131#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/plotting.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="49">
-          <caret line="272" column="4" selection-start-line="272" selection-start-column="4" selection-end-line="272" selection-end-column="21" />
-          <folding>
-            <element signature="e#109#127#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="46">
@@ -794,7 +777,7 @@
     <entry file="file://$PROJECT_DIR$/pynets/netstats.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="25">
-          <caret line="581" column="14" lean-forward="true" selection-start-line="581" selection-start-column="14" selection-end-line="581" selection-end-column="14" />
+          <caret line="581" column="14" selection-start-line="581" selection-start-column="14" selection-end-line="581" selection-end-column="14" />
           <folding>
             <element signature="e#109#140#0" expanded="true" />
           </folding>
@@ -804,9 +787,29 @@
     <entry file="file://$PROJECT_DIR$/pynets/utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="198">
-          <caret line="741" column="33" lean-forward="true" selection-start-line="741" selection-start-column="33" selection-end-line="741" selection-end-column="33" />
+          <caret line="741" column="33" selection-start-line="741" selection-start-column="33" selection-end-line="741" selection-end-column="33" />
           <folding>
             <element signature="e#132#141#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_plotting.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="322">
+          <caret line="14" column="27" lean-forward="true" selection-start-line="14" selection-start-column="27" selection-end-line="14" selection-end-column="27" />
+          <folding>
+            <element signature="e#113#131#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/plotting.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2415">
+          <caret line="295" column="40" selection-start-line="295" selection-start-column="40" selection-end-line="295" selection-end-column="40" />
+          <folding>
+            <element signature="e#109#127#0" expanded="true" />
           </folding>
         </state>
       </provider>
