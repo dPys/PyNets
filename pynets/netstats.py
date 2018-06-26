@@ -1089,14 +1089,14 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
             if ci is None:
                 raise KeyError('Diversity coefficient cannot be calculated for graph G in the absence of a community affiliation vector')
             [dc_vector, _] = diversity_coef_sign(in_mat, ci)
-            print('\nExtracting Participation Coefficient vector for all network nodes...')
+            print('\nExtracting Diversity Coefficient vector for all network nodes...')
             dc_vals = list(dc_vector)
             dc_edges = list(range(len(dc_vector)))
             num_edges = len(dc_edges)
             dc_arr = np.zeros([num_edges + 1, 2], dtype='object')
             j = 0
             for i in range(num_edges):
-                dc_arr[j, 0] = "%s%s" % (str(dc_edges[j]), '_partic_coef')
+                dc_arr[j, 0] = "%s%s" % (str(dc_edges[j]), '_diversity_coef')
                 #print('\n' + str(rc_edges[j]) + '_rich_club')
                 try:
                     dc_arr[j, 1] = dc_vals[j]

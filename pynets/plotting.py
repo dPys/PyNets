@@ -21,10 +21,10 @@ def plot_conn_mat(conn_matrix, label_names, out_path_fig):
     [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
     plt.imshow(conn_matrix, interpolation="nearest", vmax=z_max, vmin=z_min, cmap=plt.cm.RdBu_r)
     # And display the labels
-    if rois_num < 50:
+    if rois_num < 100:
         if all(isinstance(item, int) for item in label_names) is False:
-            plt.xticks(range(len(label_names)), label_names, size='x-small', rotation=90)
-            plt.yticks(range(len(label_names)), label_names, size='x-small')
+            plt.xticks(range(len(label_names)), label_names, size='xx-small', rotation=90)
+            plt.yticks(range(len(label_names)), label_names, size='xx-small')
         else:
             plt.xticks(range(rois_num), rotation=90)
             plt.yticks(range(rois_num))

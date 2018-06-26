@@ -11,6 +11,7 @@ import time
 from pathlib import Path
 from pynets import nodemaker
 
+
 def test_nodemaker_tools_parlistfile_RSN():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
@@ -48,6 +49,7 @@ def test_nodemaker_tools_parlistfile_RSN():
     assert parcel_list_exp is not None
     assert network is not None
 
+
 def test_nodemaker_tools_nilearn_coords_RSN():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
@@ -70,6 +72,7 @@ def test_nodemaker_tools_nilearn_coords_RSN():
     assert net_coords is not None
     assert net_label_names is not None
     assert network is not None
+
 
 def test_nodemaker_tools_masking_parlistfile_RSN():
     # Set example inputs
@@ -117,6 +120,7 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     assert parcel_list_exp is not None
     assert network is not None
 
+
 def test_nodemaker_tools_masking_coords_RSN():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
@@ -148,6 +152,7 @@ def test_nodemaker_tools_masking_coords_RSN():
     assert net_label_names_masked is not None
     assert network is not None
 
+
 def test_nodemaker_tools_parlistfile_WB():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
@@ -169,6 +174,7 @@ def test_nodemaker_tools_parlistfile_WB():
     assert WB_parcels_map_nifti is not None
     assert parcel_list_exp is not None
 
+
 def test_nodemaker_tools_nilearn_coords_WB():
     # Set example inputs
     atlas_select = 'coords_dosenbach_2010'
@@ -179,6 +185,7 @@ def test_nodemaker_tools_nilearn_coords_WB():
 
     assert WB_coords is not None
     assert WB_label_names is not None
+
 
 def test_nodemaker_tools_masking_parlistfile_WB():
     # Set example inputs
@@ -225,6 +232,7 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     assert WB_net_parcels_map_nifti_masked is not None
     assert WB_coords_masked is not None
 
+
 def test_nodemaker_tools_masking_coords_WB():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
@@ -247,6 +255,7 @@ def test_nodemaker_tools_masking_coords_WB():
     assert WB_label_names is not None
     assert WB_label_names_masked is not None
 
+
 def test_WB_fetch_nodes_and_labels1():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
@@ -267,6 +276,7 @@ def test_WB_fetch_nodes_and_labels1():
     assert atlas_name is not None
     assert coords is not None
     assert dir_path is not None
+
 
 def test_WB_fetch_nodes_and_labels2():
     # Set example inputs
@@ -289,6 +299,7 @@ def test_WB_fetch_nodes_and_labels2():
     assert coords is not None
     assert dir_path is not None
 
+
 def test_RSN_fetch_nodes_and_labels1():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
@@ -309,6 +320,7 @@ def test_RSN_fetch_nodes_and_labels1():
     assert atlas_name is not None
     assert RSN_coords is not None
     assert RSN_label_names is not None
+
 
 def test_RSN_fetch_nodes_and_labels2():
     # Set example inputs
