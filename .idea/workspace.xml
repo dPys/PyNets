@@ -2,10 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.travis.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.travis.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/nodemaker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -58,8 +55,8 @@
       <file leaf-file-name="plotting.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/plotting.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-394">
-              <caret line="292" selection-start-line="292" selection-end-line="292" />
+            <state relative-caret-position="299">
+              <caret line="317" column="4" selection-start-line="317" selection-start-column="4" selection-end-line="317" selection-end-column="12" />
               <folding>
                 <element signature="e#109#127#0" expanded="true" />
               </folding>
@@ -67,23 +64,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="test_plotting.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tests/test_plotting.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="460">
-              <caret line="20" column="17" selection-start-line="20" selection-start-column="17" selection-end-line="20" selection-end-column="56" />
-              <folding>
-                <element signature="e#113#131#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="workflows.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="workflows.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="46">
-              <caret line="550" column="72" selection-start-line="550" selection-start-column="72" selection-end-line="550" selection-end-column="72" />
+            <state relative-caret-position="176">
+              <caret line="702" column="38" selection-start-line="702" selection-start-column="38" selection-end-line="702" selection-end-column="38" />
             </state>
           </provider>
         </entry>
@@ -124,11 +109,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="nodemaker.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="nodemaker.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="178">
-              <caret line="426" column="122" selection-start-line="426" selection-start-column="122" selection-end-line="426" selection-end-column="122" />
+            <state relative-caret-position="341">
+              <caret line="482" column="17" selection-start-line="482" selection-start-column="17" selection-end-line="482" selection-end-column="17" />
               <folding>
                 <element signature="e#109#118#0" expanded="true" />
               </folding>
@@ -147,7 +132,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>seeds_dir</find>
       <find>seeds_dir = &quot;%s</find>
       <find>save_parcel</find>
       <find>save_parcel_vols</find>
@@ -177,6 +161,7 @@
       <find>matplotlib.use('agg')</find>
       <find>matplotlib.use('Agg')</find>
       <find>test_plot_all_nonet_no_mask</find>
+      <find>plot_conn_mat</find>
     </findStrings>
     <replaceStrings>
       <replace>#</replace>
@@ -197,8 +182,8 @@
       <replace>__file__</replace>
       <replace>&quot;__file__&quot;</replace>
       <replace>str(Path(__file__).parent)</replace>
-      <replace>#matplotlib.use('agg')</replace>
       <replace>seeds_list</replace>
+      <replace>#matplotlib.use('agg')</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -780,20 +765,13 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/plotting.py">
+    <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-394">
-          <caret line="292" selection-start-line="292" selection-end-line="292" />
+        <state relative-caret-position="341">
+          <caret line="482" column="17" selection-start-line="482" selection-start-column="17" selection-end-line="482" selection-end-column="17" />
           <folding>
-            <element signature="e#109#127#0" expanded="true" />
+            <element signature="e#109#118#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="46">
-          <caret line="550" column="72" selection-start-line="550" selection-start-column="72" selection-end-line="550" selection-end-column="72" />
         </state>
       </provider>
     </entry>
@@ -807,13 +785,20 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
+    <entry file="file://$PROJECT_DIR$/pynets/plotting.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="178">
-          <caret line="426" column="122" selection-start-line="426" selection-start-column="122" selection-end-line="426" selection-end-column="122" />
+        <state relative-caret-position="299">
+          <caret line="317" column="4" selection-start-line="317" selection-start-column="4" selection-end-line="317" selection-end-column="12" />
           <folding>
-            <element signature="e#109#118#0" expanded="true" />
+            <element signature="e#109#127#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="176">
+          <caret line="702" column="38" selection-start-line="702" selection-start-column="38" selection-end-line="702" selection-end-column="38" />
         </state>
       </provider>
     </entry>
