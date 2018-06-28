@@ -14,4 +14,5 @@ networkx>=2.0
 #basc==1.0.0
 nipype>=0.14.0
 scikit_learn>=0.19.1
+dipy>=0.13.0
 #PyYAML==3.12
