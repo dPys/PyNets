@@ -51,7 +51,7 @@ if __name__ == '__main__':
                         help='Path to parcellation/atlas file in .nii format. If specifying a list of paths to multiple user atlases, separate them by comma.\n')
     parser.add_argument('-pm',
                         metavar='Cores,memory',
-                        default='2,4',
+                        default=None,
                         help='Number of cores to use, number of GB of memory to use for single subject run, entered as two integers seperated by a comma.\n')
     parser.add_argument('-n',
                         metavar='Resting-state network',
@@ -155,7 +155,13 @@ if __name__ == '__main__':
     dwi_dir = args.dwi
     graph = args.g
     ID = args.id
-    procmem = list(eval(str((args.pm))))
+    resources = args.pm
+    if resources:
+        procmem = list(eval(str(resources)))
+    else:
+        from multiprocessing import cpu_count
+        nthreads = cpu_count()
+        procmem = [int(nthreads), int(float(nthreads)*2)]
     thr = float(args.thr)
     node_size_pre = args.ns
     node_size = list(str(node_size_pre).split(','))
@@ -505,12 +511,12 @@ if __name__ == '__main__':
     from nipype.interfaces import utility as niu
     from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits
 
-
     def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets,
                           conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, anat_loc, parc,
                           ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                           clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                           node_size_list, num_total_samples, conn_model_list, min_span_tree):
+        import os
         from pynets import workflows, utils
         from nipype import Node, Workflow, Function
 
@@ -559,7 +565,8 @@ if __name__ == '__main__':
 
         # Create meta-workflow to organize graph simulation sets in prep for analysis
         # Credit: @Mathias Goncalves
-        meta_wf = Workflow(name='meta')
+        base_dirname = "%s%s" % ('Meta_wf_', str(ID))
+        meta_wf = Workflow(name=base_dirname)
         meta_wf.add_nodes([base_wf])
 
         import_list = ['import sys',
@@ -611,16 +618,27 @@ if __name__ == '__main__':
         meta_wf.connect(base_wf, "outputnode.node_size", comp_iter, "node_size")
         meta_wf.connect(base_wf, "outputnode.dir_path", comp_iter, "dir_path")
 
-        meta_wf.config['execution']['crashdump_dir'] = dir_path
-        meta_wf.config['logging']['log_directory'] = dir_path
+        from nipype import config, logging
+        cfg = dict(logging=dict(workflow_level='DEBUG'), execution={'stop_on_first_crash': False,
+                                                                    'hash_method': 'content'})
+        config.update_config(cfg)
+        config.update_config({'logging': {'log_to_file': True}})
+        logging.update_logging(config)
+        config.enable_debug_mode()
+
+        meta_wf.config['execution']['crashfile_format'] = 'txt'
+        meta_wf.config['execution']['display_variable'] = ':0'
         meta_wf.config['logging']['workflow_level'] = 'DEBUG'
         meta_wf.config['logging']['utils_level'] = 'DEBUG'
         meta_wf.config['logging']['interface_level'] = 'DEBUG'
-        meta_wf.config['execution']['display_variable'] = ':0'
+        meta_wf.config['monitoring']['enabled'] = True
+        meta_wf.config['monitoring']['sample_frequency'] = '0.5'
+        meta_wf.config['monitoring']['summary_append'] = True
         #meta_wf.config['execution']['job_finished_timeout'] = 65
         #meta_wf.write_graph(graph2use='exec', format='png', dotfilename='meta_wf.dot')
         plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         egg = meta_wf.run(plugin='MultiProc', plugin_args=plugin_args)
+        #egg = meta_wf.run(plugin='MultiProc')
         outputs = [x for x in egg.nodes() if x.name == 'compile_iterfields'][0].result.outputs
 
         return outputs.thr, outputs.est_path, outputs.ID, outputs.network, outputs.conn_model, outputs.mask, outputs.prune, outputs.node_size
@@ -761,8 +779,7 @@ if __name__ == '__main__':
                                multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k,
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree):
-        wf = pe.Workflow(name='PyNets_' + str(ID))
-        wf.base_directory = '/tmp/pynets'
+        wf = pe.Workflow(name='Wf_single_subject_' + str(ID))
         # Create input/output nodes
         #1) Add variable to IdentityInterface if user-set
         inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'network', 'thr',
@@ -1069,13 +1086,39 @@ if __name__ == '__main__':
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree)
-        wf.config['execution']['crashdump_dir'] = dir_path
-        wf.config['logging']['log_directory'] = dir_path
-        wf.config['logging']['log_directory'] = '/tmp'
+
+        import shutil
+        if input_file:
+            base_dirname = "%s%s" % ('Wf_single_subject_', str(ID))
+            if os.path.exists("%s%s%s" % (os.path.dirname(input_file), '/', base_dirname)):
+                shutil.rmtree("%s%s%s" % (os.path.dirname(input_file), '/', base_dirname))
+            os.mkdir("%s%s%s" % (os.path.dirname(input_file), '/', base_dirname))
+            wf.base_dir = os.path.dirname(input_file)
+        else:
+            base_dirname = "%s%s" % ('Wf_single_subject_', str(ID))
+            if os.path.exists("%s%s%s" % (dwi_dir, '/', base_dirname)):
+                shutil.rmtree("%s%s%s" % (dwi_dir, '/', base_dirname))
+            os.mkdir("%s%s%s" % (dwi_dir, '/', base_dirname))
+            wf.base_dir = dwi_dir
+
+        from nipype import config, logging
+        cfg = dict(logging=dict(workflow_level='DEBUG'), execution={'stop_on_first_crash': False,
+                                                                    'hash_method': 'content'})
+        config.update_config(cfg)
+        config.update_config({'logging': {'log_directory': wf.base_dir, 'log_to_file': True}})
+        logging.update_logging(config)
+        config.enable_debug_mode()
+
+        wf.config['execution']['crashdump_dir'] = wf.base_dir
+        wf.config['execution']['crashfile_format'] = 'txt'
+        wf.config['execution']['display_variable'] = ':0'
+        wf.config['logging']['log_directory'] = wf.base_dir
         wf.config['logging']['workflow_level'] = 'DEBUG'
         wf.config['logging']['utils_level'] = 'DEBUG'
         wf.config['logging']['interface_level'] = 'DEBUG'
-        wf.config['execution']['display_variable'] = ':0'
+        wf.config['monitoring']['enabled'] = True
+        wf.config['monitoring']['sample_frequency'] = '0.5'
+        wf.config['monitoring']['summary_append'] = True
         #wf.config['execution']['job_finished_timeout'] = 65
         #wf.write_graph(graph2use='flat', format='png', dotfilename='indiv_wf.dot')
         plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
