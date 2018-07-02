@@ -618,6 +618,13 @@ if __name__ == '__main__':
         meta_wf.connect(base_wf, "outputnode.node_size", comp_iter, "node_size")
         meta_wf.connect(base_wf, "outputnode.dir_path", comp_iter, "dir_path")
 
+        meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', str(ID), '.WB_fetch_nodes_and_labels_node'))._num_threads = 1
+        meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', str(ID), '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
+        meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', str(ID), '.extract_ts_wb_coords_node'))._num_threads = 1
+        meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', str(ID), '.extract_ts_wb_coords_node'))._mem_gb = 2
+        meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', str(ID), '.thresh_and_fit_node'))._num_threads = 1
+        meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', str(ID), '.thresh_and_fit_node'))._mem_gb = 2
+
         from nipype import config, logging
         cfg = dict(logging=dict(workflow_level='DEBUG'), execution={'stop_on_first_crash': False,
                                                                     'hash_method': 'content'})
@@ -636,7 +643,7 @@ if __name__ == '__main__':
         meta_wf.config['monitoring']['summary_append'] = True
         #meta_wf.config['execution']['job_finished_timeout'] = 65
         #meta_wf.write_graph(graph2use='exec', format='png', dotfilename='meta_wf.dot')
-        plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+        plugin_args = {'n_procs': int(procmem[0])-1, 'memory_gb': int(procmem[1])-1}
         egg = meta_wf.run(plugin='MultiProc', plugin_args=plugin_args)
         #egg = meta_wf.run(plugin='MultiProc')
         outputs = [x for x in egg.nodes() if x.name == 'compile_iterfields'][0].result.outputs
