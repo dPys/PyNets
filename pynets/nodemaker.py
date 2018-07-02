@@ -430,7 +430,7 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
                 if os.path.exists(ref_txt):
                     dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
                     label_names = dict_df['Region'].tolist()
-                    print(label_names)
+                    #print(label_names)
                 else:
                     try:
                         label_names = nodemaker.AAL_naming(coords)
@@ -440,10 +440,12 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
             except:
                 try:
                     label_names = nodemaker.AAL_naming(coords)
-                    print(label_names)
+                    #print(label_names)
                 except:
                     print('AAL reference labeling failed!')
                     label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+
+    print(label_names)
     atlas_name = atlas_select
     dir_path = utils.do_dir_path(atlas_select, func_file)
 
@@ -489,11 +491,11 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
                 if os.path.exists(ref_txt):
                     dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
                     label_names = dict_df['Region'].tolist()
-                    print(label_names)
+                    #print(label_names)
                 else:
                     try:
                         label_names = nodemaker.AAL_naming(coords)
-                        print(label_names)
+                        #print(label_names)
                     except:
                         print('AAL reference labeling failed!')
                         label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
@@ -503,6 +505,7 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
                 except:
                     print('AAL reference labeling failed!')
                     label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+    print(label_names)
     atlas_name = atlas_select
     dir_path = utils.do_dir_path(atlas_select, func_file)
 
