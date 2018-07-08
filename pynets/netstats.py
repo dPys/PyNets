@@ -177,7 +177,7 @@ def smallworldness_measure(G, rG):
     return swm
 
 
-def smallworldness(G, rep = 1000):
+def smallworldness(G, rep = 100):
     print("%s%s%s" % ('Estimating smallworldness using ', rep, ' random graphs...'))
     #import multiprocessing
     n = nx.number_of_nodes(G)
@@ -847,6 +847,28 @@ def modularity_louvain_dir(W, gamma=1, hierarchy=False, seed=None):
         return ci[h - 1], q[h - 1]
 
 
+def prune_disconnected(G):
+    """ returns a copy of G with
+        isolates pruned """
+    print('Pruning fully disconnected...')
+
+    # List because it returns a generator
+    components = list(nx.connected_components(G))
+    components.sort(key=len, reverse=True)
+    components_isolated = list(components[0])
+
+    # Remove disconnected nodes
+    pruned_nodes = []
+    s = 0
+    for node in list(G.nodes()):
+        if node not in components_isolated:
+            G.remove_node(node)
+            pruned_nodes.append(s)
+        s = s + 1
+
+    return G, pruned_nodes
+
+
 def most_important(G):
      """ returns a copy of G with
          isolates and low-importance nodes pruned """
@@ -892,7 +914,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
 
     # Advanced options
     save_gephi = False
-    calc_smallworldness = False
     custom_weight = None
 
     # Load and threshold matrix
@@ -917,7 +938,9 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     G_pre = nx.from_numpy_matrix(in_mat)
 
     # Prune irrelevant nodes (i.e. nodes who are fully disconnected from the graph and/or those whose betweenness centrality are > 3 standard deviations below the mean)
-    if prune is True:
+    if prune == 1:
+        [G, _] = prune_disconnected(G_pre)
+    elif prune == 2:
         [G, _] = most_important(G_pre)
     else:
         G = G_pre

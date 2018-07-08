@@ -78,7 +78,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                            imports=import_list), name="clustering_node")
     if k_clustering == 2 or k_clustering == 3 or k_clustering == 4:
         clustering_node.interface.mem_gb = 4
-        clustering_node.interface.num_threads = 2
+        clustering_node.interface.num_threads = 1
     WB_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt',
                                                                        'parc', 'func_file'],
                                                           output_names=['label_names', 'coords', 'atlas_select',
@@ -406,7 +406,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                            imports=import_list), name="clustering_node")
     if k_clustering == 2 or k_clustering == 3 or k_clustering == 4:
         clustering_node.interface.mem_gb = 4
-        clustering_node.interface.num_threads = 2
+        clustering_node.interface.num_threads = 1
     RSN_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt',
                                                                         'parc', 'func_file'],
                                                            output_names=['label_names', 'coords', 'atlas_select',
