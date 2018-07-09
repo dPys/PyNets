@@ -213,7 +213,7 @@ if __name__ == '__main__':
     k_step = args.k_step
     clust_mask_pre = args.cm
     prune = args.p
-    plugin = args.plug
+    plugin_type = args.plug
     verbose = args.v
     clust_mask = list(str(clust_mask_pre).split(','))
     if len(clust_mask) > 1:
@@ -525,7 +525,7 @@ if __name__ == '__main__':
                           conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, anat_loc, parc,
                           ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                           clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
-                          node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin):
+                          node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type):
         import os
         from pynets import workflows, utils
         from nipype import Node, Workflow, Function
@@ -670,7 +670,7 @@ if __name__ == '__main__':
         meta_wf.config['execution']['stop_on_first_crash'] = False
         #meta_wf.write_graph(graph2use='exec', format='png', dotfilename='meta_wf.dot')
         plugin_args = {'n_procs': int(procmem[0])-1, 'memory_gb': int(procmem[1])-1}
-        egg = meta_wf.run(plugin=plugin, plugin_args=plugin_args)
+        egg = meta_wf.run(plugin=plugin_type, plugin_args=plugin_args)
         outputs = [x for x in egg.nodes() if x.name == 'compile_iterfields'][0].result.outputs
 
         return outputs.thr, outputs.est_path, outputs.ID, outputs.network, outputs.conn_model, outputs.mask, outputs.prune, outputs.node_size
@@ -814,7 +814,8 @@ if __name__ == '__main__':
                                multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir,
                                multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k,
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
-                               node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin):
+                               node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
+                               plugin_type):
         wf = pe.Workflow(name='Wf_single_subject_' + str(ID))
         # Create input/output nodes
         #1) Add variable to IdentityInterface if user-set
@@ -827,7 +828,7 @@ if __name__ == '__main__':
                                                           'k_step', 'k_clustering', 'user_atlas_list',
                                                           'clust_mask_list', 'prune', 'node_size_list',
                                                           'num_total_samples', 'graph', 'conn_model_list',
-                                                          'min_span_tree', 'verbose', 'plugin']),
+                                                          'min_span_tree', 'verbose', 'plugin_type']),
                             name='inputnode')
 
         #2) Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
@@ -871,7 +872,7 @@ if __name__ == '__main__':
         inputnode.inputs.conn_model_list = conn_model_list
         inputnode.inputs.min_span_tree = min_span_tree
         inputnode.inputs.verbose = verbose
-        inputnode.inputs.plugin = plugin
+        inputnode.inputs.plugin_type = plugin_type
 
         #3) Add variable to function nodes
         # Create function nodes
@@ -882,7 +883,7 @@ if __name__ == '__main__':
                                                     'multi_atlas', 'max_thr', 'min_thr', 'step_thr', 'k', 'clust_mask',
                                                     'k_min', 'k_max', 'k_step', 'k_clustering', 'user_atlas_list',
                                                     'clust_mask_list', 'prune', 'node_size_list', 'num_total_samples',
-                                                    'conn_model_list', 'min_span_tree', 'verbose', 'plugin'],
+                                                    'conn_model_list', 'min_span_tree', 'verbose', 'plugin_type'],
                                        output_names=['outputs.thr', 'outputs.est_path', 'outputs.ID', 'outputs.network',
                                                      'outputs.conn_model', 'outputs.mask', 'outputs.prune',
                                                      'outputs.node_size'],
@@ -948,7 +949,7 @@ if __name__ == '__main__':
                                   ('conn_model_list', 'conn_model_list'),
                                   ('min_span_tree', 'min_span_tree'),
                                   ('verbose', 'verbose'),
-                                  ('plugin', 'plugin')]),
+                                  ('plugin_type', 'plugin_type')]),
             (imp_est, net_mets_node, [('outputs.est_path', 'est_path'),
                                       ('outputs.network', 'network'),
                                       ('outputs.thr', 'thr'),
@@ -1029,7 +1030,7 @@ if __name__ == '__main__':
                                       ('conn_model_list', 'conn_model_list'),
                                       ('min_span_tree', 'min_span_tree'),
                                       ('verbose', 'verbose'),
-                                      ('plugin', 'plugin')])
+                                      ('plugin_type', 'plugin_type')])
                             ])
             wf.disconnect([(imp_est, net_mets_node, [('outputs.est_path', 'est_path'),
                                                     ('outputs.network', 'network'),
@@ -1065,7 +1066,7 @@ if __name__ == '__main__':
                          conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, multi_thr,
                          multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask,
                          k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
-                         num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin):
+                         num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type):
         wf_multi = pe.Workflow(name='PyNets_multisubject')
         cores = []
         ram = []
@@ -1082,7 +1083,7 @@ if __name__ == '__main__':
                 k_step=k_step, k_clustering=k_clustering, user_atlas_list=user_atlas_list,
                 clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
-                min_span_tree=min_span_tree, verbose=verbose, plugin=plugin)
+                min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type)
             wf_multi.add_nodes([wf_single_subject])
             cores.append(int(procmem[0]))
             ram.append(int(procmem[1]))
@@ -1102,7 +1103,7 @@ if __name__ == '__main__':
                                                               ref_txt, procmem, k, clust_mask, k_min, k_max, k_step,
                                                               k_clustering, user_atlas_list, clust_mask_list, prune,
                                                               node_size_list, num_total_samples, graph, conn_model_list,
-                                                              min_span_tree, verbose, plugin)
+                                                              min_span_tree, verbose, plugin_type)
 
         if verbose is True:
             from nipype import config, logging
@@ -1127,7 +1128,7 @@ if __name__ == '__main__':
         #wf_multi.config['execution']['job_finished_timeout'] = 65
         plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
-        wf_multi.run(plugin=plugin, plugin_args=plugin_args)
+        wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
         #wf_multi.run()
     # Single-subject workflow generator
     else:
@@ -1136,7 +1137,7 @@ if __name__ == '__main__':
                                     multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt,
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
-                                    min_span_tree, verbose, plugin)
+                                    min_span_tree, verbose, plugin_type)
 
         import shutil
         if input_file:
@@ -1177,7 +1178,7 @@ if __name__ == '__main__':
         #wf.write_graph(graph2use='flat', format='png', dotfilename='indiv_wf.dot')
         plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
-        wf.run(plugin=plugin, plugin_args=plugin_args)
+        wf.run(plugin=plugin_type, plugin_args=plugin_args)
         #wf.run()
 
     print('\n\n------------NETWORK COMPLETE-----------')

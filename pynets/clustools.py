@@ -324,7 +324,6 @@ def make_image_from_bin_renum(image, binfile, mask):
         b[a == unique_a[i]] = i+1
 
     imdat = nim.get_data()
-
     # map the binary data to mask
     imdat[imdat > 0] = 1
     imdat[imdat > 0] = np.short(b[0:int(np.sum(imdat))].flatten())
