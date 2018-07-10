@@ -272,6 +272,8 @@ if __name__ == '__main__':
         if input_file.endswith('.txt'):
             with open(input_file) as f:
                 subjects_list = f.read().splitlines()
+        elif ',' in input_file:
+            subjects_list = list(str(input_file).split(','))
         else:
             subjects_list = None
     else:
@@ -282,6 +284,11 @@ if __name__ == '__main__':
 
     if ID is None and subjects_list is None:
         raise ValueError("Error: You must include a subject ID in your command line call")
+
+    if ',' in ID:
+        ID = list(str(ID).split(','))
+        if len(ID) != len(subjects_list):
+            raise ValueError("Error: Length of ID list does not correspond to length of input file list")
 
     if anat_loc is not None and dwi_dir is None:
         raise RuntimeWarning('Warning: anatomical image specified, but not bedpostx directory specified. Anatomical images are only supported for structural connectome estimation at this time.')
@@ -1068,41 +1075,39 @@ if __name__ == '__main__':
 
         return wf
 
-    def wf_multi_subject(subjects_list, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets,
+    def wf_multi_subject(ID, subjects_list, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets,
                          conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, multi_thr,
                          multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask,
                          k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
                          num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type):
+
         wf_multi = pe.Workflow(name='PyNets_multisubject')
-        cores = []
-        ram = []
+        procmem_cores = int(np.round(float(procmem[0])/float(len(subjects_list)), 0))
+        procmem_ram = int(np.round(float(procmem[1]) / float(len(subjects_list)), 0))
+        procmem_indiv = [procmem_cores, procmem_ram]
         i = 0
         for _file in subjects_list:
             wf_single_subject = init_wf_single_subject(
-                ID=os.path.dirname(os.path.realpath(subjects_list[i])).split('/')[-1], input_file=_file,
+                ID=ID[i], input_file=_file,
                 dir_path=os.path.dirname(os.path.realpath(subjects_list[i])), atlas_select=atlas_select,
                 network=network, node_size=node_size, mask=mask, thr=thr, parlistfile=parlistfile,
                 multi_nets=multi_nets, conn_model=conn_model, dens_thresh=dens_thresh, conf=conf,
                 adapt_thresh=adapt_thresh, plot_switch=plot_switch, dwi_dir=dwi_dir, multi_thr=multi_thr,
                 multi_atlas= multi_atlas, min_thr=min_thr, max_thr=max_thr, step_thr=step_thr, anat_loc=anat_loc,
-                parc=parc, ref_txt=ref_txt, procmem=procmem, k=k, clust_mask=clust_mask, k_min=k_min, k_max=k_max,
+                parc=parc, ref_txt=ref_txt, procmem=procmem_indiv, k=k, clust_mask=clust_mask, k_min=k_min, k_max=k_max,
                 k_step=k_step, k_clustering=k_clustering, user_atlas_list=user_atlas_list,
                 clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
                 min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type)
             wf_multi.add_nodes([wf_single_subject])
-            cores.append(int(procmem[0]))
-            ram.append(int(procmem[1]))
             i = i + 1
-        total_cores = sum(cores)
-        total_ram = sum(ram)
 
-        return wf_multi, total_cores, total_ram
+        return wf_multi
 
     # Workflow generation
     # Multi-subject workflow generator
     if subjects_list:
-        [wf_multi, total_cores, total_ram] = wf_multi_subject(subjects_list, atlas_select, network, node_size, mask,
+        wf_multi = wf_multi_subject(ID, subjects_list, atlas_select, network, node_size, mask,
                                                               thr, parlistfile, multi_nets, conn_model, dens_thresh,
                                                               conf, adapt_thresh, plot_switch, dwi_dir, multi_thr,
                                                               multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc,

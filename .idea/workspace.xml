@@ -2,13 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/thresholding.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/setup.cfg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -25,11 +19,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="graphestimation.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="graphestimation.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/graphestimation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="371">
-              <caret line="240" column="102" selection-start-line="240" selection-start-column="102" selection-end-line="240" selection-end-column="102" />
+            <state relative-caret-position="325">
+              <caret line="238" column="107" selection-start-line="238" selection-start-column="107" selection-end-line="238" selection-end-column="107" />
             </state>
           </provider>
         </entry>
@@ -100,11 +94,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="pynets_run.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="pynets_run.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="378">
-              <caret line="804" column="43" selection-start-line="804" selection-start-column="43" selection-end-line="804" selection-end-column="43" />
+            <state relative-caret-position="518">
+              <caret line="1096" column="107" selection-start-line="1096" selection-start-column="107" selection-end-line="1096" selection-end-column="107" />
               <folding>
                 <element signature="e#130#140#0" expanded="true" />
               </folding>
@@ -147,9 +141,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>os.path.ex</find>
-      <find>-pm</find>
-      <find>import os</find>
       <find>/tmp</find>
       <find>base_direct</find>
       <find>str(997)</find>
@@ -177,6 +168,9 @@
       <find>plugin</find>
       <find>pe</find>
       <find>num_threads</find>
+      <find>subjects_list</find>
+      <find>wf_multi_subject</find>
+      <find>procmem</find>
     </findStrings>
     <replaceStrings>
       <replace>#</replace>
@@ -232,9 +226,9 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
-    <option name="x" value="429" />
-    <option name="y" value="23" />
+  <component name="ProjectFrameBounds">
+    <option name="x" value="360" />
+    <option name="y" value="419" />
     <option name="width" value="1123" />
     <option name="height" value="877" />
   </component>
@@ -377,7 +371,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="429" y="23" width="1123" height="877" extended-state="1" />
+    <frame x="360" y="419" width="1123" height="877" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -743,16 +737,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="378">
-          <caret line="804" column="43" selection-start-line="804" selection-start-column="43" selection-end-line="804" selection-end-column="43" />
-          <folding>
-            <element signature="e#130#140#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="192">
@@ -809,8 +793,18 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/graphestimation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="371">
-          <caret line="240" column="102" selection-start-line="240" selection-start-column="102" selection-end-line="240" selection-end-column="102" />
+        <state relative-caret-position="325">
+          <caret line="238" column="107" selection-start-line="238" selection-start-column="107" selection-end-line="238" selection-end-column="107" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="518">
+          <caret line="1096" column="107" selection-start-line="1096" selection-start-column="107" selection-end-line="1096" selection-end-column="107" />
+          <folding>
+            <element signature="e#130#140#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
