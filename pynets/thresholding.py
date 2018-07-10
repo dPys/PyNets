@@ -336,7 +336,7 @@ def thresh_and_fit(dens_thresh, thr, ts_within_nodes, conn_model, network, ID, d
             conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
 
     if not nx.is_connected(nx.from_numpy_matrix(conn_matrix_thr)):
-        print('WARNING: Fragmented graph!')
+        print('Warning: Fragmented graph')
 
     # Save thresholded mat
     est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
@@ -367,7 +367,7 @@ def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_
             conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
 
     if not nx.is_connected(nx.from_numpy_matrix(conn_matrix_thr)):
-        print('WARNING: Fragmented graph!')
+        print('Warning: Fragmented graph')
 
     # Save thresholded mat
     est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)

@@ -12,6 +12,7 @@ scipy>=1.0.0
 pytest>=3.3.1
 networkx>=2.0
 #basc==1.0.0
+futures>=3.1.1
 nipype>=0.14.0
 scikit_learn>=0.19.1
 dipy>=0.13.0

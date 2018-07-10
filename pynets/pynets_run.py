@@ -629,24 +629,27 @@ if __name__ == '__main__':
         meta_wf.connect(base_wf, "outputnode.dir_path", comp_iter, "dir_path")
 
         if network is None and input_file:
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._num_threads = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._num_threads = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._mem_gb = 3
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._num_threads = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 2
         elif network and input_file:
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._num_threads = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._num_threads = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._mem_gb = 3
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._num_threads = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 2
         else:
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._num_threads = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 3
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_diff_node'))._num_threads = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_diff_node'))._mem_gb = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_diff_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_diff_node'))._mem_gb = 2
+
+        meta_wf.get_node('compile_iterfields')._n_procs = 1
+        meta_wf.get_node('compile_iterfields')._mem_gb = 1
 
         if verbose is True:
             from nipype import config, logging
@@ -663,7 +666,6 @@ if __name__ == '__main__':
             meta_wf.config['monitoring']['sample_frequency'] = '0.5'
             meta_wf.config['monitoring']['summary_append'] = True
 
-        meta_wf.config['execution']['stop_on_first_rerun'] = True
         meta_wf.config['execution']['crashfile_format'] = 'txt'
         meta_wf.config['execution']['display_variable'] = ':0'
         meta_wf.config['execution']['job_finished_timeout'] = 65
@@ -671,6 +673,7 @@ if __name__ == '__main__':
         #meta_wf.write_graph(graph2use='exec', format='png', dotfilename='meta_wf.dot')
         plugin_args = {'n_procs': int(procmem[0])-1, 'memory_gb': int(procmem[1])-1}
         egg = meta_wf.run(plugin=plugin_type, plugin_args=plugin_args)
+        #egg = meta_wf.run(plugin='MultiProc')
         outputs = [x for x in egg.nodes() if x.name == 'compile_iterfields'][0].result.outputs
 
         return outputs.thr, outputs.est_path, outputs.ID, outputs.network, outputs.conn_model, outputs.mask, outputs.prune, outputs.node_size
@@ -888,6 +891,9 @@ if __name__ == '__main__':
                                                      'outputs.conn_model', 'outputs.mask', 'outputs.prune',
                                                      'outputs.node_size'],
                                        function=workflow_selector), name="imp_est")
+
+        imp_est.interface.n_procs = 1
+        imp_est.interface.mem_gb = 2
 
         # Create MapNode types for net_mets_node and export_to_pandas_node
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
@@ -1116,6 +1122,7 @@ if __name__ == '__main__':
             wf_multi.config['logging']['workflow_level'] = 'DEBUG'
             wf_multi.config['logging']['utils_level'] = 'DEBUG'
             wf_multi.config['logging']['interface_level'] = 'DEBUG'
+            wf_multi.config['logging']['log_directory'] = '/tmp'
             wf_multi.config['monitoring']['enabled'] = True
             wf_multi.config['monitoring']['sample_frequency'] = '0.5'
             wf_multi.config['monitoring']['summary_append'] = True
@@ -1124,8 +1131,6 @@ if __name__ == '__main__':
         wf_multi.config['execution']['display_variable'] = ':0'
         wf_multi.config['execution']['job_finished_timeout'] = 65
         wf_multi.config['execution']['stop_on_first_crash'] = False
-        wf_multi.config['logging']['log_directory'] = '/tmp'
-        #wf_multi.config['execution']['job_finished_timeout'] = 65
         plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
@@ -1164,6 +1169,7 @@ if __name__ == '__main__':
             wf.config['logging']['workflow_level'] = 'DEBUG'
             wf.config['logging']['utils_level'] = 'DEBUG'
             wf.config['logging']['interface_level'] = 'DEBUG'
+            wf.config['logging']['log_directory'] = wf.base_dir
             wf.config['monitoring']['enabled'] = True
             wf.config['monitoring']['sample_frequency'] = '0.5'
             wf.config['monitoring']['summary_append'] = True
@@ -1173,13 +1179,11 @@ if __name__ == '__main__':
         wf.config['execution']['display_variable'] = ':0'
         wf.config['execution']['job_finished_timeout'] = 65
         wf.config['execution']['stop_on_first_crash'] = False
-        wf.config['logging']['log_directory'] = wf.base_dir
-        #wf.config['execution']['job_finished_timeout'] = 65
         #wf.write_graph(graph2use='flat', format='png', dotfilename='indiv_wf.dot')
         plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf.run(plugin=plugin_type, plugin_args=plugin_args)
-        #wf.run()
+        #wf.run(plugin='Linear')
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)
