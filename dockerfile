@@ -57,24 +57,25 @@ RUN conda install -yq \
       traits \
       ipython \
     && conda clean -tipsy \
-    && pip install pynets==0.6.03
+    && pip install pynets==0.6.12
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
 
 # Install skggm
-RUN conda install -yq \
-        cython \
-        libgfortran \
-        matplotlib \
-        openblas \
-    && conda clean -tipsy \
-    && pip install --no-cache-dir https://dl.dropbox.com/s/ghgl6lff2fmtldn/skggm-0.2.7-cp36-cp36m-linux_x86_64.whl
+#RUN conda install -yq \
+#        cython \
+#        libgfortran \
+#        matplotlib \
+#        openblas \
+#    && conda clean -tipsy \
+#    && pip install --no-cache-dir https://dl.dropbox.com/s/ghgl6lff2fmtldn/skggm-0.2.7-cp36-cp36m-linux_x86_64.whl
 
 USER root
 RUN chown -R neuro:users /opt \
     && chmod a+s -R /opt \
     && chmod 777 -R /opt/conda/lib/python3.6/site-packages/pynets \
+    && chmod 775 -R /opt/conda/lib/python3.6/site-packages \ 
     && find /opt -type f -iname "*.py" -exec chmod 777 {} \;
 
 USER neuro

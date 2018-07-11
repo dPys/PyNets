@@ -541,3 +541,26 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     # connectome.savefig(out_path_fig, dpi=dpi_resolution, facecolor ='k', edgecolor ='k')
     connectome.close()
     return
+
+
+def plot_graph_measure_hists(df_concat, measures, net_pick_file):
+    import matplotlib.pyplot as plt
+    print('Saving model plots...')
+    for name in measures:
+        x = np.array(df_concat[name])
+        fig, ax = plt.subplots(tight_layout=True)
+        if True in np.isnan(x):
+            x = x[~np.isnan(x)]
+            if len(x) > 0:
+                print("%s%s%s" % ('NaNs encountered for ', name,
+                                  '. Plotting and averaging across non-missing values. Checking output is recommended...'))
+                ax.hist(x)
+            else:
+                print("%s%s" % ('Warning! No numeric data to plot for ', name))
+                continue
+        else:
+            ax.hist(x)
+        out_path_fig = "%s%s%s%s" % (os.path.dirname(os.path.dirname(net_pick_file)), '/', name, '_mean_plot.png')
+        fig.savefig(out_path_fig)
+        plt.close('all')
+    return

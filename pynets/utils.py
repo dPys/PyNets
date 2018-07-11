@@ -173,13 +173,12 @@ def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mas
 
 def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_step, min_thr, max_thr, step_thr,
                       multi_thr, thr, mask, ID, network, k_clustering, conn_model, in_csv, user_atlas_list,
-                      clust_mask_list, multi_atlas, node_size, node_size_list, parc, conn_model_list, out_file=None):
+                      clust_mask_list, multi_atlas, node_size, node_size_list, parc, conn_model_list, plot_switch, out_file=None):
     import pandas as pd
     import numpy as np
     import os
     import matplotlib
     matplotlib.use('Agg')
-    from matplotlib import pyplot as plt
     from itertools import chain
     from pynets import utils
 
@@ -742,31 +741,25 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
             list_of_dicts = [cur_df.T.to_dict().values() for cur_df in list_]
             #df_concat = pd.concat(list_, axis=1)
             df_concat = pd.DataFrame(list(chain(*list_of_dicts)))
-            df_concat["Model"] = np.array([i.replace('_net_metrics','') for i in models])
+            df_concat["Model"] = np.array([i.replace('_net_metrics', '') for i in models])
             measures = list(df_concat.columns)
             measures.remove('id')
             measures.remove('Model')
-            print('Saving model plots...')
-            for name in measures:
-                x = np.array(df_concat[name])
-                fig, ax = plt.subplots(tight_layout=True)
-                if True in np.isnan(x):
-                    x = x[~np.isnan(x)]
-                    if len(x) > 0:
-                        print("%s%s%s" % ('NaNs encountered for ', name, '. Plotting and averaging across non-missing values. Checking output is recommended...'))
-                        ax.hist(x)
-                    else:
-                        print("%s%s" % ('Warning! No numeric data to plot for ', name))
-                        continue
-                else:
-                    ax.hist(x)
-                out_path_fig = "%s%s%s%s" % (os.path.dirname(os.path.dirname(file_)), '/', name, '_mean_plot.png')
-                fig.savefig(out_path_fig)
-                plt.close('all')
+            if plot_switch is True:
+                from pynets import plotting
+                plotting.plot_graph_measure_hists(df_concat, measures, file_)
             df_concatted = df_concat.loc[:, measures].mean().to_frame().transpose()
             df_concatted_std = df_concat.loc[:, measures].std().to_frame().transpose()
+            weighted_means = []
+            for measure in measures:
+                std_val = float(df_concatted_std[measure])
+                np.array(1/(df_concat.loc[:, measures][measure])/std_val)
+                weighted_means.append((df_concat.loc[:, measures][measure] * np.array(1/(df_concat.loc[:, measures][measure])/std_val)).sum() / np.sum(np.array(1/(df_concat.loc[:, measures][measure])/std_val)))
+
+            df_concatted_weight_means = pd.DataFrame(weighted_means).transpose()
+            df_concatted_weight_means.columns = [str(col) + '_weighted_mean' for col in measures]
             df_concatted_std.columns = [str(col) + '_std_dev' for col in df_concatted_std.columns]
-            result = pd.concat([df_concatted, df_concatted_std], axis=1)
+            result = pd.concat([df_concatted, df_concatted_std, df_concatted_weight_means], axis=1)
             df_concatted_final = result.reindex(sorted(result.columns), axis=1)
             print('\nConcatenating dataframes for ' + str(ID) + '...\n')
             if network:

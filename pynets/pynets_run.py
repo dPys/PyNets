@@ -27,7 +27,7 @@ if __name__ == '__main__':
                         metavar='Path to input file',
                         default=None,
                         required=False,
-                        help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR the path to a text file containing a list of paths to subject files.\n')
+                        help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR multiple paths to multiple preprocessed functional images in standard space and in .nii or .nii.gz format, separated by commas OR the path to a text file containing a list of paths to subject files.\n')
     parser.add_argument('-g',
                         metavar='Path to graph',
                         default=None,
@@ -40,7 +40,7 @@ if __name__ == '__main__':
                         metavar='Subject ID',
                         default=None,
                         required=False,
-                        help='A subject ID that is also the name of the directory containing the input file.\n')
+                        help='An arbitrary subject identifier OR list of subject identifiers, separated by comma and of equivalent length to the list of input files indicated with the -i flag.\n')
     parser.add_argument('-a',
                         metavar='Atlas',
                         default='coords_power_2011',
@@ -138,13 +138,21 @@ if __name__ == '__main__':
                         default=None,
                         help='Specify the path to the mask within which to perform clustering. If specifying a list of paths to multiple cluster masks, separate them by comma.')
     parser.add_argument('-p',
-                        default=False,
-                        action='store_true',
-                        help='Include this flag to prune the resulting graph of any fully disconnected nodes.\n')
+                        metavar='Pruning strategy',
+                        default=1,
+                        help='Include this flag to prune the resulting graph of any isolated (1) or isolated + fully disconnected (2) nodes. Default pruning=1 and removes isolated nodes. Include -p 0 to disable pruning.\n')
     parser.add_argument('-s',
                         metavar='Number of samples',
                         default='5000',
                         help='Include this flag to manually specify number of fiber samples for probtrackx2 in structural connectome estimation (default is 500). PyNets parallelizes probtrackx2 by samples, but more samples can increase connectome estimation time considerably.\n')
+    parser.add_argument('-plug',
+                        metavar='Scheduler type',
+                        default='MultiProc',
+                        help='Include this flag to specify a workflow plugin other than the default MultiProc. Options include: Linear, SGE, PBS, SLURM, SGEgraph, SLURMgraph.\n')
+    parser.add_argument('-v',
+                        default=False,
+                        action='store_true',
+                        help='Verbose print for debugging.\n')
     args = parser.parse_args()
 
     # Start time clock
@@ -205,6 +213,8 @@ if __name__ == '__main__':
     k_step = args.k_step
     clust_mask_pre = args.cm
     prune = args.p
+    plugin_type = args.plug
+    verbose = args.v
     clust_mask = list(str(clust_mask_pre).split(','))
     if len(clust_mask) > 1:
         clust_mask_list = clust_mask
@@ -262,6 +272,8 @@ if __name__ == '__main__':
         if input_file.endswith('.txt'):
             with open(input_file) as f:
                 subjects_list = f.read().splitlines()
+        elif ',' in input_file:
+            subjects_list = list(str(input_file).split(','))
         else:
             subjects_list = None
     else:
@@ -272,6 +284,11 @@ if __name__ == '__main__':
 
     if ID is None and subjects_list is None:
         raise ValueError("Error: You must include a subject ID in your command line call")
+
+    if ',' in ID:
+        ID = list(str(ID).split(','))
+        if len(ID) != len(subjects_list):
+            raise ValueError("Error: Length of ID list does not correspond to length of input file list")
 
     if anat_loc is not None and dwi_dir is None:
         raise RuntimeWarning('Warning: anatomical image specified, but not bedpostx directory specified. Anatomical images are only supported for structural connectome estimation at this time.')
@@ -515,7 +532,7 @@ if __name__ == '__main__':
                           conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, anat_loc, parc,
                           ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                           clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
-                          node_size_list, num_total_samples, conn_model_list, min_span_tree):
+                          node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type):
         import os
         from pynets import workflows, utils
         from nipype import Node, Workflow, Function
@@ -618,33 +635,51 @@ if __name__ == '__main__':
         meta_wf.connect(base_wf, "outputnode.node_size", comp_iter, "node_size")
         meta_wf.connect(base_wf, "outputnode.dir_path", comp_iter, "dir_path")
 
-        meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', str(ID), '.WB_fetch_nodes_and_labels_node'))._num_threads = 1
-        meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', str(ID), '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
-        meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', str(ID), '.extract_ts_wb_coords_node'))._num_threads = 1
-        meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', str(ID), '.extract_ts_wb_coords_node'))._mem_gb = 2
-        meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', str(ID), '.thresh_and_fit_node'))._num_threads = 1
-        meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', str(ID), '.thresh_and_fit_node'))._mem_gb = 2
+        if network is None and input_file:
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._mem_gb = 3
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 2
+        elif network and input_file:
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._mem_gb = 3
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 2
+        else:
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 3
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_diff_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_diff_node'))._mem_gb = 2
 
-        from nipype import config, logging
-        cfg = dict(logging=dict(workflow_level='DEBUG'), execution={'stop_on_first_crash': False,
-                                                                    'hash_method': 'content'})
-        config.update_config(cfg)
-        config.update_config({'logging': {'log_to_file': True}})
-        logging.update_logging(config)
-        config.enable_debug_mode()
+        meta_wf.get_node('compile_iterfields')._n_procs = 1
+        meta_wf.get_node('compile_iterfields')._mem_gb = 1
+
+        if verbose is True:
+            from nipype import config, logging
+            cfg = dict(logging=dict(workflow_level='DEBUG'), execution={'stop_on_first_crash': False,
+                                                                        'hash_method': 'content'})
+            config.update_config(cfg)
+            config.update_config({'logging': {'log_to_file': True}})
+            logging.update_logging(config)
+            config.enable_debug_mode()
+            meta_wf.config['logging']['workflow_level'] = 'DEBUG'
+            meta_wf.config['logging']['utils_level'] = 'DEBUG'
+            meta_wf.config['logging']['interface_level'] = 'DEBUG'
+            meta_wf.config['monitoring']['enabled'] = True
+            meta_wf.config['monitoring']['sample_frequency'] = '0.5'
+            meta_wf.config['monitoring']['summary_append'] = True
 
         meta_wf.config['execution']['crashfile_format'] = 'txt'
         meta_wf.config['execution']['display_variable'] = ':0'
-        meta_wf.config['logging']['workflow_level'] = 'DEBUG'
-        meta_wf.config['logging']['utils_level'] = 'DEBUG'
-        meta_wf.config['logging']['interface_level'] = 'DEBUG'
-        meta_wf.config['monitoring']['enabled'] = True
-        meta_wf.config['monitoring']['sample_frequency'] = '0.5'
-        meta_wf.config['monitoring']['summary_append'] = True
-        #meta_wf.config['execution']['job_finished_timeout'] = 65
+        meta_wf.config['execution']['job_finished_timeout'] = 65
+        meta_wf.config['execution']['stop_on_first_crash'] = False
         #meta_wf.write_graph(graph2use='exec', format='png', dotfilename='meta_wf.dot')
         plugin_args = {'n_procs': int(procmem[0])-1, 'memory_gb': int(procmem[1])-1}
-        egg = meta_wf.run(plugin='MultiProc', plugin_args=plugin_args)
+        egg = meta_wf.run(plugin=plugin_type, plugin_args=plugin_args)
         #egg = meta_wf.run(plugin='MultiProc')
         outputs = [x for x in egg.nodes() if x.name == 'compile_iterfields'][0].result.outputs
 
@@ -686,11 +721,12 @@ if __name__ == '__main__':
             return {'out_file': op.abspath(getattr(self, '_outpath'))}
 
     class Export2PandasInputSpec(BaseInterfaceInputSpec):
+        from random import randint
         in_csv = File(exists=True, mandatory=True, desc="")
         ID = traits.Any(mandatory=True)
         network = traits.Any(mandatory=False)
         mask = traits.Any(mandatory=False)
-        out_file = File('output_export2pandas.csv', usedefault=True)
+        out_file = File("%s%s%s" % ('output_export2pandas_', randint(10000, 99999), '.csv'), usedefault=True)
 
     class Export2PandasOutputSpec(TraitedSpec):
         out_file = File()
@@ -713,6 +749,7 @@ if __name__ == '__main__':
             return {'out_file': op.abspath(self.inputs.out_file)}
 
     class CollectPandasDfsInputSpec(BaseInterfaceInputSpec):
+        from random import randint
         input_file = traits.Any(mandatory=True)
         atlas_select = traits.Any(mandatory=True)
         clust_mask = traits.Any(mandatory=True)
@@ -738,7 +775,8 @@ if __name__ == '__main__':
         node_size_list = traits.Any(mandatory=True)
         parc = traits.Any(mandatory=True)
         conn_model_list = traits.Any(mandatory=True)
-        out_file = File('output_collectpandasdf.csv', usedefault=True)
+        plot_switch = traits.Any(mandatory=True)
+        out_file = File("%s%s%s" % ('output_collectpandasdf_', randint(10000, 99999), '.csv'), usedefault=True)
 
     class CollectPandasDfsOutputSpec(TraitedSpec):
         out_file = File()
@@ -774,6 +812,7 @@ if __name__ == '__main__':
                 self.inputs.node_size_list,
                 self.inputs.parc,
                 self.inputs.conn_model_list,
+                self.inputs.plot_switch,
                 out_file=self.inputs.out_file)
             return runtime
 
@@ -785,7 +824,8 @@ if __name__ == '__main__':
                                multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir,
                                multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k,
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
-                               node_size_list, num_total_samples, graph, conn_model_list, min_span_tree):
+                               node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
+                               plugin_type):
         wf = pe.Workflow(name='Wf_single_subject_' + str(ID))
         # Create input/output nodes
         #1) Add variable to IdentityInterface if user-set
@@ -798,7 +838,7 @@ if __name__ == '__main__':
                                                           'k_step', 'k_clustering', 'user_atlas_list',
                                                           'clust_mask_list', 'prune', 'node_size_list',
                                                           'num_total_samples', 'graph', 'conn_model_list',
-                                                          'min_span_tree']),
+                                                          'min_span_tree', 'verbose', 'plugin_type']),
                             name='inputnode')
 
         #2) Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
@@ -841,6 +881,8 @@ if __name__ == '__main__':
         inputnode.inputs.graph = graph
         inputnode.inputs.conn_model_list = conn_model_list
         inputnode.inputs.min_span_tree = min_span_tree
+        inputnode.inputs.verbose = verbose
+        inputnode.inputs.plugin_type = plugin_type
 
         #3) Add variable to function nodes
         # Create function nodes
@@ -851,11 +893,14 @@ if __name__ == '__main__':
                                                     'multi_atlas', 'max_thr', 'min_thr', 'step_thr', 'k', 'clust_mask',
                                                     'k_min', 'k_max', 'k_step', 'k_clustering', 'user_atlas_list',
                                                     'clust_mask_list', 'prune', 'node_size_list', 'num_total_samples',
-                                                    'conn_model_list', 'min_span_tree'],
+                                                    'conn_model_list', 'min_span_tree', 'verbose', 'plugin_type'],
                                        output_names=['outputs.thr', 'outputs.est_path', 'outputs.ID', 'outputs.network',
                                                      'outputs.conn_model', 'outputs.mask', 'outputs.prune',
                                                      'outputs.node_size'],
                                        function=workflow_selector), name="imp_est")
+
+        imp_est.interface.n_procs = 1
+        imp_est.interface.mem_gb = 2
 
         # Create MapNode types for net_mets_node and export_to_pandas_node
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
@@ -870,7 +915,8 @@ if __name__ == '__main__':
                                                        'k', 'k_step', 'min_thr', 'max_thr', 'step_thr', 'multi_thr',
                                                        'thr', 'mask', 'ID', 'network', 'k_clustering', 'conn_model',
                                                        'in_csv', 'user_atlas_list', 'clust_mask_list', 'multi_atlas',
-                                                       'node_size', 'node_size_list', 'parc', 'conn_model_list'])
+                                                       'node_size', 'node_size_list', 'parc', 'conn_model_list',
+                                                       'plot_switch'])
         if multi_nets:
             collect_pandas_dfs_node_iterables = []
             collect_pandas_dfs_node_iterables.append(("network", multi_nets))
@@ -914,7 +960,9 @@ if __name__ == '__main__':
                                   ('node_size_list', 'node_size_list'),
                                   ('num_total_samples', 'num_total_samples'),
                                   ('conn_model_list', 'conn_model_list'),
-                                  ('min_span_tree', 'min_span_tree')]),
+                                  ('min_span_tree', 'min_span_tree'),
+                                  ('verbose', 'verbose'),
+                                  ('plugin_type', 'plugin_type')]),
             (imp_est, net_mets_node, [('outputs.est_path', 'est_path'),
                                       ('outputs.network', 'network'),
                                       ('outputs.thr', 'thr'),
@@ -951,7 +999,8 @@ if __name__ == '__main__':
                                                   ('node_size', 'node_size'),
                                                   ('node_size_list', 'node_size_list'),
                                                   ('parc', 'parc'),
-                                                  ('conn_model_list', 'conn_model_list')])
+                                                  ('conn_model_list', 'conn_model_list'),
+                                                  ('plot_switch', 'plot_switch')])
         ])
         if graph:
             wf.disconnect([
@@ -992,7 +1041,9 @@ if __name__ == '__main__':
                                       ('node_size_list', 'node_size_list'),
                                       ('num_total_samples', 'num_total_samples'),
                                       ('conn_model_list', 'conn_model_list'),
-                                      ('min_span_tree', 'min_span_tree')])
+                                      ('min_span_tree', 'min_span_tree'),
+                                      ('verbose', 'verbose'),
+                                      ('plugin_type', 'plugin_type')])
                             ])
             wf.disconnect([(imp_est, net_mets_node, [('outputs.est_path', 'est_path'),
                                                     ('outputs.network', 'network'),
@@ -1024,66 +1075,70 @@ if __name__ == '__main__':
 
         return wf
 
-    def wf_multi_subject(subjects_list, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets,
+    def wf_multi_subject(ID, subjects_list, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets,
                          conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, multi_thr,
                          multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask,
                          k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
-                         num_total_samples, graph, conn_model_list, min_span_tree):
+                         num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type):
+
         wf_multi = pe.Workflow(name='PyNets_multisubject')
-        cores = []
-        ram = []
+        procmem_cores = int(np.round(float(procmem[0])/float(len(subjects_list)), 0))
+        procmem_ram = int(np.round(float(procmem[1]) / float(len(subjects_list)), 0))
+        procmem_indiv = [procmem_cores, procmem_ram]
         i = 0
         for _file in subjects_list:
             wf_single_subject = init_wf_single_subject(
-                ID=os.path.dirname(os.path.realpath(subjects_list[i])).split('/')[-1], input_file=_file,
+                ID=ID[i], input_file=_file,
                 dir_path=os.path.dirname(os.path.realpath(subjects_list[i])), atlas_select=atlas_select,
                 network=network, node_size=node_size, mask=mask, thr=thr, parlistfile=parlistfile,
                 multi_nets=multi_nets, conn_model=conn_model, dens_thresh=dens_thresh, conf=conf,
                 adapt_thresh=adapt_thresh, plot_switch=plot_switch, dwi_dir=dwi_dir, multi_thr=multi_thr,
                 multi_atlas= multi_atlas, min_thr=min_thr, max_thr=max_thr, step_thr=step_thr, anat_loc=anat_loc,
-                parc=parc, ref_txt=ref_txt, procmem=procmem, k=k, clust_mask=clust_mask, k_min=k_min, k_max=k_max,
+                parc=parc, ref_txt=ref_txt, procmem=procmem_indiv, k=k, clust_mask=clust_mask, k_min=k_min, k_max=k_max,
                 k_step=k_step, k_clustering=k_clustering, user_atlas_list=user_atlas_list,
                 clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
-                min_span_tree=min_span_tree)
+                min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type)
             wf_multi.add_nodes([wf_single_subject])
-            cores.append(int(procmem[0]))
-            ram.append(int(procmem[1]))
             i = i + 1
-        total_cores = sum(cores)
-        total_ram = sum(ram)
 
-        return wf_multi, total_cores, total_ram
+        return wf_multi
 
     # Workflow generation
-    import logging
-    from time import gmtime, strftime
-    callback_log_path = "%s%s%s%s%s" % ('/tmp/pynets_run_stats_', str(ID), '_', strftime("%Y-%m-%d %H:%M:%S",
-                                                                                         gmtime()), '.log')
-    logger = logging.getLogger('callback')
-    logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler(callback_log_path)
-    logger.addHandler(handler)
     # Multi-subject workflow generator
     if subjects_list:
-        [wf_multi, total_cores, total_ram] = wf_multi_subject(subjects_list, atlas_select, network, node_size, mask,
+        wf_multi = wf_multi_subject(ID, subjects_list, atlas_select, network, node_size, mask,
                                                               thr, parlistfile, multi_nets, conn_model, dens_thresh,
                                                               conf, adapt_thresh, plot_switch, dwi_dir, multi_thr,
                                                               multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc,
                                                               ref_txt, procmem, k, clust_mask, k_min, k_max, k_step,
                                                               k_clustering, user_atlas_list, clust_mask_list, prune,
                                                               node_size_list, num_total_samples, graph, conn_model_list,
-                                                              min_span_tree)
+                                                              min_span_tree, verbose, plugin_type)
+
+        if verbose is True:
+            from nipype import config, logging
+            cfg = dict(logging=dict(workflow_level='DEBUG'), execution={'stop_on_first_crash': False,
+                                                                        'hash_method': 'content'})
+            config.update_config(cfg)
+            config.update_config({'logging': {'log_directory': wf_multi.base_dir, 'log_to_file': True}})
+            logging.update_logging(config)
+            config.enable_debug_mode()
+            wf_multi.config['logging']['workflow_level'] = 'DEBUG'
+            wf_multi.config['logging']['utils_level'] = 'DEBUG'
+            wf_multi.config['logging']['interface_level'] = 'DEBUG'
+            wf_multi.config['logging']['log_directory'] = '/tmp'
+            wf_multi.config['monitoring']['enabled'] = True
+            wf_multi.config['monitoring']['sample_frequency'] = '0.5'
+            wf_multi.config['monitoring']['summary_append'] = True
+
         wf_multi.config['execution']['crashdump_dir'] = '/tmp'
-        wf_multi.config['logging']['log_directory'] = '/tmp'
-        wf_multi.config['logging']['workflow_level'] = 'DEBUG'
-        wf_multi.config['logging']['utils_level'] = 'DEBUG'
-        wf_multi.config['logging']['interface_level'] = 'DEBUG'
         wf_multi.config['execution']['display_variable'] = ':0'
-        #wf_multi.config['execution']['job_finished_timeout'] = 65
+        wf_multi.config['execution']['job_finished_timeout'] = 65
+        wf_multi.config['execution']['stop_on_first_crash'] = False
         plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
-        wf_multi.run(plugin='MultiProc', plugin_args=plugin_args)
+        wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
         #wf_multi.run()
     # Single-subject workflow generator
     else:
@@ -1092,7 +1147,7 @@ if __name__ == '__main__':
                                     multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt,
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
-                                    min_span_tree)
+                                    min_span_tree, verbose, plugin_type)
 
         import shutil
         if input_file:
@@ -1108,30 +1163,32 @@ if __name__ == '__main__':
             os.mkdir("%s%s%s" % (dwi_dir, '/', base_dirname))
             wf.base_dir = dwi_dir
 
-        from nipype import config, logging
-        cfg = dict(logging=dict(workflow_level='DEBUG'), execution={'stop_on_first_crash': False,
-                                                                    'hash_method': 'content'})
-        config.update_config(cfg)
-        config.update_config({'logging': {'log_directory': wf.base_dir, 'log_to_file': True}})
-        logging.update_logging(config)
-        config.enable_debug_mode()
+        if verbose is True:
+            from nipype import config, logging
+            cfg = dict(logging=dict(workflow_level='DEBUG'), execution={'stop_on_first_crash': False,
+                                                                        'hash_method': 'content'})
+            config.update_config(cfg)
+            config.update_config({'logging': {'log_directory': wf.base_dir, 'log_to_file': True}})
+            logging.update_logging(config)
+            config.enable_debug_mode()
+            wf.config['logging']['workflow_level'] = 'DEBUG'
+            wf.config['logging']['utils_level'] = 'DEBUG'
+            wf.config['logging']['interface_level'] = 'DEBUG'
+            wf.config['logging']['log_directory'] = wf.base_dir
+            wf.config['monitoring']['enabled'] = True
+            wf.config['monitoring']['sample_frequency'] = '0.5'
+            wf.config['monitoring']['summary_append'] = True
 
         wf.config['execution']['crashdump_dir'] = wf.base_dir
         wf.config['execution']['crashfile_format'] = 'txt'
         wf.config['execution']['display_variable'] = ':0'
-        wf.config['logging']['log_directory'] = wf.base_dir
-        wf.config['logging']['workflow_level'] = 'DEBUG'
-        wf.config['logging']['utils_level'] = 'DEBUG'
-        wf.config['logging']['interface_level'] = 'DEBUG'
-        wf.config['monitoring']['enabled'] = True
-        wf.config['monitoring']['sample_frequency'] = '0.5'
-        wf.config['monitoring']['summary_append'] = True
-        #wf.config['execution']['job_finished_timeout'] = 65
+        wf.config['execution']['job_finished_timeout'] = 65
+        wf.config['execution']['stop_on_first_crash'] = False
         #wf.write_graph(graph2use='flat', format='png', dotfilename='indiv_wf.dot')
         plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
-        wf.run(plugin='MultiProc', plugin_args=plugin_args)
-        #wf.run()
+        wf.run(plugin=plugin_type, plugin_args=plugin_args)
+        #wf.run(plugin='Linear')
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)
