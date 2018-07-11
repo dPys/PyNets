@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-    </list>
+    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="" />
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -149,11 +146,11 @@
       <find>thresh_and_fit</find>
       <find>start_time</find>
       <find>mem_gb</find>
-      <find />
+      <find>num_threads =</find>
       <find>participation</find>
       <find>-p</find>
       <find>prune</find>
-      <find />
+      <find>raise TypeError(&quot;Adjacency Matrix is not connected. Impossible to execute local_thresholding()&quot;)</find>
       <find>weight_to_distance</find>
       <find>knn</find>
       <find>auto_fix</find>
@@ -372,7 +369,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="338" y="23" width="1123" height="877" extended-state="0" />
+    <frame x="292" y="543" width="1123" height="877" extended-state="1" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
