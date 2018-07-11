@@ -27,7 +27,7 @@ if __name__ == '__main__':
                         metavar='Path to input file',
                         default=None,
                         required=False,
-                        help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR the path to a text file containing a list of paths to subject files.\n')
+                        help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR multiple paths to multiple preprocessed functional images in standard space and in .nii or .nii.gz format, separated by commas OR the path to a text file containing a list of paths to subject files.\n')
     parser.add_argument('-g',
                         metavar='Path to graph',
                         default=None,
@@ -40,7 +40,7 @@ if __name__ == '__main__':
                         metavar='Subject ID',
                         default=None,
                         required=False,
-                        help='A subject ID that is also the name of the directory containing the input file.\n')
+                        help='An arbitrary subject identifier OR list of subject identifiers, separated by comma and of equivalent length to the list of input files indicated with the -i flag.\n')
     parser.add_argument('-a',
                         metavar='Atlas',
                         default='coords_power_2011',

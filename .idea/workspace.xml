@@ -3,6 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -97,8 +98,8 @@
       <file leaf-file-name="pynets_run.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="518">
-              <caret line="1096" column="107" selection-start-line="1096" selection-start-column="107" selection-end-line="1096" selection-end-column="107" />
+            <state relative-caret-position="-25580">
+              <caret line="42" column="117" selection-start-line="42" selection-start-column="117" selection-end-line="42" selection-end-column="117" />
               <folding>
                 <element signature="e#130#140#0" expanded="true" />
               </folding>
@@ -148,11 +149,11 @@
       <find>thresh_and_fit</find>
       <find>start_time</find>
       <find>mem_gb</find>
-      <find>num_threads =</find>
+      <find />
       <find>participation</find>
       <find>-p</find>
       <find>prune</find>
-      <find>raise TypeError(&quot;Adjacency Matrix is not connected. Impossible to execute local_thresholding()&quot;)</find>
+      <find />
       <find>weight_to_distance</find>
       <find>knn</find>
       <find>auto_fix</find>
@@ -226,9 +227,9 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="360" />
-    <option name="y" value="419" />
+  <component name="ProjectFrameBounds" extendedState="1">
+    <option name="x" value="292" />
+    <option name="y" value="543" />
     <option name="width" value="1123" />
     <option name="height" value="877" />
   </component>
@@ -371,7 +372,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="360" y="419" width="1123" height="877" extended-state="0" />
+    <frame x="338" y="23" width="1123" height="877" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -800,8 +801,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="518">
-          <caret line="1096" column="107" selection-start-line="1096" selection-start-column="107" selection-end-line="1096" selection-end-column="107" />
+        <state relative-caret-position="-25580">
+          <caret line="42" column="117" selection-start-line="42" selection-start-column="117" selection-end-line="42" selection-end-column="117" />
           <folding>
             <element signature="e#130#140#0" expanded="true" />
           </folding>
