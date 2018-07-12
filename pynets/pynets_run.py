@@ -599,49 +599,6 @@ if __name__ == '__main__':
                        'import numpy as np',
                        'from pynets import utils']
 
-        comp_iter = pe.Node(Function(function=utils.compile_iterfields,
-                                     input_names=['input_file', 'ID', 'atlas_select', 'network', 'node_size', 'mask',
-                                                  'thr', 'parlistfile', 'multi_nets', 'conn_model', 'dens_thresh',
-                                                  'dir_path', 'multi_thr', 'multi_atlas', 'max_thr', 'min_thr',
-                                                  'step_thr', 'k', 'clust_mask', 'k_min', 'k_max', 'k_step',
-                                                  'k_clustering', 'user_atlas_list', 'clust_mask_list', 'prune',
-                                                  'node_size_list', 'est_path', 'conn_model_list', 'min_span_tree'],
-                                     output_names=['est_path', 'thr', 'network', 'ID', 'mask', 'conn_model',
-                                                   'k_clustering', 'prune', 'node_size']),
-                            name='compile_iterfields', imports=import_list)
-
-        comp_iter.inputs.input_file = input_file
-        comp_iter.inputs.ID = ID
-        comp_iter.inputs.atlas_select = atlas_select
-        comp_iter.inputs.mask = mask
-        comp_iter.inputs.parlistfile = parlistfile
-        comp_iter.inputs.multi_nets = multi_nets
-        comp_iter.inputs.conn_model = conn_model
-        comp_iter.inputs.dens_thresh = dens_thresh
-        comp_iter.inputs.multi_thr = multi_thr
-        comp_iter.inputs.multi_atlas = multi_atlas
-        comp_iter.inputs.max_thr = max_thr
-        comp_iter.inputs.min_thr = min_thr
-        comp_iter.inputs.step_thr = step_thr
-        comp_iter.inputs.k = k
-        comp_iter.inputs.clust_mask = clust_mask
-        comp_iter.inputs.k_min = k_min
-        comp_iter.inputs.k_max = k_max
-        comp_iter.inputs.k_step = k_step
-        comp_iter.inputs.k_clustering = k_clustering
-        comp_iter.inputs.user_atlas_list = user_atlas_list
-        comp_iter.inputs.clust_mask_list = clust_mask_list
-        comp_iter.inputs.prune = prune
-        comp_iter.inputs.node_size_list = node_size_list
-        comp_iter.inputs.conn_model_list = conn_model_list
-        comp_iter.inputs.min_span_tree = min_span_tree
-
-        meta_wf.connect(base_wf, "outputnode.est_path", comp_iter, "est_path")
-        meta_wf.connect(base_wf, "outputnode.thr", comp_iter, "thr")
-        meta_wf.connect(base_wf, "outputnode.network", comp_iter, "network")
-        meta_wf.connect(base_wf, "outputnode.node_size", comp_iter, "node_size")
-        meta_wf.connect(base_wf, "outputnode.dir_path", comp_iter, "dir_path")
-
         if network is None and input_file:
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
@@ -650,17 +607,24 @@ if __name__ == '__main__':
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 2
         elif network and input_file:
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._mem_gb = 3
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 2
+            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 2
+            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_coords_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_coords_node'))._mem_gb = 3
+            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.thresh_and_fit_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 2
+        elif dwi_dir and network is None:
+            meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 3
+            meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.thresh_diff_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.thresh_diff_node'))._mem_gb = 2
+        elif dwi_dir and network:
+            meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 3
+            meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.thresh_diff_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.thresh_diff_node'))._mem_gb = 2
         else:
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 3
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_diff_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_diff_node'))._mem_gb = 2
+            raise RuntimeError('ERROR: Either functional input file or dwi directory is missing!')
 
         if verbose is True:
             from nipype import config, logging
@@ -685,31 +649,30 @@ if __name__ == '__main__':
         plugin_args = {'n_procs': int(procmem[0])-1, 'memory_gb': int(procmem[1])-1}
         egg = meta_wf.run(plugin=plugin_type, plugin_args=plugin_args)
         #egg = meta_wf.run(plugin='MultiProc')
-        outputs = [x for x in egg.nodes() if x.name == 'compile_iterfields'][0].result.outputs
+        outputs = [x for x in egg.nodes() if x.name == 'outputnode'][0].result.outputs
 
-        # print('\n\n\n')
-        # outputs_1 = [x for x in egg.nodes() if x.name == 'outputnode'][0].result.outputs
-        # print('End of base_wf')
-        # print(outputs_1.est_path)
-        # print(outputs_1.network)
-        # print(outputs_1.dir_path)
-        # print(outputs_1.thr)
-        # print(outputs_1.node_size)
-        # print('\n\n\n')
-        #
-        # print('\n\n\n')
-        # print('End of imp_est')
-        # print(outputs.thr)
-        # print(outputs.est_path)
-        # print(outputs.ID)
-        # print(outputs.network)
-        # print(outputs.conn_model)
-        # print(outputs.mask)
-        # print(outputs.prune)
-        # print(outputs.node_size)
-        # print('\n\n\n')
+        # Compile Shadow iterfields
+        if len(multi_nets) > 1:
+            network_iterlist = sorted(multi_nets * len(outputs.est_path))
+            prune_iterlist = [prune] * len(outputs.est_path) * len(multi_nets)
+            ID_iterlist = [str(ID)] * len(outputs.est_path) * len(multi_nets)
+            est_path_iterlist = outputs.est_path * len(multi_nets)
+            conn_model_iterlist = outputs.conn_model * len(multi_nets)
+            node_size_iterlist = outputs.node_size * len(multi_nets)
+            mask_iterlist = outputs.mask * len(multi_nets)
+            thr_iterlist = outputs.thr * len(multi_nets)
 
-        return outputs.thr, outputs.est_path, outputs.ID, outputs.network, outputs.conn_model, outputs.mask, outputs.prune, outputs.node_size
+        else:
+            network_iterlist = outputs.network
+            prune_iterlist = [prune] * len(outputs.est_path)
+            ID_iterlist = [str(ID)] * len(outputs.est_path)
+            est_path_iterlist = outputs.est_path
+            conn_model_iterlist = outputs.conn_model
+            node_size_iterlist = outputs.node_size
+            mask_iterlist = outputs.mask
+            thr_iterlist = outputs.thr
+
+        return thr_iterlist, est_path_iterlist, ID_iterlist, network_iterlist, conn_model_iterlist, mask_iterlist, prune_iterlist, node_size_iterlist
 
     class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
         ID = traits.Any(mandatory=True)
@@ -920,9 +883,9 @@ if __name__ == '__main__':
                                                     'k_min', 'k_max', 'k_step', 'k_clustering', 'user_atlas_list',
                                                     'clust_mask_list', 'prune', 'node_size_list', 'num_total_samples',
                                                     'conn_model_list', 'min_span_tree', 'verbose', 'plugin_type'],
-                                       output_names=['outputs.thr', 'outputs.est_path', 'outputs.ID', 'outputs.network',
-                                                     'outputs.conn_model', 'outputs.mask', 'outputs.prune',
-                                                     'outputs.node_size'],
+                                       output_names=['thr_iterlist', 'est_path_iterlist', 'ID_iterlist',
+                                                     'network_iterlist', 'conn_model_iterlist', 'mask_iterlist',
+                                                     'prune_iterlist', 'node_size_iterlist'],
                                        function=workflow_selector), name="imp_est")
 
         imp_est.interface.n_procs = 1
@@ -989,17 +952,17 @@ if __name__ == '__main__':
                                   ('min_span_tree', 'min_span_tree'),
                                   ('verbose', 'verbose'),
                                   ('plugin_type', 'plugin_type')]),
-            (imp_est, net_mets_node, [('outputs.est_path', 'est_path'),
-                                      ('outputs.network', 'network'),
-                                      ('outputs.thr', 'thr'),
-                                      ('outputs.ID', 'ID'),
-                                      ('outputs.conn_model', 'conn_model'),
-                                      ('outputs.mask', 'mask'),
-                                      ('outputs.prune', 'prune'),
-                                      ('outputs.node_size', 'node_size')]),
-            (imp_est, export_to_pandas_node, [('outputs.network', 'network'),
-                                              ('outputs.ID', 'ID'),
-                                              ('outputs.mask', 'mask')]),
+            (imp_est, net_mets_node, [('est_path_iterlist', 'est_path'),
+                                      ('network_iterlist', 'network'),
+                                      ('thr_iterlist', 'thr'),
+                                      ('ID_iterlist', 'ID'),
+                                      ('conn_model_iterlist', 'conn_model'),
+                                      ('mask_iterlist', 'mask'),
+                                      ('prune_iterlist', 'prune'),
+                                      ('node_size_iterlist', 'node_size')]),
+            (imp_est, export_to_pandas_node, [('network_iterlist', 'network'),
+                                              ('ID_iterlist', 'ID'),
+                                              ('mask_iterlist', 'mask')]),
             (net_mets_node, export_to_pandas_node, [('out_file', 'in_csv')]),
             (export_to_pandas_node, collect_pandas_dfs_node, [('out_file', 'in_csv')]),
             (inputnode, collect_pandas_dfs_node, [('in_file', 'input_file'),
@@ -1071,18 +1034,18 @@ if __name__ == '__main__':
                                       ('verbose', 'verbose'),
                                       ('plugin_type', 'plugin_type')])
                             ])
-            wf.disconnect([(imp_est, net_mets_node, [('outputs.est_path', 'est_path'),
-                                                    ('outputs.network', 'network'),
-                                                    ('outputs.thr', 'thr'),
-                                                    ('outputs.ID', 'ID'),
-                                                    ('outputs.conn_model', 'conn_model'),
-                                                    ('outputs.mask', 'mask'),
-                                                    ('outputs.prune', 'prune'),
-                                                    ('outputs.node_size', 'node_size')])
+            wf.disconnect([(imp_est, net_mets_node, [('est_path_iterlist', 'est_path'),
+                                                     ('network_iterlist', 'network'),
+                                                     ('thr_iterlist', 'thr'),
+                                                     ('ID_iterlist', 'ID'),
+                                                     ('conn_model_iterlist', 'conn_model'),
+                                                     ('mask_iterlist', 'mask'),
+                                                     ('prune_iterlist', 'prune'),
+                                                     ('node_size_iterlist', 'node_size')])
                            ])
-            wf.disconnect([(imp_est, export_to_pandas_node, [('outputs.network', 'network'),
-                                                            ('outputs.ID', 'ID'),
-                                                            ('outputs.mask', 'mask')])
+            wf.disconnect([(imp_est, export_to_pandas_node, [('network_list', 'network'),
+                                                             ('ID_list', 'ID'),
+                                                             ('outputs.mask', 'mask')])
                            ])
             wf.connect([(inputnode, net_mets_node, [('graph', 'est_path'),
                                                     ('network', 'network'),

@@ -341,7 +341,8 @@ def thresh_and_fit(dens_thresh, thr, ts_within_nodes, conn_model, network, ID, d
     # Save thresholded mat
     est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
     np.save(est_path, conn_matrix_thr)
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network
+
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, mask
 
 
 def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_size, conn_matrix, parc, min_span_tree):
@@ -372,4 +373,4 @@ def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_
     # Save thresholded mat
     est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
     np.save(est_path, conn_matrix_thr)
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, mask

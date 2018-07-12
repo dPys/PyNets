@@ -57,7 +57,7 @@ RUN conda install -yq \
       traits \
       ipython \
     && conda clean -tipsy \
-    && pip install pynets==0.6.13
+    && pip install pynets==0.6.14
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
