@@ -652,7 +652,7 @@ if __name__ == '__main__':
         outputs = [x for x in egg.nodes() if x.name == 'outputnode'][0].result.outputs
 
         # Compile Shadow iterfields
-        if len(multi_nets) > 1:
+        if type(multi_nets) is list and len(multi_nets) > 1:
             network_iterlist = sorted(multi_nets * len(outputs.est_path))
             prune_iterlist = [prune] * len(outputs.est_path) * len(multi_nets)
             ID_iterlist = [str(ID)] * len(outputs.est_path) * len(multi_nets)

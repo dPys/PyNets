@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="" />
+    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
+    </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -77,8 +79,8 @@
       <file leaf-file-name="workflows.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-13">
-              <caret line="517" column="8" selection-start-line="517" selection-start-column="8" selection-end-line="517" selection-end-column="32" />
+            <state relative-caret-position="227">
+              <caret line="693" column="17" selection-start-line="693" selection-start-column="7" selection-end-line="693" selection-end-column="17" />
             </state>
           </provider>
         </entry>
@@ -86,8 +88,8 @@
       <file leaf-file-name="pynets_run.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="644">
-              <caret line="28" column="20" lean-forward="true" selection-start-line="28" selection-start-column="20" selection-end-line="28" selection-end-column="20" />
+            <state relative-caret-position="551">
+              <caret line="666" column="46" lean-forward="true" selection-start-line="666" selection-start-column="46" selection-end-line="666" selection-end-column="46" />
               <folding>
                 <element signature="e#130#140#0" expanded="true" />
               </folding>
@@ -161,17 +163,17 @@
       <find>outputnode</find>
       <find>MapNode</find>
       <find>iterables</find>
-      <find />
-      <find />
-      <find />
-      <find />
-      <find />
-      <find />
+      <find>sorted(list(set([str(i) for i in np.round(np.arange(float(min_thr),</find>
+      <find>([str(i) for i in np.round(np.arange(float(min_thr),</find>
+      <find>[str(i) for i in np.round(np.arange(float(min_thr),</find>
+      <find>sorted(list(set([str(i) for i in np.round(np.arange(float(min_thr)</find>
+      <find>[str(i) for i in np.round(np.arange(float(min_thr), float(max_thr)</find>
+      <find>[str(i) for i in np.round(np.arange(float(min_thr)</find>
       <find>mask</find>
       <find>compil</find>
       <find>network_list</find>
+      <find>Error: c</find>
       <find>multi_nets</find>
-      <find />
     </findStrings>
     <replaceStrings>
       <replace>#</replace>
@@ -215,9 +217,9 @@
         <option value="$PROJECT_DIR$/pynets/clustools.py" />
         <option value="$PROJECT_DIR$/pynets/thresholding.py" />
         <option value="$PROJECT_DIR$/pynets/workflows.py" />
-        <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
         <option value="$PROJECT_DIR$/pynets/utils.py" />
         <option value="$PROJECT_DIR$/pynets/plotting.py" />
+        <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
       </list>
     </option>
   </component>
@@ -227,7 +229,7 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
+  <component name="ProjectFrameBounds">
     <option name="x" value="283" />
     <option name="y" value="23" />
     <option name="width" value="1123" />
@@ -772,13 +774,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-13">
-          <caret line="517" column="8" selection-start-line="517" selection-start-column="8" selection-end-line="517" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="570">
@@ -799,10 +794,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="227">
+          <caret line="693" column="17" selection-start-line="693" selection-start-column="7" selection-end-line="693" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="644">
-          <caret line="28" column="20" lean-forward="true" selection-start-line="28" selection-start-column="20" selection-end-line="28" selection-end-column="20" />
+        <state relative-caret-position="551">
+          <caret line="666" column="46" lean-forward="true" selection-start-line="666" selection-start-column="46" selection-end-line="666" selection-end-column="46" />
           <folding>
             <element signature="e#130#140#0" expanded="true" />
           </folding>
