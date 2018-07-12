@@ -186,7 +186,9 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
         node_size = 'parc'
 
     if multi_thr is True:
-        iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr), float(max_thr), float(step_thr)), decimals=2).tolist()] + [str(float(max_thr))]
+        iter_thresh = sorted(list(set([str(i) for i in np.round(np.arange(float(min_thr), float(max_thr),
+                                                                          float(step_thr)), decimals=2).tolist()] +
+                                      [str(float(max_thr))])))
     else:
         iter_thresh = None
 
@@ -777,12 +779,30 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
     return
 
 
+def list_first_mems(est_path, network, thr, dir_path, node_size):
+    est_path = est_path[0]
+    network = network[0]
+    thr = thr[0]
+    dir_path = dir_path[0]
+    node_size = node_size[0]
+    print('\n\n\n\n')
+    print(est_path)
+    print(network)
+    print(thr)
+    print(dir_path)
+    print(node_size)
+    print('\n\n\n\n')
+    return est_path, network, thr, dir_path, node_size
+
+
 def build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path,
                         est_path_list, node_size_list, node_size, conn_model_list):
     import numpy as np
     from pynets import utils
     if multi_thr is True:
-        iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr), float(max_thr), float(step_thr)), decimals=2).tolist()] + [str(float(max_thr))]
+        iter_thresh = sorted(list(set([str(i) for i in np.round(np.arange(float(min_thr), float(max_thr),
+                                                                          float(step_thr)), decimals=2).tolist()] +
+                                      [str(float(max_thr))])))
         for thr in iter_thresh:
             if conn_model_list:
                 for conn_model in conn_model_list:
@@ -939,6 +959,19 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
     import numpy as np
     import os
     from pynets import utils
+
+    thr = thr[0]
+    est_path = est_path[0]
+    network = network[0]
+    node_size = node_size[0]
+    # print('\n\n\n')
+    # print('Beginning of compile iterfield func')
+    # print(thr)
+    # print(est_path)
+    # print(dir_path)
+    # print(network)
+    # print(node_size)
+    # print('\n\n\n')
 
     # Build iterfields
     if multi_atlas is not None or user_atlas_list is not None or multi_thr is True or multi_nets is not None or k_clustering != 1 or k_clustering != 0 or node_size_list is not None or conn_model_list is not None:
@@ -1126,6 +1159,19 @@ def compile_iterfields(input_file, ID, atlas_select, network, node_size, mask, t
         mask = [mask] * len(est_path_list)
         k_clustering = [k_clustering] * len(est_path_list)
         prune = [prune] * len(est_path_list)
+
+    # print('\n\n\n')
+    # print('End of compile iterfield func')
+    # print(thr)
+    # print(est_path)
+    # print(dir_path)
+    # print(ID)
+    # print(network)
+    # print(conn_model)
+    # print(mask)
+    # print(prune)
+    # print(node_size)
+    # print('\n\n\n')
 
     return est_path, thr, network, ID, mask, conn_model, k_clustering, prune, node_size
 

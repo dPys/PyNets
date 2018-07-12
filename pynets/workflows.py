@@ -123,7 +123,6 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
             node_size_iterables = []
             node_size_iterables.append(("node_size", node_size_list))
             extract_ts_wb_node.iterables = node_size_iterables
-
     extract_ts_wb_node.interface.mem_gb = 2
     extract_ts_wb_node.interface.n_procs = 1
     thresh_and_fit_node = pe.Node(niu.Function(input_names=['dens_thresh', 'thr', 'ts_within_nodes', 'conn_model',
@@ -147,12 +146,14 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                              output_names='None',
                                              function=plotting.plot_all, imports=import_list),
                                 name="plot_all_node")
-    outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network', 'dir_path']),
-                         name='outputnode')
+    outputnode = pe.JoinNode(interface=niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network',
+                                                                     'dir_path']), name='outputnode',
+                             joinfield=['est_path', 'thr', 'node_size', 'network'],
+                             joinsource='thresh_and_fit_node')
     if multi_thr is True:
         thresh_and_fit_node_iterables = []
-        iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
-        float(max_thr), float(step_thr)), decimals=2).tolist()] + [str(float(max_thr))]
+        iter_thresh = sorted(list(set([str(i) for i in np.round(np.arange(float(min_thr),
+        float(max_thr), float(step_thr)), decimals=2).tolist()] + [str(float(max_thr))])))
         thresh_and_fit_node_iterables.append(("thr", iter_thresh))
         if node_size_list and parc is False:
             thresh_and_fit_node_iterables.append(("node_size", node_size_list))
@@ -230,8 +231,9 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
         (thresh_and_fit_node, outputnode, [('est_path', 'est_path'),
                                            ('thr', 'thr'),
                                            ('node_size', 'node_size'),
-                                           ('network', 'network')]),
+                                           ('network', 'network')])
         ])
+
     if plot_switch is True:
         wb_functional_connectometry_wf.connect([(inputnode, plot_all_node, [('ID', 'ID'),
                                                                             ('mask', 'mask'),
@@ -482,12 +484,14 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                           'ID', 'network', 'label_names', 'mask', 'coords', 'thr',
                                                           'node_size', 'edge_threshold'], output_names='None',
                                              function=plotting.plot_all, imports=import_list), name="plot_all_node")
-    outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network', 'dir_path']),
-                         name='outputnode')
+    outputnode = pe.JoinNode(interface=niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network',
+                                                                     'dir_path']), name='outputnode',
+                             joinfield=['est_path', 'thr', 'node_size', 'network'],
+                             joinsource='thresh_and_fit_node')
     if multi_thr is True:
         thresh_and_fit_node_iterables = []
-        iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
-        float(max_thr), float(step_thr)), decimals=2).tolist()] + [str(float(max_thr))]
+        iter_thresh = sorted(list(set([str(i) for i in np.round(np.arange(float(min_thr),
+        float(max_thr), float(step_thr)), decimals=2).tolist()] + [str(float(max_thr))])))
         thresh_and_fit_node_iterables.append(("thr", iter_thresh))
         if node_size_list and parc is False:
             thresh_and_fit_node_iterables.append(("node_size", node_size_list))
@@ -871,8 +875,10 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                                         function=plotting.structural_plotting,
                                                         imports=import_list),
                                            name="structural_plotting_node")
-    outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network', 'dir_path']),
-                         name='outputnode')
+    outputnode = pe.JoinNode(interface=niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network',
+                                                                     'dir_path']), name='outputnode',
+                             joinfield=['est_path', 'thr', 'node_size', 'network'],
+                             joinsource='thresh_diff_node')
     run_probtrackx2_node.interface.n_procs = 1
     run_probtrackx2_node.interface.mem_gb = 2
     run_probtrackx2_iterables = []
@@ -890,8 +896,8 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
         WB_fetch_nodes_and_labels_node.iterables = WB_fetch_nodes_and_labels_node_iterables
     if multi_thr is True:
         thresh_diff_node_iterables = []
-        iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
-        float(max_thr), float(step_thr)), decimals=2).tolist()] + [str(float(max_thr))]
+        iter_thresh = sorted(list(set([str(i) for i in np.round(np.arange(float(min_thr),
+        float(max_thr), float(step_thr)), decimals=2).tolist()] + [str(float(max_thr))])))
         thresh_diff_node_iterables.append(("thr", iter_thresh))
         thresh_diff_node.iterables = thresh_diff_node_iterables
     if node_size_list and parc is False:
@@ -1241,8 +1247,10 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                                         function=plotting.structural_plotting,
                                                         imports=import_list),
                                            name="structural_plotting_node")
-    outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network', 'dir_path']),
-                         name='outputnode')
+    outputnode = pe.JoinNode(interface=niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network',
+                                                                     'dir_path']), name='outputnode',
+                             joinfield=['est_path', 'thr', 'node_size', 'network'],
+                             joinsource='thresh_diff_node')
     run_probtrackx2_node.interface.n_procs = 1
     run_probtrackx2_node.interface.mem_gb = 2
     run_probtrackx2_iterables = []
@@ -1265,9 +1273,8 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
         get_node_membership_node.iterables = get_node_membership_node_iterables
     if multi_thr is True:
         thresh_diff_node_iterables = []
-        iter_thresh = [str(i) for i in np.round(np.arange(float(min_thr),
-                                                          float(max_thr), float(step_thr)), decimals=2).tolist()] + [
-                          str(float(max_thr))]
+        iter_thresh = sorted(list(set([str(i) for i in np.round(np.arange(float(min_thr),
+        float(max_thr), float(step_thr)), decimals=2).tolist()] + [str(float(max_thr))])))
         thresh_diff_node_iterables.append(("thr", iter_thresh))
         thresh_diff_node.iterables = thresh_diff_node_iterables
     if node_size_list and parc is False:
