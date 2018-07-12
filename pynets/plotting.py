@@ -358,7 +358,7 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
         except RuntimeError:
             print('\n\n\nError: Connectogram plotting failed!')
     else:
-        print('Error: Cannot plot connectogram for graphs smaller than 20 x 20!')
+        print('Warning: Cannot plot connectogram for graphs smaller than 20 x 20!')
 
     # Plot adj. matrix based on determined inputs
     plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr,
