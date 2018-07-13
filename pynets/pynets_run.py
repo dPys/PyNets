@@ -543,6 +543,7 @@ if __name__ == '__main__':
         from pynets import workflows, utils
         from nipype import Workflow, Function
         from nipype.pipeline import engine as pe
+        from nipype.interfaces import utility as niu
 
         # Workflow 1: Whole-brain functional connectome
         if dwi_dir is None and network is None:
@@ -592,12 +593,25 @@ if __name__ == '__main__':
         base_dirname = "%s%s" % ('Meta_wf_', str(ID))
         meta_wf = Workflow(name=base_dirname)
         meta_wf.add_nodes([base_wf])
+        import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx",
+                       "import nibabel as nib"]
 
-        import_list = ['import sys',
-                       'import os',
-                       'import nibabel as nib'
-                       'import numpy as np',
-                       'from pynets import utils']
+        inputnode = pe.Node(niu.IdentityInterface(fields=['multi_nets', 'prune', 'ID']), name='inputnode')
+        inputnode.inputs.multi_nets = multi_nets
+        inputnode.inputs.prune = prune
+        inputnode.inputs.ID = ID
+        shadow_iters = pe.Node(niu.Function(input_names=['est_path', 'conn_model', 'multi_nets', 'ID', 'network',
+                                                         'mask', 'thr', 'node_size', 'prune'],
+                                            output_names=['thr_iterlist', 'est_path_iterlist', 'ID_iterlist',
+                                                          'network_iterlist', 'conn_model_iterlist', 'mask_iterlist',
+                                                          'prune_iterlist', 'node_size_iterlist'],
+                                            function=utils.extrap_shadow_iters, imports=import_list),
+                               name="shadow_iters_node")
+
+        meta_outputnode = pe.Node(niu.IdentityInterface(fields=['thr_iterlist', 'est_path_iterlist', 'ID_iterlist',
+                                                                'network_iterlist', 'conn_model_iterlist',
+                                                                'mask_iterlist', 'prune_iterlist', 'node_size_iterlist']),
+                                  name='meta_outputnode')
 
         if network is None and input_file:
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
@@ -626,6 +640,24 @@ if __name__ == '__main__':
         else:
             raise RuntimeError('ERROR: Either functional input file or dwi directory is missing!')
 
+        meta_wf.connect(inputnode, "multi_nets", shadow_iters, "multi_nets")
+        meta_wf.connect(inputnode, "prune", shadow_iters, "prune")
+        meta_wf.connect(inputnode, "ID", shadow_iters, "ID")
+        meta_wf.connect(base_wf, "outputnode.est_path", shadow_iters, "est_path")
+        meta_wf.connect(base_wf, "outputnode.conn_model", shadow_iters, "conn_model")
+        meta_wf.connect(base_wf, "outputnode.network", shadow_iters, "network")
+        meta_wf.connect(base_wf, "outputnode.mask", shadow_iters, "mask")
+        meta_wf.connect(base_wf, "outputnode.thr", shadow_iters, "thr")
+        meta_wf.connect(base_wf, "outputnode.node_size", shadow_iters, "node_size")
+        meta_wf.connect(shadow_iters, "thr_iterlist", meta_outputnode, "thr_iterlist")
+        meta_wf.connect(shadow_iters, "est_path_iterlist", meta_outputnode, "est_path_iterlist")
+        meta_wf.connect(shadow_iters, "ID_iterlist", meta_outputnode, "ID_iterlist")
+        meta_wf.connect(shadow_iters, "network_iterlist", meta_outputnode, "network_iterlist")
+        meta_wf.connect(shadow_iters, "conn_model_iterlist", meta_outputnode, "conn_model_iterlist")
+        meta_wf.connect(shadow_iters, "mask_iterlist", meta_outputnode, "mask_iterlist")
+        meta_wf.connect(shadow_iters, "prune_iterlist", meta_outputnode, "prune_iterlist")
+        meta_wf.connect(shadow_iters, "node_size_iterlist", meta_outputnode, "node_size_iterlist")
+
         if verbose is True:
             from nipype import config, logging
             cfg = dict(logging=dict(workflow_level='DEBUG'), execution={'stop_on_first_crash': False,
@@ -648,29 +680,18 @@ if __name__ == '__main__':
         #meta_wf.write_graph(graph2use='exec', format='png', dotfilename='meta_wf.dot')
         plugin_args = {'n_procs': int(procmem[0])-1, 'memory_gb': int(procmem[1])-1}
         egg = meta_wf.run(plugin=plugin_type, plugin_args=plugin_args)
-        #egg = meta_wf.run(plugin='MultiProc')
-        outputs = [x for x in egg.nodes() if x.name == 'outputnode'][0].result.outputs
+        #print([x.name for x in egg.nodes()])
+        #print([x for x in egg.nodes() if x.name == 'meta_outputnode'])
+        outputs = [x for x in egg.nodes() if x.name == 'shadow_iters_node'][0].result.outputs
 
-        # Compile Shadow iterfields
-        if len(multi_nets) > 1:
-            network_iterlist = sorted(multi_nets * len(outputs.est_path))
-            prune_iterlist = [prune] * len(outputs.est_path) * len(multi_nets)
-            ID_iterlist = [str(ID)] * len(outputs.est_path) * len(multi_nets)
-            est_path_iterlist = outputs.est_path * len(multi_nets)
-            conn_model_iterlist = outputs.conn_model * len(multi_nets)
-            node_size_iterlist = outputs.node_size * len(multi_nets)
-            mask_iterlist = outputs.mask * len(multi_nets)
-            thr_iterlist = outputs.thr * len(multi_nets)
-
-        else:
-            network_iterlist = outputs.network
-            prune_iterlist = [prune] * len(outputs.est_path)
-            ID_iterlist = [str(ID)] * len(outputs.est_path)
-            est_path_iterlist = outputs.est_path
-            conn_model_iterlist = outputs.conn_model
-            node_size_iterlist = outputs.node_size
-            mask_iterlist = outputs.mask
-            thr_iterlist = outputs.thr
+        thr_iterlist = outputs.thr_iterlist
+        est_path_iterlist = outputs.est_path_iterlist
+        ID_iterlist = outputs.ID_iterlist
+        network_iterlist = outputs.network_iterlist
+        conn_model_iterlist = outputs.conn_model_iterlist
+        mask_iterlist = outputs.mask_iterlist
+        prune_iterlist = outputs.prune_iterlist
+        node_size_iterlist = outputs.node_size_iterlist
 
         return thr_iterlist, est_path_iterlist, ID_iterlist, network_iterlist, conn_model_iterlist, mask_iterlist, prune_iterlist, node_size_iterlist
 
@@ -888,9 +909,6 @@ if __name__ == '__main__':
                                                      'prune_iterlist', 'node_size_iterlist'],
                                        function=workflow_selector), name="imp_est")
 
-        imp_est.interface.n_procs = 1
-        imp_est.interface.mem_gb = 2
-
         # Create MapNode types for net_mets_node and export_to_pandas_node
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
                                    iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
@@ -1043,9 +1061,9 @@ if __name__ == '__main__':
                                                      ('prune_iterlist', 'prune'),
                                                      ('node_size_iterlist', 'node_size')])
                            ])
-            wf.disconnect([(imp_est, export_to_pandas_node, [('network_list', 'network'),
-                                                             ('ID_list', 'ID'),
-                                                             ('outputs.mask', 'mask')])
+            wf.disconnect([(imp_est, export_to_pandas_node, [('network_iterlist', 'network'),
+                                                             ('ID_iterlist', 'ID'),
+                                                             ('mask_iterlist', 'mask')])
                            ])
             wf.connect([(inputnode, net_mets_node, [('graph', 'est_path'),
                                                     ('network', 'network'),

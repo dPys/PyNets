@@ -11,7 +11,7 @@ with open('README.rst') as readme_file:
 requirements = [
     'Click>=6.0',
     'scipy>=0.19.0',
-    'nipype>=0.14.0',
+    'nipype>=1.1.0',
     'numpy>=1.12.1',
     'nilearn>=0.2.6',
     'seaborn>=0.7.1',
@@ -37,7 +37,7 @@ test_requirements = [
 
 setup(
     name='pynets',
-    version='0.6.14',
+    version='0.6.19',
     description="A Fully-Reproducible Workflow for Network Analysis of fMRI and dMRI",
     #long_description=readme + '\n\n',
     author="Derek Pisner",
