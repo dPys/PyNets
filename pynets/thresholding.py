@@ -127,7 +127,6 @@ def autofix(W, copy=True):
     try:
         W[np.logical_or(np.where(np.isinf(W)), np.where(np.isnan(W)))] = 0
     except:
-        print('Failed to removed undefined entries!')
         pass
     # ensure exact binarity
     u = np.unique(W)

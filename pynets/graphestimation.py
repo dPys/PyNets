@@ -181,7 +181,7 @@ def extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path):
     print("%s%s%s" % ('Mean time series extracted: ', str(np.round(time.time() - start_time, 1)), 's'))
     print("%s%s" % ('Number of ROIs expected: ', str(len(coords))))
     print("%s%s" % ('Number of ROIs found: ', str(ts_within_nodes.shape[1])))
-    return ts_within_nodes
+    return ts_within_nodes, node_size
 
 
 def extract_ts_parc_fast(label_file, conf, func_file, dir_path):
@@ -199,7 +199,9 @@ def extract_ts_parc_fast(label_file, conf, func_file, dir_path):
     ts_within_nodes = normalize(ts_within_nodes)
     print("%s%s%s" % ('Mean time series extracted: ', str(np.round(time.time() - start_time, 1)), 's'))
     print("%s%s" % ('Number of ROIs found: ', str(len(ts_within_nodes))))
-    return ts_within_nodes
+
+    node_size = None
+    return ts_within_nodes, node_size
 
 
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network, fast=False):
@@ -222,7 +224,9 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords), ' volumetric ROI\'s\n'))
     # Save time series as txt file
     utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)
-    return ts_within_nodes
+
+    node_size = None
+    return ts_within_nodes, node_size
 
 
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network, fast=False):
@@ -242,7 +246,8 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
         #                                                standardize=True, verbose=1)
         ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
 
-    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords), ' coordinate ROI\'s\n'))
+    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords), ' coordinate ROI\'s'))
+    print("%s%s%s" % ('Using node radius: ', node_size, ' mm\n'))
     # Save time series as txt file
     utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)
     return ts_within_nodes, node_size

@@ -37,12 +37,12 @@ test_requirements = [
 
 setup(
     name='pynets',
-    version='0.6.19',
-    description="A Fully-Reproducible Workflow for Network Analysis of fMRI and dMRI",
+    version='0.6.20',
+    description="A Fully-Automated Workflow for Reproducible Graph Analysis of Functional and Structural Connectomes",
     #long_description=readme + '\n\n',
     author="Derek Pisner",
     author_email='dpisner@utexas.edu',
-    url='https://github.com/dpisner453/pynets',
+    url='https://github.com/dPys/pynets',
     packages=find_packages(include=['pynets']),
     entry_points={
         'console_scripts': [

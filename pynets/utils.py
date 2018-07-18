@@ -952,29 +952,6 @@ def cuberoot(x):
     return np.sign(x) * np.abs(x)**(1 / 3)
 
 
-# Infer shadow iterfields
-def extrap_shadow_iters(est_path, conn_model, multi_nets, ID, network, mask, thr, node_size, prune):
-    if type(multi_nets) is list and len(multi_nets) > 1:
-        network_iterlist = sorted(multi_nets * len(est_path))
-        prune_iterlist = [prune] * len(est_path) * len(multi_nets)
-        ID_iterlist = [str(ID)] * len(est_path) * len(multi_nets)
-        est_path_iterlist = est_path * len(multi_nets)
-        conn_model_iterlist = conn_model * len(multi_nets)
-        node_size_iterlist = node_size * len(multi_nets)
-        mask_iterlist = mask * len(multi_nets)
-        thr_iterlist = thr * len(multi_nets)
-    else:
-        network_iterlist = network
-        prune_iterlist = [prune] * len(est_path)
-        ID_iterlist = [str(ID)] * len(est_path)
-        est_path_iterlist = est_path
-        conn_model_iterlist = conn_model
-        node_size_iterlist = node_size
-        mask_iterlist = mask
-        thr_iterlist = thr
-    return thr_iterlist, est_path_iterlist, ID_iterlist, network_iterlist, conn_model_iterlist, mask_iterlist, prune_iterlist, node_size_iterlist
-
-
 def save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes):
     import os
     # Save time series as txt file
