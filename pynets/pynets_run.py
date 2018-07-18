@@ -43,8 +43,8 @@ if __name__ == '__main__':
                         help='An arbitrary subject identifier OR list of subject identifiers, separated by comma and of equivalent length to the list of input files indicated with the -i flag.\n')
     parser.add_argument('-a',
                         metavar='Atlas',
-                        default='coords_power_2011',
-                        help='Specify a coordinate atlas parcellation of those available in nilearn. Default is coords_power_2011. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011.\n')
+                        default=None,
+                        help='Specify a coordinate atlas parcellation of those available in nilearn. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal \natlas_destrieux_2009 \ncoords_dosenbach_2010 \ncoords_power_2011.\n')
     parser.add_argument('-ua',
                         metavar='Path to parcellation file',
                         default=None,
@@ -237,6 +237,7 @@ if __name__ == '__main__':
         network = network[0]
         multi_nets = None
     parlistfile_pre = args.ua
+    atlas_select_pre = args.a
     parlistfile = list(str(parlistfile_pre).split(','))
     if len(parlistfile) > 1:
         user_atlas_list = parlistfile
@@ -247,11 +248,13 @@ if __name__ == '__main__':
     else:
         parlistfile = parlistfile[0]
         user_atlas_list = None
-    atlas_select_pre = args.a
     atlas_select = list(str(atlas_select_pre).split(','))
     if len(atlas_select) > 1:
         multi_atlas = atlas_select
-        atlas_select = None
+        atlas_select = atlas_select[0]
+    elif len(atlas_select) > 1:
+        multi_atlas = atlas_select
+        atlas_select = atlas_select[0]
     elif atlas_select == ['None']:
         atlas_select = None
         multi_atlas = None
@@ -324,58 +327,64 @@ if __name__ == '__main__':
 
     if input_file:
         if parlistfile is not None and k_clustering == 0 and user_atlas_list is None:
-            atlas_select = parlistfile.split('/')[-1].split('.')[0]
-            dir_path = do_dir_path(atlas_select, input_file)
-            print("%s%s" % ("ATLAS: ", atlas_select))
+            atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
+            dir_path = do_dir_path(atlas_select_par, input_file)
+            print("%s%s" % ("User atlas: ", atlas_select_par))
         elif parlistfile is not None and user_atlas_list is None and k_clustering == 0:
-            atlas_select = parlistfile.split('/')[-1].split('.')[0]
-            dir_path = do_dir_path(atlas_select, input_file)
-            print("%s%s" % ("ATLAS: ", atlas_select))
+            atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
+            dir_path = do_dir_path(atlas_select_par, input_file)
+            print("%s%s" % ("User atlas: ", atlas_select_par))
         elif user_atlas_list is not None:
             parlistfile = user_atlas_list[0]
-            print('Iterating across multiple user atlases...')
+            print('\nIterating across multiple user atlases...')
             for parlistfile in user_atlas_list:
-                atlas_select = parlistfile.split('/')[-1].split('.')[0]
-                dir_path = do_dir_path(atlas_select, input_file)
-            atlas_select = None
-        elif multi_atlas is not None:
-            print('Iterating across multiple nilearn atlases...')
-            for atlas_select in multi_atlas:
-                dir_path = do_dir_path(atlas_select, input_file)
-            atlas_select = None
+                atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
+                print(atlas_select_par)
+                dir_path = do_dir_path(atlas_select_par, input_file)
         elif k_clustering == 1:
             cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-            atlas_select = "%s%s%s" % (cl_mask_name, '_k', k)
-            print("%s%s" % ("ATLAS: ", atlas_select))
-            dir_path = do_dir_path(atlas_select, input_file)
-            print("Clustering within mask at a single resolution...")
+            atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
+            print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+            dir_path = do_dir_path(atlas_select_clust, input_file)
+            print("\nClustering within mask at a single resolution...")
         elif k_clustering == 2:
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
-            print("Clustering within mask at multiple resolutions...")
+            print("\nClustering within mask at multiple resolutions...")
             for k in k_list:
                 cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                atlas_select = "%s%s%s" % (cl_mask_name, '_k', k)
-                print("%s%s" % ("ATLAS: ", atlas_select))
-                dir_path = do_dir_path(atlas_select, input_file)
+                atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
+                print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                dir_path = do_dir_path(atlas_select_clust, input_file)
         elif k_clustering == 3:
-            print("Clustering within multiple masks at a single resolution...")
+            print("\nClustering within multiple masks at a single resolution...")
             for clust_mask in clust_mask_list:
                 cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                atlas_select = "%s%s%s" % (cl_mask_name, '_k', k)
-                dir_path = do_dir_path(atlas_select, input_file)
+                atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
+                dir_path = do_dir_path(atlas_select_clust, input_file)
         elif k_clustering == 4:
-            print("Clustering within multiple masks at multiple resolutions...")
+            print("\nClustering within multiple masks at multiple resolutions...")
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             for clust_mask in clust_mask_list:
                 for k in k_list:
                     cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                    atlas_select = "%s%s%s" % (cl_mask_name, '_k', k)
-                    dir_path = do_dir_path(atlas_select, input_file)
+                    atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
+                    dir_path = do_dir_path(atlas_select_clust, input_file)
         elif (user_atlas_list is not None or parlistfile is not None) and (k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1) and atlas_select is None:
             print('Error: the -ua flag cannot be used with the clustering option. Use the -cm flag instead.')
             sys.exit(0)
-        else:
+        if multi_atlas is not None:
+            print('\nIterating across multiple nilearn atlases...')
+            for atlas_select in multi_atlas:
+                print(atlas_select)
+                dir_path = do_dir_path(atlas_select, input_file)
+        elif atlas_select is not None:
+            print("%s%s" % ("\nNilearn atlas: ", atlas_select))
             dir_path = do_dir_path(atlas_select, input_file)
+        else:
+            if parlistfile is None:
+                raise KeyError('ERROR: No atlas specified!')
+            else:
+                pass
     elif graph:
         if '.txt' in graph:
             graph_name = os.path.basename(graph).split('.txt')[0]
@@ -388,24 +397,24 @@ if __name__ == '__main__':
         dir_path = do_dir_path(atlas_select, graph)
 
     if network is not None:
-        print("%s%s" % ('Using RSN pipeline for: ', network))
+        print("%s%s" % ('\nUsing RSN pipeline for: ', network))
     elif multi_nets is not None:
         network = multi_nets[0]
-        print("%s%d%s%s%s" % ('Iterating workflow across ', len(multi_nets), ' networks: ', str(', '.join(str(n) for n in multi_nets)), '...'))
+        print("%s%d%s%s%s" % ('\nIterating workflow across ', len(multi_nets), ' networks: ', str(', '.join(str(n) for n in multi_nets)), '...'))
     else:
-        print("Using whole-brain pipeline..." )
+        print("\nUsing whole-brain pipeline..." )
 
     if node_size_list:
-        print("%s%s%s" % ('Growing spherical nodes across multiple radius sizes: ', str(', '.join(str(n) for n in node_size_list)), '...'))
+        print("%s%s%s" % ('\nGrowing spherical nodes across multiple radius sizes: ', str(', '.join(str(n) for n in node_size_list)), '...'))
     elif parc is True:
-        print("Using parcels as nodes")
+        print("\nUsing parcels as nodes")
     else:
-        print("%s%s" % ("Using node size of: ", node_size))
+        print("%s%s" % ("\nUsing node size of: ", node_size))
 
     if conn_model_list:
-        print("%s%s%s" % ('Iterating graph estimation across multiple connectivity models: ', str(', '.join(str(n) for n in conn_model_list)), '...'))
+        print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ', str(', '.join(str(n) for n in conn_model_list)), '...'))
     else:
-        print("%s%s" % ("Using connectivity model: ", conn_model))
+        print("%s%s" % ("\nUsing connectivity model: ", conn_model))
 
     if input_file and subjects_list:
         print('\nRunning workflow of workflows across subjects:\n')
@@ -413,7 +422,7 @@ if __name__ == '__main__':
         # Set directory path containing input file
         dir_path = do_dir_path(atlas_select, subjects_list[0])
     elif input_file and dwi_dir:
-        print('Running joint structural-functional connectometry...')
+        print('\nRunning joint structural-functional connectometry...')
         print("%s%s" % ('Functional file: ', input_file))
         print("%s%s" % ('Diffusion directory: ', dwi_dir))
         if anat_loc is not None:
@@ -424,20 +433,28 @@ if __name__ == '__main__':
         nodif_brain_mask_path = "%s%s" % (dwi_dir, '/nodif_brain_mask.nii.gz')
         if user_atlas_list is not None:
             parlistfile = user_atlas_list[0]
-            print('Iterating across multiple user atlases...')
+            print('\nIterating across multiple user atlases...')
             for parlistfile in user_atlas_list:
-                atlas_select = parlistfile.split('/')[-1].split('.')[0]
-                dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
-            atlas_select = None
-        elif multi_atlas is not None:
-            print('Iterating across multiple nilearn atlases...')
-            for atlas_select in multi_atlas:
-                dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
-            atlas_select = None
-        else:
-            dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
-            atlas_select = parlistfile.split('/')[-1].split('.')[0]
+                atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
+                print(atlas_select_par)
+                dir_path = do_dir_path(atlas_select_par, nodif_brain_mask_path)
+        elif parlistfile is not None and user_atlas_list is None:
+            atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
             ref_txt = "%s%s" % (parlistfile.split('/')[-1:][0].split('.')[0], '.txt')
+            dir_path = do_dir_path(atlas_select_par, nodif_brain_mask_path)
+        if multi_atlas is not None:
+            print('\nIterating across multiple nilearn atlases...')
+            for atlas_select in multi_atlas:
+                print(atlas_select)
+                dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+        elif atlas_select is not None:
+            print("%s%s" % ("\nNilearn atlas: ", atlas_select))
+            dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+        else:
+            if parlistfile is None:
+                raise KeyError('ERROR: No atlas specified!')
+            else:
+                pass
 
         merged_f_samples_path = "%s%s" % (dwi_dir, '/merged_f1samples.nii.gz')
         if os.path.exists(merged_f_samples_path) is True:
@@ -448,7 +465,7 @@ if __name__ == '__main__':
             conn_model = conn_model
 
     elif input_file is None and dwi_dir:
-        print('Running structural connectometry only...')
+        print('\nRunning structural connectometry only...')
         print("%s%s" % ('Bedpostx Directory: ', dwi_dir))
         print("%s%s" % ('Number of fiber samples for tracking: ', num_total_samples))
         if anat_loc is not None:
@@ -460,23 +477,32 @@ if __name__ == '__main__':
         input_file = nodif_brain_mask_path
         if user_atlas_list is not None:
             parlistfile = user_atlas_list[0]
-            print('Iterating across multiple user atlases...')
+            print('\nIterating across multiple user atlases...')
             for parlistfile in user_atlas_list:
-                atlas_select = parlistfile.split('/')[-1].split('.')[0]
-                dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
-            atlas_select = None
-        elif multi_atlas is not None:
-            print('Iterating across multiple nilearn atlases...')
-            for atlas_select in multi_atlas:
-                dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
-            atlas_select = None
-        else:
-            dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
-            atlas_select = parlistfile.split('/')[-1].split('.')[0]
+                atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
+                print(atlas_select_par)
+                dir_path = do_dir_path(atlas_select_par, nodif_brain_mask_path)
+        elif parlistfile is not None and user_atlas_list is None:
+            atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
             ref_txt = "%s%s" % (parlistfile.split('/')[-1:][0].split('.')[0], '.txt')
+            dir_path = do_dir_path(atlas_select_par, nodif_brain_mask_path)
+        if multi_atlas is not None:
+            print('\nIterating across multiple nilearn atlases...')
+            for atlas_select in multi_atlas:
+                print(atlas_select)
+                dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+        elif atlas_select is not None:
+            print("%s%s" % ("\nNilearn atlas: ", atlas_select))
+            dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+        else:
+            if parlistfile is None:
+                raise KeyError('ERROR: No atlas specified!')
+            else:
+                pass
+
         conn_model = 'prob'
     elif input_file and dwi_dir is None and subjects_list is None:
-        print('Running functional connectometry only...')
+        print('\nRunning functional connectometry only...')
         print("%s%s" % ('Functional file: ', input_file))
     print('\n-------------------------------------------------------------------------\n\n\n')
 
@@ -527,6 +553,8 @@ if __name__ == '__main__':
     # print(str(node_size_list))
     # print(str(num_total_samples))
     # print(str(graph))
+    # import sys
+    # sys.exit(0)
 
     # Import core modules
     from pynets.utils import export_to_pandas, collect_pandas_df
@@ -593,70 +621,33 @@ if __name__ == '__main__':
         base_dirname = "%s%s" % ('Meta_wf_', str(ID))
         meta_wf = Workflow(name=base_dirname)
         meta_wf.add_nodes([base_wf])
-        import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx",
-                       "import nibabel as nib"]
-
-        inputnode = pe.Node(niu.IdentityInterface(fields=['multi_nets', 'prune', 'ID']), name='inputnode')
-        inputnode.inputs.multi_nets = multi_nets
-        inputnode.inputs.prune = prune
-        inputnode.inputs.ID = ID
-        shadow_iters = pe.Node(niu.Function(input_names=['est_path', 'conn_model', 'multi_nets', 'ID', 'network',
-                                                         'mask', 'thr', 'node_size', 'prune'],
-                                            output_names=['thr_iterlist', 'est_path_iterlist', 'ID_iterlist',
-                                                          'network_iterlist', 'conn_model_iterlist', 'mask_iterlist',
-                                                          'prune_iterlist', 'node_size_iterlist'],
-                                            function=utils.extrap_shadow_iters, imports=import_list),
-                               name="shadow_iters_node")
-
-        meta_outputnode = pe.Node(niu.IdentityInterface(fields=['thr_iterlist', 'est_path_iterlist', 'ID_iterlist',
-                                                                'network_iterlist', 'conn_model_iterlist',
-                                                                'mask_iterlist', 'prune_iterlist', 'node_size_iterlist']),
-                                  name='meta_outputnode')
 
         if network is None and input_file:
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 1
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._mem_gb = 3
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._mem_gb = 2
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 2
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 1
         elif network and input_file:
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 2
+            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 1
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_coords_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_coords_node'))._mem_gb = 3
+            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_coords_node'))._mem_gb = 2
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.thresh_and_fit_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 2
+            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 1
         elif dwi_dir and network is None:
             meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 3
+            meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 1
             meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.thresh_diff_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.thresh_diff_node'))._mem_gb = 2
+            meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.thresh_diff_node'))._mem_gb = 1
         elif dwi_dir and network:
             meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 3
+            meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 1
             meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.thresh_diff_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.thresh_diff_node'))._mem_gb = 2
+            meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.thresh_diff_node'))._mem_gb = 1
         else:
             raise RuntimeError('ERROR: Either functional input file or dwi directory is missing!')
-
-        meta_wf.connect(inputnode, "multi_nets", shadow_iters, "multi_nets")
-        meta_wf.connect(inputnode, "prune", shadow_iters, "prune")
-        meta_wf.connect(inputnode, "ID", shadow_iters, "ID")
-        meta_wf.connect(base_wf, "outputnode.est_path", shadow_iters, "est_path")
-        meta_wf.connect(base_wf, "outputnode.conn_model", shadow_iters, "conn_model")
-        meta_wf.connect(base_wf, "outputnode.network", shadow_iters, "network")
-        meta_wf.connect(base_wf, "outputnode.mask", shadow_iters, "mask")
-        meta_wf.connect(base_wf, "outputnode.thr", shadow_iters, "thr")
-        meta_wf.connect(base_wf, "outputnode.node_size", shadow_iters, "node_size")
-        meta_wf.connect(shadow_iters, "thr_iterlist", meta_outputnode, "thr_iterlist")
-        meta_wf.connect(shadow_iters, "est_path_iterlist", meta_outputnode, "est_path_iterlist")
-        meta_wf.connect(shadow_iters, "ID_iterlist", meta_outputnode, "ID_iterlist")
-        meta_wf.connect(shadow_iters, "network_iterlist", meta_outputnode, "network_iterlist")
-        meta_wf.connect(shadow_iters, "conn_model_iterlist", meta_outputnode, "conn_model_iterlist")
-        meta_wf.connect(shadow_iters, "mask_iterlist", meta_outputnode, "mask_iterlist")
-        meta_wf.connect(shadow_iters, "prune_iterlist", meta_outputnode, "prune_iterlist")
-        meta_wf.connect(shadow_iters, "node_size_iterlist", meta_outputnode, "node_size_iterlist")
 
         if verbose is True:
             from nipype import config, logging
@@ -677,21 +668,27 @@ if __name__ == '__main__':
         meta_wf.config['execution']['display_variable'] = ':0'
         meta_wf.config['execution']['job_finished_timeout'] = 65
         meta_wf.config['execution']['stop_on_first_crash'] = False
-        #meta_wf.write_graph(graph2use='exec', format='png', dotfilename='meta_wf.dot')
         plugin_args = {'n_procs': int(procmem[0])-1, 'memory_gb': int(procmem[1])-1}
         egg = meta_wf.run(plugin=plugin_type, plugin_args=plugin_args)
-        #print([x.name for x in egg.nodes()])
-        #print([x for x in egg.nodes() if x.name == 'meta_outputnode'])
-        outputs = [x for x in egg.nodes() if x.name == 'shadow_iters_node'][0].result.outputs
-
-        thr_iterlist = outputs.thr_iterlist
-        est_path_iterlist = outputs.est_path_iterlist
-        ID_iterlist = outputs.ID_iterlist
-        network_iterlist = outputs.network_iterlist
-        conn_model_iterlist = outputs.conn_model_iterlist
-        mask_iterlist = outputs.mask_iterlist
-        prune_iterlist = outputs.prune_iterlist
-        node_size_iterlist = outputs.node_size_iterlist
+        conn_model_iters = []
+        est_path_iters = []
+        network_iters = []
+        node_size_iters = []
+        thr_iters = []
+        for out in range(len([x for x in egg.nodes() if x.name == 'outputnode'])):
+            conn_model_iters.append([x for x in egg.nodes() if x.name == 'outputnode'][out].result.outputs.conn_model)
+            est_path_iters.append([x for x in egg.nodes() if x.name == 'outputnode'][out].result.outputs.est_path)
+            network_iters.append([x for x in egg.nodes() if x.name == 'outputnode'][out].result.outputs.network)
+            node_size_iters.append([x for x in egg.nodes() if x.name == 'outputnode'][out].result.outputs.node_size)
+            thr_iters.append([x for x in egg.nodes() if x.name == 'outputnode'][out].result.outputs.thr)
+        conn_model_iterlist = [item for sublist in conn_model_iters for item in sublist]
+        est_path_iterlist = [item for sublist in est_path_iters for item in sublist]
+        network_iterlist = [item for sublist in network_iters for item in sublist]
+        node_size_iterlist = [item for sublist in node_size_iters for item in sublist]
+        thr_iterlist = [item for sublist in thr_iters for item in sublist]
+        prune_iterlist = [prune] * len(est_path_iterlist)
+        ID_iterlist = [str(ID)] * len(est_path_iterlist)
+        mask_iterlist = [mask] * len(est_path_iterlist)
 
         return thr_iterlist, est_path_iterlist, ID_iterlist, network_iterlist, conn_model_iterlist, mask_iterlist, prune_iterlist, node_size_iterlist
 

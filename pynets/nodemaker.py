@@ -37,9 +37,9 @@ def fetch_nilearn_atlas_coords(atlas_select):
     atlas_name = atlas['description'].splitlines()[0]
     if atlas_name is None:
         atlas_name = atlas_select
-    if '\'b' in atlas_select:
-        atlas_select = atlas_select.decode('utf-8')
-    print("%s%s%s%s" % ('\n', str(atlas_name), ' comes with {0}'.format(atlas.keys()), '\n'))
+    if 'b\'' in atlas_select:
+        atlas_name = atlas_select.decode('utf-8')
+    print("%s%s%s%s" % ('\n', atlas_name, ' comes with {0}'.format(atlas.keys()), '\n'))
     coords = np.vstack((atlas.rois['x'], atlas.rois['y'], atlas.rois['z'])).T
     print("%s%s" % ('\nStacked atlas coordinates in array of shape {0}.'.format(coords.shape), '\n'))
     try:
