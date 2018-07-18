@@ -579,10 +579,10 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                           ('thr', 'thr'),
                                           ('ID', 'ID'),
                                           ('mask', 'mask'),
-                                          ('network', 'network'),
                                           ('conn_model', 'conn_model'),
                                           ('min_span_tree', 'min_span_tree')]),
         (RSN_fetch_nodes_and_labels_node, thresh_and_fit_node, [('dir_path', 'dir_path')]),
+        (get_node_membership_node, thresh_and_fit_node, [('network', 'network')]),
         (extract_ts_rsn_node, thresh_and_fit_node, [('ts_within_nodes', 'ts_within_nodes'),
                                                     ('node_size', 'node_size')]),
         (thresh_and_fit_node, outputnode, [('est_path', 'est_path'),
@@ -687,24 +687,18 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     if multi_nets is not None:
         if plot_switch is True:
             rsn_functional_connectometry_wf.disconnect([(inputnode, extract_ts_rsn_node, [('network', 'network')]),
-                                                        (inputnode, thresh_and_fit_node, [('network', 'network')]),
                                                         (inputnode, plot_all_node, [('network', 'network')])
                                                         ])
             rsn_functional_connectometry_wf.connect([(get_node_membership_node, extract_ts_rsn_node,
                                                       [('network', 'network')]),
-                                                    (get_node_membership_node, thresh_and_fit_node,
-                                                     [('network', 'network')]),
                                                     (get_node_membership_node, plot_all_node,
                                                      [('network', 'network')])
                                                      ])
         else:
             rsn_functional_connectometry_wf.disconnect([(inputnode, extract_ts_rsn_node, [('network', 'network')]),
-                                                        (inputnode, thresh_and_fit_node, [('network', 'network')]),
                                                         ])
             rsn_functional_connectometry_wf.connect([(get_node_membership_node, extract_ts_rsn_node,
-                                                      [('network', 'network')]),
-                                                    (get_node_membership_node, thresh_and_fit_node,
-                                                     [('network', 'network')])
+                                                      [('network', 'network')])
                                                      ])
     rsn_functional_connectometry_wf.config['execution']['crashdump_dir'] = rsn_functional_connectometry_wf.base_directory
     rsn_functional_connectometry_wf.config['execution']['crashfile_format'] = 'txt'
@@ -1362,12 +1356,12 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                                                 ('seeds_dir', 'seeds_dir')]),
         (inputnode, thresh_diff_node, [('dens_thresh', 'dens_thresh'),
                                        ('thr', 'thr'),
-                                       ('network', 'network'),
                                        ('conn_model', 'conn_model'),
                                        ('ID', 'ID'),
                                        ('mask', 'mask'),
                                        ('parc', 'parc'),
                                        ('min_span_tree', 'min_span_tree')]),
+        (get_node_membership_node, thresh_diff_node, [('network', 'network')]),
         (prep_nodes_node, thresh_diff_node, [('node_size', 'node_size')]),
         (collect_struct_mapping_outputs_node, thresh_diff_node, [('conn_matrix_symm', 'conn_matrix')]),
         (thresh_diff_node, outputnode, [('est_path', 'est_path'),
@@ -1423,11 +1417,12 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                                       [('conn_matrix_symm', 'conn_matrix_symm')]),
                                                      (inputnode, structural_plotting_node, [('ID', 'ID'),
                                                                                             ('dwi_dir', 'dwi_dir'),
-                                                                                            ('network', 'network'),
                                                                                             ('parc', 'parc'),
                                                                                             ('conn_model', 'conn_model'),
                                                                                             ('mask', 'mask'),
                                                                                             ('plot_switch', 'plot_switch')]),
+                                                     (get_node_membership_node, structural_plotting_node,
+                                                      [('network', 'network')]),
                                                      (thresh_diff_node, structural_plotting_node,
                                                       [('thr', 'thr'),
                                                        ('node_size', 'node_size')]),
@@ -1437,12 +1432,6 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                                      (RSN_fetch_nodes_and_labels_node, structural_plotting_node,
                                                       [('dir_path', 'dir_path'),
                                                        ('atlas_select', 'atlas_select')])
-                                                     ])
-        else:
-            rsn_structural_connectometry_wf.disconnect([(inputnode, thresh_diff_node, [('network', 'network')]),
-                                                        ])
-            rsn_structural_connectometry_wf.connect([(get_node_membership_node, thresh_diff_node,
-                                                      [('network', 'network')])
                                                      ])
 
     dwi_img = "%s%s" % (dwi_dir, '/dwi.nii.gz')

@@ -675,6 +675,8 @@ if __name__ == '__main__':
         network_iters = []
         node_size_iters = []
         thr_iters = []
+        print([x for x in egg.nodes() if x.name == 'outputnode'])
+        print([x for x in egg.nodes() if x.name == 'outputnode'][0].result.outputs)
         for out in range(len([x for x in egg.nodes() if x.name == 'outputnode'])):
             conn_model_iters.append([x for x in egg.nodes() if x.name == 'outputnode'][out].result.outputs.conn_model)
             est_path_iters.append([x for x in egg.nodes() if x.name == 'outputnode'][out].result.outputs.est_path)
@@ -689,6 +691,15 @@ if __name__ == '__main__':
         prune_iterlist = [prune] * len(est_path_iterlist)
         ID_iterlist = [str(ID)] * len(est_path_iterlist)
         mask_iterlist = [mask] * len(est_path_iterlist)
+
+        print(conn_model_iterlist)
+        print(est_path_iterlist)
+        print(network_iterlist)
+        print(node_size_iterlist)
+        print(thr_iterlist)
+        print(prune_iterlist)
+        print(ID_iterlist)
+        print(mask_iterlist)
 
         return thr_iterlist, est_path_iterlist, ID_iterlist, network_iterlist, conn_model_iterlist, mask_iterlist, prune_iterlist, node_size_iterlist
 

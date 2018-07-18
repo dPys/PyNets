@@ -13,7 +13,8 @@ Learn more about Networkx: https://networkx.github.io/
 
 -----
 
-1. Installation
+1. Installation:
+
 PyNets is available for both python2 and python3. We recommend using python3.
 ```python
 ##Clone the PyNets repo and install dependencies
@@ -40,20 +41,19 @@ docker run -ti --rm --privileged \
     pynets_docker
 ```
 
-and to further convert this into a singularity container for HPC:
+and to further convert this into a singularity container (e.g. for use on HPC):
 
 ```
-docker run -ti --rm --privileged \
-    -v /tmp:/tmp \
-    -v /var/tmp:/var/tmp \
-    pynets_singularity
+docker run -ti --rm \
+    --privileged \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v ${BUILDIR}/pynets_images:/output \
+    filo/docker2singularity "pynets_docker:latest"
 ```
 
 2. Usage:
 
-See pynets_run.py -h for help options.
-
-Quick Start:
+See pynets_run.py -h for a complete list of help options.
 
 Example A) You have a preprocessed (minimally -- normalized and skull stripped) functional fMRI dataset called "filtered_func_data_clean_standard.nii.gz" where you assign an arbitrary subject id of 997, you wish to analyze a whole-brain network, using the nilearn atlas 'coords_dosenbach_2010', thresholding the connectivity graph proportionally to retain 0.20% of the strongest connections, and you wish to use partial correlation model estimation:
 ```python
@@ -64,37 +64,32 @@ pynets_run.py '/Users/dPys/PyNets_examples/997/filtered_func_data_clean_standard
 pynets_run.py -i '/Users/dPys/PyNets_examples/997/filtered_func_data_clean_standard.nii.gz' -id '997' -a 'coords_dosenbach_2010,coords_power_2011' -n 'Default' -dt -thr '0.3' -ns '2,4' -mod 'partcorr,sps' -plt
 ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Example C) Building upon the previous examples, let's say you now wish to analyze the Default and Executive Control Networks for this subject, bot this time based on a custom atlas (DesikanKlein2012.nii.gz), this time defining your nodes as parcels (as opposed to spheres), you wish to fit a partial correlation model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), and you wish to prune disconnected and low importance (3 SD < M) nodes:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Example C) Building upon the previous examples, let's say you now wish to analyze the Default and Executive Control Networks for this subject, bot this time based on a custom atlas (DesikanKlein2012.nii.gz), this time defining your nodes as parcels (as opposed to spheres), you wish to fit a partial correlation model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), and you wish to prune disconnected nodes:
 ```python
-pynets_run.py -i '/Users/dPys/PyNets_examples/997/filtered_func_data_clean_standard.nii.gz' -id '997' -ua '/Users/dPys/PyNets_example_atlases/DesikanKlein2012.nii.gz' -n 'Default,Cont' -mod 'partcorr' -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -parc -p
+pynets_run.py -i '/Users/dPys/PyNets_examples/997/filtered_func_data_clean_standard.nii.gz' -id '997' -ua '/Users/dPys/PyNets_example_atlases/DesikanKlein2012.nii.gz' -n 'Default,Cont' -mod 'partcorr' -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -parc -p 1
 ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Example D) Building upon the previous examples, let's say you now wish to create a subject-specific atlas based on the subject's unique spatial-temporal profile. In this case, you can specify the path to a binarized mask within which to performed spatially-constrained spectral clustering, and you want to try this at multiple resolutions of k clusters/nodes (i.e. k=50,100,150). You again also wish to define your node radius at both 2 and 4 mm, fitting a partial correlation and sparse inverse covariance model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), you wish to prune disconnected and low importance (3 SD < M) nodes, and you wish to plot your results:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Example D) Building upon the previous examples, let's say you now wish to create a subject-specific atlas based on the subject's unique spatial-temporal profile. In this case, you can specify the path to a binarized mask within which to performed spatially-constrained spectral clustering, and you want to try this at multiple resolutions of k clusters/nodes (i.e. k=50,100,150). You again also wish to define your node radius at both 2 and 4 mm, fitting a partial correlation and sparse inverse covariance model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), you wish to prune disconnected nodes, and you wish to plot your results:
 ```python
-pynets_run.py -i '/Users/dPys/PyNets_examples/997/filtered_func_data_clean_standard.nii.gz' -id '997' -cm '/Users/dPys/PyNets_example/997_grey_matter_mask_bin.nii.gz' -ns '2,4' -mod 'partcorr,sps' -k_min 50 -k_max 150 -k_step 50 -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p -plt
+pynets_run.py -i '/Users/dPys/PyNets_examples/997/filtered_func_data_clean_standard.nii.gz' -id '997' -cm '/Users/dPys/PyNets_example/997_grey_matter_mask_bin.nii.gz' -ns '2,4' -mod 'partcorr,sps' -k_min 50 -k_max 150 -k_step 50 -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 -plt
 ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Example E) You wish to generate a structural connectome, using probabilistic tractography applied to bedpostx outputs with 5000 streamlines, constrained to a white-matter waypoint mask, and avoiding ventricular CSF as defined by the subject's T1 image. You wish to use atlas parcels as defined by both DesikanKlein2012, and AALTzourioMazoyer2002, iterate over a range of densities (i.e. 0.05-0.10 with 1% step), prune disconnected and low importance (3 SD < M) nodes, and plot your results:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Example E) You wish to generate a structural connectome, using probabilistic tractography applied to bedpostx outputs with 5000 streamlines, constrained to a white-matter waypoint mask, and avoiding ventricular CSF as defined by the subject's T1 image. You wish to use atlas parcels as defined by both DesikanKlein2012, and AALTzourioMazoyer2002, iterate over a range of densities (i.e. 0.05-0.10 with 1% step), prune disconnected nodes, and plot your results:
 ```python
-pynets_run.py -dwi /Users/PSYC-dap3463/Downloads/bedpostx_s002.bedpostX -id s002 -ua '/Users/PSYC-dap3463/Applications/PyNets/pynets/atlases/DesikanKlein2012.nii.gz,/Users/PSYC-dap3463/Applications/PyNets/pynets/atlases/AALTzourioMazoyer2002' -s 5000 -thr 0.1 -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p -parc -anat '/Users/PSYC-dap3463/Downloads/s002/s002_anat_T1.nii.gz'
+pynets_run.py -dwi /Users/PSYC-dap3463/Downloads/bedpostx_s002.bedpostX -id s002 -ua '/Users/PSYC-dap3463/Applications/PyNets/pynets/atlases/DesikanKlein2012.nii.gz,/Users/PSYC-dap3463/Applications/PyNets/pynets/atlases/AALTzourioMazoyer2002' -s 5000 -thr 0.1 -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 -parc -anat '/Users/PSYC-dap3463/Downloads/s002/s002_anat_T1.nii.gz'
 ```
 
-3. Viewing outputs:\
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PyNets outputs network metrics into csv files and pickled pandas dataframes within the same subject folder
-in which the initial image or time-series was fed into the workflow. To open the csv dataframes in pandas, you can:
+3. Interpreting outputs:
 
-```python
-import pandas as pd
-csv_path = '/Users/dPys/PyNets_examples/200/200_net_global_scalars_cov_200_neat.csv'
-df = pd.read_csv(csv_path)
-df
-```
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PyNets outputs various csv files and pickled pandas dataframes within the same subject folder
+in which the initial image was fed into the workflow. Files with the suffix '_neat.csv' within each atlas subdirectory contain the graph measure extracted for that subject from that atlas, using all of the graph hyperparameters listed in the titles of those files. Files with the suffix '_mean.csv' within the base subject directory contain averages/weighted averages of each graph measure across all hyperparameters specified at runtime.
+
 
 Generate a glass brain plot for a functional or structural connectome
 ![](tests/examples/997/997_whole_brain_cluster_labels_PCA200_sps_connectome_viz.png)
 Visualize adjacency matrices for structural or functional connectomes
 ![](docs/structural_adj_mat.png)
-Input a path to a bedpostx directory to estimate a structural connectome
+Input a path to a diffusion weighted dataset or bedpostx directory to estimate a structural connectome
 ![](docs/pynets_diffusion.png)
 Visualize communities of restricted networks
 ![](docs/glass_brain_communities.png)
