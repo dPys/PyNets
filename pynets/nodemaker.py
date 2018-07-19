@@ -385,7 +385,7 @@ def AAL_naming(coords):
     return label_names
 
 
-def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file):
+def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file, use_AAL_naming):
     from pynets import utils, nodemaker
     import pandas as pd
     import os
@@ -437,11 +437,15 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
                 else:
                     raise FileNotFoundError("ERROR: label reference file not found")
             except:
-                try:
-                    label_names = nodemaker.AAL_naming(coords)
-                    #print(label_names)
-                except:
-                    print('AAL reference labeling failed!')
+                if use_AAL_naming is True:
+                    try:
+                        label_names = nodemaker.AAL_naming(coords)
+                        #print(label_names)
+                    except:
+                        print('AAL reference labeling failed!')
+                        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                else:
+                    print('Using generic labeled numbering...')
                     label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
     print(label_names)
@@ -451,7 +455,7 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
     return label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile, dir_path
 
 
-def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file):
+def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file, use_AAL_naming):
     from pynets import utils, nodemaker
     import pandas as pd
     import os
@@ -497,11 +501,17 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
                 else:
                     raise FileNotFoundError("ERROR: label reference file not found")
             except:
-                try:
-                    label_names = nodemaker.AAL_naming(coords)
-                except:
-                    print('AAL reference labeling failed!')
+                if use_AAL_naming is True:
+                    try:
+                        label_names = nodemaker.AAL_naming(coords)
+                        #print(label_names)
+                    except:
+                        print('AAL reference labeling failed!')
+                        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                else:
+                    print('Using generic labeled numbering...')
                     label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+
     print(label_names)
     atlas_name = atlas_select
     dir_path = utils.do_dir_path(atlas_select, func_file)

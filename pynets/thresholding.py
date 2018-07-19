@@ -191,7 +191,7 @@ def local_thresholding_prop(conn_matrix, thr):
     upper_values = np.triu_indices(np.shape(conn_matrix)[0], k=1)
     weights = np.array(conn_matrix[upper_values])
     weights = weights[~np.isnan(weights)]
-    edgenum = int(thr * len(weights))
+    edgenum = int(float(thr) * float(len(weights)))
 
     if len_edges > edgenum:
         print("%s%s%s" % ('Warning: The minimum spanning tree already has: ', len_edges, ' edges, select more edges. Local Threshold will be applied by just retaining the Minimum Spanning Tree'))
@@ -307,14 +307,11 @@ def local_thresholding_dens(conn_matrix, thr):
     return conn_matrix_thr
 
 
-def thresh_and_fit(dens_thresh, thr, ts_within_nodes, conn_model, network, ID, dir_path, mask, node_size, min_span_tree):
-    from pynets import utils, thresholding, graphestimation
+def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, mask, node_size, min_span_tree):
+    from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
     edge_threshold = "%s%s" % (str(thr_perc), '%')
-
-    # Fit mat
-    conn_matrix = graphestimation.get_conn_matrix(ts_within_nodes, conn_model)
 
     # Save unthresholded
     unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
