@@ -754,10 +754,13 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
             df_concatted_std = df_concat.loc[:, measures].std().to_frame().transpose()
             weighted_means = []
             for measure in measures:
-                std_val = float(df_concatted_std[measure])
-                np.array(1/(df_concat.loc[:, measures][measure])/std_val)
-                weighted_means.append((df_concat.loc[:, measures][measure] * np.array(1/(df_concat.loc[:, measures][measure])/std_val)).sum() / np.sum(np.array(1/(df_concat.loc[:, measures][measure])/std_val)))
-
+                if measure in df_concatted_std.columns:
+                    std_val = float(df_concatted_std[measure])
+                    weighted_means.append((df_concat.loc[:, measures][measure] *
+                                           np.array(1/(df_concat.loc[:, measures][measure])/std_val)).sum() /
+                                          np.sum(np.array(1/(df_concat.loc[:, measures][measure])/std_val)))
+                else:
+                    weighted_means.append(np.nan)
             df_concatted_weight_means = pd.DataFrame(weighted_means).transpose()
             df_concatted_weight_means.columns = [str(col) + '_weighted_mean' for col in measures]
             df_concatted_std.columns = [str(col) + '_std_dev' for col in df_concatted_std.columns]

@@ -21,7 +21,7 @@ requirements = [
     'nibabel>=2.1.0',
     'scikit_learn>=0.18.2',
     'pathlib>=1.0.1',
-    'setuptools>=36.2.7',
+    'setuptools>=39.0.1',
     'configparser>=3.5.0'
 ]
 
@@ -37,7 +37,7 @@ test_requirements = [
 
 setup(
     name='pynets',
-    version='0.6.20',
+    version='0.6.21',
     description="A Fully-Automated Workflow for Reproducible Graph Analysis of Functional and Structural Connectomes",
     #long_description=readme + '\n\n',
     author="Derek Pisner",
@@ -55,7 +55,7 @@ setup(
     zip_safe=False,
     keywords='pynets',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',

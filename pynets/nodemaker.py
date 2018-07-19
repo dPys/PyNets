@@ -37,8 +37,8 @@ def fetch_nilearn_atlas_coords(atlas_select):
     atlas_name = atlas['description'].splitlines()[0]
     if atlas_name is None:
         atlas_name = atlas_select
-    if 'b\'' in atlas_select:
-        atlas_name = atlas_select.decode('utf-8')
+    if "b'" in str(atlas_name):
+        atlas_name = atlas_name.decode('utf-8')
     print("%s%s%s%s" % ('\n', atlas_name, ' comes with {0}'.format(atlas.keys()), '\n'))
     coords = np.vstack((atlas.rois['x'], atlas.rois['y'], atlas.rois['z'])).T
     print("%s%s" % ('\nStacked atlas coordinates in array of shape {0}.'.format(coords.shape), '\n'))
@@ -428,15 +428,14 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
             try:
                 ref_txt = "%s%s%s%s" % (str(Path(base_path).parent), '/labelcharts/', atlas_select, '.txt')
                 if os.path.exists(ref_txt):
-                    dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
-                    label_names = dict_df['Region'].tolist()
-                    #print(label_names)
-                else:
                     try:
-                        label_names = nodemaker.AAL_naming(coords)
-                    except:
-                        print('AAL reference labeling failed!')
-                        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                        dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
+                        label_names = dict_df['Region'].tolist()
+                        #print(label_names)
+                    except RuntimeError:
+                        print("ERROR: label names from label reference file failed to populate or are invalid")
+                else:
+                    raise FileNotFoundError("ERROR: label reference file not found")
             except:
                 try:
                     label_names = nodemaker.AAL_naming(coords)
@@ -489,16 +488,14 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
             try:
                 ref_txt = "%s%s%s%s" % (str(Path(base_path).parent), '/labelcharts/', atlas_select, '.txt')
                 if os.path.exists(ref_txt):
-                    dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
-                    label_names = dict_df['Region'].tolist()
-                    #print(label_names)
-                else:
                     try:
-                        label_names = nodemaker.AAL_naming(coords)
+                        dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
+                        label_names = dict_df['Region'].tolist()
                         #print(label_names)
-                    except:
-                        print('AAL reference labeling failed!')
-                        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                    except RuntimeError:
+                        print("ERROR: label names from label reference file failed to populate or are invalid")
+                else:
+                    raise FileNotFoundError("ERROR: label reference file not found")
             except:
                 try:
                     label_names = nodemaker.AAL_naming(coords)

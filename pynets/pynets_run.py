@@ -329,11 +329,11 @@ if __name__ == '__main__':
         if parlistfile is not None and k_clustering == 0 and user_atlas_list is None:
             atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
             dir_path = do_dir_path(atlas_select_par, input_file)
-            print("%s%s" % ("User atlas: ", atlas_select_par))
+            print("%s%s" % ("\nUser atlas: ", atlas_select_par))
         elif parlistfile is not None and user_atlas_list is None and k_clustering == 0:
             atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
             dir_path = do_dir_path(atlas_select_par, input_file)
-            print("%s%s" % ("User atlas: ", atlas_select_par))
+            print("%s%s" % ("\nUser atlas: ", atlas_select_par))
         elif user_atlas_list is not None:
             parlistfile = user_atlas_list[0]
             print('\nIterating across multiple user atlases...')
@@ -344,7 +344,7 @@ if __name__ == '__main__':
         elif k_clustering == 1:
             cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
             atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
-            print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+            print("%s%s" % ("\nCluster atlas: ", atlas_select_clust))
             dir_path = do_dir_path(atlas_select_clust, input_file)
             print("\nClustering within mask at a single resolution...")
         elif k_clustering == 2:
@@ -381,7 +381,7 @@ if __name__ == '__main__':
             print("%s%s" % ("\nNilearn atlas: ", atlas_select))
             dir_path = do_dir_path(atlas_select, input_file)
         else:
-            if parlistfile is None:
+            if parlistfile is None and k == 0:
                 raise KeyError('ERROR: No atlas specified!')
             else:
                 pass
@@ -451,7 +451,7 @@ if __name__ == '__main__':
             print("%s%s" % ("\nNilearn atlas: ", atlas_select))
             dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
         else:
-            if parlistfile is None:
+            if parlistfile is None and k == 0:
                 raise KeyError('ERROR: No atlas specified!')
             else:
                 pass
@@ -568,7 +568,7 @@ if __name__ == '__main__':
                           clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                           node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type):
         import os
-        from pynets import workflows, utils
+        from pynets import workflows
         from nipype import Workflow, Function
         from nipype.pipeline import engine as pe
         from nipype.interfaces import utility as niu
@@ -675,12 +675,13 @@ if __name__ == '__main__':
         network_iters = []
         node_size_iters = []
         thr_iters = []
-        for out in range(len([x for x in egg.nodes() if x.name == 'outputnode'])):
-            conn_model_iters.append([x for x in egg.nodes() if x.name == 'outputnode'][out].result.outputs.conn_model)
-            est_path_iters.append([x for x in egg.nodes() if x.name == 'outputnode'][out].result.outputs.est_path)
-            network_iters.append([x for x in egg.nodes() if x.name == 'outputnode'][out].result.outputs.network)
-            node_size_iters.append([x for x in egg.nodes() if x.name == 'outputnode'][out].result.outputs.node_size)
-            thr_iters.append([x for x in egg.nodes() if x.name == 'outputnode'][out].result.outputs.thr)
+        out_nodes = [x for x in egg.nodes() if x.name == 'outputnode']
+        for out in range(len(out_nodes)):
+            conn_model_iters.append(out_nodes[out].result.outputs.conn_model)
+            est_path_iters.append(out_nodes[out].result.outputs.est_path)
+            network_iters.append(out_nodes[out].result.outputs.network)
+            node_size_iters.append(out_nodes[out].result.outputs.node_size)
+            thr_iters.append(out_nodes[out].result.outputs.thr)
         conn_model_iterlist = [item for sublist in conn_model_iters for item in sublist]
         est_path_iterlist = [item for sublist in est_path_iters for item in sublist]
         network_iterlist = [item for sublist in network_iters for item in sublist]
@@ -689,6 +690,17 @@ if __name__ == '__main__':
         prune_iterlist = [prune] * len(est_path_iterlist)
         ID_iterlist = [str(ID)] * len(est_path_iterlist)
         mask_iterlist = [mask] * len(est_path_iterlist)
+
+        print('\n\nHyperparameters:\n')
+        print(conn_model_iterlist)
+        print(est_path_iterlist)
+        print(network_iterlist)
+        print(node_size_iterlist)
+        print(thr_iterlist)
+        print(prune_iterlist)
+        print(ID_iterlist)
+        print(mask_iterlist)
+        print('\n\n')
 
         return thr_iterlist, est_path_iterlist, ID_iterlist, network_iterlist, conn_model_iterlist, mask_iterlist, prune_iterlist, node_size_iterlist
 
