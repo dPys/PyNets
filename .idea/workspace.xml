@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/workflows.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/setup.cfg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -91,8 +91,8 @@
       <file leaf-file-name="pynets_run.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="368">
-              <caret line="16" column="22" lean-forward="true" selection-start-line="16" selection-start-column="22" selection-end-line="16" selection-end-column="22" />
+            <state relative-caret-position="377">
+              <caret line="1234" column="59" selection-start-line="1234" selection-start-column="59" selection-end-line="1234" selection-end-column="59" />
               <folding>
                 <element signature="e#130#140#0" expanded="true" />
               </folding>
@@ -111,10 +111,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>for atlas_select in multi_atlas:</find>
-      <find>for parlistfile in user_atlas_list:</find>
-      <find>ATLAS</find>
-      <find>node_size_it</find>
       <find>multi_thr</find>
       <find>comes with</find>
       <find>extract_ts_rsn_node.iterables</find>
@@ -141,6 +137,10 @@
       <find>Running structural connectometry</find>
       <find>nilearn</find>
       <find>clustering_node.interface.mem_gb</find>
+      <find>subjects_list</find>
+      <find>subjects</find>
+      <find>Wf_multi_subject</find>
+      <find>PyNets_multisubject</find>
     </findStrings>
     <replaceStrings>
       <replace>#</replace>
@@ -198,7 +198,7 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="356" />
+    <option name="x" value="355" />
     <option name="y" value="37" />
     <option name="width" value="1260" />
     <option name="height" value="877" />
@@ -363,7 +363,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="356" y="37" width="1260" height="877" extended-state="0" />
+    <frame x="355" y="37" width="1260" height="877" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -799,8 +799,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="368">
-          <caret line="16" column="22" lean-forward="true" selection-start-line="16" selection-start-column="22" selection-end-line="16" selection-end-column="22" />
+        <state relative-caret-position="377">
+          <caret line="1234" column="59" selection-start-line="1234" selection-start-column="59" selection-end-line="1234" selection-end-column="59" />
           <folding>
             <element signature="e#130#140#0" expanded="true" />
           </folding>

@@ -1203,6 +1203,7 @@ if __name__ == '__main__':
 
     # Workflow generation
     # Multi-subject workflow generator
+
     if subjects_list:
         wf_multi = wf_multi_subject(ID, subjects_list, atlas_select, network, node_size, mask,
                                     thr, parlistfile, multi_nets, conn_model, dens_thresh,
@@ -1212,6 +1213,12 @@ if __name__ == '__main__':
                                     k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming)
+
+        import shutil
+        if os.path.exists('/tmp/Wf_multi_subject'):
+            shutil.rmtree('/tmp/Wf_multi_subject')
+        os.mkdir('/tmp/Wf_multi_subject')
+        wf_multi.base_dir = '/tmp/Wf_multi_subject'
 
         if verbose is True:
             from nipype import config, logging
