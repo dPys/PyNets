@@ -149,6 +149,10 @@ if __name__ == '__main__':
                         metavar='Scheduler type',
                         default='MultiProc',
                         help='Include this flag to specify a workflow plugin other than the default MultiProc. Options include: Linear, SGE, PBS, SLURM, SGEgraph, SLURMgraph.\n')
+    parser.add_argument('-names',
+                        default=False,
+                        action='store_true',
+                        help='Optionally use this flag if you wish to map nodes to AAL labels.\n')
     parser.add_argument('-v',
                         default=False,
                         action='store_true',
@@ -214,6 +218,7 @@ if __name__ == '__main__':
     clust_mask_pre = args.cm
     prune = args.p
     plugin_type = args.plug
+    use_AAL_naming = args.names
     verbose = args.v
     clust_mask = list(str(clust_mask_pre).split(','))
     if len(clust_mask) > 1:
@@ -400,19 +405,22 @@ if __name__ == '__main__':
         print("%s%s" % ('\nUsing RSN pipeline for: ', network))
     elif multi_nets is not None:
         network = multi_nets[0]
-        print("%s%d%s%s%s" % ('\nIterating workflow across ', len(multi_nets), ' networks: ', str(', '.join(str(n) for n in multi_nets)), '...'))
+        print("%s%d%s%s%s" % ('\nIterating workflow across ', len(multi_nets), ' networks: ',
+                              str(', '.join(str(n) for n in multi_nets)), '...'))
     else:
         print("\nUsing whole-brain pipeline..." )
 
     if node_size_list:
-        print("%s%s%s" % ('\nGrowing spherical nodes across multiple radius sizes: ', str(', '.join(str(n) for n in node_size_list)), '...'))
+        print("%s%s%s" % ('\nGrowing spherical nodes across multiple radius sizes: ',
+                          str(', '.join(str(n) for n in node_size_list)), '...'))
     elif parc is True:
         print("\nUsing parcels as nodes")
     else:
         print("%s%s" % ("\nUsing node size of: ", node_size))
 
     if conn_model_list:
-        print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ', str(', '.join(str(n) for n in conn_model_list)), '...'))
+        print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ',
+                          str(', '.join(str(n) for n in conn_model_list)), '...'))
     else:
         print("%s%s" % ("\nUsing connectivity model: ", conn_model))
 
@@ -566,7 +574,8 @@ if __name__ == '__main__':
                           conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, anat_loc, parc,
                           ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                           clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
-                          node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type):
+                          node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
+                          use_AAL_naming):
         import os
         from pynets import workflows
         from nipype import Workflow, Function
@@ -581,7 +590,7 @@ if __name__ == '__main__':
                                                                 multi_thr, multi_atlas, max_thr, min_thr, step_thr,
                                                                 k, clust_mask, k_min, k_max, k_step, k_clustering,
                                                                 user_atlas_list, clust_mask_list, node_size_list,
-                                                                conn_model_list, min_span_tree)
+                                                                conn_model_list, min_span_tree, use_AAL_naming)
             sub_struct_wf = None
         # Workflow 2: RSN functional connectome
         elif dwi_dir is None and network is not None:
@@ -592,7 +601,7 @@ if __name__ == '__main__':
                                                                  max_thr, min_thr, step_thr, k, clust_mask, k_min,
                                                                  k_max, k_step, k_clustering, user_atlas_list,
                                                                  clust_mask_list, node_size_list, conn_model_list,
-                                                                 min_span_tree)
+                                                                 min_span_tree, use_AAL_naming)
             sub_struct_wf = None
         # Workflow 3: Whole-brain structural connectome
         elif dwi_dir is not None and network is None:
@@ -601,7 +610,8 @@ if __name__ == '__main__':
                                                                   dir_path, dwi_dir, anat_loc, thr, dens_thresh,
                                                                   conn_model, user_atlas_list, multi_thr, multi_atlas,
                                                                   max_thr, min_thr, step_thr, node_size_list,
-                                                                  num_total_samples, conn_model_list, min_span_tree)
+                                                                  num_total_samples, conn_model_list, min_span_tree,
+                                                                  use_AAL_naming)
             sub_func_wf = None
         # Workflow 4: RSN structural connectome
         elif dwi_dir is not None and network is not None:
@@ -611,7 +621,7 @@ if __name__ == '__main__':
                                                                    conn_model, user_atlas_list, multi_thr, multi_atlas,
                                                                    max_thr, min_thr, step_thr, node_size_list,
                                                                    num_total_samples, conn_model_list, min_span_tree,
-                                                                   multi_nets)
+                                                                   multi_nets, use_AAL_naming)
             sub_func_wf = None
 
         base_wf = sub_func_wf if sub_func_wf else sub_struct_wf
@@ -623,27 +633,33 @@ if __name__ == '__main__':
         meta_wf.add_nodes([base_wf])
 
         if network is None and input_file:
+            if k_clustering > 0:
+                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._n_procs = 1
+                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 4
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._mem_gb = 2
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._mem_gb = 3
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.get_conn_matrix_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.get_conn_matrix_node'))._mem_gb = 1
         elif network and input_file:
+            if k_clustering > 0:
+                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._n_procs = 1
+                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 4
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 1
+            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 2
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_coords_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_coords_node'))._mem_gb = 2
-            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.thresh_and_fit_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.thresh_and_fit_node'))._mem_gb = 1
+            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_coords_node'))._mem_gb = 3
+            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.get_conn_matrix_node'))._n_procs = 1
+            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.get_conn_matrix_node'))._mem_gb = 1
         elif dwi_dir and network is None:
             meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 1
+            meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
             meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.thresh_diff_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('wb_structural_connectometry_', ID, '.thresh_diff_node'))._mem_gb = 1
         elif dwi_dir and network:
             meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 1
+            meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 2
             meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.thresh_diff_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.thresh_diff_node'))._mem_gb = 1
         else:
@@ -691,7 +707,7 @@ if __name__ == '__main__':
         ID_iterlist = [str(ID)] * len(est_path_iterlist)
         mask_iterlist = [mask] * len(est_path_iterlist)
 
-        print('\n\nHyperparameters:\n')
+        print('\n\nParameters:\n')
         print(conn_model_iterlist)
         print(est_path_iterlist)
         print(network_iterlist)
@@ -844,7 +860,7 @@ if __name__ == '__main__':
                                multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k,
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
-                               plugin_type):
+                               plugin_type, use_AAL_naming):
         wf = pe.Workflow(name='Wf_single_subject_' + str(ID))
         # Create input/output nodes
         #1) Add variable to IdentityInterface if user-set
@@ -857,7 +873,7 @@ if __name__ == '__main__':
                                                           'k_step', 'k_clustering', 'user_atlas_list',
                                                           'clust_mask_list', 'prune', 'node_size_list',
                                                           'num_total_samples', 'graph', 'conn_model_list',
-                                                          'min_span_tree', 'verbose', 'plugin_type']),
+                                                          'min_span_tree', 'verbose', 'plugin_type', 'use_AAL_naming']),
                             name='inputnode')
 
         #2) Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
@@ -902,6 +918,7 @@ if __name__ == '__main__':
         inputnode.inputs.min_span_tree = min_span_tree
         inputnode.inputs.verbose = verbose
         inputnode.inputs.plugin_type = plugin_type
+        inputnode.inputs.use_AAL_naming = use_AAL_naming
 
         #3) Add variable to function nodes
         # Create function nodes
@@ -912,11 +929,14 @@ if __name__ == '__main__':
                                                     'multi_atlas', 'max_thr', 'min_thr', 'step_thr', 'k', 'clust_mask',
                                                     'k_min', 'k_max', 'k_step', 'k_clustering', 'user_atlas_list',
                                                     'clust_mask_list', 'prune', 'node_size_list', 'num_total_samples',
-                                                    'conn_model_list', 'min_span_tree', 'verbose', 'plugin_type'],
+                                                    'conn_model_list', 'min_span_tree', 'verbose', 'plugin_type',
+                                                    'use_AAL_naming'],
                                        output_names=['thr_iterlist', 'est_path_iterlist', 'ID_iterlist',
                                                      'network_iterlist', 'conn_model_iterlist', 'mask_iterlist',
                                                      'prune_iterlist', 'node_size_iterlist'],
                                        function=workflow_selector), name="imp_est")
+        imp_est._mem_gb = procmem[1]
+        imp_est.n_procs = procmem[0]
 
         # Create MapNode types for net_mets_node and export_to_pandas_node
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
@@ -978,7 +998,8 @@ if __name__ == '__main__':
                                   ('conn_model_list', 'conn_model_list'),
                                   ('min_span_tree', 'min_span_tree'),
                                   ('verbose', 'verbose'),
-                                  ('plugin_type', 'plugin_type')]),
+                                  ('plugin_type', 'plugin_type'),
+                                  ('use_AAL_naming', 'use_AAL_naming')]),
             (imp_est, net_mets_node, [('est_path_iterlist', 'est_path'),
                                       ('network_iterlist', 'network'),
                                       ('thr_iterlist', 'thr'),
@@ -1059,7 +1080,8 @@ if __name__ == '__main__':
                                       ('conn_model_list', 'conn_model_list'),
                                       ('min_span_tree', 'min_span_tree'),
                                       ('verbose', 'verbose'),
-                                      ('plugin_type', 'plugin_type')])
+                                      ('plugin_type', 'plugin_type'),
+                                      ('use_AAL_naming', 'use_AAL_naming')])
                             ])
             wf.disconnect([(imp_est, net_mets_node, [('est_path_iterlist', 'est_path'),
                                                      ('network_iterlist', 'network'),
@@ -1095,7 +1117,7 @@ if __name__ == '__main__':
                          conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, multi_thr,
                          multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask,
                          k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
-                         num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type):
+                         num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming):
 
         wf_multi = pe.Workflow(name='PyNets_multisubject')
         procmem_cores = int(np.round(float(procmem[0])/float(len(subjects_list)), 0))
@@ -1118,7 +1140,7 @@ if __name__ == '__main__':
                 k_step=k_step, k_clustering=k_clustering, user_atlas_list=user_atlas_list,
                 clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
-                min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type)
+                min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type, use_AAL_naming=use_AAL_naming)
             wf_multi.add_nodes([wf_single_subject])
             i = i + 1
 
@@ -1134,7 +1156,7 @@ if __name__ == '__main__':
                                     ref_txt, procmem, k, clust_mask, k_min, k_max, k_step,
                                     k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, graph, conn_model_list,
-                                    min_span_tree, verbose, plugin_type)
+                                    min_span_tree, verbose, plugin_type, use_AAL_naming)
 
         if verbose is True:
             from nipype import config, logging
@@ -1167,7 +1189,7 @@ if __name__ == '__main__':
                                     multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt,
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
-                                    min_span_tree, verbose, plugin_type)
+                                    min_span_tree, verbose, plugin_type, use_AAL_naming)
 
         import shutil
         if input_file:
