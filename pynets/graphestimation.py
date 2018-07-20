@@ -232,12 +232,15 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
     else:
         parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                      standardize=True,
-                                                     memory=Memory(cachedir="%s%s%s" % (dir_path, '/SpheresMasker_cache_', str(ID)), verbose=2),
+                                                     memory=Memory(cachedir="%s%s%s" % (dir_path,
+                                                                                        '/SpheresMasker_cache_',
+                                                                                        str(ID)), verbose=2),
                                                      memory_level=1)
         # parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
         #                                              standardize=True)
         ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
-    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords), ' volumetric ROI\'s\n'))
+    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords),
+                        ' volumetric ROI\'s\n'))
     # Save time series as txt file
     utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)
 
@@ -256,13 +259,16 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
     else:
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                        standardize=True, verbose=1,
-                                                       memory=Memory(cachedir="%s%s%s" % (dir_path, '/SpheresMasker_cache_', str(ID)), verbose=2),
+                                                       memory=Memory(cachedir="%s%s%s" % (dir_path,
+                                                                                          '/SpheresMasker_cache_',
+                                                                                          str(ID)), verbose=2),
                                                        memory_level=1)
         # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
         #                                                standardize=True, verbose=1)
         ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
 
-    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords), ' coordinate ROI\'s'))
+    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords),
+                        ' coordinate ROI\'s'))
     print("%s%s%s" % ('Using node radius: ', node_size, ' mm\n'))
     # Save time series as txt file
     utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)

@@ -971,31 +971,3 @@ def save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes):
             out_path_ts = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_wb_net_ts.npy')
     np.save(out_path_ts, ts_within_nodes)
     return
-
-
-class FlexiAtlasInputSpec(BaseInterfaceInputSpec):
-    atlas_select = traits.Any(mandatory=True)
-    parlistfile = traits.Any(mandatory=True)
-
-class FlexiAtlasOutputSpec(TraitedSpec):
-    atlas_select = traits.Any()
-    parlistfile = traits.Any()
-
-class FlexiAtlas(BaseInterface):
-    input_spec = FlexiAtlasInputSpec
-    output_spec = FlexiAtlasOutputSpec
-
-    def _return_atlas(self, atlas_select, parlistfile):
-        return str(atlas_select), str(parlistfile)
-
-    def _run_interface(self, runtime):
-        self._return_atlas(
-            self.inputs.atlas_select,
-            self.inputs.parlistfile)
-        return runtime
-
-    def _list_outputs(self):
-        outputs = self._outputs().get()
-        outputs["atlas_select"] = self._return_atlas(self.inputs.atlas_select, self.inputs.parlistfile)[0]
-        outputs["parlistfile"] = self._return_atlas(self.inputs.atlas_select, self.inputs.parlistfile)[1]
-        return outputs

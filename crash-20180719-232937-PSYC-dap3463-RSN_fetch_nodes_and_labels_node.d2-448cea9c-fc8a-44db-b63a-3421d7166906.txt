@@ -1,0 +1,115 @@
+Node: Meta_wf_002.rsn_functional_connectometry_002.RSN_fetch_nodes_and_labels_node
+Working directory: /var/folders/dk/9n8ng3n93q95kvx0zppcdtlh0000gp/T/tmpdhghudj0/Meta_wf_002/rsn_functional_connectometry_002/_atlas_select_coords_power_2011_parlistfile_None/RSN_fetch_nodes_and_labels_node
+
+Node inputs:
+
+atlas_select = coords_power_2011
+func_file = /Users/PSYC-dap3463/Downloads/002/002.nii.gz
+function_str = def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file, use_AAL_naming):
+    from pynets import utils, nodemaker
+    import pandas as pd
+    import os
+    from pathlib import Path
+
+    base_path = utils.get_file()
+
+    # Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
+    nilearn_parc_atlases = ['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
+    nilearn_coord_atlases = ['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
+    if parlistfile is None and parc is False and atlas_select in nilearn_parc_atlases:
+        [label_names, _, parlistfile] = utils.nilearn_atlas_helper(atlas_select)
+        parcel_list = None
+        par_max = None
+        networks_list = None
+    elif parlistfile is None and parc is False and atlas_select in nilearn_coord_atlases:
+        print('Fetching coordinates and labels from nilearn coordinate-based atlases')
+        # Fetch nilearn atlas coords
+        [coords, _, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
+        parcel_list = None
+        par_max = None
+    elif parlistfile:
+        # Fetch user-specified atlas coords
+        [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
+        networks_list = None
+        label_names = None
+    else:
+        networks_list = None
+        label_names = None
+        parcel_list = None
+        par_max = None
+        coords = None
+        pass
+
+    # Labels prep
+    if atlas_select or parlistfile:
+        if label_names:
+            pass
+        else:
+            if ref_txt is not None and os.path.exists(ref_txt):
+                dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
+                label_names = dict_df['Region'].tolist()
+            else:
+                try:
+                    ref_txt = "%s%s%s%s" % (str(Path(base_path).parent), '/labelcharts/', atlas_select, '.txt')
+                    if os.path.exists(ref_txt):
+                        try:
+                            dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
+                            label_names = dict_df['Region'].tolist()
+                            #print(label_names)
+                        except RuntimeError:
+                            print("ERROR: label names from label reference file failed to populate or are invalid")
+                    else:
+                        raise FileNotFoundError("ERROR: label reference file not found")
+                except:
+                    if use_AAL_naming is True:
+                        try:
+                            label_names = nodemaker.AAL_naming(coords)
+                            #print(label_names)
+                        except:
+                            print('AAL reference labeling failed!')
+                            label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                    else:
+                        print('Using generic labeled numbering...')
+                        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+
+    if atlas_select or parlistfile:
+        print(label_names)
+        atlas_name = atlas_select
+        dir_path = utils.do_dir_path(atlas_select, func_file)
+    else:
+        atlas_name = None
+        dir_path = None
+
+    print('\n\n\n\n')
+    print(atlas_select)
+    print(parlistfile)
+    print('\n\n\n\n')
+
+    return label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile, dir_path
+
+parc = False
+parlistfile = None
+ref_txt = None
+use_AAL_naming = False
+
+Traceback (most recent call last):
+  File "<string>", line 55, in RSN_fetch_nodes_and_labels
+FileNotFoundError: ERROR: label reference file not found
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.6/site-packages/nipype/pipeline/plugins/multiproc.py", line 69, in run_node
+    result['result'] = node.run(updatehash=updatehash)
+  File "/usr/local/lib/python3.6/site-packages/nipype/pipeline/engine/nodes.py", line 480, in run
+    result = self._run_interface(execute=True)
+  File "/usr/local/lib/python3.6/site-packages/nipype/pipeline/engine/nodes.py", line 564, in _run_interface
+    return self._run_command(execute)
+  File "/usr/local/lib/python3.6/site-packages/nipype/pipeline/engine/nodes.py", line 644, in _run_command
+    result = self._interface.run(cwd=outdir)
+  File "/usr/local/lib/python3.6/site-packages/nipype/interfaces/base/core.py", line 521, in run
+    runtime = self._run_interface(runtime)
+  File "/usr/local/lib/python3.6/site-packages/nipype/interfaces/utility/wrappers.py", line 144, in _run_interface
+    out = function_handle(**args)
+  File "<string>", line 66, in RSN_fetch_nodes_and_labels
+TypeError: object of type 'NoneType' has no len()

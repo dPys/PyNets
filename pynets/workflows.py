@@ -77,8 +77,8 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                            function=utils.individual_tcorr_clustering,
                                            imports=import_list), name="clustering_node")
     if k_clustering == 2 or k_clustering == 3 or k_clustering == 4:
-        clustering_node.interface.mem_gb = 6
-        clustering_node.interface.n_procs = 1
+        clustering_node._mem_gb = 4
+        clustering_node.n_procs = 1
     WB_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt',
                                                                        'parc', 'func_file', 'mask', 'use_AAL_naming'],
                                                           output_names=['label_names', 'coords', 'atlas_select',
@@ -178,7 +178,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     get_conn_matrix_node.iterables = get_conn_matrix_node_iterables
     thresh_func_node.iterables = thresh_func_node_iterables
 
-    if (multi_atlas is not None and user_atlas_list is None) or (multi_atlas is None and user_atlas_list is not None):
+    if (multi_atlas is not None and user_atlas_list is None and parlistfile is None) or (multi_atlas is None and atlas_select is None and user_atlas_list is not None):
         flexi_atlas = False
         if multi_atlas:
             WB_fetch_nodes_and_labels_node_iterables = []
@@ -193,20 +193,28 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
         pass
     else:
         flexi_atlas = True
-        flexi_atlas_source = pe.MapNode(utils.FlexiAtlas(),
-                                        iterfield=['atlas_select', 'parlistfile'], name='flexi_atlas_source')
+        flexi_atlas_source = pe.Node(niu.IdentityInterface(fields=['atlas_select', 'parlistfile']),
+                                     name='flexi_atlas_source')
         if multi_atlas is not None and user_atlas_list is not None:
-            flexi_atlas_source.inputs.atlas_select = len(user_atlas_list) * [None] + multi_atlas
-            flexi_atlas_source.inputs.parlistfile = user_atlas_list + len(multi_atlas) * [None]
+            flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + multi_atlas),
+                                            ("parlistfile", user_atlas_list + len(multi_atlas) * [None])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
         elif multi_atlas is not None and parlistfile is not None and user_atlas_list is None:
-            flexi_atlas_source.inputs.atlas_select = multi_atlas + [None]
-            flexi_atlas_source.inputs.parlistfile = len(multi_atlas) * [None] + [parlistfile]
+            flexi_atlas_source_iterables = [("atlas_select", multi_atlas + [None]),
+                                            ("parlistfile", len(multi_atlas) * [None] + [parlistfile])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
         elif atlas_select is not None and user_atlas_list is not None and multi_atlas is None:
-            flexi_atlas_source.inputs.atlas_select = len(user_atlas_list) * [None] + [atlas_select]
-            flexi_atlas_source.inputs.parlistfile = user_atlas_list + [None]
+            flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + [atlas_select]),
+                                            ("parlistfile", user_atlas_list + [None])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
         elif atlas_select is not None and parlistfile is not None and user_atlas_list is None and multi_atlas is None:
-            flexi_atlas_source.inputs.atlas_select = [atlas_select, None]
-            flexi_atlas_source.inputs.parlistfile = [None, parlistfile]
+            flexi_atlas_source_iterables = [("atlas_select", [atlas_select, None]),
+                                            ("parlistfile", [None, parlistfile])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
 
     if k_clustering == 2:
         k_cluster_iterables = []
@@ -440,8 +448,8 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                            function=utils.individual_tcorr_clustering,
                                            imports=import_list), name="clustering_node")
     if k_clustering == 2 or k_clustering == 3 or k_clustering == 4:
-        clustering_node.interface.mem_gb = 6
-        clustering_node.interface.n_procs = 1
+        clustering_node._mem_gb = 4
+        clustering_node.n_procs = 1
     RSN_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt',
                                                                         'parc', 'func_file', 'use_AAL_naming'],
                                                            output_names=['label_names', 'coords', 'atlas_select',
@@ -547,14 +555,43 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     get_conn_matrix_node.iterables = get_conn_matrix_node_iterables
     thresh_func_node.iterables = thresh_func_node_iterables
 
-    if multi_atlas is not None and user_atlas_list is None:
-        RSN_fetch_nodes_and_labels_node_iterables = []
-        RSN_fetch_nodes_and_labels_node_iterables.append(("atlas_select", multi_atlas))
-        RSN_fetch_nodes_and_labels_node.iterables = RSN_fetch_nodes_and_labels_node_iterables
-    elif multi_atlas is None and user_atlas_list is not None:
-        RSN_fetch_nodes_and_labels_node_iterables = []
-        RSN_fetch_nodes_and_labels_node_iterables.append(("parlistfile", user_atlas_list))
-        RSN_fetch_nodes_and_labels_node.iterables = RSN_fetch_nodes_and_labels_node_iterables
+    if (multi_atlas is not None and user_atlas_list is None and parlistfile is None) or (multi_atlas is None and atlas_select is None and user_atlas_list is not None):
+        flexi_atlas = False
+        if multi_atlas is not None and user_atlas_list is None:
+            RSN_fetch_nodes_and_labels_node_iterables = []
+            RSN_fetch_nodes_and_labels_node_iterables.append(("atlas_select", multi_atlas))
+            RSN_fetch_nodes_and_labels_node.iterables = RSN_fetch_nodes_and_labels_node_iterables
+        elif multi_atlas is None and user_atlas_list is not None:
+            RSN_fetch_nodes_and_labels_node_iterables = []
+            RSN_fetch_nodes_and_labels_node_iterables.append(("parlistfile", user_atlas_list))
+            RSN_fetch_nodes_and_labels_node.iterables = RSN_fetch_nodes_and_labels_node_iterables
+    elif ((atlas_select is not None and parlistfile is None) or (atlas_select is None and parlistfile is not None)) and (multi_atlas is None and user_atlas_list is None):
+        flexi_atlas = False
+        pass
+    else:
+        flexi_atlas = True
+        flexi_atlas_source = pe.Node(niu.IdentityInterface(fields=['atlas_select', 'parlistfile']),
+                                     name='flexi_atlas_source')
+        if multi_atlas is not None and user_atlas_list is not None:
+            flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + multi_atlas),
+                                            ("parlistfile", user_atlas_list + len(multi_atlas) * [None])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
+        elif multi_atlas is not None and parlistfile is not None and user_atlas_list is None:
+            flexi_atlas_source_iterables = [("atlas_select", multi_atlas + [None]),
+                                            ("parlistfile", len(multi_atlas) * [None] + [parlistfile])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
+        elif atlas_select is not None and user_atlas_list is not None and multi_atlas is None:
+            flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + [atlas_select]),
+                                            ("parlistfile", user_atlas_list + [None])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
+        elif atlas_select is not None and parlistfile is not None and user_atlas_list is None and multi_atlas is None:
+            flexi_atlas_source_iterables = [("atlas_select", [atlas_select, None]),
+                                            ("parlistfile", [None, parlistfile])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
 
     if multi_nets is not None:
         get_node_membership_node_iterables = []
@@ -728,6 +765,13 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
             rsn_functional_connectometry_wf.connect([(get_node_membership_node, plot_all_node,
                                                      [('network', 'network')])
                                                      ])
+    if flexi_atlas is True:
+        rsn_functional_connectometry_wf.disconnect([(inputnode, RSN_fetch_nodes_and_labels_node,
+                                                    [('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')])
+                                                    ])
+        rsn_functional_connectometry_wf.connect([(flexi_atlas_source, RSN_fetch_nodes_and_labels_node,
+                                                 [('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')])
+                                                 ])
     rsn_functional_connectometry_wf.config['execution']['crashdump_dir'] = rsn_functional_connectometry_wf.base_directory
     rsn_functional_connectometry_wf.config['execution']['crashfile_format'] = 'txt'
     rsn_functional_connectometry_wf.config['logging']['log_directory'] = rsn_functional_connectometry_wf.base_directory
@@ -910,14 +954,43 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     iter_i = range(int(procmem[0]))
     run_probtrackx2_iterables.append(("i", iter_i))
     run_probtrackx2_node.iterables = run_probtrackx2_iterables
-    if multi_atlas is not None and user_atlas_list is None:
-        WB_fetch_nodes_and_labels_node_iterables = []
-        WB_fetch_nodes_and_labels_node_iterables.append(("atlas_select", multi_atlas))
-        WB_fetch_nodes_and_labels_node.iterables = WB_fetch_nodes_and_labels_node_iterables
-    elif multi_atlas is None and user_atlas_list is not None:
-        WB_fetch_nodes_and_labels_node_iterables = []
-        WB_fetch_nodes_and_labels_node_iterables.append(("parlistfile", user_atlas_list))
-        WB_fetch_nodes_and_labels_node.iterables = WB_fetch_nodes_and_labels_node_iterables
+    if (multi_atlas is not None and user_atlas_list is None and parlistfile is None) or (multi_atlas is None and atlas_select is None and user_atlas_list is not None):
+        flexi_atlas = False
+        if multi_atlas is not None and user_atlas_list is None:
+            WB_fetch_nodes_and_labels_node_iterables = []
+            WB_fetch_nodes_and_labels_node_iterables.append(("atlas_select", multi_atlas))
+            WB_fetch_nodes_and_labels_node.iterables = WB_fetch_nodes_and_labels_node_iterables
+        elif multi_atlas is None and user_atlas_list is not None:
+            WB_fetch_nodes_and_labels_node_iterables = []
+            WB_fetch_nodes_and_labels_node_iterables.append(("parlistfile", user_atlas_list))
+            WB_fetch_nodes_and_labels_node.iterables = WB_fetch_nodes_and_labels_node_iterables
+    elif ((atlas_select is not None and parlistfile is None) or (atlas_select is None and parlistfile is not None)) and (multi_atlas is None and user_atlas_list is None):
+        flexi_atlas = False
+        pass
+    else:
+        flexi_atlas = True
+        flexi_atlas_source = pe.Node(niu.IdentityInterface(fields=['atlas_select', 'parlistfile']),
+                                     name='flexi_atlas_source')
+        if multi_atlas is not None and user_atlas_list is not None:
+            flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + multi_atlas),
+                                            ("parlistfile", user_atlas_list + len(multi_atlas) * [None])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
+        elif multi_atlas is not None and parlistfile is not None and user_atlas_list is None:
+            flexi_atlas_source_iterables = [("atlas_select", multi_atlas + [None]),
+                                            ("parlistfile", len(multi_atlas) * [None] + [parlistfile])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
+        elif atlas_select is not None and user_atlas_list is not None and multi_atlas is None:
+            flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + [atlas_select]),
+                                            ("parlistfile", user_atlas_list + [None])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
+        elif atlas_select is not None and parlistfile is not None and user_atlas_list is None and multi_atlas is None:
+            flexi_atlas_source_iterables = [("atlas_select", [atlas_select, None]),
+                                            ("parlistfile", [None, parlistfile])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
 
     thresh_diff_node_iterables = []
     if multi_thr is True:
@@ -1110,6 +1183,13 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
             (run_dipy_tracking_node, thresh_diff_node, [('conn_matrix', 'conn_matrix')]),
             (run_dipy_tracking_node, structural_plotting_node, [('conn_matrix', 'conn_matrix')]))
 
+    if flexi_atlas is True:
+        wb_structural_connectometry_wf.disconnect([(inputnode, WB_fetch_nodes_and_labels_node,
+                                                    [('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')])
+                                                   ])
+        wb_structural_connectometry_wf.connect([(flexi_atlas_source, WB_fetch_nodes_and_labels_node,
+                                                 [('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')])
+                                                ])
     wb_structural_connectometry_wf.config['execution']['crashdump_dir'] = wb_structural_connectometry_wf.base_directory
     wb_structural_connectometry_wf.config['execution']['crashfile_format'] = 'txt'
     wb_structural_connectometry_wf.config['logging']['log_directory'] = wb_structural_connectometry_wf.base_directory
@@ -1304,14 +1384,43 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
     iter_i = range(int(procmem[0]))
     run_probtrackx2_iterables.append(("i", iter_i))
     run_probtrackx2_node.iterables = run_probtrackx2_iterables
-    if multi_atlas is not None and user_atlas_list is None:
-        RSN_fetch_nodes_and_labels_node_iterables = []
-        RSN_fetch_nodes_and_labels_node_iterables.append(("atlas_select", multi_atlas))
-        RSN_fetch_nodes_and_labels_node.iterables = RSN_fetch_nodes_and_labels_node_iterables
-    elif multi_atlas is None and user_atlas_list is not None:
-        RSN_fetch_nodes_and_labels_node_iterables = []
-        RSN_fetch_nodes_and_labels_node_iterables.append(("parlistfile", user_atlas_list))
-        RSN_fetch_nodes_and_labels_node.iterables = RSN_fetch_nodes_and_labels_node_iterables
+    if (multi_atlas is not None and user_atlas_list is None and parlistfile is None) or (multi_atlas is None and atlas_select is None and user_atlas_list is not None):
+        flexi_atlas = False
+        if multi_atlas is not None and user_atlas_list is None:
+            RSN_fetch_nodes_and_labels_node_iterables = []
+            RSN_fetch_nodes_and_labels_node_iterables.append(("atlas_select", multi_atlas))
+            RSN_fetch_nodes_and_labels_node.iterables = RSN_fetch_nodes_and_labels_node_iterables
+        elif multi_atlas is None and user_atlas_list is not None:
+            RSN_fetch_nodes_and_labels_node_iterables = []
+            RSN_fetch_nodes_and_labels_node_iterables.append(("parlistfile", user_atlas_list))
+            RSN_fetch_nodes_and_labels_node.iterables = RSN_fetch_nodes_and_labels_node_iterables
+    elif ((atlas_select is not None and parlistfile is None) or (atlas_select is None and parlistfile is not None)) and (multi_atlas is None and user_atlas_list is None):
+        flexi_atlas = False
+        pass
+    else:
+        flexi_atlas = True
+        flexi_atlas_source = pe.Node(niu.IdentityInterface(fields=['atlas_select', 'parlistfile']),
+                                     name='flexi_atlas_source')
+        if multi_atlas is not None and user_atlas_list is not None:
+            flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + multi_atlas),
+                                            ("parlistfile", user_atlas_list + len(multi_atlas) * [None])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
+        elif multi_atlas is not None and parlistfile is not None and user_atlas_list is None:
+            flexi_atlas_source_iterables = [("atlas_select", multi_atlas + [None]),
+                                            ("parlistfile", len(multi_atlas) * [None] + [parlistfile])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
+        elif atlas_select is not None and user_atlas_list is not None and multi_atlas is None:
+            flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + [atlas_select]),
+                                            ("parlistfile", user_atlas_list + [None])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
+        elif atlas_select is not None and parlistfile is not None and user_atlas_list is None and multi_atlas is None:
+            flexi_atlas_source_iterables = [("atlas_select", [atlas_select, None]),
+                                            ("parlistfile", [None, parlistfile])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+            flexi_atlas_source.synchronize = True
 
     if multi_nets is not None:
         get_node_membership_node_iterables = []
@@ -1523,7 +1632,13 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                                                        ('dir_path', 'dir_path')]),
             (run_dipy_tracking_node, thresh_diff_node, [('conn_matrix', 'conn_matrix')]),
             (run_dipy_tracking_node, structural_plotting_node, [('conn_matrix', 'conn_matrix')]))
-
+    if flexi_atlas is True:
+        rsn_structural_connectometry_wf.disconnect([(inputnode, RSN_fetch_nodes_and_labels_node,
+                                                    [('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')])
+                                                   ])
+        rsn_structural_connectometry_wf.connect([(flexi_atlas_source, RSN_fetch_nodes_and_labels_node,
+                                                 [('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')])
+                                                ])
     rsn_structural_connectometry_wf.config['execution']['crashdump_dir'] = rsn_structural_connectometry_wf.base_directory
     rsn_structural_connectometry_wf.config['execution']['crashfile_format'] = 'txt'
     rsn_structural_connectometry_wf.config['logging']['log_directory'] = rsn_structural_connectometry_wf.base_directory

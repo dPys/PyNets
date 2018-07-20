@@ -690,7 +690,7 @@ if __name__ == '__main__':
         if network is None and input_file:
             if k_clustering > 0:
                 meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._n_procs = 1
-                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 6
+                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 4
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._n_procs = 1
@@ -700,7 +700,7 @@ if __name__ == '__main__':
         elif network and input_file:
             if k_clustering > 0:
                 meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._n_procs = 1
-                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 6
+                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 4
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 2
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_coords_node'))._n_procs = 1
