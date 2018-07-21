@@ -276,8 +276,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     if plot_switch is True:
         wb_functional_connectometry_wf.connect([(inputnode, plot_all_node, [('ID', 'ID'),
                                                                             ('mask', 'mask'),
-                                                                            ('network', 'network'),
-                                                                            ('conn_model', 'conn_model')]),
+                                                                            ('network', 'network')]),
                                                 (extract_ts_wb_node, plot_all_node, [('node_size', 'node_size')]),
                                                 (WB_fetch_nodes_and_labels_node, plot_all_node,
                                                  [('dir_path', 'dir_path'),
@@ -287,7 +286,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                 (thresh_func_node, plot_all_node,
                                                  [('conn_matrix_thr', 'conn_matrix'),
                                                   ('edge_threshold', 'edge_threshold'),
-                                                  ('thr', 'thr')]),
+                                                  ('thr', 'thr'), ('conn_model', 'conn_model')]),
                                                 ])
     if k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1:
         wb_functional_connectometry_wf.add_nodes([clustering_node])
@@ -662,8 +661,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     if plot_switch is True:
         rsn_functional_connectometry_wf.connect([(inputnode, plot_all_node, [('ID', 'ID'),
                                                                              ('mask', 'mask'),
-                                                                             ('network', 'network'),
-                                                                             ('conn_model', 'conn_model')]),
+                                                                             ('network', 'network')]),
                                                 (extract_ts_rsn_node, plot_all_node, [('node_size', 'node_size')]),
                                                 (RSN_fetch_nodes_and_labels_node, plot_all_node,
                                                  [('dir_path', 'dir_path'),
@@ -673,7 +671,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                 (thresh_func_node, plot_all_node,
                                                  [('conn_matrix_thr', 'conn_matrix'),
                                                   ('edge_threshold', 'edge_threshold'),
-                                                  ('thr', 'thr')])
+                                                  ('thr', 'thr'), ('conn_model', 'conn_model')])
                                                  ])
     if k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1:
         rsn_functional_connectometry_wf.add_nodes([clustering_node])
@@ -1102,12 +1100,11 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                                                                        ('dwi_dir', 'dwi_dir'),
                                                                                        ('network', 'network'),
                                                                                        ('parc', 'parc'),
-                                                                                       ('conn_model', 'conn_model'),
                                                                                        ('mask', 'mask'),
                                                                                        ('plot_switch', 'plot_switch')]),
                                                 (thresh_diff_node, structural_plotting_node,
                                                  [('thr', 'thr'),
-                                                  ('node_size', 'node_size')]),
+                                                  ('node_size', 'node_size'), ('conn_model', 'conn_model')]),
                                                 (node_gen_node, structural_plotting_node,
                                                  [('label_names', 'label_names'),
                                                   ('coords', 'coords')]),
@@ -1549,14 +1546,13 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                                      (inputnode, structural_plotting_node, [('ID', 'ID'),
                                                                                             ('dwi_dir', 'dwi_dir'),
                                                                                             ('parc', 'parc'),
-                                                                                            ('conn_model', 'conn_model'),
                                                                                             ('mask', 'mask'),
                                                                                             ('plot_switch', 'plot_switch')]),
                                                      (get_node_membership_node, structural_plotting_node,
                                                       [('network', 'network')]),
                                                      (thresh_diff_node, structural_plotting_node,
                                                       [('thr', 'thr'),
-                                                       ('node_size', 'node_size')]),
+                                                       ('node_size', 'node_size'), ('conn_model', 'conn_model')]),
                                                      (node_gen_node, structural_plotting_node,
                                                       [('label_names', 'label_names'),
                                                        ('coords', 'coords')]),
