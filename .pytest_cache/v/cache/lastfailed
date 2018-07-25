@@ -1,0 +1,10 @@
+{
+  "tests/test_nodemaker_bak.py::test_RSN_fetch_nodes_and_labels1": true,
+  "tests/test_nodemaker_bak.py::test_RSN_fetch_nodes_and_labels2": true,
+  "tests/test_nodemaker_bak.py::test_WB_fetch_nodes_and_labels1": true,
+  "tests/test_nodemaker_bak.py::test_WB_fetch_nodes_and_labels2": true,
+  "tests/test_thresholding.py::test_thresh_and_fit1": true,
+  "tests/test_thresholding.py::test_thresh_and_fit2": true,
+  "tests/test_thresholding_bak.py::test_thresh_and_fit1": true,
+  "tests/test_thresholding_bak.py::test_thresh_and_fit2": true
+}

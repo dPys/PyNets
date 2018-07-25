@@ -64,7 +64,7 @@ pynets_run.py '/Users/dPys/PyNets_examples/997/filtered_func_data_clean_standard
 pynets_run.py -i '/Users/dPys/PyNets_examples/997/filtered_func_data_clean_standard.nii.gz' -id '997' -a 'coords_dosenbach_2010,coords_power_2011' -n 'Default' -dt -thr '0.3' -ns '2,4' -mod 'partcorr,sps' -plt
 ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Example C) Building upon the previous examples, let's say you now wish to analyze the Default and Executive Control Networks for this subject, bot this time based on a custom atlas (DesikanKlein2012.nii.gz), this time defining your nodes as parcels (as opposed to spheres), you wish to fit a partial correlation model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), and you wish to prune disconnected nodes:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Example C) Building upon the previous examples, let's say you now wish to analyze the Default and Executive Control Networks for this subject, but this time based on a custom atlas (DesikanKlein2012.nii.gz), this time defining your nodes as parcels (as opposed to spheres), you wish to fit a partial correlation model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), and you wish to prune disconnected nodes:
 ```python
 pynets_run.py -i '/Users/dPys/PyNets_examples/997/filtered_func_data_clean_standard.nii.gz' -id '997' -ua '/Users/dPys/PyNets_example_atlases/DesikanKlein2012.nii.gz' -n 'Default,Cont' -mod 'partcorr' -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -parc -p 1
 ```
