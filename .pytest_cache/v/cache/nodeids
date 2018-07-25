@@ -22,6 +22,6 @@
   "tests/test_plotting.py::test_plot_timeseries",
   "tests/test_pynets.py::test_content",
   "tests/test_pynets.py::test_command_line_interface",
-  "tests/test_thresholding.py::test_thresh_and_fit1",
-  "tests/test_thresholding.py::test_thresh_and_fit2"
+  "tests/test_thresholding.py::test_thresh_func",
+  "tests/test_thresholding.py::test_thresh_diff"
 ]
