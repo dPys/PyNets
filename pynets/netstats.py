@@ -856,15 +856,18 @@ def most_important(G):
 # Extract network metrics interface
 def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_size, smooth):
     import pandas as pd
+    import yaml
     try:
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
+    from pathlib import Path
     from pynets import thresholding, utils
 
     # Advanced options
     save_gephi = False
     custom_weight = None
+    binary = False
 
     # Load and threshold matrix
     if '.txt' in est_path:
@@ -897,6 +900,10 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
 
     # Get corresponding matrix
     in_mat = np.array(nx.to_numpy_matrix(G))
+
+    # Binarize graph
+    if binary is True:
+        in_mat = thresholding.binarize(in_mat)
 
     # Print graph summary
     print("%s%.2f%s" % ('\n\nThreshold: ', 100*float(thr), '%'))
@@ -943,8 +950,21 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     #metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, smallworldness]
     metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
     metric_list_comm = ['louvain_modularity']
-    metric_list_nodal = ['participation_coefficient', 'diversity_coefficient', 'local_efficiency', 'local_clustering', 'degree_centrality', 'betweenness_centrality', 'eigenvector_centrality', 'communicability_centrality', 'rich_club_coefficient']
+    # with open("%s%s" % (str(Path(__file__).parent), '/global_graph_measures.yaml'), 'r') as stream:
+    #     try:
+    #         metric_dict_global = yaml.load(stream)
+    #         metric_list_global = metric_dict_global['metric_list_global']
+    #         print("%s%s%s" % ('\n\nCalculating global measures:\n', metric_list_global, '\n\n'))
+    #     except FileNotFoundError:
+    #         print('Failed to parse global_graph_measures.yaml')
 
+    with open("%s%s" % (str(Path(__file__).parent), '/nodal_graph_measures.yaml'), 'r') as stream:
+        try:
+            metric_dict_nodal = yaml.load(stream)
+            metric_list_nodal = metric_dict_nodal['metric_list_nodal']
+            print("%s%s%s" % ('\n\nCalculating nodal measures:\n', metric_list_nodal, '\n\n'))
+        except FileNotFoundError:
+            print('Failed to parse nodal_graph_measures.yaml')
     # Note the use of bare excepts in preceding blocks. Typically, this is considered bad practice in python. Here,
     # we are exploiting it intentionally to facilitate uninterrupted, automated graph analysis even when algorithms are
     # undefined. In those instances, solutions are assigned NaN's.

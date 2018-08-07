@@ -56,9 +56,9 @@ if __name__ == '__main__':
     parser.add_argument('-n',
                         metavar='Resting-state network',
                         default=None,
-                        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple RSNs, separate them by comma. e.g. -n \'Default,Cont,SalVentAttn\'\n')
+                        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple RSNs, separate them by comma. (e.g. -n \'Default,Cont,SalVentAttn)\'\n')
     parser.add_argument('-thr',
-                        metavar='graph threshold',
+                        metavar='Graph threshold',
                         default='0.00',
                         help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is proportional thresholding. If omitted, no thresholding will be applied\n')
     parser.add_argument('-ns',
@@ -81,22 +81,6 @@ if __name__ == '__main__':
                         metavar='Confounds',
                         default=None,
                         help='Optionally specify a path to a confound regressor file to reduce noise in the time-series estimation for the graph. This can also be a list of paths, separated by comma and of equivalent length to the list of input files indicated with the -i flag. \n')
-    parser.add_argument('-dt',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to threshold to achieve a given density or densities indicated by the -thr and -min_thr, -max_thr, -step_thr flags, respectively.\n')
-    parser.add_argument('-mst',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to apply local thresholding via the Minimum Spanning Tree approach.\n')
-    #    parser.add_argument('-at',
-    #        default=False,
-    #        action='store_true',
-    #        help='Optionally use this flag if you wish to activate adaptive thresholding')
-    parser.add_argument('-plt',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to activate plotting of adjacency matrices, connectomes, and time-series.\n')
     parser.add_argument('-anat',
                         metavar='Path to preprocessed anatomical image',
                         default=None,
@@ -104,21 +88,17 @@ if __name__ == '__main__':
     parser.add_argument('-min_thr',
                         metavar='Multi-thresholding minimum threshold',
                         default=None,
-                        help='Minimum threshold for multi-thresholding.\n')
+                        help='Minimum threshold for multi-thresholding\n')
     parser.add_argument('-max_thr',
                         metavar='Multi-thresholding maximum threshold',
                         default=None,
-                        help='Maximum threshold for multi-thresholding.v')
+                        help='Maximum threshold for multi-thresholding')
     parser.add_argument('-step_thr',
                         metavar='Multi-thresholding step size',
                         default=None,
                         help='Threshold step value for multi-thresholding. Default is 0.01.\n')
-    parser.add_argument('-parc',
-                        default=False,
-                        action='store_true',
-                        help='Include this flag to use parcels instead of coordinates as nodes.\n')
     parser.add_argument('-ref',
-                        metavar='atlas reference file path',
+                        metavar='Atlas reference file path',
                         default=None,
                         help='Specify the path to the atlas reference .txt file\n')
     parser.add_argument('-k',
@@ -153,14 +133,34 @@ if __name__ == '__main__':
                         metavar='Scheduler type',
                         default='MultiProc',
                         help='Include this flag to specify a workflow plugin other than the default MultiProc. Options include: Linear, SGE, PBS, SLURM, SGEgraph, SLURMgraph.\n')
+    parser.add_argument('-parc',
+                        default=False,
+                        action='store_true',
+                        help='Include this flag to use parcels instead of coordinates as nodes.\n')
+    parser.add_argument('-dt',
+                        default=False,
+                        action='store_true',
+                        help='Optionally use this flag if you wish to threshold to achieve a given density or densities indicated by the -thr and -min_thr, -max_thr, -step_thr flags, respectively.\n')
+    parser.add_argument('-mst',
+                        default=False,
+                        action='store_true',
+                        help='Optionally use this flag if you wish to apply local thresholding via the Minimum Spanning Tree approach.\n')
+    #    parser.add_argument('-at',
+    #        default=False,
+    #        action='store_true',
+    #        help='Optionally use this flag if you wish to activate adaptive thresholding')
+    parser.add_argument('-plt',
+                        default=False,
+                        action='store_true',
+                        help='Optionally use this flag if you wish to activate plotting of adjacency matrices, connectomes, and time-series.\n')
     parser.add_argument('-names',
                         default=False,
                         action='store_true',
-                        help='Optionally use this flag if you wish to map nodes to AAL labels.\n')
+                        help='Optionally use this flag if you wish to map nodes to AAL labels\n')
     parser.add_argument('-v',
                         default=False,
                         action='store_true',
-                        help='Verbose print for debugging.\n')
+                        help='Verbose print for debugging\n')
     args = parser.parse_args()
 
     # Start time clock
@@ -476,6 +476,7 @@ if __name__ == '__main__':
         k_clustering = 0
         node_size = 'None'
         smooth = 'None'
+        conn_model = 'None'
         if multi_graph:
             print('\nUsing multiple custom input graphs...')
             conn_model = None
@@ -1156,7 +1157,8 @@ if __name__ == '__main__':
                                                         ('conn_model', 'conn_model'),
                                                         ('mask', 'mask'),
                                                         ('prune', 'prune'),
-                                                        ('node_size', 'node_size')])
+                                                        ('node_size', 'node_size'),
+                                                        ('smooth', 'smooth')])
                             ])
                 wf.connect([(inputnode, net_mets_node, [('graph', 'est_path')])])
                 wf.connect([(inputnode, export_to_pandas_node, [('network', 'network'),
