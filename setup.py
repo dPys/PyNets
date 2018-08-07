@@ -22,7 +22,7 @@ requirements = [
     'scikit_learn>=0.18.2',
     'pathlib>=1.0.1',
     'setuptools>=39.0.1',
-    'configparser>=3.5.0'
+    'configparser>=3.5.0',
     'PyYAML>=3.12'
 ]
 
@@ -38,7 +38,7 @@ test_requirements = [
 
 setup(
     name='pynets',
-    version='0.6.36',
+    version='0.6.37',
     description="A Fully-Automated Workflow for Reproducible Graph Analysis of Functional and Structural Connectomes",
     #long_description=readme + '\n\n',
     author="Derek Pisner",
