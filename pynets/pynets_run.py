@@ -861,20 +861,18 @@ if __name__ == '__main__':
         network = traits.Any(mandatory=True)
         net_pickle_mt_list = traits.List(mandatory=True)
         plot_switch = traits.Any(mandatory=True)
-
-    class CollectPandasDfsOutputSpec(TraitedSpec):
-        net_pickle_mt_list = traits.Any()
+        multi_nets = traits.Any(mandatory=True)
 
     class CollectPandasDfs(SimpleInterface):
         input_spec = CollectPandasDfsInputSpec
-        output_spec = CollectPandasDfsOutputSpec
 
         def _run_interface(self, runtime):
-            self._results['net_pickle_mt_list'] = collect_pandas_df(
+            collect_pandas_df(
                 self.inputs.network,
                 self.inputs.ID,
                 self.inputs.net_pickle_mt_list,
-                self.inputs.plot_switch)
+                self.inputs.plot_switch,
+                self.inputs.multi_nets)
             return runtime
 
 
@@ -972,18 +970,14 @@ if __name__ == '__main__':
                                            iterfield=['csv_loc', 'ID', 'network', 'mask'])
 
         collect_pd_list_net_pickles = pe.Node(niu.Function(input_names='net_pickle_mt',
-                                                               output_names='net_pickle_mt_out',
-                                                               function=collect_pandas_join),
-                                                  name='collect_pd_list_net_pickles')
+                                                           output_names='net_pickle_mt_out',
+                                                           function=collect_pandas_join),
+                                              name='collect_pd_list_net_pickles')
 
         collect_pandas_dfs_node = pe.Node(interface=CollectPandasDfs(), name="CollectPandasDfs",
-                                          input_names=['network', 'ID', 'net_pickle_mt_list', 'plot_switch'],
-                                          output_names=['net_pickle_mt_list'])
+                                          input_names=['network', 'ID', 'net_pickle_mt_list', 'plot_switch',
+                                                       'multi_nets'])
 
-        if multi_nets:
-            collect_pandas_dfs_node_iterables = []
-            collect_pandas_dfs_node_iterables.append(("network", multi_nets))
-            collect_pandas_dfs_node.iterables = collect_pandas_dfs_node_iterables
         # Connect nodes of workflow
         wf.connect([
             (inputnode, imp_est, [('in_file', 'input_file'),
@@ -1041,7 +1035,8 @@ if __name__ == '__main__':
             (net_mets_node, export_to_pandas_node, [('out_file', 'csv_loc')]),
             (inputnode, collect_pandas_dfs_node, [('network', 'network'),
                                                   ('ID', 'ID'),
-                                                  ('plot_switch', 'plot_switch')]),
+                                                  ('plot_switch', 'plot_switch'),
+                                                  ('multi_nets', 'multi_nets')]),
             (export_to_pandas_node, collect_pd_list_net_pickles, [('net_pickle_mt', 'net_pickle_mt')]),
             (collect_pd_list_net_pickles, collect_pandas_dfs_node, [('net_pickle_mt_out', 'net_pickle_mt_list')])
         ])

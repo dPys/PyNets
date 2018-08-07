@@ -207,7 +207,7 @@ def collect_pandas_join(net_pickle_mt):
     return net_pickle_mt_out
 
 
-def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch):
+def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
     import pandas as pd
     import numpy as np
     import os
@@ -283,9 +283,26 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch):
             print("%s%s%s" % ('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ', str(ID), '!\n'))
             pass
     else:
-        print("%s%s%s" % ('\nSingle dataframe for: ', str(ID), '\n'))
+        if network is not None:
+            print("%s%s%s" % ('\nSingle dataframe for the ' + network + ' network for: ', str(ID), '\n'))
+        else:
+            print("%s%s%s" % ('\nSingle dataframe for: ', str(ID), '\n'))
         pass
-    return net_pickle_mt_list
+    return
+
+
+def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets):
+    from pynets.utils import collect_pandas_df_make
+
+    if network is not None and multi_nets is not None:
+        net_pickle_mt_list_nets = net_pickle_mt_list
+        for network in multi_nets:
+            net_pickle_mt_list = list(set([i for i in net_pickle_mt_list_nets if network in i]))
+            collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
+    else:
+        collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
+
+    return
 
 
 def list_first_mems(est_path, network, thr, dir_path, node_size):
