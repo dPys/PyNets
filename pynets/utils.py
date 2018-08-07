@@ -8,7 +8,6 @@ Copyright (C) 2018
 import os
 import nibabel as nib
 import numpy as np
-from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, traits
 
 
 def get_file():
@@ -18,17 +17,48 @@ def get_file():
 
 def nilearn_atlas_helper(atlas_select):
     from nilearn import datasets
-    if len(list(getattr(datasets, 'fetch_%s' % atlas_select)().keys())) > 0:
-        if 'maps' in list(getattr(datasets, 'fetch_%s' % atlas_select)().keys()):
-            parlistfile = [i.decode("utf-8") for i in getattr(datasets, 'fetch_%s' % atlas_select)().maps]
+    if atlas_select == 'atlas_harvard_oxford':
+        atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'atlas_name')('cort-maxprob-thr0-1mm')
+    elif 'atlas_talairach' in atlas_select:
+        if atlas_select == 'atlas_talairach_hemisphere':
+            atlas_select = 'atlas_talairach'
+            print('Fetching level: hemisphere...')
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('hemisphere')
+        elif atlas_select == 'atlas_talairach_lobe':
+            atlas_select = 'atlas_talairach'
+            print('Fetching level: lobe...')
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('lobe')
+        elif atlas_select == 'atlas_talairach_gyrus':
+            atlas_select = 'atlas_talairach'
+            print('Fetching level: gyrus...')
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('gyrus')
+        elif atlas_select == 'atlas_talairach_tissue':
+            atlas_select = 'atlas_talairach'
+            print('Fetching level: tissue...')
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('tissue')
+        elif atlas_select == 'atlas_talairach_ba':
+            atlas_select = 'atlas_talairach'
+            print('Fetching level: ba...')
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('ba')
+    else:
+        atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select)()
+    if len(list(atlas_fetch_obj.keys())) > 0:
+        if 'maps' in list(atlas_fetch_obj.keys()):
+            parlistfile = atlas_fetch_obj.maps
         else:
             parlistfile = None
-        if 'labels' in list(getattr(datasets, 'fetch_%s' % atlas_select)().keys()):
-            label_names = [i.decode("utf-8") for i in getattr(datasets, 'fetch_%s' % atlas_select)().labels]
+        if 'labels' in list(atlas_fetch_obj.keys()):
+            try:
+                label_names = [i.decode("utf-8") for i in atlas_fetch_obj.labels]
+            except:
+                label_names = [i for i in atlas_fetch_obj.labels]
         else:
             label_names = None
-        if 'networks' in list(getattr(datasets, 'fetch_%s' % atlas_select)().keys()):
-            networks_list = [i.decode("utf-8") for i in getattr(datasets, 'fetch_%s' % atlas_select)().networks]
+        if 'networks' in list(atlas_fetch_obj.keys()):
+            try:
+                networks_list = [i.decode("utf-8") for i in atlas_fetch_obj.networks]
+            except:
+                networks_list = [i for i in atlas_fetch_obj.networks]
         else:
             networks_list = None
     else:
@@ -37,7 +67,7 @@ def nilearn_atlas_helper(atlas_select):
 
 
 # Save net metric files to pandas dataframes interface
-def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
+def export_to_pandas(csv_loc, ID, network, mask):
     import pandas as pd
     try:
         import cPickle as pickle
@@ -71,9 +101,9 @@ def export_to_pandas(csv_loc, ID, network, mask, out_file=None):
     df = df[cols_ID]
     df['id'] = df['id'].astype('object')
     df.id = df.id.replace(1, ID)
-    out_file = csv_loc.split('.csv')[0]
-    df.to_pickle(out_file, protocol=2)
-    return out_file
+    net_pickle_mt = csv_loc.split('.csv')[0]
+    df.to_pickle(net_pickle_mt, protocol=2)
+    return net_pickle_mt
 
 
 def do_dir_path(atlas_select, in_file):
@@ -172,554 +202,29 @@ def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mas
     return out_path
 
 
-def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_step, min_thr, max_thr, step_thr,
-                      multi_thr, thr, mask, ID, network, k_clustering, conn_model, in_csv, user_atlas_list,
-                      clust_mask_list, multi_atlas, node_size, node_size_list, parc, conn_model_list, plot_switch, out_file=None):
+def collect_pandas_join(net_pickle_mt):
+    net_pickle_mt_out = net_pickle_mt
+    return net_pickle_mt_out
+
+
+def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
     import pandas as pd
     import numpy as np
     import os
     import matplotlib
     matplotlib.use('Agg')
     from itertools import chain
-    from pynets import utils
-
-    if parc is True:
-        node_size = 'parc'
-
-    if multi_thr is True:
-        iter_thresh = sorted(list(set([str(i) for i in np.round(np.arange(float(min_thr), float(max_thr),
-                                                                          float(step_thr)), decimals=2).tolist()] +
-                                      [str(float(max_thr))])))
-    else:
-        iter_thresh = None
-
-    net_pickle_mt_list = []
-    if k_clustering == 4:
-        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
-        for clust_mask in clust_mask_list:
-            mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-            for k in k_list:
-                atlas_select = "%s%s%s" % (mask_name, '_k', str(k))
-                if node_size_list:
-                    for node_size in node_size_list:
-                        if conn_model_list:
-                            for conn_model in conn_model_list:
-                                if iter_thresh is not None:
-                                    for thr in iter_thresh:
-                                        try:
-                                            net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select,
-                                                                                             network, conn_model, thr, mask,
-                                                                                             node_size))
-                                        except:
-                                            print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                            pass
-                                else:
-                                    try:
-                                        net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                         conn_model, thr, mask, node_size))
-                                    except:
-                                        print("%s%s" % ('Missing results path for K=', str(k)))
-                                        pass
-                        else:
-                            if iter_thresh is not None:
-                                for thr in iter_thresh:
-                                    try:
-                                        net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select,
-                                                                                         network, conn_model, thr, mask,
-                                                                                         node_size))
-                                    except:
-                                        print(
-                                            "%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                        pass
-                            else:
-                                try:
-                                    net_pickle_mt_list.append(
-                                        utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                               conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s" % ('Missing results path for K=', str(k)))
-                                    pass
-                else:
-                    if conn_model_list:
-                        for conn_model in conn_model_list:
-                            if iter_thresh is not None:
-                                for thr in iter_thresh:
-                                    try:
-                                        net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                         conn_model, thr, mask, node_size))
-                                    except:
-                                        print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                        pass
-                            else:
-                                try:
-                                    net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                     conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s" % ('Missing results path for K=', str(k)))
-                                    pass
-                    else:
-                        if iter_thresh is not None:
-                            for thr in iter_thresh:
-                                try:
-                                    net_pickle_mt_list.append(
-                                        utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                               conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                    pass
-                        else:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s" % ('Missing results path for K=', str(k)))
-                                pass
-    elif k_clustering == 2:
-        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)),decimals=0).tolist() + [int(k_max)]
-        mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-        for k in k_list:
-            atlas_select = "%s%s%s" % (mask_name, '_k', str(k))
-            if node_size_list:
-                for node_size in node_size_list:
-                    if conn_model_list:
-                        for conn_model in conn_model_list:
-                            if iter_thresh is not None:
-                                for thr in iter_thresh:
-                                    try:
-                                        net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                         conn_model, thr, mask, node_size))
-                                    except:
-                                        print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                        pass
-                            else:
-                                try:
-                                    net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                     conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s" % ('Missing results path for K=', str(k)))
-                                    pass
-                    else:
-                        if iter_thresh is not None:
-                            for thr in iter_thresh:
-                                try:
-                                    net_pickle_mt_list.append(
-                                        utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                               conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                    pass
-                        else:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s" % ('Missing results path for K=', str(k)))
-                                pass
-            else:
-                if conn_model_list:
-                    for conn_model in conn_model_list:
-                        if iter_thresh is not None:
-                            for thr in iter_thresh:
-                                try:
-                                    net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                     conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                    pass
-                        else:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s" % ('Missing results path for K=', str(k)))
-                                pass
-                else:
-                    if iter_thresh is not None:
-                        for thr in iter_thresh:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                pass
-                    else:
-                        try:
-                            net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                             conn_model, thr, mask, node_size))
-                        except:
-                            print("%s%s" % ('Missing results path for K=', str(k)))
-                            pass
-    elif k_clustering == 1:
-        mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-        atlas_select = "%s%s%s" % (mask_name, '_k', str(k))
-        if node_size_list:
-            for node_size in node_size_list:
-                if conn_model_list:
-                    for conn_model in conn_model_list:
-                        if iter_thresh is not None:
-                            for thr in iter_thresh:
-                                try:
-                                    net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                     conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                    pass
-                        else:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s" % ('Missing results path for K=', str(k)))
-                                pass
-                else:
-                    if iter_thresh is not None:
-                        for thr in iter_thresh:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                pass
-                    else:
-                        try:
-                            net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                             conn_model, thr, mask, node_size))
-                        except:
-                            print("%s%s" % ('Missing results path for K=', str(k)))
-                            pass
-        else:
-            if conn_model_list:
-                for conn_model in conn_model_list:
-                    if iter_thresh is not None:
-                        for thr in iter_thresh:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                pass
-                    else:
-                        try:
-                            net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network, conn_model,
-                                                                             thr, mask, node_size))
-                        except:
-                            print("%s%s" % ('Missing results path for K=', str(k)))
-                            pass
-            else:
-                if iter_thresh is not None:
-                    for thr in iter_thresh:
-                        try:
-                            net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                             conn_model, thr, mask, node_size))
-                        except:
-                            print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                            pass
-                else:
-                    try:
-                        net_pickle_mt_list.append(
-                            utils.assemble_mt_path(ID, input_file, atlas_select, network, conn_model,
-                                                   thr, mask, node_size))
-                    except:
-                        print("%s%s" % ('Missing results path for K=', str(k)))
-                        pass
-    elif k_clustering == 3:
-        for clust_mask in clust_mask_list:
-            mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-            atlas_select = "%s%s%s" % (mask_name, '_k', str(k))
-            if node_size_list:
-                for node_size in node_size_list:
-                    if conn_model_list:
-                        for conn_model in conn_model_list:
-                            if iter_thresh is not None:
-                                for thr in iter_thresh:
-                                    try:
-                                        net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                         conn_model, thr, mask, node_size))
-                                    except:
-                                        print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                        pass
-                            else:
-                                try:
-                                    net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                     conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s" % ('Missing results path for K=', str(k)))
-                                    pass
-                    else:
-                        if iter_thresh is not None:
-                            for thr in iter_thresh:
-                                try:
-                                    net_pickle_mt_list.append(
-                                        utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                               conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                    pass
-                        else:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s" % ('Missing results path for K=', str(k)))
-                                pass
-            else:
-                if conn_model_list:
-                    for conn_model in conn_model_list:
-                        if iter_thresh is not None:
-                            for thr in iter_thresh:
-                                try:
-                                    net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                     conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                    pass
-                        else:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s" % ('Missing results path for K=', str(k)))
-                                pass
-                else:
-                    if iter_thresh is not None:
-                        for thr in iter_thresh:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s%s%s" % ('Missing results path for K=', str(k), ' and thr=', str(thr)))
-                                pass
-                    else:
-                        try:
-                            net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                             conn_model, thr, mask, node_size))
-                        except:
-                            print("%s%s" % ('Missing results path for K=', str(k)))
-                            pass
-    elif user_atlas_list and len(user_atlas_list) > 1:
-        for parlistfile in user_atlas_list:
-            atlas_select = parlistfile.split('/')[-1].split('.')[0]
-            if node_size_list:
-                for node_size in node_size_list:
-                    if conn_model_list:
-                        for conn_model in conn_model_list:
-                            if iter_thresh is not None:
-                                for thr in iter_thresh:
-                                    try:
-                                        net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                         conn_model, thr, mask, node_size))
-                                    except:
-                                        print("%s%s%s%s" % ('Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
-                                        pass
-                            else:
-                                try:
-                                    net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                     conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
-                                    pass
-                    else:
-                        if iter_thresh is not None:
-                            for thr in iter_thresh:
-                                try:
-                                    net_pickle_mt_list.append(
-                                        utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                               conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s%s%s" % (
-                                    'Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
-                                    pass
-                        else:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
-                                pass
-            else:
-                if conn_model_list:
-                    for conn_model in conn_model_list:
-                        if iter_thresh is not None:
-                            for thr in iter_thresh:
-                                try:
-                                    net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                     conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s%s%s" % ('Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
-                                    pass
-                        else:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
-                                pass
-                else:
-                    if iter_thresh is not None:
-                        for thr in iter_thresh:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s%s%s" % (
-                                'Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
-                                pass
-                    else:
-                        try:
-                            net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                             conn_model, thr, mask, node_size))
-                        except:
-                            print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
-                            pass
-    elif multi_atlas:
-        for atlas_select in multi_atlas:
-            if node_size_list:
-                for node_size in node_size_list:
-                    if conn_model_list:
-                        for conn_model in conn_model_list:
-                            if iter_thresh is not None:
-                                for thr in iter_thresh:
-                                    try:
-                                        net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                         conn_model, thr, mask, node_size))
-                                    except:
-                                        print("%s%s%s%s" % ('Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
-                                        pass
-                            else:
-                                try:
-                                    net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                     conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
-                                    pass
-                    else:
-                        if iter_thresh is not None:
-                            for thr in iter_thresh:
-                                try:
-                                    net_pickle_mt_list.append(
-                                        utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                               conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s%s%s" % ('Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
-                                    pass
-                        else:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
-                                pass
-            else:
-                if conn_model_list:
-                    for conn_model in conn_model_list:
-                        if iter_thresh is not None:
-                            for thr in iter_thresh:
-                                try:
-                                    net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                     conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s%s%s" % ('Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
-                                    pass
-                        else:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
-                                pass
-                else:
-                    if iter_thresh is not None:
-                        for thr in iter_thresh:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s%s%s" % (
-                                'Missing results path for atlas=', str(atlas_select), ' and thr=', str(thr)))
-                                pass
-                    else:
-                        try:
-                            net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                             conn_model, thr, mask, node_size))
-                        except:
-                            print("%s%s" % ('Missing results path for atlas=', str(atlas_select)))
-                            pass
-    elif k_clustering == 0:
-        if node_size_list:
-            for node_size in node_size_list:
-                if conn_model_list:
-                    for conn_model in conn_model_list:
-                        if iter_thresh is not None:
-                            for thr in iter_thresh:
-                                try:
-                                    net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                     conn_model, thr, mask, node_size))
-                                except:
-                                    print("%s%s" % ('Missing results path for thr=', str(thr)))
-                                    pass
-                        else:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print('Missing results path')
-                                pass
-                else:
-                    if iter_thresh is not None:
-                        for thr in iter_thresh:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s" % ('Missing results path for thr=', str(thr)))
-                                pass
-                    else:
-                        try:
-                            net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                             conn_model, thr, mask, node_size))
-                        except:
-                            print('Missing results path')
-                            pass
-        else:
-            if conn_model_list:
-                for conn_model in conn_model_list:
-                    if iter_thresh is not None:
-                        for thr in iter_thresh:
-                            try:
-                                net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                                 conn_model, thr, mask, node_size))
-                            except:
-                                print("%s%s" % ('Missing results path for thr=', str(thr)))
-                                pass
-                    else:
-                        try:
-                            net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network, conn_model,
-                                                                             thr, mask, node_size))
-                        except:
-                            print('Missing results path')
-                            pass
-            else:
-                if iter_thresh is not None:
-                    for thr in iter_thresh:
-                        try:
-                            net_pickle_mt_list.append(utils.assemble_mt_path(ID, input_file, atlas_select, network,
-                                                                             conn_model, thr, mask, node_size))
-                        except:
-                            print("%s%s" % ('Missing results path for thr=', str(thr)))
-                            pass
-                else:
-                    try:
-                        net_pickle_mt_list.append(
-                            utils.assemble_mt_path(ID, input_file, atlas_select, network, conn_model,
-                                                   thr, mask, node_size))
-                    except:
-                        print('Missing results path')
-                        pass
 
     # Check for existence of net_pickle files, condensing final list to only those that were actually produced.
-    [net_pickle_mt_list, _] = utils.check_est_path_existence(net_pickle_mt_list)
-    if len(net_pickle_mt_list) > len(net_pickle_mt_list):
+    net_pickle_mt_list_exist = []
+    for net_pickle_mt in list(net_pickle_mt_list):
+        if os.path.isfile(net_pickle_mt) is True:
+            net_pickle_mt_list_exist.append(net_pickle_mt)
+
+    if len(net_pickle_mt_list) > len(net_pickle_mt_list_exist):
         raise UserWarning('Warning! Number of actual models produced less than expected. Some graphs were excluded')
+
+    net_pickle_mt_list = net_pickle_mt_list_exist
 
     if len(net_pickle_mt_list) > 1:
         print("%s%s%s" % ('\n\nList of result files to concatenate:\n', str(net_pickle_mt_list), '\n\n'))
@@ -778,8 +283,25 @@ def collect_pandas_df(input_file, atlas_select, clust_mask, k_min, k_max, k, k_s
             print("%s%s%s" % ('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ', str(ID), '!\n'))
             pass
     else:
-        print("%s%s%s" % ('\nSingle dataframe for: ', str(ID), '\n'))
+        if network is not None:
+            print("%s%s%s" % ('\nSingle dataframe for the ' + network + ' network for: ', str(ID), '\n'))
+        else:
+            print("%s%s%s" % ('\nSingle dataframe for: ', str(ID), '\n'))
         pass
+    return
+
+
+def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets):
+    from pynets.utils import collect_pandas_df_make
+
+    if network is not None and multi_nets is not None:
+        net_pickle_mt_list_nets = net_pickle_mt_list
+        for network in multi_nets:
+            net_pickle_mt_list = list(set([i for i in net_pickle_mt_list_nets if network in i]))
+            collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
+    else:
+        collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
+
     return
 
 
@@ -799,116 +321,12 @@ def list_first_mems(est_path, network, thr, dir_path, node_size):
     return est_path, network, thr, dir_path, node_size
 
 
-def build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network, conn_model, thr, mask, dir_path,
-                        est_path_list, node_size_list, node_size, conn_model_list):
-    import numpy as np
-    from pynets import utils
-    if multi_thr is True:
-        iter_thresh = sorted(list(set([str(i) for i in np.round(np.arange(float(min_thr), float(max_thr),
-                                                                          float(step_thr)), decimals=2).tolist()] +
-                                      [str(float(max_thr))])))
-        for thr in iter_thresh:
-            if conn_model_list:
-                for conn_model in conn_model_list:
-                    if node_size_list:
-                        for node_size in node_size_list:
-                            est_path_tmp = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
-                            est_path_list.append(est_path_tmp)
-                    else:
-                        est_path_tmp = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
-                        est_path_list.append(est_path_tmp)
-                        iter_thresh = [thr] * len(est_path_list)
-            else:
-                if node_size_list:
-                    for node_size in node_size_list:
-                        est_path_tmp = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
-                        est_path_list.append(est_path_tmp)
-                else:
-                    est_path_tmp = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
-                    est_path_list.append(est_path_tmp)
-                    iter_thresh = [thr] * len(est_path_list)
-    else:
-        if conn_model_list:
-            for conn_model in conn_model_list:
-                if node_size_list:
-                    for node_size in node_size_list:
-                        est_path_tmp = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
-                        est_path_list.append(est_path_tmp)
-                        iter_thresh = [thr] * len(est_path_list)
-                else:
-                    est_path_tmp = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
-                    est_path_list.append(est_path_tmp)
-                    iter_thresh = [thr] * len(est_path_list)
-        else:
-            if node_size_list:
-                for node_size in node_size_list:
-                    est_path_tmp = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
-                    est_path_list.append(est_path_tmp)
-                    iter_thresh = [thr] * len(est_path_list)
-            else:
-                est_path_tmp = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
-                est_path_list.append(est_path_tmp)
-                iter_thresh = [thr] * len(est_path_list)
-    return iter_thresh, est_path_list
-
-
-def build_multi_net_paths(multi_nets, atlas_select, input_file, multi_thr, min_thr, max_thr, step_thr, ID, network,
-                          conn_model, thr, mask, dir_path, est_path_list, node_size_list, node_size, conn_model_list):
-    from pynets import utils
-    if multi_nets is not None:
-        num_networks = len(multi_nets)
-        for network in multi_nets:
-            dir_path = utils.do_dir_path(atlas_select, input_file)
-            [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network,
-                                                                     conn_model, thr, mask, dir_path, est_path_list,
-                                                                     node_size_list, node_size, conn_model_list)
-    else:
-        num_networks = 1
-        dir_path = utils.do_dir_path(atlas_select, input_file)
-        [iter_thresh, est_path_list] = utils.build_est_path_list(multi_thr, min_thr, max_thr, step_thr, ID, network,
-                                                                 conn_model, thr, mask, dir_path, est_path_list,
-                                                                 node_size_list, node_size, conn_model_list)
-    return iter_thresh, est_path_list, num_networks, dir_path
-
-
-def create_net_list(node_size_list, network, network_list, multi_thr, iter_thresh, conn_model_list):
-    if conn_model_list:
-        for cm in range(len(conn_model_list)):
-            if node_size_list:
-                for ns in range(len(node_size_list)):
-                    if multi_thr is True:
-                        for t in range(len(iter_thresh)):
-                            network_list.append(network)
-                    else:
-                        network_list.append(network)
-            else:
-                if multi_thr is True:
-                    for t in range(len(iter_thresh)):
-                        network_list.append(network)
-                else:
-                    network_list.append(network)
-    else:
-        if node_size_list:
-            for ns in range(len(node_size_list)):
-                if multi_thr is True:
-                    for t in range(len(iter_thresh)):
-                        network_list.append(network)
-                else:
-                    network_list.append(network)
-        else:
-            if multi_thr is True:
-                for t in range(len(iter_thresh)):
-                    network_list.append(network)
-            else:
-                network_list.append(network)
-    return network_list
-
-
 def check_est_path_existence(est_path_list):
     import os
     est_path_list_ex = []
     bad_ixs = []
     i = -1
+
     for est_path in est_path_list:
         i = i + 1
         if os.path.isfile(est_path) is True:
