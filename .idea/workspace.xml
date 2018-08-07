@@ -2,26 +2,17 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.pytest_cache/v/cache/lastfailed" beforeDir="false" afterPath="$PROJECT_DIR$/.pytest_cache/v/cache/lastfailed" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.pytest_cache/v/cache/nodeids" beforeDir="false" afterPath="$PROJECT_DIR$/.pytest_cache/v/cache/nodeids" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/clustools.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/clustools.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/netstats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/thresholding.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/997/997_Default_est_cov_0.95_TEST.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_Default_est_cov_0.95_TEST.npy" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/997/997_Default_est_cov_0.95_parc.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_Default_est_cov_0.95_parc.npy" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/997/997_Default_est_cov_unthresholded_mat.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_Default_est_cov_unthresholded_mat.npy" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/997/997_connectogram_sps.json" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_connectogram_sps.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/997/997_fdg_sps.json" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_fdg_sps.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/997/997_parcels.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_parcels.nii.gz" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/997/997_parcels_resampled2mask_pDMN_3_bin.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/997_parcels_resampled2mask_pDMN_3_bin.nii.gz" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/997/Default_parcels.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/Default_parcels.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/whole_brain_cluster_labels_PCA200/997_net_metrics_sps_0.9_pDMN_3_bin" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/whole_brain_cluster_labels_PCA200/997_net_metrics_sps_0.9_pDMN_3_bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_nodemaker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_plotting.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_thresholding.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/997/triple_net_ICA_overlap_3_sig_bin_k3/rm_tcorr_indiv_cluster_997_3.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/triple_net_ICA_overlap_3_sig_bin_k3/rm_tcorr_indiv_cluster_997_3.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/997/triple_net_ICA_overlap_3_sig_bin_k3/triple_net_ICA_overlap_3_sig_bin_k3.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/triple_net_ICA_overlap_3_sig_bin_k3/triple_net_ICA_overlap_3_sig_bin_k3.nii.gz" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -63,8 +54,8 @@
       <file leaf-file-name="utils.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="253">
-              <caret line="221" column="49" lean-forward="true" selection-start-line="221" selection-start-column="49" selection-end-line="221" selection-end-column="49" />
+            <state relative-caret-position="314">
+              <caret line="215" column="31" selection-start-line="215" selection-start-column="31" selection-end-line="215" selection-end-column="31" />
               <folding>
                 <element signature="e#132#141#0" expanded="true" />
               </folding>
@@ -168,8 +159,8 @@
       <find>PyNets_multisubject</find>
       <find>fetch_nilearn_atlas_coords</find>
       <find>nilearn_atlas_helper</find>
-      <find>if (multi_atlas</find>
-      <find>ERROR: label reference file not found</find>
+      <find />
+      <find />
       <find>clustering_node</find>
       <find>multi_atlas</find>
       <find>get_conn_matrix_node</find>
@@ -178,7 +169,7 @@
       <find>CollectPandasDfs</find>
       <find>-g</find>
       <find>graph</find>
-      <find>os.mkdir(&quot;%s%s%s&quot; % (dwi_dir, '/', base_dirname))</find>
+      <find />
       <find>dir_path</find>
       <find>custom_graph</find>
       <find>network</find>
@@ -193,7 +184,7 @@
       <find>export</find>
       <find>collect</find>
       <find>Simple</find>
-      <find>Warning:</find>
+      <find />
     </findStrings>
     <replaceStrings>
       <replace>#</replace>
@@ -250,7 +241,7 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds">
+  <component name="ProjectFrameBounds" extendedState="1">
     <option name="x" value="156" />
     <option name="y" value="32" />
     <option name="width" value="1260" />
@@ -843,8 +834,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="253">
-          <caret line="221" column="49" lean-forward="true" selection-start-line="221" selection-start-column="49" selection-end-line="221" selection-end-column="49" />
+        <state relative-caret-position="314">
+          <caret line="215" column="31" selection-start-line="215" selection-start-column="31" selection-end-line="215" selection-end-column="31" />
           <folding>
             <element signature="e#132#141#0" expanded="true" />
           </folding>

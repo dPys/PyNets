@@ -214,7 +214,6 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch):
     import matplotlib
     matplotlib.use('Agg')
     from itertools import chain
-    from pynets import utils
 
     # Check for existence of net_pickle files, condensing final list to only those that were actually produced.
     net_pickle_mt_list_exist = []
