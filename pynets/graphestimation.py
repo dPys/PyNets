@@ -220,18 +220,17 @@ def extract_ts_parc_fast(label_file, conf, func_file, dir_path):
     return ts_within_nodes, node_size
 
 
-def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network, fast=False):
+def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network, smooth, fast=False):
     from nilearn import input_data
     from pynets.graphestimation import extract_ts_parc_fast
     from pynets import utils
     from sklearn.externals.joblib import Memory
 
-    # extract time series from whole brain parcellaions
     if fast is True:
         ts_within_nodes = extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path)
     else:
         parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
-                                                     standardize=True,
+                                                     standardize=True, smoothing_fwhm=float(smooth),
                                                      memory=Memory(cachedir="%s%s%s" % (dir_path,
                                                                                         '/SpheresMasker_cache_',
                                                                                         str(ID)), verbose=2),
@@ -241,14 +240,15 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
         ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords),
                         ' volumetric ROI\'s\n'))
+    print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
     # Save time series as txt file
     utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)
 
     node_size = None
-    return ts_within_nodes, node_size
+    return ts_within_nodes, node_size, smooth
 
 
-def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network, fast=False):
+def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network, smooth, fast=False):
     from nilearn import input_data
     from pynets.graphestimation import extract_ts_coords_fast
     from pynets import utils
@@ -258,7 +258,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
         ts_within_nodes = extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path)
     else:
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
-                                                       standardize=True, verbose=1,
+                                                       standardize=True, smoothing_fwhm=float(smooth),
                                                        memory=Memory(cachedir="%s%s%s" % (dir_path,
                                                                                           '/SpheresMasker_cache_',
                                                                                           str(ID)), verbose=2),
@@ -270,6 +270,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords),
                         ' coordinate ROI\'s'))
     print("%s%s%s" % ('Using node radius: ', node_size, ' mm\n'))
+    print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
     # Save time series as txt file
     utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)
-    return ts_within_nodes, node_size
+    return ts_within_nodes, node_size, smooth

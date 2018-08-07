@@ -64,7 +64,11 @@ if __name__ == '__main__':
     parser.add_argument('-ns',
                         metavar='Node size',
                         default=4,
-                        help='Optionally coordinate-based node radius size(s). Default is 4 mm. If you wish to iterate the pipeline across multiple node sizes, separate the list by comma (e.g. 2,4,6)\n')
+                        help='Optionally specify coordinate-based node radius size(s). Default is 4 mm. If you wish to iterate the pipeline across multiple node sizes, separate the list by comma (e.g. 2,4,6)\n')
+    parser.add_argument('-sm',
+                        metavar='Smoothing value (mm fwhm)',
+                        default=0,
+                        help='Optionally specify smoothing width(s). Default is 0 / no smoothing. If you wish to iterate the pipeline across multiple smoothing values, separate the list by comma (e.g. 2,4,6)\n')
     parser.add_argument('-m',
                         metavar='Path to mask image',
                         default=None,
@@ -195,6 +199,17 @@ if __name__ == '__main__':
     else:
         node_size = node_size[0]
         node_size_list = None
+    smooth_pre = args.sm
+    smooth = list(str(smooth_pre).split(','))
+    if len(smooth) > 1:
+        smooth_list = smooth
+        smooth = 0
+    elif smooth == ['None']:
+        smooth = 0
+        smooth_list = None
+    else:
+        smooth = smooth[0]
+        smooth_list = None
     mask = args.m
     conn_model_pre = args.mod
     conn_model = list(str(conn_model_pre).split(','))
@@ -460,6 +475,7 @@ if __name__ == '__main__':
         mask = 'None'
         k_clustering = 0
         node_size = 'None'
+        smooth = 'None'
         if multi_graph:
             print('\nUsing multiple custom input graphs...')
             conn_model = None
@@ -507,7 +523,13 @@ if __name__ == '__main__':
         elif parc is True:
             print("\nUsing parcels as nodes")
         else:
-            print("%s%s" % ("\nUsing node size of: ", node_size))
+            print("%s%s%s" % ("\nUsing node size of: ", node_size, 'mm'))
+
+        if smooth_list:
+            print("%s%s%s" % ('\nApplying smoothing to node signal at multiple FWHM mm values: ',
+                              str(', '.join(str(n) for n in smooth_list)), '...'))
+        elif smooth:
+            print("%s%s%s" % ("\npplying smoothing to node signal at: ", smooth, 'FWHM mm'))
 
         if conn_model_list:
             print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ',
@@ -608,6 +630,7 @@ if __name__ == '__main__':
     # print(str(atlas_select))
     # print(str(network))
     # print(str(node_size))
+    # print(str(smooth))
     # print(str(mask))
     # print(str(thr))
     # print(str(parlistfile))
@@ -637,6 +660,7 @@ if __name__ == '__main__':
     # print(str(clust_mask_list))
     # print(str(prune))
     # print(str(node_size_list))
+    # print(str(smooth_list))
     # print(str(num_total_samples))
     # print(str(graph))
     # print(str(multi_graph))
@@ -655,7 +679,7 @@ if __name__ == '__main__':
                           ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                           clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                           node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
-                          use_AAL_naming):
+                          use_AAL_naming, smooth, smooth_list):
         import os
         from pynets import workflows
         from nipype import Workflow, Function
@@ -670,7 +694,8 @@ if __name__ == '__main__':
                                                                 multi_thr, multi_atlas, max_thr, min_thr, step_thr,
                                                                 k, clust_mask, k_min, k_max, k_step, k_clustering,
                                                                 user_atlas_list, clust_mask_list, node_size_list,
-                                                                conn_model_list, min_span_tree, use_AAL_naming)
+                                                                conn_model_list, min_span_tree, use_AAL_naming, smooth,
+                                                                smooth_list)
             sub_struct_wf = None
         # Workflow 2: RSN functional connectome
         elif dwi_dir is None and network is not None:
@@ -681,7 +706,7 @@ if __name__ == '__main__':
                                                                  max_thr, min_thr, step_thr, k, clust_mask, k_min,
                                                                  k_max, k_step, k_clustering, user_atlas_list,
                                                                  clust_mask_list, node_size_list, conn_model_list,
-                                                                 min_span_tree, use_AAL_naming)
+                                                                 min_span_tree, use_AAL_naming, smooth, smooth_list)
             sub_struct_wf = None
         # Workflow 3: Whole-brain structural connectome
         elif dwi_dir is not None and network is None:
@@ -715,7 +740,7 @@ if __name__ == '__main__':
         if network is None and input_file:
             if k_clustering > 0:
                 meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._n_procs = 1
-                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 8
+                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 10
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._n_procs = 1
@@ -725,7 +750,7 @@ if __name__ == '__main__':
         elif network and input_file:
             if k_clustering > 0:
                 meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._n_procs = 1
-                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 8
+                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 10
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 2
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_coords_node'))._n_procs = 1
@@ -778,6 +803,7 @@ if __name__ == '__main__':
         est_path_iterlist = meta_wf_outputs['est_path']
         network_iterlist = meta_wf_outputs['network']
         node_size_iterlist = meta_wf_outputs['node_size']
+        smooth_iterlist = meta_wf_outputs['smooth']
         thr_iterlist = meta_wf_outputs['thr']
         prune_iterlist = [prune] * len(est_path_iterlist)
         ID_iterlist = [str(ID)] * len(est_path_iterlist)
@@ -788,13 +814,14 @@ if __name__ == '__main__':
         print(est_path_iterlist)
         print(network_iterlist)
         print(node_size_iterlist)
+        print(smooth_iterlist)
         print(thr_iterlist)
         print(prune_iterlist)
         print(ID_iterlist)
         print(mask_iterlist)
         print('\n\n')
 
-        return thr_iterlist, est_path_iterlist, ID_iterlist, network_iterlist, conn_model_iterlist, mask_iterlist, prune_iterlist, node_size_iterlist
+        return thr_iterlist, est_path_iterlist, ID_iterlist, network_iterlist, conn_model_iterlist, mask_iterlist, prune_iterlist, node_size_iterlist, smooth_iterlist
 
     class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
         ID = traits.Any(mandatory=True)
@@ -805,6 +832,7 @@ if __name__ == '__main__':
         mask = traits.Any(mandatory=False)
         prune = traits.Any(mandatory=False)
         node_size = traits.Any(mandatory=False)
+        smooth = traits.Any(mandatory=False)
 
     class ExtractNetStatsOutputSpec(TraitedSpec):
         out_file = File()
@@ -822,7 +850,8 @@ if __name__ == '__main__':
                 self.inputs.est_path,
                 self.inputs.mask,
                 self.inputs.prune,
-                self.inputs.node_size)
+                self.inputs.node_size,
+                self.inputs.smooth)
             setattr(self, '_outpath', out)
             return runtime
 
@@ -881,7 +910,7 @@ if __name__ == '__main__':
                                multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k,
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
-                               plugin_type, use_AAL_naming, multi_graph):
+                               plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list):
         wf = pe.Workflow(name='Wf_single_subject_' + str(ID))
         # Create input/output nodes
         #1) Add variable to IdentityInterface if user-set
@@ -895,7 +924,7 @@ if __name__ == '__main__':
                                                           'clust_mask_list', 'prune', 'node_size_list',
                                                           'num_total_samples', 'graph', 'conn_model_list',
                                                           'min_span_tree', 'verbose', 'plugin_type', 'use_AAL_naming',
-                                                          'multi_graph']),
+                                                          'multi_graph', 'smooth', 'smooth_list']),
                             name='inputnode')
 
         #2) Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
@@ -942,6 +971,8 @@ if __name__ == '__main__':
         inputnode.inputs.plugin_type = plugin_type
         inputnode.inputs.use_AAL_naming = use_AAL_naming
         inputnode.inputs.multi_graph = multi_graph
+        inputnode.inputs.smooth = smooth
+        inputnode.inputs.smooth_list = smooth_list
 
         #3) Add variable to function nodes
         # Create function nodes
@@ -953,10 +984,10 @@ if __name__ == '__main__':
                                                     'k_min', 'k_max', 'k_step', 'k_clustering', 'user_atlas_list',
                                                     'clust_mask_list', 'prune', 'node_size_list', 'num_total_samples',
                                                     'conn_model_list', 'min_span_tree', 'verbose', 'plugin_type',
-                                                    'use_AAL_naming'],
+                                                    'use_AAL_naming', 'smooth', 'smooth_list'],
                                        output_names=['thr_iterlist', 'est_path_iterlist', 'ID_iterlist',
                                                      'network_iterlist', 'conn_model_iterlist', 'mask_iterlist',
-                                                     'prune_iterlist', 'node_size_iterlist'],
+                                                     'prune_iterlist', 'node_size_iterlist', 'smooth_iterlist'],
                                        function=workflow_selector), name="imp_est")
         imp_est._mem_gb = procmem[1]
         imp_est.n_procs = procmem[0]
@@ -964,7 +995,7 @@ if __name__ == '__main__':
         # Create MapNode types for net_mets_node and export_to_pandas_node
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
                                    iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
-                                              'mask', 'prune', 'node_size'])
+                                              'mask', 'prune', 'node_size', 'smooth'])
 
         export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name="export_to_pandas",
                                            iterfield=['csv_loc', 'ID', 'network', 'mask'])
@@ -1020,7 +1051,9 @@ if __name__ == '__main__':
                                   ('min_span_tree', 'min_span_tree'),
                                   ('verbose', 'verbose'),
                                   ('plugin_type', 'plugin_type'),
-                                  ('use_AAL_naming', 'use_AAL_naming')]),
+                                  ('use_AAL_naming', 'use_AAL_naming'),
+                                  ('smooth', 'smooth'),
+                                  ('smooth_list', 'smooth_list')]),
             (imp_est, net_mets_node, [('est_path_iterlist', 'est_path'),
                                       ('network_iterlist', 'network'),
                                       ('thr_iterlist', 'thr'),
@@ -1028,7 +1061,8 @@ if __name__ == '__main__':
                                       ('conn_model_iterlist', 'conn_model'),
                                       ('mask_iterlist', 'mask'),
                                       ('prune_iterlist', 'prune'),
-                                      ('node_size_iterlist', 'node_size')]),
+                                      ('node_size_iterlist', 'node_size'),
+                                      ('smooth_iterlist', 'smooth')]),
             (imp_est, export_to_pandas_node, [('network_iterlist', 'network'),
                                               ('ID_iterlist', 'ID'),
                                               ('mask_iterlist', 'mask')]),
@@ -1082,7 +1116,9 @@ if __name__ == '__main__':
                                       ('min_span_tree', 'min_span_tree'),
                                       ('verbose', 'verbose'),
                                       ('plugin_type', 'plugin_type'),
-                                      ('use_AAL_naming', 'use_AAL_naming')])
+                                      ('use_AAL_naming', 'use_AAL_naming'),
+                                      ('smooth', 'smooth'),
+                                      ('smooth_list', 'smooth_list')])
                             ])
             wf.disconnect([(imp_est, net_mets_node, [('est_path_iterlist', 'est_path'),
                                                      ('network_iterlist', 'network'),
@@ -1091,7 +1127,8 @@ if __name__ == '__main__':
                                                      ('conn_model_iterlist', 'conn_model'),
                                                      ('mask_iterlist', 'mask'),
                                                      ('prune_iterlist', 'prune'),
-                                                     ('node_size_iterlist', 'node_size')])
+                                                     ('node_size_iterlist', 'node_size'),
+                                                     ('smooth_iterlist', 'smooth')])
                            ])
             wf.disconnect([(imp_est, export_to_pandas_node, [('network_iterlist', 'network'),
                                                              ('ID_iterlist', 'ID'),
@@ -1103,6 +1140,7 @@ if __name__ == '__main__':
                 net_mets_node.inputs.ID = [ID] * len(multi_graph)
                 net_mets_node.inputs.mask = [mask] * len(multi_graph)
                 net_mets_node.inputs.node_size = [node_size] * len(multi_graph)
+                net_mets_node.inputs.smooth = [smooth] * len(multi_graph)
                 net_mets_node.inputs.thr = [thr] * len(multi_graph)
                 net_mets_node.inputs.prune = [prune] * len(multi_graph)
                 net_mets_node.inputs.network = [network] * len(multi_graph)
@@ -1133,7 +1171,7 @@ if __name__ == '__main__':
                          multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask,
                          k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
                          num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming,
-                         multi_graph):
+                         multi_graph, smooth, smooth_list):
 
         wf_multi = pe.Workflow(name='PyNets_multisubject')
         procmem_cores = int(np.round(float(procmem[0])/float(len(subjects_list)), 0))
@@ -1157,7 +1195,7 @@ if __name__ == '__main__':
                 clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
                 min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type, use_AAL_naming=use_AAL_naming,
-                multi_graph=multi_graph)
+                multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list)
             wf_multi.add_nodes([wf_single_subject])
             i = i + 1
 
@@ -1174,7 +1212,8 @@ if __name__ == '__main__':
                                     ref_txt, procmem, k, clust_mask, k_min, k_max, k_step,
                                     k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, graph, conn_model_list,
-                                    min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph)
+                                    min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
+                                    smooth, smooth_list)
 
         import shutil
         if os.path.exists('/tmp/Wf_multi_subject'):
@@ -1213,7 +1252,8 @@ if __name__ == '__main__':
                                     multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt,
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
-                                    min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph)
+                                    min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
+                                    smooth_list)
 
         import shutil
         base_dirname = "%s%s" % ('Wf_single_subject_', str(ID))

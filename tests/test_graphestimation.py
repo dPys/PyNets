@@ -36,6 +36,7 @@ def test_extract_ts_rsn_parc():
     mask = None
     network = 'Default'
     ID = '997'
+    smooth = 2
     conf = None
     wb_coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     file_ = open(wb_coords_file, 'rb')
@@ -44,7 +45,7 @@ def test_extract_ts_rsn_parc():
     start_time = time.time()
     net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
     ts_within_nodes = graphestimation.extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path,
-                                                      ID, network)
+                                                      ID, network, smooth)
     print("%s%s%s" % ('extract_ts_parc --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
     assert ts_within_nodes is not None
 
@@ -58,12 +59,14 @@ def test_extract_ts_rsn_coords():
     ID = '997'
     conf = None
     node_size = 2
+    smooth = 2
     wb_coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     file_ = open(wb_coords_file, 'rb')
     coords = pickle.load(file_)
 
     start_time = time.time()
-    ts_within_nodes = graphestimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network)
+    ts_within_nodes = graphestimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask,
+                                                        network, smooth)
     print("%s%s%s" % ('extract_ts_coords --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
     assert ts_within_nodes is not None
 

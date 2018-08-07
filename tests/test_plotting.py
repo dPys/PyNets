@@ -24,6 +24,7 @@ def test_plot_conn_mat_nonet_no_mask():
     ID = '997'
     thr = 0.95
     node_size = 2
+    smooth = 2
     conn_model = 'sps'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     mask = None
@@ -33,7 +34,8 @@ def test_plot_conn_mat_nonet_no_mask():
     label_names = pickle.load(labels_file)
 
     start_time = time.time()
-    plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr, node_size)
+    plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr,
+                                node_size, smooth)
     print("%s%s%s" % ('plot_conn_mat_func --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 
@@ -46,6 +48,7 @@ def test_plot_conn_mat_nonet_mask():
     ID = '997'
     thr = 0.95
     node_size = 2
+    smooth = 2
     conn_model = 'sps'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     mask = None
@@ -55,7 +58,8 @@ def test_plot_conn_mat_nonet_mask():
     label_names = pickle.load(labels_file)
 
     start_time = time.time()
-    plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr, node_size)
+    plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr,
+                                node_size, smooth)
     print("%s%s%s" % ('plot_conn_mat_func (Masking version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 
@@ -68,6 +72,7 @@ def test_plot_all_nonet_no_mask():
     ID = '997'
     thr = 0.95
     node_size = 2
+    smooth = 2
     conn_model = 'sps'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     mask = None
@@ -82,7 +87,7 @@ def test_plot_all_nonet_no_mask():
 
     start_time = time.time()
     plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords,
-                      edge_threshold, thr, node_size)
+                      edge_threshold, thr, node_size, smooth)
     print("%s%s%s" % ('plot_all --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 
@@ -95,6 +100,7 @@ def test_plot_all_nonet_with_mask():
     ID = '997'
     thr = 0.95
     node_size = 2
+    smooth = 2
     conn_model = 'sps'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     mask = None
@@ -109,7 +115,7 @@ def test_plot_all_nonet_with_mask():
 
     start_time = time.time()
     plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords,
-                      edge_threshold, thr, node_size)
+                      edge_threshold, thr, node_size, smooth)
     print("%s%s%s" % ('plot_all (Masking version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 
@@ -195,8 +201,10 @@ def test_plot_conn_mat_struct():
     mask = None
     thr = 0.95
     node_size = 2
+    smooth = 2
 
-    plotting.plot_conn_mat_struct(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr, node_size)
+    plotting.plot_conn_mat_struct(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr,
+                                  node_size, smooth)
 
 ## issue with atlas_select.decode in plotting.py
 def test_structural_plotting():
@@ -219,8 +227,10 @@ def test_structural_plotting():
     conn_model = 'sps'
     thr = 0.95
     node_size = 2
+    smooth = 2
 
-    plotting.structural_plotting(conn_matrix, label_names, atlas_select, ID, bedpostx_dir, network, parc, mask, coords, dir_path, conn_model, thr, node_size)
+    plotting.structural_plotting(conn_matrix, label_names, atlas_select, ID, bedpostx_dir, network, parc, mask, coords,
+                                 dir_path, conn_model, thr, node_size, smooth)
 
 
 # def test_plot_graph_measure_hists():

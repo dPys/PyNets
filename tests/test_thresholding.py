@@ -18,9 +18,11 @@ def test_thresh_func():
     dir_path = base_dir + '/997'
     dens_thresh = False
     thr = 0.95
+    smooth = 2
     conn_matrix=np.random.rand(3,3)
     conn_model = 'cov'
     network = 'Default'
+    min_span_tree = False
     ID = '997'
     mask = None
     node_size = 'TEST'
@@ -28,7 +30,7 @@ def test_thresh_func():
     start_time = time.time()
     [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _] = thresholding.thresh_func(dens_thresh, thr, conn_matrix,
                                                                                        conn_model, network, ID, dir_path,
-                                                                                       mask, node_size, min_span_tree=False)
+                                                                                       mask, node_size, min_span_tree, smooth)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     assert conn_matrix_thr is not None
@@ -42,9 +44,11 @@ def test_thresh_diff():
     dir_path = base_dir + '/997'
     dens_thresh = False
     thr = 0.95
+    smooth = 2
     conn_matrix=np.random.rand(3,3)
     conn_model = 'cov'
     network = 'Default'
+    min_span_tree = False
     ID = '997'
     mask = None
     node_size = 'TEST'
@@ -53,7 +57,7 @@ def test_thresh_diff():
     start_time = time.time()
     [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _] = thresholding.thresh_diff(dens_thresh, thr, conn_model, network,
                                                                                           ID, dir_path, mask, node_size, conn_matrix,
-                                                                                          parc, min_span_tree=False)
+                                                                                          parc, min_span_tree, smooth)
     print("%s%s%s" % ('thresh_and_fit (Functional, density thresholding) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     assert conn_matrix_thr is not None

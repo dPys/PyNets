@@ -307,7 +307,7 @@ def local_thresholding_dens(conn_matrix, thr):
     return conn_matrix_thr
 
 
-def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, mask, node_size, min_span_tree):
+def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, mask, node_size, min_span_tree, smooth):
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -335,13 +335,13 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         print('Warning: Fragmented graph')
 
     # Save thresholded mat
-    est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
+    est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size, smooth)
     np.save(est_path, conn_matrix_thr)
 
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, mask
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, mask, smooth
 
 
-def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_size, conn_matrix, parc, min_span_tree):
+def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_size, conn_matrix, parc, min_span_tree, smooth):
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -367,6 +367,6 @@ def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_
         print('Warning: Fragmented graph')
 
     # Save thresholded mat
-    est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size)
+    est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size, smooth)
     np.save(est_path, conn_matrix_thr)
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, mask
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, mask, smooth
