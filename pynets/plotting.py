@@ -417,7 +417,6 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     from matplotlib import colors
     from nilearn import plotting as niplot
     from pynets import plotting
-    #from pynets.netstats import most_important
     try:
         import cPickle as pickle
     except ImportError:
@@ -426,9 +425,7 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     edge_threshold = 0.10
     connectome_fdt_thresh = 90
     dpi_resolution = 500
-    #pruning = False
     bpx_trx = False
-    atlas_select = atlas_select.decode('utf-8')
 
     # # Auto-set INPUTS# #
     try:

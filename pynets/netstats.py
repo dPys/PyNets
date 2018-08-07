@@ -904,7 +904,7 @@ def most_important(G):
 
 
 # Extract network metrics interface
-def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_size, out_file=None):
+def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_size):
     import pandas as pd
     try:
         import cPickle as pickle
@@ -990,7 +990,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, eigenvector_centrality, communicability_betweenness_centrality, clustering, degree_centrality, rich_club_coefficient
     from pynets.netstats import average_local_efficiency, global_efficiency, local_efficiency, modularity_louvain_dir, smallworldness, participation_coef, diversity_coef_sign
     # For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the function  (with a G-only input) to the netstats module.
-    metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, smallworldness]
+    #metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, smallworldness]
+    metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
     metric_list_comm = ['louvain_modularity', 'coreness']
     metric_list_nodal = ['participation_coefficient', 'diversity_coefficient', 'local_efficiency', 'local_clustering', 'degree_centrality', 'betweenness_centrality', 'eigenvector_centrality', 'communicability_centrality', 'rich_club_coefficient']
 

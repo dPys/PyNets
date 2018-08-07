@@ -259,11 +259,8 @@ def discretisation(eigen_vec):
 
 
 def binfile_parcellate(infile, outfile, k):
-    import time as time
     from scipy.sparse import csc_matrix
     # check how long it takes
-    start = time.time()
-    print('Started at:', start)
 
     # Read in the file
     if infile.endswith(".npy"):

@@ -282,7 +282,7 @@ def local_thresholding_dens(conn_matrix, thr):
 
         # Add weights to NNG
         for e in nng.edges():
-            nng.edges[e[0], e[1]]['weigsht'] = float(conn_matrix[e[0], e[1]])
+            nng.edges[e[0], e[1]]['weight'] = float(conn_matrix[e[0], e[1]])
 
         # Obtain list of edges from the NNG in order of weight
         edge_list = sorted(nng.edges(data=True), key=lambda t: t[2]['weight'], reverse=True)
