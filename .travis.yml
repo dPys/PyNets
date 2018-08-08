@@ -17,8 +17,8 @@ install:
 # command to run tests, e.g. python setup.py test
 script: 
 #   - tox
-   - travis_wait 120 pytest tests/test_graphestimation.py -s
+   - travis_wait 60 pytest tests/test_graphestimation.py -s
    - pytest tests/test_nodemaker.py -s
    - pytest tests/test_plotting.py -s
-   - travis_wait 120 pytest tests/test_thresholding.py -s
-   - travis_wait 120 pytest tests/test_utils.py -s
+   - travis_wait 60 pytest tests/test_thresholding.py -s
+   - travis_wait 60 pytest tests/test_utils.py -s

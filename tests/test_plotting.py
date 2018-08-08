@@ -210,31 +210,30 @@ def test_plot_conn_mat_struct():
     plotting.plot_conn_mat_struct(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr,
                                   node_size, smooth)
 
-## issue with atlas_select.decode in plotting.py
-def test_structural_plotting():
-    base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/ryanhammonds/Applications/PyNets/tests/examples'
-    dir_path = base_dir + '/997'
-    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.95.txt')
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
-    labels_file = open(labels_file_path,'rb')
-    label_names = pickle.load(labels_file)
-    atlas_select = 'whole_brain_cluster_labels_PCA200'
-    ID = '002'
-    bedpostx_dir = base_dir + 'bedpostx_s002.bedpostX'
-    network = None
-    parc = True
-    mask = None
-    coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
-    coord_file = open(coord_file_path, 'rb')
-    coords = pickle.load(coord_file)
-    conn_model = 'sps'
-    thr = 0.95
-    node_size = 2
-    smooth = 2
-
-    plotting.structural_plotting(conn_matrix, label_names, atlas_select, ID, bedpostx_dir, network, parc, mask, coords,
-                                 dir_path, conn_model, thr, node_size, smooth)
+# def test_structural_plotting():
+#     base_dir = str(Path(__file__).parent/"examples")
+#     #base_dir = '/Users/ryanhammonds/Applications/PyNets/tests/examples'
+#     dir_path = base_dir + '/997'
+#     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.95.txt')
+#     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+#     labels_file = open(labels_file_path,'rb')
+#     label_names = pickle.load(labels_file)
+#     atlas_select = 'whole_brain_cluster_labels_PCA200'
+#     ID = '002'
+#     bedpostx_dir = base_dir + 'bedpostx_s002.bedpostX'
+#     network = None
+#     parc = True
+#     mask = None
+#     coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
+#     coord_file = open(coord_file_path, 'rb')
+#     coords = pickle.load(coord_file)
+#     conn_model = 'sps'
+#     thr = 0.95
+#     node_size = 2
+#     smooth = 2
+#
+#     plotting.structural_plotting(conn_matrix, label_names, atlas_select, ID, bedpostx_dir, network, parc, mask, coords,
+#                                  dir_path, conn_model, thr, node_size, smooth)
 
 
 # def test_plot_graph_measure_hists():
