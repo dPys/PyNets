@@ -44,7 +44,7 @@ if __name__ == '__main__':
     parser.add_argument('-a',
                         metavar='Atlas',
                         default=None,
-                        help='Specify a coordinate atlas parcellation of those available in nilearn. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal\natlas_allen_2011\natlas_talairach_tissue\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\natlas_talairach_hemisphere\natlas_harvard_oxford\natlas_basc_multiscale_2015\natlas_craddock_2012\natlas_destrieux_2009\ncoords_dosenbach_2010\ncoords_power_2011\n')
+                        help='Specify a coordinate atlas parcellation of those available in nilearn. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\natlas_harvard_oxford\natlas_destrieux_2009\ncoords_dosenbach_2010\ncoords_power_2011.\n')
     parser.add_argument('-ua',
                         metavar='Path to parcellation file',
                         default=None,
@@ -56,15 +56,19 @@ if __name__ == '__main__':
     parser.add_argument('-n',
                         metavar='Resting-state network',
                         default=None,
-                        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple RSNs, separate them by comma. e.g. -n \'Default,Cont,SalVentAttn\'\n')
+                        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple RSNs, separate them by comma. (e.g. -n \'Default,Cont,SalVentAttn)\'.\n')
     parser.add_argument('-thr',
-                        metavar='graph threshold',
+                        metavar='Graph threshold',
                         default='0.00',
-                        help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is proportional thresholding. If omitted, no thresholding will be applied\n')
+                        help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is proportional thresholding. If omitted, no thresholding will be applied.\n')
     parser.add_argument('-ns',
                         metavar='Node size',
                         default=4,
-                        help='Optionally coordinate-based node radius size(s). Default is 4 mm. If you wish to iterate the pipeline across multiple node sizes, separate the list by comma (e.g. 2,4,6)\n')
+                        help='Optionally specify coordinate-based node radius size(s). Default is 4 mm. If you wish to iterate the pipeline across multiple node sizes, separate the list by comma (e.g. 2,4,6).\n')
+    parser.add_argument('-sm',
+                        metavar='Smoothing value (mm fwhm)',
+                        default=0,
+                        help='Optionally specify smoothing width(s). Default is 0 / no smoothing. If you wish to iterate the pipeline across multiple smoothing values, separate the list by comma (e.g. 2,4,6).\n')
     parser.add_argument('-m',
                         metavar='Path to mask image',
                         default=None,
@@ -76,23 +80,7 @@ if __name__ == '__main__':
     parser.add_argument('-conf',
                         metavar='Confounds',
                         default=None,
-                        help='Optionally specify a path to a confound regressor file to reduce noise in the time-series estimation for the graph. This can also be a list of paths, separated by comma and of equivalent length to the list of input files indicated with the -i flag. \n')
-    parser.add_argument('-dt',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to threshold to achieve a given density or densities indicated by the -thr and -min_thr, -max_thr, -step_thr flags, respectively.\n')
-    parser.add_argument('-mst',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to apply local thresholding via the Minimum Spanning Tree approach.\n')
-    #    parser.add_argument('-at',
-    #        default=False,
-    #        action='store_true',
-    #        help='Optionally use this flag if you wish to activate adaptive thresholding')
-    parser.add_argument('-plt',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to activate plotting of adjacency matrices, connectomes, and time-series.\n')
+                        help='Optionally specify a path to a confound regressor file to reduce noise in the time-series estimation for the graph. This can also be a list of paths, separated by comma and of equivalent length to the list of input files indicated with the -i flag.\n')
     parser.add_argument('-anat',
                         metavar='Path to preprocessed anatomical image',
                         default=None,
@@ -104,35 +92,31 @@ if __name__ == '__main__':
     parser.add_argument('-max_thr',
                         metavar='Multi-thresholding maximum threshold',
                         default=None,
-                        help='Maximum threshold for multi-thresholding.v')
+                        help='Maximum threshold for multi-thresholding.')
     parser.add_argument('-step_thr',
                         metavar='Multi-thresholding step size',
                         default=None,
                         help='Threshold step value for multi-thresholding. Default is 0.01.\n')
-    parser.add_argument('-parc',
-                        default=False,
-                        action='store_true',
-                        help='Include this flag to use parcels instead of coordinates as nodes.\n')
     parser.add_argument('-ref',
-                        metavar='atlas reference file path',
+                        metavar='Atlas reference file path',
                         default=None,
-                        help='Specify the path to the atlas reference .txt file\n')
+                        help='Specify the path to the atlas reference .txt file.\n')
     parser.add_argument('-k',
                         metavar='Number of k clusters',
                         default=None,
-                        help='Specify a number of clusters to produce\n')
+                        help='Specify a number of clusters to produce.\n')
     parser.add_argument('-k_min',
                         metavar='Min k clusters',
                         default=None,
-                        help='Specify the minimum k clusters\n')
+                        help='Specify the minimum k clusters.\n')
     parser.add_argument('-k_max',
                         metavar='Max k clusters',
                         default=None,
-                        help='Specify the maximum k clusters\n')
+                        help='Specify the maximum k clusters.\n')
     parser.add_argument('-k_step',
                         metavar='K cluster step size',
                         default=None,
-                        help='Specify the step size of k cluster iterables\n')
+                        help='Specify the step size of k cluster iterables.\n')
     parser.add_argument('-cm',
                         metavar='Cluster mask',
                         default=None,
@@ -149,6 +133,30 @@ if __name__ == '__main__':
                         metavar='Scheduler type',
                         default='MultiProc',
                         help='Include this flag to specify a workflow plugin other than the default MultiProc. Options include: Linear, SGE, PBS, SLURM, SGEgraph, SLURMgraph.\n')
+    parser.add_argument('-parc',
+                        default=False,
+                        action='store_true',
+                        help='Include this flag to use parcels instead of coordinates as nodes.\n')
+    parser.add_argument('-dt',
+                        default=False,
+                        action='store_true',
+                        help='Optionally use this flag if you wish to threshold to achieve a given density or densities indicated by the -thr and -min_thr, -max_thr, -step_thr flags, respectively.\n')
+    parser.add_argument('-mst',
+                        default=False,
+                        action='store_true',
+                        help='Optionally use this flag if you wish to apply local thresholding via the Minimum Spanning Tree approach. -thr values in this case correspond to a target density (if the -dt flag is also included), otherwirse a target proportional threshold.\n')
+    parser.add_argument('-df',
+                        default=False,
+                        action='store_true',
+                        help='Optionally use this flag if you wish to apply local thresholding via the disparity filter approach. -thr values in this case correspond to α.\n')
+    #    parser.add_argument('-at',
+    #        default=False,
+    #        action='store_true',
+    #        help='Optionally use this flag if you wish to activate adaptive thresholding')
+    parser.add_argument('-plt',
+                        default=False,
+                        action='store_true',
+                        help='Optionally use this flag if you wish to activate plotting of adjacency matrices, connectomes, and time-series.\n')
     parser.add_argument('-names',
                         default=False,
                         action='store_true',
@@ -195,6 +203,17 @@ if __name__ == '__main__':
     else:
         node_size = node_size[0]
         node_size_list = None
+    smooth_pre = args.sm
+    smooth = list(str(smooth_pre).split(','))
+    if len(smooth) > 1:
+        smooth_list = smooth
+        smooth = 0
+    elif smooth == ['None']:
+        smooth = 0
+        smooth_list = None
+    else:
+        smooth = smooth[0]
+        smooth_list = None
     mask = args.m
     conn_model_pre = args.mod
     conn_model = list(str(conn_model_pre).split(','))
@@ -210,6 +229,7 @@ if __name__ == '__main__':
     conf = args.conf
     dens_thresh = args.dt
     min_span_tree = args.mst
+    disp_filt = args.df
 #    adapt_thresh=args.at
     adapt_thresh = False
     plot_switch = args.plt
@@ -277,6 +297,10 @@ if __name__ == '__main__':
         multi_atlas = None
     print('\n\n\n------------------------------------------------------------------------\n')
 
+    nilearn_parc_atlases = ['atlas_harvard_oxford', 'atlas_aal', 'atlas_destrieux_2009',
+                            'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe']
+    nilearn_coord_atlases = ['coords_power_2011', 'coords_dosenbach_2010']
+
     if min_thr is not None and max_thr is not None and step_thr is not None:
         multi_thr = True
     elif min_thr is not None or max_thr is not None or step_thr is not None:
@@ -297,24 +321,24 @@ if __name__ == '__main__':
         subjects_list = None
 
     if input_file is None and dwi_dir is None and graph is None and multi_graph is None:
-        raise ValueError("Error: You must include a file path to either a standard space functional image in .nii or .nii.gz format with the -i flag")
+        raise ValueError("\nError: You must include a file path to either a standard space functional image in .nii or .nii.gz format with the -i flag.")
 
     if input_file and dwi_dir and subjects_list:
-        raise ValueError("Error: PyNets does not yet support joint functional-structural connectometry across multiple subjects")
+        raise ValueError("\nError: PyNets does not yet support joint functional-structural connectometry across multiple subjects.")
 
     if ID is None and subjects_list is None:
-        raise ValueError("Error: You must include a subject ID in your command line call")
+        raise ValueError("\nError: You must include a subject ID in your command line call.")
 
     if subjects_list and ',' in ID:
         ID = list(str(ID).split(','))
         if len(ID) != len(subjects_list):
-            raise ValueError("Error: Length of ID list does not correspond to length of input file list")
+            raise ValueError("Error: Length of ID list does not correspond to length of input file list.")
 
     if conf:
         if ',' in conf:
             conf = list(str(conf).split(','))
             if len(conf) != len(subjects_list):
-                raise ValueError("Error: Length of confound regressor list does not correspond to length of input file list")
+                raise ValueError("Error: Length of confound regressor list does not correspond to length of input file list.")
 
     if anat_loc is not None and dwi_dir is None:
         raise RuntimeWarning('Warning: anatomical image specified, but not bedpostx directory specified. Anatomical images are only supported for structural connectome estimation at this time.')
@@ -436,22 +460,31 @@ if __name__ == '__main__':
             if subjects_list:
                 for input_file in subjects_list:
                     for atlas_select in multi_atlas:
-                        print(atlas_select)
-                        dir_path = do_dir_path(atlas_select, input_file)
+                        if parc is True and atlas_select in nilearn_coord_atlases:
+                            raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                        else:
+                            print(atlas_select)
+                            dir_path = do_dir_path(atlas_select, input_file)
             else:
                 for atlas_select in multi_atlas:
-                    print(atlas_select)
-                    dir_path = do_dir_path(atlas_select, input_file)
+                    if parc is True and atlas_select in nilearn_coord_atlases:
+                        raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                    else:
+                        print(atlas_select)
+                        dir_path = do_dir_path(atlas_select, input_file)
         elif atlas_select is not None:
-            print("%s%s" % ("\nNilearn atlas: ", atlas_select))
-            if subjects_list:
-                for input_file in subjects_list:
-                    dir_path = do_dir_path(atlas_select, input_file)
+            if parc is True and atlas_select in nilearn_coord_atlases:
+                raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
             else:
-                dir_path = do_dir_path(atlas_select, input_file)
+                print("%s%s" % ("\nNilearn atlas: ", atlas_select))
+                if subjects_list:
+                    for input_file in subjects_list:
+                        dir_path = do_dir_path(atlas_select, input_file)
+                else:
+                    dir_path = do_dir_path(atlas_select, input_file)
         else:
             if parlistfile is None and k == 0:
-                raise KeyError('ERROR: No atlas specified!')
+                raise KeyError('\nERROR: No atlas specified!')
             else:
                 pass
     elif graph or multi_graph:
@@ -460,6 +493,8 @@ if __name__ == '__main__':
         mask = 'None'
         k_clustering = 0
         node_size = 'None'
+        smooth = 'None'
+        conn_model = 'None'
         if multi_graph:
             print('\nUsing multiple custom input graphs...')
             conn_model = None
@@ -493,13 +528,13 @@ if __name__ == '__main__':
 
     if graph is None and multi_graph is None:
         if network is not None:
-            print("%s%s" % ('\nUsing RSN pipeline for: ', network))
+            print("%s%s" % ('\nUsing resting-state network pipeline for: ', network))
         elif multi_nets is not None:
             network = multi_nets[0]
             print("%s%d%s%s%s" % ('\nIterating workflow across ', len(multi_nets), ' networks: ',
                                   str(', '.join(str(n) for n in multi_nets)), '...'))
         else:
-            print("\nUsing whole-brain pipeline..." )
+            print("\nUsing whole-brain pipeline...")
 
         if node_size_list:
             print("%s%s%s" % ('\nGrowing spherical nodes across multiple radius sizes: ',
@@ -507,7 +542,15 @@ if __name__ == '__main__':
         elif parc is True:
             print("\nUsing parcels as nodes")
         else:
-            print("%s%s" % ("\nUsing node size of: ", node_size))
+            print("%s%s%s" % ("\nUsing node size of: ", node_size, 'mm...'))
+
+        if smooth_list:
+            print("%s%s%s" % ('\nApplying smoothing to node signal at multiple FWHM mm values: ',
+                              str(', '.join(str(n) for n in smooth_list)), '...'))
+        elif float(smooth) > 0:
+            print("%s%s%s" % ("\nApplying smoothing to node signal at: ", smooth, 'FWHM mm...'))
+        else:
+            smooth = 0
 
         if conn_model_list:
             print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ',
@@ -554,23 +597,32 @@ if __name__ == '__main__':
                 for dwi_dir in subjects_list:
                     nodif_brain_mask_path = "%s%s" % (dwi_dir, '/nodif_brain_mask.nii.gz')
                     for atlas_select in multi_atlas:
-                        print(atlas_select)
-                        dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+                        if parc is True and atlas_select in nilearn_coord_atlases:
+                            raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                        else:
+                            print(atlas_select)
+                            dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
             else:
                 for atlas_select in multi_atlas:
-                    print(atlas_select)
-                    dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+                    if parc is True and atlas_select in nilearn_coord_atlases:
+                        raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                    else:
+                        print(atlas_select)
+                        dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
         elif atlas_select is not None:
-            print("%s%s" % ("\nNilearn atlas: ", atlas_select))
-            if subjects_list:
-                for dwi_dir in subjects_list:
-                    nodif_brain_mask_path = "%s%s" % (dwi_dir, '/nodif_brain_mask.nii.gz')
-                    dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+            if parc is True and atlas_select in nilearn_coord_atlases:
+                raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
             else:
-                dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+                print("%s%s" % ("\nNilearn atlas: ", atlas_select))
+                if subjects_list:
+                    for dwi_dir in subjects_list:
+                        nodif_brain_mask_path = "%s%s" % (dwi_dir, '/nodif_brain_mask.nii.gz')
+                        dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+                else:
+                    dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
         else:
             if parlistfile is None:
-                raise KeyError('ERROR: No atlas specified!')
+                raise KeyError('\nERROR: No atlas specified!')
             else:
                 pass
 
@@ -608,6 +660,7 @@ if __name__ == '__main__':
     # print(str(atlas_select))
     # print(str(network))
     # print(str(node_size))
+    # print(str(smooth))
     # print(str(mask))
     # print(str(thr))
     # print(str(parlistfile))
@@ -637,6 +690,7 @@ if __name__ == '__main__':
     # print(str(clust_mask_list))
     # print(str(prune))
     # print(str(node_size_list))
+    # print(str(smooth_list))
     # print(str(num_total_samples))
     # print(str(graph))
     # print(str(multi_graph))
@@ -655,7 +709,7 @@ if __name__ == '__main__':
                           ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                           clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                           node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
-                          use_AAL_naming):
+                          use_AAL_naming, smooth, smooth_list, disp_filt):
         import os
         from pynets import workflows
         from nipype import Workflow, Function
@@ -670,7 +724,8 @@ if __name__ == '__main__':
                                                                 multi_thr, multi_atlas, max_thr, min_thr, step_thr,
                                                                 k, clust_mask, k_min, k_max, k_step, k_clustering,
                                                                 user_atlas_list, clust_mask_list, node_size_list,
-                                                                conn_model_list, min_span_tree, use_AAL_naming)
+                                                                conn_model_list, min_span_tree, use_AAL_naming, smooth,
+                                                                smooth_list, disp_filt, prune)
             sub_struct_wf = None
         # Workflow 2: RSN functional connectome
         elif dwi_dir is None and network is not None:
@@ -681,7 +736,8 @@ if __name__ == '__main__':
                                                                  max_thr, min_thr, step_thr, k, clust_mask, k_min,
                                                                  k_max, k_step, k_clustering, user_atlas_list,
                                                                  clust_mask_list, node_size_list, conn_model_list,
-                                                                 min_span_tree, use_AAL_naming)
+                                                                 min_span_tree, use_AAL_naming, smooth, smooth_list,
+                                                                 disp_filt, prune)
             sub_struct_wf = None
         # Workflow 3: Whole-brain structural connectome
         elif dwi_dir is not None and network is None:
@@ -691,7 +747,7 @@ if __name__ == '__main__':
                                                                   conn_model, user_atlas_list, multi_thr, multi_atlas,
                                                                   max_thr, min_thr, step_thr, node_size_list,
                                                                   num_total_samples, conn_model_list, min_span_tree,
-                                                                  use_AAL_naming)
+                                                                  use_AAL_naming, disp_filt)
             sub_func_wf = None
         # Workflow 4: RSN structural connectome
         elif dwi_dir is not None and network is not None:
@@ -701,7 +757,7 @@ if __name__ == '__main__':
                                                                    conn_model, user_atlas_list, multi_thr, multi_atlas,
                                                                    max_thr, min_thr, step_thr, node_size_list,
                                                                    num_total_samples, conn_model_list, min_span_tree,
-                                                                   multi_nets, use_AAL_naming)
+                                                                   multi_nets, use_AAL_naming, disp_filt)
             sub_func_wf = None
 
         base_wf = sub_func_wf if sub_func_wf else sub_struct_wf
@@ -714,22 +770,30 @@ if __name__ == '__main__':
 
         if network is None and input_file:
             if k_clustering > 0:
-                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._n_procs = 1
-                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 8
+                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._n_procs = 4
+                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 16
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._mem_gb = 6
-            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.get_conn_matrix_node'))._n_procs = 1
+            if parc is True:
+                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_parc_node'))._n_procs = 2
+                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_parc_node'))._mem_gb = 6
+            else:
+                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._n_procs = 2
+                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.extract_ts_wb_coords_node'))._mem_gb = 6
+            meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.get_conn_matrix_node'))._n_procs = 2
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.get_conn_matrix_node'))._mem_gb = 4
         elif network and input_file:
             if k_clustering > 0:
-                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._n_procs = 1
-                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 8
+                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._n_procs = 4
+                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 16
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 2
-            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_coords_node'))._n_procs = 1
-            meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_coords_node'))._mem_gb = 6
+            if parc is True:
+                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_parc_node'))._n_procs = 2
+                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_parc_node'))._mem_gb = 6
+            else:
+                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_coords_node'))._n_procs = 2
+                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.extract_ts_rsn_coords_node'))._mem_gb = 6
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.get_conn_matrix_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.get_conn_matrix_node'))._mem_gb = 4
         elif dwi_dir and network is None:
@@ -743,7 +807,7 @@ if __name__ == '__main__':
             meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.thresh_diff_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('rsn_structural_connectometry_', ID, '.thresh_diff_node'))._mem_gb = 1
         else:
-            raise RuntimeError('ERROR: Either functional input file or dwi directory is missing!')
+            raise RuntimeError('\nERROR: Either functional input file or dwi directory is missing!')
 
         if verbose is True:
             from nipype import config, logging
@@ -778,23 +842,25 @@ if __name__ == '__main__':
         est_path_iterlist = meta_wf_outputs['est_path']
         network_iterlist = meta_wf_outputs['network']
         node_size_iterlist = meta_wf_outputs['node_size']
+        smooth_iterlist = meta_wf_outputs['smooth']
         thr_iterlist = meta_wf_outputs['thr']
         prune_iterlist = [prune] * len(est_path_iterlist)
         ID_iterlist = [str(ID)] * len(est_path_iterlist)
         mask_iterlist = [mask] * len(est_path_iterlist)
 
-        print('\n\nParameters:\n')
-        print(conn_model_iterlist)
-        print(est_path_iterlist)
-        print(network_iterlist)
-        print(node_size_iterlist)
-        print(thr_iterlist)
-        print(prune_iterlist)
-        print(ID_iterlist)
-        print(mask_iterlist)
-        print('\n\n')
+        # print('\n\nParameters:\n')
+        # print(conn_model_iterlist)
+        # print(est_path_iterlist)
+        # print(network_iterlist)
+        # print(node_size_iterlist)
+        # print(smooth_iterlist)
+        # print(thr_iterlist)
+        # print(prune_iterlist)
+        # print(ID_iterlist)
+        # print(mask_iterlist)
+        # print('\n\n')
 
-        return thr_iterlist, est_path_iterlist, ID_iterlist, network_iterlist, conn_model_iterlist, mask_iterlist, prune_iterlist, node_size_iterlist
+        return thr_iterlist, est_path_iterlist, ID_iterlist, network_iterlist, conn_model_iterlist, mask_iterlist, prune_iterlist, node_size_iterlist, smooth_iterlist
 
     class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
         ID = traits.Any(mandatory=True)
@@ -805,6 +871,7 @@ if __name__ == '__main__':
         mask = traits.Any(mandatory=False)
         prune = traits.Any(mandatory=False)
         node_size = traits.Any(mandatory=False)
+        smooth = traits.Any(mandatory=False)
 
     class ExtractNetStatsOutputSpec(TraitedSpec):
         out_file = File()
@@ -822,7 +889,8 @@ if __name__ == '__main__':
                 self.inputs.est_path,
                 self.inputs.mask,
                 self.inputs.prune,
-                self.inputs.node_size)
+                self.inputs.node_size,
+                self.inputs.smooth)
             setattr(self, '_outpath', out)
             return runtime
 
@@ -881,7 +949,7 @@ if __name__ == '__main__':
                                multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k,
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
-                               plugin_type, use_AAL_naming, multi_graph):
+                               plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt):
         wf = pe.Workflow(name='Wf_single_subject_' + str(ID))
         # Create input/output nodes
         #1) Add variable to IdentityInterface if user-set
@@ -895,7 +963,7 @@ if __name__ == '__main__':
                                                           'clust_mask_list', 'prune', 'node_size_list',
                                                           'num_total_samples', 'graph', 'conn_model_list',
                                                           'min_span_tree', 'verbose', 'plugin_type', 'use_AAL_naming',
-                                                          'multi_graph']),
+                                                          'multi_graph', 'smooth', 'smooth_list', 'disp_filt']),
                             name='inputnode')
 
         #2) Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
@@ -942,6 +1010,9 @@ if __name__ == '__main__':
         inputnode.inputs.plugin_type = plugin_type
         inputnode.inputs.use_AAL_naming = use_AAL_naming
         inputnode.inputs.multi_graph = multi_graph
+        inputnode.inputs.smooth = smooth
+        inputnode.inputs.smooth_list = smooth_list
+        inputnode.inputs.disp_filt = disp_filt
 
         #3) Add variable to function nodes
         # Create function nodes
@@ -953,10 +1024,10 @@ if __name__ == '__main__':
                                                     'k_min', 'k_max', 'k_step', 'k_clustering', 'user_atlas_list',
                                                     'clust_mask_list', 'prune', 'node_size_list', 'num_total_samples',
                                                     'conn_model_list', 'min_span_tree', 'verbose', 'plugin_type',
-                                                    'use_AAL_naming'],
+                                                    'use_AAL_naming', 'smooth', 'smooth_list', 'disp_filt'],
                                        output_names=['thr_iterlist', 'est_path_iterlist', 'ID_iterlist',
                                                      'network_iterlist', 'conn_model_iterlist', 'mask_iterlist',
-                                                     'prune_iterlist', 'node_size_iterlist'],
+                                                     'prune_iterlist', 'node_size_iterlist', 'smooth_iterlist'],
                                        function=workflow_selector), name="imp_est")
         imp_est._mem_gb = procmem[1]
         imp_est.n_procs = procmem[0]
@@ -964,7 +1035,7 @@ if __name__ == '__main__':
         # Create MapNode types for net_mets_node and export_to_pandas_node
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
                                    iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
-                                              'mask', 'prune', 'node_size'])
+                                              'mask', 'prune', 'node_size', 'smooth'])
 
         export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name="export_to_pandas",
                                            iterfield=['csv_loc', 'ID', 'network', 'mask'])
@@ -1020,7 +1091,10 @@ if __name__ == '__main__':
                                   ('min_span_tree', 'min_span_tree'),
                                   ('verbose', 'verbose'),
                                   ('plugin_type', 'plugin_type'),
-                                  ('use_AAL_naming', 'use_AAL_naming')]),
+                                  ('use_AAL_naming', 'use_AAL_naming'),
+                                  ('smooth', 'smooth'),
+                                  ('smooth_list', 'smooth_list'),
+                                  ('disp_filt', 'disp_filt')]),
             (imp_est, net_mets_node, [('est_path_iterlist', 'est_path'),
                                       ('network_iterlist', 'network'),
                                       ('thr_iterlist', 'thr'),
@@ -1028,7 +1102,8 @@ if __name__ == '__main__':
                                       ('conn_model_iterlist', 'conn_model'),
                                       ('mask_iterlist', 'mask'),
                                       ('prune_iterlist', 'prune'),
-                                      ('node_size_iterlist', 'node_size')]),
+                                      ('node_size_iterlist', 'node_size'),
+                                      ('smooth_iterlist', 'smooth')]),
             (imp_est, export_to_pandas_node, [('network_iterlist', 'network'),
                                               ('ID_iterlist', 'ID'),
                                               ('mask_iterlist', 'mask')]),
@@ -1082,7 +1157,10 @@ if __name__ == '__main__':
                                       ('min_span_tree', 'min_span_tree'),
                                       ('verbose', 'verbose'),
                                       ('plugin_type', 'plugin_type'),
-                                      ('use_AAL_naming', 'use_AAL_naming')])
+                                      ('use_AAL_naming', 'use_AAL_naming'),
+                                      ('smooth', 'smooth'),
+                                      ('smooth_list', 'smooth_list'),
+                                      ('disp_filt', 'disp_filt')])
                             ])
             wf.disconnect([(imp_est, net_mets_node, [('est_path_iterlist', 'est_path'),
                                                      ('network_iterlist', 'network'),
@@ -1091,7 +1169,8 @@ if __name__ == '__main__':
                                                      ('conn_model_iterlist', 'conn_model'),
                                                      ('mask_iterlist', 'mask'),
                                                      ('prune_iterlist', 'prune'),
-                                                     ('node_size_iterlist', 'node_size')])
+                                                     ('node_size_iterlist', 'node_size'),
+                                                     ('smooth_iterlist', 'smooth')])
                            ])
             wf.disconnect([(imp_est, export_to_pandas_node, [('network_iterlist', 'network'),
                                                              ('ID_iterlist', 'ID'),
@@ -1103,6 +1182,7 @@ if __name__ == '__main__':
                 net_mets_node.inputs.ID = [ID] * len(multi_graph)
                 net_mets_node.inputs.mask = [mask] * len(multi_graph)
                 net_mets_node.inputs.node_size = [node_size] * len(multi_graph)
+                net_mets_node.inputs.smooth = [smooth] * len(multi_graph)
                 net_mets_node.inputs.thr = [thr] * len(multi_graph)
                 net_mets_node.inputs.prune = [prune] * len(multi_graph)
                 net_mets_node.inputs.network = [network] * len(multi_graph)
@@ -1118,7 +1198,8 @@ if __name__ == '__main__':
                                                         ('conn_model', 'conn_model'),
                                                         ('mask', 'mask'),
                                                         ('prune', 'prune'),
-                                                        ('node_size', 'node_size')])
+                                                        ('node_size', 'node_size'),
+                                                        ('smooth', 'smooth')])
                             ])
                 wf.connect([(inputnode, net_mets_node, [('graph', 'est_path')])])
                 wf.connect([(inputnode, export_to_pandas_node, [('network', 'network'),
@@ -1133,7 +1214,7 @@ if __name__ == '__main__':
                          multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask,
                          k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
                          num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming,
-                         multi_graph):
+                         multi_graph, smooth, smooth_list, disp_filt):
 
         wf_multi = pe.Workflow(name='PyNets_multisubject')
         procmem_cores = int(np.round(float(procmem[0])/float(len(subjects_list)), 0))
@@ -1157,7 +1238,7 @@ if __name__ == '__main__':
                 clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
                 min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type, use_AAL_naming=use_AAL_naming,
-                multi_graph=multi_graph)
+                multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt)
             wf_multi.add_nodes([wf_single_subject])
             i = i + 1
 
@@ -1174,7 +1255,8 @@ if __name__ == '__main__':
                                     ref_txt, procmem, k, clust_mask, k_min, k_max, k_step,
                                     k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, graph, conn_model_list,
-                                    min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph)
+                                    min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
+                                    smooth, smooth_list, disp_filt)
 
         import shutil
         if os.path.exists('/tmp/Wf_multi_subject'):
@@ -1213,7 +1295,8 @@ if __name__ == '__main__':
                                     multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt,
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
-                                    min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph)
+                                    min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
+                                    smooth_list, disp_filt)
 
         import shutil
         base_dirname = "%s%s" % ('Wf_single_subject_', str(ID))

@@ -394,14 +394,19 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
     base_path = utils.get_file()
 
     # Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
-    nilearn_parc_atlases = ['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
-    nilearn_coord_atlases = ['harvard_oxford', 'msdl', 'coords_power_2011', 'smith_2009', 'basc_multiscale_2015', 'allen_2011', 'coords_dosenbach_2010']
-    if parlistfile is None and parc is False and atlas_select in nilearn_parc_atlases:
+    nilearn_parc_atlases = ['atlas_harvard_oxford', 'atlas_aal', 'atlas_destrieux_2009',
+                            'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe']
+    nilearn_coord_atlases = ['coords_power_2011', 'coords_dosenbach_2010']
+    if parlistfile is None and atlas_select in nilearn_parc_atlases:
         [label_names, _, parlistfile] = utils.nilearn_atlas_helper(atlas_select)
-        parcel_list = None
-        par_max = None
-        networks_list = None
-        coords = None
+        if parlistfile:
+            if not isinstance(parlistfile, str):
+                nib.save(parlistfile, "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz'))
+                parlistfile = "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz')
+            [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
+            networks_list = None
+        else:
+            raise ValueError("%s%s%s" % ('ERROR: Atlas file for ', atlas_select, ' not found!'))
     elif parlistfile is None and parc is False and atlas_select in nilearn_coord_atlases:
         print('Fetching coordinates and labels from nilearn coordinate-based atlases')
         # Fetch nilearn atlas coords
@@ -444,11 +449,27 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
                             dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
                             label_names = dict_df['Region'].tolist()
                             #print(label_names)
-                        except RuntimeError:
-                            print("ERROR: label names from label reference file failed to populate or are invalid")
+                        except:
+                            print("WARNING: label names from label reference file failed to populate or are invalid. Attempting AAL naming...")
+                            try:
+                                label_names = nodemaker.AAL_naming(coords)
+                                # print(label_names)
+                            except:
+                                print('AAL reference labeling failed!')
+                                label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                     else:
-                        raise FileNotFoundError("ERROR: label reference file not found")
+                        if use_AAL_naming is True:
+                            try:
+                                label_names = nodemaker.AAL_naming(coords)
+                                # print(label_names)
+                            except:
+                                print('AAL reference labeling failed!')
+                                label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                        else:
+                            print('Using generic labeled numbering...')
+                            label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                 except:
+                    print("Label reference file not found. Attempting AAL naming...")
                     if use_AAL_naming is True:
                         try:
                             label_names = nodemaker.AAL_naming(coords)
@@ -480,14 +501,19 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
     base_path = utils.get_file()
 
     # Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
-    nilearn_parc_atlases = ['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
-    nilearn_coord_atlases = ['harvard_oxford', 'msdl', 'coords_power_2011', 'smith_2009', 'basc_multiscale_2015', 'allen_2011', 'coords_dosenbach_2010']
-    if parlistfile is None and parc is False and atlas_select in nilearn_parc_atlases:
+    nilearn_parc_atlases = ['atlas_harvard_oxford', 'atlas_aal', 'atlas_destrieux_2009',
+                            'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe']
+    nilearn_coord_atlases = ['coords_power_2011', 'coords_dosenbach_2010']
+    if parlistfile is None and atlas_select in nilearn_parc_atlases:
         [label_names, _, parlistfile] = utils.nilearn_atlas_helper(atlas_select)
-        parcel_list = None
-        par_max = None
-        networks_list = None
-        coords = None
+        if parlistfile:
+            if not isinstance(parlistfile, str):
+                nib.save(parlistfile, "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz'))
+                parlistfile = "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz')
+            [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
+            networks_list = None
+        else:
+            raise ValueError("%s%s%s" % ('ERROR: Atlas file for ', atlas_select, ' not found!'))
     elif parlistfile is None and parc is False and atlas_select in nilearn_coord_atlases:
         print('Fetching coordinates and labels from nilearn coordinate-based atlases')
         # Fetch nilearn atlas coords
@@ -531,11 +557,27 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
                             dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
                             label_names = dict_df['Region'].tolist()
                             #print(label_names)
-                        except RuntimeError:
-                            print("ERROR: label names from label reference file failed to populate or are invalid")
+                        except:
+                            print("WARNING: label names from label reference file failed to populate or are invalid. Attempting AAL naming...")
+                            try:
+                                label_names = nodemaker.AAL_naming(coords)
+                                # print(label_names)
+                            except:
+                                print('AAL reference labeling failed!')
+                                label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                     else:
-                        raise FileNotFoundError("ERROR: label reference file not found")
+                        if use_AAL_naming is True:
+                            try:
+                                label_names = nodemaker.AAL_naming(coords)
+                                # print(label_names)
+                            except:
+                                print('AAL reference labeling failed!')
+                                label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                        else:
+                            print('Using generic labeled numbering...')
+                            label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                 except:
+                    print("Label reference file not found. Attempting AAL naming...")
                     if use_AAL_naming is True:
                         try:
                             label_names = nodemaker.AAL_naming(coords)
@@ -609,6 +651,7 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
         net_parcels_map_nifti = None
         print('No additional masking...')
 
+    coords = list(tuple(x) for x in coords)
     if pick_dump is True:
         # Save coords to pickle
         coord_path = "%s%s" % (dir_path, '/whole_brain_atlas_coords_wb.pkl')

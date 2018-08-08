@@ -4,9 +4,8 @@ Credits
 
 Development Lead
 ----------------
-
-* Derek Pisner <dpisner@utexas.edu>
+Derek Pisner <dpisner@utexas.edu>
 
 Contributors
 ------------
-Aki Nikolaidis, Andrew Reineberg, Charles Laidi, Josh Faskowitz, James Kunert-Graf, Cameron Craddock
+Ryan Hammonds, Aki Nikolaidis, Kamil Bonna, Miriam Kosik, Karolina Finc, James Kunert-Graf, Mathias Goncalves, Andrew Reineberg, Charles Laidi, Josh Faskowitz, Cameron Craddock

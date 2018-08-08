@@ -13,13 +13,14 @@ def plot_conn_mat(conn_matrix, label_names, out_path_fig):
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
+    from pynets import thresholding
 
     dpi_resolution = 500
 
+    conn_matrix = np.array(thresholding.normalize(np.array(thresholding.autofix(conn_matrix))))
     rois_num = conn_matrix.shape[0]
     plt.figure(figsize=(10, 10))
-    [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
-    plt.imshow(conn_matrix, interpolation="nearest", vmax=z_max, vmin=z_min, cmap=plt.cm.RdBu_r)
+    plt.imshow(conn_matrix, interpolation="nearest", vmax=float(1.0), vmin=float(-1.0), cmap=plt.cm.RdBu_r)
     # And display the labels
     if rois_num < 100:
         if all(isinstance(item, int) for item in label_names) is False:
@@ -30,40 +31,29 @@ def plot_conn_mat(conn_matrix, label_names, out_path_fig):
             plt.yticks(range(rois_num))
     plt.grid(False)
     #plt.gcf().subplots_adjust(left=0.8)
+    plt.tight_layout()
     plt.savefig(out_path_fig, dpi=dpi_resolution)
     plt.close()
     return
 
 
-def plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr, node_size):
+def plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr, node_size, smooth):
     from pynets import plotting
     if mask:
-        if network:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), '_', network, '_', str(os.path.basename(mask).split('.')[0]), '_func_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '_network.png')
-        else:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), '_', str(os.path.basename(mask).split('.')[0]), '_func_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '.png')
+        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(os.path.basename(mask).split('.')[0]), '_func_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else 'nosm.png'))
     else:
-        if network:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), '_', network, '_func_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '_network.png')
-        else:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), '_func_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '.png')
+        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), 'func_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else 'nosm.png'))
     plotting.plot_conn_mat(conn_matrix, label_names, out_path_fig)
     return
 
 
 def plot_conn_mat_struct(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr,
-                         node_size):
+                         node_size, smooth):
     from pynets import plotting
     if mask:
-        if network:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), '_', network, '_', str(os.path.basename(mask).split('.')[0]), '_struct_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '_network.png')
-        else:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), '_', str(os.path.basename(mask).split('.')[0]), '_struct_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '.png')
+        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(os.path.basename(mask).split('.')[0]), '_struct_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else 'nosm.png'))
     else:
-        if network:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), '_', network, '_struct_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '_network.png')
-        else:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), '_struct_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '.png')
+        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), 'struct_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else 'nosm.png'))
     plotting.plot_conn_mat(conn_matrix, label_names, out_path_fig)
     return
 
@@ -116,22 +106,26 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
         return label_arr, clust_levels_tmp
 
     if comm == 'nodes' and len(conn_matrix) > 40:
-        from pynets.netstats import modularity_louvain_dir
+        from pynets.netstats import modularity_louvain_und_sign
         if len(conn_matrix) < 50:
-            gamma = 0.00001
-        elif len(conn_matrix) < 100:
-            gamma = 0.0001
-        elif len(conn_matrix) < 200:
             gamma = 0.001
-        elif len(conn_matrix) < 500:
+        elif len(conn_matrix) < 100:
             gamma = 0.01
-        elif len(conn_matrix) < 1000:
+        elif len(conn_matrix) < 200:
+            gamma = 0.1
+        elif len(conn_matrix) < 250:
+            gamma = 0.25
+        elif len(conn_matrix) < 500:
             gamma = 0.5
         else:
             gamma = 1
 
-        [node_comm_aff_mat, q] = modularity_louvain_dir(conn_matrix, hierarchy=True, gamma=gamma)
-        print("%s%s%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities with gamma=', str(gamma), '...'))
+        try:
+            [node_comm_aff_mat, q] = modularity_louvain_und_sign(conn_matrix, gamma=gamma)
+            print("%s%s%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities with gamma=', str(gamma), '...'))
+        except:
+            print('WARNING: Louvain community detection failed. Proceeding with single community affiliation vector...')
+            node_comm_aff_mat = np.ones(conn_matrix.shape[0]).astype('int')
         clust_levels = len(node_comm_aff_mat)
         clust_levels_tmp = int(clust_levels) - 1
         mask_mat = np.squeeze(np.array([node_comm_aff_mat == 0]).astype('int'))
@@ -227,7 +221,8 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
         connectogram_plot = "%s%s%s" % (dir_path, '/', json_file_name)
         fdg_js_sub = "%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_fdg_', conn_model, '_network.js')
         fdg_js_sub_name = "%s%s%s%s%s%s" % (str(ID), '_', network, '_fdg_', conn_model, '_network.js')
-        connectogram_js_sub = "%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_connectogram_', conn_model, '_network.js')
+        connectogram_js_sub = "%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_connectogram_', conn_model,
+                                                    '_network.js')
         connectogram_js_name = "%s%s%s%s%s%s" % (str(ID), '_', network, '_connectogram_', conn_model, '_network.js')
     else:
         json_file_name = "%s%s%s%s" % (str(ID), '_connectogram_', conn_model, '.json')
@@ -307,41 +302,46 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
     #plt.tight_layout()
     if network:
         plt.title("%s%s" % (network, ' Time Series'))
-        out_path_fig = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_TS_plot.png')
+        out_path_fig = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, 'rsn_ts_plot.png')
     else:
         plt.title('Time Series')
-        out_path_fig = "%s%s%s%s" % (dir_path, '/', ID, '_Whole_Brain_TS_plot.png')
+        out_path_fig = "%s%s%s%s" % (dir_path, '/', ID, '_wb_ts_plot.png')
     plt.savefig(out_path_fig)
     plt.close()
 
 
-def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, thr, node_size,
-             edge_threshold):
+def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, thr,
+             node_size, edge_threshold, smooth, prune, parlistfile):
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
     import pkg_resources
     import networkx as nx
-    from pynets import plotting
-    from pynets.netstats import most_important
+    from pynets import plotting, thresholding
+    from pynets.netstats import most_important, prune_disconnected
     try:
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
 
-    pruning = True
     dpi_resolution = 500
     if '\'b' in atlas_select:
         atlas_select = atlas_select.decode('utf-8')
-    if pruning is True:
+    if (prune == 1 or prune == 2) and len(coords) == conn_matrix.shape[0]:
         G_pre = nx.from_numpy_matrix(conn_matrix)
-        [G, pruned_nodes] = most_important(G_pre)
+        if prune == 1:
+            [G, pruned_nodes] = prune_disconnected(G_pre)
+        elif prune == 2:
+            [G, pruned_nodes] = most_important(G_pre)
+        else:
+            G = G_pre
+            pruned_nodes = []
         pruned_nodes.sort(reverse=True)
+        print('(Display)')
         coords_pre = list(coords)
         label_names_pre = list(label_names)
         if len(pruned_nodes) > 0:
-            print('Pruning less central nodes for display...')
             for j in pruned_nodes:
                 label_names_pre.pop(j)
                 coords_pre.pop(j)
@@ -351,39 +351,35 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
         else:
             print('No nodes to prune for plot...')
 
+    coords = list(tuple(x) for x in coords)
     # Plot connectogram
     if len(conn_matrix) > 20:
         try:
             plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
-        except RuntimeError:
-            print('\n\n\nError: Connectogram plotting failed!')
+        except:
+            print('\n\n\nWarning: Connectogram plotting failed!')
     else:
         print('Warning: Cannot plot connectogram for graphs smaller than 20 x 20!')
 
     # Plot adj. matrix based on determined inputs
+    if not node_size or node_size == 'None':
+        node_size = 'parc'
     plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr,
-                                node_size)
+                                node_size, smooth)
 
     # Plot connectome
     if mask:
-        if network:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(os.path.basename(mask).split('.')[0]), '_', str(network), '_', str(thr), '_', str(node_size), '_func_glass_viz.png')
-        else:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(os.path.basename(mask).split('.')[0]), '_', str(thr), '_', str(node_size), '_func_glass_viz.png')
+        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(os.path.basename(mask).split('.')[0]), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else 'nosm_'), 'func_glass_viz.png')
         # Save coords to pickle
         coord_path = "%s%s%s%s" % (dir_path, '/coords_', os.path.basename(mask).split('.')[0], '_plotting.pkl')
         with open(coord_path, 'wb') as f:
             pickle.dump(coords, f, protocol=2)
-        net_parcels_map_nifti = None
         # Save labels to pickle
         labels_path = "%s%s%s%s" % (dir_path, '/labelnames_', os.path.basename(mask).split('.')[0], '_plotting.pkl')
         with open(labels_path, 'wb') as f:
             pickle.dump(label_names, f, protocol=2)
     else:
-        if network:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(network), '_', str(thr), '_', str(node_size), '_func_glass_viz.png')
-        else:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(thr), '_', str(node_size), '_func_glass_viz.png')
+        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else 'nosm_'), 'func_glass_viz.png')
         # Save coords to pickle
         coord_path = "%s%s" % (dir_path, '/coords_plotting.pkl')
         with open(coord_path, 'wb') as f:
@@ -392,21 +388,28 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
         labels_path = "%s%s" % (dir_path, '/labelnames_plotting.pkl')
         with open(labels_path, 'wb') as f:
             pickle.dump(label_names, f, protocol=2)
-    #niplot.plot_connectome(conn_matrix, coords, edge_threshold=edge_threshold, node_size=20, colorbar=True, output_file=out_path_fig)
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
     connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
-    connectome.add_overlay(ch2better_loc, alpha=0.4, cmap=plt.cm.gray)
-    [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
-    node_size_plot = int(node_size)
-    connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap='Greens', edge_vmax=z_max,
-                         edge_vmin=z_min, node_size=node_size_plot)
-    connectome.savefig(out_path_fig, dpi=dpi_resolution)
-    #connectome.savefig(out_path_fig, dpi=dpi_resolution, facecolor ='k', edgecolor ='k')
+    connectome.add_overlay(ch2better_loc, alpha=0.35, cmap=plt.cm.gray)
+    conn_matrix = np.array(thresholding.normalize(np.array(thresholding.autofix(conn_matrix))))
+    # [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
+    if node_size == 'parc':
+        node_size_plot = int(2)
+        if parlistfile:
+            connectome.add_contours(parlistfile, filled=False, alpha=0.10, colors='w')
+    else:
+        node_size_plot = int(node_size)
+    if len(coords) != conn_matrix.shape[0]:
+        raise RuntimeWarning('WARNING: Number of coordinates does not match conn_matrix dimensions. If you are using disparity filtering, try relaxing the α threshold.')
+    else:
+        connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap='Blues', edge_vmax=float(1.0),
+                             edge_vmin=float(-1.0), node_size=node_size_plot)
+        connectome.savefig(out_path_fig, dpi=dpi_resolution)
     return
 
 
 def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, mask, coords,
-                        dir_path, conn_model, thr, node_size):
+                        dir_path, conn_model, thr, node_size, smooth):
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
@@ -438,9 +441,9 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
         node_size = 'parc'
 
     if network:
-        probtrackx_output_dir_path = "%s%s%s%s%s" % (dir_path, '/probtrackx_', str(node_size), '_', str(network))
+        probtrackx_output_dir_path = "%s%s%s%s%s%s" % (dir_path, '/probtrackx_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else 'nosm_'), network)
     else:
-        probtrackx_output_dir_path = "%s%s%s" % (dir_path, '/probtrackx_WB_', str(node_size))
+        probtrackx_output_dir_path = "%s%s%s%s%s" % (dir_path, '/probtrackx_WB_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'))
     # # Auto-set INPUTS# #
 
     # G_pre=nx.from_numpy_matrix(conn_matrix_symm)
@@ -462,7 +465,7 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
 
     # Plot adj. matrix based on determined inputs
     plotting.plot_conn_mat_struct(conn_matrix_symm, conn_model, atlas_select, dir_path, ID, network, label_names, mask,
-                                  thr, node_size)
+                                  thr, node_size, smooth)
 
     if bpx_trx is True:
         # Prepare glass brain figure
@@ -497,6 +500,8 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
         flirt.run()
 
         fdt_paths_MNI_loc = "%s%s" % (probtrackx_output_dir_path, '/fdt_paths_MNI.nii.gz')
+    else:
+        fdt_paths_MNI_loc = None
 
     colors.Normalize(vmin=-1, vmax=1)
     clust_pal = sns.color_palette("Blues_r", 4)
@@ -509,23 +514,17 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
     [z_min, z_max] = -np.abs(conn_matrix_symm).max(), np.abs(conn_matrix_symm).max()
     connectome.add_graph(conn_matrix_symm, coords, edge_threshold=edge_threshold, node_color=clust_colors,
                          edge_cmap=plt.cm.binary, edge_vmax=z_max, edge_vmin=z_min, node_size=4)
-    if bpx_trx is True:
+    if bpx_trx is True and fdt_paths_MNI_loc:
         connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=niplot.cm.cyan_copper_r,
                                alpha=0.6)
 
     # Plot connectome
     if mask:
-        if network:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(os.path.basename(mask).split('.')[0]), '_', str(network), '_', str(thr), '_', str(node_size), '_struct_glass_viz.png')
-        else:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(os.path.basename(mask).split('.')[0]), '_', str(thr), '_', str(node_size), '_struct_glass_viz.png')
+        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(os.path.basename(mask).split('.')[0]), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else 'nosm_'), 'struct_glass_viz.png')
         coord_path = "%s%s%s%s" % (dir_path, '/struct_coords_', os.path.basename(mask).split('.')[0], '_plotting.pkl')
         labels_path = "%s%s%s%s" % (dir_path, '/struct_labelnames_', os.path.basename(mask).split('.')[0], '_plotting.pkl')
     else:
-        if network:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(network), '_', str(thr), '_', str(node_size), '_struct_glass_viz.png')
-        else:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(thr), '_', str(node_size), '_struct_glass_viz.png')
+        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else 'nosm_'), 'struct_glass_viz.png')
         coord_path = "%s%s" % (dir_path, '/struct_coords_plotting.pkl')
         labels_path = "%s%s" % (dir_path, '/struct_labelnames_plotting.pkl')
     # Save coords to pickle
@@ -542,11 +541,13 @@ def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpost
 
 def plot_graph_measure_hists(df_concat, measures, net_pick_file):
     import matplotlib.pyplot as plt
+    import pandas as pd
     print('Saving model plots...')
     for name in measures:
         x = np.array(df_concat[name])
         fig, ax = plt.subplots(tight_layout=True)
-        if True in np.isnan(x):
+        pd.isnull(np.array([np.nan, 0], dtype=float))
+        if True in pd.isnull(x):
             x = x[~np.isnan(x)]
             if len(x) > 0:
                 print("%s%s%s" % ('NaNs encountered for ', name,

@@ -11,7 +11,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                 dens_thresh, conf, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr,
                                 multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step,
                                 k_clustering, user_atlas_list, clust_mask_list, node_size_list, conn_model_list,
-                                min_span_tree, use_AAL_naming):
+                                min_span_tree, use_AAL_naming, smooth, smooth_list, disp_filt, prune):
     import os
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -32,7 +32,8 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                       'procmem', 'dir_path', 'k',
                                                       'clust_mask', 'k_min', 'k_max',
                                                       'k_step', 'k_clustering', 'user_atlas_list',
-                                                      'min_span_tree', 'use_AAL_naming']), name='inputnode')
+                                                      'min_span_tree', 'use_AAL_naming', 'smooth',
+                                                      'disp_filt', 'prune']), name='inputnode')
 
     #2) Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
     inputnode.inputs.func_file = func_file
@@ -64,11 +65,13 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     inputnode.inputs.min_thr = min_thr
     inputnode.inputs.step_thr = step_thr
     inputnode.inputs.clust_mask_list = clust_mask_list
-    inputnode.inputs.node_size_list = node_size_list
     inputnode.inputs.multi_nets = None
     inputnode.inputs.conn_model_list = conn_model_list
     inputnode.inputs.min_span_tree = min_span_tree
     inputnode.inputs.use_AAL_naming = use_AAL_naming
+    inputnode.inputs.smooth = smooth
+    inputnode.inputs.disp_filt = disp_filt
+    inputnode.inputs.prune = prune
 
     #3) Add variable to function nodes
     # Create function nodes
@@ -77,8 +80,10 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                            function=utils.individual_tcorr_clustering,
                                            imports=import_list), name="clustering_node")
     if k_clustering == 2 or k_clustering == 3 or k_clustering == 4:
-        clustering_node._mem_gb = 8
-        clustering_node.n_procs = 1
+        clustering_node._mem_gb = 16
+        clustering_node.n_procs = 4
+        clustering_node.interface.mem_gb = 16
+        clustering_node.interface.n_procs = 4
     WB_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt',
                                                                        'parc', 'func_file', 'mask', 'use_AAL_naming'],
                                                           output_names=['label_names', 'coords', 'atlas_select',
@@ -104,6 +109,7 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     node_gen_node._mem_gb = 2
     node_gen_node.n_procs = 1
     # Extract time-series from nodes
+    extract_ts_iterables = []
     if parc is True:
         save_nifti_parcels_node = pe.Node(niu.Function(input_names=['ID', 'dir_path', 'mask', 'network',
                                                                     'net_parcels_map_nifti'],
@@ -111,25 +117,27 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                           name="save_nifti_parcels_node")
         # extract time series from whole brain parcellaions:
         extract_ts_wb_node = pe.Node(niu.Function(input_names=['net_parcels_map_nifti', 'conf', 'func_file', 'coords',
-                                                               'mask', 'dir_path', 'ID', 'network'],
-                                                  output_names=['ts_within_nodes', 'node_size'],
+                                                               'mask', 'dir_path', 'ID', 'network', 'smooth'],
+                                                  output_names=['ts_within_nodes', 'node_size', 'smooth'],
                                                   function=graphestimation.extract_ts_parc, imports=import_list),
                                      name="extract_ts_wb_parc_node")
     else:
         # Extract within-spheres time-series from funct file
         extract_ts_wb_node = pe.Node(niu.Function(input_names=['node_size', 'conf', 'func_file', 'coords', 'dir_path',
-                                                               'ID', 'mask', 'network'],
-                                                  output_names=['ts_within_nodes', 'node_size'],
+                                                               'ID', 'mask', 'network', 'smooth'],
+                                                  output_names=['ts_within_nodes', 'node_size', 'smooth'],
                                                   function=graphestimation.extract_ts_coords, imports=import_list),
                                      name="extract_ts_wb_coords_node")
         if node_size_list:
-            node_size_iterables = []
-            node_size_iterables.append(("node_size", node_size_list))
-            extract_ts_wb_node.iterables = node_size_iterables
+            extract_ts_iterables.append(("node_size", node_size_list))
+            extract_ts_wb_node.iterables = extract_ts_iterables
+    if smooth_list:
+        extract_ts_iterables.append(("smooth", smooth_list))
+        extract_ts_wb_node.iterables = extract_ts_iterables
     extract_ts_wb_node.interface.mem_gb = 6
-    extract_ts_wb_node.interface.n_procs = 1
+    extract_ts_wb_node.interface.n_procs = 2
     extract_ts_wb_node._mem_gb = 6
-    extract_ts_wb_node.n_procs = 1
+    extract_ts_wb_node.n_procs = 2
 
     get_conn_matrix_node = pe.Node(niu.Function(input_names=['time_series', 'conn_model'],
                                                 output_names=['conn_matrix', 'conn_model'],
@@ -143,9 +151,9 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
 
     thresh_func_node = pe.Node(niu.Function(input_names=['dens_thresh', 'thr', 'conn_matrix', 'conn_model',
                                                          'network', 'ID', 'dir_path', 'mask', 'node_size',
-                                                         'min_span_tree'],
+                                                         'min_span_tree', 'smooth', 'disp_filt', 'parc'],
                                             output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr',
-                                                          'node_size', 'network', 'conn_model', 'mask'],
+                                                          'node_size', 'network', 'conn_model', 'mask', 'smooth'],
                                             function=thresholding.thresh_func, imports=import_list),
                                name="thresh_func_node")
 
@@ -153,14 +161,15 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
     if plot_switch is True:
         plot_all_node = pe.Node(niu.Function(input_names=['conn_matrix', 'conn_model', 'atlas_select', 'dir_path',
                                                           'ID', 'network', 'label_names', 'mask', 'coords', 'thr',
-                                                          'node_size', 'edge_threshold'],
+                                                          'node_size', 'edge_threshold', 'smooth', 'prune',
+                                                          'parlistfile'],
                                              output_names='None',
                                              function=plotting.plot_all, imports=import_list),
                                 name="plot_all_node")
 
     outputnode = pe.JoinNode(interface=niu.IdentityInterface(fields=['est_path', 'thr', 'network', 'conn_model',
-                                                                     'node_size']), name='outputnode',
-                             joinfield=['est_path', 'thr', 'network', 'conn_model', 'node_size'],
+                                                                     'node_size', 'smooth']), name='outputnode',
+                             joinfield=['est_path', 'thr', 'network', 'conn_model', 'node_size', 'smooth'],
                              joinsource='thresh_func_node')
 
     thresh_func_node_iterables = []
@@ -252,7 +261,8 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                          ('dir_path', 'dir_path'), ('parcel_list', 'parcel_list'),
                                                          ('par_max', 'par_max'), ('networks_list', 'networks_list')]),
         (inputnode, extract_ts_wb_node, [('conf', 'conf'), ('func_file', 'func_file'), ('node_size', 'node_size'),
-                                         ('mask', 'mask'), ('ID', 'ID'), ('network', 'network'), ('thr', 'thr')]),
+                                         ('mask', 'mask'), ('ID', 'ID'), ('network', 'network'), ('thr', 'thr'),
+                                         ('smooth', 'smooth')]),
         (WB_fetch_nodes_and_labels_node, extract_ts_wb_node, [('dir_path', 'dir_path')]),
         (node_gen_node, extract_ts_wb_node, [('net_parcels_map_nifti', 'net_parcels_map_nifti'),
                                              ('coords', 'coords')]),
@@ -261,26 +271,28 @@ def wb_functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                        ('ID', 'ID'),
                                        ('mask', 'mask'),
                                        ('network', 'network'),
-                                       ('min_span_tree', 'min_span_tree')]),
+                                       ('min_span_tree', 'min_span_tree'),
+                                       ('disp_filt', 'disp_filt'),
+                                       ('parc', 'parc')]),
         (WB_fetch_nodes_and_labels_node, thresh_func_node, [('dir_path', 'dir_path')]),
         (extract_ts_wb_node, get_conn_matrix_node, [('ts_within_nodes', 'time_series')]),
-        (extract_ts_wb_node, thresh_func_node, [('node_size', 'node_size')]),
+        (extract_ts_wb_node, thresh_func_node, [('node_size', 'node_size'), ('smooth', 'smooth')]),
         (get_conn_matrix_node, thresh_func_node, [('conn_matrix', 'conn_matrix'), ('conn_model', 'conn_model')]),
-        (thresh_func_node, outputnode, [('est_path', 'est_path'),
-                                        ('thr', 'thr'),
-                                        ('node_size', 'node_size'),
-                                        ('network', 'network'),
-                                        ('conn_model', 'conn_model')]),
+        (thresh_func_node, outputnode, [('est_path', 'est_path'), ('thr', 'thr'), ('node_size', 'node_size'),
+                                        ('network', 'network'), ('conn_model', 'conn_model'), ('smooth', 'smooth')])
         ])
 
     if plot_switch is True:
         wb_functional_connectometry_wf.connect([(inputnode, plot_all_node, [('ID', 'ID'),
                                                                             ('mask', 'mask'),
-                                                                            ('network', 'network')]),
-                                                (extract_ts_wb_node, plot_all_node, [('node_size', 'node_size')]),
+                                                                            ('network', 'network'),
+                                                                            ('prune', 'prune')]),
+                                                (extract_ts_wb_node, plot_all_node, [('node_size', 'node_size'),
+                                                                                     ('smooth', 'smooth')]),
                                                 (WB_fetch_nodes_and_labels_node, plot_all_node,
                                                  [('dir_path', 'dir_path'),
-                                                  ('atlas_select', 'atlas_select')]),
+                                                  ('atlas_select', 'atlas_select'),
+                                                  ('parlistfile', 'parlistfile')]),
                                                 (node_gen_node, plot_all_node, [('label_names', 'label_names'),
                                                                                 ('coords', 'coords')]),
                                                 (thresh_func_node, plot_all_node,
@@ -367,7 +379,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                  conn_model, dens_thresh, conf, plot_switch, parc, ref_txt, procmem, dir_path,
                                  multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max,
                                  k_step, k_clustering, user_atlas_list, clust_mask_list, node_size_list, conn_model_list,
-                                 min_span_tree, use_AAL_naming):
+                                 min_span_tree, use_AAL_naming, smooth, smooth_list, disp_filt, prune):
     import os
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -389,7 +401,8 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                       'procmem', 'dir_path', 'k',
                                                       'clust_mask', 'k_min', 'k_max',
                                                       'k_step', 'k_clustering', 'user_atlas_list',
-                                                      'min_span_tree', 'use_AAL_naming']), name='inputnode')
+                                                      'min_span_tree', 'use_AAL_naming', 'smooth',
+                                                      'disp_filt', 'prune']), name='inputnode')
 
     #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
     inputnode.inputs.func_file = func_file
@@ -421,11 +434,13 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     inputnode.inputs.min_thr = min_thr
     inputnode.inputs.step_thr = step_thr
     inputnode.inputs.clust_mask_list = clust_mask_list
-    inputnode.inputs.node_size_list = node_size_list
     inputnode.inputs.multi_nets = multi_nets
     inputnode.inputs.conn_model_list = conn_model_list
     inputnode.inputs.min_span_tree = min_span_tree
     inputnode.inputs.use_AAL_naming = use_AAL_naming
+    inputnode.inputs.smooth = smooth
+    inputnode.inputs.disp_filt = disp_filt
+    inputnode.inputs.prune = prune
 
     #3) Add variable to function nodes
     # Create function nodes
@@ -434,8 +449,10 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                            function=utils.individual_tcorr_clustering,
                                            imports=import_list), name="clustering_node")
     if k_clustering == 2 or k_clustering == 3 or k_clustering == 4:
-        clustering_node._mem_gb = 8
-        clustering_node.n_procs = 1
+        clustering_node._mem_gb = 16
+        clustering_node.n_procs = 4
+        clustering_node.interface.mem_gb = 16
+        clustering_node.interface.n_procs = 4
     RSN_fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt',
                                                                         'parc', 'func_file', 'use_AAL_naming'],
                                                            output_names=['label_names', 'coords', 'atlas_select',
@@ -470,6 +487,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                        function=utils.save_RSN_coords_and_labels_to_pickle,
                                                        imports=import_list), name="save_coords_and_labels_node")
     # Extract time-series from nodes
+    extract_ts_iterables = []
     if parc is True:
         save_nifti_parcels_node = pe.Node(niu.Function(input_names=['ID', 'dir_path', 'mask', 'network',
                                                                     'net_parcels_map_nifti'],
@@ -477,25 +495,27 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                           name="save_nifti_parcels_node")
         # Extract time series from whole brain parcellaions:
         extract_ts_rsn_node = pe.Node(niu.Function(input_names=['net_parcels_map_nifti', 'conf', 'func_file', 'coords',
-                                                                'mask', 'dir_path', 'ID', 'network'],
-                                                   output_names=['ts_within_nodes', 'node_size'],
+                                                                'mask', 'dir_path', 'ID', 'network', 'smooth'],
+                                                   output_names=['ts_within_nodes', 'node_size', 'smooth'],
                                                    function=graphestimation.extract_ts_parc, imports=import_list),
                                       name="extract_ts_rsn_parc_node")
     else:
         # Extract within-spheres time-series from funct file
         extract_ts_rsn_node = pe.Node(niu.Function(input_names=['node_size', 'conf', 'func_file', 'coords', 'dir_path',
-                                                                'ID', 'mask', 'network'],
-                                                   output_names=['ts_within_nodes', 'node_size'],
+                                                                'ID', 'mask', 'network', 'smooth'],
+                                                   output_names=['ts_within_nodes', 'node_size', 'smooth'],
                                                    function=graphestimation.extract_ts_coords, imports=import_list),
                                       name="extract_ts_rsn_coords_node")
         if node_size_list:
-            node_size_iterables = []
-            node_size_iterables.append(("node_size", node_size_list))
-            extract_ts_rsn_node.iterables = node_size_iterables
+            extract_ts_iterables.append(("node_size", node_size_list))
+            extract_ts_rsn_node.iterables = extract_ts_iterables
+    if smooth_list:
+        extract_ts_iterables.append(("smooth", smooth_list))
+        extract_ts_rsn_node.iterables = extract_ts_iterables
     extract_ts_rsn_node.interface.mem_gb = 6
-    extract_ts_rsn_node.interface.n_procs = 1
+    extract_ts_rsn_node.interface.n_procs = 2
     extract_ts_rsn_node._mem_gb = 6
-    extract_ts_rsn_node.n_procs = 1
+    extract_ts_rsn_node.n_procs = 2
 
     get_conn_matrix_node = pe.Node(niu.Function(input_names=['time_series', 'conn_model'],
                                                 output_names=['conn_matrix', 'conn_model'],
@@ -508,9 +528,9 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
 
     thresh_func_node = pe.Node(niu.Function(input_names=['dens_thresh', 'thr', 'conn_matrix', 'conn_model',
                                                          'network', 'ID', 'dir_path', 'mask', 'node_size',
-                                                         'min_span_tree'],
+                                                         'min_span_tree', 'smooth', 'disp_filt', 'parc'],
                                             output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr',
-                                                          'node_size', 'network', 'conn_model', 'mask'],
+                                                          'node_size', 'network', 'conn_model', 'mask', 'smooth'],
                                             function=thresholding.thresh_func, imports=import_list),
                                name="thresh_func_node")
 
@@ -518,12 +538,13 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
     if plot_switch is True:
         plot_all_node = pe.Node(niu.Function(input_names=['conn_matrix', 'conn_model', 'atlas_select', 'dir_path',
                                                           'ID', 'network', 'label_names', 'mask', 'coords', 'thr',
-                                                          'node_size', 'edge_threshold'], output_names='None',
+                                                          'node_size', 'edge_threshold', 'smooth', 'prune',
+                                                          'parlistfile'], output_names='None',
                                              function=plotting.plot_all, imports=import_list), name="plot_all_node")
     outputnode = pe.JoinNode(interface=niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network',
-                                                                     'conn_model']),
+                                                                     'conn_model', 'smooth']),
                              name='outputnode',
-                             joinfield=['est_path', 'thr', 'node_size', 'network', 'conn_model'],
+                             joinfield=['est_path', 'thr', 'node_size', 'network', 'conn_model', 'smooth'],
                              joinsource='thresh_func_node')
 
     thresh_func_node_iterables = []
@@ -633,11 +654,8 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                                                  ('net_label_names', 'label_names'),
                                                                  ('network', 'network')]),
         (RSN_fetch_nodes_and_labels_node, save_coords_and_labels_node, [('dir_path', 'dir_path')]),
-        (inputnode, extract_ts_rsn_node, [('conf', 'conf'),
-                                          ('func_file', 'func_file'),
-                                          ('node_size', 'node_size'),
-                                          ('mask', 'mask'),
-                                          ('ID', 'ID')]),
+        (inputnode, extract_ts_rsn_node, [('conf', 'conf'), ('func_file', 'func_file'), ('node_size', 'node_size'),
+                                          ('mask', 'mask'), ('ID', 'ID'), ('smooth', 'smooth')]),
         (get_node_membership_node, extract_ts_rsn_node, [('network', 'network')]),
         (RSN_fetch_nodes_and_labels_node, extract_ts_rsn_node, [('dir_path', 'dir_path')]),
         (node_gen_node, extract_ts_rsn_node, [('net_parcels_map_nifti', 'net_parcels_map_nifti'),
@@ -646,26 +664,28 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
                                        ('thr', 'thr'),
                                        ('ID', 'ID'),
                                        ('mask', 'mask'),
-                                       ('min_span_tree', 'min_span_tree')]),
+                                       ('min_span_tree', 'min_span_tree'),
+                                       ('disp_filt', 'disp_filt'),
+                                       ('parc', 'parc')]),
         (RSN_fetch_nodes_and_labels_node, thresh_func_node, [('dir_path', 'dir_path')]),
         (get_node_membership_node, thresh_func_node, [('network', 'network')]),
         (extract_ts_rsn_node, get_conn_matrix_node, [('ts_within_nodes', 'time_series')]),
-        (extract_ts_rsn_node, thresh_func_node, [('node_size', 'node_size')]),
+        (extract_ts_rsn_node, thresh_func_node, [('node_size', 'node_size'), ('smooth', 'smooth')]),
         (get_conn_matrix_node, thresh_func_node, [('conn_matrix', 'conn_matrix'), ('conn_model', 'conn_model')]),
-        (thresh_func_node, outputnode, [('est_path', 'est_path'),
-                                        ('thr', 'thr'),
-                                        ('node_size', 'node_size'),
-                                        ('network', 'network'),
-                                        ('conn_model', 'conn_model')])
+        (thresh_func_node, outputnode, [('est_path', 'est_path'), ('thr', 'thr'), ('node_size', 'node_size'),
+                                        ('network', 'network'), ('conn_model', 'conn_model'), ('smooth', 'smooth')])
         ])
     if plot_switch is True:
         rsn_functional_connectometry_wf.connect([(inputnode, plot_all_node, [('ID', 'ID'),
                                                                              ('mask', 'mask'),
-                                                                             ('network', 'network')]),
-                                                (extract_ts_rsn_node, plot_all_node, [('node_size', 'node_size')]),
+                                                                             ('network', 'network'),
+                                                                             ('prune', 'prune')]),
+                                                (extract_ts_rsn_node, plot_all_node, [('node_size', 'node_size'),
+                                                                                      ('smooth', 'smooth')]),
                                                 (RSN_fetch_nodes_and_labels_node, plot_all_node,
                                                  [('dir_path', 'dir_path'),
-                                                  ('atlas_select', 'atlas_select')]),
+                                                  ('atlas_select', 'atlas_select'),
+                                                  ('parlistfile', 'parlistfile')]),
                                                 (node_gen_node, plot_all_node, [('label_names', 'label_names'),
                                                                                 ('coords', 'coords')]),
                                                 (thresh_func_node, plot_all_node,
@@ -758,7 +778,7 @@ def rsn_functional_connectometry(func_file, ID, atlas_select, network, node_size
 def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt,
                                 procmem, dir_path, dwi_dir, anat_loc, thr, dens_thresh, conn_model,
                                 user_atlas_list, multi_thr, multi_atlas, max_thr, min_thr, step_thr, node_size_list,
-                                num_total_samples, conn_model_list, min_span_tree, use_AAL_naming):
+                                num_total_samples, conn_model_list, min_span_tree, use_AAL_naming, disp_filt):
     import os.path
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -777,9 +797,9 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                                       'parlistfile', 'plot_switch', 'parc', 'ref_txt', 'procmem',
                                                       'dir_path', 'dwi_dir', 'anat_loc', 'thr', 'dens_thresh',
                                                       'conn_model', 'user_atlas_list', 'multi_thr', 'multi_atlas',
-                                                      'max_thr', 'min_thr', 'step_thr', 'node_size_list',
-                                                      'num_total_samples', 'min_span_tree',
-                                                      'use_AAL_naming']), name='inputnode')
+                                                      'max_thr', 'min_thr', 'step_thr', 'num_total_samples',
+                                                      'min_span_tree', 'use_AAL_naming', 'disp_filt']),
+                        name='inputnode')
 
     #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
     inputnode.inputs.ID = ID
@@ -805,11 +825,11 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
     inputnode.inputs.max_thr = max_thr
     inputnode.inputs.min_thr = min_thr
     inputnode.inputs.step_thr = step_thr
-    inputnode.inputs.node_size_list = node_size_list
     inputnode.inputs.num_total_samples = num_total_samples
     inputnode.inputs.conn_model_list = conn_model_list
     inputnode.inputs.min_span_tree = min_span_tree
     inputnode.inputs.use_AAL_naming = use_AAL_naming
+    inputnode.inputs.disp_filt = disp_filt
 
     #3) Add variable to function nodes
     # Create function nodes
@@ -902,7 +922,7 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                                   name="collect_struct_mapping_outputs_node")
     thresh_diff_node = pe.Node(niu.Function(input_names=['dens_thresh', 'thr', 'conn_model', 'network', 'ID',
                                                          'dir_path', 'mask', 'node_size', 'conn_matrix', 'parc',
-                                                         'min_span_tree'],
+                                                         'min_span_tree', 'disp_filt'],
                                             output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr',
                                                           'node_size', 'network', 'conn_model', 'mask'],
                                             function=thresholding.thresh_diff,
@@ -1044,7 +1064,8 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
                                        ('ID', 'ID'),
                                        ('mask', 'mask'),
                                        ('parc', 'parc'),
-                                       ('min_span_tree', 'min_span_tree')]),
+                                       ('min_span_tree', 'min_span_tree'),
+                                       ('disp_filt', 'disp_filt')]),
         (prep_nodes_node, thresh_diff_node, [('node_size', 'node_size')]),
         (collect_struct_mapping_outputs_node, thresh_diff_node, [('conn_matrix_symm', 'conn_matrix')]),
         (thresh_diff_node, outputnode, [('est_path', 'est_path'),
@@ -1175,7 +1196,8 @@ def wb_structural_connectometry(ID, atlas_select, network, node_size, mask, parl
 def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt,
                                  procmem, dir_path, dwi_dir, anat_loc, thr, dens_thresh, conn_model,
                                  user_atlas_list, multi_thr, multi_atlas, max_thr, min_thr, step_thr, node_size_list,
-                                 num_total_samples, conn_model_list, min_span_tree, multi_nets, use_AAL_naming):
+                                 num_total_samples, conn_model_list, min_span_tree, multi_nets, use_AAL_naming,
+                                 disp_filt):
     import os.path
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -1194,9 +1216,8 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                                       'parlistfile', 'plot_switch', 'parc', 'ref_txt', 'procmem',
                                                       'dir_path', 'dwi_dir', 'anat_loc', 'thr', 'dens_thresh',
                                                       'conn_model', 'user_atlas_list', 'multi_thr', 'multi_atlas',
-                                                      'max_thr', 'min_thr', 'step_thr', 'node_size_list',
-                                                      'num_total_samples', 'min_span_tree', 'multi_nets',
-                                                      'use_AAL_naming']),
+                                                      'max_thr', 'min_thr', 'step_thr', 'num_total_samples',
+                                                      'min_span_tree', 'multi_nets', 'use_AAL_naming', 'disp_filt']),
                         name='inputnode')
 
     # 2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
@@ -1223,12 +1244,12 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
     inputnode.inputs.max_thr = max_thr
     inputnode.inputs.min_thr = min_thr
     inputnode.inputs.step_thr = step_thr
-    inputnode.inputs.node_size_list = node_size_list
     inputnode.inputs.num_total_samples = num_total_samples
     inputnode.inputs.multi_nets = multi_nets
     inputnode.inputs.conn_model_list = conn_model_list
     inputnode.inputs.min_span_tree = min_span_tree
     inputnode.inputs.use_AAL_naming = use_AAL_naming
+    inputnode.inputs.disp_filt = disp_filt
 
     # 3) Add variable to function nodes
     # Create function nodes
@@ -1331,7 +1352,7 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                                   name="collect_struct_mapping_outputs_node")
     thresh_diff_node = pe.Node(niu.Function(input_names=['dens_thresh', 'thr', 'conn_model', 'network', 'ID',
                                                          'dir_path', 'mask', 'node_size', 'conn_matrix', 'parc',
-                                                         'min_span_tree'],
+                                                         'min_span_tree', 'disp_filt'],
                                             output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr',
                                                           'node_size', 'network', 'conn_model', 'mask'],
                                             function=thresholding.thresh_diff,
@@ -1488,7 +1509,8 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
                                        ('ID', 'ID'),
                                        ('mask', 'mask'),
                                        ('parc', 'parc'),
-                                       ('min_span_tree', 'min_span_tree')]),
+                                       ('min_span_tree', 'min_span_tree'),
+                                       ('disp_filt', 'disp_filt')]),
         (get_node_membership_node, thresh_diff_node, [('network', 'network')]),
         (prep_nodes_node, thresh_diff_node, [('node_size', 'node_size')]),
         (collect_struct_mapping_outputs_node, thresh_diff_node, [('conn_matrix_symm', 'conn_matrix')]),
@@ -1605,10 +1627,10 @@ def rsn_structural_connectometry(ID, atlas_select, network, node_size, mask, par
     if flexi_atlas is True:
         rsn_structural_connectometry_wf.disconnect([(inputnode, RSN_fetch_nodes_and_labels_node,
                                                     [('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')])
-                                                   ])
+                                                    ])
         rsn_structural_connectometry_wf.connect([(flexi_atlas_source, RSN_fetch_nodes_and_labels_node,
                                                  [('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')])
-                                                ])
+                                                 ])
     rsn_structural_connectometry_wf.config['execution']['crashdump_dir'] = rsn_structural_connectometry_wf.base_directory
     rsn_structural_connectometry_wf.config['execution']['crashfile_format'] = 'txt'
     rsn_structural_connectometry_wf.config['logging']['log_directory'] = rsn_structural_connectometry_wf.base_directory
