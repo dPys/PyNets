@@ -3,21 +3,22 @@
 # Created on Tue Nov  7 10:40:07 2017
 # Copyright (C) 2018
 # @author: Derek Pisner
-
-import sys
-import argparse
 import os
+import sys
+import warnings
+import argparse
 import timeit
 import numpy as np
-import warnings
 warnings.simplefilter("ignore")
-try:
-    from pynets.utils import do_dir_path
-except ImportError:
-    print('PyNets not installed! Ensure that you are using the correct python version.')
+
 
 # Parse args
-if __name__ == '__main__':
+def main():
+    try:
+        from pynets.utils import do_dir_path
+    except ImportError:
+        print('PyNets not installed! Ensure that you are using the correct python version.')
+
     if len(sys.argv) < 1:
         print("\nMissing command-line inputs! See help options with the -h flag.\n")
         sys.exit()
@@ -770,8 +771,8 @@ if __name__ == '__main__':
 
         if network is None and input_file:
             if k_clustering > 0:
-                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._n_procs = 4
-                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 16
+                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._n_procs = 2
+                meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 12
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
             if parc is True:
@@ -784,8 +785,8 @@ if __name__ == '__main__':
             meta_wf.get_node("%s%s%s" % ('wb_functional_connectometry_', ID, '.get_conn_matrix_node'))._mem_gb = 4
         elif network and input_file:
             if k_clustering > 0:
-                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._n_procs = 4
-                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 16
+                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._n_procs = 2
+                meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.clustering_node'))._mem_gb = 12
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._n_procs = 1
             meta_wf.get_node("%s%s%s" % ('rsn_functional_connectometry_', ID, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 2
             if parc is True:
@@ -1346,3 +1347,7 @@ if __name__ == '__main__':
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)
     print('---------------------------------------')
+
+
+if __name__ == '__main__':
+    main()
