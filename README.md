@@ -1,9 +1,10 @@
 PyNets™
 ======
+[![Build Status](https://travis-ci.org/dPys/PyNets.svg?branch=master)](https://travis-ci.org/dPys/PyNets)
+
 
 About
 -----
-[![Build Status](https://travis-ci.org/dPys/PyNets.svg?branch=master)](https://travis-ci.org/dPys/PyNets)
 A Fully-Automated Workflow for Reproducible Graph Analysis of Functional and Structural Connectomes
 
 PyNets harnesses the power of Nipype, Nilearn, and Networkx packages to automatically generate a variety of 'meta-connectomic' solutions on a subject-by-subject basis, using any combination of graph hyperparameters. PyNets utilities can be integrated with any existing preprocessing workflow, and a docker container is provided to uniquely facilitate complete reproducibility of executions.
