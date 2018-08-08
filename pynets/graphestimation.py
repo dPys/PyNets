@@ -229,8 +229,10 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
     if fast is True:
         ts_within_nodes = extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path)
     else:
+        detrending = True
         parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                      standardize=True, smoothing_fwhm=float(smooth),
+                                                     detrend=detrending,
                                                      memory=Memory(cachedir="%s%s%s" % (dir_path,
                                                                                         '/SpheresMasker_cache_',
                                                                                         str(ID)), verbose=2),
@@ -239,7 +241,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
         #                                              standardize=True)
         ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords),
-                        ' volumetric ROI\'s\n'))
+                        ' volumetric ROI\'s'))
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
     # Save time series as txt file
     utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)
@@ -257,8 +259,10 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
     if fast is True:
         ts_within_nodes = extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path)
     else:
+        detrending = True
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                        standardize=True, smoothing_fwhm=float(smooth),
+                                                       detrend=detrending,
                                                        memory=Memory(cachedir="%s%s%s" % (dir_path,
                                                                                           '/SpheresMasker_cache_',
                                                                                           str(ID)), verbose=2),
@@ -269,7 +273,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
 
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords),
                         ' coordinate ROI\'s'))
-    print("%s%s%s" % ('Using node radius: ', node_size, ' mm\n'))
+    print("%s%s%s" % ('Using node radius: ', node_size, ' mm'))
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
     # Save time series as txt file
     utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)

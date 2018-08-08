@@ -177,7 +177,7 @@ def smallworldness_measure(G, rG):
     return swm
 
 
-def smallworldness(G, rep = 100):
+def smallworldness(G, rep=1000):
     print("%s%s%s" % ('Estimating smallworldness using ', rep, ' random graphs...'))
     #import multiprocessing
     n = nx.number_of_nodes(G)
@@ -201,39 +201,6 @@ def smallworldness(G, rep = 100):
     #ss = result.get()
     mean_s = np.mean(ss)
     return mean_s
-
-
-def clustering_coef_wd(W):
-    from pynets.utils import cuberoot
-    ## ADAPTED FROM BCTPY ##
-    '''
-    The weighted clustering coefficient is the average "intensity" of
-    triangles around a node.
-    Parameters
-    ----------
-    W : NxN np.ndarray
-        weighted directed connection matrix
-    Returns
-    -------
-    C : Nx1 np.ndarray
-        clustering coefficient vector
-    Notes
-    -----
-    Methodological note (also see clustering_coef_bd)
-    The weighted modification is as follows:
-    - The numerator: adjacency matrix is replaced with weights matrix ^ 1/3
-    - The denominator: no changes from the binary version
-    The above reduces to symmetric and/or binary versions of the clustering
-    coefficient for respective graphs.
-    '''
-    A = np.logical_not(W == 0).astype(float)
-    S = cuberoot(W) + cuberoot(W.T)
-    K = np.sum(A + A.T, axis=1)
-    cyc3 = np.diag(np.dot(S, np.dot(S, S))) / 2
-    K[np.where(cyc3 == 0)] = np.inf
-    CYC3 = K * (K - 1) - 2 * np.diag(np.dot(A, A))
-    C = cyc3 / CYC3
-    return C
 
 
 def create_communities(node_comm_aff_mat, node_num):
@@ -640,7 +607,7 @@ def link_communities(W, type_clustering='single'):
     return M
 
 
-def modularity_louvain_und_sign(W, gamma=1, qtype='sta', seed=None):
+def modularity_louvain_und_sign(W, gamma=1, qtype='sta', seed=42):
     ## ADAPTED FROM BCTPY ##
     '''
     The optimal community structure is a subdivision of the network into
@@ -918,10 +885,12 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     # except:
     #     print('Graph is UNDIRECTED')
 
-    #if nx.is_connected(G) is True:
-        #print('Graph is CONNECTED')
-    #else:
-        #print('Graph is DISCONNECTED\n')
+    if nx.is_connected(G) is True:
+        frag = False
+        print('Graph is connected...')
+    else:
+        frag = True
+        print('Warning: Graph is fragmented...\n')
 
     # Create Length matrix
     mat_len = thresholding.weight_conversion(in_mat, 'lengths')
@@ -932,14 +901,14 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
         # Save G as gephi file
         if mask:
             if network:
-                nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_', os.path.basename(mask).split('.')[0], '_', thr, '_', node_size, 'mm_', str(smooth), 'fwhm.graphml'))
+                nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_', os.path.basename(mask).split('.')[0], '_', thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm.graphml') if float(smooth) > 0 else 'nosm.graphml')))
             else:
-                nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_', thr, '_', node_size, 'mm_', str(smooth), 'fwhm.graphml'))
+                nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_', thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm.graphml') if float(smooth) > 0 else 'nosm.graphml')))
         else:
             if network:
-                nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_', thr, '_', node_size, 'mm_', str(smooth), 'fwhm.graphml'))
+                nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_', thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm.graphml') if float(smooth) > 0 else 'nosm.graphml')))
             else:
-                nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', thr, '_', node_size, 'mm_', str(smooth), 'fwhm.graphml'))
+                nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm.graphml') if float(smooth) > 0 else 'nosm.graphml')))
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # # # # Calculate global and local metrics from graph G # # # #
@@ -1332,10 +1301,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
             pass
 
     if mask:
-        if network:
-            met_list_picke_path = "%s%s%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list_', network, '_', os.path.basename(mask).split('.')[0])
-        else:
-            met_list_picke_path = "%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list_', os.path.basename(mask).split('.')[0])
+        met_list_picke_path = "%s%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list', "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), os.path.basename(mask).split('.')[0])
     else:
         if network:
             met_list_picke_path = "%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list_', network)
@@ -1347,7 +1313,10 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     out_path = utils.create_csv_path(ID, network, conn_model, thr, mask, dir_path, node_size, smooth)
     np.savetxt(out_path, net_met_val_list_final, delimiter='\t')
 
-    out_path_neat = "%s%s" % (out_path.split('.csv')[0], '_neat.csv')
+    if frag is True:
+        out_path_neat = "%s%s" % (out_path.split('.csv')[0], '_frag_neat.csv')
+    else:
+        out_path_neat = "%s%s" % (out_path.split('.csv')[0], '_neat.csv')
     df = pd.DataFrame.from_dict(dict(zip(metric_list_names, net_met_val_list_final)), orient='index').transpose()
     df.to_csv(out_path_neat, index=False)
 

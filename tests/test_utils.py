@@ -11,7 +11,7 @@ from pynets import utils
 
 
 def test_nilearn_atlas_helper():
-    atlases = ['atlas_aal', 'atlas_allen_2011', 'atlas_talairach_tissue', 'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe', 'atlas_talairach_hemisphere', 'atlas_harvard_oxford', 'atlas_basc_multiscale_2015', 'atlas_craddock_2012', 'atlas_destrieux_2009', 'coords_dosenbach_2010', 'coords_power_2011']
+    atlases = ['atlas_aal', 'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe', 'atlas_harvard_oxford', 'atlas_destrieux_2009', 'coords_dosenbach_2010', 'coords_power_2011']
     label_names_list = []
     networks_list_list = []
     parlistfile_list = []

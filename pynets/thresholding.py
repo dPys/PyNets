@@ -139,6 +139,131 @@ def autofix(W, copy=True):
     return W
 
 
+def disparity_filter(G, weight='weight'):
+    from scipy import integrate
+    ''' 
+    Compute significance scores (alpha) for weighted edges in G as defined in Serrano et al. 2009
+        Args
+            G: Weighted NetworkX graph
+        Returns
+            Weighted graph with a significance score (alpha) assigned to each edge
+        References
+            M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks. PNAS, 106:16, pp. 6483-6488.
+    '''
+
+    if nx.is_directed(G):  # directed case
+        N = nx.DiGraph()
+        for u in G:
+
+            k_out = G.out_degree(u)
+            k_in = G.in_degree(u)
+
+            if k_out > 1:
+                sum_w_out = sum(np.absolute(G[u][v][weight]) for v in G.successors(u))
+                for v in G.successors(u):
+                    w = G[u][v][weight]
+                    p_ij_out = float(np.absolute(w)) / sum_w_out
+                    alpha_ij_out = 1 - (k_out - 1) * integrate.quad(lambda x: (1 - x) ** (k_out - 2), 0, p_ij_out)[0]
+                    N.add_edge(u, v, weight=w, alpha_out=float('%.4f' % alpha_ij_out))
+
+            elif k_out == 1 and G.in_degree(G.successors(u)[0]) == 1:
+                # we need to keep the connection as it is the only way to maintain the connectivity of the network
+                v = G.successors(u)[0]
+                w = G[u][v][weight]
+                N.add_edge(u, v, weight=w, alpha_out=0., alpha_in=0.)
+                # there is no need to do the same for the k_in, since the link is built already from the tail
+
+            if k_in > 1:
+                sum_w_in = sum(np.absolute(G[v][u][weight]) for v in G.predecessors(u))
+                for v in G.predecessors(u):
+                    w = G[v][u][weight]
+                    p_ij_in = float(np.absolute(w)) / sum_w_in
+                    alpha_ij_in = 1 - (k_in - 1) * integrate.quad(lambda x: (1 - x) ** (k_in - 2), 0, p_ij_in)[0]
+                    N.add_edge(v, u, weight=w, alpha_in=float('%.4f' % alpha_ij_in))
+        return N
+
+    else:  # undirected case
+        B = nx.Graph()
+        for u in G:
+            k = len(G[u])
+            if k > 1:
+                sum_w = sum(np.absolute(G[u][v][weight]) for v in G[u])
+                for v in G[u]:
+                    w = G[u][v][weight]
+                    p_ij = float(np.absolute(w)) / sum_w
+                    alpha_ij = 1 - (k - 1) * integrate.quad(lambda x: (1 - x) ** (k - 2), 0, p_ij)[0]
+                    B.add_edge(u, v, weight=w, alpha=float('%.4f' % alpha_ij))
+            else:
+                B.add_node(u)
+        return B
+
+
+def disparity_filter_alpha_cut(G, weight='weight', alpha_t=0.4, cut_mode='or'):
+    '''
+    Performs a cut of the graph previously filtered through the disparity_filter function.
+
+        Args
+        ----
+        G: Weighted NetworkX graph
+
+        weight: string (default='weight')
+            Key for edge data used as the edge weight w_ij.
+
+        alpha_t: double (default='0.4')
+            The threshold for the alpha parameter that is used to select the surviving edges.
+            It has to be a number between 0 and 1.
+
+        cut_mode: string (default='or')
+            Possible strings: 'or', 'and'.
+            It works only for directed graphs. It represents the logic operation to filter out edges
+            that do not pass the threshold value, combining the alpha_in and alpha_out attributes
+            resulting from the disparity_filter function.
+
+
+        Returns
+        -------
+        B: Weighted NetworkX graph
+            The resulting graph contains only edges that survived from the filtering with the alpha_t threshold
+
+        References
+        ---------
+        .. M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks. PNAS, 106:16, pp. 6483-6488.
+    '''
+
+    if nx.is_directed(G):  # Directed case:
+        B = nx.DiGraph()
+        for u, v, w in G.edges(data=True):
+            try:
+                alpha_in = w['alpha_in']
+            except KeyError:  # there is no alpha_in, so we assign 1. It will never pass the cut
+                alpha_in = 1
+            try:
+                alpha_out = w['alpha_out']
+            except KeyError:  # there is no alpha_out, so we assign 1. It will never pass the cut
+                alpha_out = 1
+
+            if cut_mode == 'or':
+                if alpha_in < alpha_t or alpha_out < alpha_t:
+                    B.add_edge(u, v, weight=w[weight])
+            elif cut_mode == 'and':
+                if alpha_in < alpha_t and alpha_out < alpha_t:
+                    B.add_edge(u, v, weight=w[weight])
+        return B
+
+    else:
+        B = nx.Graph()  # Undirected case:
+        for u, v, w in G.edges(data=True):
+            try:
+                alpha = w['alpha']
+            except KeyError:  # there is no alpha, so we assign 1. It will never pass the cut
+                alpha = 1
+
+            if alpha < alpha_t:
+                B.add_edge(u, v, weight=w[weight])
+
+        return B
+
+
 def weight_to_distance(G):
     """
     inverts all the edge weights so they become equivalent to distance measure.
@@ -307,27 +432,43 @@ def local_thresholding_dens(conn_matrix, thr):
     return conn_matrix_thr
 
 
-def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, mask, node_size, min_span_tree, smooth):
+def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, mask, node_size, min_span_tree, smooth, disp_filt, parc):
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
     edge_threshold = "%s%s" % (str(thr_perc), '%')
+
+    if parc is True:
+        node_size = 'parc'
 
     # Save unthresholded
     unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
     np.save(unthr_path, conn_matrix)
 
     if min_span_tree is True:
-        print('Using local thresholding option from the Minimum Spanning Tree (MST)...\n')
+        print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
+            thr_type = 'MSTprop'
             conn_matrix_thr = thresholding.local_thresholding_prop(conn_matrix, thr)
         else:
+            thr_type = 'MSTdens'
             conn_matrix_thr = thresholding.local_thresholding_dens(conn_matrix, thr)
+    elif disp_filt is True:
+        thr_type = 'DISPα'
+        G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
+        # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
+        print('Computing edge disparity significance with alpha = %s' % thr)
+        print('Filtered graph: nodes = %s, edges = %s' % (G1.number_of_nodes(), G1.number_of_edges()))
+        # print('Backbone graph: nodes = %s, edges = %s' % (G2.number_of_nodes(), G2.number_of_edges()))
+        #print(G2.edges(data=True))
+        conn_matrix_thr = nx.to_numpy_array(G1)
     else:
         if dens_thresh is False:
+            thr_type='prop'
             print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         else:
+            thr_type = 'dens'
             print("%s%.2f%s" % ('\nThresholding to achieve density of: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
 
@@ -335,31 +476,45 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         print('Warning: Fragmented graph')
 
     # Save thresholded mat
-    est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size, smooth)
+    est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size, smooth, thr_type)
     np.save(est_path, conn_matrix_thr)
 
     return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, mask, smooth
 
 
-def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_size, conn_matrix, parc, min_span_tree, smooth):
+def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_size, conn_matrix, parc, min_span_tree, disp_filt):
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
     edge_threshold = "%s%s" % (str(thr_perc), '%')
+
     if parc is True:
         node_size = 'parc'
 
     if min_span_tree is True:
-        print('Using local thresholding option from the Minimum Spanning Tree (MST)...\n')
+        print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
+            thr_type = 'MSTprop'
             conn_matrix_thr = thresholding.local_thresholding_prop(conn_matrix, thr)
         else:
+            thr_type = 'MSTdens'
             conn_matrix_thr = thresholding.local_thresholding_dens(conn_matrix, thr)
+    elif disp_filt is True:
+        thr_type = 'DISPα'
+        G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
+        # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
+        print('Computing edge disparity significance with alpha = %s' % thr)
+        print('Filtered graph: nodes = %s, edges = %s' % (G1.number_of_nodes(), G1.number_of_edges()))
+        # print('Backbone graph: nodes = %s, edges = %s' % (G2.number_of_nodes(), G2.number_of_edges()))
+        #print(G2.edges(data=True))
+        conn_matrix_thr = nx.to_numpy_array(G1)
     else:
         if dens_thresh is False:
+            thr_type = 'prop'
             print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         else:
+            thr_type = 'dens'
             print("%s%.2f%s" % ('\nThresholding to achieve density of: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
 
@@ -367,6 +522,7 @@ def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_
         print('Warning: Fragmented graph')
 
     # Save thresholded mat
-    est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size, smooth)
+    smooth = 0
+    est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size, smooth, thr_type)
     np.save(est_path, conn_matrix_thr)
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, mask, smooth
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, mask

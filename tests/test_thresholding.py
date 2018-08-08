@@ -24,13 +24,15 @@ def test_thresh_func():
     network = 'Default'
     min_span_tree = False
     ID = '997'
+    disp_filt = False 
     mask = None
+    parc = False
     node_size = 'TEST'
 
     start_time = time.time()
-    [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _] = thresholding.thresh_func(dens_thresh, thr, conn_matrix,
+    [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _, _] = thresholding.thresh_func(dens_thresh, thr, conn_matrix,
                                                                                        conn_model, network, ID, dir_path,
-                                                                                       mask, node_size, min_span_tree, smooth)
+                                                                                       mask, node_size, min_span_tree, smooth, disp_filt, parc)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     assert conn_matrix_thr is not None
@@ -44,20 +46,20 @@ def test_thresh_diff():
     dir_path = base_dir + '/997'
     dens_thresh = False
     thr = 0.95
-    smooth = 2
     conn_matrix=np.random.rand(3,3)
     conn_model = 'cov'
     network = 'Default'
     min_span_tree = False
     ID = '997'
     mask = None
-    node_size = 'TEST'
+    node_size = 'parc'
     parc = True
+    disp_filt = False
 
     start_time = time.time()
     [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _] = thresholding.thresh_diff(dens_thresh, thr, conn_model, network,
                                                                                           ID, dir_path, mask, node_size, conn_matrix,
-                                                                                          parc, min_span_tree, smooth)
+                                                                                          parc, min_span_tree, disp_filt)
     print("%s%s%s" % ('thresh_and_fit (Functional, density thresholding) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     assert conn_matrix_thr is not None
