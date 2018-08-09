@@ -8,7 +8,10 @@ Copyright (C) 2018
 import os
 import nibabel as nib
 import numpy as np
+from pynets.netstats import extractnetstats
+from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface
 
+nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 
 def get_file():
     base_path = str(__file__)
@@ -199,6 +202,30 @@ def collect_pandas_join(net_pickle_mt):
     return net_pickle_mt_out
 
 
+def collect_meta_outs(conn_model, est_path, network, node_size, smooth, thr, prune, ID, mask):
+    est_path_iterlist = est_path
+    conn_model_iterlist = conn_model
+    network_iterlist = network
+    node_size_iterlist = node_size
+    smooth_iterlist = smooth
+    prune_iterlist = [str(prune)] * len(est_path_iterlist)
+    ID_iterlist = [str(ID)] * len(est_path_iterlist)
+    thr_iterlist = thr
+    mask_iterlist = [str(mask)] * len(est_path_iterlist)
+    print('\n\nParam-iters:\n')
+    print(conn_model_iterlist)
+    print(est_path_iterlist)
+    print(network_iterlist)
+    print(node_size_iterlist)
+    print(smooth_iterlist)
+    print(thr_iterlist)
+    print(prune_iterlist)
+    print(ID_iterlist)
+    print(mask_iterlist)
+    print('\n\n')
+    return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, smooth_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, mask_iterlist
+
+
 def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
     import pandas as pd
     import numpy as np
@@ -382,3 +409,92 @@ def save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes):
             out_path_ts = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_wb_net_ts.npy')
     np.save(out_path_ts, ts_within_nodes)
     return
+
+
+class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
+    ID = traits.Any(mandatory=True)
+    network = traits.Any(mandatory=False)
+    thr = traits.Any(mandatory=True)
+    conn_model = traits.Str(mandatory=True)
+    est_path = File(exists=True, mandatory=True, desc="")
+    mask = traits.Any(mandatory=False)
+    prune = traits.Any(mandatory=False)
+    node_size = traits.Any(mandatory=False)
+    smooth = traits.Any(mandatory=False)
+
+
+class ExtractNetStatsOutputSpec(TraitedSpec):
+    out_file = File()
+
+
+class ExtractNetStats(BaseInterface):
+    input_spec = ExtractNetStatsInputSpec
+    output_spec = ExtractNetStatsOutputSpec
+
+    def _run_interface(self, runtime):
+        out = extractnetstats(
+            self.inputs.ID,
+            self.inputs.network,
+            self.inputs.thr,
+            self.inputs.conn_model,
+            self.inputs.est_path,
+            self.inputs.mask,
+            self.inputs.prune,
+            self.inputs.node_size,
+            self.inputs.smooth)
+        setattr(self, '_outpath', out)
+        return runtime
+
+    def _list_outputs(self):
+        import os.path as op
+        return {'out_file': op.abspath(getattr(self, '_outpath'))}
+
+
+class Export2PandasInputSpec(BaseInterfaceInputSpec):
+    csv_loc = File(exists=True, mandatory=True, desc="")
+    ID = traits.Any(mandatory=True)
+    network = traits.Any(mandatory=False)
+    mask = traits.Any(mandatory=False)
+
+
+class Export2PandasOutputSpec(TraitedSpec):
+    net_pickle_mt = traits.Any(mandatory=True)
+
+
+class Export2Pandas(BaseInterface):
+    input_spec = Export2PandasInputSpec
+    output_spec = Export2PandasOutputSpec
+
+    def _run_interface(self, runtime):
+        out = export_to_pandas(
+            self.inputs.csv_loc,
+            self.inputs.ID,
+            self.inputs.network,
+            self.inputs.mask)
+        setattr(self, '_outpath', out)
+        return runtime
+
+    def _list_outputs(self):
+        import os.path as op
+        return {'net_pickle_mt': op.abspath(getattr(self, '_outpath'))}
+
+
+class CollectPandasDfsInputSpec(BaseInterfaceInputSpec):
+    ID = traits.Any(mandatory=True)
+    network = traits.Any(mandatory=True)
+    net_pickle_mt_list = traits.List(mandatory=True)
+    plot_switch = traits.Any(mandatory=True)
+    multi_nets = traits.Any(mandatory=True)
+
+
+class CollectPandasDfs(SimpleInterface):
+    input_spec = CollectPandasDfsInputSpec
+
+    def _run_interface(self, runtime):
+        collect_pandas_df(
+            self.inputs.network,
+            self.inputs.ID,
+            self.inputs.net_pickle_mt_list,
+            self.inputs.plot_switch,
+            self.inputs.multi_nets)
+        return runtime

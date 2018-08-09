@@ -8,6 +8,7 @@ Adapted from Cameron Craddock's PyClusterROI and soon to be replaced with a pypi
 """
 import nibabel as nib
 import numpy as np
+nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 
 # Craddock, R. C.; James, G. A.; Holtzheimer, P. E.; Hu, X. P. & Mayberg, H. S.
 # A whole brain fMRI atlas generated via spatially constrained spectral

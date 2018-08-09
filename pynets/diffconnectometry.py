@@ -7,6 +7,7 @@ Copyright (C) 2018
 import nibabel as nib
 import numpy as np
 import os
+nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 
 
 def create_mni2diff_transforms(dwi_dir):

@@ -240,7 +240,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
         # parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
         #                                              standardize=True)
         ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
-    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords),
+    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ', len(coords),
                         ' volumetric ROI\'s'))
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
     # Save time series as txt file
@@ -271,7 +271,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
         #                                                standardize=True, verbose=1)
         ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
 
-    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' and ', len(coords),
+    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ', len(coords),
                         ' coordinate ROI\'s'))
     print("%s%s%s" % ('Using node radius: ', node_size, ' mm'))
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))

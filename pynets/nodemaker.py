@@ -7,7 +7,7 @@ Copyright (C) 2018
 import os
 import numpy as np
 import nibabel as nib
-
+nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 
 def get_sphere(coords, r, vox_dims, dims):
     # Adapted from Neurosynth
@@ -466,7 +466,7 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
                                 print('AAL reference labeling failed!')
                                 label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                         else:
-                            print('Using generic labeled numbering...')
+                            print('Using generic numbering labels...')
                             label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                 except:
                     print("Label reference file not found. Attempting AAL naming...")
@@ -478,7 +478,7 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
                             print('AAL reference labeling failed!')
                             label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                     else:
-                        print('Using generic labeled numbering...')
+                        print('Using generic numbering labels...')
                         label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
     if atlas_select or parlistfile:
@@ -574,7 +574,7 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
                                 print('AAL reference labeling failed!')
                                 label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                         else:
-                            print('Using generic labeled numbering...')
+                            print('Using generic numbering labels...')
                             label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                 except:
                     print("Label reference file not found. Attempting AAL naming...")
@@ -586,7 +586,7 @@ def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fi
                             print('AAL reference labeling failed!')
                             label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                     else:
-                        print('Using generic labeled numbering...')
+                        print('Using generic numbering labels...')
                         label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
     if atlas_select or parlistfile:
