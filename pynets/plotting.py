@@ -30,7 +30,6 @@ def plot_conn_mat(conn_matrix, label_names, out_path_fig):
             plt.xticks(range(rois_num), rotation=90)
             plt.yticks(range(rois_num))
     plt.grid(False)
-    #plt.gcf().subplots_adjust(left=0.8)
     plt.tight_layout()
     plt.savefig(out_path_fig, dpi=dpi_resolution)
     plt.close()
@@ -325,6 +324,9 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     except ImportError:
         import _pickle as pickle
 
+    coords = coords.tolist()
+    label_names = label_names.tolist()
+
     dpi_resolution = 500
     if '\'b' in atlas_select:
         atlas_select = atlas_select.decode('utf-8')
@@ -402,7 +404,7 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     if len(coords) != conn_matrix.shape[0]:
         raise RuntimeWarning('WARNING: Number of coordinates does not match conn_matrix dimensions. If you are using disparity filtering, try relaxing the α threshold.')
     else:
-        connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap='Blues', edge_vmax=float(1.0),
+        connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap='Greens', edge_vmax=float(1.0),
                              edge_vmin=float(-1.0), node_size=node_size_plot)
         connectome.savefig(out_path_fig, dpi=dpi_resolution)
     return

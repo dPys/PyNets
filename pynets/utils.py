@@ -13,6 +13,7 @@ from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, Traite
 
 nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 
+
 def get_file():
     base_path = str(__file__)
     return base_path
@@ -197,33 +198,42 @@ def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mas
     return out_path
 
 
-def collect_pandas_join(net_pickle_mt):
-    net_pickle_mt_out = net_pickle_mt
-    return net_pickle_mt_out
-
-
-def collect_meta_outs(conn_model, est_path, network, node_size, smooth, thr, prune, ID, mask):
+def pass_meta_outs(conn_model, est_path, network, node_size, smooth, thr, prune, ID, mask):
     est_path_iterlist = est_path
     conn_model_iterlist = conn_model
     network_iterlist = network
     node_size_iterlist = node_size
     smooth_iterlist = smooth
-    prune_iterlist = [str(prune)] * len(est_path_iterlist)
-    ID_iterlist = [str(ID)] * len(est_path_iterlist)
     thr_iterlist = thr
-    mask_iterlist = [str(mask)] * len(est_path_iterlist)
-    print('\n\nParam-iters:\n')
-    print(conn_model_iterlist)
-    print(est_path_iterlist)
-    print(network_iterlist)
-    print(node_size_iterlist)
-    print(smooth_iterlist)
-    print(thr_iterlist)
-    print(prune_iterlist)
-    print(ID_iterlist)
-    print(mask_iterlist)
-    print('\n\n')
+    prune_iterlist = prune
+    ID_iterlist = ID
+    mask_iterlist = mask
+    # print('\n\nParam-iters:\n')
+    # print(conn_model_iterlist)
+    # print(est_path_iterlist)
+    # print(network_iterlist)
+    # print(node_size_iterlist)
+    # print(smooth_iterlist)
+    # print(thr_iterlist)
+    # print(prune_iterlist)
+    # print(ID_iterlist)
+    # print(mask_iterlist)
+    # print('\n\n')
     return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, smooth_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, mask_iterlist
+
+
+def collect_pandas_join(net_pickle_mt):
+    net_pickle_mt_out = net_pickle_mt
+    return net_pickle_mt_out
+
+
+def flatten(l):
+    import collections
+    for el in l:
+        if isinstance(el, collections.Iterable) and not isinstance(el, (str, bytes)):
+            yield from flatten(el)
+        else:
+            yield el
 
 
 def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
@@ -311,9 +321,11 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
 
 
 def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets):
-    from pynets.utils import collect_pandas_df_make
+    from pynets.utils import collect_pandas_df_make, flatten
 
-    if network is not None and multi_nets is not None:
+    net_pickle_mt_list = list(flatten(net_pickle_mt_list))
+
+    if multi_nets is not None:
         net_pickle_mt_list_nets = net_pickle_mt_list
         for network in multi_nets:
             net_pickle_mt_list = list(set([i for i in net_pickle_mt_list_nets if network in i]))
@@ -498,3 +510,4 @@ class CollectPandasDfs(SimpleInterface):
             self.inputs.plot_switch,
             self.inputs.multi_nets)
         return runtime
+

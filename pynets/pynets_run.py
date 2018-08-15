@@ -32,7 +32,7 @@ def get_parser():
     parser.add_argument('-a',
                         metavar='Atlas',
                         default=None,
-                        help='Specify a coordinate atlas parcellation of those available in nilearn. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\natlas_harvard_oxford\natlas_destrieux_2009\ncoords_dosenbach_2010\ncoords_power_2011.\n')
+                        help='Specify a coordinate atlas parcellation from those made publically available in nilearn. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\natlas_harvard_oxford\natlas_destrieux_2009\ncoords_dosenbach_2010\ncoords_power_2011.\n')
     parser.add_argument('-ua',
                         metavar='Path to parcellation file',
                         default=None,
@@ -342,7 +342,7 @@ def build_workflow(args, retval):
                 raise ValueError("Error: Length of confound regressor list does not correspond to length of input file list.")
 
     if anat_loc is not None and dwi_dir is None:
-        raise RuntimeWarning('Warning: anatomical image specified, but not bedpostx directory specified. Anatomical images are only supported for structural connectome estimation at this time.')
+        raise RuntimeWarning('Warning: anatomical image specified, but no bedpostx directory specified. Anatomical images are only supported for structural connectome estimation at this time.')
 
     if multi_thr is True:
         thr = None
@@ -457,7 +457,7 @@ def build_workflow(args, retval):
             print('Error: the -ua flag cannot be used with the clustering option. Use the -cm flag instead.')
             sys.exit(0)
         if multi_atlas is not None:
-            print('\nIterating across multiple nilearn atlases...')
+            print('\nIterating across multiple predefined atlases...')
             if subjects_list:
                 for input_file in subjects_list:
                     for atlas_select in multi_atlas:
@@ -477,7 +477,7 @@ def build_workflow(args, retval):
             if parc is True and atlas_select in nilearn_coord_atlases:
                 raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
             else:
-                print("%s%s" % ("\nNilearn atlas: ", atlas_select))
+                print("%s%s" % ("\nPredefined atlas: ", atlas_select))
                 if subjects_list:
                     for input_file in subjects_list:
                         dir_path = do_dir_path(atlas_select, input_file)
@@ -593,7 +593,7 @@ def build_workflow(args, retval):
             else:
                 dir_path = do_dir_path(atlas_select_par, nodif_brain_mask_path)
         if multi_atlas is not None:
-            print('\nIterating across multiple nilearn atlases...')
+            print('\nIterating across multiple predefined atlases...')
             if subjects_list:
                 for dwi_dir in subjects_list:
                     nodif_brain_mask_path = "%s%s" % (dwi_dir, '/nodif_brain_mask.nii.gz')
@@ -655,275 +655,46 @@ def build_workflow(args, retval):
         print("%s%s" % ('Diffusion directory: ', dwi_dir))
     print('\n-------------------------------------------------------------------------\n\n\n')
 
-    # print(str(ID))
-    # print(str(input_file))
-    # print(str(dir_path))
-    # print(str(atlas_select))
-    # print(str(network))
-    # print(str(node_size))
-    # print(str(smooth))
-    # print(str(mask))
-    # print(str(thr))
-    # print(str(parlistfile))
-    # print(str(multi_nets))
-    # print(str(conn_model))
-    # print(str(dens_thresh))
-    # print(str(conf))
-    # print(str(adapt_thresh))
-    # print(str(plot_switch))
-    # print(str(dwi_dir))
-    # print(str(multi_thr))
-    # print(str(multi_atlas))
-    # print(str(min_thr))
-    # print(str(max_thr))
-    # print(str(step_thr))
-    # print(str(anat_loc))
-    # print(str(parc))
-    # print(str(ref_txt))
-    # print(str(procmem))
-    # print(str(k))
-    # print(str(clust_mask))
-    # print(str(k_min))
-    # print(str(k_max))
-    # print(str(k_step))
-    # print(str(k_clustering))
-    # print(str(user_atlas_list))
-    # print(str(clust_mask_list))
-    # print(str(prune))
-    # print(str(node_size_list))
-    # print(str(smooth_list))
-    # print(str(num_total_samples))
-    # print(str(graph))
-    # print(str(multi_graph))
-    # import sys
-    # sys.exit(0)
+    # print('\n\n\n\n\n')
+    # print("%s%s" % ('ID: ', ID))
+    # print("%s%s" % ('dir_path: ', dir_path))
+    # print("%s%s" % ('atlas_select: ', atlas_select))
+    # print("%s%s" % ('network: ', network))
+    # print("%s%s" % ('node_size: ', node_size))
+    # print("%s%s" % ('smooth: ', smooth))
+    # print("%s%s" % ('mask: ', mask))
+    # print("%s%s" % ('thr: ', thr))
+    # print("%s%s" % ('parlistfile: ', parlistfile))
+    # print("%s%s" % ('conn_model: ', conn_model))
+    # print("%s%s" % ('dens_thresh: ', dens_thresh))
+    # print("%s%s" % ('conf: ', conf))
+    # print("%s%s" % ('plot_switch: ', plot_switch))
+    # print("%s%s" % ('multi_thr): ', multi_thr))
+    # print("%s%s" % ('multi_atlas: ', multi_atlas))
+    # print("%s%s" % ('min_thr: ', min_thr))
+    # print("%s%s" % ('max_thr: ', max_thr))
+    # print("%s%s" % ('step_thr: ', step_thr))
+    # print("%s%s" % ('parc: ', parc))
+    # print("%s%s" % ('ref_txt: ', ref_txt))
+    # print("%s%s" % ('procmem: ', procmem))
+    # print("%s%s" % ('k: ', k))
+    # print("%s%s" % ('clust_mask: ', clust_mask))
+    # print("%s%s" % ('k_min: ', k_min))
+    # print("%s%s" % ('k_max: ', k_max))
+    # print("%s%s" % ('k_step): ', k_step))
+    # print("%s%s" % ('k_clustering: ', k_clustering))
+    # print("%s%s" % ('user_atlas_list: ', user_atlas_list))
+    # print("%s%s" % ('clust_mask_list: ', clust_mask_list))
+    # print("%s%s" % ('prune: ', prune))
+    # print("%s%s" % ('node_size_list: ', node_size_list))
+    # print("%s%s" % ('smooth_list: ', smooth_list))
+    # print('\n\n\n\n\n')
 
-    # Import core modules
-    from pynets.utils import collect_pandas_join, CollectPandasDfs, Export2Pandas, ExtractNetStats
+    # Import wf core and interfaces
+    from pynets.utils import CollectPandasDfs, Export2Pandas, ExtractNetStats, collect_pandas_join
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
-
-    def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets,
-                          conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, anat_loc, parc,
-                          ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
-                          clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
-                          node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
-                          use_AAL_naming, smooth, smooth_list, disp_filt):
-        from pynets import workflows
-        from nipype import Workflow
-        from nipype.pipeline import engine as pe
-        from nipype.interfaces import utility as niu
-        from pynets.utils import collect_meta_outs
-
-        # Workflow 1: Whole-brain functional connectome
-        if dwi_dir is None and network is None:
-            sub_func_wf = workflows.wb_functional_connectometry(input_file, ID, atlas_select, network, node_size,
-                                                                mask, thr, parlistfile, conn_model, dens_thresh, conf,
-                                                                plot_switch, parc, ref_txt, procmem, dir_path,
-                                                                multi_thr, multi_atlas, max_thr, min_thr, step_thr,
-                                                                k, clust_mask, k_min, k_max, k_step, k_clustering,
-                                                                user_atlas_list, clust_mask_list, node_size_list,
-                                                                conn_model_list, min_span_tree, use_AAL_naming, smooth,
-                                                                smooth_list, disp_filt, prune)
-            sub_struct_wf = None
-        # Workflow 2: RSN functional connectome
-        elif dwi_dir is None and network is not None:
-            sub_func_wf = workflows.rsn_functional_connectometry(input_file, ID, atlas_select, network, node_size,
-                                                                 mask, thr, parlistfile, multi_nets, conn_model,
-                                                                 dens_thresh, conf, plot_switch, parc, ref_txt,
-                                                                 procmem, dir_path, multi_thr, multi_atlas,
-                                                                 max_thr, min_thr, step_thr, k, clust_mask, k_min,
-                                                                 k_max, k_step, k_clustering, user_atlas_list,
-                                                                 clust_mask_list, node_size_list, conn_model_list,
-                                                                 min_span_tree, use_AAL_naming, smooth, smooth_list,
-                                                                 disp_filt, prune)
-            sub_struct_wf = None
-        # Workflow 3: Whole-brain structural connectome
-        elif dwi_dir is not None and network is None:
-            sub_struct_wf = workflows.wb_structural_connectometry(ID, atlas_select, network, node_size, mask,
-                                                                  parlistfile, plot_switch, parc, ref_txt, procmem,
-                                                                  dir_path, dwi_dir, anat_loc, thr, dens_thresh,
-                                                                  conn_model, user_atlas_list, multi_thr, multi_atlas,
-                                                                  max_thr, min_thr, step_thr, node_size_list,
-                                                                  num_total_samples, conn_model_list, min_span_tree,
-                                                                  use_AAL_naming, disp_filt)
-            sub_func_wf = None
-        # Workflow 4: RSN structural connectome
-        elif dwi_dir is not None and network is not None:
-            sub_struct_wf = workflows.rsn_structural_connectometry(ID, atlas_select, network, node_size, mask,
-                                                                   parlistfile, plot_switch, parc, ref_txt, procmem,
-                                                                   dir_path, dwi_dir, anat_loc, thr, dens_thresh,
-                                                                   conn_model, user_atlas_list, multi_thr, multi_atlas,
-                                                                   max_thr, min_thr, step_thr, node_size_list,
-                                                                   num_total_samples, conn_model_list, min_span_tree,
-                                                                   multi_nets, use_AAL_naming, disp_filt)
-            sub_func_wf = None
-
-        base_wf = sub_func_wf if sub_func_wf else sub_struct_wf
-
-        # Create meta-workflow to organize graph simulation sets in prep for analysis
-        # Credit: @Mathias Goncalves
-        base_dirname = "%s%s" % ('Meta_wf_', ID)
-        meta_wf = Workflow(name=base_dirname)
-        # Create input/output nodes
-        meta_inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'network', 'thr',
-                                                               'node_size', 'mask', 'parlistfile', 'multi_nets',
-                                                               'conn_model', 'dens_thresh', 'conf', 'adapt_thresh',
-                                                               'plot_switch', 'dwi_dir', 'anat_loc', 'parc', 'ref_txt',
-                                                               'procmem', 'dir_path', 'multi_thr', 'multi_atlas', 'max_thr',
-                                                               'min_thr', 'step_thr', 'k', 'clust_mask', 'k_min', 'k_max',
-                                                               'k_step', 'k_clustering', 'user_atlas_list',
-                                                               'clust_mask_list', 'prune', 'node_size_list',
-                                                               'num_total_samples', 'graph', 'conn_model_list',
-                                                               'min_span_tree', 'verbose', 'plugin_type', 'use_AAL_naming',
-                                                               'multi_graph', 'smooth', 'smooth_list', 'disp_filt']),
-                                 name='meta_inputnode')
-        meta_inputnode.inputs.in_file = input_file
-        meta_inputnode.inputs.ID = ID
-        meta_inputnode.inputs.atlas_select = atlas_select
-        meta_inputnode.inputs.network = network
-        meta_inputnode.inputs.thr = thr
-        meta_inputnode.inputs.node_size = node_size
-        meta_inputnode.inputs.mask = mask
-        meta_inputnode.inputs.parlistfile = parlistfile
-        meta_inputnode.inputs.multi_nets = multi_nets
-        meta_inputnode.inputs.conn_model = conn_model
-        meta_inputnode.inputs.dens_thresh = dens_thresh
-        meta_inputnode.inputs.conf = conf
-        meta_inputnode.inputs.adapt_thresh = adapt_thresh
-        meta_inputnode.inputs.plot_switch = plot_switch
-        meta_inputnode.inputs.dwi_dir = dwi_dir
-        meta_inputnode.inputs.anat_loc = anat_loc
-        meta_inputnode.inputs.parc = parc
-        meta_inputnode.inputs.ref_txt = ref_txt
-        meta_inputnode.inputs.procmem = procmem
-        meta_inputnode.inputs.dir_path = dir_path
-        meta_inputnode.inputs.multi_thr = multi_thr
-        meta_inputnode.inputs.multi_atlas = multi_atlas
-        meta_inputnode.inputs.max_thr = max_thr
-        meta_inputnode.inputs.min_thr = min_thr
-        meta_inputnode.inputs.step_thr = step_thr
-        meta_inputnode.inputs.k = k
-        meta_inputnode.inputs.clust_mask = clust_mask
-        meta_inputnode.inputs.k_min = k_min
-        meta_inputnode.inputs.k_max = k_max
-        meta_inputnode.inputs.k_step = k_step
-        meta_inputnode.inputs.k_clustering = k_clustering
-        meta_inputnode.inputs.user_atlas_list = user_atlas_list
-        meta_inputnode.inputs.clust_mask_list = clust_mask_list
-        meta_inputnode.inputs.prune = prune
-        meta_inputnode.inputs.node_size_list = node_size_list
-        meta_inputnode.inputs.num_total_samples = num_total_samples
-        meta_inputnode.inputs.graph = graph
-        meta_inputnode.inputs.conn_model_list = conn_model_list
-        meta_inputnode.inputs.min_span_tree = min_span_tree
-        meta_inputnode.inputs.verbose = verbose
-        meta_inputnode.inputs.plugin_type = plugin_type
-        meta_inputnode.inputs.use_AAL_naming = use_AAL_naming
-        meta_inputnode.inputs.multi_graph = multi_graph
-        meta_inputnode.inputs.smooth = smooth
-        meta_inputnode.inputs.smooth_list = smooth_list
-        meta_inputnode.inputs.disp_filt = disp_filt
-
-        meta_wf.add_nodes([base_wf])
-        meta_wf.connect([(meta_inputnode, base_wf, [('ID', 'inputnode.ID'),
-                                                    ('atlas_select', 'inputnode.atlas_select'),
-                                                    ('network', 'inputnode.network'),
-                                                    ('node_size', 'inputnode.node_size'),
-                                                    ('mask', 'inputnode.mask'),
-                                                    ('thr', 'inputnode.thr'),
-                                                    ('parlistfile', 'inputnode.parlistfile'),
-                                                    ('multi_nets', 'inputnode.multi_nets'),
-                                                    ('conn_model', 'inputnode.conn_model'),
-                                                    ('dens_thresh', 'inputnode.dens_thresh'),
-                                                    ('conf', 'inputnode.conf'),
-                                                    ('plot_switch', 'inputnode.plot_switch'),
-                                                    ('parc', 'inputnode.parc'),
-                                                    ('ref_txt', 'inputnode.ref_txt'),
-                                                    ('procmem', 'inputnode.procmem'),
-                                                    ('dir_path', 'inputnode.dir_path'),
-                                                    ('multi_thr', 'inputnode.multi_thr'),
-                                                    ('multi_atlas', 'inputnode.multi_atlas'),
-                                                    ('max_thr', 'inputnode.max_thr'),
-                                                    ('min_thr', 'inputnode.min_thr'),
-                                                    ('step_thr', 'inputnode.step_thr'),
-                                                    ('k', 'inputnode.k'),
-                                                    ('clust_mask', 'inputnode.clust_mask'),
-                                                    ('k_min', 'inputnode.k_min'),
-                                                    ('k_max', 'inputnode.k_max'),
-                                                    ('k_step', 'inputnode.k_step'),
-                                                    ('k_clustering', 'inputnode.k_clustering'),
-                                                    ('user_atlas_list', 'inputnode.user_atlas_list'),
-                                                    ('clust_mask_list', 'inputnode.clust_mask_list'),
-                                                    ('prune', 'inputnode.prune'),
-                                                    ('conn_model_list', 'inputnode.conn_model_list'),
-                                                    ('min_span_tree', 'inputnode.min_span_tree'),
-                                                    ('use_AAL_naming', 'inputnode.use_AAL_naming'),
-                                                    ('smooth', 'inputnode.smooth'),
-                                                    ('disp_filt', 'inputnode.disp_filt')])
-                         ])
-
-        collect_meta_outs_node = pe.Node(niu.Function(input_names=['conn_model', 'est_path', 'network', 'node_size',
-                                                                   'smooth', 'thr', 'prune', 'ID', 'mask'],
-                                                      output_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                                    'network_iterlist', 'node_size_iterlist',
-                                                                    'smooth_iterlist', 'thr_iterlist',
-                                                                    'prune_iterlist', 'ID_iterlist', 'mask_iterlist'],
-                                                      function=collect_meta_outs), name='collect_meta_outs_node')
-
-        if input_file:
-            if network is None and input_file:
-                wf_selected = "%s%s" % ('wb_functional_connectometry_', ID)
-                meta_wf.get_node("%s%s" % (wf_selected, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
-                meta_wf.get_node("%s%s" % (wf_selected, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
-                if parc is True:
-                    meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_wb_parc_node'))._n_procs = 2
-                    meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_wb_parc_node'))._mem_gb = 6
-                else:
-                    meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_wb_coords_node'))._n_procs = 2
-                    meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_wb_coords_node'))._mem_gb = 6
-            elif network and input_file:
-                wf_selected = "%s%s" % ('rsn_functional_connectometry_', ID)
-                meta_wf.get_node("%s%s" % (wf_selected, '.RSN_fetch_nodes_and_labels_node'))._n_procs = 1
-                meta_wf.get_node("%s%s" % (wf_selected, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 2
-                if parc is True:
-                    meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_rsn_parc_node'))._n_procs = 2
-                    meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_rsn_parc_node'))._mem_gb = 6
-                else:
-                    meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_rsn_coords_node'))._n_procs = 2
-                    meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_rsn_coords_node'))._mem_gb = 6
-            if k_clustering > 0:
-                meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._n_procs = 2
-                meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._mem_gb = 12
-            meta_wf.get_node("%s%s" % (wf_selected, '.get_conn_matrix_node'))._n_procs = 1
-            meta_wf.get_node("%s%s" % (wf_selected, '.get_conn_matrix_node'))._mem_gb = 4
-
-        if dwi_dir:
-            if dwi_dir and network is None:
-                wf_selected = "%s%s" % ('wb_structural_connectometry_', ID)
-                meta_wf.get_node("%s%s" % (wf_selected, '.WB_fetch_nodes_and_labels_node'))._n_procs = 1
-                meta_wf.get_node("%s%s" % (wf_selected, '.WB_fetch_nodes_and_labels_node'))._mem_gb = 2
-            elif dwi_dir and network:
-                wf_selected = "%s%s" % ('rsn_structural_connectometry_', ID)
-                meta_wf.get_node("%s%s" % (wf_selected, '.RSN_fetch_nodes_and_labels_node'))._n_procs = 1
-                meta_wf.get_node("%s%s" % (wf_selected, '.RSN_fetch_nodes_and_labels_node'))._mem_gb = 2
-            meta_wf.get_node("%s%s" % (wf_selected, '.thresh_diff_node'))._n_procs = 1
-            meta_wf.get_node("%s%s" % (wf_selected, '.thresh_diff_node'))._mem_gb = 1
-
-        meta_wf.connect([(base_wf, collect_meta_outs_node, [('outputnode.conn_model', 'conn_model'),
-                                                            ('outputnode.est_path', 'est_path'),
-                                                            ('outputnode.network', 'network'),
-                                                            ('outputnode.node_size', 'node_size'),
-                                                            ('outputnode.smooth', 'smooth'),
-                                                            ('outputnode.thr', 'thr')])
-                         ])
-        meta_wf.connect([(meta_inputnode, collect_meta_outs_node, [('prune', 'prune'),
-                                                                   ('ID', 'ID'),
-                                                                   ('mask', 'mask')])
-                         ])
-
-        return meta_wf
-
+    from pynets.workflows import workflow_selector
 
     def init_wf_single_subject(ID, input_file, dir_path, atlas_select, network, node_size, mask, thr, parlistfile,
                                multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir,
@@ -960,22 +731,22 @@ def build_workflow(args, retval):
 
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
                                    iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
-                                              'mask', 'prune', 'node_size', 'smooth'])
+                                              'mask', 'prune', 'node_size', 'smooth'], nested=True)
 
-        export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name="export_to_pandas",
-                                           iterfield=['csv_loc', 'ID', 'network', 'mask'])
+        export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name="Export2Pandas",
+                                           iterfield=['csv_loc', 'ID', 'network', 'mask'], nested=True)
 
-        collect_pd_list_net_pickles = pe.Node(niu.Function(input_names='net_pickle_mt',
-                                                           output_names='net_pickle_mt_out',
-                                                           function=collect_pandas_join),
-                                              name='collect_pd_list_net_pickles')
+        collect_pd_list_net_pickles_node = pe.Node(niu.Function(input_names=['net_pickle_mt'],
+                                                                output_names=['net_pickle_mt_out'],
+                                                                function=collect_pandas_join),
+                                                   name="AggregatePandasPickles")
 
         collect_pandas_dfs_node = pe.Node(interface=CollectPandasDfs(), name="CollectPandasDfs",
                                           input_names=['network', 'ID', 'net_pickle_mt_list', 'plot_switch',
                                                        'multi_nets'])
 
         wf.connect([
-            (meta_wf.get_node('collect_meta_outs_node'), net_mets_node, [('est_path_iterlist', 'est_path'),
+            (meta_wf.get_node('pass_meta_outs_node'), net_mets_node, [('est_path_iterlist', 'est_path'),
                                                                          ('network_iterlist', 'network'),
                                                                          ('thr_iterlist', 'thr'),
                                                                          ('ID_iterlist', 'ID'),
@@ -984,20 +755,20 @@ def build_workflow(args, retval):
                                                                          ('prune_iterlist', 'prune'),
                                                                          ('node_size_iterlist', 'node_size'),
                                                                          ('smooth_iterlist', 'smooth')]),
-            (meta_wf.get_node('collect_meta_outs_node'), export_to_pandas_node, [('network_iterlist', 'network'),
-                                                                                 ('ID_iterlist', 'ID'),
-                                                                                 ('mask_iterlist', 'mask')]),
+            (meta_wf.get_node('pass_meta_outs_node'), export_to_pandas_node, [('network_iterlist', 'network'),
+                                                                              ('ID_iterlist', 'ID'),
+                                                                              ('mask_iterlist', 'mask')]),
             (net_mets_node, export_to_pandas_node, [('out_file', 'csv_loc')]),
             (inputnode, collect_pandas_dfs_node, [('network', 'network'),
                                                   ('ID', 'ID'),
                                                   ('plot_switch', 'plot_switch'),
                                                   ('multi_nets', 'multi_nets')]),
-            (export_to_pandas_node, collect_pd_list_net_pickles, [('net_pickle_mt', 'net_pickle_mt')]),
-            (collect_pd_list_net_pickles, collect_pandas_dfs_node, [('net_pickle_mt_out', 'net_pickle_mt_list')])
+            (export_to_pandas_node, collect_pd_list_net_pickles_node, [('net_pickle_mt', 'net_pickle_mt')]),
+            (collect_pd_list_net_pickles_node, collect_pandas_dfs_node, [('net_pickle_mt_out', 'net_pickle_mt_list')])
         ])
 
         if graph or multi_graph:
-            wf.disconnect([(meta_wf.get_node('collect_meta_outs_node'), net_mets_node,
+            wf.disconnect([(meta_wf.get_node('pass_meta_outs_node'), net_mets_node,
                             [('est_path_iterlist', 'est_path'),
                              ('network_iterlist', 'network'),
                              ('thr_iterlist', 'thr'),
@@ -1008,7 +779,7 @@ def build_workflow(args, retval):
                              ('node_size_iterlist', 'node_size'),
                              ('smooth_iterlist', 'smooth')])
                            ])
-            wf.disconnect([(meta_wf.get_node('collect_meta_outs_node'), export_to_pandas_node,
+            wf.disconnect([(meta_wf.get_node('pass_meta_outs_node'), export_to_pandas_node,
                             [('network_iterlist', 'network'),
                              ('ID_iterlist', 'ID'),
                              ('mask_iterlist', 'mask')])
@@ -1121,8 +892,12 @@ def build_workflow(args, retval):
         wf_multi.config['execution']['display_variable'] = ':0'
         wf_multi.config['execution']['job_finished_timeout'] = 65
         wf_multi.config['execution']['stop_on_first_crash'] = False
+        wf_multi.config['execution']['keep_inputs'] = True
+        wf_multi.config['execution']['remove_unnecessary_outputs'] = False
+        wf_multi.config['execution']['remove_node_directories'] = False
         plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
+        wf_multi.write_graph(graph2use="colored", format='png')
         wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
         #wf_multi.run()
     # Single-subject workflow generator
@@ -1174,9 +949,13 @@ def build_workflow(args, retval):
         wf.config['execution']['display_variable'] = ':0'
         wf.config['execution']['job_finished_timeout'] = 65
         wf.config['execution']['stop_on_first_crash'] = False
+        wf.config['execution']['keep_inputs'] = True
+        wf.config['execution']['remove_unnecessary_outputs'] = False
+        wf.config['execution']['remove_node_directories'] = False
         #wf.write_graph(graph2use='flat', format='png', dotfilename='indiv_wf.dot')
         plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
+        wf.write_graph(graph2use="flat", format='png')
         wf.run(plugin=plugin_type, plugin_args=plugin_args)
         #wf.run(plugin='Linear')
 
@@ -1211,7 +990,7 @@ def main():
             if p.exitcode != 0:
                 sys.exit(p.exitcode)
     except RuntimeWarning:
-        print('\nWARNING: Running memory-uncontained. Upgrade to python3 for forkserver functionality...')
+        print('\nWARNING: Upgrade to python3 for forkserver functionality...')
         retval = dict()
         build_workflow(args, retval)
 
