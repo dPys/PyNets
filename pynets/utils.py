@@ -40,9 +40,9 @@ def nilearn_atlas_helper(atlas_select):
         atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select)()
     if len(list(atlas_fetch_obj.keys())) > 0:
         if 'maps' in list(atlas_fetch_obj.keys()):
-            parlistfile = atlas_fetch_obj.maps
+            uatlas_select = atlas_fetch_obj.maps
         else:
-            parlistfile = None
+            uatlas_select = None
         if 'labels' in list(atlas_fetch_obj.keys()):
             try:
                 label_names = [i.decode("utf-8") for i in atlas_fetch_obj.labels]
@@ -59,7 +59,7 @@ def nilearn_atlas_helper(atlas_select):
             networks_list = None
     else:
         raise RuntimeWarning('Extraction from nilearn datasets failed!')
-    return label_names, networks_list, parlistfile
+    return label_names, networks_list, uatlas_select
 
 
 # Save net metric files to pandas dataframes interface
@@ -166,16 +166,17 @@ def individual_tcorr_clustering(func_file, clust_mask, ID, k, thresh=0.5):
     outfile_parc = "%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID))
     binfile = "%s%s%s%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID), '_', str(k), '.npy')
     dir_path = utils.do_dir_path(atlas_select, func_file)
-    parlistfile = "%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_k', str(k), '.nii.gz')
+    uatlas_select = "%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_k', str(k), '.nii.gz')
 
     make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh)
 
     binfile_parcellate(outfile, outfile_parc, int(k))
 
     # write out for group mean clustering
-    make_image_from_bin_renum(parlistfile, binfile, clust_mask)
-
-    return parlistfile, atlas_select, dir_path
+    make_image_from_bin_renum(uatlas_select, binfile, clust_mask)
+    #uatlas_select = '/Users/PSYC-dap3463/Downloads/002/triple_net_ICA_overlap_3_sig_bin_k50/triple_net_ICA_overlap_3_sig_bin_k50.nii.gz'
+    clustering = True
+    return uatlas_select, atlas_select, clustering, clust_mask, k
 
 
 def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask, node_size, smooth):

@@ -7,9 +7,9 @@ Copyright (C) 2018
 import numpy as np
 
 
-def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets,
+def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, uatlas_select, multi_nets,
                       conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, anat_loc, parc,
-                      ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
+                      ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                       clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                       node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
                       use_AAL_naming, smooth, smooth_list, disp_filt):
@@ -19,22 +19,22 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
     from nipype.interfaces import utility as niu
     from pynets.utils import pass_meta_outs
 
-    # Workflow 1: Whole-brain functional connectome
+    # Workflow 1: Functional connectome
     if dwi_dir is None:
         sub_func_wf = workflows.functional_connectometry(input_file, ID, atlas_select, network, node_size,
-                                                         mask, thr, parlistfile, conn_model, dens_thresh, conf,
-                                                         plot_switch, parc, ref_txt, procmem, dir_path,
+                                                         mask, thr, uatlas_select, conn_model, dens_thresh, conf,
+                                                         plot_switch, parc, ref_txt, procmem,
                                                          multi_thr, multi_atlas, max_thr, min_thr, step_thr,
                                                          k, clust_mask, k_min, k_max, k_step, k_clustering,
                                                          user_atlas_list, clust_mask_list, node_size_list,
                                                          conn_model_list, min_span_tree, use_AAL_naming, smooth,
                                                          smooth_list, disp_filt, prune, multi_nets)
         sub_struct_wf = None
-    # Workflow 2: Whole-brain structural connectome
+    # Workflow 2: Structural connectome
     elif dwi_dir is not None and network is None:
         sub_struct_wf = workflows.structural_connectometry(ID, atlas_select, network, node_size, mask,
-                                                           parlistfile, plot_switch, parc, ref_txt, procmem,
-                                                           dir_path, dwi_dir, anat_loc, thr, dens_thresh,
+                                                           uatlas_select, plot_switch, parc, ref_txt, procmem,
+                                                           dwi_dir, anat_loc, thr, dens_thresh,
                                                            conn_model, user_atlas_list, multi_thr, multi_atlas,
                                                            max_thr, min_thr, step_thr, node_size_list,
                                                            num_total_samples, conn_model_list, min_span_tree,
@@ -49,10 +49,10 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
     meta_wf = Workflow(name=base_dirname)
     # Create input/output nodes
     meta_inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'network', 'thr',
-                                                           'node_size', 'mask', 'parlistfile', 'multi_nets',
+                                                           'node_size', 'mask', 'uatlas_select', 'multi_nets',
                                                            'conn_model', 'dens_thresh', 'conf', 'adapt_thresh',
                                                            'plot_switch', 'dwi_dir', 'anat_loc', 'parc', 'ref_txt',
-                                                           'procmem', 'dir_path', 'multi_thr', 'multi_atlas', 'max_thr',
+                                                           'procmem', 'multi_thr', 'multi_atlas', 'max_thr',
                                                            'min_thr', 'step_thr', 'k', 'clust_mask', 'k_min', 'k_max',
                                                            'k_step', 'k_clustering', 'user_atlas_list',
                                                            'clust_mask_list', 'prune', 'node_size_list',
@@ -67,7 +67,7 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
     meta_inputnode.inputs.thr = thr
     meta_inputnode.inputs.node_size = node_size
     meta_inputnode.inputs.mask = mask
-    meta_inputnode.inputs.parlistfile = parlistfile
+    meta_inputnode.inputs.uatlas_select = uatlas_select
     meta_inputnode.inputs.multi_nets = multi_nets
     meta_inputnode.inputs.conn_model = conn_model
     meta_inputnode.inputs.dens_thresh = dens_thresh
@@ -79,7 +79,6 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
     meta_inputnode.inputs.parc = parc
     meta_inputnode.inputs.ref_txt = ref_txt
     meta_inputnode.inputs.procmem = procmem
-    meta_inputnode.inputs.dir_path = dir_path
     meta_inputnode.inputs.multi_thr = multi_thr
     meta_inputnode.inputs.multi_atlas = multi_atlas
     meta_inputnode.inputs.max_thr = max_thr
@@ -112,7 +111,7 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
                                                 ('node_size', 'inputnode.node_size'),
                                                 ('mask', 'inputnode.mask'),
                                                 ('thr', 'inputnode.thr'),
-                                                ('parlistfile', 'inputnode.parlistfile'),
+                                                ('uatlas_select', 'inputnode.uatlas_select'),
                                                 ('multi_nets', 'inputnode.multi_nets'),
                                                 ('conn_model', 'inputnode.conn_model'),
                                                 ('dens_thresh', 'inputnode.dens_thresh'),
@@ -121,7 +120,6 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
                                                 ('parc', 'inputnode.parc'),
                                                 ('ref_txt', 'inputnode.ref_txt'),
                                                 ('procmem', 'inputnode.procmem'),
-                                                ('dir_path', 'inputnode.dir_path'),
                                                 ('multi_thr', 'inputnode.multi_thr'),
                                                 ('multi_atlas', 'inputnode.multi_atlas'),
                                                 ('max_thr', 'inputnode.max_thr'),
@@ -155,6 +153,7 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
                                                                                          'mask_iterlist'],
                                                function=pass_meta_outs), name='pass_meta_outs_node')
 
+    # Set n_proc and mem_gb on meta-wf sub-node objects
     if input_file:
         wf_selected = "%s%s" % ('functional_connectometry_', ID)
         meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._n_procs = 1
@@ -165,7 +164,7 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
             meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._n_procs = 4
             meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._mem_gb = 8
         meta_wf.get_node("%s%s" % (wf_selected, '.get_conn_matrix_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.get_conn_matrix_node'))._mem_gb = 4
+        meta_wf.get_node("%s%s" % (wf_selected, '.get_conn_matrix_node'))._mem_gb = 2
 
     if dwi_dir:
         wf_selected = "%s%s" % ('structural_connectometry_', ID)
@@ -174,6 +173,7 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
         meta_wf.get_node("%s%s" % (wf_selected, '.thresh_diff_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.thresh_diff_node'))._mem_gb = 1
 
+    # Connect outputs of nested workflow to parent wf
     meta_wf.connect([(base_wf.get_node('outputnode'), pass_meta_outs_node, [('conn_model', 'conn_model'),
                                                                             ('est_path', 'est_path'),
                                                                             ('network', 'network'),
@@ -188,8 +188,8 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
     return meta_wf
 
 
-def functional_connectometry(func_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, conn_model,
-                             dens_thresh, conf, plot_switch, parc, ref_txt, procmem, dir_path, multi_thr,
+def functional_connectometry(func_file, ID, atlas_select, network, node_size, mask, thr, uatlas_select, conn_model,
+                             dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
                              multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step,
                              k_clustering, user_atlas_list, clust_mask_list, node_size_list, conn_model_list,
                              min_span_tree, use_AAL_naming, smooth, smooth_list, disp_filt, prune, multi_nets):
@@ -206,10 +206,10 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID',
                                                       'atlas_select', 'network',
                                                       'node_size', 'mask', 'thr',
-                                                      'parlistfile', 'multi_nets',
+                                                      'uatlas_select', 'multi_nets',
                                                       'conn_model', 'dens_thresh',
                                                       'conf', 'plot_switch', 'parc', 'ref_txt',
-                                                      'procmem', 'dir_path', 'k',
+                                                      'procmem', 'k',
                                                       'clust_mask', 'k_min', 'k_max',
                                                       'k_step', 'k_clustering', 'user_atlas_list',
                                                       'min_span_tree', 'use_AAL_naming', 'smooth',
@@ -222,7 +222,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     inputnode.inputs.node_size = node_size
     inputnode.inputs.mask = mask
     inputnode.inputs.thr = thr
-    inputnode.inputs.parlistfile = parlistfile
+    inputnode.inputs.uatlas_select = uatlas_select
     inputnode.inputs.conn_model = conn_model
     inputnode.inputs.dens_thresh = dens_thresh
     inputnode.inputs.conf = conf
@@ -230,7 +230,6 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     inputnode.inputs.parc = parc
     inputnode.inputs.ref_txt = ref_txt
     inputnode.inputs.procmem = procmem
-    inputnode.inputs.dir_path = dir_path
     inputnode.inputs.k = k
     inputnode.inputs.clust_mask = clust_mask
     inputnode.inputs.k_min = k_min
@@ -252,81 +251,161 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     inputnode.inputs.disp_filt = disp_filt
     inputnode.inputs.prune = prune
 
-    # print('\n\n\n\n\n')
+    print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
-    # print("%s%s" % ('dir_path: ', dir_path))
-    # print("%s%s" % ('atlas_select: ', atlas_select))
+    print("%s%s" % ('atlas_select: ', atlas_select))
     # print("%s%s" % ('network: ', network))
     # print("%s%s" % ('node_size: ', node_size))
     # print("%s%s" % ('smooth: ', smooth))
     # print("%s%s" % ('mask: ', mask))
     # print("%s%s" % ('thr: ', thr))
-    # print("%s%s" % ('parlistfile: ', parlistfile))
+    print("%s%s" % ('uatlas_select: ', uatlas_select))
     # print("%s%s" % ('conn_model: ', conn_model))
     # print("%s%s" % ('dens_thresh: ', dens_thresh))
     # print("%s%s" % ('conf: ', conf))
     # print("%s%s" % ('plot_switch: ', plot_switch))
     # print("%s%s" % ('multi_thr): ', multi_thr))
-    # print("%s%s" % ('multi_atlas: ', multi_atlas))
+    print("%s%s" % ('multi_atlas: ', multi_atlas))
     # print("%s%s" % ('min_thr: ', min_thr))
     # print("%s%s" % ('max_thr: ', max_thr))
     # print("%s%s" % ('step_thr: ', step_thr))
     # print("%s%s" % ('parc: ', parc))
     # print("%s%s" % ('ref_txt: ', ref_txt))
     # print("%s%s" % ('procmem: ', procmem))
-    # print("%s%s" % ('k: ', k))
-    # print("%s%s" % ('clust_mask: ', clust_mask))
-    # print("%s%s" % ('k_min: ', k_min))
-    # print("%s%s" % ('k_max: ', k_max))
-    # print("%s%s" % ('k_step): ', k_step))
-    # print("%s%s" % ('k_clustering: ', k_clustering))
-    # print("%s%s" % ('user_atlas_list: ', user_atlas_list))
-    # print("%s%s" % ('clust_mask_list: ', clust_mask_list))
+    print("%s%s" % ('k: ', k))
+    print("%s%s" % ('clust_mask: ', clust_mask))
+    print("%s%s" % ('k_min: ', k_min))
+    print("%s%s" % ('k_max: ', k_max))
+    print("%s%s" % ('k_step): ', k_step))
+    print("%s%s" % ('k_clustering: ', k_clustering))
+    print("%s%s" % ('user_atlas_list: ', user_atlas_list))
+    print("%s%s" % ('clust_mask_list: ', clust_mask_list))
     # print("%s%s" % ('prune: ', prune))
     # print("%s%s" % ('node_size_list: ', node_size_list))
     # print("%s%s" % ('smooth_list: ', smooth_list))
-    # print('\n\n\n\n\n')
+    print('\n\n\n\n\n')
 
     # Create function nodes
     # Clustering
-    clustering_node = pe.Node(niu.Function(input_names=['func_file', 'clust_mask', 'ID', 'k'],
-                                           output_names=['parlistfile', 'atlas_select', 'dir_path'],
-                                           function=utils.individual_tcorr_clustering,
-                                           imports=import_list), name="clustering_node")
+    if float(k_clustering) > 0:
+        clustering_node = pe.Node(niu.Function(input_names=['func_file', 'clust_mask', 'ID', 'k'],
+                                               output_names=['uatlas_select', 'atlas_select', 'clustering',
+                                                             'clust_mask', 'k'],
+                                               function=utils.individual_tcorr_clustering,
+                                               imports=import_list), name="clustering_node")
+        clustering_node.synchronize = True
 
-    # clustering_node iterables
-    if k_clustering == 2:
-        k_cluster_iterables = []
-        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
-        k_cluster_iterables.append(("k", k_list))
-        clustering_node.iterables = k_cluster_iterables
-    elif k_clustering == 3:
-        k_cluster_iterables = []
-        k_cluster_iterables.append(("clust_mask", clust_mask_list))
-        clustering_node.iterables = k_cluster_iterables
-    elif k_clustering == 4:
-        k_cluster_iterables = []
-        k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
-        k_cluster_iterables.append(("k", k_list))
-        k_cluster_iterables.append(("clust_mask", clust_mask_list))
-        clustering_node.iterables = k_cluster_iterables
+        # clustering_node iterables and names
+        if k_clustering == 1:
+            mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+            cluster_atlas_name = "%s%s%s" % (mask_name, '_k', str(k))
+            cluster_atlas_file = "%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_k', str(k), '.nii.gz')
+            if user_atlas_list:
+                user_atlas_list.append(cluster_atlas_file)
+            elif uatlas_select and ((uatlas_select == cluster_atlas_file) is False):
+                user_atlas_list = [uatlas_select, cluster_atlas_file]
+            else:
+                uatlas_select = cluster_atlas_file
+        elif k_clustering == 2:
+            k_cluster_iterables = []
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
+            k_cluster_iterables.append(("k", k_list))
+            clustering_node.iterables = k_cluster_iterables
+            cluster_atlas_name_list = []
+            cluster_atlas_file_list = []
+            for k in k_list:
+                mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                cluster_atlas_name = "%s%s%s" % (mask_name, '_k', str(k))
+                cluster_atlas_name_list.append(cluster_atlas_name)
+                cluster_atlas_file_list.append("%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_k', str(k), '.nii.gz'))
+            if user_atlas_list:
+                user_atlas_list = user_atlas_list + cluster_atlas_file_list
+            elif uatlas_select:
+                user_atlas_list = cluster_atlas_file_list + [uatlas_select]
+            else:
+                user_atlas_list = cluster_atlas_file_list
+        elif k_clustering == 3:
+            k_cluster_iterables = []
+            k_cluster_iterables.append(("clust_mask", clust_mask_list))
+            clustering_node.iterables = k_cluster_iterables
+            cluster_atlas_name_list = []
+            cluster_atlas_file_list = []
+            for clust_mask in clust_mask_list:
+                mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                cluster_atlas_name = "%s%s%s" % (mask_name, '_k', str(k))
+                cluster_atlas_name_list.append(cluster_atlas_name)
+                cluster_atlas_file_list.append("%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_k', str(k), '.nii.gz'))
+            if user_atlas_list:
+                user_atlas_list = user_atlas_list + cluster_atlas_file_list
+            elif uatlas_select:
+                user_atlas_list = cluster_atlas_file_list + [uatlas_select]
+            else:
+                user_atlas_list = cluster_atlas_file_list
+        elif k_clustering == 4:
+            k_cluster_iterables = []
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
+            k_cluster_iterables.append(("k", k_list))
+            k_cluster_iterables.append(("clust_mask", clust_mask_list))
+            clustering_node.iterables = k_cluster_iterables
+            cluster_atlas_name_list = []
+            cluster_atlas_file_list = []
+            for clust_mask in clust_mask_list:
+                for k in k_list:
+                    mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                    cluster_atlas_name = "%s%s%s" % (mask_name, '_k', str(k))
+                    cluster_atlas_name_list.append(cluster_atlas_name)
+                    cluster_atlas_file_list.append("%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_k', str(k), '.nii.gz'))
+            if user_atlas_list:
+                user_atlas_list = user_atlas_list + cluster_atlas_file_list
+            elif uatlas_select:
+                user_atlas_list = cluster_atlas_file_list + [uatlas_select]
+            else:
+                user_atlas_list = cluster_atlas_file_list
 
     # Define nodes
     # Create node definitions Node
-    fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt',
-                                                                    'parc', 'func_file', 'mask', 'use_AAL_naming'],
+    fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'uatlas_select', 'ref_txt',
+                                                                    'parc', 'func_file', 'use_AAL_naming', 'clustering'],
                                                        output_names=['label_names', 'coords', 'atlas_select',
                                                                      'networks_list', 'parcel_list', 'par_max',
-                                                                     'parlistfile', 'dir_path'],
+                                                                     'uatlas_select', 'dir_path'],
                                                        function=nodemaker.fetch_nodes_and_labels,
                                                        imports=import_list), name="fetch_nodes_and_labels_node")
-    # Connect atlas input vars to node definition Node
-    functional_connectometry_wf.connect([(inputnode, fetch_nodes_and_labels_node,
-                                          [('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')])
-                                         ])
+
+    # Connect clustering solutions to node definition Node
+    if float(k_clustering) > 0:
+        functional_connectometry_wf.add_nodes([clustering_node])
+        functional_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'),
+                                                                           ('func_file', 'func_file')])
+                                             ])
+        if k_clustering == 1:
+            functional_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k'),
+                                                                               ('clust_mask', 'clust_mask')])
+                                                 ])
+        elif k_clustering == 2:
+            functional_connectometry_wf.connect([(inputnode, clustering_node, [('clust_mask', 'clust_mask')])
+                                                 ])
+        elif k_clustering == 3:
+            functional_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k')])
+                                                 ])
+
+        functional_connectometry_wf.connect([(clustering_node, fetch_nodes_and_labels_node,
+                                              [('uatlas_select', 'uatlas_select'),
+                                               ('atlas_select', 'atlas_select'),
+                                               ('clustering', 'clustering')])
+                                             ])
+    else:
+        # Connect atlas input vars to node definition Node
+        functional_connectometry_wf.connect([(inputnode, fetch_nodes_and_labels_node,
+                                              [('atlas_select', 'atlas_select'),
+                                               ('uatlas_select', 'uatlas_select')])
+                                             ])
 
     # Set atlas iterables and logic for multiple atlas useage
-    if (multi_atlas is not None and user_atlas_list is None and parlistfile is None) or (multi_atlas is None and atlas_select is None and user_atlas_list is not None):
+    if ((multi_atlas is not None and user_atlas_list is None and uatlas_select is None) or (multi_atlas is None and atlas_select is None and user_atlas_list is not None)) and k_clustering == 0:
+        # print('\n\n\n\n')
+        # print('No flexi-atlas1')
+        # print('\n\n\n\n')
         flexi_atlas = False
         if multi_atlas:
             fetch_nodes_and_labels_node_iterables = []
@@ -334,75 +413,88 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
             fetch_nodes_and_labels_node.iterables = fetch_nodes_and_labels_node_iterables
         elif user_atlas_list:
             fetch_nodes_and_labels_node_iterables = []
-            fetch_nodes_and_labels_node_iterables.append(("parlistfile", user_atlas_list))
+            fetch_nodes_and_labels_node_iterables.append(("uatlas_select", user_atlas_list))
             fetch_nodes_and_labels_node.iterables = fetch_nodes_and_labels_node_iterables
-    elif (atlas_select is not None and parlistfile is not None) or (multi_atlas is not None and user_atlas_list is not None) or (multi_atlas is not None and parlistfile is not None and user_atlas_list is None) or (atlas_select is not None and user_atlas_list is not None and multi_atlas is None) or (atlas_select is not None and parlistfile is not None and user_atlas_list is None and multi_atlas is None):
-        flexi_atlas = True
-        flexi_atlas_source = pe.Node(niu.IdentityInterface(fields=['atlas_select', 'parlistfile']),
-                                     name='flexi_atlas_source')
-        if multi_atlas is not None and user_atlas_list is not None:
-            flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + multi_atlas),
-                                            ("parlistfile", user_atlas_list + len(multi_atlas) * [None])]
-            flexi_atlas_source.iterables = flexi_atlas_source_iterables
-            flexi_atlas_source.synchronize = True
-        elif multi_atlas is not None and parlistfile is not None and user_atlas_list is None:
-            flexi_atlas_source_iterables = [("atlas_select", multi_atlas + [None]),
-                                            ("parlistfile", len(multi_atlas) * [None] + [parlistfile])]
-            flexi_atlas_source.iterables = flexi_atlas_source_iterables
-            flexi_atlas_source.synchronize = True
-        elif atlas_select is not None and user_atlas_list is not None and multi_atlas is None:
-            flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + [atlas_select]),
-                                            ("parlistfile", user_atlas_list + [None])]
-            flexi_atlas_source.iterables = flexi_atlas_source_iterables
-            flexi_atlas_source.synchronize = True
-        elif atlas_select is not None and parlistfile is not None and user_atlas_list is None and multi_atlas is None:
-            flexi_atlas_source_iterables = [("atlas_select", [atlas_select, None]),
-                                            ("parlistfile", [None, parlistfile])]
-            flexi_atlas_source.iterables = flexi_atlas_source_iterables
-            flexi_atlas_source.synchronize = True
-    elif ((atlas_select is not None and parlistfile is None) or (atlas_select is None and parlistfile is not None)) and (multi_atlas is None and user_atlas_list is None):
+    elif (multi_atlas is None and user_atlas_list is None) and ((atlas_select is not None and uatlas_select is None and k_clustering == 0) or (atlas_select is None and uatlas_select is not None and k_clustering == 0) or (k_clustering > 0 and atlas_select is None and uatlas_select is None and multi_atlas is None and uatlas_select is None)):
+        # print('\n\n\n\n')
+        # print('No flexi-atlas2')
+        # print('\n\n\n\n')
         flexi_atlas = False
+        pass
     else:
-        flexi_atlas = False
-
-    # Connect clustering solutions to node definition Node
-    if float(k_clustering) > 0:
-        functional_connectometry_wf.add_nodes([clustering_node])
-        functional_connectometry_wf.disconnect([(inputnode, fetch_nodes_and_labels_node,
-                                                 [('parlistfile', 'parlistfile'),
-                                                  ('atlas_select', 'atlas_select')])
-                                                ])
-        functional_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'),
-                                                                           ('func_file', 'func_file'),
-                                                                           ('clust_mask', 'clust_mask'),
-                                                                           ('k', 'k')]),
-                                             (clustering_node, fetch_nodes_and_labels_node,
-                                              [('parlistfile', 'parlistfile'),
-                                               ('atlas_select', 'atlas_select')])
-                                             ])
+        flexi_atlas = True
+        flexi_atlas_source = pe.Node(niu.IdentityInterface(fields=['atlas_select', 'uatlas_select', 'clustering']),
+                                     name='flexi_atlas_source')
+        flexi_atlas_source.synchronize = True
+        if multi_atlas is not None and user_atlas_list is not None:
+            print('\n\n\n\n')
+            print('Flexi-atlas: multiple nilearn atlases + multiple user atlases')
+            print('\n\n\n\n')
+            flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + multi_atlas),
+                                            ("uatlas_select", user_atlas_list + len(multi_atlas) * [None])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+        elif multi_atlas is not None and uatlas_select is not None and user_atlas_list is None:
+            print('\n\n\n\n')
+            print('Flexi-atlas: single user atlas + multiple nilearn atlases')
+            print('\n\n\n\n')
+            flexi_atlas_source_iterables = [("atlas_select", multi_atlas + [None]),
+                                            ("uatlas_select", len(multi_atlas) * [None] + [uatlas_select])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+        elif atlas_select is not None and user_atlas_list is not None and multi_atlas is None:
+            print('\n\n\n\n')
+            print('Flexi-atlas: single nilearn atlas + multiple user atlases')
+            print('\n\n\n\n')
+            flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + [atlas_select]),
+                                            ("uatlas_select", user_atlas_list + [None])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
+        elif atlas_select is not None and uatlas_select is not None and user_atlas_list is None and multi_atlas is None:
+            print('\n\n\n\n')
+            print('Flexi-atlas: single nilearn atlas + single user atlas')
+            print('\n\n\n\n')
+            flexi_atlas_source_iterables = [("atlas_select", [atlas_select, None]),
+                                            ("uatlas_select", [None, uatlas_select])]
+            flexi_atlas_source.iterables = flexi_atlas_source_iterables
 
     # Connect flexi_atlas inputs to definition node
     if flexi_atlas is True:
+        functional_connectometry_wf.add_nodes([flexi_atlas_source])
         if float(k_clustering) > 0:
             functional_connectometry_wf.disconnect([(clustering_node, fetch_nodes_and_labels_node,
-                                                     [('parlistfile', 'parlistfile'),
-                                                      ('atlas_select', 'atlas_select')])
+                                                     [('uatlas_select', 'uatlas_select'),
+                                                      ('atlas_select', 'atlas_select'),
+                                                      ('clustering', 'clustering')])
                                                     ])
-            functional_connectometry_wf.connect([(clustering_node, flexi_atlas_source,
-                                                  [('parlistfile', 'parlistfile'),
-                                                   ('atlas_select', 'atlas_select')])
+            if float(k_clustering == 1):
+                functional_connectometry_wf.connect([(clustering_node, flexi_atlas_source,
+                                                      [('clustering', 'clustering')])
+                                                     ])
+            else:
+                clust_join_node = pe.JoinNode(niu.IdentityInterface(fields=['clustering', 'k', 'clust_mask']),
+                                              name='clust_join_node',
+                                              joinsource=clustering_node,
+                                              joinfield=['clustering', 'k', 'clust_mask'])
+                functional_connectometry_wf.connect([(clustering_node, clust_join_node,
+                                                      [('clustering', 'clustering'),
+                                                       ('k', 'k'),
+                                                       ('clust_mask', 'clust_mask')])
+                                                     ])
+                functional_connectometry_wf.connect([(clust_join_node, flexi_atlas_source,
+                                                      [('clustering', 'clustering')])
+                                                     ])
+            functional_connectometry_wf.connect([(flexi_atlas_source, fetch_nodes_and_labels_node,
+                                                  [('uatlas_select', 'uatlas_select'),
+                                                   ('atlas_select', 'atlas_select'),
+                                                   ('clustering', 'clustering')])
                                                  ])
         else:
             functional_connectometry_wf.disconnect([(inputnode, fetch_nodes_and_labels_node,
-                                                     [('atlas_select', 'atlas_select'),
-                                                      ('parlistfile', 'parlistfile')])
+                                                     [('uatlas_select', 'uatlas_select'),
+                                                      ('atlas_select', 'atlas_select')])
                                                     ])
-            functional_connectometry_wf.connect([(inputnode, flexi_atlas_source,
-                                                  [('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')])
+            functional_connectometry_wf.connect([(flexi_atlas_source, fetch_nodes_and_labels_node,
+                                                  [('uatlas_select', 'uatlas_select'),
+                                                   ('atlas_select', 'atlas_select')])
                                                  ])
-        functional_connectometry_wf.connect([(flexi_atlas_source, fetch_nodes_and_labels_node,
-                                              [('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')])
-                                             ])
 
     # RSN case
     if network or multi_nets:
@@ -427,17 +519,17 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     if mask is not None:
         # Masking case
         node_gen_node = pe.Node(niu.Function(input_names=['mask', 'coords', 'parcel_list', 'label_names', 'dir_path',
-                                                          'ID', 'parc', 'atlas_select', 'parlistfile'],
+                                                          'ID', 'parc', 'atlas_select', 'uatlas_select'],
                                              output_names=['net_parcels_map_nifti', 'coords', 'label_names',
-                                                           'atlas_select', 'parlistfile'],
+                                                           'atlas_select', 'uatlas_select'],
                                              function=nodemaker.node_gen_masking, imports=import_list),
                                 name="node_gen_masking_node")
     else:
         # Non-masking case
         node_gen_node = pe.Node(niu.Function(input_names=['coords', 'parcel_list', 'label_names', 'dir_path',
-                                                          'ID', 'parc', 'atlas_select', 'parlistfile'],
+                                                          'ID', 'parc', 'atlas_select', 'uatlas_select'],
                                              output_names=['net_parcels_map_nifti', 'coords', 'label_names',
-                                                           'atlas_select', 'parlistfile'],
+                                                           'atlas_select', 'uatlas_select'],
                                              function=nodemaker.node_gen, imports=import_list), name="node_gen_node")
 
     # Extract time-series from nodes
@@ -451,9 +543,9 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         # extract time series from whole brain parcellaions:
         extract_ts_node = pe.Node(niu.Function(input_names=['net_parcels_map_nifti', 'conf', 'func_file', 'coords',
                                                             'mask', 'dir_path', 'ID', 'network', 'smooth',
-                                                            'atlas_select', 'parlistfile', 'label_names', 'coords'],
+                                                            'atlas_select', 'uatlas_select', 'label_names', 'coords'],
                                                output_names=['ts_within_nodes', 'node_size', 'smooth', 'dir_path',
-                                                             'atlas_select', 'parlistfile', 'label_names', 'coords'],
+                                                             'atlas_select', 'uatlas_select', 'label_names', 'coords'],
                                                function=graphestimation.extract_ts_parc, imports=import_list),
                                   name="extract_ts_node")
         functional_connectometry_wf.add_nodes([save_nifti_parcels_node])
@@ -468,9 +560,9 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         # Coordinate case
         extract_ts_node = pe.Node(niu.Function(input_names=['node_size', 'conf', 'func_file', 'coords', 'dir_path',
                                                             'ID', 'mask', 'network', 'smooth', 'atlas_select',
-                                                            'parlistfile', 'label_names'],
+                                                            'uatlas_select', 'label_names'],
                                                output_names=['ts_within_nodes', 'node_size', 'smooth', 'dir_path',
-                                                             'atlas_select', 'parlistfile', 'label_names', 'coords'],
+                                                             'atlas_select', 'uatlas_select', 'label_names', 'coords'],
                                                function=graphestimation.extract_ts_coords, imports=import_list),
                                   name="extract_ts_node")
         functional_connectometry_wf.disconnect([(node_gen_node, extract_ts_node,
@@ -489,11 +581,11 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     get_conn_matrix_node = pe.Node(niu.Function(input_names=['time_series', 'conn_model', 'dir_path', 'node_size',
                                                              'smooth', 'dens_thresh', 'network', 'ID', 'mask',
                                                              'min_span_tree', 'disp_filt', 'parc', 'prune',
-                                                             'atlas_select', 'parlistfile', 'label_names', 'coords'],
+                                                             'atlas_select', 'uatlas_select', 'label_names', 'coords'],
                                                 output_names=['conn_matrix', 'conn_model', 'dir_path', 'node_size',
                                                               'smooth', 'dens_thresh', 'network', 'ID', 'mask',
                                                               'min_span_tree', 'disp_filt', 'parc', 'prune',
-                                                              'atlas_select', 'parlistfile', 'label_names', 'coords'],
+                                                              'atlas_select', 'uatlas_select', 'label_names', 'coords'],
                                                 function=graphestimation.get_conn_matrix, imports=import_list),
                                    name="get_conn_matrix_node")
 
@@ -538,14 +630,14 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     # Begin joinnode chaining
     # Set lists of fields and connect statements for repeated use throughout joins
     map_fields = ['conn_model', 'dir_path', 'conn_matrix', 'node_size', 'smooth', 'dens_thresh', 'network', 'ID',
-                  'mask', 'min_span_tree', 'disp_filt', 'parc', 'prune', 'thr', 'atlas_select', 'parlistfile',
+                  'mask', 'min_span_tree', 'disp_filt', 'parc', 'prune', 'thr', 'atlas_select', 'uatlas_select',
                   'label_names', 'coords']
 
     map_connects = [('conn_model', 'conn_model'), ('dir_path', 'dir_path'), ('conn_matrix', 'conn_matrix'),
                     ('node_size', 'node_size'), ('smooth', 'smooth'), ('dens_thresh', 'dens_thresh'), ('ID', 'ID'),
                     ('mask', 'mask'), ('min_span_tree', 'min_span_tree'), ('disp_filt', 'disp_filt'), ('parc', 'parc'),
                     ('prune', 'prune'), ('network', 'network'), ('thr', 'thr'), ('atlas_select', 'atlas_select'),
-                    ('parlistfile', 'parlistfile'), ('label_names', 'label_names'), ('coords', 'coords')]
+                    ('uatlas_select', 'uatlas_select'), ('label_names', 'label_names'), ('coords', 'coords')]
 
     # Create a "thr_info" node for iterating iterfields across thresholds
     thr_info_node = pe.Node(niu.IdentityInterface(fields=map_fields),
@@ -555,30 +647,35 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     if user_atlas_list or multi_atlas or float(k_clustering) > 0 or flexi_atlas is True:
         if flexi_atlas is True:
             atlas_join_source = flexi_atlas_source
-        elif float(k_clustering) > 1:
+        elif float(k_clustering) > 1 and flexi_atlas is False:
             atlas_join_source = clustering_node
+            atlas_join_source2 = None
         else:
             atlas_join_source = fetch_nodes_and_labels_node
+            atlas_join_source2 = None
+    else:
+        atlas_join_source2 = None
+        atlas_join_source = None
 
     # Connect all get_conn_matrix_node outputs to the "thr_info" node
     functional_connectometry_wf.connect([(get_conn_matrix_node, thr_info_node,
-                                             [x for x in map_connects if x != ('thr', 'thr')])])
+                                          [x for x in map_connects if x != ('thr', 'thr')])])
 
     # Begin joinnode chaining logic
     if conn_model_list or node_size_list or smooth_list or user_atlas_list or multi_atlas or float(k_clustering) > 1 or flexi_atlas is True or multi_thr is True:
+        join_info_iters_node_thr = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
+                                               name='join_info_iters_node_thr',
+                                               joinsource=thr_info_node,
+                                               joinfield=map_fields)
+        join_info_iters_node_atlas = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
+                                                 name='join_info_iters_node_atlas',
+                                                 joinsource=atlas_join_source,
+                                                 joinfield=map_fields)
         if not conn_model_list and (node_size_list or smooth_list):
             # print('Time-series node extraction iterables only...')
             join_info_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
                                                name='join_info_iters_node',
                                                joinsource=extract_ts_node, joinfield=map_fields)
-            join_info_iters_node_thr = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                                   name='join_info_iters_node_thr',
-                                                   joinsource=thr_info_node,
-                                                   joinfield=map_fields)
-            join_info_iters_node_atlas = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                                     name='join_info_iters_node_atlas',
-                                                     joinsource=atlas_join_source,
-                                                     joinfield=map_fields)
             if multi_thr:
                 # print('Multiple thresholds...')
                 functional_connectometry_wf.connect([(thr_info_node, join_info_iters_node_thr, map_connects)])
@@ -610,14 +707,6 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                                                name='join_info_iters_node',
                                                joinsource=get_conn_matrix_node,
                                                joinfield=map_fields)
-            join_info_iters_node_thr = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                                   name='join_info_iters_node_thr',
-                                                   joinsource=thr_info_node,
-                                                   joinfield=map_fields)
-            join_info_iters_node_atlas = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                                     name='join_info_iters_node_atlas',
-                                                     joinsource=atlas_join_source,
-                                                     joinfield=map_fields)
             if multi_thr:
                 # print('Multiple thresholds...')
                 if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
@@ -646,10 +735,6 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                     functional_connectometry_wf.connect([(thr_info_node, join_info_iters_node, map_connects)])
         elif not conn_model_list and not node_size_list and not smooth_list:
             # print('No connectivity model or time-series node extraction iterables...')
-            join_info_iters_node_thr = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                                   name='join_info_iters_node_thr',
-                                                   joinsource=thr_info_node,
-                                                   joinfield=map_fields)
             if multi_thr:
                 # print('Multiple thresholds...')
                 if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
@@ -684,17 +769,9 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                     functional_connectometry_wf.connect([(thr_info_node, join_info_iters_node, map_connects)])
         elif conn_model_list and (node_size_list and smooth_list) or (node_size_list or smooth_list):
             # print('Connectivity model and time-series node extraction iterables...')
-            join_info_iters_node_thr = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                                   name='join_info_iters_node_thr',
-                                                   joinsource=thr_info_node,
-                                                   joinfield=map_fields)
             join_info_iters_node_ext_ts = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
                                                       name='join_info_iters_node_ext_ts',
                                                       joinsource=extract_ts_node, joinfield=map_fields)
-            join_info_iters_node_atlas = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                                     name='join_info_iters_node_atlas',
-                                                     joinsource=atlas_join_source,
-                                                     joinfield=map_fields)
             join_info_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
                                                name='join_info_iters_node',
                                                joinsource=get_conn_matrix_node,
@@ -735,28 +812,43 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         else:
             raise RuntimeError('\nERROR: Unknown join context.')
         print('\n')
+
+        no_iters = False
     else:
         # Minimal case of no iterables
         print('\nNo iterables...\n')
         join_info_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields),
                                        name='join_info_iters_node')
         functional_connectometry_wf.connect([(thr_info_node, join_info_iters_node, map_connects)])
+        no_iters = True
 
     # Create final thresh_func node that performs the thresholding
-    thresh_func_node = pe.MapNode(niu.Function(input_names=['dens_thresh', 'thr', 'conn_matrix', 'conn_model',
-                                                            'network', 'ID', 'dir_path', 'mask', 'node_size',
-                                                            'min_span_tree', 'smooth', 'disp_filt', 'parc', 'prune',
-                                                            'atlas_select', 'parlistfile', 'label_names', 'coords'],
-                                               output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr',
-                                                             'node_size', 'network', 'conn_model', 'mask', 'smooth',
-                                                             'prune', 'ID', 'dir_path', 'atlas_select', 'parlistfile',
-                                                             'label_names', 'coords'],
-                                               function=thresholding.thresh_func, imports=import_list),
-                                  name="thresh_func_node", iterfield=['dens_thresh', 'thr', 'conn_matrix', 'conn_model',
-                                                                      'network', 'ID', 'dir_path', 'mask', 'node_size',
-                                                                      'min_span_tree', 'smooth', 'disp_filt', 'parc',
-                                                                      'prune', 'atlas_select', 'parlistfile',
-                                                                      'label_names', 'coords'], nested=True)
+    if no_iters is True:
+        thresh_func_node = pe.Node(niu.Function(input_names=['dens_thresh', 'thr', 'conn_matrix', 'conn_model',
+                                                             'network', 'ID', 'dir_path', 'mask', 'node_size',
+                                                             'min_span_tree', 'smooth', 'disp_filt', 'parc', 'prune',
+                                                             'atlas_select', 'uatlas_select', 'label_names', 'coords'],
+                                                output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr',
+                                                              'node_size', 'network', 'conn_model', 'mask', 'smooth',
+                                                              'prune', 'ID', 'dir_path', 'atlas_select', 'uatlas_select',
+                                                              'label_names', 'coords'],
+                                                function=thresholding.thresh_func, imports=import_list),
+                                   name="thresh_func_node")
+    else:
+        thresh_func_node = pe.MapNode(niu.Function(input_names=['dens_thresh', 'thr', 'conn_matrix', 'conn_model',
+                                                                'network', 'ID', 'dir_path', 'mask', 'node_size',
+                                                                'min_span_tree', 'smooth', 'disp_filt', 'parc', 'prune',
+                                                                'atlas_select', 'uatlas_select', 'label_names', 'coords'],
+                                                   output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr',
+                                                                 'node_size', 'network', 'conn_model', 'mask', 'smooth',
+                                                                 'prune', 'ID', 'dir_path', 'atlas_select', 'uatlas_select',
+                                                                 'label_names', 'coords'],
+                                                   function=thresholding.thresh_func, imports=import_list),
+                                      name="thresh_func_node", iterfield=['dens_thresh', 'thr', 'conn_matrix', 'conn_model',
+                                                                          'network', 'ID', 'dir_path', 'mask', 'node_size',
+                                                                          'min_span_tree', 'smooth', 'disp_filt', 'parc',
+                                                                          'prune', 'atlas_select', 'uatlas_select',
+                                                                          'label_names', 'coords'], nested=True)
 
     # Set iterables for thr on thresh_func, else set thr to singular input
     if multi_thr is True:
@@ -770,7 +862,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     # Plotting
     if plot_switch is True:
         plot_fields = ['conn_matrix', 'conn_model', 'atlas_select', 'dir_path', 'ID', 'network', 'label_names', 'mask',
-                       'coords', 'thr', 'node_size', 'edge_threshold', 'smooth', 'prune', 'parlistfile']
+                       'coords', 'thr', 'node_size', 'edge_threshold', 'smooth', 'prune', 'uatlas_select']
         # Plotting iterable graph solutions
         if conn_model_list or node_size_list or smooth_list or multi_thr or user_atlas_list or multi_atlas or float(k_clustering) > 1 or flexi_atlas is True:
             plot_all_node = pe.MapNode(niu.Function(input_names=plot_fields, output_names='None',
@@ -796,10 +888,10 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                                                                                 ('thr', 'thr'),
                                                                                 ('conn_model', 'conn_model'),
                                                                                 ('atlas_select', 'atlas_select'),
-                                                                                ('parlistfile', 'parlistfile'),
+                                                                                ('uatlas_select', 'uatlas_select'),
                                                                                 ('label_names', 'label_names'),
                                                                                 ('coords', 'coords')])
-                                                ])
+                                             ])
     # Create outputnode to capture results of nested workflow
     outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'network', 'prune', 'ID', 'mask',
                                                        'conn_model', 'node_size', 'smooth']), name='outputnode')
@@ -838,7 +930,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         (inputnode, node_gen_node, [('ID', 'ID'),
                                     ('mask', 'mask'),
                                     ('parc', 'parc')]),
-        (fetch_nodes_and_labels_node, node_gen_node, [('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile'),
+        (fetch_nodes_and_labels_node, node_gen_node, [('atlas_select', 'atlas_select'), ('uatlas_select', 'uatlas_select'),
                                                       ('dir_path', 'dir_path'), ('par_max', 'par_max')]),
         (inputnode, extract_ts_node, [('conf', 'conf'), ('func_file', 'func_file'), ('node_size', 'node_size'),
                                       ('mask', 'mask'), ('ID', 'ID'), ('smooth', 'smooth')]),
@@ -853,11 +945,11 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         (fetch_nodes_and_labels_node, extract_ts_node, [('dir_path', 'dir_path')]),
         (node_gen_node, extract_ts_node, [('net_parcels_map_nifti', 'net_parcels_map_nifti'),
                                           ('coords', 'coords'), ('label_names', 'label_names'),
-                                          ('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')]),
+                                          ('atlas_select', 'atlas_select'), ('uatlas_select', 'uatlas_select')]),
         (extract_ts_node, get_conn_matrix_node, [('ts_within_nodes', 'time_series'), ('dir_path', 'dir_path'),
                                                  ('node_size', 'node_size'), ('smooth', 'smooth'),
                                                  ('coords', 'coords'), ('label_names', 'label_names'),
-                                                 ('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')]),
+                                                 ('atlas_select', 'atlas_select'), ('uatlas_select', 'uatlas_select')]),
         (join_info_iters_node, thresh_func_node, map_connects)
         ])
 
@@ -867,17 +959,17 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         clustering_node.n_procs = 4
         clustering_node.interface.mem_gb = 8
         clustering_node.interface.n_procs = 4
-    node_gen_node.interface.mem_gb = 2
+    node_gen_node.interface.mem_gb = 1
     node_gen_node.interface.n_procs = 1
-    node_gen_node._mem_gb = 2
+    node_gen_node._mem_gb = 1
     node_gen_node.n_procs = 1
     extract_ts_node.interface.mem_gb = 6
     extract_ts_node.interface.n_procs = 2
     extract_ts_node._mem_gb = 6
     extract_ts_node.n_procs = 2
-    get_conn_matrix_node.interface.mem_gb = 4
+    get_conn_matrix_node.interface.mem_gb = 2
     get_conn_matrix_node.interface.n_procs = 1
-    get_conn_matrix_node._mem_gb = 4
+    get_conn_matrix_node._mem_gb = 2
     get_conn_matrix_node.n_procs = 1
 
     # Set runtime/logging configurations
@@ -895,8 +987,8 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     return functional_connectometry_wf
 
 
-def structural_connectometry(ID, atlas_select, network, node_size, mask, parlistfile, plot_switch, parc, ref_txt,
-                             procmem, dir_path, dwi_dir, anat_loc, thr, dens_thresh, conn_model,
+def structural_connectometry(ID, atlas_select, network, node_size, mask, uatlas_select, plot_switch, parc, ref_txt,
+                             procmem, dwi_dir, anat_loc, thr, dens_thresh, conn_model,
                              user_atlas_list, multi_thr, multi_atlas, max_thr, min_thr, step_thr, node_size_list,
                              num_total_samples, conn_model_list, min_span_tree, use_AAL_naming, disp_filt):
     import os.path
@@ -914,7 +1006,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, mask, parlist
     # Create input/output nodes
     #1) Add variable to IdentityInterface if user-set
     inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'atlas_select', 'network', 'node_size', 'mask',
-                                                      'parlistfile', 'plot_switch', 'parc', 'ref_txt', 'procmem',
+                                                      'uatlas_select', 'plot_switch', 'parc', 'ref_txt', 'procmem',
                                                       'dir_path', 'dwi_dir', 'anat_loc', 'thr', 'dens_thresh',
                                                       'conn_model', 'user_atlas_list', 'multi_thr', 'multi_atlas',
                                                       'max_thr', 'min_thr', 'step_thr', 'num_total_samples',
@@ -927,7 +1019,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, mask, parlist
     inputnode.inputs.network = network
     inputnode.inputs.node_size = node_size
     inputnode.inputs.mask = mask
-    inputnode.inputs.parlistfile = parlistfile
+    inputnode.inputs.uatlas_select = uatlas_select
     inputnode.inputs.plot_switch = plot_switch
     inputnode.inputs.parc = parc
     inputnode.inputs.ref_txt = ref_txt
@@ -953,11 +1045,11 @@ def structural_connectometry(ID, atlas_select, network, node_size, mask, parlist
 
     #3) Add variable to function nodes
     # Create function nodes
-    fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'parlistfile', 'ref_txt',
+    fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'uatlas_select', 'ref_txt',
                                                                        'parc', 'func_file', 'mask', 'use_AAL_naming'],
                                                           output_names=['label_names', 'coords', 'atlas_select',
                                                                         'networks_list', 'parcel_list', 'par_max',
-                                                                        'parlistfile', 'dir_path'],
+                                                                        'uatlas_select', 'dir_path'],
                                                           function=nodemaker.fetch_nodes_and_labels,
                                                           imports=import_list), name="fetch_nodes_and_labels_node")
     # Node generation
@@ -1067,7 +1159,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, mask, parlist
     iter_i = range(int(procmem[0]))
     run_probtrackx2_iterables.append(("i", iter_i))
     run_probtrackx2_node.iterables = run_probtrackx2_iterables
-    if (multi_atlas is not None and user_atlas_list is None and parlistfile is None) or (multi_atlas is None and atlas_select is None and user_atlas_list is not None):
+    if (multi_atlas is not None and user_atlas_list is None and uatlas_select is None) or (multi_atlas is None and atlas_select is None and user_atlas_list is not None):
         flexi_atlas = False
         if multi_atlas is not None and user_atlas_list is None:
             fetch_nodes_and_labels_node_iterables = []
@@ -1075,33 +1167,33 @@ def structural_connectometry(ID, atlas_select, network, node_size, mask, parlist
             fetch_nodes_and_labels_node.iterables = fetch_nodes_and_labels_node_iterables
         elif multi_atlas is None and user_atlas_list is not None:
             fetch_nodes_and_labels_node_iterables = []
-            fetch_nodes_and_labels_node_iterables.append(("parlistfile", user_atlas_list))
+            fetch_nodes_and_labels_node_iterables.append(("uatlas_select", user_atlas_list))
             fetch_nodes_and_labels_node.iterables = fetch_nodes_and_labels_node_iterables
-    elif ((atlas_select is not None and parlistfile is None) or (atlas_select is None and parlistfile is not None)) and (multi_atlas is None and user_atlas_list is None):
+    elif ((atlas_select is not None and uatlas_select is None) or (atlas_select is None and uatlas_select is not None)) and (multi_atlas is None and user_atlas_list is None):
         flexi_atlas = False
         pass
     else:
         flexi_atlas = True
-        flexi_atlas_source = pe.Node(niu.IdentityInterface(fields=['atlas_select', 'parlistfile']),
+        flexi_atlas_source = pe.Node(niu.IdentityInterface(fields=['atlas_select', 'uatlas_select']),
                                      name='flexi_atlas_source')
         if multi_atlas is not None and user_atlas_list is not None:
             flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + multi_atlas),
-                                            ("parlistfile", user_atlas_list + len(multi_atlas) * [None])]
+                                            ("uatlas_select", user_atlas_list + len(multi_atlas) * [None])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
             flexi_atlas_source.synchronize = True
-        elif multi_atlas is not None and parlistfile is not None and user_atlas_list is None:
+        elif multi_atlas is not None and uatlas_select is not None and user_atlas_list is None:
             flexi_atlas_source_iterables = [("atlas_select", multi_atlas + [None]),
-                                            ("parlistfile", len(multi_atlas) * [None] + [parlistfile])]
+                                            ("uatlas_select", len(multi_atlas) * [None] + [uatlas_select])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
             flexi_atlas_source.synchronize = True
         elif atlas_select is not None and user_atlas_list is not None and multi_atlas is None:
             flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + [atlas_select]),
-                                            ("parlistfile", user_atlas_list + [None])]
+                                            ("uatlas_select", user_atlas_list + [None])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
             flexi_atlas_source.synchronize = True
-        elif atlas_select is not None and parlistfile is not None and user_atlas_list is None and multi_atlas is None:
+        elif atlas_select is not None and uatlas_select is not None and user_atlas_list is None and multi_atlas is None:
             flexi_atlas_source_iterables = [("atlas_select", [atlas_select, None]),
-                                            ("parlistfile", [None, parlistfile])]
+                                            ("uatlas_select", [None, uatlas_select])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
             flexi_atlas_source.synchronize = True
 
@@ -1131,7 +1223,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, mask, parlist
     # Connect nodes of workflow
     structural_connectometry_wf.connect([
         (inputnode, fetch_nodes_and_labels_node, [('atlas_select', 'atlas_select'),
-                                                     ('parlistfile', 'parlistfile'),
+                                                     ('uatlas_select', 'uatlas_select'),
                                                      ('parc', 'parc'),
                                                      ('ref_txt', 'ref_txt'),
                                                      ('use_AAL_naming', 'use_AAL_naming')]),
@@ -1298,10 +1390,10 @@ def structural_connectometry(ID, atlas_select, network, node_size, mask, parlist
 
     if flexi_atlas is True:
         structural_connectometry_wf.disconnect([(inputnode, fetch_nodes_and_labels_node,
-                                                    [('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')])
+                                                    [('atlas_select', 'atlas_select'), ('uatlas_select', 'uatlas_select')])
                                                    ])
         structural_connectometry_wf.connect([(flexi_atlas_source, fetch_nodes_and_labels_node,
-                                                 [('atlas_select', 'atlas_select'), ('parlistfile', 'parlistfile')])
+                                                 [('atlas_select', 'atlas_select'), ('uatlas_select', 'uatlas_select')])
                                                 ])
     structural_connectometry_wf.config['execution']['crashdump_dir'] = structural_connectometry_wf.base_directory
     structural_connectometry_wf.config['execution']['crashfile_format'] = 'txt'

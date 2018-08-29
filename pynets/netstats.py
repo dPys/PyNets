@@ -995,7 +995,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     # Calculate modularity using the Louvain algorithm
     if 'louvain_modularity' in metric_list_comm:
         try:
-            [ci, modularity] = modularity_louvain_und_sign(in_mat)
+            gamma = nx.density(nx.from_numpy_array(in_mat))
+            [ci, modularity] = modularity_louvain_und_sign(in_mat, gamma=gamma)
             metric_list_names.append('modularity')
             net_met_val_list_final.append(modularity)
         except:

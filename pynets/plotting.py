@@ -14,35 +14,93 @@ def plot_conn_mat(conn_matrix, label_names, out_path_fig):
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
     from pynets import thresholding
+    from nilearn.plotting import plot_matrix
 
     dpi_resolution = 500
 
-    conn_matrix = np.array(thresholding.normalize(np.array(thresholding.autofix(conn_matrix))))
+    conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
+    [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
     rois_num = conn_matrix.shape[0]
-    plt.figure(figsize=(10, 10))
-    plt.imshow(conn_matrix, interpolation="nearest", vmax=float(1.0), vmin=float(-1.0), cmap=plt.cm.RdBu_r)
-    # And display the labels
     if rois_num < 100:
-        if all(isinstance(item, int) for item in label_names) is False:
-            plt.xticks(range(len(label_names)), label_names, size='xx-small', rotation=90)
-            plt.yticks(range(len(label_names)), label_names, size='xx-small')
-        else:
-            plt.xticks(range(rois_num), rotation=90)
-            plt.yticks(range(rois_num))
-    plt.grid(False)
-    plt.tight_layout()
+        plt.gca().set_xticks(size='xx-small')
+        plt.gca().set_yticks(size='xx-small')
+        plot_matrix(conn_matrix, figure=(10, 10), label_names=label_names, vmax=z_max*0.8, vmin=z_min*0.8, reorder=True,
+                    auto_fit=True, grid=False, colorbar=False)
+    else:
+        plot_matrix(conn_matrix, figure=(10, 10), vmax=z_max*0.8, vmin=z_min*0.8, auto_fit=True, grid=False,
+                    colorbar=False)
     plt.savefig(out_path_fig, dpi=dpi_resolution)
     plt.close()
     return
 
 
+def plot_community_conn_mat(conn_matrix, label_names, out_path_fig_comm, community_aff):
+    import matplotlib
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as patches
+    matplotlib.use('agg')
+    from pynets import thresholding
+    from nilearn.plotting import plot_matrix
+
+    dpi_resolution = 500
+
+    conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
+    sorting_array = sorted(range(len(community_aff)), key=lambda k: community_aff[k])
+    sorted_conn_matrix = conn_matrix[sorting_array, :]
+    sorted_conn_matrix = sorted_conn_matrix[:, sorting_array]
+    [z_min, z_max] = -np.abs(sorted_conn_matrix).max(), np.abs(sorted_conn_matrix).max()
+    rois_num = sorted_conn_matrix.shape[0]
+    if rois_num < 100:
+        plt.gca().set_xticks(size='xx-small')
+        plt.gca().set_yticks(size='xx-small')
+        plot_matrix(conn_matrix, figure=(10, 10), label_names=label_names, vmax=z_max*0.8, vmin=z_min*0.8,
+                    reorder=False, auto_fit=True, grid=False, colorbar=False)
+    else:
+        plot_matrix(conn_matrix, figure=(10, 10), vmax=z_max*0.8, vmin=z_min*0.8, auto_fit=True, grid=False,
+                    colorbar=False)
+
+    ax = plt.gca()
+    total_size = 0
+    for community in np.unique(community_aff):
+        size = sum(sorted(community_aff) == community)
+        ax.add_patch(patches.Rectangle(
+                (total_size, total_size),
+                size,
+                size,
+                fill=False,
+                edgecolor='black',
+                alpha=None,
+                linewidth=1
+            )
+        )
+        total_size += size
+
+    plt.savefig(out_path_fig_comm, dpi=dpi_resolution)
+    plt.close()
+    return
+
+
 def plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr, node_size, smooth):
+    import networkx as nx
     from pynets import plotting
+    from pynets.netstats import modularity_louvain_und_sign
     if mask:
         out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(os.path.basename(mask).split('.')[0]), '_func_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else 'nosm.png'))
+        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(os.path.basename(mask).split('.')[0]), '_func_adj_mat_communities_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else 'nosm.png'))
     else:
         out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), 'func_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else 'nosm.png'))
+        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), 'func_adj_mat_communities_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else 'nosm.png'))
+
     plotting.plot_conn_mat(conn_matrix, label_names, out_path_fig)
+    # Plot community adj. matrix
+    gamma = nx.density(nx.from_numpy_array(conn_matrix))
+    try:
+        [node_comm_aff_mat, q] = modularity_louvain_und_sign(conn_matrix, gamma=gamma)
+        print("%s%s%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities with γ=', str(gamma), '...'))
+        plotting.plot_community_conn_mat(conn_matrix, label_names, out_path_fig_comm, node_comm_aff_mat)
+    except:
+        print('WARNING: Louvain community detection failed. Cannot plot community matrix...')
+
     return
 
 
@@ -106,22 +164,11 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
 
     if comm == 'nodes' and len(conn_matrix) > 40:
         from pynets.netstats import modularity_louvain_und_sign
-        if len(conn_matrix) < 50:
-            gamma = 0.001
-        elif len(conn_matrix) < 100:
-            gamma = 0.01
-        elif len(conn_matrix) < 200:
-            gamma = 0.1
-        elif len(conn_matrix) < 250:
-            gamma = 0.25
-        elif len(conn_matrix) < 500:
-            gamma = 0.5
-        else:
-            gamma = 1
 
+        gamma = nx.density(nx.from_numpy_array(conn_matrix))
         try:
             [node_comm_aff_mat, q] = modularity_louvain_und_sign(conn_matrix, gamma=gamma)
-            print("%s%s%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities with gamma=', str(gamma), '...'))
+            print("%s%s%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities with γ=', str(gamma), '...'))
         except:
             print('WARNING: Louvain community detection failed. Proceeding with single community affiliation vector...')
             node_comm_aff_mat = np.ones(conn_matrix.shape[0]).astype('int')
@@ -310,7 +357,7 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
 
 
 def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords, thr,
-             node_size, edge_threshold, smooth, prune, parlistfile):
+             node_size, edge_threshold, smooth, prune, uatlas_select):
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
@@ -390,22 +437,23 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
         labels_path = "%s%s" % (dir_path, '/labelnames_plotting.pkl')
         with open(labels_path, 'wb') as f:
             pickle.dump(label_names, f, protocol=2)
+
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
     connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
     connectome.add_overlay(ch2better_loc, alpha=0.35, cmap=plt.cm.gray)
-    conn_matrix = np.array(thresholding.normalize(np.array(thresholding.autofix(conn_matrix))))
-    # [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
+    conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
+    [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
     if node_size == 'parc':
         node_size_plot = int(2)
-        if parlistfile:
-            connectome.add_contours(parlistfile, filled=False, alpha=0.10, colors='w')
+        if uatlas_select:
+            connectome.add_contours(uatlas_select, filled=False, alpha=0.3, colors='black')
     else:
         node_size_plot = int(node_size)
     if len(coords) != conn_matrix.shape[0]:
         raise RuntimeWarning('WARNING: Number of coordinates does not match conn_matrix dimensions. If you are using disparity filtering, try relaxing the α threshold.')
     else:
-        connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap='Greens', edge_vmax=float(1.0),
-                             edge_vmin=float(-1.0), node_size=node_size_plot)
+        connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap='Blues', edge_vmax=float(z_max),
+                             edge_vmin=float(z_min), node_size=node_size_plot, node_color='auto')
         connectome.savefig(out_path_fig, dpi=dpi_resolution)
     return
 

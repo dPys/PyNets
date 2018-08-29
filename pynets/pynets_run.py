@@ -164,9 +164,10 @@ def build_workflow(args, retval):
     import numpy as np
     warnings.simplefilter("ignore")
     try:
-        from pynets.utils import do_dir_path
+        import pynets
     except ImportError:
         print('PyNets not installed! Ensure that you are using the correct python version.')
+    from pynets.utils import do_dir_path
 
     # Start time clock
     start_time = timeit.default_timer()
@@ -271,17 +272,17 @@ def build_workflow(args, retval):
     else:
         network = network[0]
         multi_nets = None
-    parlistfile_pre = args.ua
+    uatlas_select_pre = args.ua
     atlas_select_pre = args.a
-    parlistfile = list(str(parlistfile_pre).split(','))
-    if len(parlistfile) > 1:
-        user_atlas_list = parlistfile
-        parlistfile = user_atlas_list[0]
-    elif parlistfile == ['None']:
-        parlistfile = None
+    uatlas_select = list(str(uatlas_select_pre).split(','))
+    if len(uatlas_select) > 1:
+        user_atlas_list = uatlas_select
+        uatlas_select = user_atlas_list[0]
+    elif uatlas_select == ['None']:
+        uatlas_select = None
         user_atlas_list = None
     else:
-        parlistfile = parlistfile[0]
+        uatlas_select = uatlas_select[0]
         user_atlas_list = None
     atlas_select = list(str(atlas_select_pre).split(','))
     if len(atlas_select) > 1:
@@ -369,35 +370,35 @@ def build_workflow(args, retval):
     print(str(ID))
 
     if input_file:
-        if parlistfile is not None and k_clustering == 0 and user_atlas_list is None:
-            atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
+        if uatlas_select is not None and k_clustering == 0 and user_atlas_list is None:
+            atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
             if subjects_list:
                 for input_file in subjects_list:
-                    dir_path = do_dir_path(atlas_select_par, input_file)
+                    do_dir_path(atlas_select_par, input_file)
             else:
-                dir_path = do_dir_path(atlas_select_par, input_file)
+                do_dir_path(atlas_select_par, input_file)
                 print("%s%s" % ("\nUser atlas: ", atlas_select_par))
-        elif parlistfile is not None and user_atlas_list is None and k_clustering == 0:
-            atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
+        elif uatlas_select is not None and user_atlas_list is None and k_clustering == 0:
+            atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
             if subjects_list:
                 for input_file in subjects_list:
-                    dir_path = do_dir_path(atlas_select_par, input_file)
+                    do_dir_path(atlas_select_par, input_file)
             else:
-                dir_path = do_dir_path(atlas_select_par, input_file)
+                do_dir_path(atlas_select_par, input_file)
             print("%s%s" % ("\nUser atlas: ", atlas_select_par))
         elif user_atlas_list is not None:
             print('\nIterating across multiple user atlases...')
             if subjects_list:
                 for input_file in subjects_list:
-                    for parlistfile in user_atlas_list:
-                        atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
+                    for uatlas_select in user_atlas_list:
+                        atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
                         print(atlas_select_par)
-                        dir_path = do_dir_path(atlas_select_par, input_file)
+                        do_dir_path(atlas_select_par, input_file)
             else:
-                for parlistfile in user_atlas_list:
-                    atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
+                for uatlas_select in user_atlas_list:
+                    atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
                     print(atlas_select_par)
-                    dir_path = do_dir_path(atlas_select_par, input_file)
+                    do_dir_path(atlas_select_par, input_file)
         elif k_clustering == 1:
             cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
             atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
@@ -405,9 +406,9 @@ def build_workflow(args, retval):
             print("\nClustering within mask at a single resolution...")
             if subjects_list:
                 for input_file in subjects_list:
-                    dir_path = do_dir_path(atlas_select_clust, input_file)
+                    do_dir_path(atlas_select_clust, input_file)
             else:
-                dir_path = do_dir_path(atlas_select_clust, input_file)
+                do_dir_path(atlas_select_clust, input_file)
         elif k_clustering == 2:
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             print("\nClustering within mask at multiple resolutions...")
@@ -417,13 +418,13 @@ def build_workflow(args, retval):
                         cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                         atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
                         print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
-                        dir_path = do_dir_path(atlas_select_clust, input_file)
+                        do_dir_path(atlas_select_clust, input_file)
             else:
                 for k in k_list:
                     cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                     atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
                     print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
-                    dir_path = do_dir_path(atlas_select_clust, input_file)
+                    do_dir_path(atlas_select_clust, input_file)
         elif k_clustering == 3:
             print("\nClustering within multiple masks at a single resolution...")
             if subjects_list:
@@ -431,12 +432,13 @@ def build_workflow(args, retval):
                     for clust_mask in clust_mask_list:
                         cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                         atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
-                        dir_path = do_dir_path(atlas_select_clust, input_file)
+                        do_dir_path(atlas_select_clust, input_file)
             else:
                 for clust_mask in clust_mask_list:
                     cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                     atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
-                    dir_path = do_dir_path(atlas_select_clust, input_file)
+                    do_dir_path(atlas_select_clust, input_file)
+            clust_mask = None
         elif k_clustering == 4:
             print("\nClustering within multiple masks at multiple resolutions...")
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
@@ -446,14 +448,15 @@ def build_workflow(args, retval):
                         for k in k_list:
                             cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                             atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
-                            dir_path = do_dir_path(atlas_select_clust, input_file)
+                            do_dir_path(atlas_select_clust, input_file)
             else:
                 for clust_mask in clust_mask_list:
                     for k in k_list:
                         cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                         atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
-                        dir_path = do_dir_path(atlas_select_clust, input_file)
-        elif (user_atlas_list is not None or parlistfile is not None) and (k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1) and atlas_select is None:
+                        do_dir_path(atlas_select_clust, input_file)
+            clust_mask = None
+        elif (user_atlas_list is not None or uatlas_select is not None) and (k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1) and atlas_select is None:
             print('Error: the -ua flag cannot be used with the clustering option. Use the -cm flag instead.')
             sys.exit(0)
         if multi_atlas is not None:
@@ -465,14 +468,14 @@ def build_workflow(args, retval):
                             raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                         else:
                             print(atlas_select)
-                            dir_path = do_dir_path(atlas_select, input_file)
+                            do_dir_path(atlas_select, input_file)
             else:
                 for atlas_select in multi_atlas:
                     if parc is True and atlas_select in nilearn_coord_atlases:
                         raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                     else:
                         print(atlas_select)
-                        dir_path = do_dir_path(atlas_select, input_file)
+                        do_dir_path(atlas_select, input_file)
         elif atlas_select is not None:
             if parc is True and atlas_select in nilearn_coord_atlases:
                 raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
@@ -480,11 +483,11 @@ def build_workflow(args, retval):
                 print("%s%s" % ("\nPredefined atlas: ", atlas_select))
                 if subjects_list:
                     for input_file in subjects_list:
-                        dir_path = do_dir_path(atlas_select, input_file)
+                        do_dir_path(atlas_select, input_file)
                 else:
-                    dir_path = do_dir_path(atlas_select, input_file)
+                    do_dir_path(atlas_select, input_file)
         else:
-            if parlistfile is None and k == 0:
+            if uatlas_select is None and k == 0:
                 raise KeyError('\nERROR: No atlas specified!')
             else:
                 pass
@@ -512,7 +515,7 @@ def build_workflow(args, retval):
                     sys.exit(0)
                 print(graph_name)
                 atlas_select = "%s%s%s" % (graph_name, '_', ID)
-                dir_path = do_dir_path(atlas_select, graph)
+                do_dir_path(atlas_select, graph)
                 i = i + 1
         else:
             if '.txt' in graph:
@@ -525,7 +528,7 @@ def build_workflow(args, retval):
             print('\nUsing single custom graph input...')
             print(graph_name)
             atlas_select = "%s%s%s" % (graph_name, '_', ID)
-            dir_path = do_dir_path(atlas_select, graph)
+            do_dir_path(atlas_select, graph)
 
     if graph is None and multi_graph is None:
         if network is not None:
@@ -574,24 +577,24 @@ def build_workflow(args, retval):
             if subjects_list:
                 for dwi_dir in subjects_list:
                     nodif_brain_mask_path = "%s%s" % (dwi_dir, '/nodif_brain_mask.nii.gz')
-                    for parlistfile in user_atlas_list:
-                        atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
+                    for uatlas_select in user_atlas_list:
+                        atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
                         print(atlas_select_par)
-                        dir_path = do_dir_path(atlas_select_par, nodif_brain_mask_path)
+                        do_dir_path(atlas_select_par, nodif_brain_mask_path)
             else:
-                for parlistfile in user_atlas_list:
-                    atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
+                for uatlas_select in user_atlas_list:
+                    atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
                     print(atlas_select_par)
-                    dir_path = do_dir_path(atlas_select_par, nodif_brain_mask_path)
-        elif parlistfile is not None and user_atlas_list is None:
-            atlas_select_par = parlistfile.split('/')[-1].split('.')[0]
-            ref_txt = "%s%s" % (parlistfile.split('/')[-1:][0].split('.')[0], '.txt')
+                    do_dir_path(atlas_select_par, nodif_brain_mask_path)
+        elif uatlas_select is not None and user_atlas_list is None:
+            atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
+            ref_txt = "%s%s" % (uatlas_select.split('/')[-1:][0].split('.')[0], '.txt')
             if subjects_list:
                 for dwi_dir in subjects_list:
                     nodif_brain_mask_path = "%s%s" % (dwi_dir, '/nodif_brain_mask.nii.gz')
-                    dir_path = do_dir_path(atlas_select_par, nodif_brain_mask_path)
+                    do_dir_path(atlas_select_par, nodif_brain_mask_path)
             else:
-                dir_path = do_dir_path(atlas_select_par, nodif_brain_mask_path)
+                do_dir_path(atlas_select_par, nodif_brain_mask_path)
         if multi_atlas is not None:
             print('\nIterating across multiple predefined atlases...')
             if subjects_list:
@@ -602,14 +605,14 @@ def build_workflow(args, retval):
                             raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                         else:
                             print(atlas_select)
-                            dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+                            do_dir_path(atlas_select, nodif_brain_mask_path)
             else:
                 for atlas_select in multi_atlas:
                     if parc is True and atlas_select in nilearn_coord_atlases:
                         raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                     else:
                         print(atlas_select)
-                        dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+                        do_dir_path(atlas_select, nodif_brain_mask_path)
         elif atlas_select is not None:
             if parc is True and atlas_select in nilearn_coord_atlases:
                 raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
@@ -618,11 +621,11 @@ def build_workflow(args, retval):
                 if subjects_list:
                     for dwi_dir in subjects_list:
                         nodif_brain_mask_path = "%s%s" % (dwi_dir, '/nodif_brain_mask.nii.gz')
-                        dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+                        do_dir_path(atlas_select, nodif_brain_mask_path)
                 else:
-                    dir_path = do_dir_path(atlas_select, nodif_brain_mask_path)
+                    do_dir_path(atlas_select, nodif_brain_mask_path)
         else:
-            if parlistfile is None:
+            if uatlas_select is None:
                 raise KeyError('\nERROR: No atlas specified!')
             else:
                 pass
@@ -657,14 +660,13 @@ def build_workflow(args, retval):
 
     # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
-    # print("%s%s" % ('dir_path: ', dir_path))
     # print("%s%s" % ('atlas_select: ', atlas_select))
     # print("%s%s" % ('network: ', network))
     # print("%s%s" % ('node_size: ', node_size))
     # print("%s%s" % ('smooth: ', smooth))
     # print("%s%s" % ('mask: ', mask))
     # print("%s%s" % ('thr: ', thr))
-    # print("%s%s" % ('parlistfile: ', parlistfile))
+    # print("%s%s" % ('uatlas_select: ', uatlas_select))
     # print("%s%s" % ('conn_model: ', conn_model))
     # print("%s%s" % ('dens_thresh: ', dens_thresh))
     # print("%s%s" % ('conf: ', conf))
@@ -689,6 +691,8 @@ def build_workflow(args, retval):
     # print("%s%s" % ('node_size_list: ', node_size_list))
     # print("%s%s" % ('smooth_list: ', smooth_list))
     # print('\n\n\n\n\n')
+    # import sys
+    # sys.exit(0)
 
     # Import wf core and interfaces
     from pynets.utils import CollectPandasDfs, Export2Pandas, ExtractNetStats, collect_pandas_join
@@ -696,7 +700,7 @@ def build_workflow(args, retval):
     from nipype.interfaces import utility as niu
     from pynets.workflows import workflow_selector
 
-    def init_wf_single_subject(ID, input_file, dir_path, atlas_select, network, node_size, mask, thr, parlistfile,
+    def init_wf_single_subject(ID, input_file, atlas_select, network, node_size, mask, thr, uatlas_select,
                                multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir,
                                multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k,
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
@@ -719,9 +723,9 @@ def build_workflow(args, retval):
         inputnode.inputs.prune = prune
         inputnode.inputs.smooth = smooth
 
-        meta_wf = workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets,
+        meta_wf = workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, uatlas_select, multi_nets,
                                     conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, anat_loc, parc,
-                                    ref_txt, procmem, dir_path, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
+                                    ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                                     clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
                                     use_AAL_naming, smooth, smooth_list, disp_filt)
@@ -729,18 +733,22 @@ def build_workflow(args, retval):
         meta_wf.n_procs = procmem[0]
         wf.add_nodes([meta_wf])
 
+        # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
                                    iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
                                               'mask', 'prune', 'node_size', 'smooth'], nested=True)
 
+        # Export graph analysis results to pandas dataframes
         export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name="Export2Pandas",
                                            iterfield=['csv_loc', 'ID', 'network', 'mask'], nested=True)
 
+        # Aggregate list of paths to pandas dataframe pickles
         collect_pd_list_net_pickles_node = pe.Node(niu.Function(input_names=['net_pickle_mt'],
                                                                 output_names=['net_pickle_mt_out'],
                                                                 function=collect_pandas_join),
                                                    name="AggregatePandasPickles")
 
+        # Combine dataframes across models
         collect_pandas_dfs_node = pe.Node(interface=CollectPandasDfs(), name="CollectPandasDfs",
                                           input_names=['network', 'ID', 'net_pickle_mt_list', 'plot_switch',
                                                        'multi_nets'])
@@ -767,6 +775,7 @@ def build_workflow(args, retval):
             (collect_pd_list_net_pickles_node, collect_pandas_dfs_node, [('net_pickle_mt_out', 'net_pickle_mt_list')])
         ])
 
+        # Raw graph case
         if graph or multi_graph:
             wf.disconnect([(meta_wf.get_node('pass_meta_outs_node'), net_mets_node,
                             [('est_path_iterlist', 'est_path'),
@@ -785,6 +794,7 @@ def build_workflow(args, retval):
                              ('mask_iterlist', 'mask')])
                            ])
             wf.remove_nodes([meta_wf])
+            # Multiple raw graphs
             if multi_graph:
                 net_mets_node.inputs.est_path = multi_graph
                 net_mets_node.inputs.ID = [ID] * len(multi_graph)
@@ -817,7 +827,8 @@ def build_workflow(args, retval):
 
         return wf
 
-    def wf_multi_subject(ID, subjects_list, atlas_select, network, node_size, mask, thr, parlistfile, multi_nets,
+    # Multi-subject pipeline
+    def wf_multi_subject(ID, subjects_list, atlas_select, network, node_size, mask, thr, uatlas_select, multi_nets,
                          conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, multi_thr,
                          multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask,
                          k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
@@ -835,9 +846,8 @@ def build_workflow(args, retval):
             else:
                 conf_sub = None
             wf_single_subject = init_wf_single_subject(
-                ID=ID[i], input_file=_file,
-                dir_path=os.path.dirname(os.path.realpath(subjects_list[i])), atlas_select=atlas_select,
-                network=network, node_size=node_size, mask=mask, thr=thr, parlistfile=parlistfile,
+                ID=ID[i], input_file=_file, atlas_select=atlas_select,
+                network=network, node_size=node_size, mask=mask, thr=thr, uatlas_select=uatlas_select,
                 multi_nets=multi_nets, conn_model=conn_model, dens_thresh=dens_thresh, conf=conf_sub,
                 adapt_thresh=adapt_thresh, plot_switch=plot_switch, dwi_dir=dwi_dir, multi_thr=multi_thr,
                 multi_atlas= multi_atlas, min_thr=min_thr, max_thr=max_thr, step_thr=step_thr, anat_loc=anat_loc,
@@ -857,7 +867,7 @@ def build_workflow(args, retval):
 
     if subjects_list:
         wf_multi = wf_multi_subject(ID, subjects_list, atlas_select, network, node_size, mask,
-                                    thr, parlistfile, multi_nets, conn_model, dens_thresh,
+                                    thr, uatlas_select, multi_nets, conn_model, dens_thresh,
                                     conf, adapt_thresh, plot_switch, dwi_dir, multi_thr,
                                     multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc,
                                     ref_txt, procmem, k, clust_mask, k_min, k_max, k_step,
@@ -899,10 +909,10 @@ def build_workflow(args, retval):
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf_multi.write_graph(graph2use="colored", format='png')
         wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
-        #wf_multi.run()
     # Single-subject workflow generator
     else:
-        wf = init_wf_single_subject(ID, input_file, dir_path, atlas_select, network, node_size, mask, thr, parlistfile,
+        # Single-subject pipeline
+        wf = init_wf_single_subject(ID, input_file, atlas_select, network, node_size, mask, thr, uatlas_select,
                                     multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir,
                                     multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt,
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
@@ -922,11 +932,6 @@ def build_workflow(args, retval):
                 shutil.rmtree("%s%s%s" % (dwi_dir, '/', base_dirname))
             os.mkdir("%s%s%s" % (dwi_dir, '/', base_dirname))
             wf.base_dir = dwi_dir
-        else:
-            if os.path.exists("%s%s%s" % (dir_path, '/', base_dirname)):
-                shutil.rmtree("%s%s%s" % (dir_path, '/', base_dirname))
-            os.mkdir("%s%s%s" % (dir_path, '/', base_dirname))
-            wf.base_dir = dir_path
 
         if verbose is True:
             from nipype import config, logging
@@ -952,12 +957,10 @@ def build_workflow(args, retval):
         wf.config['execution']['keep_inputs'] = True
         wf.config['execution']['remove_unnecessary_outputs'] = False
         wf.config['execution']['remove_node_directories'] = False
-        #wf.write_graph(graph2use='flat', format='png', dotfilename='indiv_wf.dot')
         plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
-        wf.write_graph(graph2use="flat", format='png')
+        wf.write_graph(graph2use="colored", format='png')
         wf.run(plugin=plugin_type, plugin_args=plugin_args)
-        #wf.run(plugin='Linear')
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)
