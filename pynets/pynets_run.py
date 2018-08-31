@@ -32,7 +32,7 @@ def get_parser():
     parser.add_argument('-a',
                         metavar='Atlas',
                         default=None,
-                        help='Specify a coordinate atlas parcellation from those made publically available in nilearn. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\natlas_harvard_oxford\natlas_destrieux_2009\ncoords_dosenbach_2010\ncoords_power_2011.\n')
+                        help='Specify a coordinate atlas parcellation from those made publically available in nilearn. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\natlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl\ncoords_dosenbach_2010\ncoords_power_2011\natlas_pauli_2017.\n')
     parser.add_argument('-ua',
                         metavar='Path to parcellation file',
                         default=None,
@@ -302,6 +302,7 @@ def build_workflow(args, retval):
     nilearn_parc_atlases = ['atlas_harvard_oxford', 'atlas_aal', 'atlas_destrieux_2009',
                             'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe']
     nilearn_coord_atlases = ['coords_power_2011', 'coords_dosenbach_2010']
+    nilearn_prob_atlases = ['atlas_msdl', 'atlas_pauli_2017']
 
     if min_thr is not None and max_thr is not None and step_thr is not None:
         multi_thr = True
@@ -464,20 +465,20 @@ def build_workflow(args, retval):
             if subjects_list:
                 for input_file in subjects_list:
                     for atlas_select in multi_atlas:
-                        if parc is True and atlas_select in nilearn_coord_atlases:
+                        if parc is True and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
                             raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                         else:
                             print(atlas_select)
                             do_dir_path(atlas_select, input_file)
             else:
                 for atlas_select in multi_atlas:
-                    if parc is True and atlas_select in nilearn_coord_atlases:
+                    if parc is True and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
                         raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                     else:
                         print(atlas_select)
                         do_dir_path(atlas_select, input_file)
         elif atlas_select is not None:
-            if parc is True and atlas_select in nilearn_coord_atlases:
+            if parc is True and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
                 raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
             else:
                 print("%s%s" % ("\nPredefined atlas: ", atlas_select))

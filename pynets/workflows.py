@@ -427,30 +427,30 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                                      name='flexi_atlas_source')
         flexi_atlas_source.synchronize = True
         if multi_atlas is not None and user_atlas_list is not None:
-            print('\n\n\n\n')
-            print('Flexi-atlas: multiple nilearn atlases + multiple user atlases')
-            print('\n\n\n\n')
+            # print('\n\n\n\n')
+            # print('Flexi-atlas: multiple nilearn atlases + multiple user atlases')
+            # print('\n\n\n\n')
             flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + multi_atlas),
                                             ("uatlas_select", user_atlas_list + len(multi_atlas) * [None])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
         elif multi_atlas is not None and uatlas_select is not None and user_atlas_list is None:
-            print('\n\n\n\n')
-            print('Flexi-atlas: single user atlas + multiple nilearn atlases')
-            print('\n\n\n\n')
+            # print('\n\n\n\n')
+            # print('Flexi-atlas: single user atlas + multiple nilearn atlases')
+            # print('\n\n\n\n')
             flexi_atlas_source_iterables = [("atlas_select", multi_atlas + [None]),
                                             ("uatlas_select", len(multi_atlas) * [None] + [uatlas_select])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
         elif atlas_select is not None and user_atlas_list is not None and multi_atlas is None:
-            print('\n\n\n\n')
-            print('Flexi-atlas: single nilearn atlas + multiple user atlases')
-            print('\n\n\n\n')
+            # print('\n\n\n\n')
+            # print('Flexi-atlas: single nilearn atlas + multiple user atlases')
+            # print('\n\n\n\n')
             flexi_atlas_source_iterables = [("atlas_select", len(user_atlas_list) * [None] + [atlas_select]),
                                             ("uatlas_select", user_atlas_list + [None])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
         elif atlas_select is not None and uatlas_select is not None and user_atlas_list is None and multi_atlas is None:
-            print('\n\n\n\n')
-            print('Flexi-atlas: single nilearn atlas + single user atlas')
-            print('\n\n\n\n')
+            # print('\n\n\n\n')
+            # print('Flexi-atlas: single nilearn atlas + single user atlas')
+            # print('\n\n\n\n')
             flexi_atlas_source_iterables = [("atlas_select", [atlas_select, None]),
                                             ("uatlas_select", [None, uatlas_select])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables

@@ -54,6 +54,54 @@ def fetch_nilearn_atlas_coords(atlas_select):
     return coords, atlas_name, networks_list, label_names
 
 
+def nilearn_atlas_helper(atlas_select, parc):
+    from nilearn import datasets
+    if atlas_select == 'atlas_harvard_oxford':
+        atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'atlas_name')('cort-maxprob-thr0-1mm')
+    elif atlas_select == 'atlas_pauli_2017':
+        if parc is False:
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'version')('prob')
+        else:
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'version')('det')
+    elif 'atlas_talairach' in atlas_select:
+        if atlas_select == 'atlas_talairach_lobe':
+            atlas_select = 'atlas_talairach'
+            print('Fetching level: lobe...')
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('lobe')
+        elif atlas_select == 'atlas_talairach_gyrus':
+            atlas_select = 'atlas_talairach'
+            print('Fetching level: gyrus...')
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('gyrus')
+        elif atlas_select == 'atlas_talairach_ba':
+            atlas_select = 'atlas_talairach'
+            print('Fetching level: ba...')
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('ba')
+    else:
+        atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select)()
+    if len(list(atlas_fetch_obj.keys())) > 0:
+        if 'maps' in list(atlas_fetch_obj.keys()):
+            uatlas_select = atlas_fetch_obj.maps
+        else:
+            uatlas_select = None
+        if 'labels' in list(atlas_fetch_obj.keys()):
+            try:
+                label_names = [i.decode("utf-8") for i in atlas_fetch_obj.labels]
+            except:
+                label_names = [i for i in atlas_fetch_obj.labels]
+        else:
+            label_names = None
+        if 'networks' in list(atlas_fetch_obj.keys()):
+            try:
+                networks_list = [i.decode("utf-8") for i in atlas_fetch_obj.networks]
+            except:
+                networks_list = [i for i in atlas_fetch_obj.networks]
+        else:
+            networks_list = None
+    else:
+        raise RuntimeWarning('Extraction from nilearn datasets failed!')
+    return label_names, networks_list, uatlas_select
+
+
 def get_node_membership(network, func_file, coords, label_names, parc, parcel_list):
     from nilearn.image import resample_img
     from pynets.nodemaker import get_sphere
@@ -372,31 +420,44 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, func_file
     nilearn_parc_atlases = ['atlas_harvard_oxford', 'atlas_aal', 'atlas_destrieux_2009',
                             'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe']
     nilearn_coord_atlases = ['coords_power_2011', 'coords_dosenbach_2010']
+    nilearn_prob_atlases = ['atlas_msdl', 'atlas_pauli_2017']
     if uatlas_select is None and atlas_select in nilearn_parc_atlases:
-        [label_names, _, uatlas_select] = utils.nilearn_atlas_helper(atlas_select)
+        [label_names, networks_list, uatlas_select] = nodemaker.nilearn_atlas_helper(atlas_select, parc)
         if uatlas_select:
             if not isinstance(uatlas_select, str):
                 nib.save(uatlas_select, "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz'))
                 uatlas_select = "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz')
             [coords, _, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(uatlas_select)
-            networks_list = None
         else:
             raise ValueError("%s%s%s" % ('ERROR: Atlas file for ', atlas_select, ' not found!'))
     elif uatlas_select is None and parc is False and atlas_select in nilearn_coord_atlases:
-        print('Fetching coordinates and labels from nilearn coordinate-based atlases')
+        print('Fetching coordinates and labels from nilearn coordinate-based atlas library...')
         # Fetch nilearn atlas coords
         [coords, _, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
         parcel_list = None
         par_max = None
-    elif uatlas_select:
+    elif uatlas_select is None and parc is False and atlas_select in nilearn_prob_atlases:
+        from nilearn.plotting import find_probabilistic_atlas_cut_coords
+        print('Fetching coordinates and labels from nilearn probabilistic atlas library...')
+        # Fetch nilearn atlas coords
+        [label_names, networks_list, uatlas_select] = nodemaker.nilearn_atlas_helper(atlas_select, parc)
+        coords = find_probabilistic_atlas_cut_coords(maps_img=uatlas_select)
+        if uatlas_select:
+            if not isinstance(uatlas_select, str):
+                nib.save(uatlas_select, "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz'))
+                uatlas_select = "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz')
+        else:
+            raise ValueError("%s%s%s" % ('ERROR: Atlas file for ', atlas_select, ' not found!'))
+        parcel_list = None
+        par_max = None
+    elif uatlas_select and not atlas_select:
         while True:
             if os.path.isfile(uatlas_select):
                 break
             else:
                 print('Waiting for atlas file...')
                 time.sleep(15)
-        if not atlas_select:
-            atlas_select = uatlas_select.split('/')[-1].split('.')[0]
+        atlas_select = uatlas_select.split('/')[-1].split('.')[0]
         try:
             # Fetch user-specified atlas coords
             [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(uatlas_select)

@@ -591,8 +591,8 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
     print('Saving model plots...')
     for name in measures:
         x = np.array(df_concat[name])
+        x = np.delete(x, np.argwhere(x == '')).astype('float')
         fig, ax = plt.subplots(tight_layout=True)
-        pd.isnull(np.array([np.nan, 0], dtype=float))
         if True in pd.isnull(x):
             x = x[~np.isnan(x)]
             if len(x) > 0:

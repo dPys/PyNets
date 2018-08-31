@@ -19,49 +19,6 @@ def get_file():
     return base_path
 
 
-def nilearn_atlas_helper(atlas_select):
-    from nilearn import datasets
-    if atlas_select == 'atlas_harvard_oxford':
-        atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'atlas_name')('cort-maxprob-thr0-1mm')
-    elif 'atlas_talairach' in atlas_select:
-        if atlas_select == 'atlas_talairach_lobe':
-            atlas_select = 'atlas_talairach'
-            print('Fetching level: lobe...')
-            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('lobe')
-        elif atlas_select == 'atlas_talairach_gyrus':
-            atlas_select = 'atlas_talairach'
-            print('Fetching level: gyrus...')
-            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('gyrus')
-        elif atlas_select == 'atlas_talairach_ba':
-            atlas_select = 'atlas_talairach'
-            print('Fetching level: ba...')
-            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('ba')
-    else:
-        atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select)()
-    if len(list(atlas_fetch_obj.keys())) > 0:
-        if 'maps' in list(atlas_fetch_obj.keys()):
-            uatlas_select = atlas_fetch_obj.maps
-        else:
-            uatlas_select = None
-        if 'labels' in list(atlas_fetch_obj.keys()):
-            try:
-                label_names = [i.decode("utf-8") for i in atlas_fetch_obj.labels]
-            except:
-                label_names = [i for i in atlas_fetch_obj.labels]
-        else:
-            label_names = None
-        if 'networks' in list(atlas_fetch_obj.keys()):
-            try:
-                networks_list = [i.decode("utf-8") for i in atlas_fetch_obj.networks]
-            except:
-                networks_list = [i for i in atlas_fetch_obj.networks]
-        else:
-            networks_list = None
-    else:
-        raise RuntimeWarning('Extraction from nilearn datasets failed!')
-    return label_names, networks_list, uatlas_select
-
-
 # Save net metric files to pandas dataframes interface
 def export_to_pandas(csv_loc, ID, network, mask):
     import pandas as pd
