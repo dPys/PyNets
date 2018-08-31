@@ -251,39 +251,39 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     inputnode.inputs.disp_filt = disp_filt
     inputnode.inputs.prune = prune
 
-    print('\n\n\n\n\n')
+    # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
-    print("%s%s" % ('atlas_select: ', atlas_select))
+    # print("%s%s" % ('atlas_select: ', atlas_select))
     # print("%s%s" % ('network: ', network))
     # print("%s%s" % ('node_size: ', node_size))
     # print("%s%s" % ('smooth: ', smooth))
     # print("%s%s" % ('mask: ', mask))
     # print("%s%s" % ('thr: ', thr))
-    print("%s%s" % ('uatlas_select: ', uatlas_select))
+    # print("%s%s" % ('uatlas_select: ', uatlas_select))
     # print("%s%s" % ('conn_model: ', conn_model))
     # print("%s%s" % ('dens_thresh: ', dens_thresh))
     # print("%s%s" % ('conf: ', conf))
     # print("%s%s" % ('plot_switch: ', plot_switch))
     # print("%s%s" % ('multi_thr): ', multi_thr))
-    print("%s%s" % ('multi_atlas: ', multi_atlas))
+    # print("%s%s" % ('multi_atlas: ', multi_atlas))
     # print("%s%s" % ('min_thr: ', min_thr))
     # print("%s%s" % ('max_thr: ', max_thr))
     # print("%s%s" % ('step_thr: ', step_thr))
     # print("%s%s" % ('parc: ', parc))
     # print("%s%s" % ('ref_txt: ', ref_txt))
     # print("%s%s" % ('procmem: ', procmem))
-    print("%s%s" % ('k: ', k))
-    print("%s%s" % ('clust_mask: ', clust_mask))
-    print("%s%s" % ('k_min: ', k_min))
-    print("%s%s" % ('k_max: ', k_max))
-    print("%s%s" % ('k_step): ', k_step))
-    print("%s%s" % ('k_clustering: ', k_clustering))
-    print("%s%s" % ('user_atlas_list: ', user_atlas_list))
-    print("%s%s" % ('clust_mask_list: ', clust_mask_list))
+    # print("%s%s" % ('k: ', k))
+    # print("%s%s" % ('clust_mask: ', clust_mask))
+    # print("%s%s" % ('k_min: ', k_min))
+    # print("%s%s" % ('k_max: ', k_max))
+    # print("%s%s" % ('k_step): ', k_step))
+    # print("%s%s" % ('k_clustering: ', k_clustering))
+    # print("%s%s" % ('user_atlas_list: ', user_atlas_list))
+    # print("%s%s" % ('clust_mask_list: ', clust_mask_list))
     # print("%s%s" % ('prune: ', prune))
     # print("%s%s" % ('node_size_list: ', node_size_list))
     # print("%s%s" % ('smooth_list: ', smooth_list))
-    print('\n\n\n\n\n')
+    # print('\n\n\n\n\n')
 
     # Create function nodes
     # Clustering
@@ -857,7 +857,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                                                                 decimals=2).tolist()] + [str(float(max_thr))])))
         thr_info_node.iterables = ("thr", iter_thresh)
     else:
-        thr_info_node.inputs.thr = thr
+        thr_info_node.iterables = ("thr", [thr])
 
     # Plotting
     if plot_switch is True:

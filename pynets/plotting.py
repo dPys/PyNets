@@ -13,21 +13,19 @@ def plot_conn_mat(conn_matrix, label_names, out_path_fig):
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
-    from pynets import thresholding
+    #from pynets import thresholding
     from nilearn.plotting import plot_matrix
 
     dpi_resolution = 500
 
-    conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
+    #conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
     [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
     rois_num = conn_matrix.shape[0]
     if rois_num < 100:
-        plt.gca().set_xticks(size='xx-small')
-        plt.gca().set_yticks(size='xx-small')
-        plot_matrix(conn_matrix, figure=(10, 10), label_names=label_names, vmax=z_max*0.8, vmin=z_min*0.8, reorder=True,
+        plot_matrix(conn_matrix, figure=(10, 10), labels=label_names, vmax=z_max, vmin=z_min, reorder=True,
                     auto_fit=True, grid=False, colorbar=False)
     else:
-        plot_matrix(conn_matrix, figure=(10, 10), vmax=z_max*0.8, vmin=z_min*0.8, auto_fit=True, grid=False,
+        plot_matrix(conn_matrix, figure=(10, 10), vmax=z_max, vmin=z_min, auto_fit=True, grid=False,
                     colorbar=False)
     plt.savefig(out_path_fig, dpi=dpi_resolution)
     plt.close()
@@ -39,24 +37,22 @@ def plot_community_conn_mat(conn_matrix, label_names, out_path_fig_comm, communi
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
     matplotlib.use('agg')
-    from pynets import thresholding
+    #from pynets import thresholding
     from nilearn.plotting import plot_matrix
 
     dpi_resolution = 500
 
-    conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
+    #conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
     sorting_array = sorted(range(len(community_aff)), key=lambda k: community_aff[k])
     sorted_conn_matrix = conn_matrix[sorting_array, :]
     sorted_conn_matrix = sorted_conn_matrix[:, sorting_array]
     [z_min, z_max] = -np.abs(sorted_conn_matrix).max(), np.abs(sorted_conn_matrix).max()
     rois_num = sorted_conn_matrix.shape[0]
     if rois_num < 100:
-        plt.gca().set_xticks(size='xx-small')
-        plt.gca().set_yticks(size='xx-small')
-        plot_matrix(conn_matrix, figure=(10, 10), label_names=label_names, vmax=z_max*0.8, vmin=z_min*0.8,
+        plot_matrix(conn_matrix, figure=(10, 10), labels=label_names, vmax=z_max, vmin=z_min,
                     reorder=False, auto_fit=True, grid=False, colorbar=False)
     else:
-        plot_matrix(conn_matrix, figure=(10, 10), vmax=z_max*0.8, vmin=z_min*0.8, auto_fit=True, grid=False,
+        plot_matrix(conn_matrix, figure=(10, 10), vmax=z_max, vmin=z_min, auto_fit=True, grid=False,
                     colorbar=False)
 
     ax = plt.gca()
@@ -95,7 +91,7 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, netw
     # Plot community adj. matrix
     gamma = nx.density(nx.from_numpy_array(conn_matrix))
     try:
-        [node_comm_aff_mat, q] = modularity_louvain_und_sign(conn_matrix, gamma=gamma)
+        [node_comm_aff_mat, q] = modularity_louvain_und_sign(conn_matrix, gamma=float(gamma))
         print("%s%s%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities with γ=', str(gamma), '...'))
         plotting.plot_community_conn_mat(conn_matrix, label_names, out_path_fig_comm, node_comm_aff_mat)
     except:
@@ -167,7 +163,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
 
         gamma = nx.density(nx.from_numpy_array(conn_matrix))
         try:
-            [node_comm_aff_mat, q] = modularity_louvain_und_sign(conn_matrix, gamma=gamma)
+            [node_comm_aff_mat, q] = modularity_louvain_und_sign(conn_matrix, gamma=float(gamma))
             print("%s%s%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities with γ=', str(gamma), '...'))
         except:
             print('WARNING: Louvain community detection failed. Proceeding with single community affiliation vector...')

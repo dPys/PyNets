@@ -172,9 +172,7 @@ def individual_tcorr_clustering(func_file, clust_mask, ID, k, thresh=0.5):
 
     binfile_parcellate(outfile, outfile_parc, int(k))
 
-    # write out for group mean clustering
     make_image_from_bin_renum(uatlas_select, binfile, clust_mask)
-    #uatlas_select = '/Users/PSYC-dap3463/Downloads/002/triple_net_ICA_overlap_3_sig_bin_k50/triple_net_ICA_overlap_3_sig_bin_k50.nii.gz'
     clustering = True
     return uatlas_select, atlas_select, clustering, clust_mask, k
 
@@ -251,7 +249,7 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
         if os.path.isfile(net_pickle_mt) is True:
             net_pickle_mt_list_exist.append(net_pickle_mt)
 
-    if len(net_pickle_mt_list) > len(net_pickle_mt_list_exist):
+    if len(list(net_pickle_mt_list)) > len(net_pickle_mt_list_exist):
         raise UserWarning('Warning! Number of actual models produced less than expected. Some graphs were excluded')
 
     net_pickle_mt_list = net_pickle_mt_list_exist

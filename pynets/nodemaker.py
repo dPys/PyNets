@@ -286,38 +286,11 @@ def coord_masker(mask, coords, label_names, error):
     return coords, label_names
 
 
-def get_names_and_coords_of_parcels_from_img(bna_img):
-    from nilearn.plotting import find_xyz_cut_coords
-    from nilearn.image import new_img_like
-    bna_data = np.round(bna_img.get_data(), 1)
-    # Get an array of unique parcels
-    bna_data_for_coords_uniq = np.unique(bna_data)
-    # Number of parcels:
-    par_max = len(bna_data_for_coords_uniq) - 1
-    bna_data = bna_data.astype('int16')
-    img_stack = []
-    for idx in range(1, par_max+1):
-        roi_img = bna_data == bna_data_for_coords_uniq[idx].astype('int16')
-        roi_img = roi_img.astype('int16')
-        img_stack.append(roi_img)
-    img_stack = np.array(img_stack).astype('int16')
-    img_list = []
-    for idy in range(par_max):
-        roi_img_nifti = new_img_like(bna_img, img_stack[idy])
-        img_list.append(roi_img_nifti)
-    coords = []
-    for roiin in img_list:
-        coord = find_xyz_cut_coords(roiin)
-        coords.append(coord)
-    coords = list(tuple(x) for x in np.array(coords))
-    return coords, par_max, img_list
-
-
 def get_names_and_coords_of_parcels(uatlas_select):
-    from pynets import nodemaker
+    from nilearn.plotting import find_parcellation_cut_coords
     atlas_select = uatlas_select.split('/')[-1].split('.')[0]
-    bna_img = nib.load(uatlas_select)
-    [coords, par_max, img_list] = nodemaker.get_names_and_coords_of_parcels_from_img(bna_img)
+    [coords, img_list] = find_parcellation_cut_coords(uatlas_select, return_label_names=True)
+    par_max = len(coords)
     return coords, atlas_select, par_max, img_list
 
 
