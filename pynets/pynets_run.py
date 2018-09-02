@@ -236,7 +236,17 @@ def build_workflow(args, retval):
     dens_thresh = args.dt
     min_span_tree = args.mst
     disp_filt = args.df
-    clust_type = args.ct
+    clust_type_pre = args.ct
+    clust_type = list(str(clust_type_pre).split(','))
+    if len(clust_type) > 1:
+        clust_type_list = clust_type
+        clust_type = None
+    elif clust_type == ['None']:
+        clust_type = None
+        clust_type = None
+    else:
+        clust_type = clust_type[0]
+        clust_type_list = None
 #    adapt_thresh=args.at
     adapt_thresh = False
     plot_switch = args.plt
@@ -358,13 +368,21 @@ def build_workflow(args, retval):
         max_thr = None
         step_thr = None
 
-    if (k_min is not None and k_max is not None) and k is None and clust_mask_list is not None:
+    if (k_min is not None and k_max is not None) and k is None and clust_mask_list is not None and clust_type_list is not None:
+        k_clustering = 8
+    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is None and clust_type_list is not None:
+        k_clustering = 7
+    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is not None and clust_type_list is not None:
+        k_clustering = 6
+    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is None and clust_type_list is not None:
+        k_clustering = 5
+    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is not None and clust_type_list is None:
         k_clustering = 4
-    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is None:
+    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is None and clust_type_list is None:
         k_clustering = 2
-    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is not None:
+    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is not None and clust_type_list is None:
         k_clustering = 3
-    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is None:
+    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is None and clust_type_list is None:
         k_clustering = 1
     else:
         k_clustering = 0
@@ -405,9 +423,9 @@ def build_workflow(args, retval):
                     atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
                     print(atlas_select_par)
                     do_dir_path(atlas_select_par, input_file)
-        elif k_clustering == 1:
+        if k_clustering == 1:
             cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-            atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
+            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
             print("%s%s" % ("\nCluster atlas: ", atlas_select_clust))
             print("\nClustering within mask at a single resolution...")
             if subjects_list:
@@ -422,13 +440,13 @@ def build_workflow(args, retval):
                 for input_file in subjects_list:
                     for k in k_list:
                         cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                        atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
+                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
                         print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
                         do_dir_path(atlas_select_clust, input_file)
             else:
                 for k in k_list:
                     cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                    atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
+                    atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
                     print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
                     do_dir_path(atlas_select_clust, input_file)
         elif k_clustering == 3:
@@ -437,12 +455,12 @@ def build_workflow(args, retval):
                 for input_file in subjects_list:
                     for clust_mask in clust_mask_list:
                         cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                        atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
+                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
                         do_dir_path(atlas_select_clust, input_file)
             else:
                 for clust_mask in clust_mask_list:
                     cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                    atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
+                    atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
                     do_dir_path(atlas_select_clust, input_file)
             clust_mask = None
         elif k_clustering == 4:
@@ -453,17 +471,81 @@ def build_workflow(args, retval):
                     for clust_mask in clust_mask_list:
                         for k in k_list:
                             cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                            atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
+                            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
                             do_dir_path(atlas_select_clust, input_file)
             else:
                 for clust_mask in clust_mask_list:
                     for k in k_list:
                         cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                        atlas_select_clust = "%s%s%s" % (cl_mask_name, '_k', k)
+                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
                         do_dir_path(atlas_select_clust, input_file)
             clust_mask = None
+        elif k_clustering == 5:
+            for clust_type in clust_type_list:
+                cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                print("%s%s" % ("\nCluster atlas: ", atlas_select_clust))
+                print("\nClustering within mask at a single resolution...")
+                if subjects_list:
+                    for input_file in subjects_list:
+                        do_dir_path(atlas_select_clust, input_file)
+                else:
+                    do_dir_path(atlas_select_clust, input_file)
+        elif k_clustering == 6:
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
+            print("\nClustering within mask at multiple resolutions...")
+            if subjects_list:
+                for input_file in subjects_list:
+                    for clust_type in clust_type_list:
+                        for k in k_list:
+                            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                            print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                            do_dir_path(atlas_select_clust, input_file)
+            else:
+                for clust_type in clust_type_list:
+                    for k in k_list:
+                        cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                        print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                        do_dir_path(atlas_select_clust, input_file)
+        elif k_clustering == 7:
+            print("\nClustering within multiple masks at a single resolution...")
+            if subjects_list:
+                for input_file in subjects_list:
+                    for clust_type in clust_type_list:
+                        for clust_mask in clust_mask_list:
+                            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                            do_dir_path(atlas_select_clust, input_file)
+            else:
+                for clust_type in clust_type_list:
+                    for clust_mask in clust_mask_list:
+                        cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                        do_dir_path(atlas_select_clust, input_file)
+            clust_mask = None
+        elif k_clustering == 8:
+            print("\nClustering within multiple masks at multiple resolutions...")
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
+            if subjects_list:
+                for input_file in subjects_list:
+                    for clust_type in clust_type_list:
+                        for clust_mask in clust_mask_list:
+                            for k in k_list:
+                                cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                                atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                                do_dir_path(atlas_select_clust, input_file)
+            else:
+                for clust_type in clust_type_list:
+                    for clust_mask in clust_mask_list:
+                        for k in k_list:
+                            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                            do_dir_path(atlas_select_clust, input_file)
+            clust_mask = None
         elif (user_atlas_list is not None or uatlas_select is not None) and (k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1) and atlas_select is None:
-            print('Error: the -ua flag cannot be used with the clustering option. Use the -cm flag instead.')
+            print('Error: the -ua flag cannot be used alone with the clustering option. Use the -cm flag instead.')
             sys.exit(0)
         if multi_atlas is not None:
             print('\nIterating across multiple predefined atlases...')
@@ -696,6 +778,8 @@ def build_workflow(args, retval):
     # print("%s%s" % ('prune: ', prune))
     # print("%s%s" % ('node_size_list: ', node_size_list))
     # print("%s%s" % ('smooth_list: ', smooth_list))
+    # print("%s%s" % ('clust_type: ', clust_type))
+    # print("%s%s" % ('clust_type_list: ', clust_type_list))
     # print('\n\n\n\n\n')
     # import sys
     # sys.exit(0)
@@ -711,7 +795,8 @@ def build_workflow(args, retval):
                                multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k,
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
-                               plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type):
+                               plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
+                               clust_type_list):
 
         wf = pe.Workflow(name='Wf_single_subject_' + str(ID))
         inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'mask', 'multi_nets',
@@ -734,7 +819,7 @@ def build_workflow(args, retval):
                                     ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                                     clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
-                                    use_AAL_naming, smooth, smooth_list, disp_filt, clust_type)
+                                    use_AAL_naming, smooth, smooth_list, disp_filt, clust_type, clust_type_list)
         meta_wf._mem_gb = procmem[1]
         meta_wf.n_procs = procmem[0]
         wf.add_nodes([meta_wf])
@@ -839,7 +924,7 @@ def build_workflow(args, retval):
                          multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask,
                          k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
                          num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming,
-                         multi_graph, smooth, smooth_list, disp_filt, clust_type):
+                         multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list):
 
         wf_multi = pe.Workflow(name='PyNets_multisubject')
         procmem_cores = int(np.round(float(procmem[0])/float(len(subjects_list)), 0))
@@ -863,7 +948,7 @@ def build_workflow(args, retval):
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
                 min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type, use_AAL_naming=use_AAL_naming,
                 multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
-                clust_type=clust_type)
+                clust_type=clust_type, clust_type_list=clust_type_list)
             wf_multi.add_nodes([wf_single_subject])
             i = i + 1
 
@@ -881,7 +966,7 @@ def build_workflow(args, retval):
                                     k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
-                                    smooth, smooth_list, disp_filt, clust_type)
+                                    smooth, smooth_list, disp_filt, clust_type, clust_type_list)
 
         import shutil
         if os.path.exists('/tmp/Wf_multi_subject'):
@@ -925,7 +1010,7 @@ def build_workflow(args, retval):
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
-                                    smooth_list, disp_filt, clust_type)
+                                    smooth_list, disp_filt, clust_type, clust_type_list)
 
         import shutil
         base_dirname = "%s%s" % ('Wf_single_subject_', str(ID))

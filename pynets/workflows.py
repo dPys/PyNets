@@ -12,7 +12,7 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
                       ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                       clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                       node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
-                      use_AAL_naming, smooth, smooth_list, disp_filt, clust_type):
+                      use_AAL_naming, smooth, smooth_list, disp_filt, clust_type, clust_type_list):
     from pynets import workflows
     from nipype import Workflow
     from nipype.pipeline import engine as pe
@@ -28,7 +28,8 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
                                                          k, clust_mask, k_min, k_max, k_step, k_clustering,
                                                          user_atlas_list, clust_mask_list, node_size_list,
                                                          conn_model_list, min_span_tree, use_AAL_naming, smooth,
-                                                         smooth_list, disp_filt, prune, multi_nets, clust_type)
+                                                         smooth_list, disp_filt, prune, multi_nets, clust_type,
+                                                         clust_type_list)
         sub_struct_wf = None
     # Workflow 2: Structural connectome
     elif dwi_dir is not None and network is None:
@@ -58,7 +59,8 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
                                                            'clust_mask_list', 'prune', 'node_size_list',
                                                            'num_total_samples', 'conn_model_list',
                                                            'min_span_tree', 'verbose', 'plugin_type', 'use_AAL_naming',
-                                                           'smooth', 'smooth_list', 'disp_filt']),
+                                                           'smooth', 'smooth_list', 'disp_filt', 'clust_type',
+                                                           'clust_type_list']),
                              name='meta_inputnode')
     meta_inputnode.inputs.in_file = input_file
     meta_inputnode.inputs.ID = ID
@@ -104,6 +106,7 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
     meta_inputnode.inputs.smooth_list = smooth_list
     meta_inputnode.inputs.disp_filt = disp_filt
     meta_inputnode.inputs.clust_type = clust_type
+    meta_inputnode.inputs.clust_type_list = clust_type_list
 
     meta_wf.add_nodes([base_wf])
     meta_wf.connect([(meta_inputnode, base_wf, [('ID', 'inputnode.ID'),
@@ -140,7 +143,8 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
                                                 ('use_AAL_naming', 'inputnode.use_AAL_naming'),
                                                 ('smooth', 'inputnode.smooth'),
                                                 ('disp_filt', 'inputnode.disp_filt'),
-                                                ('clust_type', 'inputnode.clust_type')])
+                                                ('clust_type', 'inputnode.clust_type'),
+                                                ('clust_type_list', 'inputnode.clust_type_list')])
                      ])
 
     pass_meta_outs_node = pe.Node(niu.Function(input_names=['conn_model', 'est_path', 'network', 'node_size',
@@ -194,7 +198,8 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                              dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
                              multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step,
                              k_clustering, user_atlas_list, clust_mask_list, node_size_list, conn_model_list,
-                             min_span_tree, use_AAL_naming, smooth, smooth_list, disp_filt, prune, multi_nets, clust_type):
+                             min_span_tree, use_AAL_naming, smooth, smooth_list, disp_filt, prune, multi_nets,
+                             clust_type, clust_type_list):
     import os
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -254,6 +259,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     inputnode.inputs.disp_filt = disp_filt
     inputnode.inputs.prune = prune
     inputnode.inputs.clust_type = clust_type
+    inputnode.inputs.clust_type_list = clust_type_list
 
     # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
@@ -288,6 +294,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     # print("%s%s" % ('node_size_list: ', node_size_list))
     # print("%s%s" % ('smooth_list: ', smooth_list))
     # print("%s%s" % ('clust_type: ', clust_type))
+    # print("%s%s" % ('clust_type_list: ', clust_type_list))
     # print('\n\n\n\n\n')
 
     # Create function nodes
@@ -296,7 +303,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         clustering_node = pe.Node(niu.Function(input_names=['func_file', 'clust_mask', 'ID', 'k',
                                                             'clust_type'],
                                                output_names=['uatlas_select', 'atlas_select', 'clustering',
-                                                             'clust_mask', 'k'],
+                                                             'clust_mask', 'k', 'clust_type'],
                                                function=utils.individual_tcorr_clustering,
                                                imports=import_list), name="clustering_node")
         clustering_node.synchronize = True
@@ -304,7 +311,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         # clustering_node iterables and names
         if k_clustering == 1:
             mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-            cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
+            cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
             cluster_atlas_file = "%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
             if user_atlas_list:
                 user_atlas_list.append(cluster_atlas_file)
@@ -321,7 +328,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
             cluster_atlas_file_list = []
             for k in k_list:
                 mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
+                cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz'))
             if user_atlas_list:
@@ -338,7 +345,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
             cluster_atlas_file_list = []
             for clust_mask in clust_mask_list:
                 mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
+                cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz'))
             if user_atlas_list:
@@ -358,9 +365,87 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
             for clust_mask in clust_mask_list:
                 for k in k_list:
                     mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                    cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
+                    cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz'))
+            if user_atlas_list:
+                user_atlas_list = user_atlas_list + cluster_atlas_file_list
+            elif uatlas_select:
+                user_atlas_list = cluster_atlas_file_list + [uatlas_select]
+            else:
+                user_atlas_list = cluster_atlas_file_list
+        elif k_clustering == 5:
+            k_cluster_iterables = []
+            k_cluster_iterables.append(("clust_type", clust_type_list))
+            clustering_node.iterables = k_cluster_iterables
+            cluster_atlas_name_list = []
+            cluster_atlas_file_list = []
+            for clust_type in clust_type_list:
+                mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
+                cluster_atlas_name_list.append(cluster_atlas_name)
+                cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz'))
+            if user_atlas_list:
+                user_atlas_list = user_atlas_list + cluster_atlas_file_list
+            elif uatlas_select:
+                user_atlas_list = cluster_atlas_file_list + [uatlas_select]
+            else:
+                user_atlas_list = cluster_atlas_file_list
+        elif k_clustering == 6:
+            k_cluster_iterables = []
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
+            k_cluster_iterables.append(("k", k_list))
+            k_cluster_iterables.append(("clust_type", clust_type_list))
+            clustering_node.iterables = k_cluster_iterables
+            cluster_atlas_name_list = []
+            cluster_atlas_file_list = []
+            for clust_type in clust_type_list:
+                for k in k_list:
+                    mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                    cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
+                    cluster_atlas_name_list.append(cluster_atlas_name)
+                    cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz'))
+            if user_atlas_list:
+                user_atlas_list = user_atlas_list + cluster_atlas_file_list
+            elif uatlas_select:
+                user_atlas_list = cluster_atlas_file_list + [uatlas_select]
+            else:
+                user_atlas_list = cluster_atlas_file_list
+        elif k_clustering == 7:
+            k_cluster_iterables = []
+            k_cluster_iterables.append(("clust_mask", clust_mask_list))
+            k_cluster_iterables.append(("clust_type", clust_type_list))
+            clustering_node.iterables = k_cluster_iterables
+            cluster_atlas_name_list = []
+            cluster_atlas_file_list = []
+            for clust_type in clust_type_list:
+                for clust_mask in clust_mask_list:
+                    mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                    cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
+                    cluster_atlas_name_list.append(cluster_atlas_name)
+                    cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz'))
+            if user_atlas_list:
+                user_atlas_list = user_atlas_list + cluster_atlas_file_list
+            elif uatlas_select:
+                user_atlas_list = cluster_atlas_file_list + [uatlas_select]
+            else:
+                user_atlas_list = cluster_atlas_file_list
+        elif k_clustering == 8:
+            k_cluster_iterables = []
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
+            k_cluster_iterables.append(("k", k_list))
+            k_cluster_iterables.append(("clust_mask", clust_mask_list))
+            k_cluster_iterables.append(("clust_type", clust_type_list))
+            clustering_node.iterables = k_cluster_iterables
+            cluster_atlas_name_list = []
+            cluster_atlas_file_list = []
+            for clust_type in clust_type_list:
+                for clust_mask in clust_mask_list:
+                    for k in k_list:
+                        mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                        cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
+                        cluster_atlas_name_list.append(cluster_atlas_name)
+                        cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz'))
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
             elif uatlas_select:
@@ -381,19 +466,35 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     # Connect clustering solutions to node definition Node
     if float(k_clustering) > 0:
         functional_connectometry_wf.add_nodes([clustering_node])
-        functional_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('clust_type', 'clust_type'),
+        functional_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'),
                                                                            ('func_file', 'func_file')])
                                              ])
         if k_clustering == 1:
-            functional_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k'),
+            functional_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k'), ('clust_type', 'clust_type'),
                                                                                ('clust_mask', 'clust_mask')])
                                                  ])
         elif k_clustering == 2:
-            functional_connectometry_wf.connect([(inputnode, clustering_node, [('clust_mask', 'clust_mask')])
+            functional_connectometry_wf.connect([(inputnode, clustering_node, [('clust_mask', 'clust_mask'),
+                                                                               ('clust_type', 'clust_type')])
                                                  ])
         elif k_clustering == 3:
+            functional_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k'),
+                                                                               ('clust_type', 'clust_type')])
+                                                 ])
+        elif k_clustering == 4:
+            functional_connectometry_wf.connect([(inputnode, clustering_node, [('clust_type', 'clust_type')])
+                                                 ])
+        elif k_clustering == 5:
+            functional_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k'),
+                                                                               ('clust_mask', 'clust_mask')])
+                                                 ])
+        elif k_clustering == 6:
+            functional_connectometry_wf.connect([(inputnode, clustering_node, [('clust_mask', 'clust_mask')])
+                                                 ])
+        elif k_clustering == 7:
             functional_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k')])
                                                  ])
+
         functional_connectometry_wf.connect([(clustering_node, fetch_nodes_and_labels_node,
                                               [('uatlas_select', 'uatlas_select'),
                                                ('atlas_select', 'atlas_select'),
@@ -473,14 +574,16 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                                                       [('clustering', 'clustering')])
                                                      ])
             else:
-                clust_join_node = pe.JoinNode(niu.IdentityInterface(fields=['clustering', 'k', 'clust_mask']),
+                clust_join_node = pe.JoinNode(niu.IdentityInterface(fields=['clustering', 'k', 'clust_mask',
+                                                                            'clust_type']),
                                               name='clust_join_node',
                                               joinsource=clustering_node,
-                                              joinfield=['clustering', 'k', 'clust_mask'])
+                                              joinfield=['clustering', 'k', 'clust_mask', 'clust_type'])
                 functional_connectometry_wf.connect([(clustering_node, clust_join_node,
                                                       [('clustering', 'clustering'),
                                                        ('k', 'k'),
-                                                       ('clust_mask', 'clust_mask')])
+                                                       ('clust_mask', 'clust_mask'),
+                                                       ('clust_type', 'clust_type')])
                                                      ])
                 functional_connectometry_wf.connect([(clust_join_node, flexi_atlas_source,
                                                       [('clustering', 'clustering')])

@@ -152,7 +152,7 @@ def individual_tcorr_clustering(func_file, clust_mask, ID, k, clust_type, thresh
         make_image_from_bin_renum(uatlas_select, binfile, clust_mask)
 
     clustering = True
-    return uatlas_select, atlas_select, clustering, clust_mask, k
+    return uatlas_select, atlas_select, clustering, clust_mask, k, clust_type
 
 
 def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask, node_size, smooth):
