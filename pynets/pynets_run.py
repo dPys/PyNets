@@ -109,6 +109,10 @@ def get_parser():
                         metavar='Cluster mask',
                         default=None,
                         help='Specify the path to the mask within which to perform clustering. If specifying a list of paths to multiple cluster masks, separate them by comma.')
+    parser.add_argument('-ct',
+                        metavar='Clustering type',
+                        default='ncut',
+                        help='Specify the types of clustering to use. Options include ncut, ward, kmeans, complete, and average. If specifying a list of clustering types, separate them by comma.')
     parser.add_argument('-p',
                         metavar='Pruning strategy',
                         default=1,
@@ -232,6 +236,7 @@ def build_workflow(args, retval):
     dens_thresh = args.dt
     min_span_tree = args.mst
     disp_filt = args.df
+    clust_type = args.ct
 #    adapt_thresh=args.at
     adapt_thresh = False
     plot_switch = args.plt
@@ -706,7 +711,7 @@ def build_workflow(args, retval):
                                multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k,
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
-                               plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt):
+                               plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type):
 
         wf = pe.Workflow(name='Wf_single_subject_' + str(ID))
         inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'mask', 'multi_nets',
@@ -729,7 +734,7 @@ def build_workflow(args, retval):
                                     ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                                     clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
-                                    use_AAL_naming, smooth, smooth_list, disp_filt)
+                                    use_AAL_naming, smooth, smooth_list, disp_filt, clust_type)
         meta_wf._mem_gb = procmem[1]
         meta_wf.n_procs = procmem[0]
         wf.add_nodes([meta_wf])
@@ -834,7 +839,7 @@ def build_workflow(args, retval):
                          multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask,
                          k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
                          num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming,
-                         multi_graph, smooth, smooth_list, disp_filt):
+                         multi_graph, smooth, smooth_list, disp_filt, clust_type):
 
         wf_multi = pe.Workflow(name='PyNets_multisubject')
         procmem_cores = int(np.round(float(procmem[0])/float(len(subjects_list)), 0))
@@ -857,7 +862,8 @@ def build_workflow(args, retval):
                 clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
                 min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type, use_AAL_naming=use_AAL_naming,
-                multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt)
+                multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
+                clust_type=clust_type)
             wf_multi.add_nodes([wf_single_subject])
             i = i + 1
 
@@ -875,7 +881,7 @@ def build_workflow(args, retval):
                                     k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
-                                    smooth, smooth_list, disp_filt)
+                                    smooth, smooth_list, disp_filt, clust_type)
 
         import shutil
         if os.path.exists('/tmp/Wf_multi_subject'):
@@ -919,7 +925,7 @@ def build_workflow(args, retval):
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
-                                    smooth_list, disp_filt)
+                                    smooth_list, disp_filt, clust_type)
 
         import shutil
         base_dirname = "%s%s" % ('Wf_single_subject_', str(ID))

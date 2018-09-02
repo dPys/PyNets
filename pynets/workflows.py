@@ -12,7 +12,7 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
                       ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                       clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                       node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
-                      use_AAL_naming, smooth, smooth_list, disp_filt):
+                      use_AAL_naming, smooth, smooth_list, disp_filt, clust_type):
     from pynets import workflows
     from nipype import Workflow
     from nipype.pipeline import engine as pe
@@ -28,7 +28,7 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
                                                          k, clust_mask, k_min, k_max, k_step, k_clustering,
                                                          user_atlas_list, clust_mask_list, node_size_list,
                                                          conn_model_list, min_span_tree, use_AAL_naming, smooth,
-                                                         smooth_list, disp_filt, prune, multi_nets)
+                                                         smooth_list, disp_filt, prune, multi_nets, clust_type)
         sub_struct_wf = None
     # Workflow 2: Structural connectome
     elif dwi_dir is not None and network is None:
@@ -103,6 +103,7 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
     meta_inputnode.inputs.smooth = smooth
     meta_inputnode.inputs.smooth_list = smooth_list
     meta_inputnode.inputs.disp_filt = disp_filt
+    meta_inputnode.inputs.clust_type = clust_type
 
     meta_wf.add_nodes([base_wf])
     meta_wf.connect([(meta_inputnode, base_wf, [('ID', 'inputnode.ID'),
@@ -138,7 +139,8 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
                                                 ('min_span_tree', 'inputnode.min_span_tree'),
                                                 ('use_AAL_naming', 'inputnode.use_AAL_naming'),
                                                 ('smooth', 'inputnode.smooth'),
-                                                ('disp_filt', 'inputnode.disp_filt')])
+                                                ('disp_filt', 'inputnode.disp_filt'),
+                                                ('clust_type', 'inputnode.clust_type')])
                      ])
 
     pass_meta_outs_node = pe.Node(niu.Function(input_names=['conn_model', 'est_path', 'network', 'node_size',
@@ -192,7 +194,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                              dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
                              multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step,
                              k_clustering, user_atlas_list, clust_mask_list, node_size_list, conn_model_list,
-                             min_span_tree, use_AAL_naming, smooth, smooth_list, disp_filt, prune, multi_nets):
+                             min_span_tree, use_AAL_naming, smooth, smooth_list, disp_filt, prune, multi_nets, clust_type):
     import os
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -213,7 +215,8 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                                                       'clust_mask', 'k_min', 'k_max',
                                                       'k_step', 'k_clustering', 'user_atlas_list',
                                                       'min_span_tree', 'use_AAL_naming', 'smooth',
-                                                      'disp_filt', 'prune', 'multi_nets']), name='inputnode')
+                                                      'disp_filt', 'prune', 'multi_nets', 'clust_type']),
+                        name='inputnode')
 
     inputnode.inputs.func_file = func_file
     inputnode.inputs.ID = ID
@@ -250,6 +253,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     inputnode.inputs.smooth = smooth
     inputnode.inputs.disp_filt = disp_filt
     inputnode.inputs.prune = prune
+    inputnode.inputs.clust_type = clust_type
 
     # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
@@ -283,12 +287,14 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     # print("%s%s" % ('prune: ', prune))
     # print("%s%s" % ('node_size_list: ', node_size_list))
     # print("%s%s" % ('smooth_list: ', smooth_list))
+    # print("%s%s" % ('clust_type: ', clust_type))
     # print('\n\n\n\n\n')
 
     # Create function nodes
     # Clustering
     if float(k_clustering) > 0:
-        clustering_node = pe.Node(niu.Function(input_names=['func_file', 'clust_mask', 'ID', 'k'],
+        clustering_node = pe.Node(niu.Function(input_names=['func_file', 'clust_mask', 'ID', 'k',
+                                                            'clust_type'],
                                                output_names=['uatlas_select', 'atlas_select', 'clustering',
                                                              'clust_mask', 'k'],
                                                function=utils.individual_tcorr_clustering,
@@ -298,8 +304,8 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         # clustering_node iterables and names
         if k_clustering == 1:
             mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-            cluster_atlas_name = "%s%s%s" % (mask_name, '_k', str(k))
-            cluster_atlas_file = "%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_k', str(k), '.nii.gz')
+            cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
+            cluster_atlas_file = "%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
             if user_atlas_list:
                 user_atlas_list.append(cluster_atlas_file)
             elif uatlas_select and ((uatlas_select == cluster_atlas_file) is False):
@@ -315,9 +321,9 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
             cluster_atlas_file_list = []
             for k in k_list:
                 mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                cluster_atlas_name = "%s%s%s" % (mask_name, '_k', str(k))
+                cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
                 cluster_atlas_name_list.append(cluster_atlas_name)
-                cluster_atlas_file_list.append("%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_k', str(k), '.nii.gz'))
+                cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz'))
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
             elif uatlas_select:
@@ -332,9 +338,9 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
             cluster_atlas_file_list = []
             for clust_mask in clust_mask_list:
                 mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                cluster_atlas_name = "%s%s%s" % (mask_name, '_k', str(k))
+                cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
                 cluster_atlas_name_list.append(cluster_atlas_name)
-                cluster_atlas_file_list.append("%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_k', str(k), '.nii.gz'))
+                cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz'))
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
             elif uatlas_select:
@@ -352,9 +358,9 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
             for clust_mask in clust_mask_list:
                 for k in k_list:
                     mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                    cluster_atlas_name = "%s%s%s" % (mask_name, '_k', str(k))
+                    cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
                     cluster_atlas_name_list.append(cluster_atlas_name)
-                    cluster_atlas_file_list.append("%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_k', str(k), '.nii.gz'))
+                    cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz'))
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
             elif uatlas_select:
@@ -375,7 +381,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     # Connect clustering solutions to node definition Node
     if float(k_clustering) > 0:
         functional_connectometry_wf.add_nodes([clustering_node])
-        functional_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'),
+        functional_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('clust_type', 'clust_type'),
                                                                            ('func_file', 'func_file')])
                                              ])
         if k_clustering == 1:
@@ -388,7 +394,6 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         elif k_clustering == 3:
             functional_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k')])
                                                  ])
-
         functional_connectometry_wf.connect([(clustering_node, fetch_nodes_and_labels_node,
                                               [('uatlas_select', 'uatlas_select'),
                                                ('atlas_select', 'atlas_select'),
@@ -415,12 +420,11 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
             fetch_nodes_and_labels_node_iterables = []
             fetch_nodes_and_labels_node_iterables.append(("uatlas_select", user_atlas_list))
             fetch_nodes_and_labels_node.iterables = fetch_nodes_and_labels_node_iterables
-    elif (multi_atlas is None and user_atlas_list is None) and ((atlas_select is not None and uatlas_select is None and k_clustering == 0) or (atlas_select is None and uatlas_select is not None and k_clustering == 0) or (k_clustering > 0 and atlas_select is None and uatlas_select is None and multi_atlas is None and uatlas_select is None)):
+    elif (atlas_select is not None and uatlas_select is None and k_clustering == 0) or (atlas_select is None and uatlas_select is not None and k_clustering == 0) or (k_clustering > 0 and atlas_select is None and multi_atlas is None):
         # print('\n\n\n\n')
         # print('No flexi-atlas2')
         # print('\n\n\n\n')
         flexi_atlas = False
-        pass
     else:
         flexi_atlas = True
         flexi_atlas_source = pe.Node(niu.IdentityInterface(fields=['atlas_select', 'uatlas_select', 'clustering']),
@@ -649,12 +653,9 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
             atlas_join_source = flexi_atlas_source
         elif float(k_clustering) > 1 and flexi_atlas is False:
             atlas_join_source = clustering_node
-            atlas_join_source2 = None
         else:
             atlas_join_source = fetch_nodes_and_labels_node
-            atlas_join_source2 = None
     else:
-        atlas_join_source2 = None
         atlas_join_source = None
 
     # Connect all get_conn_matrix_node outputs to the "thr_info" node
@@ -930,7 +931,8 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         (inputnode, node_gen_node, [('ID', 'ID'),
                                     ('mask', 'mask'),
                                     ('parc', 'parc')]),
-        (fetch_nodes_and_labels_node, node_gen_node, [('atlas_select', 'atlas_select'), ('uatlas_select', 'uatlas_select'),
+        (fetch_nodes_and_labels_node, node_gen_node, [('atlas_select', 'atlas_select'),
+                                                      ('uatlas_select', 'uatlas_select'),
                                                       ('dir_path', 'dir_path'), ('par_max', 'par_max')]),
         (inputnode, extract_ts_node, [('conf', 'conf'), ('func_file', 'func_file'), ('node_size', 'node_size'),
                                       ('mask', 'mask'), ('ID', 'ID'), ('smooth', 'smooth')]),

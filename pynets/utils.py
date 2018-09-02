@@ -110,26 +110,47 @@ def create_csv_path(ID, network, conn_model, thr, mask, dir_path, node_size, smo
     return out_path
 
 
-def individual_tcorr_clustering(func_file, clust_mask, ID, k, thresh=0.5):
+def nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_select):
+    import time
+    import nibabel as nib
+    from nilearn.regions import Parcellations
+    detrending = True
+
+    start = time.time()
+    func_img = nib.load(func_file)
+    mask_img = nib.load(clust_mask)
+    clust_est = Parcellations(method=clust_type, detrend=detrending, n_parcels=int(k),
+                              mask=mask_img)
+    clust_est.fit(func_img)
+    nib.save(clust_est.labels_img_, uatlas_select)
+    print("%s%s%s" % (clust_type, k, " clusters: %.2fs" % (time.time() - start)))
+    return
+
+
+def individual_tcorr_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
     import os
     from pynets import utils
-    from pynets.clustools import make_image_from_bin_renum, binfile_parcellate, make_local_connectivity_tcorr
+    nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
     mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-    atlas_select = "%s%s%s" % (mask_name, '_k', str(k))
-    print("%s%s%s%s%s" % ('\nCreating atlas at cluster level ', str(k), ' for ', str(atlas_select), '...\n'))
-    working_dir = "%s%s%s" % (os.path.dirname(func_file), '/', atlas_select)
-    outfile = "%s%s%s%s" % (working_dir, '/rm_tcorr_conn_', str(ID), '.npy')
-    outfile_parc = "%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID))
-    binfile = "%s%s%s%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID), '_', str(k), '.npy')
+    atlas_select = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
+    print("%s%s%s%s%s%s%s" % ('\nCreating atlas using ', clust_type, ' at cluster level ', str(k),
+                              ' for ', str(atlas_select), '...\n'))
     dir_path = utils.do_dir_path(atlas_select, func_file)
-    uatlas_select = "%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_k', str(k), '.nii.gz')
+    uatlas_select = "%s%s%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
 
-    make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh)
+    if clust_type in nilearn_clust_list:
+        utils.nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_select)
+    elif clust_type == 'ncut':
+        from pynets.clustools import make_image_from_bin_renum, binfile_parcellate, make_local_connectivity_tcorr
+        working_dir = "%s%s%s" % (os.path.dirname(func_file), '/', atlas_select)
+        outfile = "%s%s%s%s" % (working_dir, '/rm_tcorr_conn_', str(ID), '.npy')
+        outfile_parc = "%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID))
+        binfile = "%s%s%s%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID), '_', str(k), '.npy')
+        make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh)
+        binfile_parcellate(outfile, outfile_parc, int(k))
+        make_image_from_bin_renum(uatlas_select, binfile, clust_mask)
 
-    binfile_parcellate(outfile, outfile_parc, int(k))
-
-    make_image_from_bin_renum(uatlas_select, binfile, clust_mask)
     clustering = True
     return uatlas_select, atlas_select, clustering, clust_mask, k
 

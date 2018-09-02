@@ -450,13 +450,14 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, func_file
             raise ValueError("%s%s%s" % ('ERROR: Atlas file for ', atlas_select, ' not found!'))
         parcel_list = None
         par_max = None
-    elif uatlas_select and not atlas_select:
-        while True:
-            if os.path.isfile(uatlas_select):
-                break
-            else:
-                print('Waiting for atlas file...')
-                time.sleep(15)
+    elif uatlas_select:
+        if clustering is True:
+            while True:
+                if os.path.isfile(uatlas_select):
+                    break
+                else:
+                    print('Waiting for atlas file...')
+                    time.sleep(15)
         atlas_select = uatlas_select.split('/')[-1].split('.')[0]
         try:
             # Fetch user-specified atlas coords
