@@ -243,7 +243,7 @@ def build_workflow(args, retval):
         clust_type = None
     elif clust_type == ['None']:
         clust_type = None
-        clust_type = None
+        clust_type_list = None
     else:
         clust_type = clust_type[0]
         clust_type_list = None
@@ -370,18 +370,18 @@ def build_workflow(args, retval):
 
     if (k_min is not None and k_max is not None) and k is None and clust_mask_list is not None and clust_type_list is not None:
         k_clustering = 8
-    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is None and clust_type_list is not None:
-        k_clustering = 7
     elif k is not None and (k_min is None and k_max is None) and clust_mask_list is not None and clust_type_list is not None:
+        k_clustering = 7
+    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is None and clust_type_list is not None:
         k_clustering = 6
     elif k is not None and (k_min is None and k_max is None) and clust_mask_list is None and clust_type_list is not None:
         k_clustering = 5
     elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is not None and clust_type_list is None:
         k_clustering = 4
-    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is None and clust_type_list is None:
-        k_clustering = 2
     elif k is not None and (k_min is None and k_max is None) and clust_mask_list is not None and clust_type_list is None:
         k_clustering = 3
+    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is None and clust_type_list is None:
+        k_clustering = 2
     elif k is not None and (k_min is None and k_max is None) and clust_mask_list is None and clust_type_list is None:
         k_clustering = 1
     else:
@@ -485,15 +485,16 @@ def build_workflow(args, retval):
                 cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
                 atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
                 print("%s%s" % ("\nCluster atlas: ", atlas_select_clust))
-                print("\nClustering within mask at a single resolution...")
+                print("\nClustering within mask at a single resolution using multiple clustering methods...")
                 if subjects_list:
                     for input_file in subjects_list:
                         do_dir_path(atlas_select_clust, input_file)
                 else:
                     do_dir_path(atlas_select_clust, input_file)
+            clust_type = None
         elif k_clustering == 6:
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
-            print("\nClustering within mask at multiple resolutions...")
+            print("\nClustering within mask at multiple resolutions using multiple clustering methods...")
             if subjects_list:
                 for input_file in subjects_list:
                     for clust_type in clust_type_list:
@@ -509,8 +510,9 @@ def build_workflow(args, retval):
                         atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
                         print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
                         do_dir_path(atlas_select_clust, input_file)
+            clust_type = None
         elif k_clustering == 7:
-            print("\nClustering within multiple masks at a single resolution...")
+            print("\nClustering within multiple masks at a single resolution using multiple clustering methods...")
             if subjects_list:
                 for input_file in subjects_list:
                     for clust_type in clust_type_list:
@@ -525,8 +527,9 @@ def build_workflow(args, retval):
                         atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
                         do_dir_path(atlas_select_clust, input_file)
             clust_mask = None
+            clust_type = None
         elif k_clustering == 8:
-            print("\nClustering within multiple masks at multiple resolutions...")
+            print("\nClustering within multiple masks at multiple resolutions using multiple clustering methods...")
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             if subjects_list:
                 for input_file in subjects_list:
@@ -544,6 +547,7 @@ def build_workflow(args, retval):
                             atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
                             do_dir_path(atlas_select_clust, input_file)
             clust_mask = None
+            clust_type = None
         elif (user_atlas_list is not None or uatlas_select is not None) and (k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1) and atlas_select is None:
             print('Error: the -ua flag cannot be used alone with the clustering option. Use the -cm flag instead.')
             sys.exit(0)
