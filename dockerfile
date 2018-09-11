@@ -61,6 +61,9 @@ RUN conda install -yq \
     && conda clean -tipsy \
     && pip install pynets==0.7.10
 
+RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
+    && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
+
 # Install skggm
 RUN conda install -yq \
         cython \

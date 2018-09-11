@@ -13,9 +13,9 @@ requirements = [
     'scipy>=0.19.0',
     'nipype>=1.1.0',
     'numpy>=1.12.1',
-#    'nilearn>=0.2.6',
     'seaborn>=0.7.1',
     'matplotlib>=2.0.0',
+    'nilearn>=0.4.2',
     'pandas>=0.19.2',
     'networkx>=2.0',
     'nibabel>=2.1.0',
@@ -68,8 +68,5 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     setup_requires=setup_requirements,
-    dependency_links=[
-        'https://github.com/dPys/nilearn.git#egg=0.4.2',
-    ],
     scripts=["pynets/pynets_run.py"]
 )
