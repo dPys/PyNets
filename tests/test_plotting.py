@@ -3,7 +3,8 @@
 """
 Created on Wed Dec 27 16:19:14 2017
 
-@author: PSYC-dap3463
+@authors: Derek Pisner & Ryan Hammonds
+
 """
 import numpy as np
 import time
@@ -18,7 +19,7 @@ from pynets import plotting
 def test_plot_conn_mat_nonet_no_mask():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/ryanhammonds/Applications/PyNets/tests/examples'
+    #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
     dir_path = base_dir + '/997'
     network = None
     ID = '997'
@@ -34,15 +35,16 @@ def test_plot_conn_mat_nonet_no_mask():
     label_names = pickle.load(labels_file)
 
     start_time = time.time()
-    plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr,
-                                node_size, smooth)
-    print("%s%s%s" % ('plot_conn_mat_func --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
+    plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path,
+    ID, network, label_names, mask, thr, node_size, smooth)
+    print("%s%s%s" % ('plot_conn_mat_func --> finished: ',
+    str(np.round(time.time() - start_time, 1)), 's'))
 
 
 def test_plot_conn_mat_nonet_mask():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/ryanhammonds/Applications/PyNets/tests/examples'
+    #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
     dir_path = base_dir + '/997'
     network = None
     ID = '997'
@@ -58,15 +60,16 @@ def test_plot_conn_mat_nonet_mask():
     label_names = pickle.load(labels_file)
 
     start_time = time.time()
-    plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr,
-                                node_size, smooth)
-    print("%s%s%s" % ('plot_conn_mat_func (Masking version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
+    plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path,
+    ID, network, label_names, mask, thr, node_size, smooth)
+    print("%s%s%s" % ('plot_conn_mat_func (Masking version) --> finished: ',
+    str(np.round(time.time() - start_time, 1)), 's'))
 
 
 def test_plot_all_nonet_no_mask():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/ryanhammonds/Applications/PyNets/tests/examples'
+    #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
     dir_path = base_dir + '/997'
     network = None
     ID = '997'
@@ -88,15 +91,18 @@ def test_plot_all_nonet_no_mask():
     coords = pickle.load(coord_file)
 
     start_time = time.time()
-    plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords,
-                      edge_threshold, thr, node_size, smooth, prune, parlistfile)
-    print("%s%s%s" % ('plot_all --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
+    #coords already a list
+    plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID,
+    network, label_names, mask, coords, edge_threshold, thr, node_size, smooth,
+    prune, parlistfile)
+    print("%s%s%s" % ('plot_all --> finished: ',
+    str(np.round(time.time() - start_time, 1)), 's'))
 
 
 def test_plot_all_nonet_with_mask():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/ryanhammonds/Applications/PyNets/tests/examples'
+    #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
     dir_path = base_dir + '/997'
     network = None
     ID = '997'
@@ -118,15 +124,18 @@ def test_plot_all_nonet_with_mask():
     coords = pickle.load(coord_file)
 
     start_time = time.time()
-    plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, coords,
-                      edge_threshold, thr, node_size, smooth, prune, parlistfile)
-    print("%s%s%s" % ('plot_all (Masking version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
+    #coords already a list
+    plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID,
+    network, label_names, mask, coords, edge_threshold, thr, node_size, smooth,
+    prune, parlistfile)
+    print("%s%s%s" % ('plot_all (Masking version) --> finished: ',
+    str(np.round(time.time() - start_time, 1)), 's'))
 
 
 def test_plot_connectogram():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/ryanhammonds/Applications/PyNets/tests/examples'
+    #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
     dir_path = base_dir + '/997'
     network = None
     ID = '997'
@@ -138,14 +147,16 @@ def test_plot_connectogram():
     label_names = pickle.load(labels_file)
 
     start_time = time.time()
-    plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
-    print("%s%s%s" % ('plot_connectogram --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
+    plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path,
+    ID, network, label_names)
+    print("%s%s%s" % ('plot_connectogram --> finished: ',
+    str(np.round(time.time() - start_time, 1)), 's'))
 
 
 def test_plot_timeseries():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/ryanhammonds/Applications/PyNets/tests/examples'
+    #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
     dir_path = base_dir + '/997'
     network = None
     ID = '997'
@@ -162,7 +173,7 @@ def test_plot_timeseries():
 
 def test_plot_conn_mat_rois_gt_100():
     base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/ryanhammonds/Applications/PyNets/tests/examples'
+    #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
     dir_path = base_dir + '/997'
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.95.txt')
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
@@ -177,7 +188,7 @@ def test_plot_conn_mat_rois_gt_100():
 
 def test_plot_conn_mat_rois_lt_100():
     base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/ryanhammonds/Applications/PyNets/tests/examples'
+    #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
     dir_path = base_dir + '/997'
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.95.txt')
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
@@ -192,7 +203,7 @@ def test_plot_conn_mat_rois_lt_100():
 
 def test_plot_conn_mat_struct():
     base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/ryanhammonds/Applications/PyNets/tests/examples'
+    #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
     dir_path = base_dir + '/997'
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.95.txt')
     conn_model = 'sps'

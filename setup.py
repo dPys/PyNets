@@ -13,9 +13,9 @@ requirements = [
     'scipy>=0.19.0',
     'nipype>=1.1.0',
     'numpy>=1.12.1',
-    'nilearn>=0.2.6',
     'seaborn>=0.7.1',
     'matplotlib>=2.0.0',
+    'nilearn>=0.4.2',
     'pandas>=0.19.2',
     'networkx>=2.0',
     'nibabel>=2.1.0',
@@ -38,7 +38,7 @@ test_requirements = [
 
 setup(
     name='pynets',
-    version='0.6.39',
+    version='0.7.11',
     description="A Fully-Automated Workflow for Reproducible Graph Analysis of Functional and Structural Connectomes",
     #long_description=readme + '\n\n',
     author="Derek Pisner",

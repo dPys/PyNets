@@ -1,5 +1,6 @@
 pandas>=0.19.2
-nilearn>=0.3.1
+scipy>=1.0.0
+#nilearn>=0.3.1
 numpy>=1.13.3
 setuptools>=38.2.4
 click>=6.7
@@ -7,10 +8,10 @@ nibabel>=2.2.1
 seaborn>=0.7.1
 matplotlib>=2.2.0
 #skggm>=0.2.7
-scipy>=1.0.0
 pytest>=3.3.1
 networkx>=2.0
 nipype>=1.1.0
 scikit_learn>=0.19.1
 dipy>=0.13.0
 PyYAML==3.12
+-e git+git://github.com/dPys/nilearn.git#egg=0.4.2

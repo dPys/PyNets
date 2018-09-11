@@ -7,6 +7,7 @@ Copyright (C) 2018
 import os
 import numpy as np
 import nibabel as nib
+nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 
 
 def get_sphere(coords, r, vox_dims, dims):
@@ -51,6 +52,54 @@ def fetch_nilearn_atlas_coords(atlas_select):
     except:
         label_names = None
     return coords, atlas_name, networks_list, label_names
+
+
+def nilearn_atlas_helper(atlas_select, parc):
+    from nilearn import datasets
+    if atlas_select == 'atlas_harvard_oxford':
+        atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'atlas_name')('cort-maxprob-thr0-1mm')
+    elif atlas_select == 'atlas_pauli_2017':
+        if parc is False:
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'version')('prob')
+        else:
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'version')('det')
+    elif 'atlas_talairach' in atlas_select:
+        if atlas_select == 'atlas_talairach_lobe':
+            atlas_select = 'atlas_talairach'
+            print('Fetching level: lobe...')
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('lobe')
+        elif atlas_select == 'atlas_talairach_gyrus':
+            atlas_select = 'atlas_talairach'
+            print('Fetching level: gyrus...')
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('gyrus')
+        elif atlas_select == 'atlas_talairach_ba':
+            atlas_select = 'atlas_talairach'
+            print('Fetching level: ba...')
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('ba')
+    else:
+        atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select)()
+    if len(list(atlas_fetch_obj.keys())) > 0:
+        if 'maps' in list(atlas_fetch_obj.keys()):
+            uatlas_select = atlas_fetch_obj.maps
+        else:
+            uatlas_select = None
+        if 'labels' in list(atlas_fetch_obj.keys()):
+            try:
+                label_names = [i.decode("utf-8") for i in atlas_fetch_obj.labels]
+            except:
+                label_names = [i for i in atlas_fetch_obj.labels]
+        else:
+            label_names = None
+        if 'networks' in list(atlas_fetch_obj.keys()):
+            try:
+                networks_list = [i.decode("utf-8") for i in atlas_fetch_obj.networks]
+            except:
+                networks_list = [i for i in atlas_fetch_obj.networks]
+        else:
+            networks_list = None
+    else:
+        raise RuntimeWarning('Extraction from nilearn datasets failed!')
+    return label_names, networks_list, uatlas_select
 
 
 def get_node_membership(network, func_file, coords, label_names, parc, parcel_list):
@@ -285,9 +334,18 @@ def coord_masker(mask, coords, label_names, error):
     return coords, label_names
 
 
-def get_names_and_coords_of_parcels_from_img(bna_img):
-    from nilearn.plotting import find_xyz_cut_coords
+def get_names_and_coords_of_parcels(uatlas_select):
+    from nilearn.plotting import find_parcellation_cut_coords
+    atlas_select = uatlas_select.split('/')[-1].split('.')[0]
+    [coords, label_intensities] = find_parcellation_cut_coords(uatlas_select, return_label_names=True)
+    print("%s%s" % ('Region intensities:\n', label_intensities))
+    par_max = len(coords)
+    return coords, atlas_select, par_max
+
+
+def gen_img_list(uatlas_select):
     from nilearn.image import new_img_like
+    bna_img = nib.load(uatlas_select)
     bna_data = np.round(bna_img.get_data(), 1)
     # Get an array of unique parcels
     bna_data_for_coords_uniq = np.unique(bna_data)
@@ -304,41 +362,13 @@ def get_names_and_coords_of_parcels_from_img(bna_img):
     for idy in range(par_max):
         roi_img_nifti = new_img_like(bna_img, img_stack[idy])
         img_list.append(roi_img_nifti)
-    coords = []
-    for roiin in img_list:
-        coord = find_xyz_cut_coords(roiin)
-        coords.append(coord)
-    coords = list(tuple(x) for x in np.array(coords))
-    return coords, par_max, img_list
+    return img_list
 
 
-def get_names_and_coords_of_parcels(parlistfile):
+def gen_network_parcels(uatlas_select, network, labels, dir_path):
+    from nilearn.image import concat_imgs
     from pynets import nodemaker
-    atlas_select = parlistfile.split('/')[-1].split('.')[0]
-    bna_img = nib.load(parlistfile)
-    [coords, par_max, img_list] = nodemaker.get_names_and_coords_of_parcels_from_img(bna_img)
-    return coords, atlas_select, par_max, img_list
-
-
-def gen_network_parcels(parlistfile, network, labels, dir_path):
-    from nilearn.image import new_img_like, concat_imgs
-    bna_img = nib.load(parlistfile)
-    bna_data = np.round(bna_img.get_data(), 1)
-    # Get an array of unique parcels
-    bna_data_for_coords_uniq = np.unique(bna_data)
-    # Number of parcels:
-    par_max = len(bna_data_for_coords_uniq) - 1
-    bna_data = bna_data.astype('int16')
-    img_stack = []
-    for idx in range(1, par_max+1):
-        roi_img = bna_data == bna_data_for_coords_uniq[idx].astype('int16')
-        roi_img = roi_img.astype('int16')
-        img_stack.append(roi_img)
-    img_stack = np.array(img_stack).astype('int16')
-    img_list = []
-    for idy in range(par_max):
-        roi_img_nifti = new_img_like(bna_img, img_stack[idy])
-        img_list.append(roi_img_nifti)
+    img_list = nodemaker.gen_img_list(uatlas_select)
     print("%s%s%s" % ('\nExtracting parcels associated with ', network, ' network locations...\n'))
     net_parcels = [i for j, i in enumerate(img_list) if j in labels]
     bna_4D = concat_imgs(net_parcels).get_data()
@@ -385,10 +415,11 @@ def AAL_naming(coords):
     return label_names
 
 
-def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file, use_AAL_naming):
+def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, func_file, use_AAL_naming, clustering=False):
     from pynets import utils, nodemaker
     import pandas as pd
     import os
+    import time
     from pathlib import Path
 
     base_path = utils.get_file()
@@ -397,26 +428,59 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
     nilearn_parc_atlases = ['atlas_harvard_oxford', 'atlas_aal', 'atlas_destrieux_2009',
                             'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe']
     nilearn_coord_atlases = ['coords_power_2011', 'coords_dosenbach_2010']
-    if parlistfile is None and atlas_select in nilearn_parc_atlases:
-        [label_names, _, parlistfile] = utils.nilearn_atlas_helper(atlas_select)
-        if parlistfile:
-            if not isinstance(parlistfile, str):
-                nib.save(parlistfile, "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz'))
-                parlistfile = "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz')
-            [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
-            networks_list = None
+    nilearn_prob_atlases = ['atlas_msdl', 'atlas_pauli_2017']
+    if uatlas_select is None and atlas_select in nilearn_parc_atlases:
+        [label_names, networks_list, uatlas_select] = nodemaker.nilearn_atlas_helper(atlas_select, parc)
+        if uatlas_select:
+            if not isinstance(uatlas_select, str):
+                nib.save(uatlas_select, "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz'))
+                uatlas_select = "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz')
+            [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas_select)
+            if parc is True:
+                parcel_list = nodemaker.gen_img_list(uatlas_select)
+            else:
+                parcel_list = None
         else:
             raise ValueError("%s%s%s" % ('ERROR: Atlas file for ', atlas_select, ' not found!'))
-    elif parlistfile is None and parc is False and atlas_select in nilearn_coord_atlases:
-        print('Fetching coordinates and labels from nilearn coordinate-based atlases')
+    elif uatlas_select is None and parc is False and atlas_select in nilearn_coord_atlases:
+        print('Fetching coordinates and labels from nilearn coordinate-based atlas library...')
         # Fetch nilearn atlas coords
         [coords, _, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
         parcel_list = None
         par_max = None
-    elif parlistfile:
+    elif uatlas_select is None and parc is False and atlas_select in nilearn_prob_atlases:
+        from nilearn.plotting import find_probabilistic_atlas_cut_coords
+        print('Fetching coordinates and labels from nilearn probabilistic atlas library...')
+        # Fetch nilearn atlas coords
+        [label_names, networks_list, uatlas_select] = nodemaker.nilearn_atlas_helper(atlas_select, parc)
+        coords = find_probabilistic_atlas_cut_coords(maps_img=uatlas_select)
+        if uatlas_select:
+            if not isinstance(uatlas_select, str):
+                nib.save(uatlas_select, "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz'))
+                uatlas_select = "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz')
+            if parc is True:
+                parcel_list = nodemaker.gen_img_list(uatlas_select)
+            else:
+                parcel_list = None
+        else:
+            raise ValueError("%s%s%s" % ('ERROR: Atlas file for ', atlas_select, ' not found!'))
+        par_max = None
+    elif uatlas_select:
+        if clustering is True:
+            while True:
+                if os.path.isfile(uatlas_select):
+                    break
+                else:
+                    print('Waiting for atlas file...')
+                    time.sleep(15)
+        atlas_select = uatlas_select.split('/')[-1].split('.')[0]
         try:
             # Fetch user-specified atlas coords
-            [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
+            [coords, atlas_select, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas_select)
+            if parc is True:
+                parcel_list = nodemaker.gen_img_list(uatlas_select)
+            else:
+                parcel_list = None
             # Describe user atlas coords
             print("%s%s%s%s" % ('\n', atlas_select, ' comes with {0} '.format(par_max), 'parcels\n'))
         except ValueError:
@@ -466,7 +530,7 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
                                 print('AAL reference labeling failed!')
                                 label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                         else:
-                            print('Using generic labeled numbering...')
+                            print('Using generic numbering labels...')
                             label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                 except:
                     print("Label reference file not found. Attempting AAL naming...")
@@ -478,129 +542,19 @@ def WB_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_fil
                             print('AAL reference labeling failed!')
                             label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                     else:
-                        print('Using generic labeled numbering...')
+                        print('Using generic numbering labels...')
                         label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-
-    if atlas_select or parlistfile:
-        print(label_names)
-        atlas_name = atlas_select
-        dir_path = utils.do_dir_path(atlas_select, func_file)
     else:
-        atlas_name = None
-        dir_path = None
+        print('WARNING: No labels available since atlas name is not specified!')
 
-    return label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile, dir_path
+    print(label_names)
+    atlas_name = atlas_select
+    dir_path = utils.do_dir_path(atlas_select, func_file)
 
-
-def RSN_fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file, use_AAL_naming):
-    from pynets import utils, nodemaker
-    import pandas as pd
-    import os
-    from pathlib import Path
-
-    base_path = utils.get_file()
-
-    # Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
-    nilearn_parc_atlases = ['atlas_harvard_oxford', 'atlas_aal', 'atlas_destrieux_2009',
-                            'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe']
-    nilearn_coord_atlases = ['coords_power_2011', 'coords_dosenbach_2010']
-    if parlistfile is None and atlas_select in nilearn_parc_atlases:
-        [label_names, _, parlistfile] = utils.nilearn_atlas_helper(atlas_select)
-        if parlistfile:
-            if not isinstance(parlistfile, str):
-                nib.save(parlistfile, "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz'))
-                parlistfile = "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz')
-            [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
-            networks_list = None
-        else:
-            raise ValueError("%s%s%s" % ('ERROR: Atlas file for ', atlas_select, ' not found!'))
-    elif parlistfile is None and parc is False and atlas_select in nilearn_coord_atlases:
-        print('Fetching coordinates and labels from nilearn coordinate-based atlases')
-        # Fetch nilearn atlas coords
-        [coords, _, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
-        parcel_list = None
-        par_max = None
-    elif parlistfile:
-        try:
-            # Fetch user-specified atlas coords
-            [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
-            # Describe user atlas coords
-            print("%s%s%s%s" % ('\n', atlas_select, ' comes with {0} '.format(par_max), 'parcels\n'))
-        except ValueError:
-            print(
-                '\n\nError: Either you have specified the name of a nilearn atlas that does not exist or you have not supplied a 3d atlas parcellation image!\n\n')
-            parcel_list = None
-            par_max = None
-            coords = None
-        label_names = None
-        networks_list = None
-    else:
-        networks_list = None
-        label_names = None
-        parcel_list = None
-        par_max = None
-        coords = None
-
-    # Labels prep
-    if atlas_select:
-        if label_names:
-            pass
-        else:
-            if ref_txt is not None and os.path.exists(ref_txt):
-                dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
-                label_names = dict_df['Region'].tolist()
-            else:
-                try:
-                    ref_txt = "%s%s%s%s" % (str(Path(base_path).parent), '/labelcharts/', atlas_select, '.txt')
-                    if os.path.exists(ref_txt):
-                        try:
-                            dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
-                            label_names = dict_df['Region'].tolist()
-                            #print(label_names)
-                        except:
-                            print("WARNING: label names from label reference file failed to populate or are invalid. Attempting AAL naming...")
-                            try:
-                                label_names = nodemaker.AAL_naming(coords)
-                                # print(label_names)
-                            except:
-                                print('AAL reference labeling failed!')
-                                label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-                    else:
-                        if use_AAL_naming is True:
-                            try:
-                                label_names = nodemaker.AAL_naming(coords)
-                                # print(label_names)
-                            except:
-                                print('AAL reference labeling failed!')
-                                label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-                        else:
-                            print('Using generic labeled numbering...')
-                            label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-                except:
-                    print("Label reference file not found. Attempting AAL naming...")
-                    if use_AAL_naming is True:
-                        try:
-                            label_names = nodemaker.AAL_naming(coords)
-                            #print(label_names)
-                        except:
-                            print('AAL reference labeling failed!')
-                            label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-                    else:
-                        print('Using generic labeled numbering...')
-                        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-
-    if atlas_select or parlistfile:
-        print(label_names)
-        atlas_name = atlas_select
-        dir_path = utils.do_dir_path(atlas_select, func_file)
-    else:
-        atlas_name = None
-        dir_path = None
-
-    return label_names, coords, atlas_name, networks_list, parcel_list, par_max, parlistfile, dir_path
+    return label_names, coords, atlas_name, networks_list, parcel_list, par_max, uatlas_select, dir_path
 
 
-def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc):
+def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select):
     from pynets import nodemaker
     try:
         import cPickle as pickle
@@ -625,19 +579,19 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc)
             error = 2
         [coords, label_names] = nodemaker.coord_masker(mask, coords, label_names, error)
         # Save coords to pickle
-        coord_path = "%s%s%s%s" % (dir_path, '/whole_brain_atlas_coords_', os.path.basename(mask).split('.')[0], '.pkl')
+        coord_path = "%s%s%s%s" % (dir_path, '/atlas_coords_', os.path.basename(mask).split('.')[0], '.pkl')
         with open(coord_path, 'wb') as f:
             pickle.dump(coords, f, protocol=2)
         net_parcels_map_nifti = None
     # Save labels to pickle
-    labels_path = "%s%s%s%s" % (dir_path, '/whole_brain_atlas_labelnames_', os.path.basename(mask).split('.')[0], '.pkl')
+    labels_path = "%s%s%s%s" % (dir_path, '/atlas_labelnames_', os.path.basename(mask).split('.')[0], '.pkl')
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f, protocol=2)
 
-    return net_parcels_map_nifti, coords, label_names
+    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select
 
 
-def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
+def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select):
     try:
         import cPickle as pickle
     except ImportError:
@@ -654,12 +608,12 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc):
     coords = list(tuple(x) for x in coords)
     if pick_dump is True:
         # Save coords to pickle
-        coord_path = "%s%s" % (dir_path, '/whole_brain_atlas_coords_wb.pkl')
+        coord_path = "%s%s" % (dir_path, '/atlas_coords_wb.pkl')
         with open(coord_path, 'wb') as f:
             pickle.dump(coords, f, protocol=2)
         # Save labels to pickle
-        labels_path = "%s%s" % (dir_path, '/whole_brain_atlas_labelnames_wb.pkl')
+        labels_path = "%s%s" % (dir_path, '/atlas_labelnames_wb.pkl')
         with open(labels_path, 'wb') as f:
             pickle.dump(label_names, f, protocol=2)
 
-    return net_parcels_map_nifti, coords, label_names
+    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select

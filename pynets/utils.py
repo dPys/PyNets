@@ -8,54 +8,15 @@ Copyright (C) 2018
 import os
 import nibabel as nib
 import numpy as np
+from pynets.netstats import extractnetstats
+from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface
+
+nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 
 
 def get_file():
     base_path = str(__file__)
     return base_path
-
-
-def nilearn_atlas_helper(atlas_select):
-    from nilearn import datasets
-    if atlas_select == 'atlas_harvard_oxford':
-        atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'atlas_name')('cort-maxprob-thr0-1mm')
-    elif 'atlas_talairach' in atlas_select:
-        if atlas_select == 'atlas_talairach_lobe':
-            atlas_select = 'atlas_talairach'
-            print('Fetching level: lobe...')
-            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('lobe')
-        elif atlas_select == 'atlas_talairach_gyrus':
-            atlas_select = 'atlas_talairach'
-            print('Fetching level: gyrus...')
-            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('gyrus')
-        elif atlas_select == 'atlas_talairach_ba':
-            atlas_select = 'atlas_talairach'
-            print('Fetching level: ba...')
-            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('ba')
-    else:
-        atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select)()
-    if len(list(atlas_fetch_obj.keys())) > 0:
-        if 'maps' in list(atlas_fetch_obj.keys()):
-            parlistfile = atlas_fetch_obj.maps
-        else:
-            parlistfile = None
-        if 'labels' in list(atlas_fetch_obj.keys()):
-            try:
-                label_names = [i.decode("utf-8") for i in atlas_fetch_obj.labels]
-            except:
-                label_names = [i for i in atlas_fetch_obj.labels]
-        else:
-            label_names = None
-        if 'networks' in list(atlas_fetch_obj.keys()):
-            try:
-                networks_list = [i.decode("utf-8") for i in atlas_fetch_obj.networks]
-            except:
-                networks_list = [i for i in atlas_fetch_obj.networks]
-        else:
-            networks_list = None
-    else:
-        raise RuntimeWarning('Extraction from nilearn datasets failed!')
-    return label_names, networks_list, parlistfile
 
 
 # Save net metric files to pandas dataframes interface
@@ -149,29 +110,49 @@ def create_csv_path(ID, network, conn_model, thr, mask, dir_path, node_size, smo
     return out_path
 
 
-def individual_tcorr_clustering(func_file, clust_mask, ID, k, thresh=0.5):
+def nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_select):
+    import time
+    import nibabel as nib
+    from nilearn.regions import Parcellations
+    detrending = True
+
+    start = time.time()
+    func_img = nib.load(func_file)
+    mask_img = nib.load(clust_mask)
+    clust_est = Parcellations(method=clust_type, detrend=detrending, n_parcels=int(k),
+                              mask=mask_img)
+    clust_est.fit(func_img)
+    nib.save(clust_est.labels_img_, uatlas_select)
+    print("%s%s%s" % (clust_type, k, " clusters: %.2fs" % (time.time() - start)))
+    return
+
+
+def individual_tcorr_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
     import os
     from pynets import utils
-    from pynets.clustools import make_image_from_bin_renum, binfile_parcellate, make_local_connectivity_tcorr
+    nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
     mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-    atlas_select = "%s%s%s" % (mask_name, '_k', str(k))
-    print("%s%s%s%s%s" % ('\nCreating atlas at cluster level ', str(k), ' for ', str(atlas_select), '...\n'))
-    working_dir = "%s%s%s" % (os.path.dirname(func_file), '/', atlas_select)
-    outfile = "%s%s%s%s" % (working_dir, '/rm_tcorr_conn_', str(ID), '.npy')
-    outfile_parc = "%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID))
-    binfile = "%s%s%s%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID), '_', str(k), '.npy')
+    atlas_select = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
+    print("%s%s%s%s%s%s%s" % ('\nCreating atlas using ', clust_type, ' at cluster level ', str(k),
+                              ' for ', str(atlas_select), '...\n'))
     dir_path = utils.do_dir_path(atlas_select, func_file)
-    parlistfile = "%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_k', str(k), '.nii.gz')
+    uatlas_select = "%s%s%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
 
-    make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh)
+    if clust_type in nilearn_clust_list:
+        utils.nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_select)
+    elif clust_type == 'ncut':
+        from pynets.clustools import make_image_from_bin_renum, binfile_parcellate, make_local_connectivity_tcorr
+        working_dir = "%s%s%s" % (os.path.dirname(func_file), '/', atlas_select)
+        outfile = "%s%s%s%s" % (working_dir, '/rm_tcorr_conn_', str(ID), '.npy')
+        outfile_parc = "%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID))
+        binfile = "%s%s%s%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID), '_', str(k), '.npy')
+        make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh)
+        binfile_parcellate(outfile, outfile_parc, int(k))
+        make_image_from_bin_renum(uatlas_select, binfile, clust_mask)
 
-    binfile_parcellate(outfile, outfile_parc, int(k))
-
-    # write out for group mean clustering
-    make_image_from_bin_renum(parlistfile, binfile, clust_mask)
-
-    return parlistfile, atlas_select, dir_path
+    clustering = True
+    return uatlas_select, atlas_select, clustering, clust_mask, k, clust_type
 
 
 def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask, node_size, smooth):
@@ -194,9 +175,43 @@ def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mas
     return out_path
 
 
+def pass_meta_outs(conn_model, est_path, network, node_size, smooth, thr, prune, ID, mask):
+    est_path_iterlist = est_path
+    conn_model_iterlist = conn_model
+    network_iterlist = network
+    node_size_iterlist = node_size
+    smooth_iterlist = smooth
+    thr_iterlist = thr
+    prune_iterlist = prune
+    ID_iterlist = ID
+    mask_iterlist = mask
+    # print('\n\nParam-iters:\n')
+    # print(conn_model_iterlist)
+    # print(est_path_iterlist)
+    # print(network_iterlist)
+    # print(node_size_iterlist)
+    # print(smooth_iterlist)
+    # print(thr_iterlist)
+    # print(prune_iterlist)
+    # print(ID_iterlist)
+    # print(mask_iterlist)
+    # print('\n\n')
+    return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, smooth_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, mask_iterlist
+
+
 def collect_pandas_join(net_pickle_mt):
     net_pickle_mt_out = net_pickle_mt
     return net_pickle_mt_out
+
+
+def flatten(l):
+    import collections
+    for el in l:
+        if isinstance(el, collections.Iterable) and not isinstance(el, (str, bytes)):
+            for ell in flatten(el):
+                yield ell
+        else:
+            yield el
 
 
 def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
@@ -213,7 +228,7 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
         if os.path.isfile(net_pickle_mt) is True:
             net_pickle_mt_list_exist.append(net_pickle_mt)
 
-    if len(net_pickle_mt_list) > len(net_pickle_mt_list_exist):
+    if len(list(net_pickle_mt_list)) > len(net_pickle_mt_list_exist):
         raise UserWarning('Warning! Number of actual models produced less than expected. Some graphs were excluded')
 
     net_pickle_mt_list = net_pickle_mt_list_exist
@@ -284,9 +299,11 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
 
 
 def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets):
-    from pynets.utils import collect_pandas_df_make
+    from pynets.utils import collect_pandas_df_make, flatten
 
-    if network is not None and multi_nets is not None:
+    net_pickle_mt_list = list(flatten(net_pickle_mt_list))
+
+    if multi_nets is not None:
         net_pickle_mt_list_nets = net_pickle_mt_list
         for network in multi_nets:
             net_pickle_mt_list = list(set([i for i in net_pickle_mt_list_nets if network in i]))
@@ -382,3 +399,93 @@ def save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes):
             out_path_ts = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_wb_net_ts.npy')
     np.save(out_path_ts, ts_within_nodes)
     return
+
+
+class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
+    ID = traits.Any(mandatory=True)
+    network = traits.Any(mandatory=False)
+    thr = traits.Any(mandatory=True)
+    conn_model = traits.Str(mandatory=True)
+    est_path = File(exists=True, mandatory=True, desc="")
+    mask = traits.Any(mandatory=False)
+    prune = traits.Any(mandatory=False)
+    node_size = traits.Any(mandatory=False)
+    smooth = traits.Any(mandatory=False)
+
+
+class ExtractNetStatsOutputSpec(TraitedSpec):
+    out_file = File()
+
+
+class ExtractNetStats(BaseInterface):
+    input_spec = ExtractNetStatsInputSpec
+    output_spec = ExtractNetStatsOutputSpec
+
+    def _run_interface(self, runtime):
+        out = extractnetstats(
+            self.inputs.ID,
+            self.inputs.network,
+            self.inputs.thr,
+            self.inputs.conn_model,
+            self.inputs.est_path,
+            self.inputs.mask,
+            self.inputs.prune,
+            self.inputs.node_size,
+            self.inputs.smooth)
+        setattr(self, '_outpath', out)
+        return runtime
+
+    def _list_outputs(self):
+        import os.path as op
+        return {'out_file': op.abspath(getattr(self, '_outpath'))}
+
+
+class Export2PandasInputSpec(BaseInterfaceInputSpec):
+    csv_loc = File(exists=True, mandatory=True, desc="")
+    ID = traits.Any(mandatory=True)
+    network = traits.Any(mandatory=False)
+    mask = traits.Any(mandatory=False)
+
+
+class Export2PandasOutputSpec(TraitedSpec):
+    net_pickle_mt = traits.Any(mandatory=True)
+
+
+class Export2Pandas(BaseInterface):
+    input_spec = Export2PandasInputSpec
+    output_spec = Export2PandasOutputSpec
+
+    def _run_interface(self, runtime):
+        out = export_to_pandas(
+            self.inputs.csv_loc,
+            self.inputs.ID,
+            self.inputs.network,
+            self.inputs.mask)
+        setattr(self, '_outpath', out)
+        return runtime
+
+    def _list_outputs(self):
+        import os.path as op
+        return {'net_pickle_mt': op.abspath(getattr(self, '_outpath'))}
+
+
+class CollectPandasDfsInputSpec(BaseInterfaceInputSpec):
+    ID = traits.Any(mandatory=True)
+    network = traits.Any(mandatory=True)
+    net_pickle_mt_list = traits.List(mandatory=True)
+    plot_switch = traits.Any(mandatory=True)
+    multi_nets = traits.Any(mandatory=True)
+
+
+class CollectPandasDfs(SimpleInterface):
+    input_spec = CollectPandasDfsInputSpec
+
+    def _run_interface(self, runtime):
+        collect_pandas_df(
+            self.inputs.network,
+            self.inputs.ID,
+            self.inputs.net_pickle_mt_list,
+            self.inputs.plot_switch,
+            self.inputs.multi_nets)
+        return runtime
+
