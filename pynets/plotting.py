@@ -367,8 +367,8 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     except ImportError:
         import _pickle as pickle
 
-    coords = coords.tolist()
-    label_names = label_names.tolist()
+    coords = list(coords)
+    label_names = list(label_names)
 
     dpi_resolution = 500
     if '\'b' in atlas_select:

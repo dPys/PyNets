@@ -337,13 +337,14 @@ def coord_masker(mask, coords, label_names, error):
 def get_names_and_coords_of_parcels(uatlas_select):
     from nilearn.plotting import find_parcellation_cut_coords
     atlas_select = uatlas_select.split('/')[-1].split('.')[0]
-    [coords, img_list] = find_parcellation_cut_coords(uatlas_select, return_label_names=True)
+    [coords, label_intensities] = find_parcellation_cut_coords(uatlas_select, return_label_names=True)
+    print("%s%s" % ('Region intensities:\n', label_intensities))
     par_max = len(coords)
-    return coords, atlas_select, par_max, img_list
+    return coords, atlas_select, par_max
 
 
-def gen_network_parcels(uatlas_select, network, labels, dir_path):
-    from nilearn.image import new_img_like, concat_imgs
+def gen_img_list(uatlas_select):
+    from nilearn.image import new_img_like
     bna_img = nib.load(uatlas_select)
     bna_data = np.round(bna_img.get_data(), 1)
     # Get an array of unique parcels
@@ -361,6 +362,13 @@ def gen_network_parcels(uatlas_select, network, labels, dir_path):
     for idy in range(par_max):
         roi_img_nifti = new_img_like(bna_img, img_stack[idy])
         img_list.append(roi_img_nifti)
+    return img_list
+
+
+def gen_network_parcels(uatlas_select, network, labels, dir_path):
+    from nilearn.image import concat_imgs
+    from pynets import nodemaker
+    img_list = nodemaker.gen_img_list(uatlas_select)
     print("%s%s%s" % ('\nExtracting parcels associated with ', network, ' network locations...\n'))
     net_parcels = [i for j, i in enumerate(img_list) if j in labels]
     bna_4D = concat_imgs(net_parcels).get_data()
@@ -427,7 +435,11 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, func_file
             if not isinstance(uatlas_select, str):
                 nib.save(uatlas_select, "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz'))
                 uatlas_select = "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz')
-            [coords, _, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(uatlas_select)
+            [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas_select)
+            if parc is True:
+                parcel_list = nodemaker.gen_img_list(uatlas_select)
+            else:
+                parcel_list = None
         else:
             raise ValueError("%s%s%s" % ('ERROR: Atlas file for ', atlas_select, ' not found!'))
     elif uatlas_select is None and parc is False and atlas_select in nilearn_coord_atlases:
@@ -446,9 +458,12 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, func_file
             if not isinstance(uatlas_select, str):
                 nib.save(uatlas_select, "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz'))
                 uatlas_select = "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz')
+            if parc is True:
+                parcel_list = nodemaker.gen_img_list(uatlas_select)
+            else:
+                parcel_list = None
         else:
             raise ValueError("%s%s%s" % ('ERROR: Atlas file for ', atlas_select, ' not found!'))
-        parcel_list = None
         par_max = None
     elif uatlas_select:
         if clustering is True:
@@ -461,7 +476,11 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, func_file
         atlas_select = uatlas_select.split('/')[-1].split('.')[0]
         try:
             # Fetch user-specified atlas coords
-            [coords, atlas_select, par_max, parcel_list] = nodemaker.get_names_and_coords_of_parcels(uatlas_select)
+            [coords, atlas_select, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas_select)
+            if parc is True:
+                parcel_list = nodemaker.gen_img_list(uatlas_select)
+            else:
+                parcel_list = None
             # Describe user atlas coords
             print("%s%s%s%s" % ('\n', atlas_select, ' comes with {0} '.format(par_max), 'parcels\n'))
         except ValueError:
