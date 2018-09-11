@@ -12,28 +12,28 @@ from pathlib import Path
 from pynets import nodemaker
 
 
-def test_nilearn_atlas_helper():
-    parc=False
-    atlases = ['atlas_aal', 'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe', 'atlas_harvard_oxford', 'atlas_destrieux_2009', 'coords_dosenbach_2010', 'coords_power_2011']
-    label_names_list = []
-    networks_list_list = []
-    parlistfile_list = []
-    for atlas_select in atlases:
-        [label_names, networks_list, parlistfile] = nodemaker.nilearn_atlas_helper(atlas_select, parc)
-        print(label_names)
-        print(networks_list)
-        print(parlistfile)
-        label_names_list.append(label_names)
-        networks_list_list.append(networks_list)
-        parlistfile_list.append(parlistfile)
-
-    labs_length = len(label_names_list)
-    nets_length = len(networks_list_list)
-    par_length = len(parlistfile_list)
-    atlas_length = len(atlases)
-    assert labs_length is atlas_length
-    assert nets_length is atlas_length
-    assert par_length is atlas_length
+# def test_nilearn_atlas_helper():
+#     parc=False
+#     atlases = ['atlas_aal', 'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe', 'atlas_harvard_oxford', 'atlas_destrieux_2009', 'coords_dosenbach_2010', 'coords_power_2011']
+#     label_names_list = []
+#     networks_list_list = []
+#     parlistfile_list = []
+#     for atlas_select in atlases:
+#         [label_names, networks_list, parlistfile] = nodemaker.nilearn_atlas_helper(atlas_select, parc)
+#         print(label_names)
+#         print(networks_list)
+#         print(parlistfile)
+#         label_names_list.append(label_names)
+#         networks_list_list.append(networks_list)
+#         parlistfile_list.append(parlistfile)
+#
+#     labs_length = len(label_names_list)
+#     nets_length = len(networks_list_list)
+#     par_length = len(parlistfile_list)
+#     atlas_length = len(atlases)
+#     assert labs_length is atlas_length
+#     assert nets_length is atlas_length
+#     assert par_length is atlas_length
 
 
 ##nilearn.plotting.find_parcellation_cut_coords will not import##
