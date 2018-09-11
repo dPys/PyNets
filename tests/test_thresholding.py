@@ -82,7 +82,7 @@ def test_thresh_diff():
 
     start_time = time.time()
     [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _, _, _, _, _] = thresholding.thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path,
-    ask, node_size, conn_matrix, parc, min_span_tree, disp_filt, atlas_select,
+    mask, node_size, conn_matrix, parc, min_span_tree, disp_filt, atlas_select,
     uatlas_select, label_names, coords)
     print("%s%s%s" %
     ('thresh_and_fit (Functional, density thresholding) --> finished: ',
