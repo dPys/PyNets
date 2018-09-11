@@ -208,7 +208,8 @@ def flatten(l):
     import collections
     for el in l:
         if isinstance(el, collections.Iterable) and not isinstance(el, (str, bytes)):
-            yield from flatten(el)
+            for ell in flatten(el):
+                yield ell
         else:
             yield el
 
