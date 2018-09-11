@@ -68,5 +68,8 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     setup_requires=setup_requirements,
+    dependency_links=[
+        'https://github.com/dPys/nilearn.git#egg=0.4.2',
+    ],
     scripts=["pynets/pynets_run.py"]
 )

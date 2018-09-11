@@ -61,9 +61,6 @@ RUN conda install -yq \
     && conda clean -tipsy \
     && pip install pynets==0.7.10
 
-RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
-    && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
-
 # Install skggm
 RUN conda install -yq \
         cython \
@@ -71,7 +68,6 @@ RUN conda install -yq \
         matplotlib \
         openblas \
     && conda clean -tipsy \
-#    && pip install --no-cache-dir https://dl.dropbox.com/s/ghgl6lff2fmtldn/skggm-0.2.7-cp36-cp36m-linux_x86_64.whl
     && pip install skggm
 
 USER root

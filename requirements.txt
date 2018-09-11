@@ -1,4 +1,5 @@
 pandas>=0.19.2
+scipy>=1.0.0
 -e git+git://github.com/dPys/nilearn.git#egg=0.4.2
 #nilearn>=0.3.1
 numpy>=1.13.3
@@ -8,7 +9,6 @@ nibabel>=2.2.1
 seaborn>=0.7.1
 matplotlib>=2.2.0
 #skggm>=0.2.7
-scipy>=1.0.0
 pytest>=3.3.1
 networkx>=2.0
 nipype>=1.1.0
