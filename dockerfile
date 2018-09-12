@@ -87,7 +87,6 @@ RUN chown -R neuro /opt \
 
 # Cleanup
 RUN apt-get remove --purge -y \
-    build-essential \
     git
 
 USER neuro
