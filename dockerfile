@@ -23,6 +23,7 @@ RUN apt-get update -qq \
         graphviz \
         libpng-dev \
         build-essential \
+        git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && curl -o /tmp/libxp6.deb -sSL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
@@ -61,8 +62,9 @@ RUN conda install -yq \
       python=3.6 \
       ipython \
     && conda clean -tipsy \
-    && pip install pynets==0.7.12 \
-    && pip install -e git+git://github.com/dPys/nilearn.git#egg=0.4.2
+    && pip install scipy sklearn \
+    && pip install -e git://github.com/dPys/nilearn.git#egg=0.4.2 \
+    && pip install pynets==0.7.11
 
 #RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
 #    && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
@@ -77,11 +79,16 @@ RUN conda install -yq \
     && pip install skggm
 
 USER root
-RUN chown -R neuro:users /opt \
+RUN chown -R neuro /opt \
     && chmod a+s -R /opt \
     && chmod 777 -R /opt/conda/lib/python3.6/site-packages/pynets \
     && chmod 775 -R /opt/conda/lib/python3.6/site-packages \ 
     && find /opt -type f -iname "*.py" -exec chmod 777 {} \;
+
+# Cleanup
+RUN apt-get remove --purge -y \
+    build-essential \
+    git
 
 USER neuro
 
