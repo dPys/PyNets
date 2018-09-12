@@ -83,13 +83,17 @@ RUN chown -R neuro /opt \
     && chmod a+s -R /opt \
     && chmod 777 -R /opt/conda/lib/python3.6/site-packages/pynets \
     && chmod 775 -R /opt/conda/lib/python3.6/site-packages \ 
-    && find /opt -type f -iname "*.py" -exec chmod 777 {} \;
+    && find /opt -type f -iname "*.py" -exec chmod 777 {} \
+    && rm -rf src
 
 # Cleanup
 RUN apt-get remove --purge -y \
     git
 
 USER neuro
+
+# Python ENV Config
+export LD_LIBRARY_PATH=/opt/conda/lib
 
 # PyNets ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets:$PATH"
