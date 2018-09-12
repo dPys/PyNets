@@ -915,7 +915,6 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                                                           map_connects)])
         else:
             raise RuntimeError('\nERROR: Unknown join context.')
-        print('\n')
 
         no_iters = False
     else:

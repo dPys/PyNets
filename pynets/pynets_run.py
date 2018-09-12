@@ -748,7 +748,7 @@ def build_workflow(args, retval):
         print('\nRunning joint structural-functional connectometry...')
         print("%s%s" % ('Functional file: ', input_file))
         print("%s%s" % ('Diffusion directory: ', dwi_dir))
-    print('\n-------------------------------------------------------------------------\n\n\n')
+    print('\n-------------------------------------------------------------------------\n\n')
 
     # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
@@ -789,6 +789,7 @@ def build_workflow(args, retval):
     # sys.exit(0)
 
     # Import wf core and interfaces
+    import random
     from pynets.utils import CollectPandasDfs, Export2Pandas, ExtractNetStats, collect_pandas_join
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -801,8 +802,7 @@ def build_workflow(args, retval):
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
                                clust_type_list):
-
-        wf = pe.Workflow(name='Wf_single_subject_' + str(ID))
+        wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_subject_', ID, '_', random.randint(1000, 1000)))
         inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'mask', 'multi_nets',
                                                           'conn_model', 'plot_switch', 'graph', 'prune', 'smooth']),
                             name='inputnode')
@@ -930,7 +930,7 @@ def build_workflow(args, retval):
                          num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming,
                          multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list):
 
-        wf_multi = pe.Workflow(name='PyNets_multisubject')
+        wf_multi = pe.Workflow(name="%s%s" % ('PyNets_multisubject_', random.randint(1000, 9000)))
         procmem_cores = int(np.round(float(procmem[0])/float(len(subjects_list)), 0))
         procmem_ram = int(np.round(float(procmem[1]) / float(len(subjects_list)), 0))
         procmem_indiv = [procmem_cores, procmem_ram]
