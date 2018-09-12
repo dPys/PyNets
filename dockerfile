@@ -20,11 +20,13 @@ RUN apt-get update -qq \
         vim \
         wget \
         libgl1-mesa-glx \
+        graphviz \
         libpng-dev \
+        build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && curl -o /tmp/libxp6.deb -sSL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
-    && dpkg -i /tmp/libxp6.deb && rm -f /tmp/libxp6.deb" \
+    && dpkg -i /tmp/libxp6.deb && rm -f /tmp/libxp6.deb \
     # Add new user.
     && useradd --no-user-group --create-home --shell /bin/bash neuro \
     && chmod a+s /opt \
@@ -59,10 +61,11 @@ RUN conda install -yq \
       python=3.6 \
       ipython \
     && conda clean -tipsy \
-    && pip install pynets==0.7.11
+    && pip install pynets==0.7.12 \
+    && pip install -e git+git://github.com/dPys/nilearn.git#egg=0.4.2
 
-RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
-    && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
+#RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
+#    && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
 
 # Install skggm
 RUN conda install -yq \
