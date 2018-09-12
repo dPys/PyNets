@@ -94,7 +94,7 @@ RUN apt-get remove --purge -y \
 USER neuro
 
 # Python ENV Config
-export LD_LIBRARY_PATH=/opt/conda/lib
+ENV LD_LIBRARY_PATH=/opt/conda/lib
 
 # PyNets ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets:$PATH"
