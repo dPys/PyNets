@@ -62,8 +62,9 @@ RUN conda install -yq \
       python=3.6 \
       ipython \
     && conda clean -tipsy \
-    && pip install scipy scikit-learn>=0.19 \
-    && pip install -e git://github.com/dPys/nilearn.git#egg=0.4.2 \
+    && pip install nilearn==0.4.2 \
+#    && pip install scipy scikit-learn>=0.19 \
+#    && pip install -e git://github.com/dPys/nilearn.git#egg=0.4.2 \
     && pip install pynets==0.7.12
 
 #RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
@@ -83,8 +84,7 @@ RUN chown -R neuro /opt \
     && chmod a+s -R /opt \
     && chmod 777 -R /opt/conda/lib/python3.6/site-packages/pynets \
     && chmod 775 -R /opt/conda/lib/python3.6/site-packages \ 
-    && find /opt -type f -iname "*.py" -exec chmod 777 {} \
-    && rm -rf src
+    && find /opt -type f -iname "*.py" -exec chmod 777 {} \;
 
 # Cleanup
 RUN apt-get remove --purge -y \
