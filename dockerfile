@@ -67,8 +67,8 @@ RUN conda install -yq \
 #    && pip install -e git://github.com/dPys/nilearn.git#egg=0.4.2 \
     && pip install pynets==0.7.12
 
-#RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
-#    && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
+RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
+    && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
 
 # Install skggm
 RUN conda install -yq \
@@ -94,7 +94,7 @@ RUN apt-get remove --purge -y \
 USER neuro
 
 # Python ENV Config
-ENV LD_LIBRARY_PATH=/opt/conda/lib
+ENV LD_LIBRARY_PATH="/opt/conda/lib":$LD_LIBRARY_PATH
 
 # PyNets ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets:$PATH"
