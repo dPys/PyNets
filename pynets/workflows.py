@@ -164,11 +164,11 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
         wf_selected = "%s%s" % ('functional_connectometry_', ID)
         meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._mem_gb = 2
-        meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_node'))._n_procs = 2
+        meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_node'))._mem_gb = 6
         if k_clustering > 0:
-            meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._n_procs = 4
-            meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._mem_gb = 8
+            meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._n_procs = 2
+            meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._mem_gb = 10
         meta_wf.get_node("%s%s" % (wf_selected, '.get_conn_matrix_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.get_conn_matrix_node'))._mem_gb = 2
 
@@ -628,7 +628,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         node_gen_node = pe.Node(niu.Function(input_names=['mask', 'coords', 'parcel_list', 'label_names', 'dir_path',
                                                           'ID', 'parc', 'atlas_select', 'uatlas_select'],
                                              output_names=['net_parcels_map_nifti', 'coords', 'label_names',
-                                                           'atlas_select', 'uatlas_select'],
+                                                           'atlas_select', 'uatlas_select', 'vox_array'],
                                              function=nodemaker.node_gen_masking, imports=import_list),
                                 name="node_gen_masking_node")
     else:
@@ -636,7 +636,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         node_gen_node = pe.Node(niu.Function(input_names=['coords', 'parcel_list', 'label_names', 'dir_path',
                                                           'ID', 'parc', 'atlas_select', 'uatlas_select'],
                                              output_names=['net_parcels_map_nifti', 'coords', 'label_names',
-                                                           'atlas_select', 'uatlas_select'],
+                                                           'atlas_select', 'uatlas_select', 'vox_array'],
                                              function=nodemaker.node_gen, imports=import_list), name="node_gen_node")
 
     # Extract time-series from nodes
@@ -688,7 +688,8 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     get_conn_matrix_node = pe.Node(niu.Function(input_names=['time_series', 'conn_model', 'dir_path', 'node_size',
                                                              'smooth', 'dens_thresh', 'network', 'ID', 'mask',
                                                              'min_span_tree', 'disp_filt', 'parc', 'prune',
-                                                             'atlas_select', 'uatlas_select', 'label_names', 'coords'],
+                                                             'atlas_select', 'uatlas_select', 'label_names', 'coords',
+                                                             'vox_array'],
                                                 output_names=['conn_matrix', 'conn_model', 'dir_path', 'node_size',
                                                               'smooth', 'dens_thresh', 'network', 'ID', 'mask',
                                                               'min_span_tree', 'disp_filt', 'parc', 'prune',
@@ -915,7 +916,6 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                                                           map_connects)])
         else:
             raise RuntimeError('\nERROR: Unknown join context.')
-        print('\n')
 
         no_iters = False
     else:
@@ -1051,6 +1051,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         (node_gen_node, extract_ts_node, [('net_parcels_map_nifti', 'net_parcels_map_nifti'),
                                           ('coords', 'coords'), ('label_names', 'label_names'),
                                           ('atlas_select', 'atlas_select'), ('uatlas_select', 'uatlas_select')]),
+        (node_gen_node, get_conn_matrix_node, [('vox_array', 'vox_array')]),
         (extract_ts_node, get_conn_matrix_node, [('ts_within_nodes', 'time_series'), ('dir_path', 'dir_path'),
                                                  ('node_size', 'node_size'), ('smooth', 'smooth'),
                                                  ('coords', 'coords'), ('label_names', 'label_names'),
@@ -1060,18 +1061,18 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
 
     # Set cpu/memory reqs
     if k_clustering > 0:
-        clustering_node._mem_gb = 8
-        clustering_node.n_procs = 4
-        clustering_node.interface.mem_gb = 8
-        clustering_node.interface.n_procs = 4
+        clustering_node._mem_gb = 10
+        clustering_node.n_procs = 2
+        clustering_node.interface.mem_gb = 10
+        clustering_node.interface.n_procs = 2
     node_gen_node.interface.mem_gb = 1
     node_gen_node.interface.n_procs = 1
     node_gen_node._mem_gb = 1
     node_gen_node.n_procs = 1
     extract_ts_node.interface.mem_gb = 6
-    extract_ts_node.interface.n_procs = 2
+    extract_ts_node.interface.n_procs = 1
     extract_ts_node._mem_gb = 6
-    extract_ts_node.n_procs = 2
+    extract_ts_node.n_procs = 1
     get_conn_matrix_node.interface.mem_gb = 2
     get_conn_matrix_node.interface.n_procs = 1
     get_conn_matrix_node._mem_gb = 2
