@@ -8,7 +8,7 @@ import numpy as np
 
 
 def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, mask, min_span_tree,
-                    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords):
+                    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, vox_array):
     from nilearn.connectome import ConnectivityMeasure
     from sklearn.covariance import GraphLassoCV
 
@@ -130,6 +130,10 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         model.fit(time_series)
         conn_matrix = -model.estimator_.precision_
 
+    # Weight reuslting matrix by voxels in each label if using parcels as nodes
+    if parc is True:
+        conn_matrix = np.divide(conn_matrix, vox_array)
+
     coords = np.array(coords)
     label_names = np.array(label_names)
     return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, mask, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords
@@ -240,7 +244,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
                                                  memory=Memory(cachedir="%s%s%s" % (dir_path,
                                                                                     '/SpheresMasker_cache_',
                                                                                     str(ID)), verbose=2),
-                                                 memory_level=1)
+                                                 memory_level=2)
     # parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
     #                                              standardize=True)
     ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
@@ -271,7 +275,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
                                                    memory=Memory(cachedir="%s%s%s" % (dir_path,
                                                                                       '/SpheresMasker_cache_',
                                                                                       str(ID)), verbose=2),
-                                                   memory_level=1)
+                                                   memory_level=2)
     # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
     #                                                standardize=True, verbose=1)
     ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)

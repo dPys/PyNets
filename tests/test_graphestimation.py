@@ -43,13 +43,14 @@ def test_get_conn_matrix_cov():
     coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     coord_file = open(coord_file_path, 'rb')
     coords = pickle.load(coord_file)
+    vox_array = None
 
     start_time = time.time()
     [conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network,
     ID, mask, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select,
     label_names, coords] = graphestimation.get_conn_matrix(time_series, conn_model,
     dir_path, node_size, smooth, dens_thresh, network, ID, mask, min_span_tree,
-    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords)
+    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, vox_array)
     print("%s%s%s" %
     ('get_conn_matrix --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 

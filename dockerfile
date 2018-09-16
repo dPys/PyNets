@@ -20,11 +20,14 @@ RUN apt-get update -qq \
         vim \
         wget \
         libgl1-mesa-glx \
+        graphviz \
         libpng-dev \
+        build-essential \
+        git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && curl -o /tmp/libxp6.deb -sSL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
-    && dpkg -i /tmp/libxp6.deb && rm -f /tmp/libxp6.deb" \
+    && dpkg -i /tmp/libxp6.deb && rm -f /tmp/libxp6.deb \
     # Add new user.
     && useradd --no-user-group --create-home --shell /bin/bash neuro \
     && chmod a+s /opt \
@@ -59,7 +62,9 @@ RUN conda install -yq \
       python=3.6 \
       ipython \
     && conda clean -tipsy \
-    && pip install pynets==0.7.11
+#    && pip install scipy scikit-learn>=0.19 \
+#    && pip install -e git://github.com/dPys/nilearn.git#egg=0.4.2 \
+    && pip install pynets==0.7.17
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
@@ -74,13 +79,21 @@ RUN conda install -yq \
     && pip install skggm
 
 USER root
-RUN chown -R neuro:users /opt \
+RUN chown -R neuro /opt \
     && chmod a+s -R /opt \
     && chmod 777 -R /opt/conda/lib/python3.6/site-packages/pynets \
     && chmod 775 -R /opt/conda/lib/python3.6/site-packages \ 
     && find /opt -type f -iname "*.py" -exec chmod 777 {} \;
 
+# Cleanup
+RUN apt-get remove --purge -y \
+    git \
+    build-essential
+
 USER neuro
+
+# Python ENV Config
+ENV LD_LIBRARY_PATH="/opt/conda/lib":$LD_LIBRARY_PATH
 
 # PyNets ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets:$PATH"

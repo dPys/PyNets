@@ -276,12 +276,12 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
-    [WB_net_parcels_map_nifti_unmasked, WB_coords_unmasked, _, WB_atlas_select, WB_uatlas_select] = nodemaker.node_gen(WB_coords, WB_parcel_list, WB_label_names, dir_path, ID, parc, atlas_select, parlistfile)
+    [WB_net_parcels_map_nifti_unmasked, WB_coords_unmasked, _, WB_atlas_select, WB_uatlas_select, _] = nodemaker.node_gen(WB_coords, WB_parcel_list, WB_label_names, dir_path, ID, parc, atlas_select, parlistfile)
     print("%s%s%s" % ('node_gen (Masking whole-brain version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
-    [WB_net_parcels_map_nifti_masked, WB_coords_masked, WB_label_names_masked, WB_atlas_select, WB_uatlas_select] = nodemaker.node_gen_masking(mask, WB_coords, WB_parcel_list, WB_label_names,
+    [WB_net_parcels_map_nifti_masked, WB_coords_masked, WB_label_names_masked, WB_atlas_select, WB_uatlas_select, _] = nodemaker.node_gen_masking(mask, WB_coords, WB_parcel_list, WB_label_names,
     dir_path, ID, parc, atlas_select, parlistfile)
     print("%s%s%s" % ('node_gen_masking (Masking whole-brain version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
