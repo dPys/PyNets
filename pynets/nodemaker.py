@@ -571,6 +571,10 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc,
         [coords, label_names, parcel_list_masked] = nodemaker.parcel_masker(mask, coords, parcel_list, label_names,
                                                                             dir_path, ID, perc_overlap)
         [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list_masked)
+        vox_list = []
+        for i in range(len(parcel_list)):
+            vox_list.append(np.count_nonzero(parcel_list[i].get_data()))
+        vox_array = np.array(vox_list).astype('float64')
     # Mask Coordinates
     else:
         if 'bedpostX' in dir_path:
@@ -583,12 +587,13 @@ def node_gen_masking(mask, coords, parcel_list, label_names, dir_path, ID, parc,
         with open(coord_path, 'wb') as f:
             pickle.dump(coords, f, protocol=2)
         net_parcels_map_nifti = None
+        vox_array = None
     # Save labels to pickle
     labels_path = "%s%s%s%s" % (dir_path, '/atlas_labelnames_', os.path.basename(mask).split('.')[0], '.pkl')
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f, protocol=2)
 
-    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select
+    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select, vox_array
 
 
 def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select):
@@ -601,8 +606,13 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select,
 
     if parc is True:
         [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list)
+        vox_list = []
+        for i in range(len(parcel_list)):
+            vox_list.append(np.count_nonzero(parcel_list[i].get_data()))
+        vox_array = np.array(vox_list).astype('float64')
     else:
         net_parcels_map_nifti = None
+        vox_array = None
         print('No additional masking...')
 
     coords = list(tuple(x) for x in coords)
@@ -616,4 +626,4 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select,
         with open(labels_path, 'wb') as f:
             pickle.dump(label_names, f, protocol=2)
 
-    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select
+    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select, vox_array

@@ -996,6 +996,7 @@ def build_workflow(args, retval):
 
         wf_multi.config['execution']['crashdump_dir'] = wf_multi.base_dir
         wf_multi.config['execution']['display_variable'] = ':0'
+        wf_multi.config['execution']['crashfile_format'] = 'txt'
         wf_multi.config['execution']['job_finished_timeout'] = 65
         wf_multi.config['execution']['stop_on_first_crash'] = False
         wf_multi.config['execution']['keep_inputs'] = True
