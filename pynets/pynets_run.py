@@ -828,6 +828,21 @@ def build_workflow(args, retval):
         meta_wf.n_procs = procmem[0]
         wf.add_nodes([meta_wf])
 
+        # Set resource restrictions at level of the meta-meta wf
+        if input_file:
+            wf_selected = "%s%s" % ('functional_connectometry_', ID)
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 3
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 3
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._n_procs = 3
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 6
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 3
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 4
+            if k_clustering > 0:
+                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._n_procs = 4
+                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 10
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._n_procs = 3
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 4
+
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
                                    iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
