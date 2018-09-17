@@ -162,23 +162,25 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
     # Set resource restrictions at level of the meta wf
     if input_file:
         wf_selected = "%s%s" % ('functional_connectometry_', ID)
-        meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._n_procs = 2
+        meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._mem_gb = 2
-        meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_node'))._n_procs = 2
-        meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_node'))._mem_gb = 5
-        meta_wf.get_node("%s%s" % (wf_selected, '.node_gen_node'))._n_procs = 2
-        meta_wf.get_node("%s%s" % (wf_selected, '.node_gen_node'))._mem_gb = 3
+        meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_node'))._n_procs = 1
+        meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_node'))._mem_gb = 2
+        meta_wf.get_node("%s%s" % (wf_selected, '.node_gen_node'))._n_procs = 1
+        meta_wf.get_node("%s%s" % (wf_selected, '.node_gen_node'))._mem_gb = 2
         if k_clustering > 0:
-            meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._n_procs = 3
-            meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._mem_gb = 9
-        meta_wf.get_node("%s%s" % (wf_selected, '.get_conn_matrix_node'))._n_procs = 2
-        meta_wf.get_node("%s%s" % (wf_selected, '.get_conn_matrix_node'))._mem_gb = 3
+            meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._n_procs = 1
+            meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._mem_gb = 8
+        meta_wf.get_node("%s%s" % (wf_selected, '.get_conn_matrix_node'))._n_procs = 1
+        meta_wf.get_node("%s%s" % (wf_selected, '.get_conn_matrix_node'))._mem_gb = 2
+        meta_wf.get_node("%s%s" % (wf_selected, '.thresh_func_node'))._n_procs = 1
+        meta_wf.get_node("%s%s" % (wf_selected, '.thresh_func_node'))._mem_gb = 2
 
     if dwi_dir:
         wf_selected = "%s%s" % ('structural_connectometry_', ID)
-        meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._n_procs = 2
+        meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._mem_gb = 2
-        meta_wf.get_node("%s%s" % (wf_selected, '.thresh_diff_node'))._n_procs = 2
+        meta_wf.get_node("%s%s" % (wf_selected, '.thresh_diff_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.thresh_diff_node'))._mem_gb = 2
 
     # Connect outputs of nested workflow to parent wf
@@ -1064,9 +1066,9 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     # Set cpu/memory reqs
     if k_clustering > 0:
         clustering_node._mem_gb = 8
-        clustering_node.n_procs = 2
+        clustering_node.n_procs = 1
         clustering_node.interface.mem_gb = 8
-        clustering_node.interface.n_procs = 2
+        clustering_node.interface.n_procs = 1
     fetch_nodes_and_labels_node.interface.mem_gb = 2
     fetch_nodes_and_labels_node.interface.n_procs = 1
     fetch_nodes_and_labels_node._mem_gb = 2
@@ -1075,14 +1077,16 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     node_gen_node.interface.n_procs = 1
     node_gen_node._mem_gb = 2
     node_gen_node.n_procs = 1
-    extract_ts_node.interface.mem_gb = 4
+    extract_ts_node.interface.mem_gb = 2
     extract_ts_node.interface.n_procs = 1
-    extract_ts_node._mem_gb = 4
+    extract_ts_node._mem_gb = 2
     extract_ts_node.n_procs = 1
     get_conn_matrix_node.interface.mem_gb = 2
     get_conn_matrix_node.interface.n_procs = 1
     get_conn_matrix_node._mem_gb = 2
     get_conn_matrix_node.n_procs = 1
+    thresh_func_node._mem_gb = 2
+    thresh_func_node.n_procs = 1
 
     # Set runtime/logging configurations
     functional_connectometry_wf.config['execution']['crashdump_dir'] = functional_connectometry_wf.base_directory

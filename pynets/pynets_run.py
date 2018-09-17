@@ -824,24 +824,26 @@ def build_workflow(args, retval):
                                     clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
                                     use_AAL_naming, smooth, smooth_list, disp_filt, clust_type, clust_type_list)
-        meta_wf._mem_gb = procmem[1]
-        meta_wf.n_procs = procmem[0]
+        meta_wf._mem_gb = procmem[1] - 1
+        meta_wf.n_procs = procmem[0] - 1
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
         if input_file:
             wf_selected = "%s%s" % ('functional_connectometry_', ID)
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 3
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 3
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._n_procs = 3
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 6
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 3
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 4
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 1
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 2
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._n_procs = 1
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 2
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 2
             if k_clustering > 0:
-                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._n_procs = 4
-                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 10
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._n_procs = 3
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 4
+                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._n_procs = 1
+                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 8
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._n_procs = 1
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 2
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_func_node')._n_procs = 1
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_func_node')._mem_gb = 2
 
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
@@ -865,14 +867,14 @@ def build_workflow(args, retval):
 
         wf.connect([
             (meta_wf.get_node('pass_meta_outs_node'), net_mets_node, [('est_path_iterlist', 'est_path'),
-                                                                         ('network_iterlist', 'network'),
-                                                                         ('thr_iterlist', 'thr'),
-                                                                         ('ID_iterlist', 'ID'),
-                                                                         ('conn_model_iterlist', 'conn_model'),
-                                                                         ('mask_iterlist', 'mask'),
-                                                                         ('prune_iterlist', 'prune'),
-                                                                         ('node_size_iterlist', 'node_size'),
-                                                                         ('smooth_iterlist', 'smooth')]),
+                                                                      ('network_iterlist', 'network'),
+                                                                      ('thr_iterlist', 'thr'),
+                                                                      ('ID_iterlist', 'ID'),
+                                                                      ('conn_model_iterlist', 'conn_model'),
+                                                                      ('mask_iterlist', 'mask'),
+                                                                      ('prune_iterlist', 'prune'),
+                                                                      ('node_size_iterlist', 'node_size'),
+                                                                      ('smooth_iterlist', 'smooth')]),
             (meta_wf.get_node('pass_meta_outs_node'), export_to_pandas_node, [('network_iterlist', 'network'),
                                                                               ('ID_iterlist', 'ID'),
                                                                               ('mask_iterlist', 'mask')]),
