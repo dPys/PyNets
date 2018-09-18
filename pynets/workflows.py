@@ -165,7 +165,7 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
         meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._mem_gb = 2
         meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_node'))._mem_gb = 2
+        meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_node'))._mem_gb = 4
         meta_wf.get_node("%s%s" % (wf_selected, '.node_gen_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.node_gen_node'))._mem_gb = 2
         if k_clustering > 0:
@@ -1077,9 +1077,9 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     node_gen_node.interface.n_procs = 1
     node_gen_node._mem_gb = 2
     node_gen_node.n_procs = 1
-    extract_ts_node.interface.mem_gb = 2
+    extract_ts_node.interface.mem_gb = 4
     extract_ts_node.interface.n_procs = 1
-    extract_ts_node._mem_gb = 2
+    extract_ts_node._mem_gb = 4
     extract_ts_node.n_procs = 1
     get_conn_matrix_node.interface.mem_gb = 2
     get_conn_matrix_node.interface.n_procs = 1

@@ -824,8 +824,6 @@ def build_workflow(args, retval):
                                     clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
                                     use_AAL_naming, smooth, smooth_list, disp_filt, clust_type, clust_type_list)
-        meta_wf._mem_gb = procmem[1] - 1
-        meta_wf.n_procs = procmem[0] - 1
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
@@ -834,7 +832,7 @@ def build_workflow(args, retval):
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 2
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 2
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 4
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 2
             if k_clustering > 0:
@@ -948,9 +946,6 @@ def build_workflow(args, retval):
                          multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list):
 
         wf_multi = pe.Workflow(name="%s%s" % ('PyNets_multisub_', random.randint(1000, 9000)))
-        procmem_cores = int(np.round(float(procmem[0])/float(len(subjects_list)), 0))
-        procmem_ram = int(np.round(float(procmem[1]) / float(len(subjects_list)), 0))
-        procmem_indiv = [procmem_cores, procmem_ram]
         i = 0
         for _file in subjects_list:
             if conf:
@@ -963,7 +958,7 @@ def build_workflow(args, retval):
                 multi_nets=multi_nets, conn_model=conn_model, dens_thresh=dens_thresh, conf=conf_sub,
                 adapt_thresh=adapt_thresh, plot_switch=plot_switch, dwi_dir=dwi_dir, multi_thr=multi_thr,
                 multi_atlas= multi_atlas, min_thr=min_thr, max_thr=max_thr, step_thr=step_thr, anat_loc=anat_loc,
-                parc=parc, ref_txt=ref_txt, procmem=procmem_indiv, k=k, clust_mask=clust_mask, k_min=k_min, k_max=k_max,
+                parc=parc, ref_txt=ref_txt, procmem='auto', k=k, clust_mask=clust_mask, k_min=k_min, k_max=k_max,
                 k_step=k_step, k_clustering=k_clustering, user_atlas_list=user_atlas_list,
                 clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
@@ -971,8 +966,6 @@ def build_workflow(args, retval):
                 multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
                 clust_type=clust_type, clust_type_list=clust_type_list)
             wf_multi.add_nodes([wf_single_subject])
-            wf_multi.n_procs = procmem_cores
-            wf_multi._mem_gb = procmem_ram
             # Restrict nested meta-meta wf resources at the level of the group wf
             if input_file:
                 wf_selected = "%s%s" % ('functional_connectometry_', ID[i])
@@ -980,7 +973,7 @@ def build_workflow(args, retval):
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 2
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('extract_ts_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 2
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 4
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 2
                 if k_clustering > 0:
@@ -1038,7 +1031,7 @@ def build_workflow(args, retval):
         wf_multi.config['execution']['keep_inputs'] = True
         wf_multi.config['execution']['remove_unnecessary_outputs'] = False
         wf_multi.config['execution']['remove_node_directories'] = False
-        plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+        plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'maxtasksperchild': 1}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf_multi.write_graph(graph2use="colored", format='png')
         wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
@@ -1090,10 +1083,13 @@ def build_workflow(args, retval):
         wf.config['execution']['keep_inputs'] = True
         wf.config['execution']['remove_unnecessary_outputs'] = False
         wf.config['execution']['remove_node_directories'] = False
-        plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
-        print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf.write_graph(graph2use="colored", format='png')
-        wf.run(plugin=plugin_type, plugin_args=plugin_args)
+        if procmem != 'auto':
+            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'maxtasksperchild': 1}
+            print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
+            wf.run(plugin=plugin_type, plugin_args=plugin_args)
+        else:
+            wf.run(plugin=plugin_type)
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)

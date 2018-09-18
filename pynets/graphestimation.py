@@ -232,19 +232,22 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
     from nilearn import input_data
     # from pynets.graphestimation import extract_ts_parc_fast
     from pynets import utils
-    from sklearn.externals.joblib import Memory
+    #from sklearn.externals.joblib import Memory
 
     # if fast is True:
     #     ts_within_nodes = extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path)
     # else:
     detrending = True
+    # parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
+    #                                              standardize=True, smoothing_fwhm=float(smooth),
+    #                                              detrend=detrending,
+    #                                              memory=Memory(cachedir="%s%s%s" % (dir_path,
+    #                                                                                 '/SpheresMasker_cache_',
+    #                                                                                 str(ID)), verbose=2),
+    #                                              memory_level=1)
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth),
-                                                 detrend=detrending,
-                                                 memory=Memory(cachedir="%s%s%s" % (dir_path,
-                                                                                    '/SpheresMasker_cache_',
-                                                                                    str(ID)), verbose=2),
-                                                 memory_level=2)
+                                                 detrend=detrending, verbose=2)
     # parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
     #                                              standardize=True)
     ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
@@ -263,19 +266,22 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
     from nilearn import input_data
     # from pynets.graphestimation import extract_ts_coords_fast
     from pynets import utils
-    from sklearn.externals.joblib import Memory
+    #from sklearn.externals.joblib import Memory
 
     # if fast is True:
     #     ts_within_nodes = extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path)
     # else:
     detrending = True
+    # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
+    #                                                standardize=True, smoothing_fwhm=float(smooth),
+    #                                                detrend=detrending,
+    #                                                memory=Memory(cachedir="%s%s%s" % (dir_path,
+    #                                                                                   '/SpheresMasker_cache_',
+    #                                                                                   str(ID)), verbose=2),
+    #                                                memory_level=1)
     spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                    standardize=True, smoothing_fwhm=float(smooth),
-                                                   detrend=detrending,
-                                                   memory=Memory(cachedir="%s%s%s" % (dir_path,
-                                                                                      '/SpheresMasker_cache_',
-                                                                                      str(ID)), verbose=2),
-                                                   memory_level=2)
+                                                   detrend=detrending)
     # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
     #                                                standardize=True, verbose=1)
     ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
