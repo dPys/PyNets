@@ -947,7 +947,7 @@ def build_workflow(args, retval):
                          num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming,
                          multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list):
 
-        wf_multi = pe.Workflow(name="%s%s" % ('PyNets_multisubject_', random.randint(1000, 9000)))
+        wf_multi = pe.Workflow(name="%s%s" % ('PyNets_multisub_', random.randint(1000, 9000)))
         procmem_cores = int(np.round(float(procmem[0])/float(len(subjects_list)), 0))
         procmem_ram = int(np.round(float(procmem[1]) / float(len(subjects_list)), 0))
         procmem_indiv = [procmem_cores, procmem_ram]
@@ -971,6 +971,25 @@ def build_workflow(args, retval):
                 multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
                 clust_type=clust_type, clust_type_list=clust_type_list)
             wf_multi.add_nodes([wf_single_subject])
+            wf_multi.n_procs = procmem_cores
+            wf_multi._mem_gb = procmem_ram
+            # Restrict nested meta-meta wf resources at the level of the group wf
+            if input_file:
+                wf_selected = "%s%s" % ('functional_connectometry_', ID[i])
+                meta_wf_name = "%s%s" % ('Meta_wf_', ID[i])
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 1
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 2
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('extract_ts_node')._n_procs = 1
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 2
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 2
+                if k_clustering > 0:
+                    wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._n_procs = 1
+                    wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 8
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_conn_matrix_node')._n_procs = 1
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 2
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_func_node')._n_procs = 1
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_func_node')._mem_gb = 2
             i = i + 1
 
         return wf_multi
