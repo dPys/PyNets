@@ -396,27 +396,27 @@ def build_workflow(args, retval):
     if input_file:
         if uatlas_select is not None and k_clustering == 0 and user_atlas_list is None:
             atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
+            print("%s%s" % ("\nUser atlas: ", atlas_select_par))
             if subjects_list:
                 for input_file in subjects_list:
                     do_dir_path(atlas_select_par, input_file)
             else:
                 do_dir_path(atlas_select_par, input_file)
-                print("%s%s" % ("\nUser atlas: ", atlas_select_par))
         elif uatlas_select is not None and user_atlas_list is None and k_clustering == 0:
             atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
+            print("%s%s" % ("\nUser atlas: ", atlas_select_par))
             if subjects_list:
                 for input_file in subjects_list:
                     do_dir_path(atlas_select_par, input_file)
             else:
                 do_dir_path(atlas_select_par, input_file)
-            print("%s%s" % ("\nUser atlas: ", atlas_select_par))
         elif user_atlas_list is not None:
             print('\nIterating across multiple user atlases...')
             if subjects_list:
-                for input_file in subjects_list:
-                    for uatlas_select in user_atlas_list:
-                        atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
-                        print(atlas_select_par)
+                for uatlas_select in user_atlas_list:
+                    atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
+                    print(atlas_select_par)
+                    for input_file in subjects_list:
                         do_dir_path(atlas_select_par, input_file)
             else:
                 for uatlas_select in user_atlas_list:
@@ -437,11 +437,11 @@ def build_workflow(args, retval):
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             print("\nClustering within mask at multiple resolutions...")
             if subjects_list:
-                for input_file in subjects_list:
-                    for k in k_list:
-                        cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                        print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                for k in k_list:
+                    cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                    atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                    print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                    for input_file in subjects_list:
                         do_dir_path(atlas_select_clust, input_file)
             else:
                 for k in k_list:
@@ -452,10 +452,10 @@ def build_workflow(args, retval):
         elif k_clustering == 3:
             print("\nClustering within multiple masks at a single resolution...")
             if subjects_list:
-                for input_file in subjects_list:
-                    for clust_mask in clust_mask_list:
-                        cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                for clust_mask in clust_mask_list:
+                    cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                    atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                    for input_file in subjects_list:
                         do_dir_path(atlas_select_clust, input_file)
             else:
                 for clust_mask in clust_mask_list:
@@ -467,11 +467,11 @@ def build_workflow(args, retval):
             print("\nClustering within multiple masks at multiple resolutions...")
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             if subjects_list:
-                for input_file in subjects_list:
-                    for clust_mask in clust_mask_list:
-                        for k in k_list:
-                            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                for clust_mask in clust_mask_list:
+                    for k in k_list:
+                        cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                        for input_file in subjects_list:
                             do_dir_path(atlas_select_clust, input_file)
             else:
                 for clust_mask in clust_mask_list:
@@ -496,12 +496,12 @@ def build_workflow(args, retval):
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             print("\nClustering within mask at multiple resolutions using multiple clustering methods...")
             if subjects_list:
-                for input_file in subjects_list:
-                    for clust_type in clust_type_list:
-                        for k in k_list:
-                            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                            print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                for clust_type in clust_type_list:
+                    for k in k_list:
+                        cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                        print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                        for input_file in subjects_list:
                             do_dir_path(atlas_select_clust, input_file)
             else:
                 for clust_type in clust_type_list:
@@ -514,11 +514,12 @@ def build_workflow(args, retval):
         elif k_clustering == 7:
             print("\nClustering within multiple masks at a single resolution using multiple clustering methods...")
             if subjects_list:
-                for input_file in subjects_list:
-                    for clust_type in clust_type_list:
-                        for clust_mask in clust_mask_list:
-                            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                for clust_type in clust_type_list:
+                    for clust_mask in clust_mask_list:
+                        cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                        print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                        for input_file in subjects_list:
                             do_dir_path(atlas_select_clust, input_file)
             else:
                 for clust_type in clust_type_list:
@@ -532,12 +533,13 @@ def build_workflow(args, retval):
             print("\nClustering within multiple masks at multiple resolutions using multiple clustering methods...")
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             if subjects_list:
-                for input_file in subjects_list:
-                    for clust_type in clust_type_list:
-                        for clust_mask in clust_mask_list:
-                            for k in k_list:
-                                cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                                atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                for clust_type in clust_type_list:
+                    for clust_mask in clust_mask_list:
+                        for k in k_list:
+                            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                            print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                            for input_file in subjects_list:
                                 do_dir_path(atlas_select_clust, input_file)
             else:
                 for clust_type in clust_type_list:

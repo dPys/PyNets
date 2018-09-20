@@ -132,7 +132,9 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
 
     # Weight reuslting matrix by voxels in each label if using parcels as nodes
     if parc is True:
-        conn_matrix = np.divide(conn_matrix, vox_array)
+        vox_weights = np.divide(vox_array, np.sum(vox_array))
+        Z = (vox_weights - np.nanmean(vox_weights)) / np.nanstd(vox_weights)
+        conn_matrix = np.multiply(conn_matrix, Z)
 
     coords = np.array(coords)
     label_names = np.array(label_names)
