@@ -305,6 +305,7 @@ def local_thresholding_prop(conn_matrix, thr):
     '''
 
     fail_tol = 10
+    conn_matrix = np.nan_to_num(conn_matrix)
     G = nx.from_numpy_matrix(conn_matrix)
     if not nx.is_connected(G):
         [G, _] = netstats.prune_disconnected(G)
@@ -376,6 +377,7 @@ def local_thresholding_dens(conn_matrix, thr):
 
     fail_tol = 10
 
+    conn_matrix = np.nan_to_num(conn_matrix)
     G = nx.from_numpy_matrix(conn_matrix)
     if not nx.is_connected(G):
         [G, _] = netstats.prune_disconnected(G)
