@@ -67,15 +67,15 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
                 conn_matrix = estimator.covariance_
             else:
                 conn_matrix = estimator_shrunk.covariance_
-    elif conn_model == 'QuicGraphLasso':
+    elif conn_model == 'QuicGraphicalLasso':
         try:
-            from inverse_covariance import QuicGraphLasso
+            from inverse_covariance import QuicGraphicalLasso
         except ImportError:
             print('Cannot run QuicGraphLasso. Skggm not installed!')
 
         # Compute the sparse inverse covariance via QuicGraphLasso
         # credit: skggm
-        model = QuicGraphLasso(
+        model = QuicGraphicalLasso(
             init_method='cov',
             lam=0.5,
             mode='default',
@@ -85,27 +85,27 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         conn_matrix = -model.precision_
     elif conn_model == 'QuicGraphLassoCV':
         try:
-            from inverse_covariance import QuicGraphLassoCV
+            from inverse_covariance import QuicGraphicalLassoCV
         except ImportError:
             print('Cannot run QuicGraphLassoCV. Skggm not installed!')
 
         # Compute the sparse inverse covariance via QuicGraphLassoCV
         # credit: skggm
-        model = QuicGraphLassoCV(
+        model = QuicGraphicalLassoCV(
             init_method='cov',
             verbose=1)
         print('\nCalculating QuicGraphLassoCV precision matrix using skggm...\n')
         model.fit(time_series)
         conn_matrix = -model.precision_
-    elif conn_model == 'QuicGraphLassoEBIC':
+    elif conn_model == 'QuicGraphicalLassoEBIC':
         try:
-            from inverse_covariance import QuicGraphLassoEBIC
+            from inverse_covariance import QuicGraphicalLassoEBIC
         except ImportError:
             print('Cannot run QuicGraphLassoEBIC. Skggm not installed!')
 
         # Compute the sparse inverse covariance via QuicGraphLassoEBIC
         # credit: skggm
-        model = QuicGraphLassoEBIC(
+        model = QuicGraphicalLassoEBIC(
             init_method='cov',
             verbose=1)
         print('\nCalculating QuicGraphLassoEBIC precision matrix using skggm...\n')
@@ -113,15 +113,15 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         conn_matrix = -model.precision_
     elif conn_model == 'AdaptiveQuicGraphLasso':
         try:
-            from inverse_covariance import AdaptiveGraphLasso, QuicGraphLassoEBIC
+            from inverse_covariance import AdaptiveQuicGraphicalLasso, QuicGraphicalLassoEBIC
         except ImportError:
             print('Cannot run AdaptiveGraphLasso. Skggm not installed!')
 
         # Compute the sparse inverse covariance via
         # AdaptiveGraphLasso + QuicGraphLassoEBIC + method='binary'
         # credit: skggm
-        model = AdaptiveGraphLasso(
-                estimator=QuicGraphLassoEBIC(
+        model = AdaptiveQuicGraphicalLasso(
+                estimator=QuicGraphicalLassoEBIC(
                     init_method='cov',
                 ),
                 method='binary',

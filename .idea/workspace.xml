@@ -2,10 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/diffconnectometry.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/diffconnectometry.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/graphestimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/graphestimation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/thresholding.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/workflows.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -23,11 +22,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="graphestimation.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="graphestimation.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/graphestimation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="211">
-              <caret line="162" column="26" selection-start-line="162" selection-start-column="26" selection-end-line="162" selection-end-column="26" />
+            <state relative-caret-position="434">
+              <caret line="128" column="66" lean-forward="true" selection-start-line="128" selection-start-column="66" selection-end-line="128" selection-end-column="66" />
             </state>
           </provider>
         </entry>
@@ -35,7 +34,7 @@
       <file leaf-file-name="utils.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="4761">
+            <state relative-caret-position="23">
               <caret line="211" column="25" selection-start-line="211" selection-start-column="25" selection-end-line="211" selection-end-column="25" />
               <folding>
                 <element signature="e#132#141#0" expanded="true" />
@@ -44,11 +43,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="plotting.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="plotting.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/plotting.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="23">
-              <caret line="9" selection-start-line="9" selection-end-line="9" />
+            <state relative-caret-position="322">
+              <caret line="22" column="35" lean-forward="true" selection-start-line="22" selection-start-column="35" selection-end-line="22" selection-end-column="35" />
               <folding>
                 <element signature="e#109#127#0" expanded="true" />
               </folding>
@@ -59,7 +58,7 @@
       <file leaf-file-name="netstats.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/netstats.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="23">
+            <state relative-caret-position="-2475">
               <caret line="450" column="52" selection-start-line="450" selection-start-column="52" selection-end-line="450" selection-end-column="52" />
               <folding>
                 <element signature="e#109#140#0" expanded="true" />
@@ -71,8 +70,8 @@
       <file leaf-file-name="pynets_run.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="23">
-              <caret line="841" column="103" selection-start-line="841" selection-start-column="103" selection-end-line="841" selection-end-column="103" />
+            <state relative-caret-position="188">
+              <caret line="1072" column="57" lean-forward="true" selection-start-line="1072" selection-start-column="57" selection-end-line="1072" selection-end-column="57" />
             </state>
           </provider>
         </entry>
@@ -80,8 +79,8 @@
       <file leaf-file-name="workflows.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="23">
-              <caret line="1067" column="35" selection-start-line="1067" selection-start-column="35" selection-end-line="1067" selection-end-column="35" />
+            <state relative-caret-position="232">
+              <caret line="1071" column="52" lean-forward="true" selection-start-line="1071" selection-start-column="52" selection-end-line="1071" selection-end-column="52" />
             </state>
           </provider>
         </entry>
@@ -113,8 +112,8 @@
       <file leaf-file-name="nodemaker.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="334">
-              <caret line="608" column="21" selection-start-line="608" selection-start-column="21" selection-end-line="608" selection-end-column="21" />
+            <state relative-caret-position="357">
+              <caret line="609" column="41" lean-forward="true" selection-start-line="609" selection-start-column="41" selection-end-line="609" selection-end-column="41" />
               <folding>
                 <element signature="e#109#118#0" expanded="true" />
               </folding>
@@ -125,8 +124,8 @@
       <file leaf-file-name="thresholding.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/thresholding.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="11592">
-              <caret line="504" column="26" lean-forward="true" selection-start-line="504" selection-start-column="26" selection-end-line="504" selection-end-column="26" />
+            <state relative-caret-position="610">
+              <caret line="406" column="73" lean-forward="true" selection-start-line="406" selection-start-column="73" selection-end-line="406" selection-end-column="73" />
               <folding>
                 <element signature="e#109#127#0" expanded="true" />
               </folding>
@@ -145,7 +144,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>clust_mask_list</find>
       <find>clustering within</find>
       <find>at a single</find>
       <find>for clust_mask in clust_mask_list:</find>
@@ -175,6 +173,7 @@
       <find>MultiProc</find>
       <find>Edge (0, 0, {'weight': nan, 'distance': nan})</find>
       <find>mst</find>
+      <find>fail_tol</find>
     </findStrings>
     <replaceStrings>
       <replace>997_Default_est</replace>
@@ -225,11 +224,11 @@
         <option value="$PROJECT_DIR$/pynets/plotting.py" />
         <option value="$PROJECT_DIR$/pynets/utils.py" />
         <option value="$PROJECT_DIR$/pynets/nodemaker.py" />
-        <option value="$PROJECT_DIR$/pynets/workflows.py" />
-        <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
         <option value="$PROJECT_DIR$/pynets/diffconnectometry.py" />
-        <option value="$PROJECT_DIR$/pynets/graphestimation.py" />
         <option value="$PROJECT_DIR$/pynets/thresholding.py" />
+        <option value="$PROJECT_DIR$/pynets/workflows.py" />
+        <option value="$PROJECT_DIR$/pynets/graphestimation.py" />
+        <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
       </list>
     </option>
   </component>
@@ -240,9 +239,9 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="375" />
+    <option name="x" value="660" />
     <option name="y" value="23" />
-    <option name="width" value="1003" />
+    <option name="width" value="718" />
     <option name="height" value="877" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
@@ -423,12 +422,12 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="375" y="23" width="1003" height="877" extended-state="0" />
+    <frame x="660" y="23" width="718" height="877" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info active="true" anchor="bottom" id="Event Log" order="12" sideWeight="0.50044525" side_tool="true" visible="true" weight="0.013977128" />
-      <window_info anchor="right" x="0" y="0" width="200" height="677" id="Documentation" order="5" side_tool="true" visible="true" weight="0.04885344" />
+      <window_info anchor="right" x="0" y="0" width="200" height="677" id="Documentation" order="5" side_tool="true" visible="true" weight="0.06824513" />
       <window_info anchor="bottom" id="Database Changes" order="9" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="8" weight="0.32909784" />
       <window_info anchor="bottom" id="Python Console" order="10" sideWeight="0.49955475" weight="0.24533" />
@@ -762,20 +761,40 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
+    <entry file="file://$PROJECT_DIR$/pynets/clustools.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4761">
-          <caret line="211" column="25" selection-start-line="211" selection-start-column="25" selection-end-line="211" selection-end-column="25" />
+        <state relative-caret-position="23">
+          <caret line="274" selection-start-line="274" selection-end-line="274" />
           <folding>
-            <element signature="e#132#141#0" expanded="true" />
+            <element signature="e#206#227#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/graphestimation.py">
+    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="211">
-          <caret line="162" column="26" selection-start-line="162" selection-start-column="26" selection-end-line="162" selection-end-column="26" />
+        <state relative-caret-position="232">
+          <caret line="1071" column="52" lean-forward="true" selection-start-line="1071" selection-start-column="52" selection-end-line="1071" selection-end-column="52" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/thresholding.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="610">
+          <caret line="406" column="73" lean-forward="true" selection-start-line="406" selection-start-column="73" selection-end-line="406" selection-end-column="73" />
+          <folding>
+            <element signature="e#109#127#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="357">
+          <caret line="609" column="41" lean-forward="true" selection-start-line="609" selection-start-column="41" selection-end-line="609" selection-end-column="41" />
+          <folding>
+            <element signature="e#109#118#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -789,53 +808,29 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/thresholding.py">
+    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="11592">
-          <caret line="504" column="26" lean-forward="true" selection-start-line="504" selection-start-column="26" selection-end-line="504" selection-end-column="26" />
+        <state relative-caret-position="23">
+          <caret line="211" column="25" selection-start-line="211" selection-start-column="25" selection-end-line="211" selection-end-column="25" />
+          <folding>
+            <element signature="e#132#141#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/plotting.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="322">
+          <caret line="22" column="35" lean-forward="true" selection-start-line="22" selection-start-column="35" selection-end-line="22" selection-end-column="35" />
           <folding>
             <element signature="e#109#127#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="334">
-          <caret line="608" column="21" selection-start-line="608" selection-start-column="21" selection-end-line="608" selection-end-column="21" />
-          <folding>
-            <element signature="e#109#118#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/clustools.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="23">
-          <caret line="274" selection-start-line="274" selection-end-line="274" />
-          <folding>
-            <element signature="e#206#227#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="23">
-          <caret line="1067" column="35" selection-start-line="1067" selection-start-column="35" selection-end-line="1067" selection-end-column="35" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="23">
-          <caret line="841" column="103" selection-start-line="841" selection-start-column="103" selection-end-line="841" selection-end-column="103" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/netstats.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="23">
+        <state relative-caret-position="-2475">
           <caret line="450" column="52" selection-start-line="450" selection-start-column="52" selection-end-line="450" selection-end-column="52" />
           <folding>
             <element signature="e#109#140#0" expanded="true" />
@@ -843,13 +838,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/plotting.py">
+    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="23">
-          <caret line="9" selection-start-line="9" selection-end-line="9" />
-          <folding>
-            <element signature="e#109#127#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="188">
+          <caret line="1072" column="57" lean-forward="true" selection-start-line="1072" selection-start-column="57" selection-end-line="1072" selection-end-column="57" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/graphestimation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="434">
+          <caret line="128" column="66" lean-forward="true" selection-start-line="128" selection-start-column="66" selection-end-line="128" selection-end-column="66" />
         </state>
       </provider>
     </entry>

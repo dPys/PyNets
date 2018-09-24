@@ -64,7 +64,7 @@ def get_parser():
     parser.add_argument('-mod',
                         metavar='Graph estimator type',
                         default=None,
-                        help='Specify matrix estimation type. For fMRI, options models include: corr for correlation, cov for covariance, sps for precision covariance, partcorr for partial correlation. sps type is used by default. If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphLasso, QuicGraphLassoCV, QuicGraphLassoEBIC, and AdaptiveGraphLasso. For dMRI, models include ball_and_stick, tensor, and csd.\n')
+                        help='Specify matrix estimation type. For fMRI, options models include: corr for correlation, cov for covariance, sps for precision covariance, partcorr for partial correlation. sps type is used by default. If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. For dMRI, models include ball_and_stick, tensor, and csd.\n')
     parser.add_argument('-conf',
                         metavar='Confounds',
                         default=None,
@@ -832,18 +832,18 @@ def build_workflow(args, retval):
         if input_file:
             wf_selected = "%s%s" % ('functional_connectometry_', ID)
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 2
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._n_procs = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 4
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 2
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 1
             if k_clustering > 0:
                 wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._n_procs = 1
                 wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 8
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 2
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_func_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_func_node')._mem_gb = 2
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_func_node')._mem_gb = 1
 
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
@@ -973,18 +973,18 @@ def build_workflow(args, retval):
                 wf_selected = "%s%s" % ('functional_connectometry_', ID[i])
                 meta_wf_name = "%s%s" % ('Meta_wf_', ID[i])
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 2
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('extract_ts_node')._n_procs = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 4
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 2
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 1
                 if k_clustering > 0:
                     wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._n_procs = 1
                     wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 8
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_conn_matrix_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 2
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_func_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_func_node')._mem_gb = 2
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_func_node')._mem_gb = 1
             i = i + 1
 
         return wf_multi
@@ -1004,10 +1004,10 @@ def build_workflow(args, retval):
                                     smooth, smooth_list, disp_filt, clust_type, clust_type_list)
 
         import shutil
-        if os.path.exists('/tmp/Wf_multi_subject'):
-            shutil.rmtree('/tmp/Wf_multi_subject')
-        os.mkdir('/tmp/Wf_multi_subject')
-        wf_multi.base_dir = '/tmp/Wf_multi_subject'
+        wf_multi.base_dir = "%s%s" % (os.getcwd(), '/Wf_multi_subject')
+        if os.path.exists(wf_multi.base_dir):
+            shutil.rmtree(wf_multi.base_dir)
+        os.mkdir(wf_multi.base_dir)
 
         if verbose is True:
             from nipype import config, logging
@@ -1087,7 +1087,8 @@ def build_workflow(args, retval):
         wf.config['execution']['remove_node_directories'] = False
         wf.write_graph(graph2use="colored", format='png')
         if procmem != 'auto':
-            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'maxtasksperchild': 1}
+            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+            #plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'maxtasksperchild': 1}
             print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
             wf.run(plugin=plugin_type, plugin_args=plugin_args)
         else:
