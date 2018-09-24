@@ -1004,7 +1004,7 @@ def build_workflow(args, retval):
                                     smooth, smooth_list, disp_filt, clust_type, clust_type_list)
 
         import shutil
-        wf_multi.base_dir = "%s%s" % (os.getcwd(), '/Wf_multi_subject')
+        wf_multi.base_dir = '/tmp/Wf_multi_subject'
         if os.path.exists(wf_multi.base_dir):
             shutil.rmtree(wf_multi.base_dir)
         os.mkdir(wf_multi.base_dir)
@@ -1033,7 +1033,8 @@ def build_workflow(args, retval):
         wf_multi.config['execution']['keep_inputs'] = True
         wf_multi.config['execution']['remove_unnecessary_outputs'] = False
         wf_multi.config['execution']['remove_node_directories'] = False
-        plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'maxtasksperchild': 1}
+        #plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'maxtasksperchild': 1}
+        plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf_multi.write_graph(graph2use="colored", format='png')
         wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
