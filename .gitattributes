@@ -1,6 +1,1 @@
-pynets/rsnrefs/BIGREF1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
-pynets/rsnrefs/BIGREF2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
-tests/examples/whole_brain_cluster_labels_PCA200.nii.gz filter=lfs diff=lfs merge=lfs -text
-tests/examples/997/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz filter=lfs diff=lfs merge=lfs -text
-pynets/rsnrefs/SMALLREF2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
-pynets/rsnrefs/SMALLREF1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+
