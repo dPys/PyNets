@@ -64,7 +64,7 @@ def get_parser():
     parser.add_argument('-mod',
                         metavar='Graph estimator type',
                         default=None,
-                        help='Specify matrix estimation type. For fMRI, options models include: corr for correlation, cov for covariance, sps for precision covariance, partcorr for partial correlation. sps type is used by default. If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphLasso, QuicGraphLassoCV, QuicGraphLassoEBIC, and AdaptiveGraphLasso. For dMRI, models include ball_and_stick, tensor, and csd.\n')
+                        help='Specify matrix estimation type. For fMRI, options models include: corr for correlation, cov for covariance, sps for precision covariance, partcorr for partial correlation. sps type is used by default. If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. For dMRI, models include ball_and_stick, tensor, and csd.\n')
     parser.add_argument('-conf',
                         metavar='Confounds',
                         default=None,
@@ -396,27 +396,27 @@ def build_workflow(args, retval):
     if input_file:
         if uatlas_select is not None and k_clustering == 0 and user_atlas_list is None:
             atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
+            print("%s%s" % ("\nUser atlas: ", atlas_select_par))
             if subjects_list:
                 for input_file in subjects_list:
                     do_dir_path(atlas_select_par, input_file)
             else:
                 do_dir_path(atlas_select_par, input_file)
-                print("%s%s" % ("\nUser atlas: ", atlas_select_par))
         elif uatlas_select is not None and user_atlas_list is None and k_clustering == 0:
             atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
+            print("%s%s" % ("\nUser atlas: ", atlas_select_par))
             if subjects_list:
                 for input_file in subjects_list:
                     do_dir_path(atlas_select_par, input_file)
             else:
                 do_dir_path(atlas_select_par, input_file)
-            print("%s%s" % ("\nUser atlas: ", atlas_select_par))
         elif user_atlas_list is not None:
             print('\nIterating across multiple user atlases...')
             if subjects_list:
-                for input_file in subjects_list:
-                    for uatlas_select in user_atlas_list:
-                        atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
-                        print(atlas_select_par)
+                for uatlas_select in user_atlas_list:
+                    atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
+                    print(atlas_select_par)
+                    for input_file in subjects_list:
                         do_dir_path(atlas_select_par, input_file)
             else:
                 for uatlas_select in user_atlas_list:
@@ -437,11 +437,11 @@ def build_workflow(args, retval):
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             print("\nClustering within mask at multiple resolutions...")
             if subjects_list:
-                for input_file in subjects_list:
-                    for k in k_list:
-                        cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                        print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                for k in k_list:
+                    cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                    atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                    print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                    for input_file in subjects_list:
                         do_dir_path(atlas_select_clust, input_file)
             else:
                 for k in k_list:
@@ -452,10 +452,10 @@ def build_workflow(args, retval):
         elif k_clustering == 3:
             print("\nClustering within multiple masks at a single resolution...")
             if subjects_list:
-                for input_file in subjects_list:
-                    for clust_mask in clust_mask_list:
-                        cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                for clust_mask in clust_mask_list:
+                    cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                    atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                    for input_file in subjects_list:
                         do_dir_path(atlas_select_clust, input_file)
             else:
                 for clust_mask in clust_mask_list:
@@ -467,11 +467,11 @@ def build_workflow(args, retval):
             print("\nClustering within multiple masks at multiple resolutions...")
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             if subjects_list:
-                for input_file in subjects_list:
-                    for clust_mask in clust_mask_list:
-                        for k in k_list:
-                            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                for clust_mask in clust_mask_list:
+                    for k in k_list:
+                        cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                        for input_file in subjects_list:
                             do_dir_path(atlas_select_clust, input_file)
             else:
                 for clust_mask in clust_mask_list:
@@ -496,12 +496,12 @@ def build_workflow(args, retval):
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             print("\nClustering within mask at multiple resolutions using multiple clustering methods...")
             if subjects_list:
-                for input_file in subjects_list:
-                    for clust_type in clust_type_list:
-                        for k in k_list:
-                            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                            print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                for clust_type in clust_type_list:
+                    for k in k_list:
+                        cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                        print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                        for input_file in subjects_list:
                             do_dir_path(atlas_select_clust, input_file)
             else:
                 for clust_type in clust_type_list:
@@ -514,11 +514,12 @@ def build_workflow(args, retval):
         elif k_clustering == 7:
             print("\nClustering within multiple masks at a single resolution using multiple clustering methods...")
             if subjects_list:
-                for input_file in subjects_list:
-                    for clust_type in clust_type_list:
-                        for clust_mask in clust_mask_list:
-                            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                for clust_type in clust_type_list:
+                    for clust_mask in clust_mask_list:
+                        cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                        print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                        for input_file in subjects_list:
                             do_dir_path(atlas_select_clust, input_file)
             else:
                 for clust_type in clust_type_list:
@@ -532,12 +533,13 @@ def build_workflow(args, retval):
             print("\nClustering within multiple masks at multiple resolutions using multiple clustering methods...")
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             if subjects_list:
-                for input_file in subjects_list:
-                    for clust_type in clust_type_list:
-                        for clust_mask in clust_mask_list:
-                            for k in k_list:
-                                cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-                                atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                for clust_type in clust_type_list:
+                    for clust_mask in clust_mask_list:
+                        for k in k_list:
+                            cl_mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+                            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                            print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
+                            for input_file in subjects_list:
                                 do_dir_path(atlas_select_clust, input_file)
             else:
                 for clust_type in clust_type_list:
@@ -824,24 +826,24 @@ def build_workflow(args, retval):
                                     clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
                                     use_AAL_naming, smooth, smooth_list, disp_filt, clust_type, clust_type_list)
-        meta_wf._mem_gb = procmem[1]
-        meta_wf.n_procs = procmem[0]
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
         if input_file:
             wf_selected = "%s%s" % ('functional_connectometry_', ID)
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 3
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 3
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._n_procs = 3
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 6
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 3
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 4
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 1
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 1
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._n_procs = 1
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 4
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 1
             if k_clustering > 0:
-                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._n_procs = 4
-                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 10
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._n_procs = 3
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 4
+                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._n_procs = 1
+                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 8
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._n_procs = 1
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 1
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_func_node')._n_procs = 1
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_func_node')._mem_gb = 1
 
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
@@ -865,14 +867,14 @@ def build_workflow(args, retval):
 
         wf.connect([
             (meta_wf.get_node('pass_meta_outs_node'), net_mets_node, [('est_path_iterlist', 'est_path'),
-                                                                         ('network_iterlist', 'network'),
-                                                                         ('thr_iterlist', 'thr'),
-                                                                         ('ID_iterlist', 'ID'),
-                                                                         ('conn_model_iterlist', 'conn_model'),
-                                                                         ('mask_iterlist', 'mask'),
-                                                                         ('prune_iterlist', 'prune'),
-                                                                         ('node_size_iterlist', 'node_size'),
-                                                                         ('smooth_iterlist', 'smooth')]),
+                                                                      ('network_iterlist', 'network'),
+                                                                      ('thr_iterlist', 'thr'),
+                                                                      ('ID_iterlist', 'ID'),
+                                                                      ('conn_model_iterlist', 'conn_model'),
+                                                                      ('mask_iterlist', 'mask'),
+                                                                      ('prune_iterlist', 'prune'),
+                                                                      ('node_size_iterlist', 'node_size'),
+                                                                      ('smooth_iterlist', 'smooth')]),
             (meta_wf.get_node('pass_meta_outs_node'), export_to_pandas_node, [('network_iterlist', 'network'),
                                                                               ('ID_iterlist', 'ID'),
                                                                               ('mask_iterlist', 'mask')]),
@@ -945,10 +947,7 @@ def build_workflow(args, retval):
                          num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming,
                          multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list):
 
-        wf_multi = pe.Workflow(name="%s%s" % ('PyNets_multisubject_', random.randint(1000, 9000)))
-        procmem_cores = int(np.round(float(procmem[0])/float(len(subjects_list)), 0))
-        procmem_ram = int(np.round(float(procmem[1]) / float(len(subjects_list)), 0))
-        procmem_indiv = [procmem_cores, procmem_ram]
+        wf_multi = pe.Workflow(name="%s%s" % ('PyNets_multisub_', random.randint(1000, 9000)))
         i = 0
         for _file in subjects_list:
             if conf:
@@ -961,7 +960,7 @@ def build_workflow(args, retval):
                 multi_nets=multi_nets, conn_model=conn_model, dens_thresh=dens_thresh, conf=conf_sub,
                 adapt_thresh=adapt_thresh, plot_switch=plot_switch, dwi_dir=dwi_dir, multi_thr=multi_thr,
                 multi_atlas= multi_atlas, min_thr=min_thr, max_thr=max_thr, step_thr=step_thr, anat_loc=anat_loc,
-                parc=parc, ref_txt=ref_txt, procmem=procmem_indiv, k=k, clust_mask=clust_mask, k_min=k_min, k_max=k_max,
+                parc=parc, ref_txt=ref_txt, procmem='auto', k=k, clust_mask=clust_mask, k_min=k_min, k_max=k_max,
                 k_step=k_step, k_clustering=k_clustering, user_atlas_list=user_atlas_list,
                 clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
@@ -969,6 +968,23 @@ def build_workflow(args, retval):
                 multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
                 clust_type=clust_type, clust_type_list=clust_type_list)
             wf_multi.add_nodes([wf_single_subject])
+            # Restrict nested meta-meta wf resources at the level of the group wf
+            if input_file:
+                wf_selected = "%s%s" % ('functional_connectometry_', ID[i])
+                meta_wf_name = "%s%s" % ('Meta_wf_', ID[i])
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 1
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 1
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('extract_ts_node')._n_procs = 1
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 4
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 1
+                if k_clustering > 0:
+                    wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._n_procs = 1
+                    wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 8
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_conn_matrix_node')._n_procs = 1
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 1
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_func_node')._n_procs = 1
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_func_node')._mem_gb = 1
             i = i + 1
 
         return wf_multi
@@ -988,10 +1004,10 @@ def build_workflow(args, retval):
                                     smooth, smooth_list, disp_filt, clust_type, clust_type_list)
 
         import shutil
-        if os.path.exists('/tmp/Wf_multi_subject'):
-            shutil.rmtree('/tmp/Wf_multi_subject')
-        os.mkdir('/tmp/Wf_multi_subject')
         wf_multi.base_dir = '/tmp/Wf_multi_subject'
+        if os.path.exists(wf_multi.base_dir):
+            shutil.rmtree(wf_multi.base_dir)
+        os.mkdir(wf_multi.base_dir)
 
         if verbose is True:
             from nipype import config, logging
@@ -1017,6 +1033,7 @@ def build_workflow(args, retval):
         wf_multi.config['execution']['keep_inputs'] = True
         wf_multi.config['execution']['remove_unnecessary_outputs'] = False
         wf_multi.config['execution']['remove_node_directories'] = False
+        #plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'maxtasksperchild': 1}
         plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf_multi.write_graph(graph2use="colored", format='png')
@@ -1069,10 +1086,14 @@ def build_workflow(args, retval):
         wf.config['execution']['keep_inputs'] = True
         wf.config['execution']['remove_unnecessary_outputs'] = False
         wf.config['execution']['remove_node_directories'] = False
-        plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
-        print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf.write_graph(graph2use="colored", format='png')
-        wf.run(plugin=plugin_type, plugin_args=plugin_args)
+        if procmem != 'auto':
+            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+            #plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'maxtasksperchild': 1}
+            print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
+            wf.run(plugin=plugin_type, plugin_args=plugin_args)
+        else:
+            wf.run(plugin=plugin_type)
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)

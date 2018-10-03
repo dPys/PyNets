@@ -709,21 +709,27 @@ def collect_struct_mapping_outputs(parc, dwi_dir, network, ID, probtrackx_output
         np.seterr(divide='ignore', invalid='ignore')
         conn_matrix = np.divide(mx, waytotal)
         conn_matrix[np.isnan(conn_matrix)] = 0
+        conn_matrix[np.isinf(conn_matrix)] = 0
         conn_matrix = np.nan_to_num(conn_matrix)
         conn_matrices.append(conn_matrix)
         i = i + 1
 
     conn_matri = conn_matrices[0]
+    j = 0
     for i in range(len(conn_matrices))[1:]:
         try:
             conn_matri = conn_matri + conn_matrices[i]
+            j = j + 1
         except:
-            print("%s%s%s%s%s" % ('Matrix ', str(i + 1), ' is a different shape: ', str(conn_matrices[i].shape), '. Skipping...'))
+            print("%s%s%s%s%s" % ('Matrix ', str(i + 1), ' is a different shape: ', str(conn_matrices[i].shape),
+                                  '. Skipping...'))
             continue
+
+    mx_mean = conn_matri / float(j)
 
     try:
         print('Normalizing array...')
-        conn_matrix = normalize(np.nan_to_num(conn_matri))
+        conn_matrix = normalize(np.nan_to_num(mx_mean))
     except RuntimeError:
         print('Normalization failed...')
         pass

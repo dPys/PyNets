@@ -67,15 +67,15 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
                 conn_matrix = estimator.covariance_
             else:
                 conn_matrix = estimator_shrunk.covariance_
-    elif conn_model == 'QuicGraphLasso':
+    elif conn_model == 'QuicGraphicalLasso':
         try:
-            from inverse_covariance import QuicGraphLasso
+            from inverse_covariance import QuicGraphicalLasso
         except ImportError:
             print('Cannot run QuicGraphLasso. Skggm not installed!')
 
         # Compute the sparse inverse covariance via QuicGraphLasso
         # credit: skggm
-        model = QuicGraphLasso(
+        model = QuicGraphicalLasso(
             init_method='cov',
             lam=0.5,
             mode='default',
@@ -85,27 +85,27 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         conn_matrix = -model.precision_
     elif conn_model == 'QuicGraphLassoCV':
         try:
-            from inverse_covariance import QuicGraphLassoCV
+            from inverse_covariance import QuicGraphicalLassoCV
         except ImportError:
             print('Cannot run QuicGraphLassoCV. Skggm not installed!')
 
         # Compute the sparse inverse covariance via QuicGraphLassoCV
         # credit: skggm
-        model = QuicGraphLassoCV(
+        model = QuicGraphicalLassoCV(
             init_method='cov',
             verbose=1)
         print('\nCalculating QuicGraphLassoCV precision matrix using skggm...\n')
         model.fit(time_series)
         conn_matrix = -model.precision_
-    elif conn_model == 'QuicGraphLassoEBIC':
+    elif conn_model == 'QuicGraphicalLassoEBIC':
         try:
-            from inverse_covariance import QuicGraphLassoEBIC
+            from inverse_covariance import QuicGraphicalLassoEBIC
         except ImportError:
             print('Cannot run QuicGraphLassoEBIC. Skggm not installed!')
 
         # Compute the sparse inverse covariance via QuicGraphLassoEBIC
         # credit: skggm
-        model = QuicGraphLassoEBIC(
+        model = QuicGraphicalLassoEBIC(
             init_method='cov',
             verbose=1)
         print('\nCalculating QuicGraphLassoEBIC precision matrix using skggm...\n')
@@ -113,15 +113,15 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         conn_matrix = -model.precision_
     elif conn_model == 'AdaptiveQuicGraphLasso':
         try:
-            from inverse_covariance import AdaptiveGraphLasso, QuicGraphLassoEBIC
+            from inverse_covariance import AdaptiveQuicGraphicalLasso, QuicGraphicalLassoEBIC
         except ImportError:
             print('Cannot run AdaptiveGraphLasso. Skggm not installed!')
 
         # Compute the sparse inverse covariance via
         # AdaptiveGraphLasso + QuicGraphLassoEBIC + method='binary'
         # credit: skggm
-        model = AdaptiveGraphLasso(
-                estimator=QuicGraphLassoEBIC(
+        model = AdaptiveQuicGraphicalLasso(
+                estimator=QuicGraphicalLassoEBIC(
                     init_method='cov',
                 ),
                 method='binary',
@@ -131,8 +131,10 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         conn_matrix = -model.estimator_.precision_
 
     # Weight reuslting matrix by voxels in each label if using parcels as nodes
-    if parc is True:
-        conn_matrix = np.divide(conn_matrix, vox_array)
+    # if parc is True:
+    #     norm_parcels = (vox_array - min(vox_array)) / (max(vox_array) - min(vox_array))
+    #     conn_matrix_norm = normalize(conn_matrix)
+    #     conn_matrix = norm_parcels * conn_matrix_norm
 
     coords = np.array(coords)
     label_names = np.array(label_names)
@@ -232,19 +234,22 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
     from nilearn import input_data
     # from pynets.graphestimation import extract_ts_parc_fast
     from pynets import utils
-    from sklearn.externals.joblib import Memory
+    #from sklearn.externals.joblib import Memory
 
     # if fast is True:
     #     ts_within_nodes = extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path)
     # else:
     detrending = True
+    # parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
+    #                                              standardize=True, smoothing_fwhm=float(smooth),
+    #                                              detrend=detrending,
+    #                                              memory=Memory(cachedir="%s%s%s" % (dir_path,
+    #                                                                                 '/SpheresMasker_cache_',
+    #                                                                                 str(ID)), verbose=2),
+    #                                              memory_level=1)
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth),
-                                                 detrend=detrending,
-                                                 memory=Memory(cachedir="%s%s%s" % (dir_path,
-                                                                                    '/SpheresMasker_cache_',
-                                                                                    str(ID)), verbose=2),
-                                                 memory_level=2)
+                                                 detrend=detrending, verbose=2)
     # parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
     #                                              standardize=True)
     ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
@@ -263,19 +268,22 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
     from nilearn import input_data
     # from pynets.graphestimation import extract_ts_coords_fast
     from pynets import utils
-    from sklearn.externals.joblib import Memory
+    #from sklearn.externals.joblib import Memory
 
     # if fast is True:
     #     ts_within_nodes = extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path)
     # else:
     detrending = True
+    # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
+    #                                                standardize=True, smoothing_fwhm=float(smooth),
+    #                                                detrend=detrending,
+    #                                                memory=Memory(cachedir="%s%s%s" % (dir_path,
+    #                                                                                   '/SpheresMasker_cache_',
+    #                                                                                   str(ID)), verbose=2),
+    #                                                memory_level=1)
     spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                    standardize=True, smoothing_fwhm=float(smooth),
-                                                   detrend=detrending,
-                                                   memory=Memory(cachedir="%s%s%s" % (dir_path,
-                                                                                      '/SpheresMasker_cache_',
-                                                                                      str(ID)), verbose=2),
-                                                   memory_level=2)
+                                                   detrend=detrending)
     # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
     #                                                standardize=True, verbose=1)
     ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
