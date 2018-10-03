@@ -1,2 +1,4 @@
 pynets/rsnrefs/BIGREF1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
 pynets/rsnrefs/BIGREF2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/rsnrefs/SMALLREF1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/rsnrefs/SMALLREF2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
