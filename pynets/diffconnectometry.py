@@ -12,7 +12,8 @@ nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 
 def create_mni2diff_transforms(dwi_dir):
     import nipype.interfaces.fsl as fsl
-    import nipype.pipeline.engine as pe
+    from nipype.pipeline import engine as pe
+    from nipype.interfaces import utility as niu
     try:
         FSLDIR = os.environ['FSLDIR']
     except KeyError:
@@ -31,65 +32,105 @@ def create_mni2diff_transforms(dwi_dir):
     input_MNI = "%s%s" % (FSLDIR, '/data/standard/MNI152_T1_1mm_brain.nii.gz')
     out_aff = "%s%s" % (dwi_dir, '/xfms/MNI2diff_affine.nii.gz')
 
-    # Create transform matrix between diff and MNI using FLIRT
-    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-    flirt.inputs.reference = dwi_infile
-    flirt.inputs.in_file = input_MNI
-    flirt.inputs.out_matrix_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
-    flirt.inputs.out_file = '/tmp/out_flirt.nii.gz'
-    flirt.run()
+    diff_transforms_wf = pe.Workflow(name='diff_transforms')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['dwi_infile', 'input_MNI',
+                                                      'out_aff', 'mat_file']),
+                        name='inputnode')
+    inputnode.inputs.dwi_infile = dwi_infile
+    inputnode.inputs.input_MNI = input_MNI
+    inputnode.inputs.out_aff = out_aff
+    inputnode.inputs.mat_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
 
-    # Apply transform between diff and MNI using FLIRT
     flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-    flirt.inputs.reference = dwi_infile
-    flirt.inputs.in_file = input_MNI
-    flirt.inputs.apply_xfm = True
-    flirt.inputs.in_matrix_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
-    flirt.inputs.out_file = out_aff
-    flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
-    flirt.run()
-    return out_aff
+    flirt.inputs.out_file = '/tmp/out_flirt.nii.gz'
+    flirt_apply = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister_apply')
+    flirt_apply.inputs.out_matrix_file = '/tmp/out_flirt.mat'
+    flirt_apply.inputs.apply_xfm = True
+
+    diff_transforms_wf.connect([
+        (inputnode, flirt, [('dwi_infile', 'reference'),
+                            ('input_MNI', 'in_file'),
+                            ('mat_file', 'out_matrix_file')]),
+        (inputnode, flirt_apply, [('dwi_infile', 'reference'), ('input_MNI', 'in_file'),
+                                  ('mat_file', 'in_matrix_file'), ('out_aff', 'out_file')])
+    ])
+
+    return diff_transforms_wf
 
 
 # Create avoidance and waypoints masks
-def gen_anat_segs(anat_loc, out_aff):
-    # # Custom inputs# #
-    try:
-        FSLDIR = os.environ['FSLDIR']
-    except KeyError:
-        print('FSLDIR environment variable not set!')
-    import nipype.interfaces.fsl as fsl
-    #import nibabel as nib
-    #from nilearn.image import resample_img
-    from nipype.interfaces.fsl import ExtractROI
+def gen_anat_segs(anat_loc):
+    import nipype.pipeline.engine as pe
+    from nipype.interfaces import utility as niu
+    anat_segs_wf = pe.Workflow(name='anat_segs')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['anat_loc']),
+                        name='inputnode')
+    inputnode.inputs.anat_loc = anat_loc
+
     print('\nSegmenting anatomical image to create White Matter and Ventricular CSF masks for contraining the tractography...')
+
     # Create MNI ventricle mask
-    print('Creating MNI space ventricle mask...')
-    anat_dir = os.path.dirname(anat_loc)
-    lvent_out_file = "%s%s" % (anat_dir, '/LVentricle.nii.gz')
-    rvent_out_file = "%s%s" % (anat_dir, '/RVentricle.nii.gz')
-    MNI_atlas = "%s%s" % (FSLDIR, '/data/atlases/HarvardOxford/HarvardOxford-sub-prob-1mm.nii.gz')
-    fslroi1 = ExtractROI(in_file=MNI_atlas, roi_file=lvent_out_file, t_min=2, t_size=1)
-    os.system(fslroi1.cmdline)
-    fslroi2 = ExtractROI(in_file=MNI_atlas, roi_file=rvent_out_file, t_min=13, t_size=1)
-    os.system(fslroi2.cmdline)
-    mni_csf_loc = anat_dir + '/VentricleMask.nii.gz'
-    args = "%s%s%s" % ('-add ', rvent_out_file, ' -thr 0.1 -bin -dilF')
-    maths = fsl.ImageMaths(in_file=lvent_out_file, op_string=args, out_file=mni_csf_loc)
-    os.system(maths.cmdline)
+    def create_MNI_vent_mask(anat_loc):
+        import os
+        try:
+            FSLDIR = os.environ['FSLDIR']
+        except KeyError:
+            print('FSLDIR environment variable not set!')
+        import nipype.interfaces.fsl as fsl
+        from nipype.interfaces.fsl import ExtractROI
+        print('Creating MNI space ventricle mask...')
+        anat_dir = os.path.dirname(anat_loc)
+        lvent_out_file = "%s%s" % (anat_dir, '/LVentricle.nii.gz')
+        rvent_out_file = "%s%s" % (anat_dir, '/RVentricle.nii.gz')
+        MNI_atlas = "%s%s" % (FSLDIR, '/data/atlases/HarvardOxford/HarvardOxford-sub-prob-1mm.nii.gz')
+        fslroi1 = ExtractROI(in_file=MNI_atlas, roi_file=lvent_out_file, t_min=2, t_size=1)
+        os.system(fslroi1.cmdline)
+        fslroi2 = ExtractROI(in_file=MNI_atlas, roi_file=rvent_out_file, t_min=13, t_size=1)
+        os.system(fslroi2.cmdline)
+        mni_csf_loc = anat_dir + '/VentricleMask.nii.gz'
+        args = "%s%s%s" % ('-add ', rvent_out_file, ' -thr 0.1 -bin -dilF')
+        maths = fsl.ImageMaths(in_file=lvent_out_file, op_string=args, out_file=mni_csf_loc)
+        os.system(maths.cmdline)
+        return mni_csf_loc
 
     # Segment anatomical (should be in MNI space)
-    print('Segmenting anatomical image using FAST...')
-    fastr = fsl.FAST()
-    fastr.inputs.in_files = anat_loc
-    fastr.inputs.img_type = 1
-    fastr.run()
-    old_file_csf = "%s%s" % (anat_loc.split('.nii.gz')[0], '_pve_0.nii.gz')
-    new_file_csf = "%s%s" % (anat_dir, '/CSF.nii.gz')
-    old_file_wm = "%s%s" % (anat_loc.split('.nii.gz')[0], '_pve_2.nii.gz')
-    new_file_wm = "%s%s" % (anat_dir, '/WM.nii.gz')
-    os.rename(old_file_csf, new_file_csf)
-    os.rename(old_file_wm, new_file_wm)
+    def seg_anat(anat_loc):
+        import os
+        try:
+            FSLDIR = os.environ['FSLDIR']
+        except KeyError:
+            print('FSLDIR environment variable not set!')
+        import nipype.interfaces.fsl as fsl
+        print('Segmenting anatomical image using FAST...')
+        anat_dir = os.path.dirname(anat_loc)
+        fastr = fsl.FAST()
+        fastr.inputs.in_files = anat_loc
+        fastr.inputs.img_type = 1
+        fastr.run()
+        old_file_csf = "%s%s" % (anat_loc.split('.nii.gz')[0], '_pve_0.nii.gz')
+        new_file_csf = "%s%s" % (anat_dir, '/CSF.nii.gz')
+        old_file_wm = "%s%s" % (anat_loc.split('.nii.gz')[0], '_pve_2.nii.gz')
+        new_file_wm = "%s%s" % (anat_dir, '/WM.nii.gz')
+        os.rename(old_file_csf, new_file_csf)
+        os.rename(old_file_wm, new_file_wm)
+        return new_file_csf, new_file_wm
+
+    create_MNI_vent_mask = pe.Node(niu.Function(input_names=['anat_loc'], output_names=['mni_csf_loc'],
+                                                function=create_MNI_vent_mask), name="create_MNI_vent_mask")
+
+    seg_anat = pe.Node(niu.Function(input_names=['anat_loc'],
+                                    output_names=['new_file_csf', 'new_file_wm'],
+                                    function=seg_anat), name="seg_anat")
+
+    outputnode = pe.Node(niu.IdentityInterface(fields=['mni_csf_loc', 'new_file_csf', 'new_file_wm']),
+                         name='outputnode')
+
+    anat_segs_wf.connect([
+        (inputnode, create_MNI_vent_mask, [('anat_loc', 'anat_loc')]),
+        (inputnode, seg_anat, [('anat_loc', 'anat_loc')]),
+        (create_MNI_vent_mask, outputnode, [('mni_csf_loc', 'mni_csf_loc')]),
+        (seg_anat, outputnode, [('new_file_csf', 'new_file_csf'), ('new_file_wm', 'new_file_wm')])
+    ])
 
     # Reslice to 1x1x1mm voxels
     #img=nib.load(anat_loc)
@@ -99,58 +140,101 @@ def gen_anat_segs(anat_loc, out_aff):
     #new_file_wm_res = resample_img(new_file_wm, target_affine=targ_aff)
     #nib.save(new_file_csf_res, new_file_csf)
     #nib.save(new_file_wm_res, new_file_wm)
-    return new_file_csf, mni_csf_loc, new_file_wm
+    return anat_segs_wf
 
 
 def coreg_vent_CSF_to_diff(dwi_dir, csf_loc, mni_csf_loc):
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
+    from nipype.interfaces import utility as niu
     print('\nTransforming CSF mask to diffusion space...')
     merged_f_samples_path = "%s%s" % (dwi_dir, '/merged_f1samples.nii.gz')
     if os.path.exists(merged_f_samples_path) is True:
         dwi_infile = merged_f_samples_path
     else:
         dwi_infile = "%s%s" % (dwi_dir, '/dwi.nii.gz')
-
     csf_mask_diff_out = "%s%s" % (dwi_dir, '/csf_diff.nii.gz')
-    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-    flirt.inputs.reference = dwi_infile
-    flirt.inputs.in_file = csf_loc
-    flirt.inputs.out_file = csf_mask_diff_out
-    flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
-    flirt.inputs.in_matrix_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
-    flirt.inputs.apply_xfm = True
-    flirt.run()
-
     vent_mask_diff_out = dwi_dir + '/ventricle_diff.nii.gz'
-    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-    flirt.inputs.reference = dwi_infile
-    flirt.inputs.in_file = mni_csf_loc
-    flirt.inputs.out_file = vent_mask_diff_out
-    flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
-    flirt.inputs.in_matrix_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
-    flirt.inputs.apply_xfm = True
-    flirt.run()
 
-    # Mask CSF with MNI ventricle mask
-    print('Masking CSF with ventricle mask...')
-    vent_csf_diff_out = "%s%s" % (dwi_dir, '/vent_csf_diff.nii.gz')
-    args = "%s%s" % ('-mas ', vent_mask_diff_out)
-    maths = fsl.ImageMaths(in_file=csf_mask_diff_out, op_string=args, out_file=vent_csf_diff_out)
-    os.system(maths.cmdline)
+    csf_transforms_wf = pe.Workflow(name='csf_transforms')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['dwi_infile', 'csf_loc', 'csf_mask_diff_out', 'mat_file',
+                                                      'vent_mask_diff_out', 'mni_csf_loc', 'dwi_dir']),
+                        name='inputnode')
+    inputnode.inputs.dwi_infile = dwi_infile
+    inputnode.inputs.csf_loc = csf_loc
+    inputnode.inputs.csf_mask_diff_out = csf_mask_diff_out
+    inputnode.inputs.mat_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
+    inputnode.inputs.vent_mask_diff_out = vent_mask_diff_out
+    inputnode.inputs.mni_csf_loc = mni_csf_loc
+    inputnode.inputs.dwi_dir = dwi_dir
 
-    print('Eroding and binarizing CSF mask...')
-    # Erode CSF mask
-    out_file_final = "%s%s" % (vent_csf_diff_out.split('.nii.gz')[0], '_ero.nii.gz')
-    args = '-ero -bin'
-    maths = fsl.ImageMaths(in_file=vent_csf_diff_out, op_string=args, out_file=out_file_final)
-    os.system(maths.cmdline)
-    return out_file_final
+    flirt_csf = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister_csf')
+    flirt_csf.inputs.out_matrix_file = '/tmp/out_flirt.mat'
+    flirt_csf.inputs.apply_xfm = True
+    flirt_vents = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister_vents')
+    flirt_vents.inputs.out_matrix_file = '/tmp/out_flirt.mat'
+    flirt_vents.inputs.apply_xfm = True
+
+    csf_transforms_wf.connect([
+        (inputnode, flirt_csf, [('dwi_infile', 'reference'),
+                                ('csf_loc', 'in_file'),
+                                ('csf_mask_diff_out', 'out_file'),
+                                ('mat_file', 'in_matrix_file')]),
+        (inputnode, flirt_vents, [('dwi_infile', 'reference'),
+                                  ('mni_csf_loc', 'in_file'),
+                                  ('vent_mask_diff_out', 'out_file'),
+                                  ('mat_file', 'in_matrix_file')]),
+    ])
+
+    def mask_csf_with_vent(csf_mask_diff_out, dwi_dir, vent_mask_diff_out):
+        import nipype.interfaces.fsl as fsl
+        import os
+        # Mask CSF with MNI ventricle mask
+        print('Masking CSF with ventricle mask...')
+        vent_csf_diff_out = "%s%s" % (dwi_dir, '/vent_csf_diff.nii.gz')
+        args = "%s%s" % ('-mas ', vent_mask_diff_out)
+        if os.path.isfile(vent_csf_diff_out):
+            os.remove(vent_csf_diff_out)
+        maths = fsl.ImageMaths(in_file=csf_mask_diff_out, op_string=args, out_file=vent_csf_diff_out)
+        os.system(maths.cmdline)
+        return vent_csf_diff_out
+
+    def erode_and_bin_csf(vent_csf_diff_out):
+        import nipype.interfaces.fsl as fsl
+        import os
+        print('Eroding and binarizing CSF mask...')
+        # Erode CSF mask
+        out_file_final = "%s%s" % (vent_csf_diff_out.split('.nii.gz')[0], '_ero.nii.gz')
+        if os.path.isfile(out_file_final):
+            os.remove(out_file_final)
+        args = '-ero -bin'
+        maths = fsl.ImageMaths(in_file=vent_csf_diff_out, op_string=args, out_file=out_file_final)
+        os.system(maths.cmdline)
+        return out_file_final
+
+    mask_csf = pe.Node(niu.Function(input_names=['csf_mask_diff_out', 'dwi_dir', 'vent_mask_diff_out'],
+                                    output_names=['vent_csf_diff_out'],
+                                    function=mask_csf_with_vent), name="mask_csf_node")
+
+    erode_csf = pe.Node(niu.Function(input_names=['vent_csf_diff_out'], output_names=['out_file_final'],
+                                     function=erode_and_bin_csf), name="erode_csf_node")
+
+    outputnode = pe.Node(niu.IdentityInterface(fields=['out_file_final']), name='outputnode')
+
+    csf_transforms_wf.connect([
+        (inputnode, mask_csf, [('csf_mask_diff_out', 'csf_mask_diff_out'), ('dwi_dir', 'dwi_dir'),
+                               ('vent_mask_diff_out', 'vent_mask_diff_out')]),
+        (mask_csf, erode_csf, [('vent_csf_diff_out', 'vent_csf_diff_out')]),
+        (erode_csf, outputnode, [('out_file_final', 'out_file_final')])
+    ])
+
+    return csf_transforms_wf
 
 
 def coreg_WM_mask_to_diff(dwi_dir, wm_mask_loc):
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
+    from nipype.interfaces import utility as niu
     print('\nTransforming White-Matter waypoint mask to diffusion space...')
     merged_f_samples_path = "%s%s" % (dwi_dir, '/merged_f1samples.nii.gz')
     if os.path.exists(merged_f_samples_path) is True:
@@ -159,24 +243,43 @@ def coreg_WM_mask_to_diff(dwi_dir, wm_mask_loc):
         dwi_infile = "%s%s" % (dwi_dir, '/dwi.nii.gz')
 
     out_file = "%s%s" % (dwi_dir, '/wm_mask_diff.nii.gz')
-    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-    flirt.inputs.reference = dwi_infile
-    flirt.inputs.in_file = wm_mask_loc
-    flirt.inputs.out_file = out_file
-    flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
-    flirt.inputs.in_matrix_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
+    wm_transforms_wf = pe.Workflow(name='wm_transforms')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['dwi_infile', 'wm_mask_loc', 'out_file', 'mat_file', 'dwi_dir']),
+                        name='inputnode')
+    inputnode.inputs.dwi_infile = dwi_infile
+    inputnode.inputs.wm_mask_loc = wm_mask_loc
+    inputnode.inputs.out_file = out_file
+    inputnode.inputs.mat_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
+    inputnode.inputs.dwi_dir = dwi_dir
+
+    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister_wm')
     flirt.inputs.apply_xfm = True
-    flirt.run()
-    args = '-bin'
-    maths = fsl.ImageMaths(in_file=out_file, op_string=args, out_file=out_file)
-    print('\nBinarizing WM mask...')
-    os.system(maths.cmdline)
-    return out_file
+    flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
+
+    def bin_wm(out_file):
+        import nipype.interfaces.fsl as fsl
+        import os
+        args = '-bin'
+        maths = fsl.ImageMaths(in_file=out_file, op_string=args, out_file=out_file)
+        print('\nBinarizing WM mask...')
+        os.system(maths.cmdline)
+        return out_file
+
+    bin_wm = pe.Node(niu.Function(input_names=['out_file'], output_names=['out_file'],
+                                  function=bin_wm), name="bin_wm_node")
+
+    wm_transforms_wf.connect([(inputnode, flirt, [('dwi_infile', 'reference'), ('wm_mask_loc', 'in_file'),
+                                                  ('out_file', 'out_file'), ('mat_file', 'in_matrix_file')]),
+                              (flirt, bin_wm, [('out_file', 'out_file')])
+                              ])
+
+    return wm_transforms_wf
 
 
 def coreg_mask_to_diff(dwi_dir, mask):
     import nipype.interfaces.fsl as fsl
     import nipype.pipeline.engine as pe
+    from nipype.interfaces import utility as niu
     print('\nTransforming custom waypoint mask to diffusion space...')
     merged_f_samples_path = "%s%s" % (dwi_dir, '/merged_f1samples.nii.gz')
     if os.path.exists(merged_f_samples_path) is True:
@@ -185,19 +288,36 @@ def coreg_mask_to_diff(dwi_dir, mask):
         dwi_infile = "%s%s" % (dwi_dir, '/dwi.nii.gz')
 
     out_file = "%s%s" % (dwi_dir, '/mask_custom_diff.nii.gz')
-    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-    flirt.inputs.reference = dwi_infile
-    flirt.inputs.in_file = mask
-    flirt.inputs.out_file = out_file
-    flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
-    flirt.inputs.in_matrix_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
+    mask_transforms_wf = pe.Workflow(name='wm_transforms')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['dwi_infile', 'mask', 'out_file', 'mat_file', 'dwi_dir']),
+                        name='inputnode')
+    inputnode.inputs.dwi_infile = dwi_infile
+    inputnode.inputs.mask = mask
+    inputnode.inputs.out_file = out_file
+    inputnode.inputs.mat_file = "%s%s" % (dwi_dir, '/xfms/MNI2diff.mat')
+    inputnode.inputs.dwi_dir = dwi_dir
+
+    flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister_wm')
     flirt.inputs.apply_xfm = True
-    flirt.run()
-    args = '-bin'
-    maths = fsl.ImageMaths(in_file=out_file, op_string=args, out_file=out_file)
-    print('\nBinarizing custom mask...')
-    os.system(maths.cmdline)
-    return out_file
+    flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
+
+    def bin_mask(out_file):
+        import nipype.interfaces.fsl as fsl
+        import os
+        args = '-bin'
+        maths = fsl.ImageMaths(in_file=out_file, op_string=args, out_file=out_file)
+        print('\nBinarizing custom mask...')
+        os.system(maths.cmdline)
+        return out_file
+
+    bin_mask = pe.Node(niu.Function(input_names=['out_file'], output_names=['out_file'],
+                                  function=bin_mask), name="bin_mask_node")
+
+    mask_transforms_wf.connect([(inputnode, flirt, [('dwi_infile', 'reference'), ('mask', 'in_file'),
+                                                    ('out_file', 'out_file'), ('mat_file', 'in_matrix_file')]),
+                                (flirt, bin_mask, [('out_file', 'out_file')])
+                                ])
+    return mask_transforms_wf
 
 
 def build_coord_list(coords, dwi_dir):

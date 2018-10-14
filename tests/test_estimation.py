@@ -13,7 +13,7 @@ try:
     import cPickle as pickle
 except ImportError:
     import _pickle as pickle
-from pynets import graphestimation
+from pynets import estimation
 from pathlib import Path
 
 def test_get_conn_matrix_cov():
@@ -48,7 +48,7 @@ def test_get_conn_matrix_cov():
     start_time = time.time()
     [conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network,
     ID, mask, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select,
-    label_names, coords] = graphestimation.get_conn_matrix(time_series, conn_model,
+    label_names, coords] = estimation.get_conn_matrix(time_series, conn_model,
     dir_path, node_size, smooth, dens_thresh, network, ID, mask, min_span_tree,
     disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, vox_array)
     print("%s%s%s" %
@@ -98,7 +98,7 @@ def test_extract_ts_rsn_parc():
     start_time = time.time()
     net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
     [ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select,
-    label_names, coords] = graphestimation.extract_ts_parc(net_parcels_map_nifti,
+    label_names, coords] = estimation.extract_ts_parc(net_parcels_map_nifti,
     conf, func_file, coords, mask, dir_path, ID, network, smooth, atlas_select,
     uatlas_select, label_names)
     print("%s%s%s" % ('extract_ts_parc --> finished: ',
@@ -130,7 +130,7 @@ def test_extract_ts_rsn_coords():
     label_names = pickle.load(labels_file)
 
     start_time = time.time()
-    ts_within_nodes = graphestimation.extract_ts_coords(node_size, conf,
+    ts_within_nodes = estimation.extract_ts_coords(node_size, conf,
     func_file, coords, dir_path, ID, mask, network, smooth, atlas_select,
     uatlas_select, label_names)
     print("%s%s%s" % ('extract_ts_coords --> finished: ',
@@ -154,7 +154,7 @@ def test_extract_ts_rsn_coords():
 #
 #     start_time = time.time()
 #     net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
-#     ts_within_nodes = graphestimation.extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path,
+#     ts_within_nodes = estimation.extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path,
 #                                                       ID, network, fast=True)
 #     print("%s%s%s" % ('extract_ts_parc (fast) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 #     assert ts_within_nodes is not None
@@ -174,7 +174,7 @@ def test_extract_ts_rsn_coords():
 #     coords = pickle.load(file_)
 #
 #     start_time = time.time()
-#     ts_within_nodes = graphestimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network,
+#     ts_within_nodes = estimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network,
 #                                                         fast=True)
 #     print("%s%s%s" % ('extract_ts_coords (fast) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 #     assert ts_within_nodes is not None

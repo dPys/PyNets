@@ -8,7 +8,6 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import numpy as np
 import networkx as nx
-import math
 import time
 from pathlib import Path
 from pynets import netstats

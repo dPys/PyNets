@@ -164,7 +164,7 @@ def normalize(v):
 #     except ImportError:
 #         from io import BytesIO as StringIO
 #     from pynets.nodemaker import get_sphere
-#     from pynets.graphestimation import generate_mask_from_voxels, normalize
+#     from pynets.estimation import generate_mask_from_voxels, normalize
 #     start_time = time.time()
 #     data = nib.load(func_file)
 #     activity_data = data.get_data()
@@ -212,7 +212,7 @@ def normalize(v):
 # def extract_ts_parc_fast(label_file, conf, func_file, dir_path):
 #     import time
 #     import subprocess
-#     from pynets.graphestimation import normalize
+#     from pynets.estimation import normalize
 #     try:
 #         from StringIO import StringIO
 #     except ImportError:
@@ -232,7 +232,7 @@ def normalize(v):
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network, smooth, atlas_select,
                     uatlas_select, label_names):
     from nilearn import input_data
-    # from pynets.graphestimation import extract_ts_parc_fast
+    # from pynets.estimation import extract_ts_parc_fast
     from pynets import utils
     #from sklearn.externals.joblib import Memory
 
@@ -266,7 +266,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network, smooth, atlas_select, uatlas_select,
                       label_names):
     from nilearn import input_data
-    # from pynets.graphestimation import extract_ts_coords_fast
+    # from pynets.estimation import extract_ts_coords_fast
     from pynets import utils
     #from sklearn.externals.joblib import Memory
 
@@ -281,12 +281,15 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
     #                                                                                   '/SpheresMasker_cache_',
     #                                                                                   str(ID)), verbose=2),
     #                                                memory_level=1)
-    spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
-                                                   standardize=True, smoothing_fwhm=float(smooth),
-                                                   detrend=detrending)
-    # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
-    #                                                standardize=True, verbose=1)
-    ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
+    if len(coords) > 0:
+        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
+                                                       standardize=True, smoothing_fwhm=float(smooth),
+                                                       detrend=detrending)
+        # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
+        #                                                standardize=True, verbose=1)
+        ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
+    else:
+        raise RuntimeError('ERROR: Cannot extract time-series from an empty list of coordinates. \nThis usually means that no nodes were generated based on the specified conditions at runtime (e.g. atlas was overly restricted by an RSN or some user-defined mask.')
 
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
                         len(coords), ' coordinate ROI\'s'))

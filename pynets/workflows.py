@@ -45,9 +45,11 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
     base_wf = sub_func_wf if sub_func_wf else sub_struct_wf
 
     # Create meta-workflow to organize graph simulation sets in prep for analysis
-    # Credit: @Mathias Goncalves
     base_dirname = "%s%s" % ('Meta_wf_', ID)
     meta_wf = Workflow(name=base_dirname)
+    meta_wf.config['monitoring']['enabled'] = True
+    meta_wf.config['monitoring']['sample_frequency'] = '0.1'
+    meta_wf.config['monitoring']['summary_append'] = True
     # Create input/output nodes
     meta_inputnode = pe.Node(niu.IdentityInterface(fields=['in_file', 'ID', 'atlas_select', 'network', 'thr',
                                                            'node_size', 'mask', 'uatlas_select', 'multi_nets',
@@ -207,11 +209,9 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     import os
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
-    from pynets import nodemaker, utils, graphestimation, plotting, thresholding
+    from pynets import nodemaker, utils, estimation, plotting, thresholding
     import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib"]
-    functional_connectometry_wf = pe.Workflow(name='functional_connectometry_' + str(ID))
-    base_dirname = "%s%s%s%s" % ('functional_connectometry_', str(ID), '/Meta_wf_imp_est_', str(ID))
-    functional_connectometry_wf.base_directory = os.path.dirname(func_file) + base_dirname
+    functional_connectometry_wf = pe.Workflow(name="%s%s" % ('functional_connectometry_', ID))
 
     # Create input/output nodes
     inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID',
@@ -657,7 +657,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                                                             'atlas_select', 'uatlas_select', 'label_names', 'coords'],
                                                output_names=['ts_within_nodes', 'node_size', 'smooth', 'dir_path',
                                                              'atlas_select', 'uatlas_select', 'label_names', 'coords'],
-                                               function=graphestimation.extract_ts_parc, imports=import_list),
+                                               function=estimation.extract_ts_parc, imports=import_list),
                                   name="extract_ts_node")
         functional_connectometry_wf.add_nodes([save_nifti_parcels_node])
         functional_connectometry_wf.connect([(inputnode, save_nifti_parcels_node, [('ID', 'ID'), ('mask', 'mask')]),
@@ -674,7 +674,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                                                             'uatlas_select', 'label_names'],
                                                output_names=['ts_within_nodes', 'node_size', 'smooth', 'dir_path',
                                                              'atlas_select', 'uatlas_select', 'label_names', 'coords'],
-                                               function=graphestimation.extract_ts_coords, imports=import_list),
+                                               function=estimation.extract_ts_coords, imports=import_list),
                                   name="extract_ts_node")
         functional_connectometry_wf.disconnect([(node_gen_node, extract_ts_node,
                                                  [('net_parcels_map_nifti', 'net_parcels_map_nifti')])
@@ -698,7 +698,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
                                                               'smooth', 'dens_thresh', 'network', 'ID', 'mask',
                                                               'min_span_tree', 'disp_filt', 'parc', 'prune',
                                                               'atlas_select', 'uatlas_select', 'label_names', 'coords'],
-                                                function=graphestimation.get_conn_matrix, imports=import_list),
+                                                function=estimation.get_conn_matrix, imports=import_list),
                                    name="get_conn_matrix_node")
 
     # Set get_conn_matrix_node iterables
@@ -1089,12 +1089,13 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     thresh_func_node.n_procs = 1
 
     # Set runtime/logging configurations
-    functional_connectometry_wf.config['execution']['crashdump_dir'] = functional_connectometry_wf.base_directory
+    functional_connectometry_wf.config['monitoring']['enabled'] = True
+    functional_connectometry_wf.config['monitoring']['sample_frequency'] = '0.1'
+    functional_connectometry_wf.config['monitoring']['summary_append'] = True
     functional_connectometry_wf.config['execution']['crashfile_format'] = 'txt'
     functional_connectometry_wf.config['execution']['keep_inputs'] = True
     functional_connectometry_wf.config['execution']['remove_unnecessary_outputs'] = False
     functional_connectometry_wf.config['execution']['remove_node_directories'] = False
-    functional_connectometry_wf.config['logging']['log_directory'] = functional_connectometry_wf.base_directory
     functional_connectometry_wf.config['logging']['workflow_level'] = 'DEBUG'
     functional_connectometry_wf.config['logging']['utils_level'] = 'DEBUG'
     functional_connectometry_wf.config['logging']['interface_level'] = 'DEBUG'

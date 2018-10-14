@@ -369,88 +369,90 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
 
     coords = list(coords)
     label_names = list(label_names)
+    if len(coords) > 0:
+        dpi_resolution = 500
+        if '\'b' in atlas_select:
+            atlas_select = atlas_select.decode('utf-8')
+        if (prune == 1 or prune == 2) and len(coords) == conn_matrix.shape[0]:
+            G_pre = nx.from_numpy_matrix(conn_matrix)
+            if prune == 1:
+                [G, pruned_nodes] = prune_disconnected(G_pre)
+            elif prune == 2:
+                [G, pruned_nodes] = most_important(G_pre)
+            else:
+                G = G_pre
+                pruned_nodes = []
+            pruned_nodes.sort(reverse=True)
+            print('(Display)')
+            coords_pre = list(coords)
+            label_names_pre = list(label_names)
+            if len(pruned_nodes) > 0:
+                for j in pruned_nodes:
+                    label_names_pre.pop(j)
+                    coords_pre.pop(j)
+                conn_matrix = nx.to_numpy_array(G)
+                label_names = label_names_pre
+                coords = coords_pre
+            else:
+                print('No nodes to prune for plot...')
 
-    dpi_resolution = 500
-    if '\'b' in atlas_select:
-        atlas_select = atlas_select.decode('utf-8')
-    if (prune == 1 or prune == 2) and len(coords) == conn_matrix.shape[0]:
-        G_pre = nx.from_numpy_matrix(conn_matrix)
-        if prune == 1:
-            [G, pruned_nodes] = prune_disconnected(G_pre)
-        elif prune == 2:
-            [G, pruned_nodes] = most_important(G_pre)
+        coords = list(tuple(x) for x in coords)
+        # Plot connectogram
+        if len(conn_matrix) > 20:
+            try:
+                plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
+            except:
+                print('\n\n\nWarning: Connectogram plotting failed!')
         else:
-            G = G_pre
-            pruned_nodes = []
-        pruned_nodes.sort(reverse=True)
-        print('(Display)')
-        coords_pre = list(coords)
-        label_names_pre = list(label_names)
-        if len(pruned_nodes) > 0:
-            for j in pruned_nodes:
-                label_names_pre.pop(j)
-                coords_pre.pop(j)
-            conn_matrix = nx.to_numpy_array(G)
-            label_names = label_names_pre
-            coords = coords_pre
+            print('Warning: Cannot plot connectogram for graphs smaller than 20 x 20!')
+
+        # Plot adj. matrix based on determined inputs
+        if not node_size or node_size == 'None':
+            node_size = 'parc'
+        plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr,
+                                    node_size, smooth)
+
+        # Plot connectome
+        if mask:
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(os.path.basename(mask).split('.')[0]), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else 'nosm_'), 'func_glass_viz.png')
+            # Save coords to pickle
+            coord_path = "%s%s%s%s" % (dir_path, '/coords_', os.path.basename(mask).split('.')[0], '_plotting.pkl')
+            with open(coord_path, 'wb') as f:
+                pickle.dump(coords, f, protocol=2)
+            # Save labels to pickle
+            labels_path = "%s%s%s%s" % (dir_path, '/labelnames_', os.path.basename(mask).split('.')[0], '_plotting.pkl')
+            with open(labels_path, 'wb') as f:
+                pickle.dump(label_names, f, protocol=2)
         else:
-            print('No nodes to prune for plot...')
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else 'nosm_'), 'func_glass_viz.png')
+            # Save coords to pickle
+            coord_path = "%s%s" % (dir_path, '/coords_plotting.pkl')
+            with open(coord_path, 'wb') as f:
+                pickle.dump(coords, f, protocol=2)
+            # Save labels to pickle
+            labels_path = "%s%s" % (dir_path, '/labelnames_plotting.pkl')
+            with open(labels_path, 'wb') as f:
+                pickle.dump(label_names, f, protocol=2)
 
-    coords = list(tuple(x) for x in coords)
-    # Plot connectogram
-    if len(conn_matrix) > 20:
-        try:
-            plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names)
-        except:
-            print('\n\n\nWarning: Connectogram plotting failed!')
+        ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
+        connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
+        connectome.add_overlay(ch2better_loc, alpha=0.35, cmap=plt.cm.gray)
+        conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
+        [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
+        if node_size == 'parc':
+            node_size_plot = int(2)
+            if uatlas_select:
+                connectome.add_contours(uatlas_select, filled=False, alpha=0.3, colors='black')
+        else:
+            node_size_plot = int(node_size)
+        if len(coords) != conn_matrix.shape[0]:
+            raise RuntimeWarning('WARNING: Number of coordinates does not match conn_matrix dimensions. If you are using disparity filtering, try relaxing the α threshold.')
+        else:
+            connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap='Blues', edge_vmax=float(z_max),
+                                 edge_vmin=float(z_min), node_size=node_size_plot, node_color='auto')
+            connectome.savefig(out_path_fig, dpi=dpi_resolution)
     else:
-        print('Warning: Cannot plot connectogram for graphs smaller than 20 x 20!')
-
-    # Plot adj. matrix based on determined inputs
-    if not node_size or node_size == 'None':
-        node_size = 'parc'
-    plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr,
-                                node_size, smooth)
-
-    # Plot connectome
-    if mask:
-        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(os.path.basename(mask).split('.')[0]), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else 'nosm_'), 'func_glass_viz.png')
-        # Save coords to pickle
-        coord_path = "%s%s%s%s" % (dir_path, '/coords_', os.path.basename(mask).split('.')[0], '_plotting.pkl')
-        with open(coord_path, 'wb') as f:
-            pickle.dump(coords, f, protocol=2)
-        # Save labels to pickle
-        labels_path = "%s%s%s%s" % (dir_path, '/labelnames_', os.path.basename(mask).split('.')[0], '_plotting.pkl')
-        with open(labels_path, 'wb') as f:
-            pickle.dump(label_names, f, protocol=2)
-    else:
-        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else 'nosm_'), 'func_glass_viz.png')
-        # Save coords to pickle
-        coord_path = "%s%s" % (dir_path, '/coords_plotting.pkl')
-        with open(coord_path, 'wb') as f:
-            pickle.dump(coords, f, protocol=2)
-        # Save labels to pickle
-        labels_path = "%s%s" % (dir_path, '/labelnames_plotting.pkl')
-        with open(labels_path, 'wb') as f:
-            pickle.dump(label_names, f, protocol=2)
-
-    ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
-    connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
-    connectome.add_overlay(ch2better_loc, alpha=0.35, cmap=plt.cm.gray)
-    conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
-    [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
-    if node_size == 'parc':
-        node_size_plot = int(2)
-        if uatlas_select:
-            connectome.add_contours(uatlas_select, filled=False, alpha=0.3, colors='black')
-    else:
-        node_size_plot = int(node_size)
-    if len(coords) != conn_matrix.shape[0]:
-        raise RuntimeWarning('WARNING: Number of coordinates does not match conn_matrix dimensions. If you are using disparity filtering, try relaxing the α threshold.')
-    else:
-        connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap='Blues', edge_vmax=float(z_max),
-                             edge_vmin=float(z_min), node_size=node_size_plot, node_color='auto')
-        connectome.savefig(out_path_fig, dpi=dpi_resolution)
+        raise RuntimeError('ERROR: no coordinates to plot! Are you running plotting outside of pynets\'s internal estimation schemes?')
     return
 
 

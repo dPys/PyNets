@@ -804,10 +804,13 @@ def build_workflow(args, retval):
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
                                clust_type_list):
-        wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_subject_', ID, '_', random.randint(1000, 1000)))
+        wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_', random.randint(1, 1000)))
         inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'mask', 'multi_nets',
                                                           'conn_model', 'plot_switch', 'graph', 'prune', 'smooth']),
                             name='inputnode')
+        wf.config['monitoring']['enabled'] = True
+        wf.config['monitoring']['sample_frequency'] = '0.2'
+        wf.config['monitoring']['summary_append'] = True
         inputnode.inputs.ID = ID
         inputnode.inputs.network = network
         inputnode.inputs.thr = thr
@@ -947,7 +950,7 @@ def build_workflow(args, retval):
                          num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming,
                          multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list):
 
-        wf_multi = pe.Workflow(name="%s%s" % ('PyNets_multisub_', random.randint(1000, 9000)))
+        wf_multi = pe.Workflow(name="%s%s" % ('Wf_multisub_', random.randint(1001, 9000)))
         i = 0
         for _file in subjects_list:
             if conf:
@@ -1014,16 +1017,19 @@ def build_workflow(args, retval):
             cfg = dict(logging=dict(workflow_level='DEBUG'), execution={'stop_on_first_crash': False,
                                                                         'hash_method': 'content'})
             config.update_config(cfg)
+            config.enable_debug_mode()
             config.update_config({'logging': {'log_directory': wf_multi.base_dir, 'log_to_file': True}})
             logging.update_logging(config)
-            config.enable_debug_mode()
             wf_multi.config['logging']['workflow_level'] = 'DEBUG'
             wf_multi.config['logging']['utils_level'] = 'DEBUG'
             wf_multi.config['logging']['interface_level'] = 'DEBUG'
             wf_multi.config['logging']['log_directory'] = wf_multi.base_dir
             wf_multi.config['monitoring']['enabled'] = True
-            wf_multi.config['monitoring']['sample_frequency'] = '0.5'
+            wf_multi.config['monitoring']['sample_frequency'] = '0.1'
             wf_multi.config['monitoring']['summary_append'] = True
+            wf_multi.config['monitoring']['summary_file'] = wf_multi.base_dir
+            config.enable_resource_monitor()
+            config.update_config(cfg)
 
         wf_multi.config['execution']['crashdump_dir'] = wf_multi.base_dir
         wf_multi.config['execution']['display_variable'] = ':0'
@@ -1050,16 +1056,15 @@ def build_workflow(args, retval):
                                     smooth_list, disp_filt, clust_type, clust_type_list)
 
         import shutil
-        base_dirname = "%s%s" % ('Wf_single_subject_', str(ID))
         if input_file:
-            if os.path.exists("%s%s%s" % (os.path.dirname(input_file), '/', base_dirname)):
-                shutil.rmtree("%s%s%s" % (os.path.dirname(input_file), '/', base_dirname))
-            os.mkdir("%s%s%s" % (os.path.dirname(input_file), '/', base_dirname))
+            if os.path.exists("%s%s%s" % (os.path.dirname(input_file), '/', wf.name)):
+                shutil.rmtree("%s%s%s" % (os.path.dirname(input_file), '/', wf.name))
+            os.mkdir("%s%s%s" % (os.path.dirname(input_file), '/', wf.name))
             wf.base_dir = os.path.dirname(input_file)
         elif dwi_dir:
-            if os.path.exists("%s%s%s" % (dwi_dir, '/', base_dirname)):
-                shutil.rmtree("%s%s%s" % (dwi_dir, '/', base_dirname))
-            os.mkdir("%s%s%s" % (dwi_dir, '/', base_dirname))
+            if os.path.exists("%s%s%s" % (dwi_dir, '/', wf.name)):
+                shutil.rmtree("%s%s%s" % (dwi_dir, '/', wf.name))
+            os.mkdir("%s%s%s" % (dwi_dir, '/', wf.name))
             wf.base_dir = dwi_dir
 
         if verbose is True:
@@ -1075,8 +1080,11 @@ def build_workflow(args, retval):
             wf.config['logging']['interface_level'] = 'DEBUG'
             wf.config['logging']['log_directory'] = wf.base_dir
             wf.config['monitoring']['enabled'] = True
-            wf.config['monitoring']['sample_frequency'] = '0.5'
+            wf.config['monitoring']['sample_frequency'] = '0.1'
             wf.config['monitoring']['summary_append'] = True
+            wf.config['monitoring']['summary_file'] = wf.base_dir
+            config.enable_resource_monitor()
+            config.update_config(cfg)
 
         wf.config['execution']['crashdump_dir'] = wf.base_dir
         wf.config['execution']['crashfile_format'] = 'txt'
