@@ -228,7 +228,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
     import os
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
-    from pynets import nodemaker, utils, estimation, plotting, thresholding
+    from pynets import nodemaker, utils, estimation, plotting, thresholding, clustools
     import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib"]
     functional_connectometry_wf = pe.Workflow(name="%s%s" % ('functional_connectometry_', ID))
 
@@ -329,7 +329,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ma
         clustering_node = pe.Node(niu.Function(input_names=['func_file', 'clust_mask', 'ID', 'k', 'clust_type'],
                                                output_names=['uatlas_select', 'atlas_select', 'clustering',
                                                              'clust_mask', 'k', 'clust_type'],
-                                               function=utils.individual_tcorr_clustering,
+                                               function=clustools.individual_tcorr_clustering,
                                                imports=import_list), name="clustering_node")
         clustering_node.synchronize = True
 

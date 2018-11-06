@@ -352,7 +352,8 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_se
 
 def individual_tcorr_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
     import os
-    from pynets import utils
+    from pynets import utils, clustools
+
     nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
     mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
@@ -363,15 +364,15 @@ def individual_tcorr_clustering(func_file, clust_mask, ID, k, clust_type, thresh
     uatlas_select = "%s%s%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
 
     if clust_type in nilearn_clust_list:
-        nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_select)
+        clustools.nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_select)
     elif clust_type == 'ncut':
         working_dir = "%s%s%s" % (os.path.dirname(func_file), '/', atlas_select)
         outfile = "%s%s%s%s" % (working_dir, '/rm_tcorr_conn_', str(ID), '.npy')
         outfile_parc = "%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID))
         binfile = "%s%s%s%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID), '_', str(k), '.npy')
-        make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh)
-        binfile_parcellate(outfile, outfile_parc, int(k))
-        make_image_from_bin_renum(uatlas_select, binfile, clust_mask)
+        clustools.make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh)
+        clustools.binfile_parcellate(outfile, outfile_parc, int(k))
+        clustools.make_image_from_bin_renum(uatlas_select, binfile, clust_mask)
 
     clustering = True
     return uatlas_select, atlas_select, clustering, clust_mask, k, clust_type

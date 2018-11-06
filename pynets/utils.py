@@ -171,6 +171,29 @@ def flatten(l):
             yield el
 
 
+def random_forest_ensemble(df_in):
+    from sklearn.ensemble import RandomForestRegressor
+    #from sklearn.model_selection import cross_val_score
+    from random import randint
+    estimator = RandomForestRegressor(random_state=0, n_estimators=100)
+    df_train = df_in.drop(columns=['modularity', 'average_diversity_coefficient'])
+
+    for column in list(df_train.columns):
+        try:
+            df_train[column] = (df_train[column].str.split()).apply(lambda x: float(x[0]))
+        except:
+            continue
+
+    y = df_train.T[randint(1, len(df_train.T))]
+    df_train_in = df_train.T
+    #full_scores = cross_val_score(estimator, np.array(df_train_in), np.array(y), scoring='neg_mean_squared_error', cv=5)
+    fit = estimator.fit(df_train_in, y)
+
+    df = pd.DataFrame(fit.predict(df_train_in)).T
+    df.columns = list(df_train.T.index)
+    return df
+
+
 def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
     import pandas as pd
     import numpy as np
@@ -178,6 +201,7 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
     import matplotlib
     matplotlib.use('Agg')
     from itertools import chain
+    rand_forest = False
 
     # Check for existence of net_pickle files, condensing final list to only those that were actually produced.
     net_pickle_mt_list_exist = []
@@ -222,18 +246,9 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
                 plotting.plot_graph_measure_hists(df_concat, measures, file_)
             df_concatted = df_concat.loc[:, measures].mean().to_frame().transpose()
             df_concatted_std = df_concat.loc[:, measures].std().to_frame().transpose()
-            means = []
-            for measure in measures:
-                if measure in df_concatted_std.columns:
-                    valsA = df_concat.loc[:, measures][measure].dropna()
-                    valsB = valsA[(valsA.T != 0)]
-                    means.append(np.nanmean(valsB))
-                else:
-                    means.append(np.nan)
-            df_concatted_weight_means = pd.DataFrame(means).transpose()
-            df_concatted_weight_means.columns = [str(col) + '_mean' for col in measures]
+            df_concatted.columns = [str(col) + '_mean' for col in df_concatted.columns]
             df_concatted_std.columns = [str(col) + '_std_dev' for col in df_concatted_std.columns]
-            result = pd.concat([df_concatted, df_concatted_std, df_concatted_weight_means], axis=1)
+            result = pd.concat([df_concatted, df_concatted_std], axis=1)
             df_concatted_final = result.reindex(sorted(result.columns), axis=1)
             print('\nConcatenating dataframes for ' + str(ID) + '...\n')
             if network:
@@ -242,6 +257,16 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
                 net_pick_out_path = "%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle, '_mean')
             df_concatted_final.to_pickle(net_pick_out_path)
             df_concatted_final.to_csv(net_pick_out_path + '.csv', index=False)
+
+            if rand_forest is True:
+                df_rnd_forest = random_forest_ensemble(df_concat.loc[:, measures])
+                if network:
+                    net_pick_out_path = "%s%s%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle, '_', network, '_rand_forest')
+                else:
+                    net_pick_out_path = "%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle, '_rand_forest')
+                df_rnd_forest.to_pickle(net_pick_out_path)
+                df_rnd_forest.to_csv(net_pick_out_path + '.csv', index=False)
+
         except RuntimeWarning:
             print("%s%s%s" % ('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ', str(ID), '!\n'))
             pass
