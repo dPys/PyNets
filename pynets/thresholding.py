@@ -6,6 +6,8 @@ Copyright (C) 2018
 """
 import numpy as np
 import networkx as nx
+import warnings
+warnings.simplefilter("ignore")
 
 
 def threshold_absolute(W, thr, copy=True):
@@ -434,7 +436,7 @@ def local_thresholding_dens(conn_matrix, thr):
     return conn_matrix_thr
 
 
-def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, mask, node_size, min_span_tree, smooth, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords):
+def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, mask, node_size, min_span_tree, smooth, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot):
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -478,10 +480,10 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         print('Warning: Fragmented graph')
 
     # Save thresholded mat
-    est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size, smooth, thr_type)
+    est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size, smooth, c_boot, thr_type)
     np.save(est_path, conn_matrix_thr)
 
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, mask, smooth, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, mask, smooth, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot
 
 
 def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_size, conn_matrix, parc, min_span_tree, disp_filt, atlas_select, uatlas_select, label_names, coords):

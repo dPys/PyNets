@@ -214,8 +214,9 @@ def test_extractnetstats():
     prune = 1
     node_size = 'parc'
     smooth = 2
+    c_boot = 0
 
     start_time = time.time()
-    out_path = netstats.extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_size, smooth)
+    out_path = netstats.extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_size, smooth, c_boot)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
     assert out_path is not None

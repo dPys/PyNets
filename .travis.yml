@@ -22,3 +22,4 @@ script:
    - pytest tests/test_plotting.py -s
    - travis_wait 60 pytest tests/test_thresholding.py -s
    - travis_wait 60 pytest tests/test_utils.py -s
+   - travis_wait 60 pytest tests/test_clustools.py -s

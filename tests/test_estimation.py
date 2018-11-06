@@ -27,6 +27,7 @@ def test_get_conn_matrix_cov():
 
     node_size = 2
     smooth = 2
+    c_boot = 0
     dens_thresh = False
     network = 'Default'
     ID = '997'
@@ -48,9 +49,9 @@ def test_get_conn_matrix_cov():
     start_time = time.time()
     [conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network,
     ID, mask, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select,
-    label_names, coords] = estimation.get_conn_matrix(time_series, conn_model,
+    label_names, coords, c_boot] = estimation.get_conn_matrix(time_series, conn_model,
     dir_path, node_size, smooth, dens_thresh, network, ID, mask, min_span_tree,
-    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, vox_array)
+    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, vox_array, c_boot)
     print("%s%s%s" %
     ('get_conn_matrix --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -59,6 +60,7 @@ def test_get_conn_matrix_cov():
     assert dir_path is not None
     assert node_size is not None
     assert smooth is not None
+    assert c_boot is not None
     assert dens_thresh is not None
     assert network is not None
     assert ID is not None
@@ -84,6 +86,8 @@ def test_extract_ts_rsn_parc():
     network = 'Default'
     ID = '997'
     smooth = 2
+    c_boot = 0
+    boot_size = 3
     conf = None
     wb_coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     file_ = open(wb_coords_file, 'rb')
@@ -98,9 +102,9 @@ def test_extract_ts_rsn_parc():
     start_time = time.time()
     net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
     [ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select,
-    label_names, coords] = estimation.extract_ts_parc(net_parcels_map_nifti,
+    label_names, coords, c_boot] = estimation.extract_ts_parc(net_parcels_map_nifti,
     conf, func_file, coords, mask, dir_path, ID, network, smooth, atlas_select,
-    uatlas_select, label_names)
+    uatlas_select, label_names, c_boot, boot_size)
     print("%s%s%s" % ('extract_ts_parc --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     assert ts_within_nodes is not None
@@ -120,6 +124,8 @@ def test_extract_ts_rsn_coords():
     conf = None
     node_size = 2
     smooth = 2
+    c_boot = 0
+    boot_size = 3
     wb_coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     file_ = open(wb_coords_file, 'rb')
     coords = pickle.load(file_)
@@ -130,13 +136,17 @@ def test_extract_ts_rsn_coords():
     label_names = pickle.load(labels_file)
 
     start_time = time.time()
-    ts_within_nodes = estimation.extract_ts_coords(node_size, conf,
+    [ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot] = \
+        estimation.extract_ts_coords(node_size, conf,
     func_file, coords, dir_path, ID, mask, network, smooth, atlas_select,
-    uatlas_select, label_names)
+    uatlas_select, label_names, c_boot, boot_size)
     print("%s%s%s" % ('extract_ts_coords --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     assert ts_within_nodes is not None
-
+    assert node_size is not None
+    assert smooth is not None
+    assert dir_path is not None
+    assert c_boot is not None
 
 # def test_extract_ts_rsn_parc_fast():
 #     # Set example inputs

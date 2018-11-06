@@ -7,7 +7,8 @@ Copyright (C) 2018
 import os
 import numpy as np
 import nibabel as nib
-nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
+import warnings
+warnings.simplefilter("ignore")
 
 
 def get_sphere(coords, r, vox_dims, dims):
@@ -230,6 +231,8 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
             i = i + 1
         coords_mm = list(set(list(tuple(x) for x in coords_with_parc)))
 
+    bna_img.uncache()
+
     return coords_mm, RSN_parcels, net_label_names, network
 
 
@@ -282,6 +285,10 @@ def parcel_masker(mask, coords, parcel_list, label_names, dir_path, ID, perc_ove
     resampled_parcels_map_nifti = resample_img(resampled_parcels_atlas, target_affine=mask_img.affine,
                                                target_shape=mask_data.shape)
     nib.save(resampled_parcels_map_nifti, resampled_parcels_nii_path)
+
+    mask_img.uncache()
+    resampled_parcels_map_nifti.uncache()
+
     return coords_adj, label_names_adj, parcel_list_adj
 
 
@@ -362,6 +369,9 @@ def gen_img_list(uatlas_select):
     for idy in range(par_max):
         roi_img_nifti = new_img_like(bna_img, img_stack[idy])
         img_list.append(roi_img_nifti)
+    bna_img.uncache()
+    del img_stack
+
     return img_list
 
 
@@ -377,6 +387,8 @@ def gen_network_parcels(uatlas_select, network, labels, dir_path):
     net_parcels_map_nifti = nib.Nifti1Image(net_parcels_sum, affine=np.eye(4))
     out_path = "%s%s%s%s" % (dir_path, '/', network, '_parcels.nii.gz')
     nib.save(net_parcels_map_nifti, out_path)
+    net_parcels_map_nifti.uncache()
+
     return out_path
 
 

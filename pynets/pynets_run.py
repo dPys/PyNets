@@ -39,7 +39,7 @@ def get_parser():
                         help='Path to parcellation/atlas file in .nii format. If specifying a list of paths to multiple user atlases, separate them by comma.\n')
     parser.add_argument('-pm',
                         metavar='Cores,memory',
-                        default=None,
+                        default='2,4',
                         help='Number of cores to use, number of GB of memory to use for single subject run, entered as two integers seperated by a comma.\n')
     parser.add_argument('-n',
                         metavar='Resting-state network',
@@ -57,14 +57,22 @@ def get_parser():
                         metavar='Smoothing value (mm fwhm)',
                         default=0,
                         help='Optionally specify smoothing width(s). Default is 0 / no smoothing. If you wish to iterate the pipeline across multiple smoothing values, separate the list by comma (e.g. 2,4,6).\n')
+    parser.add_argument('-b',
+                        metavar='Number of bootstraps (integer)',
+                        default=0,
+                        help='Optionally specify the number of bootstraps with this flag if you wish to apply circular-block bootstrapped resampling of the node-extracted time-series. Size of blocks can be specified using the -bs flag and defaults to 3.\n')
+    parser.add_argument('-bs',
+                        metavar='Size bootstrap blocks (integer)',
+                        default=3,
+                        help='Optionally specify a size of bootstrap blocks to perform circular-block resampling of the node-extracted time-series. Default is 3.\n')
     parser.add_argument('-m',
                         metavar='Path to mask image',
                         default=None,
                         help='Optionally specify a thresholded binarized mask image and retain only those nodes contained within that mask for functional connectome estimation, or constrain the tractography in the case of structural connectome estimation.\n')
     parser.add_argument('-mod',
                         metavar='Graph estimator type',
-                        default=None,
-                        help='Specify matrix estimation type. For fMRI, options models include: corr for correlation, cov for covariance, sps for precision covariance, partcorr for partial correlation. sps type is used by default. If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. For dMRI, models include ball_and_stick, tensor, and csd.\n')
+                        default='partcorr',
+                        help='Specify matrix estimation type. For fMRI, options models include: corr for correlation, cov for covariance, sps for precision covariance, partcorr for partial correlation. sps type is used by default. If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. Default is partcorr for fMRI. For dMRI, models include ball_and_stick, tensor, and csd.\n')
     parser.add_argument('-conf',
                         metavar='Confounds',
                         default=None,
@@ -163,10 +171,8 @@ def get_parser():
 def build_workflow(args, retval):
     import os
     import sys
-    import warnings
     import timeit
     import numpy as np
-    warnings.simplefilter("ignore")
     try:
         import pynets
     except ImportError:
@@ -220,6 +226,8 @@ def build_workflow(args, retval):
     else:
         smooth = smooth[0]
         smooth_list = None
+    c_boot = args.b
+    block_size = args.bs
     mask = args.m
     conn_model_pre = args.mod
     conn_model = list(str(conn_model_pre).split(','))
@@ -593,6 +601,7 @@ def build_workflow(args, retval):
         node_size = 'None'
         smooth = 'None'
         conn_model = 'None'
+        c_boot = 'None'
         if multi_graph:
             print('\nUsing multiple custom input graphs...')
             conn_model = None
@@ -649,6 +658,17 @@ def build_workflow(args, retval):
             print("%s%s%s" % ("\nApplying smoothing to node signal at: ", smooth, 'FWHM mm...'))
         else:
             smooth = 0
+
+        if float(c_boot) > 0:
+            try:
+                c_boot = int(c_boot)
+                try:
+                    block_size = int(block_size)
+                except ValueError:
+                    print('ERROR: size of bootstrap blocks indicated with the -bs flag must be an integer > 0.')
+            except ValueError:
+                print('ERROR: number of boostraps indicated with the -b flag must be an integer > 0.')
+            print("%s%s%s%s" % ('Applying circular block bootstrapping to the node-extracted time-series using: ', int(c_boot), ' bootstraps with block size ', int(block_size)))
 
         if conn_model_list:
             print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ',
@@ -786,6 +806,8 @@ def build_workflow(args, retval):
     # print("%s%s" % ('smooth_list: ', smooth_list))
     # print("%s%s" % ('clust_type: ', clust_type))
     # print("%s%s" % ('clust_type_list: ', clust_type_list))
+    # print("%s%s" % ('c_boot: ', c_boot)
+    # print("%s%s" % ('block_size: ', block_size))
     # print('\n\n\n\n\n')
     # import sys
     # sys.exit(0)
@@ -803,14 +825,28 @@ def build_workflow(args, retval):
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
-                               clust_type_list):
+                               clust_type_list, c_boot, block_size):
         wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_', random.randint(1, 1000)))
         inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'mask', 'multi_nets',
-                                                          'conn_model', 'plot_switch', 'graph', 'prune', 'smooth']),
+                                                          'conn_model', 'plot_switch', 'graph', 'prune', 'smooth', 'c_boot']),
                             name='inputnode')
-        wf.config['monitoring']['enabled'] = True
-        wf.config['monitoring']['sample_frequency'] = '0.2'
-        wf.config['monitoring']['summary_append'] = True
+        if verbose is True:
+            from nipype import config, logging
+            cfg = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'DEBUG', 'log_to_file': True,
+                                'interface_level': 'DEBUG'},
+                       monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True})
+            logging.update_logging(config)
+            config.enable_debug_mode()
+            config.enable_resource_monitor()
+            config.update_config(cfg)
+        cfg = dict(execution={'stop_on_first_crash': False, 'crashfile_format': 'txt', 'parameterize_dirs': True,
+                              'display_variable': ':0', 'matplotlib_backend': 'Agg',
+                              'plugin': str(plugin_type), 'use_relative_paths': True, 'keep_inputs': True,
+                              'remove_unnecessary_outputs': True, 'remove_node_directories': False})
+        for key in cfg.keys():
+            for setting, value in cfg[key].items():
+                wf.config[key][setting] = value
+
         inputnode.inputs.ID = ID
         inputnode.inputs.network = network
         inputnode.inputs.thr = thr
@@ -822,13 +858,15 @@ def build_workflow(args, retval):
         inputnode.inputs.graph = graph
         inputnode.inputs.prune = prune
         inputnode.inputs.smooth = smooth
+        inputnode.inputs.c_boot = c_boot
+        inputnode.inputs.block_size = block_size
 
         meta_wf = workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, uatlas_select, multi_nets,
                                     conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, anat_loc, parc,
                                     ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                                     clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
-                                    use_AAL_naming, smooth, smooth_list, disp_filt, clust_type, clust_type_list)
+                                    use_AAL_naming, smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size)
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
@@ -842,7 +880,7 @@ def build_workflow(args, retval):
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 1
             if k_clustering > 0:
                 wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._n_procs = 1
-                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 8
+                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 4
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._n_procs = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_func_node')._n_procs = 1
@@ -851,7 +889,7 @@ def build_workflow(args, retval):
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
                                    iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
-                                              'mask', 'prune', 'node_size', 'smooth'], nested=True)
+                                              'mask', 'prune', 'node_size', 'smooth', 'c_boot'], nested=True)
 
         # Export graph analysis results to pandas dataframes
         export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name="Export2Pandas",
@@ -877,7 +915,8 @@ def build_workflow(args, retval):
                                                                       ('mask_iterlist', 'mask'),
                                                                       ('prune_iterlist', 'prune'),
                                                                       ('node_size_iterlist', 'node_size'),
-                                                                      ('smooth_iterlist', 'smooth')]),
+                                                                      ('smooth_iterlist', 'smooth'),
+                                                                      ('c_boot_iterlist', 'c_boot')]),
             (meta_wf.get_node('pass_meta_outs_node'), export_to_pandas_node, [('network_iterlist', 'network'),
                                                                               ('ID_iterlist', 'ID'),
                                                                               ('mask_iterlist', 'mask')]),
@@ -901,7 +940,8 @@ def build_workflow(args, retval):
                              ('mask_iterlist', 'mask'),
                              ('prune_iterlist', 'prune'),
                              ('node_size_iterlist', 'node_size'),
-                             ('smooth_iterlist', 'smooth')])
+                             ('smooth_iterlist', 'smooth'),
+                             ('c_boot_iterlist', 'c_boot')])
                            ])
             wf.disconnect([(meta_wf.get_node('pass_meta_outs_node'), export_to_pandas_node,
                             [('network_iterlist', 'network'),
@@ -920,6 +960,7 @@ def build_workflow(args, retval):
                 net_mets_node.inputs.prune = [prune] * len(multi_graph)
                 net_mets_node.inputs.network = [network] * len(multi_graph)
                 net_mets_node.inputs.conn_model = conn_model_list
+                net_mets_node.inputs.c_boot = [c_boot] * len(multi_graph)
 
                 export_to_pandas_node.inputs.ID = [ID] * len(multi_graph)
                 export_to_pandas_node.inputs.mask = [mask] * len(multi_graph)
@@ -933,6 +974,7 @@ def build_workflow(args, retval):
                                                         ('prune', 'prune'),
                                                         ('node_size', 'node_size'),
                                                         ('smooth', 'smooth'),
+                                                        ('c_boot', 'c_boot'),
                                                         ('graph', 'est_path')])
                             ])
                 wf.connect([(inputnode, export_to_pandas_node, [('network', 'network'),
@@ -948,7 +990,7 @@ def build_workflow(args, retval):
                          multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask,
                          k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
                          num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming,
-                         multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list):
+                         multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size):
 
         wf_multi = pe.Workflow(name="%s%s" % ('Wf_multisub_', random.randint(1001, 9000)))
         i = 0
@@ -969,7 +1011,7 @@ def build_workflow(args, retval):
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
                 min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type, use_AAL_naming=use_AAL_naming,
                 multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
-                clust_type=clust_type, clust_type_list=clust_type_list)
+                clust_type=clust_type, clust_type_list=clust_type_list, c_boot=c_boot, block_size=block_size)
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if input_file:
@@ -983,7 +1025,7 @@ def build_workflow(args, retval):
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 1
                 if k_clustering > 0:
                     wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._n_procs = 1
-                    wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 8
+                    wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 4
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_conn_matrix_node')._n_procs = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_func_node')._n_procs = 1
@@ -994,7 +1036,6 @@ def build_workflow(args, retval):
 
     # Workflow generation
     # Multi-subject workflow generator
-
     if subjects_list:
         wf_multi = wf_multi_subject(ID, subjects_list, atlas_select, network, node_size, mask,
                                     thr, uatlas_select, multi_nets, conn_model, dens_thresh,
@@ -1004,46 +1045,52 @@ def build_workflow(args, retval):
                                     k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
-                                    smooth, smooth_list, disp_filt, clust_type, clust_type_list)
+                                    smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size)
 
         import shutil
-        wf_multi.base_dir = '/tmp/Wf_multi_subject'
+        wf_multi.base_dir = '/tmp/wf_multi_subject'
         if os.path.exists(wf_multi.base_dir):
             shutil.rmtree(wf_multi.base_dir)
         os.mkdir(wf_multi.base_dir)
 
         if verbose is True:
             from nipype import config, logging
-            cfg = dict(logging=dict(workflow_level='DEBUG'), execution={'stop_on_first_crash': False,
-                                                                        'hash_method': 'content'})
-            config.update_config(cfg)
-            config.enable_debug_mode()
-            config.update_config({'logging': {'log_directory': wf_multi.base_dir, 'log_to_file': True}})
+            cfg = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'INFO', 'interface_level': 'INFO',
+                                'log_directory': str(wf_multi.base_dir), 'log_to_file': True},
+                       monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True,
+                                   'summary_file': str(wf_multi.base_dir)})
             logging.update_logging(config)
-            wf_multi.config['logging']['workflow_level'] = 'DEBUG'
-            wf_multi.config['logging']['utils_level'] = 'DEBUG'
-            wf_multi.config['logging']['interface_level'] = 'DEBUG'
-            wf_multi.config['logging']['log_directory'] = wf_multi.base_dir
-            wf_multi.config['monitoring']['enabled'] = True
-            wf_multi.config['monitoring']['sample_frequency'] = '0.1'
-            wf_multi.config['monitoring']['summary_append'] = True
-            wf_multi.config['monitoring']['summary_file'] = wf_multi.base_dir
+            config.enable_debug_mode()
             config.enable_resource_monitor()
             config.update_config(cfg)
 
-        wf_multi.config['execution']['crashdump_dir'] = wf_multi.base_dir
-        wf_multi.config['execution']['display_variable'] = ':0'
-        wf_multi.config['execution']['crashfile_format'] = 'txt'
-        wf_multi.config['execution']['job_finished_timeout'] = 65
-        wf_multi.config['execution']['stop_on_first_crash'] = False
-        wf_multi.config['execution']['keep_inputs'] = True
-        wf_multi.config['execution']['remove_unnecessary_outputs'] = False
-        wf_multi.config['execution']['remove_node_directories'] = False
-        #plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'maxtasksperchild': 1}
-        plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
-        print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
+            import logging
+            callback_log_path = "%s%s" % (wf_multi.base_dir, '/run_stats.log')
+            logger = logging.getLogger('callback')
+            logger.setLevel(logging.DEBUG)
+            handler = logging.FileHandler(callback_log_path)
+            logger.addHandler(handler)
+
+        cfg = dict(execution={'stop_on_first_crash': False,
+                              'crashdump_dir': str(wf_multi.base_dir), 'crashfile_format': 'txt', 'parameterize_dirs': True,
+                              'display_variable': ':0', 'job_finished_timeout': 120, 'matplotlib_backend': 'Agg',
+                              'plugin': str(plugin_type), 'use_relative_paths': True, 'keep_inputs': True,
+                              'remove_unnecessary_outputs': False, 'remove_node_directories': False})
+        for key in cfg.keys():
+            for setting, value in cfg[key].items():
+                wf_multi.config[key][setting] = value
         wf_multi.write_graph(graph2use="colored", format='png')
-        wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
+        if procmem != 'auto':
+            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+            print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
+            wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
+        else:
+            wf_multi.run(plugin=plugin_type)
+        if verbose is True:
+            from nipype.utils.draw_gantt_chart import generate_gantt_chart
+            print('Plotting resource profile from run...')
+            generate_gantt_chart('/tmp/wf_multi_subject/multi_sub_run_stats.log', cores=int(procmem[0]))
+
     # Single-subject workflow generator
     else:
         # Single-subject pipeline
@@ -1053,64 +1100,73 @@ def build_workflow(args, retval):
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
-                                    smooth_list, disp_filt, clust_type, clust_type_list)
+                                    smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size)
 
         import shutil
+        base_dirname = "%s%s" % ('wf_single_subject_', str(ID))
         if input_file:
-            if os.path.exists("%s%s%s" % (os.path.dirname(input_file), '/', wf.name)):
-                shutil.rmtree("%s%s%s" % (os.path.dirname(input_file), '/', wf.name))
-            os.mkdir("%s%s%s" % (os.path.dirname(input_file), '/', wf.name))
+            if os.path.exists("%s%s%s" % (os.path.dirname(input_file), '/', base_dirname)):
+                shutil.rmtree("%s%s%s" % (os.path.dirname(input_file), '/', base_dirname))
+            os.mkdir("%s%s%s" % (os.path.dirname(input_file), '/', base_dirname))
             wf.base_dir = os.path.dirname(input_file)
         elif dwi_dir:
-            if os.path.exists("%s%s%s" % (dwi_dir, '/', wf.name)):
-                shutil.rmtree("%s%s%s" % (dwi_dir, '/', wf.name))
-            os.mkdir("%s%s%s" % (dwi_dir, '/', wf.name))
+            if os.path.exists("%s%s%s" % (dwi_dir, '/', base_dirname)):
+                shutil.rmtree("%s%s%s" % (dwi_dir, '/', base_dirname))
+            os.mkdir("%s%s%s" % (dwi_dir, '/', base_dirname))
             wf.base_dir = dwi_dir
 
         if verbose is True:
             from nipype import config, logging
-            cfg = dict(logging=dict(workflow_level='DEBUG'), execution={'stop_on_first_crash': False,
-                                                                        'hash_method': 'content'})
-            config.update_config(cfg)
-            config.update_config({'logging': {'log_directory': wf.base_dir, 'log_to_file': True}})
+            cfg = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'INFO', 'interface_level': 'INFO',
+                                'log_directory': str(wf.base_dir), 'log_to_file': True},
+                       monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True,
+                                   'summary_file': str(wf.base_dir)})
             logging.update_logging(config)
             config.enable_debug_mode()
-            wf.config['logging']['workflow_level'] = 'DEBUG'
-            wf.config['logging']['utils_level'] = 'DEBUG'
-            wf.config['logging']['interface_level'] = 'DEBUG'
-            wf.config['logging']['log_directory'] = wf.base_dir
-            wf.config['monitoring']['enabled'] = True
-            wf.config['monitoring']['sample_frequency'] = '0.1'
-            wf.config['monitoring']['summary_append'] = True
-            wf.config['monitoring']['summary_file'] = wf.base_dir
             config.enable_resource_monitor()
             config.update_config(cfg)
 
-        wf.config['execution']['crashdump_dir'] = wf.base_dir
-        wf.config['execution']['crashfile_format'] = 'txt'
-        wf.config['execution']['display_variable'] = ':0'
-        wf.config['execution']['job_finished_timeout'] = 65
-        wf.config['execution']['stop_on_first_crash'] = False
-        wf.config['execution']['keep_inputs'] = True
-        wf.config['execution']['remove_unnecessary_outputs'] = False
-        wf.config['execution']['remove_node_directories'] = False
+            import logging
+            callback_log_path = "%s%s" % (wf.base_dir, '/run_stats.log')
+            logger = logging.getLogger('callback')
+            logger.setLevel(logging.DEBUG)
+            handler = logging.FileHandler(callback_log_path)
+            logger.addHandler(handler)
+
+        cfg = dict(execution={'stop_on_first_crash': False, 'crashdump_dir': str(wf.base_dir), 'parameterize_dirs': True,
+                              'crashfile_format': 'txt', 'display_variable': ':0', 'job_finished_timeout': 120,
+                              'matplotlib_backend': 'Agg', 'plugin': str(plugin_type), 'use_relative_paths': True,
+                              'keep_inputs': True, 'remove_unnecessary_outputs': False, 'remove_node_directories': False})
+        for key in cfg.keys():
+            for setting, value in cfg[key].items():
+                wf.config[key][setting] = value
         wf.write_graph(graph2use="colored", format='png')
         if procmem != 'auto':
-            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
-            #plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'maxtasksperchild': 1}
+            if verbose is True:
+                from nipype.utils.profiler import log_nodes_cb
+                plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'status_callback': log_nodes_cb}
+            else:
+                plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
             print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
             wf.run(plugin=plugin_type, plugin_args=plugin_args)
         else:
             wf.run(plugin=plugin_type)
+        if verbose is True:
+            from nipype.utils.draw_gantt_chart import generate_gantt_chart
+            print('Plotting resource profile from run...')
+            generate_gantt_chart("%s%s" % (wf.base_dir, '/run_stats.log'), cores=int(procmem[0]))
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)
     print('---------------------------------------')
+
     return
 
 
 def main():
     import sys
+    import warnings
+    warnings.simplefilter("ignore")
     try:
         from pynets.utils import do_dir_path
     except ImportError:
