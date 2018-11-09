@@ -49,13 +49,13 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, mask, th
     meta_wf = Workflow(name=base_dirname)
     if verbose is True:
         from nipype import config, logging
-        cfg = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'INFO', 'log_to_file': True,
-                            'interface_level': 'INFO'},
-                   monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True})
+        cfg_v = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'DEBUG', 'log_to_file': True,
+                              'interface_level': 'DEBUG'},
+                     monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True})
         logging.update_logging(config)
         config.enable_debug_mode()
         config.enable_resource_monitor()
-        config.update_config(cfg)
+        config.update_config(cfg_v)
     cfg = dict(execution={'stop_on_first_crash': False, 'crashfile_format': 'txt', 'parameterize_dirs': True,
                           'display_variable': ':0', 'job_finished_timeout': 120, 'matplotlib_backend': 'Agg',
                           'plugin': str(plugin_type), 'use_relative_paths': True, 'keep_inputs': True,

@@ -832,13 +832,13 @@ def build_workflow(args, retval):
                             name='inputnode')
         if verbose is True:
             from nipype import config, logging
-            cfg = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'DEBUG', 'log_to_file': True,
-                                'interface_level': 'DEBUG'},
-                       monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True})
+            cfg_v = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'DEBUG', 'log_to_file': True,
+                                  'interface_level': 'DEBUG'},
+                         monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True})
             logging.update_logging(config)
             config.enable_debug_mode()
             config.enable_resource_monitor()
-            config.update_config(cfg)
+            config.update_config(cfg_v)
         cfg = dict(execution={'stop_on_first_crash': False, 'crashfile_format': 'txt', 'parameterize_dirs': True,
                               'display_variable': ':0', 'matplotlib_backend': 'Agg',
                               'plugin': str(plugin_type), 'use_relative_paths': True, 'keep_inputs': True,
@@ -859,7 +859,6 @@ def build_workflow(args, retval):
         inputnode.inputs.prune = prune
         inputnode.inputs.smooth = smooth
         inputnode.inputs.c_boot = c_boot
-        inputnode.inputs.block_size = block_size
 
         meta_wf = workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, uatlas_select, multi_nets,
                                     conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, anat_loc, parc,
@@ -1055,14 +1054,14 @@ def build_workflow(args, retval):
 
         if verbose is True:
             from nipype import config, logging
-            cfg = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'INFO', 'interface_level': 'INFO',
-                                'log_directory': str(wf_multi.base_dir), 'log_to_file': True},
-                       monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True,
-                                   'summary_file': str(wf_multi.base_dir)})
+            cfg_v = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'DEBUG', 'interface_level': 'DEBUG',
+                                  'log_directory': str(wf_multi.base_dir), 'log_to_file': True},
+                         monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True,
+                                     'summary_file': str(wf_multi.base_dir)})
             logging.update_logging(config)
             config.enable_debug_mode()
             config.enable_resource_monitor()
-            config.update_config(cfg)
+            config.update_config(cfg_v)
 
             import logging
             callback_log_path = "%s%s" % (wf_multi.base_dir, '/run_stats.log')
@@ -1117,14 +1116,14 @@ def build_workflow(args, retval):
 
         if verbose is True:
             from nipype import config, logging
-            cfg = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'INFO', 'interface_level': 'INFO',
-                                'log_directory': str(wf.base_dir), 'log_to_file': True},
-                       monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True,
-                                   'summary_file': str(wf.base_dir)})
+            cfg_v = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'DEBUG', 'interface_level': 'DEBUG',
+                                  'log_directory': str(wf.base_dir), 'log_to_file': True},
+                         monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True,
+                                     'summary_file': str(wf.base_dir)})
             logging.update_logging(config)
             config.enable_debug_mode()
             config.enable_resource_monitor()
-            config.update_config(cfg)
+            config.update_config(cfg_v)
 
             import logging
             callback_log_path = "%s%s" % (wf.base_dir, '/run_stats.log')

@@ -172,6 +172,7 @@ def flatten(l):
 
 
 def random_forest_ensemble(df_in):
+    import pandas as pd
     from sklearn.ensemble import RandomForestRegressor
     #from sklearn.model_selection import cross_val_score
     from random import randint
