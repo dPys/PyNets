@@ -320,7 +320,6 @@ def local_thresholding_prop(conn_matrix, thr):
     weights = np.array(conn_matrix[upper_values])
     weights = weights[~np.isnan(weights)]
     edgenum = int(float(thr) * float(len(weights)))
-
     if len_edges > edgenum:
         print("%s%s%s" % ('Warning: The minimum spanning tree already has: ', len_edges, ' edges, select more edges. Local Threshold will be applied by just retaining the Minimum Spanning Tree'))
         conn_matrix_thr = nx.to_numpy_array(G)
@@ -363,7 +362,6 @@ def local_thresholding_prop(conn_matrix, thr):
         k += 1
 
     conn_matrix_thr = nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64)
-
     if len(min_t.nodes()) < conn_matrix.shape[0]:
         raise RuntimeWarning("%s%s%s" % ('Cannot apply local thresholding to achieve threshold of: ', thr, '. Try a higher -thr or -min_thr'))
 
@@ -376,9 +374,7 @@ def local_thresholding_dens(conn_matrix, thr):
     Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
     successive N-nearest neighbour degree graphs to achieve target density.
     '''
-
     fail_tol = 10
-
     conn_matrix = np.nan_to_num(conn_matrix)
     G = nx.from_numpy_matrix(conn_matrix)
     if not nx.is_connected(G):
@@ -389,7 +385,6 @@ def local_thresholding_dens(conn_matrix, thr):
     min_t = nx.minimum_spanning_tree(G, weight="distance")
     mst_density = nx.density(min_t)
     G_density = nx.density(G)
-
     if mst_density > G_density:
         print("%s%s%s" % ('Warning: The minimum spanning tree already has: ', thr, ' density. Local Threshold will be applied by just retaining the Minimum Spanning Tree'))
         conn_matrix_thr = nx.to_numpy_array(G)
@@ -426,7 +421,6 @@ def local_thresholding_dens(conn_matrix, thr):
         print('\n')
         if (len(dense_list[-fail_tol:]) - len(set(dense_list[-fail_tol:]))) >= (fail_tol - 1):
             print("%s%s%s" % ('Cannot apply local thresholding to achieve density of: ', thr, '. Using maximally saturated connected matrix instead...'))
-
         k += 1
 
     conn_matrix_thr = nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64)
@@ -441,14 +435,12 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
 
     thr_perc = 100 * float(thr)
     edge_threshold = "%s%s" % (str(thr_perc), '%')
-
     if parc is True:
         node_size = 'parc'
 
     # Save unthresholded
     unthr_path = utils.create_unthr_path(ID, network, conn_model, roi, dir_path)
     np.save(unthr_path, conn_matrix)
-
     if min_span_tree is True:
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
@@ -492,7 +484,6 @@ def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, roi, node_s
 
     thr_perc = 100 * float(thr)
     edge_threshold = "%s%s" % (str(thr_perc), '%')
-
     if parc is True:
         node_size = 'parc'
 

@@ -12,20 +12,25 @@ def get_parser():
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Graph Analysis of Functional and Structural Connectomes')
     parser.add_argument('-i',
-                        metavar='Path to input file',
+                        metavar='Path to input functional file (required for functional connectomes)',
+                        default=None,
+                        required=False,
+                        help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR multiple paths to multiple preprocessed functional images in standard space and in .nii or .nii.gz format, separated by commas OR the path to a text file containing a list of paths to subject files.\n')
+    parser.add_argument('-m',
+                        metavar='Path to binarized mask image to apply to regions before extracting signals.',
                         default=None,
                         required=False,
                         help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR multiple paths to multiple preprocessed functional images in standard space and in .nii or .nii.gz format, separated by commas OR the path to a text file containing a list of paths to subject files.\n')
     parser.add_argument('-g',
-                        metavar='Path to graph',
+                        metavar='Path to graph file input.',
                         default=None,
                         help='In either .txt or .npy format. This skips fMRI and dMRI graph estimation workflows and begins at the graph analysis stage.\n')
     parser.add_argument('-dwi',
-                        metavar='Path to a directory containing diffusion data',
+                        metavar='Path to a directory containing diffusion data (required for structural connectomes)',
                         default=None,
                         help='Contains dwi.nii.gz, bval, bvec, nodif_brain_mask.nii.gz files, or the outputs from FSLs bedpostx Formatted according to the FSL default tree structure found at https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX.\n')
     parser.add_argument('-id',
-                        metavar='Subject ID',
+                        metavar='A subject id (can be any arbitrary identifier)',
                         default=None,
                         required=False,
                         help='An arbitrary subject identifier OR list of subject identifiers, separated by comma and of equivalent length to the list of input files indicated with the -i flag.\n')
@@ -36,7 +41,7 @@ def get_parser():
     parser.add_argument('-ua',
                         metavar='Path to parcellation file',
                         default=None,
-                        help='Path to parcellation/atlas file in .nii format. If specifying a list of paths to multiple user atlases, separate them by comma.\n')
+                        help='Optionally specify a path to a parcellation/atlas file in nifti format. If specifying a list of paths to multiple user atlases, separate them by comma.\n')
     parser.add_argument('-pm',
                         metavar='Cores,memory',
                         default='2,4',
@@ -47,10 +52,10 @@ def get_parser():
                         help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple RSNs, separate them by comma. (e.g. -n \'Default,Cont,SalVentAttn)\'.\n')
     parser.add_argument('-thr',
                         metavar='Graph threshold',
-                        default='0.00',
+                        default='1.00',
                         help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is proportional thresholding. If omitted, no thresholding will be applied.\n')
     parser.add_argument('-ns',
-                        metavar='Node size',
+                        metavar='Spherical centroid node size',
                         default=4,
                         help='Optionally specify coordinate-based node radius size(s). Default is 4 mm. If you wish to iterate the pipeline across multiple node sizes, separate the list by comma (e.g. 2,4,6).\n')
     parser.add_argument('-sm',
@@ -64,17 +69,17 @@ def get_parser():
     parser.add_argument('-bs',
                         metavar='Size bootstrap blocks (integer)',
                         default=3,
-                        help='Optionally specify a size of bootstrap blocks to perform circular-block resampling of the node-extracted time-series. Default is 3.\n')
+                        help='Optionally specify a bootstrap block size for circular-block resampling of the node-extracted time-series. Default is 3 blocks.\n')
     parser.add_argument('-roi',
-                        metavar='Path to binarized ROI image',
+                        metavar='Path to binarized roi image',
                         default=None,
                         help='Optionally specify a thresholded binarized ROI mask and retain only those nodes contained within that mask for functional connectome estimation, or constrain the tractography in the case of structural connectome estimation.\n')
     parser.add_argument('-mod',
-                        metavar='Graph estimator type',
+                        metavar='Graph estimation method',
                         default='partcorr',
-                        help='Specify matrix estimation type. For fMRI, options models include: corr for correlation, cov for covariance, sps for precision covariance, partcorr for partial correlation. sps type is used by default. If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. Default is partcorr for fMRI. For dMRI, models include ball_and_stick, tensor, and csd.\n')
+                        help='Specify matrix estimation type. For fMRI, possible models include: corr for correlation, cov for covariance, sps for precision covariance, partcorr for partial correlation. sps type is used by default. If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. Default is partcorr for fMRI. For dMRI, models include ball_and_stick, tensor, and csd.\n')
     parser.add_argument('-conf',
-                        metavar='Confounds',
+                        metavar='Confound regressor file (.tsv/.csv format)',
                         default=None,
                         help='Optionally specify a path to a confound regressor file to reduce noise in the time-series estimation for the graph. This can also be a list of paths, separated by comma and of equivalent length to the list of input files indicated with the -i flag.\n')
     parser.add_argument('-anat',
@@ -184,6 +189,7 @@ def build_workflow(args, retval):
 
     # Set Arguments to global variables
     input_file = args.i
+    mask = args.m
     dwi_dir = args.dwi
     graph_pre = args.g
     multi_graph = list(str(graph_pre).split(','))
@@ -805,6 +811,7 @@ def build_workflow(args, retval):
     # print("%s%s" % ('clust_type_list: ', clust_type_list))
     # print("%s%s" % ('c_boot: ', c_boot)
     # print("%s%s" % ('block_size: ', block_size))
+    # print("%s%s" % ('mask: ', mask))
     # print('\n\n\n\n\n')
     # import sys
     # sys.exit(0)
@@ -822,7 +829,7 @@ def build_workflow(args, retval):
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
-                               clust_type_list, c_boot, block_size):
+                               clust_type_list, c_boot, block_size, mask):
         wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_', random.randint(1, 1000)))
         inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'roi', 'multi_nets',
                                                           'conn_model', 'plot_switch', 'graph', 'prune', 'smooth',
@@ -864,7 +871,7 @@ def build_workflow(args, retval):
                                     step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list, disp_filt,
-                                    clust_type, clust_type_list, c_boot, block_size)
+                                    clust_type, clust_type_list, c_boot, block_size, mask)
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
@@ -988,7 +995,8 @@ def build_workflow(args, retval):
                          multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask,
                          k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
                          num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming,
-                         multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size):
+                         multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size,
+                         mask):
 
         wf_multi = pe.Workflow(name="%s%s" % ('Wf_multisub_', random.randint(1001, 9000)))
         i = 0
@@ -1009,7 +1017,7 @@ def build_workflow(args, retval):
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
                 min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type, use_AAL_naming=use_AAL_naming,
                 multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
-                clust_type=clust_type, clust_type_list=clust_type_list, c_boot=c_boot, block_size=block_size)
+                clust_type=clust_type, clust_type_list=clust_type_list, c_boot=c_boot, block_size=block_size, mask=mask)
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if input_file:
@@ -1043,7 +1051,8 @@ def build_workflow(args, retval):
                                     k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
-                                    smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size)
+                                    smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot,
+                                    block_size, mask)
 
         import shutil
         wf_multi.base_dir = '/tmp/wf_multi_subject'
@@ -1084,10 +1093,10 @@ def build_workflow(args, retval):
             wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
         else:
             wf_multi.run(plugin=plugin_type)
-        if verbose is True:
-            from nipype.utils.draw_gantt_chart import generate_gantt_chart
-            print('Plotting resource profile from run...')
-            generate_gantt_chart('/tmp/wf_multi_subject/multi_sub_run_stats.log', cores=int(procmem[0]))
+        # if verbose is True:
+        #     from nipype.utils.draw_gantt_chart import generate_gantt_chart
+        #     print('Plotting resource profile from run...')
+        #     generate_gantt_chart('/tmp/wf_multi_subject/multi_sub_run_stats.log', cores=int(procmem[0]))
 
     # Single-subject workflow generator
     else:
@@ -1098,7 +1107,7 @@ def build_workflow(args, retval):
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
-                                    smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size)
+                                    smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask)
 
         import shutil
         base_dirname = "%s%s" % ('wf_single_subject_', str(ID))
@@ -1150,10 +1159,10 @@ def build_workflow(args, retval):
             wf.run(plugin=plugin_type, plugin_args=plugin_args)
         else:
             wf.run(plugin=plugin_type)
-        if verbose is True:
-            from nipype.utils.draw_gantt_chart import generate_gantt_chart
-            print('Plotting resource profile from run...')
-            generate_gantt_chart("%s%s" % (wf.base_dir, '/run_stats.log'), cores=int(procmem[0]))
+        # if verbose is True:
+        #     from nipype.utils.draw_gantt_chart import generate_gantt_chart
+        #     print('Plotting resource profile from run...')
+        #     generate_gantt_chart("%s%s" % (wf.base_dir, '/run_stats.log'), cores=int(procmem[0]))
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)

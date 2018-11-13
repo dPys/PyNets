@@ -231,7 +231,7 @@ def normalize(v):
 
 
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas_select,
-                    uatlas_select, label_names, c_boot, block_size):
+                    uatlas_select, label_names, c_boot, block_size, mask):
     from nilearn import input_data
     # from pynets.estimation import extract_ts_parc_fast
     from pynets import utils
@@ -250,10 +250,12 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     #                                              memory_level=1)
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth),
-                                                 detrend=detrending, verbose=2)
+                                                 detrend=detrending, verbose=2, mask_img=mask)
     # parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
     #                                              standardize=True)
     ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
+    if ts_within_nodes is None:
+        raise RuntimeError('ERROR: Time-series extraction failed!')
     if float(c_boot) > 0:
         print("%s%s%s" % ('Performing circular block bootstrapping iteration: ', c_boot, '...'))
         ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
@@ -262,13 +264,12 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
     # Save time series as txt file
     utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
-
     node_size = None
     return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot
 
 
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, network, smooth, atlas_select,
-                      uatlas_select, label_names, c_boot, block_size):
+                      uatlas_select, label_names, c_boot, block_size, mask):
     from nilearn import input_data
     # from pynets.estimation import extract_ts_coords_fast
     from pynets import utils
@@ -288,13 +289,15 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     if len(coords) > 0:
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                        standardize=True, smoothing_fwhm=float(smooth),
-                                                       detrend=detrending, verbose=2)
+                                                       detrend=detrending, verbose=2, mask_img=mask)
         # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
         #                                                standardize=True, verbose=1)
         ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
         if float(c_boot) > 0:
             print("%s%s%s" % ('Performing circular block bootstrapping iteration: ', c_boot, '...'))
             ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
+        if ts_within_nodes is None:
+            raise RuntimeError('ERROR: Time-series extraction failed!')
     else:
         raise RuntimeError('ERROR: Cannot extract time-series from an empty list of coordinates. \nThis usually means that no nodes were generated based on the specified conditions at runtime (e.g. atlas was overly restricted by an RSN or some user-defined mask.')
 

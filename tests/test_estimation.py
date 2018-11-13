@@ -16,6 +16,7 @@ except ImportError:
 from pynets import estimation
 from pathlib import Path
 
+
 def test_get_conn_matrix_cov():
     base_dir = str(Path(__file__).parent/"examples")
     #ase_dir = '/Users/rxh180012/PyNets-development/tests/examples'
@@ -96,14 +97,14 @@ def test_extract_ts_rsn_parc():
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path, 'rb')
     label_names = pickle.load(labels_file)
-
+    mask = None
 
     start_time = time.time()
     net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
     [ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select,
     label_names, coords, c_boot] = estimation.extract_ts_parc(net_parcels_map_nifti,
     conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas_select,
-    uatlas_select, label_names, c_boot, boot_size)
+    uatlas_select, label_names, c_boot, boot_size, mask)
     print("%s%s%s" % ('extract_ts_parc --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     assert ts_within_nodes is not None
@@ -133,12 +134,12 @@ def test_extract_ts_rsn_coords():
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path, 'rb')
     label_names = pickle.load(labels_file)
-
+    mask = None
     start_time = time.time()
     [ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select,
      label_names, coords, c_boot] = estimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi,
                                                                  network, smooth, atlas_select, uatlas_select,
-                                                                 label_names, c_boot, boot_size)
+                                                                 label_names, c_boot, boot_size, mask)
     print("%s%s%s" % ('extract_ts_coords --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     assert ts_within_nodes is not None

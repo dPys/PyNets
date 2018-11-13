@@ -295,7 +295,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
     save_json(connectogram_plot, output)
 
     # Force-directed graphing
-    G=nx.from_numpy_matrix(np.round(conn_matrix.astype('float64'), 6))
+    G = nx.from_numpy_matrix(np.round(conn_matrix.astype('float64'), 6))
     data = json_graph.node_link_data(G)
     data.pop('directed', None)
     data.pop('graph', None)

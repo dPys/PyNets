@@ -846,12 +846,12 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
 
     # De-diagnal and Normalize connectivity matrix (weights between 0-1)
     in_mat = np.array(thresholding.normalize(np.array(thresholding.autofix(in_mat_raw))))
+    in_mat[np.isnan(in_mat)] = 0
+    in_mat[np.isinf(in_mat)] = 1
 
     # Get hyperbolic tangent (i.e. fischer r-to-z transform) of matrix if non-covariance
     if conn_model == 'corr':
         in_mat = np.arctanh(in_mat)
-        in_mat[np.isnan(in_mat)] = 0
-        in_mat[np.isinf(in_mat)] = 1
 
     # Get dir_path
     dir_path = os.path.dirname(os.path.realpath(est_path))
