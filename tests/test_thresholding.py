@@ -30,7 +30,7 @@ def test_thresh_func():
     min_span_tree = False
     ID = '997'
     disp_filt = False
-    mask = None
+    roi = None
     parc = False
     node_size = 'TEST'
     prune = 1
@@ -46,7 +46,7 @@ def test_thresh_func():
     start_time = time.time()
     [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _, _, _, _, _, _,
     _, _, _, _] = thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model,
-    network, ID, dir_path, mask, node_size, min_span_tree, smooth, disp_filt,
+    network, ID, dir_path, roi, node_size, min_span_tree, smooth, disp_filt,
     parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot)
     print("%s%s%s" %
     ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
@@ -69,7 +69,7 @@ def test_thresh_func():
 #     network = 'Default'
 #     min_span_tree = False
 #     ID = '997'
-#     mask = None
+#     roi = None
 #     node_size = 'parc'
 #     parc = True
 #     disp_filt = False
@@ -84,7 +84,7 @@ def test_thresh_func():
 #
 #     start_time = time.time()
 #     [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _, _, _, _, _] = thresholding.thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path,
-#     mask, node_size, conn_matrix, parc, min_span_tree, disp_filt, atlas_select,
+#     roi, node_size, conn_matrix, parc, min_span_tree, disp_filt, atlas_select,
 #     uatlas_select, label_names, coords)
 #     print("%s%s%s" %
 #     ('thresh_and_fit (Functional, density thresholding) --> finished: ',

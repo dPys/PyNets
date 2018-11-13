@@ -23,7 +23,8 @@ def test_individual_tcorr_clustering():
     k = 3
     clust_type = 'kmeans'
 
-    [uatlas_select, atlas_select, clustering, _, _, _] = clustools.individual_tcorr_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5)
+    [uatlas_select, atlas_select,
+     clustering, _, _, _] = clustools.individual_tcorr_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5)
     assert uatlas_select is not None
     assert atlas_select is not None
     assert clustering is True

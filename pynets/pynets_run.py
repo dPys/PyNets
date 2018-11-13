@@ -65,10 +65,10 @@ def get_parser():
                         metavar='Size bootstrap blocks (integer)',
                         default=3,
                         help='Optionally specify a size of bootstrap blocks to perform circular-block resampling of the node-extracted time-series. Default is 3.\n')
-    parser.add_argument('-m',
-                        metavar='Path to mask image',
+    parser.add_argument('-roi',
+                        metavar='Path to binarized ROI image',
                         default=None,
-                        help='Optionally specify a thresholded binarized mask image and retain only those nodes contained within that mask for functional connectome estimation, or constrain the tractography in the case of structural connectome estimation.\n')
+                        help='Optionally specify a thresholded binarized ROI mask and retain only those nodes contained within that mask for functional connectome estimation, or constrain the tractography in the case of structural connectome estimation.\n')
     parser.add_argument('-mod',
                         metavar='Graph estimator type',
                         default='partcorr',
@@ -228,7 +228,7 @@ def build_workflow(args, retval):
         smooth_list = None
     c_boot = args.b
     block_size = args.bs
-    mask = args.m
+    roi = args.roi
     conn_model_pre = args.mod
     conn_model = list(str(conn_model_pre).split(','))
     if len(conn_model) > 1:
@@ -596,7 +596,7 @@ def build_workflow(args, retval):
     elif graph or multi_graph:
         network = 'custom_graph'
         thr = 0
-        mask = 'None'
+        roi = 'None'
         k_clustering = 0
         node_size = 'None'
         smooth = 'None'
@@ -638,14 +638,12 @@ def build_workflow(args, retval):
             print("%s%s" % ('\nUsing resting-state network pipeline for: ', network))
         elif multi_nets is not None:
             network = multi_nets[0]
-            print("%s%d%s%s%s" % ('\nIterating workflow across ', len(multi_nets), ' networks: ',
-                                  str(', '.join(str(n) for n in multi_nets)), '...'))
+            print("%s%d%s%s%s" % ('\nIterating workflow across ', len(multi_nets), ' networks: ', str(', '.join(str(n) for n in multi_nets)), '...'))
         else:
             print("\nUsing whole-brain pipeline...")
 
         if node_size_list:
-            print("%s%s%s" % ('\nGrowing spherical nodes across multiple radius sizes: ',
-                              str(', '.join(str(n) for n in node_size_list)), '...'))
+            print("%s%s%s" % ('\nGrowing spherical nodes across multiple radius sizes: ', str(', '.join(str(n) for n in node_size_list)), '...'))
         elif parc is True:
             print("\nUsing parcels as nodes")
         else:
@@ -671,8 +669,7 @@ def build_workflow(args, retval):
             print("%s%s%s%s" % ('Applying circular block bootstrapping to the node-extracted time-series using: ', int(c_boot), ' bootstraps with block size ', int(block_size)))
 
         if conn_model_list:
-            print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ',
-                              str(', '.join(str(n) for n in conn_model_list)), '...'))
+            print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ', str(', '.join(str(n) for n in conn_model_list)), '...'))
         else:
             print("%s%s" % ("\nUsing connectivity model: ", conn_model))
 
@@ -778,7 +775,7 @@ def build_workflow(args, retval):
     # print("%s%s" % ('network: ', network))
     # print("%s%s" % ('node_size: ', node_size))
     # print("%s%s" % ('smooth: ', smooth))
-    # print("%s%s" % ('mask: ', mask))
+    # print("%s%s" % ('roi: ', roi))
     # print("%s%s" % ('thr: ', thr))
     # print("%s%s" % ('uatlas_select: ', uatlas_select))
     # print("%s%s" % ('conn_model: ', conn_model))
@@ -819,7 +816,7 @@ def build_workflow(args, retval):
     from nipype.interfaces import utility as niu
     from pynets.workflows import workflow_selector
 
-    def init_wf_single_subject(ID, input_file, atlas_select, network, node_size, mask, thr, uatlas_select,
+    def init_wf_single_subject(ID, input_file, atlas_select, network, node_size, roi, thr, uatlas_select,
                                multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir,
                                multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k,
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
@@ -827,8 +824,9 @@ def build_workflow(args, retval):
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
                                clust_type_list, c_boot, block_size):
         wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_', random.randint(1, 1000)))
-        inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'mask', 'multi_nets',
-                                                          'conn_model', 'plot_switch', 'graph', 'prune', 'smooth', 'c_boot']),
+        inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'roi', 'multi_nets',
+                                                          'conn_model', 'plot_switch', 'graph', 'prune', 'smooth',
+                                                          'c_boot']),
                             name='inputnode')
         if verbose is True:
             from nipype import config, logging
@@ -851,7 +849,7 @@ def build_workflow(args, retval):
         inputnode.inputs.network = network
         inputnode.inputs.thr = thr
         inputnode.inputs.node_size = node_size
-        inputnode.inputs.mask = mask
+        inputnode.inputs.roi = roi
         inputnode.inputs.multi_nets = multi_nets
         inputnode.inputs.conn_model = conn_model
         inputnode.inputs.plot_switch = plot_switch
@@ -860,12 +858,13 @@ def build_workflow(args, retval):
         inputnode.inputs.smooth = smooth
         inputnode.inputs.c_boot = c_boot
 
-        meta_wf = workflow_selector(input_file, ID, atlas_select, network, node_size, mask, thr, uatlas_select, multi_nets,
-                                    conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, anat_loc, parc,
-                                    ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
-                                    clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
-                                    node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
-                                    use_AAL_naming, smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size)
+        meta_wf = workflow_selector(input_file, ID, atlas_select, network, node_size, roi, thr, uatlas_select,
+                                    multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir,
+                                    anat_loc, parc, ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr,
+                                    step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
+                                    clust_mask_list, prune, node_size_list, num_total_samples, conn_model_list,
+                                    min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list, disp_filt,
+                                    clust_type, clust_type_list, c_boot, block_size)
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
@@ -888,11 +887,11 @@ def build_workflow(args, retval):
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
                                    iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
-                                              'mask', 'prune', 'node_size', 'smooth', 'c_boot'], nested=True)
+                                              'roi', 'prune', 'node_size', 'smooth', 'c_boot'], nested=True)
 
         # Export graph analysis results to pandas dataframes
         export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name="Export2Pandas",
-                                           iterfield=['csv_loc', 'ID', 'network', 'mask'], nested=True)
+                                           iterfield=['csv_loc', 'ID', 'network', 'roi'], nested=True)
 
         # Aggregate list of paths to pandas dataframe pickles
         collect_pd_list_net_pickles_node = pe.Node(niu.Function(input_names=['net_pickle_mt'],
@@ -911,14 +910,14 @@ def build_workflow(args, retval):
                                                                       ('thr_iterlist', 'thr'),
                                                                       ('ID_iterlist', 'ID'),
                                                                       ('conn_model_iterlist', 'conn_model'),
-                                                                      ('mask_iterlist', 'mask'),
+                                                                      ('roi_iterlist', 'roi'),
                                                                       ('prune_iterlist', 'prune'),
                                                                       ('node_size_iterlist', 'node_size'),
                                                                       ('smooth_iterlist', 'smooth'),
                                                                       ('c_boot_iterlist', 'c_boot')]),
             (meta_wf.get_node('pass_meta_outs_node'), export_to_pandas_node, [('network_iterlist', 'network'),
                                                                               ('ID_iterlist', 'ID'),
-                                                                              ('mask_iterlist', 'mask')]),
+                                                                              ('roi_iterlist', 'roi')]),
             (net_mets_node, export_to_pandas_node, [('out_file', 'csv_loc')]),
             (inputnode, collect_pandas_dfs_node, [('network', 'network'),
                                                   ('ID', 'ID'),
@@ -936,7 +935,7 @@ def build_workflow(args, retval):
                              ('thr_iterlist', 'thr'),
                              ('ID_iterlist', 'ID'),
                              ('conn_model_iterlist', 'conn_model'),
-                             ('mask_iterlist', 'mask'),
+                             ('roi_iterlist', 'roi'),
                              ('prune_iterlist', 'prune'),
                              ('node_size_iterlist', 'node_size'),
                              ('smooth_iterlist', 'smooth'),
@@ -945,14 +944,14 @@ def build_workflow(args, retval):
             wf.disconnect([(meta_wf.get_node('pass_meta_outs_node'), export_to_pandas_node,
                             [('network_iterlist', 'network'),
                              ('ID_iterlist', 'ID'),
-                             ('mask_iterlist', 'mask')])
+                             ('roi_iterlist', 'roi')])
                            ])
             wf.remove_nodes([meta_wf])
             # Multiple raw graphs
             if multi_graph:
                 net_mets_node.inputs.est_path = multi_graph
                 net_mets_node.inputs.ID = [ID] * len(multi_graph)
-                net_mets_node.inputs.mask = [mask] * len(multi_graph)
+                net_mets_node.inputs.roi = [roi] * len(multi_graph)
                 net_mets_node.inputs.node_size = [node_size] * len(multi_graph)
                 net_mets_node.inputs.smooth = [smooth] * len(multi_graph)
                 net_mets_node.inputs.thr = [thr] * len(multi_graph)
@@ -962,14 +961,14 @@ def build_workflow(args, retval):
                 net_mets_node.inputs.c_boot = [c_boot] * len(multi_graph)
 
                 export_to_pandas_node.inputs.ID = [ID] * len(multi_graph)
-                export_to_pandas_node.inputs.mask = [mask] * len(multi_graph)
+                export_to_pandas_node.inputs.roi = [roi] * len(multi_graph)
                 export_to_pandas_node.inputs.network = [network] * len(multi_graph)
             else:
                 wf.connect([(inputnode, net_mets_node, [('network', 'network'),
                                                         ('thr', 'thr'),
                                                         ('ID', 'ID'),
                                                         ('conn_model', 'conn_model'),
-                                                        ('mask', 'mask'),
+                                                        ('roi', 'roi'),
                                                         ('prune', 'prune'),
                                                         ('node_size', 'node_size'),
                                                         ('smooth', 'smooth'),
@@ -978,13 +977,13 @@ def build_workflow(args, retval):
                             ])
                 wf.connect([(inputnode, export_to_pandas_node, [('network', 'network'),
                                                                 ('ID', 'ID'),
-                                                                ('mask', 'mask')])
+                                                                ('roi', 'roi')])
                             ])
 
         return wf
 
     # Multi-subject pipeline
-    def wf_multi_subject(ID, subjects_list, atlas_select, network, node_size, mask, thr, uatlas_select, multi_nets,
+    def wf_multi_subject(ID, subjects_list, atlas_select, network, node_size, roi, thr, uatlas_select, multi_nets,
                          conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir, multi_thr,
                          multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k, clust_mask,
                          k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
@@ -1000,7 +999,7 @@ def build_workflow(args, retval):
                 conf_sub = None
             wf_single_subject = init_wf_single_subject(
                 ID=ID[i], input_file=_file, atlas_select=atlas_select,
-                network=network, node_size=node_size, mask=mask, thr=thr, uatlas_select=uatlas_select,
+                network=network, node_size=node_size, roi=roi, thr=thr, uatlas_select=uatlas_select,
                 multi_nets=multi_nets, conn_model=conn_model, dens_thresh=dens_thresh, conf=conf_sub,
                 adapt_thresh=adapt_thresh, plot_switch=plot_switch, dwi_dir=dwi_dir, multi_thr=multi_thr,
                 multi_atlas= multi_atlas, min_thr=min_thr, max_thr=max_thr, step_thr=step_thr, anat_loc=anat_loc,
@@ -1036,7 +1035,7 @@ def build_workflow(args, retval):
     # Workflow generation
     # Multi-subject workflow generator
     if subjects_list:
-        wf_multi = wf_multi_subject(ID, subjects_list, atlas_select, network, node_size, mask,
+        wf_multi = wf_multi_subject(ID, subjects_list, atlas_select, network, node_size, roi,
                                     thr, uatlas_select, multi_nets, conn_model, dens_thresh,
                                     conf, adapt_thresh, plot_switch, dwi_dir, multi_thr,
                                     multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc,
@@ -1070,11 +1069,11 @@ def build_workflow(args, retval):
             handler = logging.FileHandler(callback_log_path)
             logger.addHandler(handler)
 
-        cfg = dict(execution={'stop_on_first_crash': False,
-                              'crashdump_dir': str(wf_multi.base_dir), 'crashfile_format': 'txt', 'parameterize_dirs': True,
-                              'display_variable': ':0', 'job_finished_timeout': 120, 'matplotlib_backend': 'Agg',
-                              'plugin': str(plugin_type), 'use_relative_paths': True, 'keep_inputs': True,
-                              'remove_unnecessary_outputs': False, 'remove_node_directories': False})
+        cfg = dict(execution={'stop_on_first_crash': False, 'crashdump_dir': str(wf_multi.base_dir),
+                              'crashfile_format': 'txt', 'parameterize_dirs': True, 'display_variable': ':0',
+                              'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
+                              'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
+                              'remove_node_directories': False})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf_multi.config[key][setting] = value
@@ -1093,7 +1092,7 @@ def build_workflow(args, retval):
     # Single-subject workflow generator
     else:
         # Single-subject pipeline
-        wf = init_wf_single_subject(ID, input_file, atlas_select, network, node_size, mask, thr, uatlas_select,
+        wf = init_wf_single_subject(ID, input_file, atlas_select, network, node_size, roi, thr, uatlas_select,
                                     multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir,
                                     multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt,
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
@@ -1132,10 +1131,11 @@ def build_workflow(args, retval):
             handler = logging.FileHandler(callback_log_path)
             logger.addHandler(handler)
 
-        cfg = dict(execution={'stop_on_first_crash': False, 'crashdump_dir': str(wf.base_dir), 'parameterize_dirs': True,
-                              'crashfile_format': 'txt', 'display_variable': ':0', 'job_finished_timeout': 120,
-                              'matplotlib_backend': 'Agg', 'plugin': str(plugin_type), 'use_relative_paths': True,
-                              'keep_inputs': True, 'remove_unnecessary_outputs': False, 'remove_node_directories': False})
+        cfg = dict(execution={'stop_on_first_crash': False, 'crashdump_dir': str(wf.base_dir),
+                              'parameterize_dirs': True, 'crashfile_format': 'txt', 'display_variable': ':0',
+                              'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
+                              'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
+                              'remove_node_directories': False})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf.config[key][setting] = value

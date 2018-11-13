@@ -9,8 +9,8 @@ import warnings
 warnings.simplefilter("ignore")
 
 
-def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, mask, min_span_tree,
-                    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, vox_array, c_boot):
+def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
+                    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot):
     from nilearn.connectome import ConnectivityMeasure
     from sklearn.covariance import GraphicalLassoCV
 
@@ -139,7 +139,7 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
 
     coords = np.array(coords)
     label_names = np.array(label_names)
-    return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, mask, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot
+    return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot
 
 
 def generate_mask_from_voxels(voxel_coords, volume_dims):
@@ -230,7 +230,7 @@ def normalize(v):
 #     return ts_within_nodes, node_size
 
 
-def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network, smooth, atlas_select,
+def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas_select,
                     uatlas_select, label_names, c_boot, block_size):
     from nilearn import input_data
     # from pynets.estimation import extract_ts_parc_fast
@@ -261,14 +261,14 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
                         len(coords), ' volumetric ROI\'s'))
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
     # Save time series as txt file
-    utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes, c_boot)
+    utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
 
     node_size = None
     return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot
 
 
-def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network, smooth, atlas_select, uatlas_select,
-                      label_names, c_boot, block_size):
+def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, network, smooth, atlas_select,
+                      uatlas_select, label_names, c_boot, block_size):
     from nilearn import input_data
     # from pynets.estimation import extract_ts_coords_fast
     from pynets import utils
@@ -303,5 +303,5 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
     print("%s%s%s" % ('Using node radius: ', node_size, ' mm'))
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
     # Save time series as txt file
-    utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes, c_boot)
+    utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
     return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot

@@ -287,7 +287,7 @@ def knn(conn_matrix, k):
     nodes = list(range(len(conn_matrix[0])))
     gra.add_nodes_from(nodes)
     for i in nodes:
-        line = np.ma.masked_array(conn_matrix[i, :], mask=np.isnan(conn_matrix[i]))
+        line = np.ma.masked_array(conn_matrix[i, :], roi=np.isnan(conn_matrix[i]))
         line.mask[i] = True
         for _ in range(k):
             node = np.argmax(line)
@@ -436,7 +436,7 @@ def local_thresholding_dens(conn_matrix, thr):
     return conn_matrix_thr
 
 
-def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, mask, node_size, min_span_tree, smooth, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot):
+def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree, smooth, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot):
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -446,7 +446,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         node_size = 'parc'
 
     # Save unthresholded
-    unthr_path = utils.create_unthr_path(ID, network, conn_model, mask, dir_path)
+    unthr_path = utils.create_unthr_path(ID, network, conn_model, roi, dir_path)
     np.save(unthr_path, conn_matrix)
 
     if min_span_tree is True:
@@ -480,13 +480,14 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         print('Warning: Fragmented graph')
 
     # Save thresholded mat
-    est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size, smooth, c_boot, thr_type)
+    est_path = utils.create_est_path(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type)
     np.save(est_path, conn_matrix_thr)
 
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, mask, smooth, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot
 
 
-def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_size, conn_matrix, parc, min_span_tree, disp_filt, atlas_select, uatlas_select, label_names, coords):
+def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, roi, node_size, conn_matrix, parc, min_span_tree,
+                disp_filt, atlas_select, uatlas_select, label_names, coords):
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -527,6 +528,6 @@ def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, mask, node_
 
     # Save thresholded mat
     smooth = 0
-    est_path = utils.create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size, smooth, thr_type)
+    est_path = utils.create_est_path(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, thr_type)
     np.save(est_path, conn_matrix_thr)
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, mask, atlas_select, uatlas_select, label_names, coords
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, atlas_select, uatlas_select, label_names, coords

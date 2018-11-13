@@ -20,7 +20,7 @@ def get_file():
 
 
 # Save net metric files to pandas dataframes interface
-def export_to_pandas(csv_loc, ID, network, mask):
+def export_to_pandas(csv_loc, ID, network, roi):
     import pandas as pd
     try:
         import cPickle as pickle
@@ -31,11 +31,11 @@ def export_to_pandas(csv_loc, ID, network, mask):
     if os.path.isfile(csv_loc) is False:
         raise FileNotFoundError('\n\n\nERROR: Missing netmetrics csv file output. Cannot export to pandas df!')
 
-    if mask is not None:
+    if roi is not None:
         if network is not None:
-            met_list_picke_path = "%s%s%s%s%s" % (os.path.dirname(os.path.abspath(csv_loc)), '/net_metric_list_', network, '_', str(os.path.basename(mask).split('.')[0]))
+            met_list_picke_path = "%s%s%s%s%s" % (os.path.dirname(os.path.abspath(csv_loc)), '/net_metric_list_', network, '_', str(os.path.basename(roi).split('.')[0]))
         else:
-            met_list_picke_path = "%s%s%s" % (os.path.dirname(os.path.abspath(csv_loc)), '/net_metric_list_', str(os.path.basename(mask).split('.')[0]))
+            met_list_picke_path = "%s%s%s" % (os.path.dirname(os.path.abspath(csv_loc)), '/net_metric_list_', str(os.path.basename(roi).split('.')[0]))
     else:
         if network is not None:
             met_list_picke_path = "%s%s%s" % (os.path.dirname(os.path.abspath(csv_loc)), '/net_metric_list_', network)
@@ -68,12 +68,12 @@ def do_dir_path(atlas_select, in_file):
     return dir_path
 
 
-def create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size, smooth, c_boot, thr_type):
-    if mask is not None:
+def create_est_path(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type):
+    if roi is not None:
         if network is not None:
-            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model), '_', str(thr), thr_type, '_', str(os.path.basename(mask).split('.')[0]), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'), '.npy')
+            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model), '_', str(thr), thr_type, '_', str(os.path.basename(roi).split('.')[0]), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'), '.npy')
         else:
-            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_', str(thr), thr_type, '_', str(os.path.basename(mask).split('.')[0]), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'), '.npy')
+            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_', str(thr), thr_type, '_', str(os.path.basename(roi).split('.')[0]), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'), '.npy')
     else:
         if network is not None:
             est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model), '_', str(thr), thr_type, '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'), '.npy')
@@ -82,12 +82,12 @@ def create_est_path(ID, network, conn_model, thr, mask, dir_path, node_size, smo
     return est_path
 
 
-def create_unthr_path(ID, network, conn_model, mask, dir_path):
-    if mask is not None:
+def create_unthr_path(ID, network, conn_model, roi, dir_path):
+    if roi is not None:
         if network is not None:
-            unthr_path = "%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model), '_', str(os.path.basename(mask).split('.')[0]), '_unthresh_mat.npy')
+            unthr_path = "%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model), '_', str(os.path.basename(roi).split('.')[0]), '_unthresh_mat.npy')
         else:
-            unthr_path = "%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_', str(os.path.basename(mask).split('.')[0]), '_unthresh_mat.npy')
+            unthr_path = "%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_', str(os.path.basename(roi).split('.')[0]), '_unthresh_mat.npy')
     else:
         if network is not None:
             unthr_path = "%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model), '_unthresholded_mat.npy')
@@ -96,12 +96,12 @@ def create_unthr_path(ID, network, conn_model, mask, dir_path):
     return unthr_path
 
 
-def create_csv_path(ID, network, conn_model, thr, mask, dir_path, node_size, smooth, c_boot):
-    if mask is not None:
+def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot):
+    if roi is not None:
         if network is not None:
-            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_net_metrics_', conn_model, '_', str(thr), '_', str(os.path.basename(mask).split('.')[0]), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'), '.csv')
+            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_net_metrics_', conn_model, '_', str(thr), '_', str(os.path.basename(roi).split('.')[0]), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'), '.csv')
         else:
-            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_net_metrics_', conn_model, '_', str(thr), '_', str(os.path.basename(mask).split('.')[0]), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'), '.csv')
+            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_net_metrics_', conn_model, '_', str(thr), '_', str(os.path.basename(roi).split('.')[0]), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'), '.csv')
     else:
         if network is not None:
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_net_metrics_', conn_model, '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'), '.csv')
@@ -110,18 +110,18 @@ def create_csv_path(ID, network, conn_model, thr, mask, dir_path, node_size, smo
     return out_path
 
 
-def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mask, node_size, smooth, c_boot):
+def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, roi, node_size, smooth, c_boot):
     #nilearn_parc_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
     #nilearn_coord_atlases=['harvard_oxford', 'msdl', 'coords_power_2011', 'smith_2009', 'basc_multiscale_2015', 'allen_2011', 'coords_dosenbach_2010']
     if conn_model == 'prob':
         ID_dir = str(os.path.dirname(input_file))
     else:
         ID_dir = str(os.path.dirname(input_file).split('.')[0])
-    if mask is not None:
+    if roi is not None:
         if network is not None:
-            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_', network, '_net_metrics_', conn_model, '_', str(thr), '_', str(os.path.basename(mask).split('.')[0]), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'))
+            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_', network, '_net_metrics_', conn_model, '_', str(thr), '_', str(os.path.basename(roi).split('.')[0]), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'))
         else:
-            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_net_metrics_', conn_model, '_', str(thr), '_', str(os.path.basename(mask).split('.')[0]), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'))
+            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_net_metrics_', conn_model, '_', str(thr), '_', str(os.path.basename(roi).split('.')[0]), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'))
     else:
         if network is not None:
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_', network, '_net_metrics_', conn_model, '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'))
@@ -130,7 +130,7 @@ def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, mas
     return out_path
 
 
-def pass_meta_outs(conn_model, est_path, network, node_size, smooth, c_boot, thr, prune, ID, mask):
+def pass_meta_outs(conn_model, est_path, network, node_size, smooth, c_boot, thr, prune, ID, roi):
     est_path_iterlist = est_path
     conn_model_iterlist = conn_model
     network_iterlist = network
@@ -140,7 +140,7 @@ def pass_meta_outs(conn_model, est_path, network, node_size, smooth, c_boot, thr
     thr_iterlist = thr
     prune_iterlist = prune
     ID_iterlist = ID
-    mask_iterlist = mask
+    roi_iterlist = roi
     # print('\n\nParam-iters:\n')
     # print(conn_model_iterlist)
     # print(est_path_iterlist)
@@ -151,9 +151,9 @@ def pass_meta_outs(conn_model, est_path, network, node_size, smooth, c_boot, thr
     # print(thr_iterlist)
     # print(prune_iterlist)
     # print(ID_iterlist)
-    # print(mask_iterlist)
+    # print(roi_iterlist)
     # print('\n\n')
-    return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, smooth_iterlist, c_boot_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, mask_iterlist
+    return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, smooth_iterlist, c_boot_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist
 
 
 def collect_pandas_join(net_pickle_mt):
@@ -348,12 +348,12 @@ def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network)
     return
 
 
-def save_nifti_parcels_map(ID, dir_path, mask, network, net_parcels_map_nifti):
-    if mask:
+def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
+    if roi:
         if network:
-            net_parcels_nii_path = "%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_parcels_masked_', network, '_', str(os.path.basename(mask).split('.')[0]), '.nii.gz')
+            net_parcels_nii_path = "%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_parcels_masked_', network, '_', str(os.path.basename(roi).split('.')[0]), '.nii.gz')
         else:
-            net_parcels_nii_path = "%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_parcels_masked_', str(os.path.basename(mask).split('.')[0]), '.nii.gz')
+            net_parcels_nii_path = "%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_parcels_masked_', str(os.path.basename(roi).split('.')[0]), '.nii.gz')
     else:
         if network:
             net_parcels_nii_path = "%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_parcels_', network, '.nii.gz')
@@ -368,19 +368,19 @@ def cuberoot(x):
     return np.sign(x) * np.abs(x)**(1 / 3)
 
 
-def save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes, c_boot):
+def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
     import os
     # Save time series as txt file
-    if mask is None:
+    if roi is None:
         if network is not None:
             out_path_ts = "%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), '_rsn_net_ts.npy')
         else:
             out_path_ts = "%s%s%s%s%s" % (dir_path, '/', ID, "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), '_wb_net_ts.npy')
     else:
         if network is not None:
-            out_path_ts = "%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_', network, "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), '_rsn_net_ts.npy')
+            out_path_ts = "%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(roi).split('.')[0], '_', network, "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), '_rsn_net_ts.npy')
         else:
-            out_path_ts = "%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), '_wb_net_ts.npy')
+            out_path_ts = "%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(roi).split('.')[0], "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), '_wb_net_ts.npy')
     np.save(out_path_ts, ts_within_nodes)
     return
 
@@ -428,7 +428,7 @@ class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
     thr = traits.Any(mandatory=True)
     conn_model = traits.Str(mandatory=True)
     est_path = File(exists=True, mandatory=True, desc="")
-    mask = traits.Any(mandatory=False)
+    roi = traits.Any(mandatory=False)
     prune = traits.Any(mandatory=False)
     node_size = traits.Any(mandatory=False)
     smooth = traits.Any(mandatory=False)
@@ -450,7 +450,7 @@ class ExtractNetStats(BaseInterface):
             self.inputs.thr,
             self.inputs.conn_model,
             self.inputs.est_path,
-            self.inputs.mask,
+            self.inputs.roi,
             self.inputs.prune,
             self.inputs.node_size,
             self.inputs.smooth,
@@ -467,7 +467,7 @@ class Export2PandasInputSpec(BaseInterfaceInputSpec):
     csv_loc = File(exists=True, mandatory=True, desc="")
     ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=False)
-    mask = traits.Any(mandatory=False)
+    roi = traits.Any(mandatory=False)
 
 
 class Export2PandasOutputSpec(TraitedSpec):
@@ -483,7 +483,7 @@ class Export2Pandas(BaseInterface):
             self.inputs.csv_loc,
             self.inputs.ID,
             self.inputs.network,
-            self.inputs.mask)
+            self.inputs.roi)
         setattr(self, '_outpath', out)
         return runtime
 

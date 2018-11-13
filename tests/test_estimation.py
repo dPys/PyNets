@@ -31,7 +31,7 @@ def test_get_conn_matrix_cov():
     dens_thresh = False
     network = 'Default'
     ID = '997'
-    mask = None
+    roi = None
     min_span_tree = False
     disp_filt = False
     parc = None
@@ -48,9 +48,9 @@ def test_get_conn_matrix_cov():
 
     start_time = time.time()
     [conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network,
-    ID, mask, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select,
+    ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select,
     label_names, coords, c_boot] = estimation.get_conn_matrix(time_series, conn_model,
-    dir_path, node_size, smooth, dens_thresh, network, ID, mask, min_span_tree,
+    dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
     disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, vox_array, c_boot)
     print("%s%s%s" %
     ('get_conn_matrix --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
@@ -64,7 +64,7 @@ def test_get_conn_matrix_cov():
     assert dens_thresh is not None
     assert network is not None
     assert ID is not None
-    #assert mask is not None
+    #assert roi is not None
     assert min_span_tree is not None
     assert disp_filt is not None
     #assert parc is not None
@@ -82,7 +82,7 @@ def test_extract_ts_rsn_parc():
     dir_path = base_dir + '/997'
     net_parcels_map_nifti_file = dir_path + '/whole_brain_cluster_labels_PCA200/997_parcels_Default.nii.gz'
     func_file = dir_path + '/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz'
-    mask = None
+    roi = None
     network = 'Default'
     ID = '997'
     smooth = 2
@@ -103,7 +103,7 @@ def test_extract_ts_rsn_parc():
     net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
     [ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select,
     label_names, coords, c_boot] = estimation.extract_ts_parc(net_parcels_map_nifti,
-    conf, func_file, coords, mask, dir_path, ID, network, smooth, atlas_select,
+    conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas_select,
     uatlas_select, label_names, c_boot, boot_size)
     print("%s%s%s" % ('extract_ts_parc --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
@@ -118,7 +118,7 @@ def test_extract_ts_rsn_coords():
     dir_path = base_dir + '/997'
 
     func_file = dir_path + '/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz'
-    mask = None
+    roi = None
     network = 'Default'
     ID = '997'
     conf = None
@@ -136,10 +136,10 @@ def test_extract_ts_rsn_coords():
     label_names = pickle.load(labels_file)
 
     start_time = time.time()
-    [ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot] = \
-        estimation.extract_ts_coords(node_size, conf,
-    func_file, coords, dir_path, ID, mask, network, smooth, atlas_select,
-    uatlas_select, label_names, c_boot, boot_size)
+    [ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select,
+     label_names, coords, c_boot] = estimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi,
+                                                                 network, smooth, atlas_select, uatlas_select,
+                                                                 label_names, c_boot, boot_size)
     print("%s%s%s" % ('extract_ts_coords --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     assert ts_within_nodes is not None
@@ -154,7 +154,7 @@ def test_extract_ts_rsn_coords():
 #     dir_path = base_dir + '/997'
 #     net_parcels_map_nifti_file = dir_path + '/whole_brain_cluster_labels_PCA200/997_parcels_Default.nii.gz'
 #     func_file = dir_path + '/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz'
-#     mask = None
+#     roi = None
 #     network = 'Default'
 #     ID = '997'
 #     conf = None
@@ -164,7 +164,7 @@ def test_extract_ts_rsn_coords():
 #
 #     start_time = time.time()
 #     net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
-#     ts_within_nodes = estimation.extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path,
+#     ts_within_nodes = estimation.extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path,
 #                                                       ID, network, fast=True)
 #     print("%s%s%s" % ('extract_ts_parc (fast) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 #     assert ts_within_nodes is not None
@@ -174,7 +174,7 @@ def test_extract_ts_rsn_coords():
 #     base_dir = str(Path(__file__).parent/"examples")
 #     dir_path = base_dir + '/997'
 #     func_file = dir_path + '/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz'
-#     mask = None
+#     roi = None
 #     network = 'Default'
 #     ID = '997'
 #     conf = None
@@ -184,7 +184,7 @@ def test_extract_ts_rsn_coords():
 #     coords = pickle.load(file_)
 #
 #     start_time = time.time()
-#     ts_within_nodes = estimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network,
+#     ts_within_nodes = estimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, network,
 #                                                         fast=True)
 #     print("%s%s%s" % ('extract_ts_coords (fast) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 #     assert ts_within_nodes is not None

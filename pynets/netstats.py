@@ -823,7 +823,7 @@ def most_important(G):
 
 
 # Extract network metrics interface
-def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_size, smooth, c_boot):
+def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_size, smooth, c_boot):
     import pandas as pd
     import yaml
     try:
@@ -901,11 +901,11 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
 
     if save_gephi is True:
         # Save G as gephi file
-        if mask:
+        if roi:
             if network:
-                nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_', os.path.basename(mask).split('.')[0], '_', thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.graphml') if float(smooth) > 0 else 'nosm.graphml')))
+                nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_', os.path.basename(roi).split('.')[0], '_', thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.graphml') if float(smooth) > 0 else 'nosm.graphml')))
             else:
-                nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(mask).split('.')[0], '_', thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.graphml') if float(smooth) > 0 else 'nosm.graphml')))
+                nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(roi).split('.')[0], '_', thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.graphml') if float(smooth) > 0 else 'nosm.graphml')))
         else:
             if network:
                 nx.write_graphml(G, "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_', thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.graphml') if float(smooth) > 0 else 'nosm.graphml')))
@@ -1303,8 +1303,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
             print('Rich club coefficient cannot be calculated for graph G')
             pass
 
-    if mask:
-        met_list_picke_path = "%s%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list', "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), os.path.basename(mask).split('.')[0])
+    if roi:
+        met_list_picke_path = "%s%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list', "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), os.path.basename(roi).split('.')[0])
     else:
         if network:
             met_list_picke_path = "%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list_', network)
@@ -1313,7 +1313,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_si
     pickle.dump(metric_list_names, open(met_list_picke_path, 'wb'), protocol=2)
 
     # And save results to csv
-    out_path = utils.create_csv_path(ID, network, conn_model, thr, mask, dir_path, node_size, smooth, c_boot)
+    out_path = utils.create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot)
     np.savetxt(out_path, net_met_val_list_final, delimiter='\t')
 
     if frag is True:

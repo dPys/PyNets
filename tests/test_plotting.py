@@ -29,7 +29,7 @@ def test_plot_conn_mat_nonet_no_mask():
     c_boot = 2
     conn_model = 'sps'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
-    mask = None
+    roi = None
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.94.txt')
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path, 'rb')
@@ -37,7 +37,7 @@ def test_plot_conn_mat_nonet_no_mask():
 
     start_time = time.time()
     plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path,
-    ID, network, label_names, mask, thr, node_size, smooth, c_boot)
+    ID, network, label_names, roi, thr, node_size, smooth, c_boot)
     print("%s%s%s" % ('plot_conn_mat_func --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -55,7 +55,7 @@ def test_plot_conn_mat_nonet_mask():
     c_boot = 3
     conn_model = 'sps'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
-    mask = None
+    roi = None
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.94.txt')
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path,'rb')
@@ -63,7 +63,7 @@ def test_plot_conn_mat_nonet_mask():
 
     start_time = time.time()
     plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path,
-    ID, network, label_names, mask, thr, node_size, smooth, c_boot)
+    ID, network, label_names, roi, thr, node_size, smooth, c_boot)
     print("%s%s%s" % ('plot_conn_mat_func (Masking version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -82,7 +82,7 @@ def test_plot_all_nonet_no_mask():
     conn_model = 'sps'
     parlistfile = None
     atlas_select = 'whole_brain_cluster_labels_PCA200'
-    mask = None
+    roi = None
     prune = 1
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.94.txt')
     edge_threshold = '99%'
@@ -96,7 +96,7 @@ def test_plot_all_nonet_no_mask():
     start_time = time.time()
     #coords already a list
     plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID,
-    network, label_names, mask, coords, edge_threshold, thr, node_size, smooth,
+    network, label_names, roi, coords, edge_threshold, thr, node_size, smooth,
     prune, parlistfile, c_boot)
     print("%s%s%s" % ('plot_all --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
@@ -117,7 +117,7 @@ def test_plot_all_nonet_with_mask():
     conn_model = 'sps'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     parlistfile = None
-    mask = None
+    roi = None
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.94.txt')
     edge_threshold = '99%'
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
@@ -130,7 +130,7 @@ def test_plot_all_nonet_with_mask():
     start_time = time.time()
     #coords already a list
     plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID,
-    network, label_names, mask, coords, edge_threshold, thr, node_size, smooth,
+    network, label_names, roi, coords, edge_threshold, thr, node_size, smooth,
     prune, parlistfile, c_boot)
     print("%s%s%s" % ('plot_all (Masking version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
@@ -217,12 +217,12 @@ def test_plot_conn_mat_rois_gt_100():
 #     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
 #     labels_file = open(labels_file_path,'rb')
 #     label_names = pickle.load(labels_file)
-#     mask = None
+#     roi = None
 #     thr = 0.95
 #     node_size = 2
 #     smooth = 2
 #
-#     plotting.plot_conn_mat_struct(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, mask, thr,
+#     plotting.plot_conn_mat_struct(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, roi, thr,
 #                                   node_size, smooth)
 
 # def test_structural_plotting():
@@ -238,7 +238,7 @@ def test_plot_conn_mat_rois_gt_100():
 #     bedpostx_dir = base_dir + 'bedpostx_s002.bedpostX'
 #     network = None
 #     parc = True
-#     mask = None
+#     roi = None
 #     coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
 #     coord_file = open(coord_file_path, 'rb')
 #     coords = pickle.load(coord_file)
@@ -247,7 +247,7 @@ def test_plot_conn_mat_rois_gt_100():
 #     node_size = 2
 #     smooth = 2
 #
-#     plotting.structural_plotting(conn_matrix, label_names, atlas_select, ID, bedpostx_dir, network, parc, mask, coords,
+#     plotting.structural_plotting(conn_matrix, label_names, atlas_select, ID, bedpostx_dir, network, parc, roi, coords,
 #                                  dir_path, conn_model, thr, node_size, smooth)
 
 
