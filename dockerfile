@@ -1,5 +1,8 @@
 FROM debian:stretch-slim
 
+# Pre-cache neurodebian key
+COPY docker/files/neurodebian.gpg /root/.neurodebian.gpg
+
 ARG DEBIAN_FRONTEND="noninteractive"
 
 ENV LANG="C.UTF-8" \
@@ -35,11 +38,9 @@ RUN apt-get update -qq \
 
 # Add Neurodebian package repositories (i.e. for FSL)
 RUN apt-get update && apt-get install -my wget gnupg
-ENV NEURODEBIAN_URL http://neuro.debian.net/lists/stretch.us-tn.full
-RUN wget -O- $NEURODEBIAN_URL | tee /etc/apt/sources.list.d/neurodebian.sources.list && \
-    apt-key adv --recv-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 && \
-#    apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
-#    apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9 && \
+RUN curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
+    apt-key add /root/.neurodebian.gpg && \
+    (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true) && \
     apt-get update -qq
 RUN apt-get update -qq && apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates 
 
@@ -64,7 +65,7 @@ RUN conda install -yq \
     && conda clean -tipsy \
 #    && pip install scipy scikit-learn>=0.19 \
 #    && pip install -e git://github.com/dPys/nilearn.git#egg=0.4.2 \
-    && pip install pynets==0.7.28
+    && pip install pynets==0.7.29
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py

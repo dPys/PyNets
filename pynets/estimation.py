@@ -15,17 +15,17 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
     from sklearn.covariance import GraphicalLassoCV
 
     conn_matrix = None
-    if conn_model == 'corr':
+    if conn_model == 'corr' or conn_model == 'cor' or conn_model == 'correlation':
         # credit: nilearn
         print('\nComputing correlation matrix...\n')
         conn_measure = ConnectivityMeasure(kind='correlation')
         conn_matrix = conn_measure.fit_transform([time_series])[0]
-    elif conn_model == 'partcorr':
+    elif conn_model == 'partcorr' or conn_model == 'parcorr' or conn_model == 'partialcorrelation':
         # credit: nilearn
         print('\nComputing partial correlation matrix...\n')
         conn_measure = ConnectivityMeasure(kind='partial correlation')
         conn_matrix = conn_measure.fit_transform([time_series])[0]
-    elif conn_model == 'cov' or conn_model == 'sps':
+    elif conn_model == 'cov' or conn_model == 'covariance' or conn_model == 'covar' or conn_model == 'sps' or conn_model == 'sparse' or conn_model == 'precision':
         # Fit estimator to matrix to get sparse matrix
         estimator_shrunk = None
         estimator = GraphicalLassoCV(cv=5)
@@ -55,15 +55,15 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
             except ValueError:
                 print('Unstable Lasso estimation! Shrinkage failed. A different connectivity model may be needed.')
         if estimator is None and estimator_shrunk is None:
-            raise RuntimeError('ERROR: Covariance estimation failed.')
-        if conn_model == 'sps':
+            raise RuntimeError('\nERROR: Covariance estimation failed.')
+        if conn_model == 'sps' or conn_model == 'sparse' or conn_model == 'precision':
             if estimator_shrunk is None:
                 print('\nFetching precision matrix from covariance estimator...\n')
                 conn_matrix = -estimator.precision_
             else:
                 print('\nFetching shrunk precision matrix from covariance estimator...\n')
                 conn_matrix = -estimator_shrunk.precision_
-        elif conn_model == 'cov':
+        elif conn_model == 'cov' or conn_model == 'covariance' or conn_model == 'covar':
             if estimator_shrunk is None:
                 print('\nFetching covariance matrix from covariance estimator...\n')
                 conn_matrix = estimator.covariance_
@@ -132,10 +132,10 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         model.fit(time_series)
         conn_matrix = -model.estimator_.precision_
     else:
-        raise ValueError('ERROR! No connectivity model specified at runtime. Select a valid estimator using the -mod flag.')
+        raise ValueError('\nERROR! No connectivity model specified at runtime. Select a valid estimator using the -mod flag.')
 
     if conn_matrix.shape < (2, 2):
-        raise RuntimeError('ERROR! Matrix estimation selection yielded an empty or 1-dimensional graph. Check time-series for errors or try using a different atlas')
+        raise RuntimeError('\nERROR! Matrix estimation selection yielded an empty or 1-dimensional graph. Check time-series for errors or try using a different atlas')
 
     coords = np.array(coords)
     label_names = np.array(label_names)
@@ -255,7 +255,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     #                                              standardize=True)
     ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
     if ts_within_nodes is None:
-        raise RuntimeError('ERROR: Time-series extraction failed!')
+        raise RuntimeError('\nERROR: Time-series extraction failed!')
     if float(c_boot) > 0:
         print("%s%s%s" % ('Performing circular block bootstrapping iteration: ', c_boot, '...'))
         ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
@@ -297,9 +297,9 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
             print("%s%s%s" % ('Performing circular block bootstrapping iteration: ', c_boot, '...'))
             ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
         if ts_within_nodes is None:
-            raise RuntimeError('ERROR: Time-series extraction failed!')
+            raise RuntimeError('\nERROR: Time-series extraction failed!')
     else:
-        raise RuntimeError('ERROR: Cannot extract time-series from an empty list of coordinates. \nThis usually means that no nodes were generated based on the specified conditions at runtime (e.g. atlas was overly restricted by an RSN or some user-defined mask.')
+        raise RuntimeError('\nERROR: Cannot extract time-series from an empty list of coordinates. \nThis usually means that no nodes were generated based on the specified conditions at runtime (e.g. atlas was overly restricted by an RSN or some user-defined mask.')
 
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
                         len(coords), ' coordinate ROI\'s'))

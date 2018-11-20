@@ -17,10 +17,10 @@ def get_parser():
                         required=False,
                         help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR multiple paths to multiple preprocessed functional images in standard space and in .nii or .nii.gz format, separated by commas OR the path to a text file containing a list of paths to subject files.\n')
     parser.add_argument('-m',
-                        metavar='Path to binarized mask image to apply to regions before extracting signals.',
+                        metavar='Path to binarized mask image to apply to regions before extracting signals',
                         default=None,
                         required=False,
-                        help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR multiple paths to multiple preprocessed functional images in standard space and in .nii or .nii.gz format, separated by commas OR the path to a text file containing a list of paths to subject files.\n')
+                        help='Specify either a path to a binarized brain mask image in standard space and in .nii or .nii.gz format OR multiple paths to multiple brain mask images in the case of running multiple participants, in which case paths should be separated by comma.\n')
     parser.add_argument('-g',
                         metavar='Path to graph file input.',
                         default=None,
@@ -81,7 +81,7 @@ def get_parser():
     parser.add_argument('-conf',
                         metavar='Confound regressor file (.tsv/.csv format)',
                         default=None,
-                        help='Optionally specify a path to a confound regressor file to reduce noise in the time-series estimation for the graph. This can also be a list of paths, separated by comma and of equivalent length to the list of input files indicated with the -i flag.\n')
+                        help='Optionally specify a path to a confound regressor file to reduce noise in the time-series estimation for the graph. This can also be a list of paths in the case of running multiple subjects, which requires separated by comma and of equivalent length to the list of input files indicated with the -i flag.\n')
     parser.add_argument('-anat',
                         metavar='Path to preprocessed anatomical image',
                         default=None,
@@ -371,6 +371,12 @@ def build_workflow(args, retval):
             conf = list(str(conf).split(','))
             if len(conf) != len(subjects_list):
                 raise ValueError("Error: Length of confound regressor list does not correspond to length of input file list.")
+
+    if mask:
+        if ',' in mask:
+            mask = list(str(mask).split(','))
+            if len(mask) != len(subjects_list):
+                raise ValueError("Error: Length of brain mask list does not correspond to length of input file list.")
 
     if anat_loc is not None and dwi_dir is None:
         raise RuntimeWarning('Warning: anatomical image specified, but no bedpostx directory specified. Anatomical images are only supported for structural connectome estimation at this time.')
@@ -1005,6 +1011,10 @@ def build_workflow(args, retval):
                 conf_sub = conf[i]
             else:
                 conf_sub = None
+            if mask:
+                mask_sub = mask[i]
+            else:
+                mask_sub = None
             wf_single_subject = init_wf_single_subject(
                 ID=ID[i], input_file=_file, atlas_select=atlas_select,
                 network=network, node_size=node_size, roi=roi, thr=thr, uatlas_select=uatlas_select,
@@ -1017,7 +1027,8 @@ def build_workflow(args, retval):
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
                 min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type, use_AAL_naming=use_AAL_naming,
                 multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
-                clust_type=clust_type, clust_type_list=clust_type_list, c_boot=c_boot, block_size=block_size, mask=mask)
+                clust_type=clust_type, clust_type_list=clust_type_list, c_boot=c_boot, block_size=block_size,
+                mask=mask_sub)
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if input_file:

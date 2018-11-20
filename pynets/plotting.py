@@ -111,7 +111,7 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, netw
         print("%s%s%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities using γ=', str(gamma), '...'))
         plotting.plot_community_conn_mat(conn_matrix, label_names, out_path_fig_comm, node_comm_aff_mat)
     except:
-        print('WARNING: Louvain community detection failed. Cannot plot community matrix...')
+        print('\nWARNING: Louvain community detection failed. Cannot plot community matrix...')
 
     return
 
@@ -184,7 +184,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
                 [node_comm_aff_mat, q] = modularity_louvain_und_sign(conn_matrix, gamma=float(gamma * 0.01))
             print("%s%s%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities using γ=', str(gamma), '...'))
         except:
-            print('WARNING: Louvain community detection failed. Proceeding with single community affiliation vector...')
+            print('\nWARNING: Louvain community detection failed. Proceeding with single community affiliation vector...')
             node_comm_aff_mat = np.ones(conn_matrix.shape[0]).astype('int')
         clust_levels = len(node_comm_aff_mat)
         clust_levels_tmp = int(clust_levels) - 1
@@ -464,13 +464,13 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
         else:
             node_size_plot = int(node_size)
         if len(coords) != conn_matrix.shape[0]:
-            raise RuntimeWarning('WARNING: Number of coordinates does not match conn_matrix dimensions. If you are using disparity filtering, try relaxing the α threshold.')
+            raise RuntimeWarning('\nWARNING: Number of coordinates does not match conn_matrix dimensions. If you are using disparity filtering, try relaxing the α threshold.')
         else:
             connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap='Blues', edge_vmax=float(z_max),
                                  edge_vmin=float(z_min), node_size=node_size_plot, node_color='auto')
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
     else:
-        raise RuntimeError('ERROR: no coordinates to plot! Are you running plotting outside of pynets\'s internal estimation schemes?')
+        raise RuntimeError('\nERROR: no coordinates to plot! Are you running plotting outside of pynets\'s internal estimation schemes?')
     return
 
 

@@ -29,7 +29,7 @@ def export_to_pandas(csv_loc, ID, network, roi):
 
     # Check for existence of csv_loc
     if os.path.isfile(csv_loc) is False:
-        raise FileNotFoundError('\n\n\nERROR: Missing netmetrics csv file output. Cannot export to pandas df!')
+        raise FileNotFoundError('\nERROR: Missing netmetrics csv file output. Cannot export to pandas df!')
 
     if roi is not None:
         if network is not None:
@@ -171,27 +171,27 @@ def flatten(l):
             yield el
 
 
-# def random_forest_ensemble(df_in):
-#     import pandas as pd
-#     from sklearn.ensemble import RandomForestRegressor
-#     #from sklearn.model_selection import cross_val_score
-#     from random import randint
-#     estimator = RandomForestRegressor(random_state=0, n_estimators=100)
-#     df_train = df_in.drop(columns=['modularity', 'average_diversity_coefficient'])
-#
-#     for column in list(df_train.columns):
-#         try:
-#             df_train[column] = (df_train[column].str.split()).apply(lambda x: float(x[0]))
-#         except:
-#             continue
-#
-#     y = df_train.T[randint(1, len(df_train.T))]
-#     df_train_in = df_train.T
-#     #full_scores = cross_val_score(estimator, np.array(df_train_in), np.array(y), scoring='neg_mean_squared_error', cv=5)
-#     fit = estimator.fit(df_train_in, y)
-#     df = pd.DataFrame(fit.predict(df_train_in)).T
-#     df.columns = list(df_train.T.index)
-#     return df
+def random_forest_ensemble(df_in):
+    import pandas as pd
+    from sklearn.ensemble import RandomForestRegressor
+    #from sklearn.model_selection import cross_val_score
+    from random import randint
+    estimator = RandomForestRegressor(random_state=0, n_estimators=100)
+    df_train = df_in.drop(columns=['modularity', 'average_diversity_coefficient'])
+
+    for column in list(df_train.columns):
+        try:
+            df_train[column] = (df_train[column].str.split()).apply(lambda x: float(x[0]))
+        except:
+            continue
+
+    y = df_train.T[randint(1, len(df_train.T))]
+    df_train_in = df_train.T
+    #full_scores = cross_val_score(estimator, np.array(df_train_in), np.array(y), scoring='neg_mean_squared_error', cv=5)
+    fit = estimator.fit(df_train_in, y)
+    df = pd.DataFrame(fit.predict(df_train_in)).T
+    df.columns = list(df_train.T.index)
+    return df
 
 
 def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
