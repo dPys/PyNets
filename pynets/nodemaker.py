@@ -286,7 +286,7 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_over
     nib.save(resampled_parcels_map_nifti, resampled_parcels_nii_path)
     mask_img.uncache()
     resampled_parcels_map_nifti.uncache()
-    if len(parcel_list_adj) <= 1:
+    if coords_adj and len(coords_adj) <= 1:
         raise ValueError('\nERROR: ROI mask was likely too restrictive and yielded < 2 remaining parcels')
 
     return coords_adj, label_names_adj, parcel_list_adj

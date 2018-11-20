@@ -232,10 +232,19 @@ def normalize(v):
 
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas_select,
                     uatlas_select, label_names, c_boot, block_size, mask):
+    import os.path
     from nilearn import input_data
     # from pynets.estimation import extract_ts_parc_fast
     from pynets import utils
     #from sklearn.externals.joblib import Memory
+
+    if not os.path.isfile(func_file):
+        raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag exist(s)')
+
+    if conf:
+        if not os.path.isfile(conf):
+            raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the -conf flag exist(s)')
+
 
     # if fast is True:
     #     ts_within_nodes = extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path)
@@ -270,10 +279,18 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
 
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, network, smooth, atlas_select,
                       uatlas_select, label_names, c_boot, block_size, mask):
+    import os.path
     from nilearn import input_data
     # from pynets.estimation import extract_ts_coords_fast
     from pynets import utils
     #from sklearn.externals.joblib import Memory
+
+    if not os.path.isfile(func_file):
+        raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag exist(s)')
+
+    if conf:
+        if not os.path.isfile(conf):
+            raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the -conf flag exist(s)')
 
     # if fast is True:
     #     ts_within_nodes = extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path)
