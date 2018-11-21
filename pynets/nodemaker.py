@@ -168,14 +168,13 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
     coords_vox = []
     for i in coords:
         coords_vox.append(mmToVox(bna_img, i))
-    coords_vox = list(tuple(x) for x in coords_vox)
+    coords_vox = list(tuple(map(lambda y: isinstance(y, float) and int(round(y, 0)), x)) for x in coords_vox)
     if parc is False:
         i = -1
         RSN_parcels = None
         RSN_coords_vox = []
         net_label_names = []
         for coord in coords_vox:
-            coord = tuple(map(lambda x: isinstance(x, float) and int(round(x, 1)), coord))
             sphere_vol = np.zeros(RSNmask.shape, dtype=bool)
             sphere_vol[tuple(coord)] = 1
             i = i + 1
@@ -301,10 +300,9 @@ def coord_masker(roi, coords, label_names, error):
     coords_vox = []
     for i in coords:
         coords_vox.append(mmToVox(mask_aff, i))
-    coords_vox = list(tuple(x) for x in coords_vox)
+    coords_vox = list(tuple(map(lambda y: isinstance(y, float) and int(round(y, 0)), x)) for x in coords_vox)
     bad_coords = []
     for coord in coords_vox:
-        coord = tuple(map(lambda x: isinstance(x, float) and int(round(x, 1)), coord))
         sphere_vol = np.zeros(mask_data.shape, dtype=bool)
         sphere_vol[tuple(coord)] = 1
         if (mask_data & sphere_vol).any():
