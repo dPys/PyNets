@@ -1,0 +1,59 @@
+Node: Meta_wf_997 (functional_connectometry_997 (extract_ts_node (utility)
+==========================================================================
+
+
+ Hierarchy : Wf_single_subject_997_1000.Meta_wf_997.functional_connectometry_997.extract_ts_node
+ Exec ID : extract_ts_node
+
+
+Original Inputs
+---------------
+
+
+* ID : 997
+* atlas_select : coords_dosenbach_2010
+* conf : None
+* coords : [(18, -81, -33), (-21, -79, -33), (-6, -79, -33), (33, -73, -30), (-34, -67, -29), (32, -61, -31), (-25, -60, -34), (-37, -54, -37), (21, -64, -22), (-34, -57, -24), (-24, -54, -21), (-28, -44, -25), (5, -75, -11), (14, -75, -21), (-11, -72, -14), (1, -66, -24), (-16, -64, -21), (-6, -60, -15), (-2, 30, 27), (-52, -63, 15), (27, 49, 26), (-41, -47, 29), (-36, 18, 2), (38, 21, -1), (11, -24, 2), (-20, 6, 7), (14, 6, 7), (-6, 17, 34), (9, 20, 34), (54, -31, -18), (0, 15, 45), (-30, -14, 1), (32, -12, 2), (37, -2, -3), (-55, -44, 30), (58, -41, 20), (-4, -31, -4), (-30, -28, 9), (8, -40, 50), (42, -46, 21), (-59, -47, 11), (43, -43, 8), (51, -30, 5), (-12, -12, 6), (11, -12, 6), (-12, -3, 13), (-48, 6, 1), (-46, 10, 14), (51, 23, 8), (34, 32, 7), (9, 39, 20), (-36, -69, 40), (-25, 51, 27), (-48, -63, 35), (51, -59, 34), (28, -37, -15), (-61, -41, -2), (-59, -25, -15), (52, -15, -13), (0, 51, 32), (-42, -76, 26), (-2, -75, 32), (-9, -72, 41), (45, -72, 29), (-28, -42, -11), (-11, -58, 17), (10, -55, 17), (-5, -52, 17), (-5, -43, 25), (-8, -41, 3), (1, -26, 31), (11, -68, 42), (-6, -56, 29), (5, -50, 33), (9, -43, 25), (-3, -38, 45), (-16, 29, 54), (23, 33, 47), (46, 39, -15), (8, 42, -5), (-11, 45, 17), (-6, 50, -1), (9, 51, 16), (6, 64, 3), (-1, 28, 40), (44, -52, 47), (-53, -50, 39), (-48, -47, 49), (54, -44, 43), (-41, -40, 42), (32, -59, 41), (-32, -58, 46), (29, 57, 18), (-29, 57, 10), (-42, 7, 36), (44, 8, 34), (40, 17, 40), (-44, 27, 33), (46, 28, 31), (40, 36, 29), (-35, -46, 48), (-52, 28, 17), (-43, 47, 2), (42, 48, -3), (39, 42, 16), (20, -78, -2), (15, -77, 32), (-16, -76, 33), (9, -76, 14), (-29, -75, 28), (29, -73, 29), (39, -71, 13), (17, -68, 20), (19, -66, -1), (-44, -63, -7), (-34, -60, -5), (36, -60, -8), (-18, -50, 1), (-4, -94, 12), (13, -91, 2), (27, -91, 2), (-29, -88, 8), (-37, -83, -2), (29, -81, 14), (33, -81, -2), (-5, -80, 9), (46, -62, 5), (0, -1, 52), (60, 8, 34), (53, -3, 32), (58, 11, 14), (33, -12, 16), (-36, -12, 15), (-42, -3, 11), (-24, -30, 64), (18, -27, 62), (-38, -27, 60), (41, -23, 55), (-55, -22, 38), (46, -20, 45), (-47, -18, 50), (-38, -15, 59), (-47, -12, 36), (-26, -8, 54), (42, -24, 17), (-41, -31, 48), (10, 5, 51), (-54, -22, 22), (44, -11, 38), (-54, -9, 23), (46, -8, 24), (-44, -6, 49), (58, -3, 17), (34, -39, 65), (-41, -37, 16), (-53, -37, 13), (-54, -22, 9), (59, -13, 8), (43, 1, 12), (-55, 7, 23)]
+* dir_path : /Users/PSYC-dap3463/Applications/PyNets/tests/examples/997/coords_dosenbach_2010
+* func_file : /Users/PSYC-dap3463/Applications/PyNets/tests/examples/997/filtered_func_data_clean_standard.nii.gz
+* function_str : def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network, smooth, atlas_select, uatlas_select,
+                      label_names):
+    from nilearn import input_data
+    # from pynets.graphestimation import extract_ts_coords_fast
+    from pynets import utils
+    #from sklearn.externals.joblib import Memory
+
+    # if fast is True:
+    #     ts_within_nodes = extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path)
+    # else:
+    detrending = True
+    # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
+    #                                                standardize=True, smoothing_fwhm=float(smooth),
+    #                                                detrend=detrending,
+    #                                                memory=Memory(cachedir="%s%s%s" % (dir_path,
+    #                                                                                   '/SpheresMasker_cache_',
+    #                                                                                   str(ID)), verbose=2),
+    #                                                memory_level=1)
+    spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
+                                                   standardize=True, smoothing_fwhm=float(smooth),
+                                                   detrend=detrending)
+    # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
+    #                                                standardize=True, verbose=1)
+    ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
+
+    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
+                        len(coords), ' coordinate ROI\'s'))
+    print("%s%s%s" % ('Using node radius: ', node_size, ' mm'))
+    print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
+    # Save time series as txt file
+    utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)
+    return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords
+
+* label_names : ["inf cerebellum' 155", "inf cerebellum' 150", "inf cerebellum' 151", "inf cerebellum' 140", "inf cerebellum' 131", "inf cerebellum' 122", "inf cerebellum' 121", "inf cerebellum' 110", "lat cerebellum' 128", "lat cerebellum' 113", "lat cerebellum' 109", "lat cerebellum' 98", "med cerebellum' 143", "med cerebellum' 144", "med cerebellum' 138", "med cerebellum' 130", "med cerebellum' 127", "med cerebellum' 120", "ACC' 19", "TPJ' 125", "aPFC' 8", "angular gyrus' 102", "ant insula' 28", "ant insula' 26", "asal ganglia' 71", "asal ganglia' 38", "asal ganglia' 39", "asal ganglia' 30", "dACC' 27", "fusiform' 81", "mFC' 31", "mid insula' 61", "mid insula' 59", "mid insula' 44", "parietal' 97", "parietal' 89", "post cingulate' 80", "post insula' 76", "precuneus' 87", "sup temporal' 100", "temporal' 103", "temporal' 95", "temporal' 78", "thalamus' 57", "thalamus' 58", "thalamus' 47", "vFC' 40", "vFC' 33", "vFC' 25", "vPFC' 18", "ACC' 14", "IPS' 134", "aPFC' 5", "angular gyrus' 124", "angular gyrus' 117", "fusiform' 84", "inf temporal' 91", "inf temporal' 72", "inf temporal' 63", "mPFC' 4", "occipital' 146", "occipital' 141", "occipital' 136", "occipital' 137", "occipital' 92", "post cingulate' 115", "post cingulate' 111", "post cingulate' 108", "post cingulate' 93", "post cingulate' 90", "post cingulate' 73", "precuneus' 132", "precuneus' 112", "precuneus' 105", "precuneus' 94", "precuneus' 85", "sup frontal' 20", "sup frontal' 17", "vlPFC' 15", "vmPFC' 13", "vmPFC' 11", "vmPFC' 7", "vmPFC' 6", "vmPFC' 1", "ACC' 21", "IPL' 107", "IPL' 104", "IPL' 101", "IPL' 96", "IPL' 88", "IPS' 116", "IPS' 114", "aPFC' 2", "aPFC' 3", "dFC' 36", "dFC' 34", "dFC' 29", "dlPFC' 24", "dlPFC' 22", "dlPFC' 16", "post parietal' 99", "vPFC' 23", "vent aPFC' 10", "vent aPFC' 9", "vlPFC' 12", "occipital' 149", "occipital' 148", "occipital' 145", "occipital' 147", "occipital' 142", "occipital' 139", "occipital' 135", "occipital' 133", "occipital' 129", "occipital' 126", "occipital' 118", "occipital' 119", "occipital' 106", "post occipital' 160", "post occipital' 158", "post occipital' 159", "post occipital' 157", "post occipital' 156", "post occipital' 153", "post occipital' 154", "post occipital' 152", "temporal' 123", "SMA' 43", "dFC' 35", "frontal' 45", "frontal' 32", "mid insula' 55", "mid insula' 56", "mid insula' 48", "parietal' 77", "parietal' 74", "parietal' 75", "parietal' 69", "parietal' 66", "parietal' 65", "parietal' 64", "parietal' 62", "parietal' 54", "parietal' 50", "post insula' 70", "post parietal' 79", "pre-SMA' 41", "precentral gyrus' 67", "precentral gyrus' 53", "precentral gyrus' 52", "precentral gyrus' 51", "precentral gyrus' 49", "precentral gyrus' 46", "sup parietal' 86", "temporal' 82", "temporal' 83", "temporal' 68", "temporal' 60", "vFC' 42", "vFC' 37"]
+* mask : None
+* net_parcels_map_nifti : None
+* network : None
+* node_size : 4
+* smooth : 0
+* uatlas_select : None
+

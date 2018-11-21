@@ -58,7 +58,9 @@ def test_nodemaker_tools_parlistfile_RSN():
 
     parcel_list = nodemaker.gen_img_list(parlistfile)
 
-    [net_coords, net_parcel_list, net_label_names, network] = nodemaker.get_node_membership(network, func_file, coords, label_names, parc, parcel_list)
+    [net_coords, net_parcel_list, net_label_names, network] = nodemaker.get_node_membership(network, func_file, coords,
+                                                                                            label_names, parc,
+                                                                                            parcel_list)
     print("%s%s%s" % ('get_node_membership --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
@@ -98,8 +100,8 @@ def test_nodemaker_tools_nilearn_coords_RSN():
     str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
-    [net_coords, _, net_label_names, network] = nodemaker.get_node_membership(network, func_file, coords, label_names, parc,
-    parcel_list)
+    [net_coords, _, net_label_names, network] = nodemaker.get_node_membership(network, func_file, coords, label_names,
+                                                                              parc, parcel_list)
     print("%s%s%s" % ('get_node_membership --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -132,14 +134,18 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
 
     start_time = time.time()
     parcel_list = nodemaker.gen_img_list(parlistfile)
-    [net_coords, net_parcel_list, net_label_names, network] = nodemaker.get_node_membership(network, func_file, coords, label_names, parc,
-    parcel_list)
+    [net_coords, net_parcel_list, net_label_names, network] = nodemaker.get_node_membership(network, func_file, coords,
+                                                                                            label_names, parc,
+                                                                                            parcel_list)
     print("%s%s%s" % ('get_node_membership --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
-    [net_coords_masked, net_label_names_masked, net_parcel_list_masked] = nodemaker.parcel_masker(mask, net_coords, net_parcel_list, net_label_names,
-    dir_path, ID, perc_overlap)
+    [net_coords_masked, net_label_names_masked, net_parcel_list_masked] = nodemaker.parcel_masker(mask, net_coords,
+                                                                                                  net_parcel_list,
+                                                                                                  net_label_names,
+                                                                                                  dir_path, ID,
+                                                                                                  perc_overlap)
     print("%s%s%s" % ('parcel_masker --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -276,13 +282,16 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
-    [WB_net_parcels_map_nifti_unmasked, WB_coords_unmasked, _, WB_atlas_select, WB_uatlas_select, _] = nodemaker.node_gen(WB_coords, WB_parcel_list, WB_label_names, dir_path, ID, parc, atlas_select, parlistfile)
+    [WB_net_parcels_map_nifti_unmasked, WB_coords_unmasked, _,
+     WB_atlas_select, WB_uatlas_select] = nodemaker.node_gen(WB_coords, WB_parcel_list, WB_label_names, dir_path,
+                                                                ID, parc, atlas_select, parlistfile)
     print("%s%s%s" % ('node_gen (Masking whole-brain version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
-    [WB_net_parcels_map_nifti_masked, WB_coords_masked, WB_label_names_masked, WB_atlas_select, WB_uatlas_select, _] = nodemaker.node_gen_masking(mask, WB_coords, WB_parcel_list, WB_label_names,
-    dir_path, ID, parc, atlas_select, parlistfile)
+    [WB_net_parcels_map_nifti_masked, WB_coords_masked, WB_label_names_masked,
+     WB_atlas_select, WB_uatlas_select] = nodemaker.node_gen_masking(mask, WB_coords, WB_parcel_list, WB_label_names,
+                                                                        dir_path, ID, parc, atlas_select, parlistfile)
     print("%s%s%s" % ('node_gen_masking (Masking whole-brain version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -338,7 +347,8 @@ def test_WB_fetch_nodes_and_labels1():
     parc = True
 
     start_time = time.time()
-    [_, coords, atlas_name, _, parcel_list, par_max, parlistfile, dir_path] = nodemaker.fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file, use_AAL_naming)
+    [_, coords, atlas_name, _, parcel_list, par_max, parlistfile,
+     dir_path] = nodemaker.fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file, use_AAL_naming)
     print("%s%s%s" % ('WB_fetch_nodes_and_labels (Parcel Nodes) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -362,7 +372,8 @@ def test_WB_fetch_nodes_and_labels2():
     parc = False
     use_AAL_naming = True
     start_time = time.time()
-    [_, coords, atlas_name, _, parcel_list, par_max, parlistfile, dir_path] = nodemaker.fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc,
+    [_, coords, atlas_name, _, parcel_list, par_max, parlistfile,
+     dir_path] = nodemaker.fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc,
     func_file, use_AAL_naming)
     print("%s%s%s" % ('WB_fetch_nodes_and_labels (Spherical Nodes) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
@@ -386,8 +397,9 @@ def test_RSN_fetch_nodes_and_labels1():
     use_AAL_naming = True
 
     start_time = time.time()
-    [RSN_label_names, RSN_coords, atlas_name, _, parcel_list, par_max, parlistfile, _] = nodemaker.fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc,
-    func_file, use_AAL_naming)
+    [RSN_label_names, RSN_coords, atlas_name, _, parcel_list, par_max,
+     parlistfile, _] = nodemaker.fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc,
+                                                        func_file, use_AAL_naming)
     print("%s%s%s" % ('RSN_fetch_nodes_and_labels (Parcel Nodes) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 

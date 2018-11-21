@@ -5,42 +5,44 @@ Copyright (C) 2018
 @author: Derek Pisner
 """
 import numpy as np
+import warnings
+warnings.simplefilter("ignore")
 
 
-def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, mask, min_span_tree,
-                    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, vox_array):
+def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
+                    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot):
     from nilearn.connectome import ConnectivityMeasure
-    from sklearn.covariance import GraphLassoCV
+    from sklearn.covariance import GraphicalLassoCV
 
     conn_matrix = None
-    if conn_model == 'corr':
+    if conn_model == 'corr' or conn_model == 'cor' or conn_model == 'correlation':
         # credit: nilearn
         print('\nComputing correlation matrix...\n')
         conn_measure = ConnectivityMeasure(kind='correlation')
         conn_matrix = conn_measure.fit_transform([time_series])[0]
-    elif conn_model == 'partcorr':
+    elif conn_model == 'partcorr' or conn_model == 'parcorr' or conn_model == 'partialcorrelation':
         # credit: nilearn
         print('\nComputing partial correlation matrix...\n')
         conn_measure = ConnectivityMeasure(kind='partial correlation')
         conn_matrix = conn_measure.fit_transform([time_series])[0]
-    elif conn_model == 'cov' or conn_model == 'sps':
+    elif conn_model == 'cov' or conn_model == 'covariance' or conn_model == 'covar' or conn_model == 'sps' or conn_model == 'sparse' or conn_model == 'precision':
         # Fit estimator to matrix to get sparse matrix
         estimator_shrunk = None
-        estimator = GraphLassoCV()
+        estimator = GraphicalLassoCV(cv=5)
         try:
             print('\nComputing covariance...\n')
             estimator.fit(time_series)
         except:
             print('Unstable Lasso estimation--Attempting to re-run by first applying shrinkage...')
             try:
-                from sklearn.covariance import GraphLasso, empirical_covariance, shrunk_covariance
+                from sklearn.covariance import GraphicalLasso, empirical_covariance, shrunk_covariance
                 emp_cov = empirical_covariance(time_series)
                 for i in np.arange(0.8, 0.99, 0.01):
                     shrunk_cov = shrunk_covariance(emp_cov, shrinkage=i)
                     alphaRange = 10.0 ** np.arange(-8, 0)
                     for alpha in alphaRange:
                         try:
-                            estimator_shrunk = GraphLasso(alpha)
+                            estimator_shrunk = GraphicalLasso(alpha)
                             estimator_shrunk.fit(shrunk_cov)
                             print("Retrying covariance matrix estimate with alpha=%s" % alpha)
                             if estimator_shrunk is None:
@@ -53,15 +55,15 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
             except ValueError:
                 print('Unstable Lasso estimation! Shrinkage failed. A different connectivity model may be needed.')
         if estimator is None and estimator_shrunk is None:
-            raise RuntimeError('ERROR: Covariance estimation failed.')
-        if conn_model == 'sps':
+            raise RuntimeError('\nERROR: Covariance estimation failed.')
+        if conn_model == 'sps' or conn_model == 'sparse' or conn_model == 'precision':
             if estimator_shrunk is None:
                 print('\nFetching precision matrix from covariance estimator...\n')
                 conn_matrix = -estimator.precision_
             else:
                 print('\nFetching shrunk precision matrix from covariance estimator...\n')
                 conn_matrix = -estimator_shrunk.precision_
-        elif conn_model == 'cov':
+        elif conn_model == 'cov' or conn_model == 'covariance' or conn_model == 'covar':
             if estimator_shrunk is None:
                 print('\nFetching covariance matrix from covariance estimator...\n')
                 conn_matrix = estimator.covariance_
@@ -129,16 +131,15 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         print('\nCalculating AdaptiveQuicGraphLasso precision matrix using skggm...\n')
         model.fit(time_series)
         conn_matrix = -model.estimator_.precision_
+    else:
+        raise ValueError('\nERROR! No connectivity model specified at runtime. Select a valid estimator using the -mod flag.')
 
-    # Weight reuslting matrix by voxels in each label if using parcels as nodes
-    # if parc is True:
-    #     norm_parcels = (vox_array - min(vox_array)) / (max(vox_array) - min(vox_array))
-    #     conn_matrix_norm = normalize(conn_matrix)
-    #     conn_matrix = norm_parcels * conn_matrix_norm
+    if conn_matrix.shape < (2, 2):
+        raise RuntimeError('\nERROR! Matrix estimation selection yielded an empty or 1-dimensional graph. Check time-series for errors or try using a different atlas')
 
     coords = np.array(coords)
     label_names = np.array(label_names)
-    return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, mask, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords
+    return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot
 
 
 def generate_mask_from_voxels(voxel_coords, volume_dims):
@@ -164,7 +165,7 @@ def normalize(v):
 #     except ImportError:
 #         from io import BytesIO as StringIO
 #     from pynets.nodemaker import get_sphere
-#     from pynets.graphestimation import generate_mask_from_voxels, normalize
+#     from pynets.estimation import generate_mask_from_voxels, normalize
 #     start_time = time.time()
 #     data = nib.load(func_file)
 #     activity_data = data.get_data()
@@ -212,7 +213,7 @@ def normalize(v):
 # def extract_ts_parc_fast(label_file, conf, func_file, dir_path):
 #     import time
 #     import subprocess
-#     from pynets.graphestimation import normalize
+#     from pynets.estimation import normalize
 #     try:
 #         from StringIO import StringIO
 #     except ImportError:
@@ -229,12 +230,21 @@ def normalize(v):
 #     return ts_within_nodes, node_size
 
 
-def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_path, ID, network, smooth, atlas_select,
-                    uatlas_select, label_names):
+def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas_select,
+                    uatlas_select, label_names, c_boot, block_size, mask):
+    import os.path
     from nilearn import input_data
-    # from pynets.graphestimation import extract_ts_parc_fast
+    # from pynets.estimation import extract_ts_parc_fast
     from pynets import utils
     #from sklearn.externals.joblib import Memory
+
+    if not os.path.isfile(func_file):
+        raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag exist(s)')
+
+    if conf:
+        if not os.path.isfile(conf):
+            raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the -conf flag exist(s)')
+
 
     # if fast is True:
     #     ts_within_nodes = extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path)
@@ -249,26 +259,38 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, mask, dir_pa
     #                                              memory_level=1)
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth),
-                                                 detrend=detrending, verbose=2)
+                                                 detrend=detrending, verbose=2, mask_img=mask)
     # parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
     #                                              standardize=True)
     ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
+    if ts_within_nodes is None:
+        raise RuntimeError('\nERROR: Time-series extraction failed!')
+    if float(c_boot) > 0:
+        print("%s%s%s" % ('Performing circular block bootstrapping iteration: ', c_boot, '...'))
+        ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
                         len(coords), ' volumetric ROI\'s'))
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
     # Save time series as txt file
-    utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)
-
+    utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
     node_size = None
-    return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords
+    return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot
 
 
-def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, network, smooth, atlas_select, uatlas_select,
-                      label_names):
+def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, network, smooth, atlas_select,
+                      uatlas_select, label_names, c_boot, block_size, mask):
+    import os.path
     from nilearn import input_data
-    # from pynets.graphestimation import extract_ts_coords_fast
+    # from pynets.estimation import extract_ts_coords_fast
     from pynets import utils
     #from sklearn.externals.joblib import Memory
+
+    if not os.path.isfile(func_file):
+        raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag exist(s)')
+
+    if conf:
+        if not os.path.isfile(conf):
+            raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the -conf flag exist(s)')
 
     # if fast is True:
     #     ts_within_nodes = extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path)
@@ -281,17 +303,25 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, mask, ne
     #                                                                                   '/SpheresMasker_cache_',
     #                                                                                   str(ID)), verbose=2),
     #                                                memory_level=1)
-    spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
-                                                   standardize=True, smoothing_fwhm=float(smooth),
-                                                   detrend=detrending)
-    # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
-    #                                                standardize=True, verbose=1)
-    ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
+    if len(coords) > 0:
+        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
+                                                       standardize=True, smoothing_fwhm=float(smooth),
+                                                       detrend=detrending, verbose=2, mask_img=mask)
+        # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
+        #                                                standardize=True, verbose=1)
+        ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
+        if float(c_boot) > 0:
+            print("%s%s%s" % ('Performing circular block bootstrapping iteration: ', c_boot, '...'))
+            ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
+        if ts_within_nodes is None:
+            raise RuntimeError('\nERROR: Time-series extraction failed!')
+    else:
+        raise RuntimeError('\nERROR: Cannot extract time-series from an empty list of coordinates. \nThis usually means that no nodes were generated based on the specified conditions at runtime (e.g. atlas was overly restricted by an RSN or some user-defined mask.')
 
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
                         len(coords), ' coordinate ROI\'s'))
     print("%s%s%s" % ('Using node radius: ', node_size, ' mm'))
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
     # Save time series as txt file
-    utils.save_ts_to_file(mask, network, ID, dir_path, ts_within_nodes)
-    return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords
+    utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
+    return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot

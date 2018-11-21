@@ -1,0 +1,91 @@
+[
+    {
+        "group": 1,
+        "imports": [],
+        "name": "00_fetch_nodes_and_labels_node",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "00_fetch_nodes_and_labels_node"
+        ],
+        "name": "01_node_gen_node",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "00_fetch_nodes_and_labels_node",
+            "01_node_gen_node"
+        ],
+        "name": "02_extract_ts_node",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "01_node_gen_node",
+            "02_extract_ts_node"
+        ],
+        "name": "03_get_conn_matrix_node",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "03_get_conn_matrix_node"
+        ],
+        "name": "04_thresh_func_node",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "04_thresh_func_node"
+        ],
+        "name": "05_pass_meta_outs_node",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "05_pass_meta_outs_node"
+        ],
+        "name": "06_ExtractNetStats",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "05_pass_meta_outs_node",
+            "06_ExtractNetStats"
+        ],
+        "name": "07_Export2Pandas",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "07_Export2Pandas"
+        ],
+        "name": "08_AggregatePandasPickles",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "08_AggregatePandasPickles"
+        ],
+        "name": "09_CollectPandasDfs",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "04_thresh_func_node"
+        ],
+        "name": "10_plot_all_node",
+        "size": 1
+    }
+]

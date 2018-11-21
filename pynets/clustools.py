@@ -8,7 +8,6 @@ Adapted from Cameron Craddock's PyClusterROI and soon to be replaced with a pypi
 """
 import nibabel as nib
 import numpy as np
-nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 
 # Craddock, R. C.; James, G. A.; Holtzheimer, P. E.; Hu, X. P. & Mayberg, H. S.
 # A whole brain fMRI atlas generated via spatially constrained spectral
@@ -330,3 +329,50 @@ def make_image_from_bin_renum(image, binfile, mask):
     nim_out = nib.Nifti1Image(imdat, nim.get_affine(), nim.get_header())
     #nim_out.set_data_dtype('int16')
     nim_out.to_filename(image)
+
+
+def nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_select):
+    import time
+    import nibabel as nib
+    from nilearn.regions import Parcellations
+    from nilearn.regions import connected_label_regions
+    detrending = True
+
+    start = time.time()
+    func_img = nib.load(func_file)
+    mask_img = nib.load(clust_mask)
+    clust_est = Parcellations(method=clust_type, detrend=detrending, n_parcels=int(k),
+                              mask=mask_img)
+    clust_est.fit(func_img)
+    region_labels = connected_label_regions(clust_est.labels_img_)
+    nib.save(region_labels, uatlas_select)
+    print("%s%s%s" % (clust_type, k, " clusters: %.2fs" % (time.time() - start)))
+    return
+
+
+def individual_tcorr_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
+    import os
+    from pynets import utils, clustools
+
+    nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
+
+    mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
+    atlas_select = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
+    print("%s%s%s%s%s%s%s" % ('\nCreating atlas using ', clust_type, ' at cluster level ', str(k),
+                              ' for ', str(atlas_select), '...\n'))
+    dir_path = utils.do_dir_path(atlas_select, func_file)
+    uatlas_select = "%s%s%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
+
+    if clust_type in nilearn_clust_list:
+        clustools.nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_select)
+    elif clust_type == 'ncut':
+        working_dir = "%s%s%s" % (os.path.dirname(func_file), '/', atlas_select)
+        outfile = "%s%s%s%s" % (working_dir, '/rm_tcorr_conn_', str(ID), '.npy')
+        outfile_parc = "%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID))
+        binfile = "%s%s%s%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID), '_', str(k), '.npy')
+        clustools.make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh)
+        clustools.binfile_parcellate(outfile, outfile_parc, int(k))
+        clustools.make_image_from_bin_renum(uatlas_select, binfile, clust_mask)
+
+    clustering = True
+    return uatlas_select, atlas_select, clustering, clust_mask, k, clust_type
