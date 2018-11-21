@@ -815,7 +815,7 @@ def build_workflow(args, retval):
     # print("%s%s" % ('smooth_list: ', smooth_list))
     # print("%s%s" % ('clust_type: ', clust_type))
     # print("%s%s" % ('clust_type_list: ', clust_type_list))
-    # print("%s%s" % ('c_boot: ', c_boot)
+    # print("%s%s" % ('c_boot: ', c_boot))
     # print("%s%s" % ('block_size: ', block_size))
     # print("%s%s" % ('mask: ', mask))
     # print('\n\n\n\n\n')
@@ -824,7 +824,7 @@ def build_workflow(args, retval):
 
     # Import wf core and interfaces
     import random
-    from pynets.utils import CollectPandasDfs, Export2Pandas, ExtractNetStats, collect_pandas_join
+    from pynets.utils import CollectPandasDfs, Export2Pandas, ExtractNetStats, CollectPandasJoin
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.workflows import workflow_selector
@@ -847,9 +847,10 @@ def build_workflow(args, retval):
                                   'interface_level': 'DEBUG'},
                          monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True})
             logging.update_logging(config)
+            config.update_config(cfg_v)
             config.enable_debug_mode()
             config.enable_resource_monitor()
-            config.update_config(cfg_v)
+
         cfg = dict(execution={'stop_on_first_crash': False, 'crashfile_format': 'txt', 'parameterize_dirs': True,
                               'display_variable': ':0', 'matplotlib_backend': 'Agg',
                               'plugin': str(plugin_type), 'use_relative_paths': True, 'keep_inputs': True,
@@ -909,7 +910,7 @@ def build_workflow(args, retval):
         # Aggregate list of paths to pandas dataframe pickles
         collect_pd_list_net_pickles_node = pe.Node(niu.Function(input_names=['net_pickle_mt'],
                                                                 output_names=['net_pickle_mt_out'],
-                                                                function=collect_pandas_join),
+                                                                function=CollectPandasJoin),
                                                    name="AggregatePandasPickles")
 
         # Combine dataframes across models
@@ -1078,9 +1079,9 @@ def build_workflow(args, retval):
                          monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True,
                                      'summary_file': str(wf_multi.base_dir)})
             logging.update_logging(config)
+            config.update_config(cfg_v)
             config.enable_debug_mode()
             config.enable_resource_monitor()
-            config.update_config(cfg_v)
 
             import logging
             callback_log_path = "%s%s" % (wf_multi.base_dir, '/run_stats.log')
@@ -1099,15 +1100,19 @@ def build_workflow(args, retval):
                 wf_multi.config[key][setting] = value
         wf_multi.write_graph(graph2use="colored", format='png')
         if procmem != 'auto':
-            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+            if verbose is True:
+                from nipype.utils.profiler import log_nodes_cb
+                plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'status_callback': log_nodes_cb}
+            else:
+                plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
             print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
             wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
         else:
             wf_multi.run(plugin=plugin_type)
-        # if verbose is True:
-        #     from nipype.utils.draw_gantt_chart import generate_gantt_chart
-        #     print('Plotting resource profile from run...')
-        #     generate_gantt_chart('/tmp/wf_multi_subject/multi_sub_run_stats.log', cores=int(procmem[0]))
+        if verbose is True:
+            from nipype.utils.draw_gantt_chart import generate_gantt_chart
+            print('Plotting resource profile from run...')
+            generate_gantt_chart('/tmp/wf_multi_subject/multi_sub_run_stats.log', cores=int(procmem[0]))
 
     # Single-subject workflow generator
     else:
@@ -1140,9 +1145,9 @@ def build_workflow(args, retval):
                          monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True,
                                      'summary_file': str(wf.base_dir)})
             logging.update_logging(config)
+            config.update_config(cfg_v)
             config.enable_debug_mode()
             config.enable_resource_monitor()
-            config.update_config(cfg_v)
 
             import logging
             callback_log_path = "%s%s" % (wf.base_dir, '/run_stats.log')
@@ -1170,10 +1175,14 @@ def build_workflow(args, retval):
             wf.run(plugin=plugin_type, plugin_args=plugin_args)
         else:
             wf.run(plugin=plugin_type)
-        # if verbose is True:
-        #     from nipype.utils.draw_gantt_chart import generate_gantt_chart
-        #     print('Plotting resource profile from run...')
-        #     generate_gantt_chart("%s%s" % (wf.base_dir, '/run_stats.log'), cores=int(procmem[0]))
+        if verbose is True:
+            from nipype.utils.draw_gantt_chart import generate_gantt_chart
+            print('Plotting resource profile from run...')
+            generate_gantt_chart("%s%s" % (wf.base_dir, '/run_stats.log'), cores=int(procmem[0]))
+
+    if verbose is True:
+        handler.close()
+        logger.removeHandler(handler)
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)

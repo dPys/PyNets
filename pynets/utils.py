@@ -156,7 +156,7 @@ def pass_meta_outs(conn_model, est_path, network, node_size, smooth, c_boot, thr
     return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, smooth_iterlist, c_boot_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist
 
 
-def collect_pandas_join(net_pickle_mt):
+def CollectPandasJoin(net_pickle_mt):
     net_pickle_mt_out = net_pickle_mt
     return net_pickle_mt_out
 

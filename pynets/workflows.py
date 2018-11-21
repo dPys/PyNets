@@ -20,6 +20,7 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, roi, thr
     from nipype.interfaces import utility as niu
     from pynets.utils import pass_meta_outs
 
+
     # Workflow 1: Functional connectome
     if dwi_dir is None:
         sub_func_wf = workflows.functional_connectometry(input_file, ID, atlas_select, network, node_size,
@@ -54,9 +55,9 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, roi, thr
                               'interface_level': 'DEBUG'},
                      monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True})
         logging.update_logging(config)
+        config.update_config(cfg_v)
         config.enable_debug_mode()
         config.enable_resource_monitor()
-        config.update_config(cfg_v)
     cfg = dict(execution={'stop_on_first_crash': False, 'crashfile_format': 'txt', 'parameterize_dirs': True,
                           'display_variable': ':0', 'job_finished_timeout': 120, 'matplotlib_backend': 'Agg',
                           'plugin': str(plugin_type), 'use_relative_paths': True, 'keep_inputs': True,
@@ -130,9 +131,9 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, roi, thr
     meta_wf.connect([(meta_inputnode, base_wf, [('ID', 'inputnode.ID'),
                                                 ('atlas_select', 'inputnode.atlas_select'),
                                                 ('network', 'inputnode.network'),
+                                                ('thr', 'inputnode.thr'),
                                                 ('node_size', 'inputnode.node_size'),
                                                 ('roi', 'inputnode.roi'),
-                                                ('thr', 'inputnode.thr'),
                                                 ('uatlas_select', 'inputnode.uatlas_select'),
                                                 ('multi_nets', 'inputnode.multi_nets'),
                                                 ('conn_model', 'inputnode.conn_model'),
@@ -316,7 +317,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
     # print("%s%s" % ('smooth_list: ', smooth_list))
     # print("%s%s" % ('clust_type: ', clust_type))
     # print("%s%s" % ('clust_type_list: ', clust_type_list))
-    # print("%s%s" % ('c_boot: ', c_boot)
+    # print("%s%s" % ('c_boot: ', c_boot))
     # print("%s%s" % ('block_size: ', block_size))
     # print("%s%s" % ('mask: ', mask))
     # print('\n\n\n\n\n')
@@ -651,7 +652,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                                              output_names=['net_parcels_map_nifti', 'coords', 'label_names',
                                                            'atlas_select', 'uatlas_select'],
                                              function=nodemaker.node_gen_masking, imports=import_list),
-                                name="node_gen_masking_node")
+                                name="node_gen_node")
     else:
         # Non-masking case
         node_gen_node = pe.Node(niu.Function(input_names=['coords', 'parcel_list', 'label_names', 'dir_path',

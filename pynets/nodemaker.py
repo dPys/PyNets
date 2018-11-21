@@ -159,23 +159,15 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
     RSN_ix = list(ref_dict.keys())[list(ref_dict.values()).index(network)]
     RSNmask = par_data[:, :, :, RSN_ix]
 
-    def mmToVox(mmcoords):
-        voxcoords = ['', '', '']
-        voxcoords[0] = int((round(int(mmcoords[0])/x_vox))+45)
-        voxcoords[1] = int((round(int(mmcoords[1])/y_vox))+63)
-        voxcoords[2] = int((round(int(mmcoords[2])/z_vox))+36)
-        return voxcoords
+    def mmToVox(nib_nifti, mmcoords):
+        return nib.affines.apply_affine(np.linalg.inv(nib_nifti.affine), mmcoords)
 
-    def VoxTomm(voxcoords):
-        mmcoords = ['', '', '']
-        mmcoords[0] = int((round(int(voxcoords[0])-45)*x_vox))
-        mmcoords[1] = int((round(int(voxcoords[1])-63)*y_vox))
-        mmcoords[2] = int((round(int(voxcoords[2])-36)*z_vox))
-        return mmcoords
+    def VoxTomm(nib_nifti, voxcoords):
+        return nib.affines.apply_affine(nib_nifti.affine, voxcoords)
 
     coords_vox = []
     for i in coords:
-        coords_vox.append(mmToVox(i))
+        coords_vox.append(mmToVox(bna_img, i))
     coords_vox = list(tuple(x) for x in coords_vox)
     if parc is False:
         i = -1
@@ -183,6 +175,7 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
         RSN_coords_vox = []
         net_label_names = []
         for coord in coords_vox:
+            coord = tuple(map(lambda x: isinstance(x, float) and int(round(x, 1)), coord))
             sphere_vol = np.zeros(RSNmask.shape, dtype=bool)
             sphere_vol[tuple(coord)] = 1
             i = i + 1
@@ -198,9 +191,10 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
                     print("%s%s%.2f%s%s%s" % (coord, ' coord is within a + or - ', float(error), ' mm neighborhood of ', network, '...'))
                     RSN_coords_vox.append(coord)
                     net_label_names.append(label_names[i])
+
         coords_mm = []
         for i in RSN_coords_vox:
-            coords_mm.append(VoxTomm(i))
+            coords_mm.append(VoxTomm(bna_img, i))
         coords_mm = list(set(list(tuple(x) for x in coords_mm)))
     else:
         i = 0
@@ -294,26 +288,23 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_over
 
 def coord_masker(roi, coords, label_names, error):
     from nilearn import masking
-    x_vox = np.diagonal(masking._load_mask_img(roi)[1][:3,0:3])[0]
-    y_vox = np.diagonal(masking._load_mask_img(roi)[1][:3,0:3])[1]
-    z_vox = np.diagonal(masking._load_mask_img(roi)[1][:3,0:3])[2]
 
-    def mmToVox(mmcoords):
-        voxcoords = ['', '', '']
-        voxcoords[0] = int((round(int(mmcoords[0])/x_vox))+45)
-        voxcoords[1] = int((round(int(mmcoords[1])/y_vox))+63)
-        voxcoords[2] = int((round(int(mmcoords[2])/z_vox))+36)
+    mask_data, mask_aff = masking._load_mask_img(roi)
+    x_vox = np.diagonal(mask_aff[:3,0:3])[0]
+    y_vox = np.diagonal(mask_aff[:3,0:3])[1]
+    z_vox = np.diagonal(mask_aff[:3,0:3])[2]
 
-        return voxcoords
+    def mmToVox(mask_aff, mmcoords):
+        return nib.affines.apply_affine(np.linalg.inv(mask_aff), mmcoords)
 
-    mask_data, _ = masking._load_mask_img(roi)
 #    mask_coords = list(zip(*np.where(mask_data == True)))
     coords_vox = []
     for i in coords:
-        coords_vox.append(mmToVox(i))
+        coords_vox.append(mmToVox(mask_aff, i))
     coords_vox = list(tuple(x) for x in coords_vox)
     bad_coords = []
     for coord in coords_vox:
+        coord = tuple(map(lambda x: isinstance(x, float) and int(round(x, 1)), coord))
         sphere_vol = np.zeros(mask_data.shape, dtype=bool)
         sphere_vol[tuple(coord)] = 1
         if (mask_data & sphere_vol).any():
@@ -345,7 +336,11 @@ def coord_masker(roi, coords, label_names, error):
 
 
 def get_names_and_coords_of_parcels(uatlas_select):
+    import os.path
     from nilearn.plotting import find_parcellation_cut_coords
+    if not os.path.isfile(uatlas_select):
+        raise ValueError('\nERROR: User-specified atlas input not found! Check that the file(s) specified with the -ua flag exist(s)')
+
     atlas_select = uatlas_select.split('/')[-1].split('.')[0]
     [coords, label_intensities] = find_parcellation_cut_coords(uatlas_select, return_label_names=True)
     print("%s%s" % ('Region intensities:\n', label_intensities))
@@ -354,7 +349,11 @@ def get_names_and_coords_of_parcels(uatlas_select):
 
 
 def gen_img_list(uatlas_select):
+    import os.path
     from nilearn.image import new_img_like
+    if not os.path.isfile(uatlas_select):
+        raise ValueError('\nERROR: User-specified atlas input not found! Check that the file(s) specified with the -ua flag exist(s)')
+
     bna_img = nib.load(uatlas_select)
     bna_data = np.round(bna_img.get_data(), 1)
     # Get an array of unique parcels
@@ -379,8 +378,13 @@ def gen_img_list(uatlas_select):
 
 
 def gen_network_parcels(uatlas_select, network, labels, dir_path):
+    import os.path
     from nilearn.image import concat_imgs
     from pynets import nodemaker
+
+    if not os.path.isfile(uatlas_select):
+        raise ValueError('\nERROR: User-specified atlas input not found! Check that the file(s) specified with the -ua flag exist(s)')
+
     img_list = nodemaker.gen_img_list(uatlas_select)
     print("%s%s%s" % ('\nExtracting parcels associated with ', network, ' network locations...\n'))
     net_parcels = [i for j, i in enumerate(img_list) if j in labels]
