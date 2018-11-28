@@ -2,7 +2,7 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
-@author: Derek Pisner
+@author: Derek Pisner (dPys)
 """
 import numpy as np
 import networkx as nx
@@ -355,7 +355,6 @@ def local_thresholding_prop(conn_matrix, thr):
                 #print(len_edges)
                 break
 
-        print('\n')
         if (len(len_edge_list[-fail_tol:]) - len(set(len_edge_list[-fail_tol:]))) >= (fail_tol-1):
             print("%s%s%s" % ('Cannot apply local thresholding to achieve threshold of: ', thr, '. Using maximally saturated connected matrix instead...'))
 
@@ -418,9 +417,10 @@ def local_thresholding_dens(conn_matrix, thr):
             if mst_density >= G_density or mst_density >= float(thr):
                 #print(mst_density)
                 break
-        print('\n')
+
         if (len(dense_list[-fail_tol:]) - len(set(dense_list[-fail_tol:]))) >= (fail_tol - 1):
             print("%s%s%s" % ('Cannot apply local thresholding to achieve density of: ', thr, '. Using maximally saturated connected matrix instead...'))
+
         k += 1
 
     conn_matrix_thr = nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64)

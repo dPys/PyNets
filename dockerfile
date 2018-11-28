@@ -26,6 +26,12 @@ RUN apt-get update -qq \
         graphviz \
         libpng-dev \
         build-essential \
+        libgomp1 \
+        libmpich-dev \
+        mpich \
+        ffmpeg \
+        unzip \
+        screen \
         git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
@@ -42,7 +48,7 @@ RUN curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sourc
     apt-key add /root/.neurodebian.gpg && \
     (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true) && \
     apt-get update -qq
-RUN apt-get update -qq && apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates 
+RUN apt-get update -qq && apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates
 
 USER neuro
 WORKDIR /home/neuro
@@ -65,7 +71,7 @@ RUN conda install -yq \
     && conda clean -tipsy \
 #    && pip install scipy scikit-learn>=0.19 \
 #    && pip install -e git://github.com/dPys/nilearn.git#egg=0.4.2 \
-    && pip install pynets==0.7.30
+    && pip install pynets==0.7.31
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
@@ -79,11 +85,14 @@ RUN conda install -yq \
     && conda clean -tipsy \
     && pip install skggm
 
+# Install brainiak
+#RUN conda install -yq -c brainiak -c defaults -c conda-forge brainiak
+
 USER root
 RUN chown -R neuro /opt \
     && chmod a+s -R /opt \
     && chmod 777 -R /opt/conda/lib/python3.6/site-packages/pynets \
-    && chmod 775 -R /opt/conda/lib/python3.6/site-packages \ 
+    && chmod 775 -R /opt/conda/lib/python3.6/site-packages \
     && find /opt -type f -iname "*.py" -exec chmod 777 {} \;
 
 # Cleanup
@@ -95,6 +104,10 @@ USER neuro
 
 # Python ENV Config
 ENV LD_LIBRARY_PATH="/opt/conda/lib":$LD_LIBRARY_PATH
+
+# Link to local packages
+RUN echo PATH=\"\$HOME/.local/bin:\$PATH\" >> $HOME/.profile \
+    && echo "shell -bash" >> ~/.screenrc
 
 # PyNets ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets:$PATH"

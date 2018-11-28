@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Created on Tue Nov  7 10:40:07 2017
 # Copyright (C) 2018
-# @author: Derek Pisner
+# @author: Derek Pisner (dPys)
 import warnings
 warnings.simplefilter("ignore")
 
@@ -373,6 +373,8 @@ def build_workflow(args, retval):
                 raise ValueError("Error: Length of confound regressor list does not correspond to length of input file list.")
 
     if mask:
+        if not roi:
+            roi = mask
         if ',' in mask:
             mask = list(str(mask).split(','))
             if len(mask) != len(subjects_list):

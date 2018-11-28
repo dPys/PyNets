@@ -2,7 +2,7 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
-@author: Derek Pisner
+@author: Derek Pisner (dPys)
 """
 import numpy as np
 
@@ -648,7 +648,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
     if roi is not None:
         # Masking case
         node_gen_node = pe.Node(niu.Function(input_names=['roi', 'coords', 'parcel_list', 'label_names', 'dir_path',
-                                                          'ID', 'parc', 'atlas_select', 'uatlas_select'],
+                                                          'ID', 'parc', 'atlas_select', 'uatlas_select', 'mask'],
                                              output_names=['net_parcels_map_nifti', 'coords', 'label_names',
                                                            'atlas_select', 'uatlas_select'],
                                              function=nodemaker.node_gen_masking, imports=import_list),
@@ -1029,7 +1029,8 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                                                   ('use_AAL_naming', 'use_AAL_naming')]),
         (inputnode, node_gen_node, [('ID', 'ID'),
                                     ('roi', 'roi'),
-                                    ('parc', 'parc')]),
+                                    ('parc', 'parc'),
+                                    ('mask', 'mask')]),
         (fetch_nodes_and_labels_node, node_gen_node, [('atlas_select', 'atlas_select'),
                                                       ('uatlas_select', 'uatlas_select'),
                                                       ('dir_path', 'dir_path'), ('par_max', 'par_max')]),

@@ -108,14 +108,12 @@ def nilearn_atlas_helper(atlas_select, parc):
     return label_names, networks_list, uatlas_select
 
 
-def get_node_membership(network, func_file, coords, label_names, parc, parcel_list):
+def get_node_membership(network, func_file, coords, label_names, parc, parcel_list, perc_overlap=0.75, error=2):
     from nilearn.image import resample_img
     from pynets.nodemaker import get_sphere
     import pkg_resources
     import pandas as pd
-    # For parcel membership determination, specify overlap thresh and error cushion in mm voxels
-    perc_overlap = 0.75 # Default is >=90% overlap
-    error = 2
+
     # Determine whether input is from 17-networks or 7-networks
     seven_nets = ['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default']
     seventeen_nets = ['VisCent', 'VisPeri', 'SomMotA', 'SomMotB', 'DorsAttnA', 'DorsAttnB', 'SalVentAttnA',
@@ -230,10 +228,13 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
     return coords_mm, RSN_parcels, net_label_names, network
 
 
-def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_overlap):
+def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, mask, perc_overlap):
     from pynets import nodemaker
     from nilearn.image import resample_img
     from nilearn import masking
+
+    if mask and roi == mask:
+        perc_overlap = 0.9
 
     mask_img = nib.load(roi)
     mask_data, _ = masking._load_mask_img(roi)
@@ -265,11 +266,14 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_over
     label_names_adj = list(label_names)
     coords_adj = list(tuple(x) for x in coords)
     parcel_list_adj = parcel_list
-    for ix in sorted(indices, reverse=True):
-        print("%s%s%s%s" % ('Removing: ', label_names_adj[ix], ' at ', coords_adj[ix]))
-        label_names_adj.pop(ix)
-        coords_adj.pop(ix)
-        parcel_list_adj.pop(ix)
+    try:
+        for ix in sorted(indices, reverse=True):
+            print("%s%s%s%s" % ('Removing: ', label_names_adj[ix], ' at ', coords_adj[ix]))
+            label_names_adj.pop(ix)
+            coords_adj.pop(ix)
+            parcel_list_adj.pop(ix)
+    except RuntimeError:
+        print('ERROR: Restrictive masking. No parcels remain after masking with brain mask/roi...')
 
     # Create a resampled 3D atlas that can be viewed alongside mask img for QA
     resampled_parcels_nii_path = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_parcels_resampled2roimask_', os.path.basename(roi).split('.')[0], '.nii.gz')
@@ -285,8 +289,11 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_over
     return coords_adj, label_names_adj, parcel_list_adj
 
 
-def coord_masker(roi, coords, label_names, error):
+def coord_masker(roi, coords, label_names, mask, error):
     from nilearn import masking
+
+    if mask and roi == mask:
+        error = 0
 
     mask_data, mask_aff = masking._load_mask_img(roi)
     x_vox = np.diagonal(mask_aff[:3,0:3])[0]
@@ -322,10 +329,13 @@ def coord_masker(roi, coords, label_names, error):
 
     label_names = list(label_names)
     coords = list(tuple(x) for x in coords)
-    for ix in sorted(indices, reverse=True):
-        print("%s%s%s%s" % ('Removing: ', label_names[ix], ' at ', coords[ix]))
-        label_names.pop(ix)
-        coords.pop(ix)
+    try:
+        for ix in sorted(indices, reverse=True):
+            print("%s%s%s%s" % ('Removing: ', label_names[ix], ' at ', coords[ix]))
+            label_names.pop(ix)
+            coords.pop(ix)
+    except RuntimeError:
+        print('ERROR: Restrictive masking. No coordinates remain after masking with brain mask/roi...')
 
     if len(coords) <= 1:
         raise ValueError('\nERROR: ROI mask was likely too restrictive and yielded < 2 remaining coordinates')
@@ -570,7 +580,7 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, func_file
     return label_names, coords, atlas_name, networks_list, parcel_list, par_max, uatlas_select, dir_path
 
 
-def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select):
+def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select, mask):
     from pynets import nodemaker
     try:
         import cPickle as pickle
@@ -585,7 +595,7 @@ def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, 
         else:
             perc_overlap = 0.75
         [coords, label_names, parcel_list_masked] = nodemaker.parcel_masker(roi, coords, parcel_list, label_names,
-                                                                            dir_path, ID, perc_overlap)
+                                                                            dir_path, ID, mask, perc_overlap)
         [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list_masked)
     # Mask Coordinates
     else:
@@ -593,7 +603,7 @@ def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, 
             error = 60
         else:
             error = 2
-        [coords, label_names] = nodemaker.coord_masker(roi, coords, label_names, error)
+        [coords, label_names] = nodemaker.coord_masker(roi, coords, label_names, mask, error)
         # Save coords to pickle
         coord_path = "%s%s%s%s" % (dir_path, '/atlas_coords_', os.path.basename(roi).split('.')[0], '.pkl')
         with open(coord_path, 'wb') as f:
