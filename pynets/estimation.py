@@ -2,7 +2,7 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
-@author: Derek Pisner
+@author: Derek Pisner (dPys)
 """
 import numpy as np
 import warnings

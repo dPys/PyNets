@@ -3,7 +3,7 @@
 """
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2018
-@author: Derek Pisner
+@author: Derek Pisner (dPys)
 """
 import os
 import nibabel as nib

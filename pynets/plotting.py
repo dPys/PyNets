@@ -2,7 +2,7 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
-@author: Derek Pisner
+@author: Derek Pisner (dPys)
 """
 import numpy as np
 import networkx as nx
@@ -466,7 +466,11 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
         if len(coords) != conn_matrix.shape[0]:
             raise RuntimeWarning('\nWARNING: Number of coordinates does not match conn_matrix dimensions. If you are using disparity filtering, try relaxing the α threshold.')
         else:
-            connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap='Blues', edge_vmax=float(z_max),
+            #color_theme = 'Blues'
+            #color_theme = 'Greens'
+            color_theme = 'Reds'
+            node_color = 'auto'
+            connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap=color_theme, edge_vmax=float(z_max),
                                  edge_vmin=float(z_min), node_size=node_size_plot, node_color='auto')
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
     else:

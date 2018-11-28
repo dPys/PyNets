@@ -119,7 +119,8 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     dir_path = base_dir + '/997'
     func_file = dir_path + '/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz'
     parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
-    mask = dir_path + '/pDMN_3_bin.nii.gz'
+    roi = dir_path + '/pDMN_3_bin.nii.gz'
+    mask = None
     network = 'Default'
     ID = '997'
     perc_overlap = 0.10
@@ -141,10 +142,10 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
-    [net_coords_masked, net_label_names_masked, net_parcel_list_masked] = nodemaker.parcel_masker(mask, net_coords,
+    [net_coords_masked, net_label_names_masked, net_parcel_list_masked] = nodemaker.parcel_masker(roi, net_coords,
                                                                                                   net_parcel_list,
                                                                                                   net_label_names,
-                                                                                                  dir_path, ID,
+                                                                                                  dir_path, ID, mask,
                                                                                                   perc_overlap)
     print("%s%s%s" % ('parcel_masker --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
@@ -176,7 +177,8 @@ def test_nodemaker_tools_masking_coords_RSN():
     #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
     dir_path= base_dir + '/997'
     func_file = dir_path + '/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz'
-    mask = dir_path + '/pDMN_3_bin.nii.gz'
+    roi = dir_path + '/pDMN_3_bin.nii.gz'
+    mask = None
     atlas_select = 'coords_dosenbach_2010'
     network='Default'
     parc = False
@@ -195,8 +197,8 @@ def test_nodemaker_tools_masking_coords_RSN():
     str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
-    [net_coords_masked, net_label_names_masked] = nodemaker.coord_masker(mask,
-    net_coords, net_label_names, error)
+    [net_coords_masked, net_label_names_masked] = nodemaker.coord_masker(roi,
+    net_coords, net_label_names, mask, error)
     print("%s%s%s" % ('coord_masker (Masking RSN version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -257,7 +259,8 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     dir_path = base_dir + '/997'
     parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
-    mask = dir_path + '/pDMN_3_bin.nii.gz'
+    roi = dir_path + '/pDMN_3_bin.nii.gz'
+    mask = None
     ID = '997'
     parc = True
     perc_overlap = 0.10
@@ -271,8 +274,8 @@ def test_nodemaker_tools_masking_parlistfile_WB():
 
     start_time = time.time()
     WB_parcel_list = nodemaker.gen_img_list(parlistfile)
-    [_, _, WB_parcel_list_masked] = nodemaker.parcel_masker(mask, WB_coords,
-    WB_parcel_list, WB_label_names, dir_path, ID, perc_overlap)
+    [_, _, WB_parcel_list_masked] = nodemaker.parcel_masker(roi, WB_coords, WB_parcel_list, WB_label_names, dir_path,
+                                                            ID, mask, perc_overlap)
     print("%s%s%s" % ('parcel_masker (Masking whole-brain version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -290,8 +293,9 @@ def test_nodemaker_tools_masking_parlistfile_WB():
 
     start_time = time.time()
     [WB_net_parcels_map_nifti_masked, WB_coords_masked, WB_label_names_masked,
-     WB_atlas_select, WB_uatlas_select] = nodemaker.node_gen_masking(mask, WB_coords, WB_parcel_list, WB_label_names,
-                                                                        dir_path, ID, parc, atlas_select, parlistfile)
+     WB_atlas_select, WB_uatlas_select] = nodemaker.node_gen_masking(roi, WB_coords, WB_parcel_list, WB_label_names,
+                                                                     dir_path, ID, parc, atlas_select, parlistfile,
+                                                                     mask)
     print("%s%s%s" % ('node_gen_masking (Masking whole-brain version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -314,7 +318,8 @@ def test_nodemaker_tools_masking_coords_WB():
     base_dir = str(Path(__file__).parent/"examples")
     #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
     dir_path = base_dir + '/997'
-    mask = dir_path + '/pDMN_3_bin.nii.gz'
+    roi = dir_path + '/pDMN_3_bin.nii.gz'
+    mask = None
     atlas_select = 'coords_dosenbach_2010'
     error = 2
 
@@ -323,8 +328,7 @@ def test_nodemaker_tools_masking_coords_WB():
     print("%s%s%s" % ('fetch_nilearn_atlas_coords (Masking whole-brain coords version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
-    [WB_coords_masked, WB_label_names_masked] = nodemaker.coord_masker(mask,
-    WB_coords, WB_label_names, error)
+    [WB_coords_masked, WB_label_names_masked] = nodemaker.coord_masker(roi, WB_coords, WB_label_names, mask, error)
     print("%s%s%s" % ('coord_masker (Masking whole-brain coords version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     assert WB_coords is not None
@@ -373,8 +377,7 @@ def test_WB_fetch_nodes_and_labels2():
     use_AAL_naming = True
     start_time = time.time()
     [_, coords, atlas_name, _, parcel_list, par_max, parlistfile,
-     dir_path] = nodemaker.fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc,
-    func_file, use_AAL_naming)
+     dir_path] = nodemaker.fetch_nodes_and_labels(atlas_select, parlistfile, ref_txt, parc, func_file, use_AAL_naming)
     print("%s%s%s" % ('WB_fetch_nodes_and_labels (Spherical Nodes) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
