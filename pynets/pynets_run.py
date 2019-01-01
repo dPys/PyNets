@@ -148,7 +148,27 @@ def get_parser():
     parser.add_argument('-s',
                         metavar='Number of samples',
                         default='5000',
-                        help='Include this flag to manually specify number of fiber samples for probtrackx2 in structural connectome estimation (default is 500). PyNets parallelizes probtrackx2 by samples, but more samples can increase connectome estimation time considerably.\n')
+                        help='Include this flag to manually specify a number of streamline samples per ROI for in structural connectome estimation. Default is 5000. PyNets parallelizes tracking by samples.\n')
+    parser.add_argument('-fl',
+                        metavar='Maximum fiber length for tracking',
+                        default='200',
+                        help='Include this flag to manually specify a maximum tract length (mm) for structural connectome tracking. Default is 200.\n')
+    parser.add_argument('-tt',
+                        metavar='Tracking algorithm',
+                        default='local',
+                        help='Include this flag to manually specify a tracking algorithm for structural connectome estimation. Options are: local, particle, and eudx. Default is local.\n')
+    parser.add_argument('-lr',
+                        default=False,
+                        action='store_true',
+                        help='Include this flag to run Linear Fascicle Ealuation (LiFE) to prune FP streamlines produced by tractography (recommended).\n')
+    parser.add_argument('-dg',
+                        metavar='Direction getter',
+                        default='det',
+                        help='Include this flag to manually specify the statistical approach to tracking for structural connectome estimation. Options are: det (deterministic) and prob (probabilistic). Default is det.\n')
+    parser.add_argument('-tc',
+                        metavar='Tissue classification method',
+                        default='cmc',
+                        help='Include this flag to manually specify a tissue classification method for structural connectome estimation. Options are: cmc (continuous), act (anatomically-constrained), and bin (binary to white-matter only). Default is cmc.\n')
     parser.add_argument('-plug',
                         metavar='Scheduler type',
                         default='MultiProc',
@@ -346,21 +366,22 @@ def build_workflow(args, retval):
     else:
         atlas_select = atlas_select[0]
         multi_atlas = None
-
-    target_samples = 10
-    maxcrossing = 1
-    max_length = 200
-    track_type = 'particle'
-    overlap_thr_list = [5]
-    step_list = [0.2]
-    curv_thr_list = [6]
-    tiss_class = 'act'
-    directget = 'prob'
-    life_run = True
-    min_length = 60
+    target_samples = args.s
+    max_length = args.fl
+    track_type = args.tt
+    tiss_class = args.tc
+    directget = args.dg
+    life_run = args.lf
 
     print('\n\n\n------------------------------------------------------------------------\n')
 
+    # Hard-coded:
+    maxcrossing = 1
+    min_length = 60
+    overlap_thr = 5
+    overlap_thr_list = None
+    step_list = [0.2]
+    curv_thr_list = [6]
     nilearn_parc_atlases = ['atlas_harvard_oxford', 'atlas_aal', 'atlas_destrieux_2009',
                             'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe']
     nilearn_coord_atlases = ['coords_power_2011', 'coords_dosenbach_2010']
@@ -913,8 +934,8 @@ def build_workflow(args, retval):
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
                                clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples,
-                               curv_thr_list, step_list, overlap_thr_list, track_type, max_length, maxcrossing,
-                               life_run, min_length, directget, tiss_class):
+                               curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
+                               maxcrossing, life_run, min_length, directget, tiss_class):
         wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_', random.randint(1, 1000)))
         inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'roi', 'multi_nets',
                                                           'conn_model', 'plot_switch', 'graph', 'prune', 'smooth',
@@ -960,8 +981,8 @@ def build_workflow(args, retval):
                                     clust_mask_list, prune, node_size_list, num_total_samples, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list, disp_filt,
                                     clust_type, clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec,
-                                    target_samples, curv_thr_list, step_list, overlap_thr_list, track_type, max_length,
-                                    maxcrossing, life_run, min_length, directget, tiss_class)
+                                    target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
+                                    max_length, maxcrossing, life_run, min_length, directget, tiss_class)
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
@@ -1116,8 +1137,8 @@ def build_workflow(args, retval):
                          node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type,
                          use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list,
                          c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
-                         overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length, directget,
-                         tiss_class):
+                         overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
+                         directget, tiss_class):
 
         wf_multi = pe.Workflow(name="%s%s" % ('Wf_multisub_', random.randint(1001, 9000)))
         if func_subjects_list and not struct_subjects_list:
@@ -1159,9 +1180,9 @@ def build_workflow(args, retval):
                 multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
                 clust_type=clust_type, clust_type_list=clust_type_list, c_boot=c_boot, block_size=block_size,
                 mask=mask_sub, norm=norm, binary=binary, fbval=fbval_sub, fbvec=fbvec_sub, target_samples=target_samples,
-                curv_thr_list=curv_thr_list, step_list=step_list, overlap_thr_list=overlap_thr_list,
-                track_type=track_type, max_length=max_length, maxcrossing=maxcrossing, life_run=life_run,
-                min_length=min_length, directget=directget, tiss_class=tiss_class)
+                curv_thr_list=curv_thr_list, step_list=step_list, overlap_thr=overlap_thr,
+                overlap_thr_list=overlap_thr_list, track_type=track_type, max_length=max_length, maxcrossing=maxcrossing,
+                life_run=life_run, min_length=min_length, directget=directget, tiss_class=tiss_class)
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
@@ -1219,8 +1240,8 @@ def build_workflow(args, retval):
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
                                     smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot,
                                     block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list,
-                                    step_list, overlap_thr_list, track_type, max_length, maxcrossing, life_run,
-                                    min_length, directget, tiss_class)
+                                    step_list, overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing,
+                                    life_run, min_length, directget, tiss_class)
 
         import shutil
         wf_multi.base_dir = '/tmp/wf_multi_subject'
@@ -1283,7 +1304,7 @@ def build_workflow(args, retval):
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
                                     smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask,
-                                    norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
+                                    norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
                                     directget, tiss_class)
 

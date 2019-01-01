@@ -629,9 +629,21 @@ def match_target_vox_res(img_file, vox_size, out_dir, zoom_set, sens):
         if vox_size == '1mm':
             print('Reslicing image ' + img_file + ' to 1mm...')
             img_file = rgu.reslice_to_xmm(img_file_pre, 1.0)
+            #Correct offsets
+            img = nib.load(img_file)
+            new_offs = img.affine[:3,3]*np.abs(zooms[0])
         elif vox_size == '2mm':
             print('Reslicing image ' + img_file + ' to 2mm...')
             img_file = rgu.reslice_to_xmm(img_file_pre, 2.0)
+            #Correct offsets
+            img = nib.load(img_file)
+            new_offs = img.affine[:3,3]*np.abs(zooms[0])
+        else:
+            new_offs = img.affine[:3,3]
+        img.affine[:3,3][2] = new_offs[2]
+        img.set_sform(img.affine, code='scanner')
+        img.update_header()
+        nib.save(nib.Nifti1Image(img.get_data(), affine=img.affine, header=hdr), img_file)
     else:
         pass
     return img_file

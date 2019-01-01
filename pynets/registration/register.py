@@ -57,9 +57,9 @@ def transform_pts(pts, t_aff, t_warp, ref_img_path, ants_path, template_path, ds
     warped_affine = template.affine
 
     adjusted_affine = warped_affine.copy()
-    adjusted_affine[0] = -adjusted_affine[0]
-    adjusted_affine[1] = adjusted_affine[1]
-    adjusted_affine[2] = adjusted_affine[2]
+    adjusted_affine[0] = adjusted_affine[0]
+    adjusted_affine[1] = -adjusted_affine[1]
+    adjusted_affine[2] = -adjusted_affine[2]
 
     ants_warped_coords = np.loadtxt(dsn_dir + "/aattp.csv", skiprows=1, delimiter=",")[:, :3]
     os.remove(dsn_dir + "/aattp.csv")
@@ -78,9 +78,9 @@ def transform_pts(pts, t_aff, t_warp, ref_img_path, ants_path, template_path, ds
     elif output_space == "lps_voxmm":
         template_extents = template.get_shape()
         lps_voxels = new_voxels.copy()
-        lps_voxels[0] = template_extents[0] - lps_voxels[0]
-        lps_voxels[1] = -template_extents[1] + lps_voxels[1]
-        lps_voxels[2] = lps_voxels[2]
+        lps_voxels[0] = template_extents[0]-lps_voxels[0]
+        lps_voxels[1] = template_extents[1]-lps_voxels[1]
+        lps_voxels[2] = -lps_voxels[2]
         lps_voxmm = lps_voxels.T * np.array(template.header.get_zooms())[:3]
         return lps_voxmm
 
@@ -116,9 +116,9 @@ class Warp(object):
                                         [warped_affine[0][0], warped_affine[1][1], warped_affine[2][2]],
                                         [0.0, 0.0, 0.0], 0, ['', '', '', '', '', '', '', '', '', ''],
                                         0, ['', '', '', '', '', '', '', '', '', ''],
-                                        [[-warped_affine[0][0]/np.abs(warped_affine[0][0]), 0.0, 0.0, -warped_affine[0][3]/np.abs(np.abs(warped_affine[0][0]))],
-                                         [0.0, -warped_affine[1][1]/np.abs(warped_affine[1][1]), 0.0, warped_affine[1][3]],
-                                         [0.0, 0.0, warped_affine[2][2]/np.abs(warped_affine[2][2]), -warped_affine[2][3]],
+                                        [[1.0, 0.0, 0.0, 0.0],
+                                         [0.0, 1.0, 0.0, 0.0],
+                                         [0.0, 0.0, 1.0, -template.affine[2][3]],
                                          [0.0, 0.0, 0.0, 1.0]], '', 'LPS', 'LPS',
                                         [1.0, 0.0, 0.0, 0.0, 1.0, 0.0],
                                         '', '', '', '', '', '', '', 10000, 2, 1000),
@@ -154,7 +154,12 @@ class Warp(object):
         print("Finished " + self.file_out)
 
 
-def direct_streamline_norm(streams, nodif_B0, dir_path):
+def direct_streamline_norm(streams, nodif_B0, dir_path, iso_affine):
+    from nilearn.image import new_img_like
+    try:
+        FSLDIR = os.environ['FSLDIR']
+    except KeyError:
+        print('FSLDIR environment variable not set!')
     '''Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different spatial normalization approaches on tractography and structural brain networks. Network Neuroscience, 1-19.'''
     template_path="%s%s" % (FSLDIR, '/data/standard/MNI152_T1_2mm_brain.nii.gz')
     ants_path = '/opt/ants'
@@ -163,15 +168,22 @@ def direct_streamline_norm(streams, nodif_B0, dir_path):
     if not os.path.isdir(dsn_dir):
         os.mkdir(dsn_dir)
 
+    nodif_B0_iso_path = "%s%s" % (dir_path, '/nodif_B0_iso.nii.gz')
     streams_mni = "%s%s" % (dir_path, '/streamlines_mni.trk')
 
-    cmd = 'antsRegistrationSyNQuick.sh -d 3 -f ' + template_path + ' -m ' + nodif_B0 + ' -o ' + dsn_dir + '/'
-    os.system(cmd)
+    # Remoe B0 offsets
+    B0_img = nib.load(nodif_B0)
+    B0_iso_img = new_img_like(B0_img, B0_img.get_data(), affine=iso_affine)
+    nib.save(B0_iso_img, nodif_B0_iso_path)
 
+    # Run ANTs reg
+    cmd = 'antsRegistrationSyNQuick.sh -d 3 -f ' + template_path + ' -m ' + nodif_B0_iso_path + ' -o ' + dsn_dir + '/'
+    os.system(cmd)
     t_aff = "%s%s" % (dsn_dir, '/0GenericAffine.mat')
     t_warp = "%s%s" % (dsn_dir, '/1Warp.nii.gz')
 
-    wS = Warp(ants_path, streams, streams_mni, template_path, t_aff, t_warp, nodif_B0, dsn_dir)
+    # Warp streamlines
+    wS = Warp(ants_path, streams, streams_mni, template_path, t_aff, t_warp, nodif_B0_iso_path, dsn_dir)
     wS.streamlines()
 
     return streams_mni

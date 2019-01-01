@@ -39,8 +39,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, voxel_size='2mm'):
     # Build graph
     start_time = time.time()
     stream_viz = []
-    # Map the streamlines coordinates to voxel coordinates
     for s in streamlines:
+        # Map the streamlines coordinates to voxel coordinates
         points = _to_voxel_coordinates(s, lin_T, offset)
 
         # get labels for label_volume
@@ -49,7 +49,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, voxel_size='2mm'):
         endlabels = []
         for lab in np.unique(lab_arr):
             if lab > 0:
-                if np.sum(lab_arr == lab) > overlap_thr:
+                if np.sum(lab_arr == lab) >= overlap_thr:
                     endlabels.append(lab)
                     stream_viz.append(s)
 
@@ -64,7 +64,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, voxel_size='2mm'):
 
     # Stack and save remaining streamlines
     stream_viz_list = np.vstack(stream_viz)
-    nib.streamlines.save(Streamlines(stream_viz_list), "%s%s%s%s" % (dir_path, '/streamlines_graph_', overlap_thr, '_overlap.trk.gz'))
+    nib.streamlines.save(Streamlines(stream_viz_list), "%s%s%s%s" % (dir_path, '/streamlines_graph_', overlap_thr, '_overlap.trk'))
 
     # Convert to numpy matrix
     conn_matrix = nx.to_numpy_matrix(g)

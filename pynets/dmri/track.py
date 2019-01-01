@@ -142,7 +142,7 @@ def transform_to_affine(streams, header, affine):
 def save_streams(dwi_img, streamlines, dir_path, vox_size='2mm'):
     from dipy.tracking.streamline import Streamlines
     hdr = dwi_img.header
-    streams = "%s%s" % (dir_path, '/streamlines.trk.gz')
+    streams = "%s%s" % (dir_path, '/streamlines.trk')
 
     if vox_size == '1mm':
         zoom_set = (1.0, 1.0, 1.0)
@@ -152,24 +152,25 @@ def save_streams(dwi_img, streamlines, dir_path, vox_size='2mm'):
         raise ValueError('Voxel size not supported. Use 2mm or 1mm')
 
     # Save streamlines
-    affine = np.eye(4)*np.array([-zoom_set[0], zoom_set[1], zoom_set[2],1])
-    tract_affine = np.eye(4)*np.array([zoom_set[0], zoom_set[1], zoom_set[2],1])
+    tract_affine = np.eye(4) * np.array([-1, 1, 1, 1])
+    trk_affine = np.eye(4) * np.array([1, 1, 1, 1])
+    iso_affine = np.eye(4) * np.array([-zoom_set[0], zoom_set[1], zoom_set[2], 1])
     trk_hdr = nib.streamlines.trk.TrkFile.create_empty_header()
     trk_hdr['hdr_size'] = 1000
     trk_hdr['dimensions'] = hdr['dim'][1:4].astype('float32')
     trk_hdr['voxel_sizes'] = hdr['pixdim'][1:4]
-    trk_hdr['voxel_to_rasmm'] = tract_affine
+    trk_hdr['voxel_to_rasmm'] = trk_affine
     trk_hdr['voxel_order'] = 'LPS'
     trk_hdr['pad2'] = 'LPS'
     trk_hdr['image_orientation_patient'] = np.array([1., 0., 0., 0., 1., 0.]).astype('float32')
     trk_hdr['endianness'] = '<'
     trk_hdr['_offset_data'] = 1000
-    trk_hdr['nb_streamlines'] = streamlines.total_nb_rows
-    streamlines_trans = Streamlines(transform_to_affine(streamlines, trk_hdr, affine))
-    tractogram = nib.streamlines.Tractogram(streamlines_trans, affine_to_rasmm=affine)
+    trk_hdr['nb_streamlines'] = len(streamlines)
+    streamlines_trans = Streamlines(transform_to_affine(streamlines, trk_hdr, iso_affine))
+    tractogram = nib.streamlines.Tractogram(streamlines_trans, affine_to_rasmm=tract_affine)
     trkfile = nib.streamlines.trk.TrkFile(tractogram, header=trk_hdr)
     nib.streamlines.save(trkfile, streams)
-    return streams
+    return streams, iso_affine
 
 
 def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, labels_im_file, mod_path,
@@ -204,13 +205,16 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     sphere = get_sphere('repulsion724')
 
     # Iteratively build a list of streamlines for each ROI while tracking
+    print("%s%s" % ('Target number of samples per ROI: ', target_samples))
+    print("%s%s" % ('Using curvature threshold(s): ', curv_thr_list))
+    print("%s%s" % ('Using step size(s): ', step_list))
     streamlines_list = []
     for roi in np.unique(atlas_data)[1:]:
         print("%s%s" % ('ROI: ', roi))
         streamlines = nib.streamlines.array_sequence.ArraySequence()
+        ix = 0
         while len(streamlines) < target_samples:
             for curv_thr in curv_thr_list:
-                print("%s%s" % ('Using curvature threshold: ', curv_thr))
                 # Create ProbabilisticDirectionGetter whose name is confusing because it is not getting directions.
                 if directget == 'prob':
                     dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit.shm_coeff, max_angle=curv_thr, sphere=sphere)
@@ -226,10 +230,9 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
                     fa[np.isnan(fa)] = 0
                     ind = quantize_evecs(mod_fit.evecs, sphere.vertices)
                 for step in step_list:
-                    print("%s%s" % ('Using step size: ', step))
                     seed = utils.random_seeds_from_mask(atlas_data==roi, seeds_count=1, seed_count_per_voxel=True,
                                                         affine=np.eye(4))
-                    print(seed)
+                    #print(seed)
                     if track_type == 'local':
                         if not directget != 'tensor':
                             streamline_generator = LocalTracking(dg, tiss_classifier, seed, np.eye(4),
@@ -255,6 +258,8 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
                             raise ValueError('ERROR: EuDX tracking is currently only supported for tensor model')
                     streamlines_more = Streamlines(streamline_generator)
 
+                    print("%s%s" % ('Streams: ', len(streamlines_more)))
+                    ix = ix + 1
                     for s in streamlines_more:
                         streamlines.append(s)
                         if len(streamlines) > target_samples:
@@ -263,25 +268,29 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
         print('\n')
         streamlines_list.append(streamlines)
 
+    print('Tracking complete...')
+
     return streamlines_list
 
 
 def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length):
     from dipy.tracking import utils
+    from pynets.utils import flatten
     from dipy.tracking.streamline import Streamlines
     from pynets.dmri.track import save_streams, run_LIFE_all
     dwi_img = nib.load(dwi)
     data = dwi_img.get_data()
 
     # Flatten streamlines list, and apply min length filter
-    streamlines = Streamlines([s for stream in streamlines_list for s in stream if len(s) > min_length])
-    print(streamlines)
+    print('Filtering streamlines...')
+    streamlines = Streamlines([s for s in flatten(streamlines_list) if len(s) > min_length])
 
     # Fit LiFE model
     if life_run is True:
-        print('Fitting LiFE')
+        print('Fitting LiFE...')
         # Fit Linear Fascicle Evaluation (LiFE)
-        [streamlines, mean_rmse] = run_LIFE_all(data, gtab, streamlines)
+        [streamlines, rmse] = run_LIFE_all(data, gtab, streamlines)
+        print("%s%s" % ('Mean RMSE: ', np.sum(rmse)))
 
     # Create density map
     dm = utils.density_map(streamlines, dwi_img.shape, affine=np.eye(4))
@@ -291,6 +300,6 @@ def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_leng
     dm_img.to_filename("%s%s" % (dir_path, "/density_map.nii.gz"))
 
     # Save streamlines to trk
-    streams = save_streams(dwi, streamlines, dir_path)
+    [streams, iso_affine] = save_streams(dwi_img, streamlines, dir_path)
 
-    return streamlines, streams
+    return streamlines, streams, iso_affine
