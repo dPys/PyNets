@@ -454,21 +454,22 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
 
         ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
         connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
-        connectome.add_overlay(ch2better_loc, alpha=0.35, cmap=plt.cm.gray)
+        connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
+        #connectome.add_overlay(ch2better_loc, alpha=0.35, cmap=plt.cm.gray)
         conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
         [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
         if node_size == 'parc':
             node_size_plot = int(2)
             if uatlas_select:
-                connectome.add_contours(uatlas_select, filled=False, alpha=0.3, colors='black')
+                connectome.add_contours(uatlas_select, filled=True, alpha=0.20, cmap=plt.cm.gist_rainbow)
         else:
             node_size_plot = int(node_size)
         if len(coords) != conn_matrix.shape[0]:
             raise RuntimeWarning('\nWARNING: Number of coordinates does not match conn_matrix dimensions. If you are using disparity filtering, try relaxing the α threshold.')
         else:
-            #color_theme = 'Blues'
+            color_theme = 'Blues'
             #color_theme = 'Greens'
-            color_theme = 'Reds'
+            #color_theme = 'Reds'
             node_color = 'auto'
             connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap=color_theme, edge_vmax=float(z_max),
                                  edge_vmin=float(z_min), node_size=node_size_plot, node_color='auto')

@@ -1100,7 +1100,7 @@ def build_workflow(args, retval):
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf_multi.config[key][setting] = value
-        wf_multi.write_graph(graph2use="colored", format='png')
+        #wf_multi.write_graph(graph2use="colored", format='png')
         if procmem != 'auto':
             if verbose is True:
                 from nipype.utils.profiler import log_nodes_cb
@@ -1166,7 +1166,7 @@ def build_workflow(args, retval):
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf.config[key][setting] = value
-        wf.write_graph(graph2use="colored", format='png')
+        #wf.write_graph(graph2use="colored", format='png')
         if procmem != 'auto':
             if verbose is True:
                 from nipype.utils.profiler import log_nodes_cb

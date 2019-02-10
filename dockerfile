@@ -33,6 +33,19 @@ RUN apt-get update -qq \
         unzip \
         screen \
         git \
+        mesa-common-dev \
+        libglu1-mesa-dev \
+        g++ \
+        libgtk2.0-dev \
+        libglib2.0-dev \
+        libglibmm-2.4-dev \
+        libgtkmm-2.4-dev \
+        libgtkglext1-dev \
+        libgsl0-dev \
+        libgl1-mesa-dev \
+        qt5-default \
+        libqt5svg5* \
+        libeigen3-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && curl -o /tmp/libxp6.deb -sSL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
@@ -87,6 +100,12 @@ RUN conda install -yq \
 
 # Install brainiak
 #RUN conda install -yq -c brainiak -c defaults -c conda-forge brainiak
+
+# Install mrtrix
+#RUN git clone https://github.com/MRtrix3/mrtrix3.git /opt/mrtrix3
+#ENV EIGEN_CFLAGS="-isystem /usr/include/eigen3"
+#RUN cd /opt/mrtrix3 && ./configure && ./build && ./set_path
+#ENV PATH=/opt/mrtrix3/bin:$PATH
 
 USER root
 RUN chown -R neuro /opt \
