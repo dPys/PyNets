@@ -55,19 +55,14 @@ def normalize(W, copy=True):
 
 def density_thresholding(conn_matrix, thr):
     from pynets import thresholding
-    work_thr = 0.0
-    conn_matrix = thresholding.normalize(conn_matrix)
+    work_thr = 0
     np.fill_diagonal(conn_matrix, 0)
     i = 1
-    thr_max = 0.50
-    G = nx.from_numpy_matrix(conn_matrix)
-    density = nx.density(G)
-    while float(work_thr) <= float(thr_max) and float(density) > float(thr):
-        work_thr = float(work_thr) + float(0.01)
-        conn_matrix = thresholding.threshold_proportional(conn_matrix, work_thr)
-        G = nx.from_numpy_matrix(conn_matrix)
-        density = nx.density(G)
-        print("%s%d%s%.2f%s%.2f%s" % ('Iteratively thresholding -- Iteration ', i, ' -- with thresh: ', float(work_thr), ' and Density: ', float(density), '...'))
+    density = nx.density(nx.from_numpy_matrix(conn_matrix))
+    while (float(work_thr) < 100 and float(thr)<float(density)):
+        work_thr = float(work_thr) + float(1)
+        density = nx.density(nx.from_numpy_matrix(thresholding.threshold_absolute(conn_matrix, work_thr)))
+        print("%s%d%s%.2f%s%.2f%s" % ('Iteration ', i, ' -- with Thresh: ', float(work_thr), ' and Density: ', float(density), '...'))
         i = i + 1
     return conn_matrix
 
