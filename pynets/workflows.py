@@ -13,7 +13,7 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, roi, thr
                       clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                       node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
                       use_AAL_naming, smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size,
-                      mask):
+                      mask, norm, binary):
     from pynets import workflows
     from nipype import Workflow
     from nipype.pipeline import engine as pe
@@ -31,7 +31,8 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, roi, thr
                                                          user_atlas_list, clust_mask_list, node_size_list,
                                                          conn_model_list, min_span_tree, use_AAL_naming, smooth,
                                                          smooth_list, disp_filt, prune, multi_nets, clust_type,
-                                                         clust_type_list, plugin_type, c_boot, block_size, mask)
+                                                         clust_type_list, plugin_type, c_boot, block_size, mask,
+                                                         norm, binary)
         sub_struct_wf = None
     # Workflow 2: Structural connectome
     elif dwi_dir is not None and network is None:
@@ -77,7 +78,8 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, roi, thr
                                                            'num_total_samples', 'conn_model_list',
                                                            'min_span_tree', 'verbose', 'plugin_type', 'use_AAL_naming',
                                                            'smooth', 'smooth_list', 'disp_filt', 'clust_type',
-                                                           'clust_type_list', 'c_boot', 'block_size', 'mask']),
+                                                           'clust_type_list', 'c_boot', 'block_size', 'mask', 'norm',
+                                                           'binary']),
                              name='meta_inputnode')
     meta_inputnode.inputs.in_file = input_file
     meta_inputnode.inputs.ID = ID
@@ -127,6 +129,8 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, roi, thr
     meta_inputnode.inputs.c_boot = c_boot
     meta_inputnode.inputs.block_size = block_size
     meta_inputnode.inputs.mask = mask
+    meta_inputnode.inputs.norm = norm
+    meta_inputnode.inputs.binary = binary
     meta_wf.add_nodes([base_wf])
     meta_wf.connect([(meta_inputnode, base_wf, [('ID', 'inputnode.ID'),
                                                 ('atlas_select', 'inputnode.atlas_select'),
@@ -166,17 +170,20 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, roi, thr
                                                 ('clust_type_list', 'inputnode.clust_type_list'),
                                                 ('c_boot', 'inputnode.c_boot'),
                                                 ('block_size', 'inputnode.block_size'),
-                                                ('mask', 'inputnode.mask')])
+                                                ('mask', 'inputnode.mask'),
+                                                ('norm', 'inputnode.norm'),
+                                                ('binary', 'inputnode.binary')])
                      ])
     pass_meta_outs_node = pe.Node(niu.Function(input_names=['conn_model', 'est_path',
                                                             'network', 'node_size',
                                                             'smooth', 'c_boot', 'thr',
-                                                            'prune', 'ID', 'roi'],
+                                                            'prune', 'ID', 'roi', 'norm', 'binary'],
                                                output_names=['conn_model_iterlist', 'est_path_iterlist',
                                                              'network_iterlist', 'node_size_iterlist',
                                                              'smooth_iterlist', 'c_boot_iterlist',
                                                              'thr_iterlist', 'prune_iterlist',
-                                                             'ID_iterlist', 'roi_iterlist'],
+                                                             'ID_iterlist', 'roi_iterlist', 'norm_iterlist',
+                                                             'binary_iterlist'],
                                                function=pass_meta_outs), name='pass_meta_outs_node')
     # Set resource restrictions at level of the meta wf
     if input_file:
@@ -212,7 +219,9 @@ def workflow_selector(input_file, ID, atlas_select, network, node_size, roi, thr
                                                                             ('thr', 'thr'),
                                                                             ('prune', 'prune'),
                                                                             ('ID', 'ID'),
-                                                                            ('roi', 'roi')])
+                                                                            ('roi', 'roi'),
+                                                                            ('norm', 'norm'),
+                                                                            ('binary', 'binary')])
                      ])
 
     return meta_wf
@@ -223,7 +232,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                              multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_min, k_max, k_step,
                              k_clustering, user_atlas_list, clust_mask_list, node_size_list, conn_model_list,
                              min_span_tree, use_AAL_naming, smooth, smooth_list, disp_filt, prune, multi_nets,
-                             clust_type, clust_type_list, plugin_type, c_boot, block_size, mask):
+                             clust_type, clust_type_list, plugin_type, c_boot, block_size, mask, norm, binary):
     import os
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -241,7 +250,8 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                                                       'k_step', 'k_clustering', 'user_atlas_list',
                                                       'min_span_tree', 'use_AAL_naming', 'smooth',
                                                       'disp_filt', 'prune', 'multi_nets', 'clust_type',
-                                                      'c_boot', 'block_size', 'mask']), name='inputnode')
+                                                      'c_boot', 'block_size', 'mask', 'norm', 'binary']),
+                        name='inputnode')
 
     inputnode.inputs.func_file = func_file
     inputnode.inputs.ID = ID
@@ -283,6 +293,8 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
     inputnode.inputs.c_boot = c_boot
     inputnode.inputs.block_size = block_size
     inputnode.inputs.mask = mask
+    inputnode.inputs.norm = norm
+    inputnode.inputs.binary = binary
     # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
     # print("%s%s" % ('atlas_select: ', atlas_select))
@@ -320,6 +332,8 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
     # print("%s%s" % ('c_boot: ', c_boot))
     # print("%s%s" % ('block_size: ', block_size))
     # print("%s%s" % ('mask: ', mask))
+    # print("%s%s" % ('norm: ', norm))
+    # print("%s%s" % ('binary: ', binary))
     # print('\n\n\n\n\n')
 
     # Create function nodes
@@ -719,12 +733,12 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                                                              'smooth', 'dens_thresh', 'network', 'ID', 'roi',
                                                              'min_span_tree', 'disp_filt', 'parc', 'prune',
                                                              'atlas_select', 'uatlas_select', 'label_names', 'coords',
-                                                             'c_boot'],
+                                                             'c_boot', 'norm', 'binary'],
                                                 output_names=['conn_matrix', 'conn_model', 'dir_path', 'node_size',
                                                               'smooth', 'dens_thresh', 'network', 'ID', 'roi',
                                                               'min_span_tree', 'disp_filt', 'parc', 'prune',
                                                               'atlas_select', 'uatlas_select', 'label_names', 'coords',
-                                                              'c_boot'],
+                                                              'c_boot', 'norm', 'binary'],
                                                 function=estimation.get_conn_matrix, imports=import_list),
                                    name="get_conn_matrix_node")
     # Set get_conn_matrix_node iterables
@@ -769,14 +783,14 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
     # Set lists of fields and connect statements for repeated use throughout joins
     map_fields = ['conn_model', 'dir_path', 'conn_matrix', 'node_size', 'smooth', 'dens_thresh', 'network', 'ID',
                   'roi', 'min_span_tree', 'disp_filt', 'parc', 'prune', 'thr', 'atlas_select', 'uatlas_select',
-                  'label_names', 'coords', 'c_boot']
+                  'label_names', 'coords', 'c_boot', 'norm', 'binary']
 
     map_connects = [('conn_model', 'conn_model'), ('dir_path', 'dir_path'), ('conn_matrix', 'conn_matrix'),
                     ('node_size', 'node_size'), ('smooth', 'smooth'), ('dens_thresh', 'dens_thresh'), ('ID', 'ID'),
                     ('roi', 'roi'), ('min_span_tree', 'min_span_tree'), ('disp_filt', 'disp_filt'), ('parc', 'parc'),
                     ('prune', 'prune'), ('network', 'network'), ('thr', 'thr'), ('atlas_select', 'atlas_select'),
                     ('uatlas_select', 'uatlas_select'), ('label_names', 'label_names'), ('coords', 'coords'),
-                    ('c_boot', 'c_boot')]
+                    ('c_boot', 'c_boot'), ('norm', 'norm'), ('binary', 'binary')]
     # Create a "thr_info" node for iterating iterfields across thresholds
     thr_info_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='thr_info_node')
     # Joinsource logic for atlas varieties
@@ -925,11 +939,11 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                                                              'network', 'ID', 'dir_path', 'roi', 'node_size',
                                                              'min_span_tree', 'smooth', 'disp_filt', 'parc', 'prune',
                                                              'atlas_select', 'uatlas_select', 'label_names', 'coords',
-                                                             'c_boot'],
+                                                             'c_boot', 'norm', 'binary'],
                                                 output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr',
                                                               'node_size', 'network', 'conn_model', 'roi', 'smooth',
                                                               'prune', 'ID', 'dir_path', 'atlas_select', 'uatlas_select',
-                                                              'label_names', 'coords', 'c_boot'],
+                                                              'label_names', 'coords', 'c_boot', 'norm', 'binary'],
                                                 function=thresholding.thresh_func, imports=import_list),
                                    name="thresh_func_node")
     else:
@@ -937,18 +951,19 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                                                                 'network', 'ID', 'dir_path', 'roi', 'node_size',
                                                                 'min_span_tree', 'smooth', 'disp_filt', 'parc', 'prune',
                                                                 'atlas_select', 'uatlas_select', 'label_names', 'coords',
-                                                                'c_boot'],
+                                                                'c_boot', 'norm', 'binary'],
                                                    output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr',
                                                                  'node_size', 'network', 'conn_model', 'roi', 'smooth',
                                                                  'prune', 'ID', 'dir_path', 'atlas_select',
-                                                                 'uatlas_select', 'label_names', 'coords', 'c_boot'],
+                                                                 'uatlas_select', 'label_names', 'coords', 'c_boot',
+                                                                 'norm', 'binary'],
                                                    function=thresholding.thresh_func, imports=import_list),
                                       name="thresh_func_node", iterfield=['dens_thresh', 'thr', 'conn_matrix',
                                                                           'conn_model', 'network', 'ID', 'dir_path',
                                                                           'roi', 'node_size', 'min_span_tree', 'smooth',
                                                                           'disp_filt', 'parc', 'prune', 'atlas_select',
                                                                           'uatlas_select', 'label_names', 'coords',
-                                                                          'c_boot'], nested=True)
+                                                                          'c_boot', 'norm', 'binary'], nested=True)
 
     # Set iterables for thr on thresh_func, else set thr to singular input
     if multi_thr is True:
@@ -962,7 +977,8 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
     # Plotting
     if plot_switch is True:
         plot_fields = ['conn_matrix', 'conn_model', 'atlas_select', 'dir_path', 'ID', 'network', 'label_names', 'roi',
-                       'coords', 'thr', 'node_size', 'edge_threshold', 'smooth', 'prune', 'uatlas_select', 'c_boot']
+                       'coords', 'thr', 'node_size', 'edge_threshold', 'smooth', 'prune', 'uatlas_select', 'c_boot',
+                       'norm', 'binary']
         # Plotting iterable graph solutions
         if conn_model_list or node_size_list or smooth_list or float(c_boot) > 0 or multi_thr or user_atlas_list or multi_atlas or float(k_clustering) > 1 or flexi_atlas is True:
             plot_all_node = pe.MapNode(niu.Function(input_names=plot_fields, output_names='None',
@@ -989,37 +1005,42 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                                                                                 ('uatlas_select', 'uatlas_select'),
                                                                                 ('label_names', 'label_names'),
                                                                                 ('coords', 'coords'),
-                                                                                ('c_boot', 'c_boot')])
+                                                                                ('c_boot', 'c_boot'),
+                                                                                ('norm', 'norm'),
+                                                                                ('binary', 'binary')])
                                              ])
     # Create outputnode to capture results of nested workflow
     outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'network', 'prune', 'ID', 'roi',
-                                                       'conn_model', 'node_size', 'smooth', 'c_boot']),
+                                                       'conn_model', 'node_size', 'smooth', 'c_boot', 'norm',
+                                                       'binary']),
                          name='outputnode')
     # Handle multiple RSN cases with multi_nets joinnode
     if multi_nets:
         join_iters_node_nets = pe.JoinNode(niu.IdentityInterface(fields=['est_path', 'thr', 'network', 'prune',
                                                                          'ID', 'roi', 'conn_model', 'node_size',
-                                                                         'smooth', 'c_boot']),
+                                                                         'smooth', 'c_boot', 'norm', 'binary']),
                                            name='join_iters_node_nets', joinsource=get_node_membership_node,
                                            joinfield=['est_path', 'thr', 'network', 'prune', 'ID', 'roi',
-                                                      'conn_model', 'node_size', 'smooth', 'c_boot'])
+                                                      'conn_model', 'node_size', 'smooth', 'c_boot', 'norm',
+                                                      'binary'])
         functional_connectometry_wf.connect([
             (thresh_func_node, join_iters_node_nets, [('thr', 'thr'), ('network', 'network'),
                                                       ('est_path', 'est_path'), ('node_size', 'node_size'),
                                                       ('smooth', 'smooth'), ('roi', 'roi'),
                                                       ('conn_model', 'conn_model'), ('ID', 'ID'),
-                                                      ('prune', 'prune'), ('c_boot', 'c_boot')]),
+                                                      ('prune', 'prune'), ('c_boot', 'c_boot'),
+                                                      ('norm', 'norm'), ('binary', 'binary')]),
             (join_iters_node_nets, outputnode, [('thr', 'thr'), ('network', 'network'), ('est_path', 'est_path'),
                                                 ('node_size', 'node_size'), ('smooth', 'smooth'), ('roi', 'roi'),
                                                 ('conn_model', 'conn_model'), ('ID', 'ID'), ('prune', 'prune'),
-                                                ('c_boot', 'c_boot')])
+                                                ('c_boot', 'c_boot'), ('norm', 'norm'), ('binary', 'binary')])
         ])
     else:
         functional_connectometry_wf.connect([
             (thresh_func_node, outputnode, [('thr', 'thr'), ('network', 'network'), ('est_path', 'est_path'),
                                             ('node_size', 'node_size'), ('smooth', 'smooth'), ('roi', 'roi'),
                                             ('conn_model', 'conn_model'), ('ID', 'ID'), ('prune', 'prune'),
-                                            ('c_boot', 'c_boot')])
+                                            ('c_boot', 'c_boot'), ('norm', 'norm'), ('binary', 'binary')])
         ])
 
     # Connect remaining nodes of workflow
@@ -1045,7 +1066,9 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                                            ('min_span_tree', 'min_span_tree'),
                                            ('disp_filt', 'disp_filt'),
                                            ('parc', 'parc'),
-                                           ('prune', 'prune')]),
+                                           ('prune', 'prune'),
+                                           ('norm', 'norm'),
+                                           ('binary', 'binary')]),
         (fetch_nodes_and_labels_node, extract_ts_node, [('dir_path', 'dir_path')]),
         (node_gen_node, extract_ts_node, [('net_parcels_map_nifti', 'net_parcels_map_nifti'),
                                           ('coords', 'coords'), ('label_names', 'label_names'),

@@ -823,7 +823,7 @@ def most_important(G):
 
 
 # Extract network metrics interface
-def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_size, smooth, c_boot):
+def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_size, smooth, c_boot, norm, binary):
     import pandas as pd
     import yaml
     try:
@@ -836,7 +836,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     # Advanced options
     save_gephi = False
     custom_weight = None
-    binary = False
 
     # Load and threshold matrix
     if '.txt' in est_path:
@@ -844,14 +843,30 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     else:
         in_mat_raw = np.array(np.load(est_path))
 
-    # De-diagnal and Normalize connectivity matrix (weights between 0-1)
-    in_mat = np.array(thresholding.normalize(np.array(thresholding.autofix(in_mat_raw))))
+    # De-diagnal
+    in_mat = np.array(np.array(thresholding.autofix(in_mat_raw)))
+
+    # Normalize connectivity matrix
+    # Force edges to values between 0-1
+    if norm == 1:
+        in_mat = thresholding.normalize(in_mat)
+    # Apply log10
+    elif norm == 2:
+        in_mat = np.log10(in_mat)
+    else:
+        pass
+
+    # Correct nan's and inf's
     in_mat[np.isnan(in_mat)] = 0
     in_mat[np.isinf(in_mat)] = 1
 
     # Get hyperbolic tangent (i.e. fischer r-to-z transform) of matrix if non-covariance
     if conn_model == 'corr':
         in_mat = np.arctanh(in_mat)
+
+    # Binarize graph
+    if binary is True:
+        in_mat = thresholding.binarize(in_mat)
 
     # Get dir_path
     dir_path = os.path.dirname(os.path.realpath(est_path))
@@ -869,10 +884,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
 
     # Get corresponding matrix
     in_mat = np.array(nx.to_numpy_matrix(G))
-
-    # Binarize graph
-    if binary is True:
-        in_mat = thresholding.binarize(in_mat)
 
     # Print graph summary
     print("%s%.2f%s" % ('\n\nThreshold: ', 100*float(thr), '%'))
@@ -896,6 +907,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
 
     # Create Length matrix
     mat_len = thresholding.weight_conversion(in_mat, 'lengths')
+
     # Load numpy matrix as networkx graph
     G_len = nx.from_numpy_matrix(mat_len)
 

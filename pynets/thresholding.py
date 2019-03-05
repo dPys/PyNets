@@ -53,13 +53,13 @@ def normalize(W, copy=True):
     return W
 
 
-def density_thresholding(conn_matrix, thr):
+def density_thresholding(conn_matrix, thr, thr_max=1000):
     from pynets import thresholding
     work_thr = 0
     np.fill_diagonal(conn_matrix, 0)
     i = 1
     density = nx.density(nx.from_numpy_matrix(conn_matrix))
-    while (float(work_thr) < 100 and float(thr)<float(density)):
+    while float(work_thr) < thr_max and float(thr) < float(density):
         work_thr = float(work_thr) + float(1)
         density = nx.density(nx.from_numpy_matrix(thresholding.threshold_absolute(conn_matrix, work_thr)))
         print("%s%d%s%.2f%s%.2f%s" % ('Iteration ', i, ' -- with Thresh: ', float(work_thr), ' and Density: ', float(density), '...'))

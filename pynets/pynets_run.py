@@ -130,6 +130,14 @@ def get_parser():
                         metavar='Pruning strategy',
                         default=1,
                         help='Include this flag to prune the resulting graph of any isolated (1) or isolated + fully disconnected (2) nodes. Default pruning=1 and removes isolated nodes. Include -p 0 to disable pruning.\n')
+    parser.add_argument('-norm',
+                        metavar='Normalization strategy for resulting graph(s)',
+                        default=None,
+                        help='Include this flag to normalize the resulting graph to values between 0-1 (1) or using log10 (2). Default is no normalization.\n')
+    parser.add_argument('-bin',
+                        metavar='Binarize resulting graph(s)',
+                        default=False,
+                        help='Include this flag to binarize the resulting graph such that edges are boolean and not weighted.\n')
     parser.add_argument('-s',
                         metavar='Number of samples',
                         default='5000',
@@ -277,6 +285,8 @@ def build_workflow(args, retval):
     k_step = args.k_step
     clust_mask_pre = args.cm
     prune = args.p
+    norm = args.norm
+    binary = args.bin
     plugin_type = args.plug
     use_AAL_naming = args.names
     verbose = args.v
@@ -820,6 +830,8 @@ def build_workflow(args, retval):
     # print("%s%s" % ('c_boot: ', c_boot))
     # print("%s%s" % ('block_size: ', block_size))
     # print("%s%s" % ('mask: ', mask))
+    # print("%s%s" % ('norm: ', norm))
+    # print("%s%s" % ('binary: ', binary))
     # print('\n\n\n\n\n')
     # import sys
     # sys.exit(0)
@@ -837,11 +849,11 @@ def build_workflow(args, retval):
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
-                               clust_type_list, c_boot, block_size, mask):
+                               clust_type_list, c_boot, block_size, mask, norm, binary):
         wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_', random.randint(1, 1000)))
         inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'roi', 'multi_nets',
                                                           'conn_model', 'plot_switch', 'graph', 'prune', 'smooth',
-                                                          'c_boot']),
+                                                          'c_boot', 'norm', 'binary']),
                             name='inputnode')
         if verbose is True:
             from nipype import config, logging
@@ -873,6 +885,8 @@ def build_workflow(args, retval):
         inputnode.inputs.prune = prune
         inputnode.inputs.smooth = smooth
         inputnode.inputs.c_boot = c_boot
+        inputnode.inputs.norm = norm
+        inputnode.inputs.binary = binary
 
         meta_wf = workflow_selector(input_file, ID, atlas_select, network, node_size, roi, thr, uatlas_select,
                                     multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_dir,
@@ -880,7 +894,7 @@ def build_workflow(args, retval):
                                     step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list, disp_filt,
-                                    clust_type, clust_type_list, c_boot, block_size, mask)
+                                    clust_type, clust_type_list, c_boot, block_size, mask, norm, binary)
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
@@ -903,7 +917,8 @@ def build_workflow(args, retval):
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
                                    iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
-                                              'roi', 'prune', 'node_size', 'smooth', 'c_boot'], nested=True)
+                                              'roi', 'prune', 'node_size', 'smooth', 'c_boot',
+                                              'norm', 'binary'], nested=True)
 
         # Export graph analysis results to pandas dataframes
         export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name="Export2Pandas",
@@ -930,7 +945,9 @@ def build_workflow(args, retval):
                                                                       ('prune_iterlist', 'prune'),
                                                                       ('node_size_iterlist', 'node_size'),
                                                                       ('smooth_iterlist', 'smooth'),
-                                                                      ('c_boot_iterlist', 'c_boot')]),
+                                                                      ('c_boot_iterlist', 'c_boot'),
+                                                                      ('norm_iterlist', 'norm'),
+                                                                      ('binary_iterlist', 'binary')]),
             (meta_wf.get_node('pass_meta_outs_node'), export_to_pandas_node, [('network_iterlist', 'network'),
                                                                               ('ID_iterlist', 'ID'),
                                                                               ('roi_iterlist', 'roi')]),
@@ -955,7 +972,9 @@ def build_workflow(args, retval):
                              ('prune_iterlist', 'prune'),
                              ('node_size_iterlist', 'node_size'),
                              ('smooth_iterlist', 'smooth'),
-                             ('c_boot_iterlist', 'c_boot')])
+                             ('c_boot_iterlist', 'c_boot'),
+                             ('norm_iterlist', 'norm'),
+                             ('binary_iterlist', 'binary')])
                            ])
             wf.disconnect([(meta_wf.get_node('pass_meta_outs_node'), export_to_pandas_node,
                             [('network_iterlist', 'network'),
@@ -975,6 +994,8 @@ def build_workflow(args, retval):
                 net_mets_node.inputs.network = [network] * len(multi_graph)
                 net_mets_node.inputs.conn_model = conn_model_list
                 net_mets_node.inputs.c_boot = [c_boot] * len(multi_graph)
+                net_mets_node.inputs.norm = [norm] * len(multi_graph)
+                net_mets_node.inputs.binary = [binary] * len(multi_graph)
 
                 export_to_pandas_node.inputs.ID = [ID] * len(multi_graph)
                 export_to_pandas_node.inputs.roi = [roi] * len(multi_graph)
@@ -989,7 +1010,9 @@ def build_workflow(args, retval):
                                                         ('node_size', 'node_size'),
                                                         ('smooth', 'smooth'),
                                                         ('c_boot', 'c_boot'),
-                                                        ('graph', 'est_path')])
+                                                        ('graph', 'est_path'),
+                                                        ('norm', 'norm'),
+                                                        ('binary', 'binary')])
                             ])
                 wf.connect([(inputnode, export_to_pandas_node, [('network', 'network'),
                                                                 ('ID', 'ID'),
@@ -1005,7 +1028,7 @@ def build_workflow(args, retval):
                          k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
                          num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming,
                          multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size,
-                         mask):
+                         mask, norm, binary):
 
         wf_multi = pe.Workflow(name="%s%s" % ('Wf_multisub_', random.randint(1001, 9000)))
         i = 0
@@ -1031,7 +1054,7 @@ def build_workflow(args, retval):
                 min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type, use_AAL_naming=use_AAL_naming,
                 multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
                 clust_type=clust_type, clust_type_list=clust_type_list, c_boot=c_boot, block_size=block_size,
-                mask=mask_sub)
+                mask=mask_sub, norm=norm, binary=binary)
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if input_file:
@@ -1066,7 +1089,7 @@ def build_workflow(args, retval):
                                     node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
                                     smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot,
-                                    block_size, mask)
+                                    block_size, mask, norm, binary)
 
         import shutil
         wf_multi.base_dir = '/tmp/wf_multi_subject'
@@ -1125,7 +1148,8 @@ def build_workflow(args, retval):
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
-                                    smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask)
+                                    smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask,
+                                    norm, binary)
 
         import shutil
         base_dirname = "%s%s" % ('wf_single_subject_', str(ID))
