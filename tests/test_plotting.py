@@ -84,6 +84,8 @@ def test_plot_all_nonet_no_mask():
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     roi = None
     prune = 1
+    norm = 1
+    binary = False
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/997_Default_est_sps_0.94.txt')
     edge_threshold = '99%'
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
@@ -97,7 +99,7 @@ def test_plot_all_nonet_no_mask():
     #coords already a list
     plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID,
     network, label_names, roi, coords, edge_threshold, thr, node_size, smooth,
-    prune, parlistfile, c_boot)
+    prune, parlistfile, c_boot, norm, binary)
     print("%s%s%s" % ('plot_all --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -114,6 +116,8 @@ def test_plot_all_nonet_with_mask():
     smooth = 2
     c_boot = 3
     prune = 1
+    norm = 1
+    binary = False
     conn_model = 'sps'
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     parlistfile = None
@@ -131,7 +135,7 @@ def test_plot_all_nonet_with_mask():
     #coords already a list
     plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID,
     network, label_names, roi, coords, edge_threshold, thr, node_size, smooth,
-    prune, parlistfile, c_boot)
+    prune, parlistfile, c_boot, norm, binary)
     print("%s%s%s" % ('plot_all (Masking version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 

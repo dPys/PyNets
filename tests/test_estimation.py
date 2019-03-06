@@ -37,6 +37,8 @@ def test_get_conn_matrix_cov():
     disp_filt = False
     parc = None
     prune = 1
+    norm = 1
+    binary = False
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     uatlas_select = None
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
@@ -49,9 +51,9 @@ def test_get_conn_matrix_cov():
     start_time = time.time()
     [conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network,
     ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select,
-    label_names, coords, c_boot] = estimation.get_conn_matrix(time_series, conn_model,
+    label_names, coords, c_boot, norm, binary] = estimation.get_conn_matrix(time_series, conn_model,
     dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot)
+    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary)
     print("%s%s%s" %
     ('get_conn_matrix --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 

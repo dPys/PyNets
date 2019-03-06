@@ -138,7 +138,7 @@ def autofix(W, copy=True):
 
 def disparity_filter(G, weight='weight'):
     from scipy import integrate
-    ''' 
+    '''
     Compute significance scores (alpha) for weighted edges in G as defined in Serrano et al. 2009
         Args
             G: Weighted NetworkX graph
@@ -425,7 +425,7 @@ def local_thresholding_dens(conn_matrix, thr):
     return conn_matrix_thr
 
 
-def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree, smooth, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot):
+def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree, smooth, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary):
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -470,7 +470,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     est_path = utils.create_est_path(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type)
     np.save(est_path, conn_matrix_thr)
 
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary
 
 
 def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, roi, node_size, conn_matrix, parc, min_span_tree,

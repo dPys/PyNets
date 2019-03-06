@@ -371,7 +371,7 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
 
 
 def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, roi, coords, thr,
-             node_size, edge_threshold, smooth, prune, uatlas_select, c_boot):
+             node_size, edge_threshold, smooth, prune, uatlas_select, c_boot, norm, binary):
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt

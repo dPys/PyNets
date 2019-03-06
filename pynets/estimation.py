@@ -10,7 +10,7 @@ warnings.simplefilter("ignore")
 
 
 def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-                    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot):
+                    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary):
     from nilearn.connectome import ConnectivityMeasure
     from sklearn.covariance import GraphicalLassoCV
 
@@ -139,7 +139,7 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
 
     coords = np.array(coords)
     label_names = np.array(label_names)
-    return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot
+    return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary
 
 
 def generate_mask_from_voxels(voxel_coords, volume_dims):

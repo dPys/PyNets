@@ -135,8 +135,8 @@ def get_parser():
                         default=None,
                         help='Include this flag to normalize the resulting graph to values between 0-1 (1) or using log10 (2). Default is no normalization.\n')
     parser.add_argument('-bin',
-                        metavar='Binarize resulting graph(s)',
                         default=False,
+                        action='store_true',
                         help='Include this flag to binarize the resulting graph such that edges are boolean and not weighted.\n')
     parser.add_argument('-s',
                         metavar='Number of samples',

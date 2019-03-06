@@ -130,7 +130,7 @@ def assemble_mt_path(ID, input_file, atlas_select, network, conn_model, thr, roi
     return out_path
 
 
-def pass_meta_outs(conn_model, est_path, network, node_size, smooth, c_boot, thr, prune, ID, roi):
+def pass_meta_outs(conn_model, est_path, network, node_size, smooth, c_boot, thr, prune, ID, roi, norm, binary):
     est_path_iterlist = est_path
     conn_model_iterlist = conn_model
     network_iterlist = network
@@ -141,6 +141,8 @@ def pass_meta_outs(conn_model, est_path, network, node_size, smooth, c_boot, thr
     prune_iterlist = prune
     ID_iterlist = ID
     roi_iterlist = roi
+    norm_iterlist = norm
+    binary_iterlist = binary
     # print('\n\nParam-iters:\n')
     # print(conn_model_iterlist)
     # print(est_path_iterlist)
@@ -152,8 +154,10 @@ def pass_meta_outs(conn_model, est_path, network, node_size, smooth, c_boot, thr
     # print(prune_iterlist)
     # print(ID_iterlist)
     # print(roi_iterlist)
+    # print(norm_iterlist)
+    # print(binary_iterlist)
     # print('\n\n')
-    return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, smooth_iterlist, c_boot_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist
+    return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, smooth_iterlist, c_boot_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 
 
 def CollectPandasJoin(net_pickle_mt):
@@ -432,6 +436,8 @@ class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
     node_size = traits.Any(mandatory=False)
     smooth = traits.Any(mandatory=False)
     c_boot = traits.Any(mandatory=False)
+    norm = traits.Any(mandatory=False)
+    binary = traits.Any(mandatory=False)
 
 
 class ExtractNetStatsOutputSpec(TraitedSpec):
@@ -453,7 +459,9 @@ class ExtractNetStats(BaseInterface):
             self.inputs.prune,
             self.inputs.node_size,
             self.inputs.smooth,
-            self.inputs.c_boot)
+            self.inputs.c_boot,
+            self.inputs.norm,
+            self.inputs.binary)
         setattr(self, '_outpath', out)
         return runtime
 
