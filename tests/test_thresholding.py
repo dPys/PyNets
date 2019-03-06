@@ -34,6 +34,8 @@ def test_thresh_func():
     parc = False
     node_size = 'TEST'
     prune = 1
+    norm = 1
+    binary = False
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     uatlas_select = None
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'

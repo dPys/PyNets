@@ -8,6 +8,7 @@
   "tests/test_thresholding.py::test_thresh_and_fit1": true,
   "tests/test_thresholding.py::test_thresh_and_fit2": true,
   "tests/test_thresholding.py::test_thresh_diff": true,
+  "tests/test_thresholding.py::test_thresh_func": true,
   "tests/test_thresholding_bak.py::test_thresh_and_fit1": true,
   "tests/test_thresholding_bak.py::test_thresh_and_fit2": true,
   "tests/test_utils.py::test_individual_tcorr_clustering": true,
