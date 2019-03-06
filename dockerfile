@@ -25,6 +25,7 @@ RUN apt-get update -qq \
         libgl1-mesa-glx \
         graphviz \
         libpng-dev \
+        gnupg \
         build-essential \
         libgomp1 \
         libmpich-dev \
@@ -33,19 +34,20 @@ RUN apt-get update -qq \
         unzip \
         screen \
         git \
-        mesa-common-dev \
-        libglu1-mesa-dev \
         g++ \
-        libgtk2.0-dev \
-        libglib2.0-dev \
-        libglibmm-2.4-dev \
-        libgtkmm-2.4-dev \
-        libgtkglext1-dev \
+        zip \
+        unzip \
+        libglu1 \
+        zlib1g-dev \
+        libfreetype6-dev \
+        pkg-config \
+        r-base-core \
         libgsl0-dev \
-        libgl1-mesa-dev \
-        qt5-default \
-        libqt5svg5* \
-        libeigen3-dev \
+        openssl \
+        gsl-bin \
+        libglu1-mesa-dev \
+        libglib2.0-0 \
+        libglw1-mesa \ 
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && curl -o /tmp/libxp6.deb -sSL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
@@ -56,12 +58,18 @@ RUN apt-get update -qq \
     && chmod 777 -R /opt
 
 # Add Neurodebian package repositories (i.e. for FSL)
-RUN apt-get update && apt-get install -my wget gnupg
 RUN curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key add /root/.neurodebian.gpg && \
     (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true) && \
     apt-get update -qq
 RUN apt-get update -qq && apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates fsl-first-data
+
+# Add git-lfs
+# Configure git-lfs
+RUN apt-get install -y apt-transport-https debian-archive-keyring
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
+    apt-get update && \
+    apt-get install -y git-lfs
 
 USER neuro
 WORKDIR /home/neuro
@@ -78,13 +86,11 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh
 
 # Install pynets.
-RUN conda install -yq \
-      python=3.6 \
-      ipython \
-    && conda clean -tipsy \
-#    && pip install scipy scikit-learn>=0.19 \
-#    && pip install -e git://github.com/dPys/nilearn.git#egg=0.4.2 \
-    && pip install pynets==0.7.31
+RUN conda install -yq python=3.6 ipython
+RUN pip install --upgrade pip
+RUN pip install --upgrade pip
+RUN conda clean -tipsy
+RUN pip install pynets==0.7.32 awscli pybids boto3 python-dateutil requests
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
@@ -98,16 +104,28 @@ RUN conda install -yq \
     && conda clean -tipsy \
     && pip install skggm
 
-# Install brainiak
-#RUN conda install -yq -c brainiak -c defaults -c conda-forge brainiak
-
-# Install mrtrix
-#RUN git clone https://github.com/MRtrix3/mrtrix3.git /opt/mrtrix3
-#ENV EIGEN_CFLAGS="-isystem /usr/include/eigen3"
-#RUN cd /opt/mrtrix3 && ./configure && ./build && ./set_path
-#ENV PATH=/opt/mrtrix3/bin:$PATH
-
 USER root
+
+# Install ANTS
+RUN wget -qO- "https://cmake.org/files/v3.12/cmake-3.12.1-Linux-x86_64.tar.gz" | \
+  tar --strip-components=1 -xz -C /usr/local
+
+ENV ANTS_VERSION=2.2.0
+WORKDIR /tmp
+RUN git clone git://github.com/stnava/ANTs.git ants \
+    && cd ants \
+    && mkdir build \
+    && cd build \
+    && cmake .. \
+    && make -j4 \
+    && mkdir -p /opt/ants \
+    && mv bin/* /opt/ants && mv ../Scripts/* /opt/ants \
+    && cd .. \
+    && rm -rf build
+
+ENV ANTSPATH=/opt/ants/ \
+    PATH=/opt/ants:$PATH
+
 RUN chown -R neuro /opt \
     && chmod a+s -R /opt \
     && chmod 777 -R /opt/conda/lib/python3.6/site-packages/pynets \
@@ -118,6 +136,9 @@ RUN chown -R neuro /opt \
 RUN apt-get remove --purge -y \
     git \
     build-essential
+
+# Delete buggy line in dipy
+RUN sed -i -e '189d;190d' /opt/conda/lib/python3.6/site-packages/dipy/tracking/eudx.py
 
 USER neuro
 
@@ -141,3 +162,12 @@ ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
 ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
 ENV FSLOUTPUTTYPE=NIFTI_GZ
+
+# Misc environment vars
+ENV MPLCONFIGDIR /tmp/matplotlib
+ENV PYTHONWARNINGS ignore
+
+RUN ldconfig
+
+# and add it as an entrypoint
+#ENTRYPOINT ["pynets_run"]
