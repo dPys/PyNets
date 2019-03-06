@@ -1,5 +1,8 @@
 FROM debian:stretch-slim
 
+ENV LIBXP_URL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb
+ENV LIBPNG_URL http://mirrors.kernel.org/debian/pool/main/libp/libpng/libpng12-0_1.2.49-1%2Bdeb7u2_amd64.deb
+
 # Pre-cache neurodebian key
 COPY docker/files/neurodebian.gpg /root/.neurodebian.gpg
 
@@ -57,6 +60,19 @@ RUN apt-get update -qq \
     && chmod a+s /opt \
     && chmod 777 -R /opt
 
+RUN echo "Install libxp (not in all ubuntu/debian repositories)" && \
+    apt-get install -yq --no-install-recommends libxp6 \
+    || /bin/bash -c " \
+       curl --retry 5 -o /tmp/libxp6.deb -sSL \
+       && dpkg -i /tmp/libxp6.deb && rm -f /tmp/libxp6.deb $LIBXP_URL" && \
+    echo "Install libpng12 (not in all ubuntu/debian repositories" && \
+    apt-get install -yq --no-install-recommends libpng12-0 \
+    || /bin/bash -c " \
+       curl -o /tmp/libpng12.deb -sSL $LIBPNG_URL \
+       && dpkg -i /tmp/libpng12.deb && rm -f /tmp/libpng12.deb" && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 # Add Neurodebian package repositories (i.e. for FSL)
 RUN curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key add /root/.neurodebian.gpg && \
@@ -104,8 +120,6 @@ RUN conda install -yq \
     && conda clean -tipsy \
     && pip install skggm
 
-USER root
-
 # Install ANTS
 RUN wget -qO- "https://cmake.org/files/v3.12/cmake-3.12.1-Linux-x86_64.tar.gz" | \
   tar --strip-components=1 -xz -C /usr/local
@@ -126,6 +140,7 @@ RUN git clone git://github.com/stnava/ANTs.git ants \
 ENV ANTSPATH=/opt/ants/ \
     PATH=/opt/ants:$PATH
 
+USER root
 RUN chown -R neuro /opt \
     && chmod a+s -R /opt \
     && chmod 777 -R /opt/conda/lib/python3.6/site-packages/pynets \
@@ -138,7 +153,7 @@ RUN apt-get remove --purge -y \
     build-essential
 
 # Delete buggy line in dipy
-#RUN sed -i -e '189d;190d' /opt/conda/lib/python3.6/site-packages/dipy/tracking/eudx.py
+RUN sed -i -e '189d;190d' /opt/conda/lib/python3.6/site-packages/dipy/tracking/eudx.py
 
 USER neuro
 
@@ -167,5 +182,7 @@ ENV FSLOUTPUTTYPE=NIFTI_GZ
 ENV MPLCONFIGDIR /tmp/matplotlib
 ENV PYTHONWARNINGS ignore
 
+RUN ldconfig
+
 # and add it as an entrypoint
-#ENTRYPOINT ["pynets_run"]
+ENTRYPOINT ["pynets_run"]
