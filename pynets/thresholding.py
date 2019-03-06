@@ -71,8 +71,8 @@ def density_thresholding(conn_matrix, thr, thr_max=1000):
 def est_density(func_mat):
     '''# Adapted from bctpy
     '''
-    fG=nx.from_numpy_matrix(func_mat)
-    density=nx.density(fG)
+    fG = nx.from_numpy_matrix(func_mat)
+    density = nx.density(fG)
     return density
 
 

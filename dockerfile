@@ -138,7 +138,7 @@ RUN apt-get remove --purge -y \
     build-essential
 
 # Delete buggy line in dipy
-RUN sed -i -e '189d;190d' /opt/conda/lib/python3.6/site-packages/dipy/tracking/eudx.py
+#RUN sed -i -e '189d;190d' /opt/conda/lib/python3.6/site-packages/dipy/tracking/eudx.py
 
 USER neuro
 
@@ -166,8 +166,6 @@ ENV FSLOUTPUTTYPE=NIFTI_GZ
 # Misc environment vars
 ENV MPLCONFIGDIR /tmp/matplotlib
 ENV PYTHONWARNINGS ignore
-
-RUN ldconfig
 
 # and add it as an entrypoint
 #ENTRYPOINT ["pynets_run"]
