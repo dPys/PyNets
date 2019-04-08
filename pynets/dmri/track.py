@@ -173,7 +173,7 @@ def save_streams(dwi_img, streamlines, dir_path, vox_size='2mm'):
 
 
 def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, labels_im_file, mod_path,
-              target_samples, curv_thr_list, step_list, overlap_thr_list, track_type, max_length,
+              target_samples, curv_thr_list, step_list, track_type, max_length,
               maxcrossing, directget):
     try:
         import cPickle as pickle
@@ -227,40 +227,38 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
                     ind = quantize_evecs(mod_fit.evecs, sphere.vertices)
                 for step in step_list:
                     print("%s%s" % ('Using step size: ', step))
-                    for overlap_thr in overlap_thr_list:
-                        print("%s%s" % ('Using ROI voxel overlap threshold: ', overlap_thr))
-                        seed = utils.random_seeds_from_mask(atlas_data==roi, seeds_count=1, seed_count_per_voxel=True,
-                                                            affine=np.eye(4))
-                        print(seed)
-                        if track_type == 'local':
-                            if not directget != 'tensor':
-                                streamline_generator = LocalTracking(dg, tiss_classifier, seed, np.eye(4),
-                                                                     max_cross=maxcrossing, maxlen=max_length,
-                                                                     step_size=step, return_all=True)
-                            else:
-                                raise ValueError('ERROR: Local tracking does not currently support tensor model')
-                        elif track_type == 'particle':
-                            if directget != 'tensor':
-                                streamline_generator = ParticleFilteringTracking(dg, tiss_classifier, seed, np.eye(4),
-                                                                                 max_cross=maxcrossing, step_size=step,
-                                                                                 maxlen=max_length,
-                                                                                 pft_back_tracking_dist=2,
-                                                                                 pft_front_tracking_dist=1,
-                                                                                 particle_count=15, return_all=True)
-                            else:
-                                raise ValueError('ERROR: Particle tracking does not currently support tensor model')
-                        elif track_type == 'eudx':
-                            if directget == 'tensor':
-                                streamline_generator = EuDX(fa.astype('f8'), ind, odf_vertices=sphere.vertices,
-                                                            a_low=float(0.2), seeds=seed, affine=np.eye(4))
-                            else:
-                                raise ValueError('ERROR: EuDX tracking is currently only supported for tensor model')
-                        streamlines_more = Streamlines(streamline_generator)
+                    seed = utils.random_seeds_from_mask(atlas_data==roi, seeds_count=1, seed_count_per_voxel=True,
+                                                        affine=np.eye(4))
+                    print(seed)
+                    if track_type == 'local':
+                        if not directget != 'tensor':
+                            streamline_generator = LocalTracking(dg, tiss_classifier, seed, np.eye(4),
+                                                                 max_cross=maxcrossing, maxlen=max_length,
+                                                                 step_size=step, return_all=True)
+                        else:
+                            raise ValueError('ERROR: Local tracking does not currently support tensor model')
+                    elif track_type == 'particle':
+                        if directget != 'tensor':
+                            streamline_generator = ParticleFilteringTracking(dg, tiss_classifier, seed, np.eye(4),
+                                                                             max_cross=maxcrossing, step_size=step,
+                                                                             maxlen=max_length,
+                                                                             pft_back_tracking_dist=2,
+                                                                             pft_front_tracking_dist=1,
+                                                                             particle_count=15, return_all=True)
+                        else:
+                            raise ValueError('ERROR: Particle tracking does not currently support tensor model')
+                    elif track_type == 'eudx':
+                        if directget == 'tensor':
+                            streamline_generator = EuDX(fa.astype('f8'), ind, odf_vertices=sphere.vertices,
+                                                        a_low=float(0.2), seeds=seed, affine=np.eye(4))
+                        else:
+                            raise ValueError('ERROR: EuDX tracking is currently only supported for tensor model')
+                    streamlines_more = Streamlines(streamline_generator)
 
-                        for s in streamlines_more:
-                            streamlines.append(s)
-                            if len(streamlines) > target_samples:
-                                break
+                    for s in streamlines_more:
+                        streamlines.append(s)
+                        if len(streamlines) > target_samples:
+                            break
 
         print('\n')
         streamlines_list.append(streamlines)

@@ -17,6 +17,7 @@ from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
 
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, voxel_size='2mm'):
+
     # Read Streamlines
     streamlines_mni = nib.streamlines.load(streams).streamlines
     streamlines = Streamlines(streamlines_mni)
@@ -63,7 +64,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, voxel_size='2mm'):
 
     # Stack and save remaining streamlines
     stream_viz_list = np.vstack(stream_viz)
-    nib.streamlines.save(Streamlines(stream_viz_list), "%s%s" % (dir_path, "/streamlines_graph.trk.gz"))
+    nib.streamlines.save(Streamlines(stream_viz_list), "%s%s%s%s" % (dir_path, '/streamlines_graph_', overlap_thr, '_overlap.trk.gz'))
 
     # Convert to numpy matrix
     conn_matrix = nx.to_numpy_matrix(g)
@@ -75,6 +76,6 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, voxel_size='2mm'):
     conn_matrix_symm = conn_matrix_symm[1:, 1:]
 
     # Save matrix
-    est_path_raw = "%s%s" % (dir_path, "/conn_matrix_symm.npy")
+    est_path_raw = "%s%s%s%s" % (dir_path, '/conn_matrix_', overlap_thr, '_overlap.npy')
     np.save(est_path_raw, conn_matrix_symm)
     return conn_matrix_symm

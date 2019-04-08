@@ -347,7 +347,7 @@ def build_workflow(args, retval):
         atlas_select = atlas_select[0]
         multi_atlas = None
 
-    target_samples = 1000
+    target_samples = 10
     maxcrossing = 1
     max_length = 200
     track_type = 'particle'

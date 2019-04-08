@@ -1454,8 +1454,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
     run_tracking_node = pe.Node(niu.Function(input_names=['nodif_B0_mask', 'gm_in_dwi', 'vent_csf_in_dwi', 'wm_in_dwi',
                                                           'tiss_class', 'dir_path', 'labels_im_file', 'mod_path',
                                                           'target_samples', 'curv_thr_list', 'step_list',
-                                                          'overlap_thr_list', 'track_type', 'max_length',
-                                                          'maxcrossing', 'directget'],
+                                                          'track_type', 'max_length', 'maxcrossing', 'directget'],
                                              output_names=['streamlines_list'], function=track.run_track,
                                              imports=import_list),
                                 name="run_tracking_node")
@@ -1471,10 +1470,16 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                     function=register.direct_streamline_norm,
                                     imports=import_list), name="dsn_node")
 
-    streams2graph_node = pe.Node(niu.Function(input_names=['atlas_mni', 'streams', 'directget', 'dir_path'],
+    streams2graph_node = pe.Node(niu.Function(input_names=['atlas_mni', 'streams', 'overlap_thr', 'dir_path'],
                                               output_names=['conn_matrix'],
                                               function=estimation.streams2graph,
                                               imports=import_list), name="streams2graph_node")
+
+    # Set streams2graph_node iterables
+    streams2graph_node_iterables = []
+    if overlap_thr_list:
+        streams2graph_node_iterables.append(("overlap_thr", overlap_thr_list))
+        streams2graph_node.iterables = streams2graph_node_iterables
 
     thresh_diff_node = pe.Node(niu.Function(input_names=['dens_thresh', 'thr', 'conn_matrix', 'conn_model',
                                                          'network', 'ID', 'dir_path', 'roi', 'node_size',
@@ -1639,7 +1644,6 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
         (inputnode, run_tracking_node, [('target_samples', 'target_samples'),
                                         ('curv_thr_list', 'curv_thr_list'),
                                         ('step_list', 'step_list'),
-                                        ('overlap_thr_list', 'overlap_thr_list'),
                                         ('track_type', 'track_type'),
                                         ('max_length', 'max_length'),
                                         ('maxcrossing', 'maxcrossing'),
@@ -1650,7 +1654,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                               ('min_length', 'min_length'),
                                               ('dwi', 'dwi')]),
         (gtab_node, filter_streamlines_node, [('gtab', 'gtab')]),
-        (inputnode, streams2graph_node, [('directget', 'directget')]),
+        (inputnode, streams2graph_node, [('overlap_thr', 'overlap_thr')]),
         (fetch_nodes_and_labels_node, streams2graph_node, [('dir_path', 'dir_path')]),
         (gtab_node, dsn_node, [('nodif_B0', 'nodif_B0')]),
         (fetch_nodes_and_labels_node, dsn_node, [('dir_path', 'dir_path')]),

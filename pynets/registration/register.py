@@ -247,11 +247,11 @@ class dmri_reg(object):
             if not os.path.isdir(reg_dirs[i]):
                 os.mkdir(reg_dirs[i])
 
-    def gen_tissue(self):
-        #print('Extracting brain from raw T1w image...')
-        #mgru.t1w_skullstrip(self.t1w, self.t1w_brain)
-        self.t1w_brain = self.t1w
+        if os.path.isfile(self.t1w_brain) is False:
+            import shutil
+            shutil.copyfile(self.t1w, self.t1w_brain)
 
+    def gen_tissue(self):
         # Segment the t1w brain into probability maps
         self.maps = mgru.segment_t1w(self.t1w_brain, self.map_path)
         self.wm_mask = self.maps['wm_prob']
@@ -412,8 +412,8 @@ class dmri_reg(object):
         # Set intensities to int
         self.atlas_img = nib.load(self.dwi_aligned_atlas)
         self.atlas_data = self.atlas_img.get_data().astype('int')
-        node_num = len(np.unique(self.atlas_data))
-        self.atlas_data[np.where(self.atlas_data>node_num)] = 0
+        #node_num = len(np.unique(self.atlas_data))
+        #self.atlas_data[self.atlas_data>node_num] = 0
         t_img = load_img(self.wm_gm_int_in_dwi)
         mask = math_img('img > 0', img=t_img)
         mask.to_filename(self.wm_gm_int_in_dwi_bin)
