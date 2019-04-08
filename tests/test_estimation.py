@@ -13,7 +13,7 @@ try:
     import cPickle as pickle
 except ImportError:
     import _pickle as pickle
-from pynets import estimation
+from pynets.fmri import estimation
 from pathlib import Path
 
 
@@ -24,8 +24,6 @@ def test_get_conn_matrix_cov():
     time_series_file = dir_path + '/coords_power_2011/997_wb_net_ts.txt'
     time_series = np.genfromtxt(time_series_file)
     conn_model = 'cov'
-
-
     node_size = 2
     smooth = 2
     c_boot = 0

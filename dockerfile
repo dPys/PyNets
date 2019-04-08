@@ -1,5 +1,6 @@
 FROM debian:stretch-slim
 
+ENV AFNI_URL https://files.osf.io/v1/resources/fvuh8/providers/osfstorage/5a0dd9a7b83f69027512a12b
 ENV LIBXP_URL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb
 ENV LIBPNG_URL http://mirrors.kernel.org/debian/pool/main/libp/libpng/libpng12-0_1.2.49-1%2Bdeb7u2_amd64.deb
 
@@ -60,19 +61,6 @@ RUN apt-get update -qq \
     && chmod a+s /opt \
     && chmod 777 -R /opt
 
-RUN echo "Install libxp (not in all ubuntu/debian repositories)" && \
-    apt-get install -yq --no-install-recommends libxp6 \
-    || /bin/bash -c " \
-       curl --retry 5 -o /tmp/libxp6.deb -sSL \
-       && dpkg -i /tmp/libxp6.deb && rm -f /tmp/libxp6.deb $LIBXP_URL" && \
-    echo "Install libpng12 (not in all ubuntu/debian repositories" && \
-    apt-get install -yq --no-install-recommends libpng12-0 \
-    || /bin/bash -c " \
-       curl -o /tmp/libpng12.deb -sSL $LIBPNG_URL \
-       && dpkg -i /tmp/libpng12.deb && rm -f /tmp/libpng12.deb" && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
 # Add Neurodebian package repositories (i.e. for FSL)
 RUN curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key add /root/.neurodebian.gpg && \
@@ -87,38 +75,32 @@ RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.d
     apt-get update && \
     apt-get install -y git-lfs
 
-USER neuro
-WORKDIR /home/neuro
+# Install AFNI
+RUN apt-get update -qq && apt-get install -yq --no-install-recommends ed gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa fsl-atlases \
+    libgomp1 libjpeg62 libxm4 netpbm tcsh xfonts-base xvfb && \
+    libs_path=/usr/lib/x86_64-linux-gnu && \
+    if [ -f $libs_path/libgsl.so.19 ]; then \
+           ln $libs_path/libgsl.so.19 $libs_path/libgsl.so.0; \
+    fi
 
-# Install Miniconda.
-ARG miniconda_version="4.3.27"
-ENV PATH="/opt/conda/bin:$PATH"
-RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_version}-Linux-x86_64.sh \
-    && bash Miniconda3-${miniconda_version}-Linux-x86_64.sh -b -p /opt/conda \
-    && conda config --system --prepend channels conda-forge \
-    && conda config --system --set auto_update_conda false \
-    && conda config --system --set show_channel_urls true \
-    && conda clean -tipsy \
-    && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh
+RUN echo "Install libxp (not in all ubuntu/debian repositories)" && \
+    apt-get install -yq --no-install-recommends libxp6 \
+    || /bin/bash -c " \
+       curl --retry 5 -o /tmp/libxp6.deb -sSL \
+       && dpkg -i /tmp/libxp6.deb && rm -f /tmp/libxp6.deb $LIBXP_URL" && \
+    echo "Install libpng12 (not in all ubuntu/debian repositories" && \
+    apt-get install -yq --no-install-recommends libpng12-0 \
+    || /bin/bash -c " \
+       curl -o /tmp/libpng12.deb -sSL $LIBPNG_URL \
+       && dpkg -i /tmp/libpng12.deb && rm -f /tmp/libpng12.deb" && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install pynets.
-RUN conda install -yq python=3.6 ipython
-RUN pip install --upgrade pip
-RUN pip install --upgrade pip
-RUN conda clean -tipsy
-RUN pip install pynets==0.7.32 awscli pybids boto3 python-dateutil requests
-
-RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
-    && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
-
-# Install skggm
-RUN conda install -yq \
-        cython \
-        libgfortran \
-        matplotlib \
-        openblas \
-    && conda clean -tipsy \
-    && pip install skggm
+RUN mkdir -p /opt/afni && \
+    curl -o afni.tar.gz -sSLO "$AFNI_URL" && \
+    tar zxv -C /opt/afni --strip-components=1 -f afni.tar.gz && \
+    rm -rf afni.tar.gz
+ENV PATH=/opt/afni:$PATH
 
 # Install ANTS
 RUN wget -qO- "https://cmake.org/files/v3.12/cmake-3.12.1-Linux-x86_64.tar.gz" | \
@@ -139,6 +121,38 @@ RUN git clone git://github.com/stnava/ANTs.git ants \
 
 ENV ANTSPATH=/opt/ants/ \
     PATH=/opt/ants:$PATH
+
+USER neuro
+WORKDIR /home/neuro
+
+# Install Miniconda.
+ARG miniconda_version="4.3.27"
+ENV PATH="/opt/conda/bin:$PATH"
+RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_version}-Linux-x86_64.sh \
+    && bash Miniconda3-${miniconda_version}-Linux-x86_64.sh -b -p /opt/conda \
+    && conda config --system --prepend channels conda-forge \
+    && conda config --system --set auto_update_conda false \
+    && conda config --system --set show_channel_urls true \
+    && conda clean -tipsy \
+    && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh
+
+# Install pynets.
+RUN conda install -yq python=3.6 ipython
+RUN pip install --upgrade pip
+RUN conda clean -tipsy
+RUN pip install pynets==0.7.32 awscli pybids boto3 python-dateutil requests dipy
+
+RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
+    && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
+
+# Install skggm
+RUN conda install -yq \
+        cython \
+        libgfortran \
+        matplotlib \
+        openblas \
+    && conda clean -tipsy \
+    && pip install skggm
 
 USER root
 RUN chown -R neuro /opt \
@@ -182,7 +196,5 @@ ENV FSLOUTPUTTYPE=NIFTI_GZ
 ENV MPLCONFIGDIR /tmp/matplotlib
 ENV PYTHONWARNINGS ignore
 
-RUN ldconfig
-
 # and add it as an entrypoint
-ENTRYPOINT ["pynets_run"]
+#ENTRYPOINT ["pynets_run"]

@@ -13,7 +13,7 @@ try:
 except ImportError:
     import _pickle as pickle
 from pathlib import Path
-from pynets import plotting
+from pynets.plotting import plot_gen, plot_graphs
 
 
 def test_plot_conn_mat_nonet_no_mask():
@@ -36,7 +36,7 @@ def test_plot_conn_mat_nonet_no_mask():
     label_names = pickle.load(labels_file)
 
     start_time = time.time()
-    plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path,
+    plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path,
     ID, network, label_names, roi, thr, node_size, smooth, c_boot)
     print("%s%s%s" % ('plot_conn_mat_func --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
@@ -62,7 +62,7 @@ def test_plot_conn_mat_nonet_mask():
     label_names = pickle.load(labels_file)
 
     start_time = time.time()
-    plotting.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path,
+    plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path,
     ID, network, label_names, roi, thr, node_size, smooth, c_boot)
     print("%s%s%s" % ('plot_conn_mat_func (Masking version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
@@ -97,7 +97,7 @@ def test_plot_all_nonet_no_mask():
 
     start_time = time.time()
     #coords already a list
-    plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID,
+    plot_gen.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID,
     network, label_names, roi, coords, edge_threshold, thr, node_size, smooth,
     prune, parlistfile, c_boot, norm, binary)
     print("%s%s%s" % ('plot_all --> finished: ',
@@ -133,7 +133,7 @@ def test_plot_all_nonet_with_mask():
 
     start_time = time.time()
     #coords already a list
-    plotting.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID,
+    plot_gen.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID,
     network, label_names, roi, coords, edge_threshold, thr, node_size, smooth,
     prune, parlistfile, c_boot, norm, binary)
     print("%s%s%s" % ('plot_all (Masking version) --> finished: ',
@@ -155,7 +155,7 @@ def test_plot_connectogram():
     label_names = pickle.load(labels_file)
 
     start_time = time.time()
-    plotting.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path,
+    plot_gen.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path,
     ID, network, label_names)
     print("%s%s%s" % ('plot_connectogram --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
@@ -175,7 +175,7 @@ def test_plot_timeseries():
     labels = pickle.load(labels_file)
 
     start_time = time.time()
-    plotting.plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels)
+    plot_gen.plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels)
     print("%s%s%s" % ('plot_timeseries --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 
@@ -190,7 +190,7 @@ def test_plot_conn_mat_rois_gt_100():
     out_path_fig = '/tmp/fig'
 
     start_time = time.time()
-    plotting.plot_conn_mat(conn_matrix, label_names, out_path_fig)
+    plot_graphs.plot_conn_mat(conn_matrix, label_names, out_path_fig)
     print("%s%s%s" % ('plot_timeseries --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 

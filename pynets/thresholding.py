@@ -4,10 +4,10 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
-import numpy as np
-import networkx as nx
 import warnings
 warnings.simplefilter("ignore")
+import numpy as np
+import networkx as nx
 
 
 def threshold_absolute(W, thr, copy=True):
@@ -295,7 +295,8 @@ def knn(conn_matrix, k):
 
 
 def local_thresholding_prop(conn_matrix, thr):
-    from pynets import netstats, thresholding
+    from pynets import thresholding
+    from pynets.stats import netstats
     '''
     Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
     successive N-nearest neighbour degree graphs to achieve target proportional threshold.
@@ -363,7 +364,8 @@ def local_thresholding_prop(conn_matrix, thr):
 
 
 def local_thresholding_dens(conn_matrix, thr):
-    from pynets import netstats, thresholding
+    from pynets import thresholding
+    from pynets.stats import netstats
     '''
     Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
     successive N-nearest neighbour degree graphs to achieve target density.
@@ -473,8 +475,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary
 
 
-def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, roi, node_size, conn_matrix, parc, min_span_tree,
-                disp_filt, atlas_select, uatlas_select, label_names, coords):
+def thresh_diff(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary):
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -482,6 +483,9 @@ def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, roi, node_s
     if parc is True:
         node_size = 'parc'
 
+    # Save unthresholded
+    unthr_path = utils.create_unthr_path(ID, network, conn_model, roi, dir_path)
+    np.save(unthr_path, conn_matrix)
     if min_span_tree is True:
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
@@ -501,7 +505,7 @@ def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, roi, node_s
         conn_matrix_thr = nx.to_numpy_array(G1)
     else:
         if dens_thresh is False:
-            thr_type = 'prop'
+            thr_type='prop'
             print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         else:
@@ -513,7 +517,10 @@ def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, roi, node_s
         print('Warning: Fragmented graph')
 
     # Save thresholded mat
-    smooth = 0
-    est_path = utils.create_est_path(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, thr_type)
+    smooth=False
+    c_boot=False
+    est_path = utils.create_est_path(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type)
     np.save(est_path, conn_matrix_thr)
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, atlas_select, uatlas_select, label_names, coords
+
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, norm, binary
+

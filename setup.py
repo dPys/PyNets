@@ -23,7 +23,9 @@ requirements = [
     'pathlib>=1.0.1',
     'setuptools>=39.0.1',
     'configparser>=3.5.0',
-    'PyYAML>=3.12'
+    'PyYAML>=3.12',
+    'boto3>=1.9.111',
+    'pybids>=0.6.4'
 ]
 
 setup_requirements = [
@@ -44,7 +46,7 @@ setup(
     author="Derek Pisner",
     author_email='dpisner@utexas.edu',
     url='https://github.com/dPys/pynets',
-    packages=find_packages(include=['pynets']),
+    packages=['pynets'],
     entry_points={
         'console_scripts': [
             'pynets=pynets.cli:main'
