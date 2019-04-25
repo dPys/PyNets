@@ -321,8 +321,6 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
         meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._mem_gb = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.register_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.register_node'))._mem_gb = 2
-        meta_wf.get_node("%s%s" % (wf_selected, '.reconstruction_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.reconstruction_node'))._mem_gb = 2
         meta_wf.get_node("%s%s" % (wf_selected, '.run_tracking_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.run_tracking_node'))._mem_gb = 4
         meta_wf.get_node("%s%s" % (wf_selected, '.node_gen_node'))._n_procs = 1
@@ -1280,7 +1278,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                                       'norm', 'binary', 'template', 'template_mask', 'target_samples',
                                                       'curv_thr_list', 'step_list', 'overlap_thr', 'overlap_thr_list',
                                                       'track_type', 'max_length', 'maxcrossing', 'life_run', 'min_length',
-                                                      'directget', 'tiss_class']),
+                                                      'directget', 'tiss_class', 'vox_size']),
                         name='inputnode')
 
     #2)Add variable to input nodes if user-set (e.g. inputnode.inputs.WHATEVER)
@@ -1331,6 +1329,8 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
     inputnode.inputs.min_length = min_length
     inputnode.inputs.directget = directget
     inputnode.inputs.tiss_class = tiss_class
+    inputnode.inputs.plugin_type = plugin_type
+    inputnode.inputs.vox_size = vox_size
 
     # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
@@ -1366,8 +1366,17 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
     # print("%s%s" % ('template_mask: ', template_mask))
     # print('\n\n\n\n\n')
 
-    #3) Add variable to function nodes
     # Create function nodes
+    check_orient_and_dims_dwi_node = pe.Node(niu.Function(input_names=['infile', 'vox_size', 'bvecs'],
+                                                      output_names=['outfile', 'bvecs'],
+                                                      function=utils.check_orient_and_dims,
+                                                      imports=import_list), name="check_orient_and_dims_dwi_node")
+
+    check_orient_and_dims_anat_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'],
+                                                      output_names=['outfile'],
+                                                      function=utils.check_orient_and_dims,
+                                                      imports=import_list), name="check_orient_and_dims_anat_node")
+
     fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas_select', 'uatlas_select', 'ref_txt', 'parc',
                                                                     'in_file', 'roi', 'use_AAL_naming'],
                                                        output_names=['label_names', 'coords', 'atlas_select',
@@ -1432,44 +1441,46 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                      output_names=['gtab', 'nodif_B0', 'nodif_B0_mask'],
                                      function=utils.make_gtab_and_bmask, imports=import_list), name="gtab_node")
 
-    register_node = pe.Node(niu.Function(input_names=['dir_path', 'nodif_B0', 'nodif_B0_mask', 'anat_loc'],
+    get_fa_node = pe.Node(niu.Function(input_names=['gtab', 'dwi', 'nodif_B0_mask'],
+                                     output_names=['fa_path'],
+                                     function=estimation.tens_mod_fa_est, imports=import_list), name="get_fa_node")
+
+
+    register_node = pe.Node(niu.Function(input_names=['dir_path', 'fa_path', 'nodif_B0_mask', 'anat_loc'],
                                          output_names=['wm_gm_int_in_dwi', 'wm_in_dwi', 'gm_in_dwi', 'vent_csf_in_dwi',
                                                        'csf_mask_dwi'],
                                          function=register.register_all, imports=import_list),
                             name="register_node")
 
-    register_atlas_node = pe.Node(niu.Function(input_names=['uatlas_select', 'dir_path', 'nodif_B0', 'nodif_B0_mask',
+    register_atlas_node = pe.Node(niu.Function(input_names=['uatlas_select', 'dir_path', 'fa_path', 'nodif_B0_mask',
                                                             'anat_loc', 'wm_gm_int_in_dwi'],
                                                output_names=['dwi_aligned_atlas_wmgm_int', 'aligned_atlas_t1mni'],
                                                function=register.register_atlas, imports=import_list),
                                   name="register_atlas_node")
 
-    reconstruction_node = pe.Node(niu.Function(input_names=['conn_model', 'gtab', 'dwi', 'wm_in_dwi', 'dir_path'],
-                                               output_names=['mod_path'], function=track.reconstruction,
-                                               imports=import_list),
-                                  name="reconstruction_node")
-    # Set reconstruction_node iterables
-    reconstruction_node_iterables = []
-    if conn_model_list:
-        reconstruction_node_iterables.append(("conn_model", conn_model_list))
-        reconstruction_node.iterables = reconstruction_node_iterables
-
     run_tracking_node = pe.Node(niu.Function(input_names=['nodif_B0_mask', 'gm_in_dwi', 'vent_csf_in_dwi', 'wm_in_dwi',
-                                                          'tiss_class', 'dir_path', 'labels_im_file', 'mod_path',
+                                                          'tiss_class', 'dir_path', 'labels_im_file',
                                                           'target_samples', 'curv_thr_list', 'step_list',
-                                                          'track_type', 'max_length', 'maxcrossing', 'directget'],
+                                                          'track_type', 'max_length', 'maxcrossing', 'directget',
+                                                          'conn_model', 'gtab', 'dwi'],
                                              output_names=['streamlines_list'], function=track.run_track,
                                              imports=import_list),
                                 name="run_tracking_node")
 
+    # Set reconstruction model iterables
+    run_tracking_node_iterables = []
+    if conn_model_list:
+        run_tracking_node_iterables.append(("conn_model", conn_model_list))
+        run_tracking_node.iterables = run_tracking_node_iterables
+
     filter_streamlines_node = pe.Node(niu.Function(input_names=['dwi', 'dir_path', 'gtab', 'streamlines_list',
                                                                 'life_run', 'min_length'],
-                                                   output_names=['streamlines', 'streams', 'iso_affine'],
+                                                   output_names=['streamlines', 'streams'],
                                                    function=track.filter_streamlines,
                                                    imports=import_list), name="filter_streamlines_node")
 
-    dsn_node = pe.Node(niu.Function(input_names=['streams', 'nodif_B0', 'dir_path', 'iso_affine'],
-                                    output_names=['streamlines', 'streams'],
+    dsn_node = pe.Node(niu.Function(input_names=['streams', 'fa_path', 'dir_path'],
+                                    output_names=['streams_warp'],
                                     function=register.direct_streamline_norm,
                                     imports=import_list), name="dsn_node")
 
@@ -1504,11 +1515,11 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                                         function=plot_gen.structural_plotting,
                                                         imports=import_list),
                                            name="structural_plotting_node")
-    outputnode = pe.JoinNode(interface=niu.IdentityInterface(fields=['est_path', 'thr', 'node_size', 'network',
-                                                                     'conn_model']),
-                             name='outputnode',
-                             joinfield=['est_path', 'thr', 'node_size', 'network', 'conn_model'],
-                             joinsource='thresh_diff_node')
+
+    # Create outputnode to capture results of nested workflow
+    outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'network', 'prune', 'ID', 'roi',
+                                                       'conn_model', 'node_size', 'norm', 'binary']),
+                         name='outputnode')
 
     if (multi_atlas is not None and user_atlas_list is None and uatlas_select is None) or (multi_atlas is None and atlas_select is None and user_atlas_list is not None):
         flexi_atlas = False
@@ -1607,26 +1618,25 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
         (inputnode, node_gen_node, [('ID', 'ID'),
                                     ('roi', 'roi'),
                                     ('parc', 'parc')]),
-        (inputnode, fetch_nodes_and_labels_node, [('dwi', 'in_file')]),
+        (inputnode, check_orient_and_dims_dwi_node, [('dwi', 'infile'), ('fbvec', 'bvecs'), ('vox_size', 'vox_size')]),
+        (check_orient_and_dims_dwi_node, fetch_nodes_and_labels_node, [('outfile', 'in_file')]),
         (fetch_nodes_and_labels_node, node_gen_node, [('dir_path', 'dir_path'),
                                                       ('par_max', 'par_max'),
                                                       ('networks_list', 'networks_list'),
                                                       ('atlas_select', 'atlas_select'),
                                                       ('uatlas_select', 'uatlas_select')]),
-        (inputnode, gtab_node, [('fbval', 'fbval'),
-                                ('fbvec', 'fbvec'),
-                                ('dwi', 'dwi')]),
+        (check_orient_and_dims_dwi_node, gtab_node, [('bvecs', 'fbvec'),
+                                                 ('outfile', 'dwi')]),
+        (inputnode, gtab_node, [('fbval', 'fbval')]),
         (fetch_nodes_and_labels_node, register_node, [('dir_path', 'dir_path')]),
-        (fetch_nodes_and_labels_node, reconstruction_node, [('dir_path', 'dir_path')]),
         (fetch_nodes_and_labels_node, run_tracking_node, [('dir_path', 'dir_path')]),
-        (inputnode, register_node, [('anat_loc', 'anat_loc')]),
-        (gtab_node, register_node, [('nodif_B0', 'nodif_B0'),
-                                    ('nodif_B0_mask', 'nodif_B0_mask')]),
+        (inputnode, check_orient_and_dims_anat_node, [('anat_loc', 'infile'), ('vox_size', 'vox_size')]),
+        (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_loc')]),
+        (gtab_node, register_node, [('nodif_B0_mask', 'nodif_B0_mask')]),
         (fetch_nodes_and_labels_node, register_atlas_node, [('dir_path', 'dir_path'),
                                                             ('uatlas_select', 'uatlas_select')]),
-        (inputnode, register_atlas_node, [('anat_loc', 'anat_loc')]),
-        (gtab_node, register_atlas_node, [('nodif_B0', 'nodif_B0'),
-                                          ('nodif_B0_mask', 'nodif_B0_mask')]),
+        (check_orient_and_dims_anat_node, register_atlas_node, [('outfile', 'anat_loc')]),
+        (gtab_node, register_atlas_node, [('nodif_B0_mask', 'nodif_B0_mask')]),
         (register_node, register_atlas_node, [('wm_gm_int_in_dwi', 'wm_gm_int_in_dwi')]),
         (fetch_nodes_and_labels_node, thresh_diff_node, [('dir_path', 'dir_path'),
                                                          ('label_names', 'label_names'),
@@ -1638,11 +1648,9 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                             ('wm_in_dwi', 'wm_in_dwi')]),
         (inputnode, run_tracking_node, [('tiss_class', 'tiss_class')]),
         (gtab_node, run_tracking_node, [('nodif_B0_mask', 'nodif_B0_mask')]),
-        (register_node, reconstruction_node, [('wm_in_dwi', 'wm_in_dwi')]),
-        (inputnode, reconstruction_node, [('dwi', 'dwi'),
-                                          ('conn_model', 'conn_model')]),
-        (gtab_node, reconstruction_node, [('gtab', 'gtab')]),
-        (reconstruction_node, run_tracking_node, [('mod_path', 'mod_path')]),
+        (check_orient_and_dims_dwi_node, run_tracking_node, [('outfile', 'dwi')]),
+        (inputnode, run_tracking_node, [('conn_model', 'conn_model')]),
+        (gtab_node, run_tracking_node, [('gtab', 'gtab')]),
         (register_atlas_node, run_tracking_node, [('dwi_aligned_atlas_wmgm_int', 'labels_im_file')]),
         (inputnode, run_tracking_node, [('target_samples', 'target_samples'),
                                         ('curv_thr_list', 'curv_thr_list'),
@@ -1654,16 +1662,20 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
         (run_tracking_node, filter_streamlines_node, [('streamlines_list', 'streamlines_list')]),
         (fetch_nodes_and_labels_node, filter_streamlines_node, [('dir_path', 'dir_path')]),
         (inputnode, filter_streamlines_node, [('life_run', 'life_run'),
-                                              ('min_length', 'min_length'),
-                                              ('dwi', 'dwi')]),
+                                              ('min_length', 'min_length')]),
+        (check_orient_and_dims_dwi_node, filter_streamlines_node, [('outfile', 'dwi')]),
         (gtab_node, filter_streamlines_node, [('gtab', 'gtab')]),
         (inputnode, streams2graph_node, [('overlap_thr', 'overlap_thr')]),
         (fetch_nodes_and_labels_node, streams2graph_node, [('dir_path', 'dir_path')]),
-        (gtab_node, dsn_node, [('nodif_B0', 'nodif_B0')]),
+        (gtab_node, get_fa_node, [('nodif_B0_mask', 'nodif_B0_mask'),
+                                  ('gtab', 'gtab')]),
+        (check_orient_and_dims_dwi_node, get_fa_node, [('outfile', 'dwi')]),
+        (get_fa_node, register_node, [('fa_path', 'fa_path')]),
+        (get_fa_node, register_atlas_node, [('fa_path', 'fa_path')]),
+        (get_fa_node, dsn_node, [('fa_path', 'fa_path')]),
         (fetch_nodes_and_labels_node, dsn_node, [('dir_path', 'dir_path')]),
-        (filter_streamlines_node, dsn_node, [('streams', 'streams'),
-                                             ('iso_affine', 'iso_affine')]),
-        (dsn_node, streams2graph_node, [('streams_mni', 'streams')]),
+        (filter_streamlines_node, dsn_node, [('streams', 'streams')]),
+        (dsn_node, streams2graph_node, [('streams_warp', 'streams')]),
         (register_atlas_node, streams2graph_node, [('aligned_atlas_t1mni', 'atlas_mni')]),
         (streams2graph_node, thresh_diff_node, [('conn_matrix', 'conn_matrix')]),
         (inputnode, thresh_diff_node, [('dens_thresh', 'dens_thresh'),
@@ -1682,7 +1694,10 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                         ('thr', 'thr'),
                                         ('node_size', 'node_size'),
                                         ('network', 'network'),
-                                        ('conn_model', 'conn_model')])
+                                        ('conn_model', 'conn_model'),
+                                        ('norm', 'norm'),
+                                        ('prune', 'prune'),
+                                        ('roi', 'roi')])
         ])
 
     if flexi_atlas is True:
@@ -1773,165 +1788,161 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
 
     # Begin joinnode chaining
     # Set lists of fields and connect statements for repeated use throughout joins
-    # map_fields = ['conn_model', 'dir_path', 'conn_matrix', 'node_size', 'smooth', 'dens_thresh', 'network', 'ID',
-    #               'roi', 'min_span_tree', 'disp_filt', 'parc', 'prune', 'thr', 'atlas_select', 'uatlas_select',
-    #               'label_names', 'coords', 'c_boot', 'norm', 'binary']
-    #
-    # map_connects = [('conn_model', 'conn_model'), ('dir_path', 'dir_path'), ('conn_matrix', 'conn_matrix'),
-    #                 ('node_size', 'node_size'), ('smooth', 'smooth'), ('dens_thresh', 'dens_thresh'), ('ID', 'ID'),
-    #                 ('roi', 'roi'), ('min_span_tree', 'min_span_tree'), ('disp_filt', 'disp_filt'), ('parc', 'parc'),
-    #                 ('prune', 'prune'), ('network', 'network'), ('thr', 'thr'), ('atlas_select', 'atlas_select'),
-    #                 ('uatlas_select', 'uatlas_select'), ('label_names', 'label_names'), ('coords', 'coords'),
-    #                 ('c_boot', 'c_boot'), ('norm', 'norm'), ('binary', 'binary')]
-    #
-    # # Create a "thr_info" node for iterating iterfields across thresholds
-    # thr_info_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='thr_info_node')
-    # # Joinsource logic for atlas varieties
-    # if user_atlas_list or multi_atlas or float(k_clustering) > 0 or flexi_atlas is True:
-    #     if flexi_atlas is True:
-    #         atlas_join_source = flexi_atlas_source
-    #     elif float(k_clustering) > 1 and flexi_atlas is False:
-    #         atlas_join_source = clustering_node
-    #     else:
-    #         atlas_join_source = fetch_nodes_and_labels_node
-    # else:
-    #     atlas_join_source = None
-    #
-    # # Connect all get_conn_matrix_node outputs to the "thr_info" node
-    # functional_connectometry_wf.connect([(get_conn_matrix_node, thr_info_node,
-    #                                       [x for x in map_connects if x != ('thr', 'thr')])])
+    map_fields = ['conn_model', 'dir_path', 'conn_matrix', 'node_size', 'dens_thresh', 'network', 'ID',
+                  'roi', 'min_span_tree', 'disp_filt', 'parc', 'prune', 'thr', 'atlas_select', 'uatlas_select',
+                  'label_names', 'coords', 'norm', 'binary']
+
+    map_connects = [('conn_model', 'conn_model'), ('dir_path', 'dir_path'), ('conn_matrix', 'conn_matrix'),
+                    ('node_size', 'node_size'), ('dens_thresh', 'dens_thresh'), ('ID', 'ID'),
+                    ('roi', 'roi'), ('min_span_tree', 'min_span_tree'), ('disp_filt', 'disp_filt'), ('parc', 'parc'),
+                    ('prune', 'prune'), ('network', 'network'), ('thr', 'thr'), ('atlas_select', 'atlas_select'),
+                    ('uatlas_select', 'uatlas_select'), ('label_names', 'label_names'), ('coords', 'coords'),
+                    ('norm', 'norm'), ('binary', 'binary')]
+
+    # Create a "thr_info" node for iterating iterfields across thresholds
+    thr_info_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='thr_info_node')
+    # Joinsource logic for atlas varieties
+    if user_atlas_list or multi_atlas or flexi_atlas is True:
+        if flexi_atlas is True:
+            atlas_join_source = flexi_atlas_source
+        else:
+            atlas_join_source = fetch_nodes_and_labels_node
+    else:
+        atlas_join_source = None
+
+    # Connect all get_conn_matrix_node outputs to the "thr_info" node
+    structural_connectometry_wf.connect([(streams2graph_node, thr_info_node,
+                                          [x for x in map_connects if x != ('thr', 'thr')])])
     # Begin joinnode chaining logic
-    # if conn_model_list or node_size_list or smooth_list or user_atlas_list or multi_atlas or float(k_clustering) > 1 or flexi_atlas is True or multi_thr is True or float(c_boot) > 0:
-    #     join_iters_node_thr = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-    #                                       name='join_iters_node_thr',
-    #                                       joinsource=thr_info_node,
-    #                                       joinfield=map_fields)
-    #     join_iters_node_atlas = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-    #                                         name='join_iters_node_atlas',
-    #                                         joinsource=atlas_join_source,
-    #                                         joinfield=map_fields)
-    #     if not conn_model_list and (node_size_list or smooth_list or float(c_boot) > 0):
-    #         # print('Time-series node extraction iterables only...')
-    #         join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_node',
-    #                                       joinsource=extract_ts_node, joinfield=map_fields)
-    #         if multi_thr:
-    #             # print('Multiple thresholds...')
-    #             functional_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-    #             if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-    #                 # print('Multiple atlases...')
-    #                 functional_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_atlas, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
-    #             else:
-    #                 # print('Single atlas...')
-    #                 functional_connectometry_wf.connect([(join_iters_node_thr, join_iters_node, map_connects)])
-    #         else:
-    #             # print('Single threshold...')
-    #             if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-    #                 # print('Multiple atlases...')
-    #                 functional_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
-    #             else:
-    #                 # print('Single atlas...')
-    #                 functional_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
-    #     elif conn_model_list and not node_size_list and not smooth_list and not float(c_boot) > 0:
-    #         # print('Connectivity model iterables only...')
-    #         join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_node',
-    #                                       joinsource=get_conn_matrix_node, joinfield=map_fields)
-    #         if multi_thr:
-    #             # print('Multiple thresholds...')
-    #             if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-    #                 # print('Multiple atlases...')
-    #                 functional_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_atlas, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
-    #             else:
-    #                 # print('Single atlas...')
-    #                 join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
-    #                 functional_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_thr, join_iters_node, map_connects)])
-    #         else:
-    #             # print('Single threshold...')
-    #             if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-    #                 # print('Multiple atlases...')
-    #                 functional_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
-    #             else:
-    #                 # print('Single atlas...')
-    #                 functional_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
-    #     elif not conn_model_list and not node_size_list and not smooth_list and not float(c_boot) > 0:
-    #         # print('No connectivity model or time-series node extraction iterables...')
-    #         if multi_thr:
-    #             # print('Multiple thresholds...')
-    #             if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-    #                 # print('Multiple atlases...')
-    #                 join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_node',
-    #                                               joinsource=atlas_join_source, joinfield=map_fields)
-    #                 functional_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_thr, join_iters_node, map_connects)])
-    #             else:
-    #                 # print('Single atlas...')
-    #                 join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_node',
-    #                                               joinsource=thr_info_node, joinfield=map_fields)
-    #                 functional_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
-    #         else:
-    #             # print('Single threshold...')
-    #             if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-    #                 # print('Multiple atlases...')
-    #                 join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_node',
-    #                                               joinsource=atlas_join_source, joinfield=map_fields)
-    #                 functional_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
-    #             else:
-    #                 # print('Single atlas...')
-    #                 join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
-    #                 functional_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
-    #     elif conn_model_list and (node_size_list and smooth_list and float(c_boot) > 0) or (node_size_list or smooth_list or float(c_boot) > 0):
-    #         # print('Connectivity model and time-series node extraction iterables...')
-    #         join_iters_node_ext_ts = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-    #                                              name='join_iters_node_ext_ts', joinsource=extract_ts_node,
-    #                                              joinfield=map_fields)
-    #         join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_node',
-    #                                       joinsource=get_conn_matrix_node, joinfield=map_fields)
-    #         if multi_thr:
-    #             # print('Multiple thresholds...')
-    #             if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-    #                 # print('Multiple atlases...')
-    #                 functional_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_ext_ts, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_ext_ts, join_iters_node_atlas, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
-    #             else:
-    #                 # print('Single atlas...')
-    #                 functional_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_ext_ts, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_ext_ts, join_iters_node, map_connects)])
-    #         else:
-    #             # print('Single threshold...')
-    #             if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-    #                 # print('Multiple atlases...')
-    #                 functional_connectometry_wf.connect([(thr_info_node, join_iters_node_ext_ts, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_ext_ts, join_iters_node_atlas, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
-    #             else:
-    #                 # print('Single atlas...')
-    #                 functional_connectometry_wf.connect([(thr_info_node, join_iters_node_ext_ts, map_connects)])
-    #                 functional_connectometry_wf.connect([(join_iters_node_ext_ts, join_iters_node, map_connects)])
-    #     else:
-    #         raise RuntimeError('\nERROR: Unknown join context.')
-    #
-    #     no_iters = False
-    # else:
-    #     # Minimal case of no iterables
-    #     print('\nNo iterables...\n')
-    #     join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
-    #     functional_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
-    #     no_iters = True
+    if conn_model_list or node_size_list or user_atlas_list or multi_atlas or flexi_atlas is True or multi_thr is True:
+        join_iters_node_thr = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
+                                          name='join_iters_node_thr',
+                                          joinsource=thr_info_node,
+                                          joinfield=map_fields)
+        join_iters_node_atlas = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
+                                            name='join_iters_node_atlas',
+                                            joinsource=atlas_join_source,
+                                            joinfield=map_fields)
+        if not conn_model_list and node_size_list:
+            # print('Time-series node extraction iterables only...')
+            join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_node',
+                                          joinsource=run_tracking_node, joinfield=map_fields)
+            if multi_thr:
+                # print('Multiple thresholds...')
+                structural_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
+                if user_atlas_list or multi_atlas or flexi_atlas is True:
+                    # print('Multiple atlases...')
+                    structural_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_atlas, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                else:
+                    # print('Single atlas...')
+                    structural_connectometry_wf.connect([(join_iters_node_thr, join_iters_node, map_connects)])
+            else:
+                # print('Single threshold...')
+                if user_atlas_list or multi_atlas or flexi_atlas is True:
+                    # print('Multiple atlases...')
+                    structural_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                else:
+                    # print('Single atlas...')
+                    structural_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
+        elif conn_model_list and not node_size_list:
+            # print('Connectivity model iterables only...')
+            join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_node',
+                                          joinsource=streams2graph_node, joinfield=map_fields)
+            if multi_thr:
+                # print('Multiple thresholds...')
+                if user_atlas_list or multi_atlas or flexi_atlas is True:
+                    # print('Multiple atlases...')
+                    structural_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_atlas, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                else:
+                    # print('Single atlas...')
+                    join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
+                    structural_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_thr, join_iters_node, map_connects)])
+            else:
+                # print('Single threshold...')
+                if user_atlas_list or multi_atlas or flexi_atlas is True:
+                    # print('Multiple atlases...')
+                    structural_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                else:
+                    # print('Single atlas...')
+                    structural_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
+        elif not conn_model_list and not node_size_list:
+            # print('No connectivity model or time-series node extraction iterables...')
+            if multi_thr:
+                # print('Multiple thresholds...')
+                if user_atlas_list or multi_atlas or flexi_atlas is True:
+                    # print('Multiple atlases...')
+                    join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_node',
+                                                  joinsource=atlas_join_source, joinfield=map_fields)
+                    structural_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_thr, join_iters_node, map_connects)])
+                else:
+                    # print('Single atlas...')
+                    join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_node',
+                                                  joinsource=thr_info_node, joinfield=map_fields)
+                    structural_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
+            else:
+                # print('Single threshold...')
+                if user_atlas_list or multi_atlas or flexi_atlas is True:
+                    # print('Multiple atlases...')
+                    join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_node',
+                                                  joinsource=atlas_join_source, joinfield=map_fields)
+                    structural_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
+                else:
+                    # print('Single atlas...')
+                    join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
+                    structural_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
+        elif conn_model_list and node_size_list:
+            # print('Connectivity model iterables...')
+            join_iters_node_ext_ts = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
+                                                 name='join_iters_node_ext_ts', joinsource=run_tracking_node,
+                                                 joinfield=map_fields)
+            join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_node',
+                                          joinsource=streams2graph_node, joinfield=map_fields)
+            if multi_thr:
+                # print('Multiple thresholds...')
+                if user_atlas_list or multi_atlas or flexi_atlas is True:
+                    # print('Multiple atlases...')
+                    structural_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_ext_ts, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_ext_ts, join_iters_node_atlas, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                else:
+                    # print('Single atlas...')
+                    structural_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_ext_ts, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_ext_ts, join_iters_node, map_connects)])
+            else:
+                # print('Single threshold...')
+                if user_atlas_list or multi_atlas or flexi_atlas is True:
+                    # print('Multiple atlases...')
+                    structural_connectometry_wf.connect([(thr_info_node, join_iters_node_ext_ts, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_ext_ts, join_iters_node_atlas, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                else:
+                    # print('Single atlas...')
+                    structural_connectometry_wf.connect([(thr_info_node, join_iters_node_ext_ts, map_connects)])
+                    structural_connectometry_wf.connect([(join_iters_node_ext_ts, join_iters_node, map_connects)])
+        else:
+            raise RuntimeError('\nERROR: Unknown join context.')
+
+        no_iters = False
+    else:
+        # Minimal case of no iterables
+        print('\nNo iterables...\n')
+        join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
+        structural_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
+        no_iters = True
 
     fetch_nodes_and_labels_node._n_procs = 1
     fetch_nodes_and_labels_node._mem_gb = 1
     register_node._n_procs = 1
     register_node._mem_gb = 2
-    reconstruction_node._n_procs = 1
-    reconstruction_node._mem_gb = 2
     run_tracking_node._n_procs = 1
     run_tracking_node._mem_gb = 4
     node_gen_node._n_procs = 1

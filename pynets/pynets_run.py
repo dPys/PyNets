@@ -156,8 +156,8 @@ def get_parser():
     parser.add_argument('-tt',
                         metavar='Tracking algorithm',
                         default='local',
-                        help='Include this flag to manually specify a tracking algorithm for structural connectome estimation. Options are: local, particle, and eudx. Default is local.\n')
-    parser.add_argument('-lr',
+                        help='Include this flag to manually specify a tracking algorithm for structural connectome estimation. Options are: local and particle. Default is local.\n')
+    parser.add_argument('-lf',
                         default=False,
                         action='store_true',
                         help='Include this flag to run Linear Fascicle Ealuation (LiFE) to prune FP streamlines produced by tractography (recommended).\n')
@@ -377,7 +377,7 @@ def build_workflow(args, retval):
 
     # Hard-coded:
     maxcrossing = 1
-    min_length = 60
+    min_length = 40
     overlap_thr = 5
     overlap_thr_list = None
     step_list = [0.2]
@@ -1008,8 +1008,6 @@ def build_workflow(args, retval):
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('register_node')._n_procs = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('register_node')._mem_gb = 2
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('reconstruction_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('reconstruction_node')._mem_gb = 2
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('run_tracking_node')._n_procs = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('run_tracking_node')._mem_gb = 4
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
@@ -1209,8 +1207,6 @@ def build_workflow(args, retval):
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('register_node')._n_procs = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('register_node')._mem_gb = 2
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('reconstruction_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('reconstruction_node')._mem_gb = 2
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('run_tracking_node')._n_procs = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('run_tracking_node')._mem_gb = 4
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1

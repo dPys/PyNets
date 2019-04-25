@@ -29,6 +29,7 @@ def transform_pts(pts, t_aff, t_warp, ref_img_path, ants_path, template_path, ds
         raise ValueError("Must specify output space")
 
     warped_csv_out = dsn_dir + "/warped_output.csv"
+    aattp_out = dsn_dir + "/aattp.csv"
     transforms = "-t [" + str(t_aff) + ", 1] " + "-t " + str(t_warp)
 
     # Load the volume from DSI Studio
@@ -49,7 +50,7 @@ def transform_pts(pts, t_aff, t_warp, ref_img_path, ants_path, template_path, ds
                header="x,y,z,t", delimiter=",", fmt="%f")
 
     # Apply the trandforms to
-    cmd = ants_path + "/antsApplyTransformsToPoints " + "-d 3 -i " + warped_csv_out + " -o " + dsn_dir + "/aattp.csv " + transforms
+    cmd = ants_path + "/antsApplyTransformsToPoints " + "-d 3 -i " + warped_csv_out + " -o " + aattp_out + " " + transforms
     os.system(cmd)
 
     # Load template to get output space
@@ -57,12 +58,11 @@ def transform_pts(pts, t_aff, t_warp, ref_img_path, ants_path, template_path, ds
     warped_affine = template.affine
 
     adjusted_affine = warped_affine.copy()
-    adjusted_affine[0] = adjusted_affine[0]
+    adjusted_affine[0] = -adjusted_affine[0]
     adjusted_affine[1] = -adjusted_affine[1]
-    adjusted_affine[2] = -adjusted_affine[2]
 
-    ants_warped_coords = np.loadtxt(dsn_dir + "/aattp.csv", skiprows=1, delimiter=",")[:, :3]
-    os.remove(dsn_dir + "/aattp.csv")
+    ants_warped_coords = np.loadtxt(aattp_out, skiprows=1, delimiter=",")[:, :3]
+    os.remove(aattp_out)
     to_transform = np.hstack([ants_warped_coords, np.ones((ants_warped_coords.shape[0], 1))])
     new_voxels = (np.dot(np.linalg.inv(adjusted_affine), to_transform.T) + warped_affine[0, 0])[:3]
 
@@ -78,9 +78,8 @@ def transform_pts(pts, t_aff, t_warp, ref_img_path, ants_path, template_path, ds
     elif output_space == "lps_voxmm":
         template_extents = template.get_shape()
         lps_voxels = new_voxels.copy()
-        lps_voxels[0] = template_extents[0]-lps_voxels[0]
-        lps_voxels[1] = template_extents[1]-lps_voxels[1]
-        lps_voxels[2] = -lps_voxels[2]
+        lps_voxels[0] = template_extents[0] - lps_voxels[0]
+        lps_voxels[1] = template_extents[1] - lps_voxels[1]
         lps_voxmm = lps_voxels.T * np.array(template.header.get_zooms())[:3]
         return lps_voxmm
 
@@ -98,6 +97,7 @@ class Warp(object):
         self.dsn_dir = dsn_dir
 
     def streamlines(self):
+        from pynets.registration.register import transform_pts
         if not self.file_in.endswith((".trk", ".trk.gz")):
             print("File format currently unsupported.")
             return
@@ -110,7 +110,6 @@ class Warp(object):
         template = nib.load(self.template_path)
         warped_affine = template.affine
         dims = template.header.get_data_shape()
-
         template_trk_header = np.array(('TRACK',
                                         [dims[0], dims[1], dims[2]],
                                         [warped_affine[0][0], warped_affine[1][1], warped_affine[2][2]],
@@ -118,7 +117,7 @@ class Warp(object):
                                         0, ['', '', '', '', '', '', '', '', '', ''],
                                         [[1.0, 0.0, 0.0, 0.0],
                                          [0.0, 1.0, 0.0, 0.0],
-                                         [0.0, 0.0, 1.0, -template.affine[2][3]],
+                                         [0.0, 0.0, 1.0, 0.0],
                                          [0.0, 0.0, 0.0, 1.0]], '', 'LPS', 'LPS',
                                         [1.0, 0.0, 0.0, 0.0, 1.0, 0.0],
                                         '', '', '', '', '', '', '', 10000, 2, 1000),
@@ -154,46 +153,58 @@ class Warp(object):
         print("Finished " + self.file_out)
 
 
-def direct_streamline_norm(streams, nodif_B0, dir_path, iso_affine):
-    from nilearn.image import new_img_like
-    try:
-        FSLDIR = os.environ['FSLDIR']
-    except KeyError:
-        print('FSLDIR environment variable not set!')
+def direct_streamline_norm(streams, fa_path, dir_path):
+    from dipy.tracking.streamline import Streamlines
+    from pynets.registration import reg_utils as mgru
+    from pynets.registration.register import Warp
+    import pkg_resources
     '''Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different spatial normalization approaches on tractography and structural brain networks. Network Neuroscience, 1-19.'''
-    template_path="%s%s" % (FSLDIR, '/data/standard/MNI152_T1_2mm_brain.nii.gz')
-    ants_path = '/opt/ants'
+    template_path = pkg_resources.resource_filename("pynets", "templates/FSL_HCP1065_FA_2mm.nii.gz")
+    try:
+        ants_path = os.environ['ANTSPATH']
+    except KeyError:
+        print('ANTSDIR environment variable not set!')
 
     dsn_dir = "%s%s" % (dir_path, '/tmp/DSN')
     if not os.path.isdir(dsn_dir):
         os.mkdir(dsn_dir)
 
-    nodif_B0_iso_path = "%s%s" % (dir_path, '/nodif_B0_iso.nii.gz')
     streams_mni = "%s%s" % (dir_path, '/streamlines_mni.trk')
 
-    # Remoe B0 offsets
-    B0_img = nib.load(nodif_B0)
-    B0_iso_img = new_img_like(B0_img, B0_img.get_data(), affine=iso_affine)
-    nib.save(B0_iso_img, nodif_B0_iso_path)
 
     # Run ANTs reg
-    cmd = 'antsRegistrationSyNQuick.sh -d 3 -f ' + template_path + ' -m ' + nodif_B0_iso_path + ' -o ' + dsn_dir + '/'
-    os.system(cmd)
     t_aff = "%s%s" % (dsn_dir, '/0GenericAffine.mat')
     t_warp = "%s%s" % (dsn_dir, '/1Warp.nii.gz')
 
+    if (os.path.isfile(t_aff) is False) and (os.path.isfile(t_warp) is False):
+        cmd = ants_path + '/antsRegistrationSyN.sh -d 3 -f ' + template_path + ' -m ' + fa_path + ' -o ' + dsn_dir + '/'
+        os.system(cmd)
+
+    fa_path_img = nib.load(fa_path)
+    s_aff = fa_path_img.affine
+
     # Warp streamlines
-    wS = Warp(ants_path, streams, streams_mni, template_path, t_aff, t_warp, nodif_B0_iso_path, dsn_dir)
+    wS = Warp(ants_path, streams, streams_mni, template_path, t_aff, t_warp, fa_path, dsn_dir)
     wS.streamlines()
 
-    return streams_mni
+    s_aff[:3, 3] = np.array([180, 0, 0])
+    streamlines_mni = nib.streamlines.load(streams_mni)
+    streamlines_mni_s = streamlines_mni.streamlines
+    streamlines_trans = Streamlines(mgru.transform_to_affine(streamlines_mni_s, streamlines_mni.header, s_aff))
+    streams_warp = streams_mni.split('.trk')[0] + '_warped.trk'
+    tractogram = nib.streamlines.Tractogram(streamlines_trans, affine_to_rasmm=np.eye(4))
+    trkfile = nib.streamlines.trk.TrkFile(tractogram, header=streamlines_mni.header)
+    nib.streamlines.save(trkfile, streams_warp)
+    print(streams_warp)
+
+    return streams_warp
 
 
-class dmri_reg(object):
+class DmriReg(object):
 
-    def __init__(self, dir_path, nodif_B0, nodif_B0_mask, anat_loc, vox_size, simple):
+    def __init__(self, dir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple):
         self.simple = simple
-        self.nodif_B0 = nodif_B0
+        self.fa_path = fa_path
         self.nodif_B0_mask = nodif_B0_mask
         self.t1w = anat_loc
         self.vox_size = vox_size
@@ -270,18 +281,10 @@ class dmri_reg(object):
         self.gm_mask = self.maps['gm_prob']
         self.csf_mask = self.maps['csf_prob']
 
-        # Check dimensions
-        if self.vox_size == '1mm':
-            self.zoom_set = (1.0, 1.0, 1.0)
-        elif self.vox_size == '2mm':
-            self.zoom_set = (2.0, 2.0, 2.0)
-        else:
-            raise ValueError('Voxel size not supported. Use 2mm or 1mm')
-
-        self.t1w_brain = utils.match_target_vox_res(self.t1w_brain, self.vox_size, self.anat_path, self.zoom_set, sens='t1w')
-        self.wm_mask = utils.match_target_vox_res(self.wm_mask, self.vox_size, self.anat_path, self.zoom_set, sens='t1w')
-        self.gm_mask = utils.match_target_vox_res(self.gm_mask, self.vox_size, self.anat_path, self.zoom_set, sens='t1w')
-        self.csf_mask = utils.match_target_vox_res(self.csf_mask, self.vox_size, self.anat_path, self.zoom_set, sens='t1w')
+        self.t1w_brain = utils.match_target_vox_res(self.t1w_brain, self.vox_size, self.anat_path, sens='anat')
+        self.wm_mask = utils.match_target_vox_res(self.wm_mask, self.vox_size, self.anat_path, sens='anat')
+        self.gm_mask = utils.match_target_vox_res(self.gm_mask, self.vox_size, self.anat_path, sens='anat')
+        self.csf_mask = utils.match_target_vox_res(self.csf_mask, self.vox_size, self.anat_path, sens='anat')
 
         # Threshold WM to binary in dwi space
         self.t_img = load_img(self.wm_mask)
@@ -337,7 +340,7 @@ class dmri_reg(object):
                        dof=12, cost='mutualinfo', searchrad=True, interp="spline", out=self.t1_aligned_mni, sch=None)
 
         # Align T1w-->DWI
-        mgru.align(self.nodif_B0, self.t1w_brain, xfm=self.t1w2dwi_xfm, bins=None, interp="spline", dof=6,
+        mgru.align(self.fa_path, self.t1w_brain, xfm=self.t1w2dwi_xfm, bins=None, interp="spline", dof=6,
                    cost='mutualinfo', out=None, searchrad=True, sch=None)
         cmd = 'convert_xfm -omat ' + self.dwi2t1w_xfm + ' -inverse ' + self.t1w2dwi_xfm
         print(cmd)
@@ -347,21 +350,21 @@ class dmri_reg(object):
             # Flirt bbr
             try:
                 print('Running FLIRT BBR registration: T1w-->DWI ...')
-                mgru.align(self.nodif_B0, self.t1w_brain, wmseg=self.wm_edge, xfm=self.dwi2t1w_bbr_xfm,
+                mgru.align(self.fa_path, self.t1w_brain, wmseg=self.wm_edge, xfm=self.dwi2t1w_bbr_xfm,
                            init=self.dwi2t1w_xfm, bins=256, dof=7, searchrad=True, interp="spline", out=None,
                            cost='bbr', finesearch=5, sch="${FSLDIR}/etc/flirtsch/bbr.sch")
                 cmd = 'convert_xfm -omat ' + self.t1w2dwi_bbr_xfm + ' -inverse ' + self.dwi2t1w_bbr_xfm
                 os.system(cmd)
 
                 # Apply the alignment
-                mgru.align(self.t1w_brain, self.nodif_B0, init=self.t1w2dwi_bbr_xfm, xfm=self.t1wtissue2dwi_xfm,
+                mgru.align(self.t1w_brain, self.fa_path, init=self.t1w2dwi_bbr_xfm, xfm=self.t1wtissue2dwi_xfm,
                            bins=None, interp="spline", dof=7, cost='mutualinfo', out=self.t1w2dwi, searchrad=True,
                            sch=None)
             except RuntimeError('Error: FLIRT BBR failed!'):
                 pass
         else:
             # Apply the alignment
-            mgru.align(self.t1w_brain, self.nodif_B0, init=self.t1w2dwi_xfm, xfm=self.t1wtissue2dwi_xfm, bins=None,
+            mgru.align(self.t1w_brain, self.fa_path, init=self.t1w2dwi_xfm, xfm=self.t1wtissue2dwi_xfm, bins=None,
                        interp="spline", dof=6, cost='mutualinfo', out=self.t1w2dwi, searchrad=True, sch=None)
 
         return
@@ -391,7 +394,7 @@ class dmri_reg(object):
                                 warp=self.mni2t1w_warp, interp='nn', sup=True)
 
                 # Apply transform to dwi space
-                mgru.align(self.aligned_atlas_skull, self.nodif_B0, init=self.t1wtissue2dwi_xfm, xfm=None,
+                mgru.align(self.aligned_atlas_skull, self.fa_path, init=self.t1wtissue2dwi_xfm, xfm=None,
                            out=self.dwi_aligned_atlas, dof=6, searchrad=True, interp="nearestneighbour",
                            cost='mutualinfo')
             except:
@@ -407,7 +410,7 @@ class dmri_reg(object):
                 mgru.combine_xfms(self.xfm_atlas2t1w, self.t1wtissue2dwi_xfm, self.temp2dwi_xfm)
 
                 # Apply linear transformation from template to dwi space
-                mgru.applyxfm(self.nodif_B0, self.atlas, self.temp2dwi_xfm, self.dwi_aligned_atlas)
+                mgru.applyxfm(self.fa_path, self.atlas, self.temp2dwi_xfm, self.dwi_aligned_atlas)
         else:
             # Create transform to align atlas to T1w using flirt
             mgru.align(self.atlas, self.t1w_brain, xfm=self.xfm_atlas2t1w_init, init=None, bins=None, dof=6,
@@ -419,7 +422,7 @@ class dmri_reg(object):
             mgru.combine_xfms(self.xfm_atlas2t1w, self.t1wtissue2dwi_xfm, self.temp2dwi_xfm)
 
             # Apply linear transformation from template to dwi space
-            mgru.applyxfm(self.nodif_B0, self.atlas, self.temp2dwi_xfm, self.dwi_aligned_atlas)
+            mgru.applyxfm(self.fa_path, self.atlas, self.temp2dwi_xfm, self.dwi_aligned_atlas)
 
         # Set intensities to int
         self.atlas_img = nib.load(self.dwi_aligned_atlas)
@@ -470,10 +473,10 @@ class dmri_reg(object):
                             interp='nn', sup=True)
 
         # Applyxfm tissue maps to dwi space
-        mgru.applyxfm(self.nodif_B0, self.vent_mask_t1w, self.t1wtissue2dwi_xfm, self.vent_mask_dwi)
-        mgru.applyxfm(self.nodif_B0, self.csf_mask, self.t1wtissue2dwi_xfm, self.csf_mask_dwi)
-        mgru.applyxfm(self.nodif_B0, self.gm_mask, self.t1wtissue2dwi_xfm, self.gm_in_dwi)
-        mgru.applyxfm(self.nodif_B0, self.wm_mask, self.t1wtissue2dwi_xfm, self.wm_in_dwi)
+        mgru.applyxfm(self.fa_path, self.vent_mask_t1w, self.t1wtissue2dwi_xfm, self.vent_mask_dwi)
+        mgru.applyxfm(self.fa_path, self.csf_mask, self.t1wtissue2dwi_xfm, self.csf_mask_dwi)
+        mgru.applyxfm(self.fa_path, self.gm_mask, self.t1wtissue2dwi_xfm, self.gm_in_dwi)
+        mgru.applyxfm(self.fa_path, self.wm_mask, self.t1wtissue2dwi_xfm, self.wm_in_dwi)
 
         # Threshold WM to binary in dwi space
         thr_img = nib.load(self.wm_in_dwi)
@@ -519,29 +522,29 @@ class dmri_reg(object):
         return
 
 
-def register_all(dir_path, nodif_B0, nodif_B0_mask, anat_loc, vox_size='2mm', simple=False, overwrite=False):
+def register_all(dir_path, fa_path, nodif_B0_mask, anat_loc, vox_size='2mm', simple=False, overwrite=True):
     import os.path as op
     from pynets.registration import register
-    reg = register.dmri_reg(dir_path, nodif_B0, nodif_B0_mask, anat_loc, vox_size, simple)
+    reg = register.DmriReg(dir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple)
 
-    if (overwrite is True) or (op.isfile(reg.t1w_brain) is False):
-        # Perform anatomical segmentation
-        reg.gen_tissue()
-
-    if (overwrite is True) or (op.isfile(reg.t1w2dwi) is False):
-        # Align t1w to dwi
-        reg.t1w2dwi_align()
-
-    if (overwrite is True) or (op.isfile(reg.wm_gm_int_in_dwi) is False):
-        # Align tissue
-        reg.tissue2dwi_align()
+    # if (overwrite is True) or (op.isfile(reg.t1w_brain) is False):
+    #     # Perform anatomical segmentation
+    #     reg.gen_tissue()
+    #
+    # if (overwrite is True) or (op.isfile(reg.t1w2dwi) is False):
+    #     # Align t1w to dwi
+    #     reg.t1w2dwi_align()
+    #
+    # if (overwrite is True) or (op.isfile(reg.wm_gm_int_in_dwi) is False):
+    #     # Align tissue
+    #     reg.tissue2dwi_align()
 
     return reg.wm_gm_int_in_dwi, reg.wm_in_dwi, reg.gm_in_dwi, reg.vent_csf_in_dwi, reg.csf_mask_dwi
 
 
-def register_atlas(uatlas_select, dir_path, nodif_B0, nodif_B0_mask, anat_loc, wm_gm_int_in_dwi, vox_size='2mm', simple=False):
+def register_atlas(uatlas_select, dir_path, fa_path, nodif_B0_mask, anat_loc, wm_gm_int_in_dwi, vox_size='2mm', simple=False):
     from pynets.registration import register
-    reg = register.dmri_reg(dir_path, nodif_B0, nodif_B0_mask, anat_loc, vox_size, simple)
+    reg = register.DmriReg(dir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple)
 
     # Apply warps/coregister atlas to dwi
     [dwi_aligned_atlas, aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas_select)

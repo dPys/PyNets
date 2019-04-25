@@ -10,15 +10,14 @@ import numpy as np
 import nibabel as nib
 
 
-def reconstruction(conn_model, gtab, dwi, wm_in_dwi, dir_path):
+def reconstruction(conn_model, gtab, dwi, wm_in_dwi):
     try:
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
-    from pynets.dmri.track import tens_mod_est, odf_mod_est, csd_mod_est
+    from pynets.dmri.estimation import tens_mod_est, odf_mod_est, csd_mod_est
     dwi_img = nib.load(dwi)
     data = dwi_img.get_data()
-
     if conn_model == 'tensor':
         mod = tens_mod_est(gtab, data, wm_in_dwi)
     elif conn_model == 'csa':
@@ -28,14 +27,7 @@ def reconstruction(conn_model, gtab, dwi, wm_in_dwi, dir_path):
     else:
         raise ValueError('Error: Either no seeds supplied, or no valid seeds found in white-matter interface')
 
-    mod_path = "%s%s%s%s" % (dir_path, '/recon_mod_', conn_model, '.pkl')
-
-    # Create an variable to pickle and open it in write mode
-    with open(mod_path, 'wb') as mod_pick:
-        pickle.dump(mod, mod_pick)
-    mod_pick.close()
-
-    return mod_path
+    return mod
 
 
 def prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, cmc_step_size=0.2):
@@ -75,42 +67,6 @@ def prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_clas
     return tiss_classifier
 
 
-def tens_mod_est(gtab, data, wm_in_dwi):
-    from dipy.reconst.dti import TensorModel
-    print('Fitting tensor model...')
-    wm_in_dwi_mask = nib.load(wm_in_dwi).get_data().astype('bool')
-    model = TensorModel(gtab)
-    mod = model.fit(data, wm_in_dwi_mask)
-    return mod
-
-
-def odf_mod_est(gtab, data, wm_in_dwi):
-    from dipy.reconst.shm import CsaOdfModel
-    print('Fitting CSA ODF model...')
-    wm_in_dwi_mask = nib.load(wm_in_dwi).get_data().astype('bool')
-    model = CsaOdfModel(gtab, sh_order=6)
-    mod = model.fit(data, wm_in_dwi_mask)
-    return mod
-
-
-def csd_mod_est(gtab, data, wm_in_dwi):
-    from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
-    print('Fitting CSD model...')
-    wm_in_dwi_mask = nib.load(wm_in_dwi).get_data().astype('bool')
-    try:
-        print('Attempting to use spherical harmonic basis first...')
-        model = ConstrainedSphericalDeconvModel(gtab, None, sh_order=6)
-    except:
-        print('Falling back to estimating recursive response...')
-        response = recursive_response(gtab, data, mask=wm_in_dwi_mask, sh_order=8,
-                                      peak_thr=0.01, init_fa=0.08, init_trace=0.0021, iter=8, convergence=0.001,
-                                      parallel=False)
-        print('CSD Reponse: ' + str(response))
-        model = ConstrainedSphericalDeconvModel(gtab, response)
-    mod = model.fit(data, wm_in_dwi_mask)
-    return mod
-
-
 def run_LIFE_all(data, gtab, streamlines):
     import dipy.tracking.life as life
     import dipy.core.optimize as opt
@@ -129,32 +85,12 @@ def run_LIFE_all(data, gtab, streamlines):
     return streamlines_filt, mean_rmse
 
 
-def transform_to_affine(streams, header, affine):
-    from dipy.tracking.utils import move_streamlines
-    rotation, scale = np.linalg.qr(affine)
-    streams = move_streamlines(streams, rotation)
-    scale[0:3, 0:3] = np.dot(scale[0:3, 0:3], np.diag(1. / header['voxel_sizes']))
-    scale[0:3, 3] = abs(scale[0:3, 3])
-    streams = move_streamlines(streams, scale)
-    return streams
-
-
-def save_streams(dwi_img, streamlines, dir_path, vox_size='2mm'):
-    from dipy.tracking.streamline import Streamlines
+def save_streams(dwi_img, streamlines, dir_path):
     hdr = dwi_img.header
     streams = "%s%s" % (dir_path, '/streamlines.trk')
 
-    if vox_size == '1mm':
-        zoom_set = (1.0, 1.0, 1.0)
-    elif vox_size == '2mm':
-        zoom_set = (2.0, 2.0, 2.0)
-    else:
-        raise ValueError('Voxel size not supported. Use 2mm or 1mm')
-
     # Save streamlines
-    tract_affine = np.eye(4) * np.array([-1, 1, 1, 1])
-    trk_affine = np.eye(4) * np.array([1, 1, 1, 1])
-    iso_affine = np.eye(4) * np.array([-zoom_set[0], zoom_set[1], zoom_set[2], 1])
+    trk_affine = np.eye(4)
     trk_hdr = nib.streamlines.trk.TrkFile.create_empty_header()
     trk_hdr['hdr_size'] = 1000
     trk_hdr['dimensions'] = hdr['dim'][1:4].astype('float32')
@@ -166,16 +102,15 @@ def save_streams(dwi_img, streamlines, dir_path, vox_size='2mm'):
     trk_hdr['endianness'] = '<'
     trk_hdr['_offset_data'] = 1000
     trk_hdr['nb_streamlines'] = len(streamlines)
-    streamlines_trans = Streamlines(transform_to_affine(streamlines, trk_hdr, iso_affine))
-    tractogram = nib.streamlines.Tractogram(streamlines_trans, affine_to_rasmm=tract_affine)
+    tractogram = nib.streamlines.Tractogram(streamlines, affine_to_rasmm=trk_affine)
     trkfile = nib.streamlines.trk.TrkFile(tractogram, header=trk_hdr)
     nib.streamlines.save(trkfile, streams)
-    return streams, iso_affine
+    return streams
 
 
-def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, labels_im_file, mod_path,
+def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, labels_im_file,
               target_samples, curv_thr_list, step_list, track_type, max_length,
-              maxcrossing, directget):
+              maxcrossing, directget, conn_model, gtab, dwi):
     try:
         import cPickle as pickle
     except ImportError:
@@ -183,26 +118,26 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     from dipy.tracking.local import LocalTracking, ParticleFilteringTracking
     from dipy.data import get_sphere
     from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
-    from dipy.reconst.dti import quantize_evecs
     from dipy.tracking import utils
-    from dipy.tracking.eudx import EuDX
     from dipy.tracking.streamline import Streamlines
-    from pynets.dmri.track import prep_tissues
+    from pynets.dmri.track import prep_tissues, reconstruction
 
-    with open(mod_path, 'rb') as mod_pick:
-        mod_fit = pickle.load(mod_pick)
+    # Set max repetitions before assuming no further streamlines can be generated from seeds
+    repetitions = 1000
 
-    tiss_classifier = prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path)
+    mod_fit = reconstruction(conn_model, gtab, dwi, wm_in_dwi)
 
     # Load atlas parcellation
     atlas_img = nib.load(labels_im_file)
     atlas_data = atlas_img.get_data().astype('int')
 
-    if np.sum(atlas_data) == 0:
-        raise ValueError('ERROR: No non-zero voxels found in atlas. Check any roi masks and/or wm-gm interface images to verify overlap with dwi-registered atlas.')
-
     # Get sphere
     sphere = get_sphere('repulsion724')
+
+    tiss_classifier = prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path)
+
+    if np.sum(atlas_data) == 0:
+        raise ValueError('ERROR: No non-zero voxels found in atlas. Check any roi masks and/or wm-gm interface images to verify overlap with dwi-registered atlas.')
 
     # Iteratively build a list of streamlines for each ROI while tracking
     print("%s%s" % ('Target number of samples per ROI: ', target_samples))
@@ -213,57 +148,60 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
         print("%s%s" % ('ROI: ', roi))
         streamlines = nib.streamlines.array_sequence.ArraySequence()
         ix = 0
-        while len(streamlines) < target_samples:
+        while (len(streamlines) < float(target_samples)) and (ix < int(repetitions)):
             for curv_thr in curv_thr_list:
+
                 # Create ProbabilisticDirectionGetter whose name is confusing because it is not getting directions.
                 if directget == 'prob':
-                    dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit.shm_coeff, max_angle=curv_thr, sphere=sphere)
+                    print('Using Probabilistic Direction...')
+                    dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit.shm_coeff, max_angle=float(curv_thr),
+                                                                   sphere=sphere)
                 elif directget == 'boot':
-                    dg = BootDirectionGetter.from_shcoeff(mod_fit.shm_coeff, max_angle=curv_thr, sphere=sphere)
+                    print('Using Bootstrapped Direction...')
+                    dg = BootDirectionGetter.from_shcoeff(mod_fit.shm_coeff, max_angle=float(curv_thr),
+                                                          sphere=sphere)
                 elif directget == 'closest':
-                    dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit.shm_coeff, max_angle=curv_thr, sphere=sphere)
+                    print('Using Closest Peak Direction...')
+                    dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit.shm_coeff, max_angle=float(curv_thr),
+                                                                 sphere=sphere)
                 elif directget == 'det':
-                    dg = DeterministicMaximumDirectionGetter.from_shcoeff(mod_fit.shm_coeff, max_angle=curv_thr,
+                    print('Using Deterministic Maximum Direction...')
+                    dg = DeterministicMaximumDirectionGetter.from_shcoeff(mod_fit.shm_coeff, max_angle=float(curv_thr),
                                                                           sphere=sphere)
-                elif directget == 'tensor':
-                    fa = mod_fit.fa
-                    fa[np.isnan(fa)] = 0
-                    ind = quantize_evecs(mod_fit.evecs, sphere.vertices)
+                else:
+                    raise ValueError('ERROR: No valid direction getter(s) specified.')
                 for step in step_list:
                     seed = utils.random_seeds_from_mask(atlas_data==roi, seeds_count=1, seed_count_per_voxel=True,
                                                         affine=np.eye(4))
                     #print(seed)
                     if track_type == 'local':
-                        if not directget != 'tensor':
-                            streamline_generator = LocalTracking(dg, tiss_classifier, seed, np.eye(4),
-                                                                 max_cross=maxcrossing, maxlen=max_length,
-                                                                 step_size=step, return_all=True)
-                        else:
-                            raise ValueError('ERROR: Local tracking does not currently support tensor model')
+                        print('Using Local Tracking...')
+                        streamline_generator = LocalTracking(dg, tiss_classifier, seed, np.eye(4),
+                                                             max_cross=int(maxcrossing), maxlen=int(max_length),
+                                                             step_size=float(step), return_all=True)
                     elif track_type == 'particle':
-                        if directget != 'tensor':
-                            streamline_generator = ParticleFilteringTracking(dg, tiss_classifier, seed, np.eye(4),
-                                                                             max_cross=maxcrossing, step_size=step,
-                                                                             maxlen=max_length,
-                                                                             pft_back_tracking_dist=2,
-                                                                             pft_front_tracking_dist=1,
-                                                                             particle_count=15, return_all=True)
-                        else:
-                            raise ValueError('ERROR: Particle tracking does not currently support tensor model')
-                    elif track_type == 'eudx':
-                        if directget == 'tensor':
-                            streamline_generator = EuDX(fa.astype('f8'), ind, odf_vertices=sphere.vertices,
-                                                        a_low=float(0.2), seeds=seed, affine=np.eye(4))
-                        else:
-                            raise ValueError('ERROR: EuDX tracking is currently only supported for tensor model')
+                        print('Using Particle Tracking...')
+                        streamline_generator = ParticleFilteringTracking(dg, tiss_classifier, seed, np.eye(4),
+                                                                         max_cross=int(maxcrossing), step_size=float(step),
+                                                                         maxlen=int(max_length),
+                                                                         pft_back_tracking_dist=2,
+                                                                         pft_front_tracking_dist=1,
+                                                                         particle_count=15, return_all=True)
+                    else:
+                        raise ValueError('ERROR: No valid tracking method(s) specified.')
                     streamlines_more = Streamlines(streamline_generator)
 
-                    print("%s%s" % ('Streams: ', len(streamlines_more)))
                     ix = ix + 1
                     for s in streamlines_more:
                         streamlines.append(s)
-                        if len(streamlines) > target_samples:
+                        if len(streamlines) > float(target_samples):
                             break
+                        elif ix > int(repetitions):
+                            break
+                        else:
+                            continue
+
+            print("%s%s" % ('Streams: ', len(streamlines)))
 
         print('\n')
         streamlines_list.append(streamlines)
@@ -275,22 +213,21 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
 
 def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length):
     from dipy.tracking import utils
-    from pynets.utils import flatten
-    from dipy.tracking.streamline import Streamlines
     from pynets.dmri.track import save_streams, run_LIFE_all
+
     dwi_img = nib.load(dwi)
     data = dwi_img.get_data()
 
     # Flatten streamlines list, and apply min length filter
     print('Filtering streamlines...')
-    streamlines = Streamlines([s for s in flatten(streamlines_list) if len(s) > min_length])
+    streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in np.concatenate(streamlines_list).ravel() if len(s) > float(min_length)])
 
     # Fit LiFE model
     if life_run is True:
         print('Fitting LiFE...')
         # Fit Linear Fascicle Evaluation (LiFE)
         [streamlines, rmse] = run_LIFE_all(data, gtab, streamlines)
-        print("%s%s" % ('Mean RMSE: ', np.sum(rmse)))
+        print("%s%s" % ('Mean RMSE: ', np.mean(rmse)))
 
     # Create density map
     dm = utils.density_map(streamlines, dwi_img.shape, affine=np.eye(4))
@@ -300,6 +237,6 @@ def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_leng
     dm_img.to_filename("%s%s" % (dir_path, "/density_map.nii.gz"))
 
     # Save streamlines to trk
-    [streams, iso_affine] = save_streams(dwi_img, streamlines, dir_path)
+    streams = save_streams(dwi_img, streamlines, dir_path)
 
-    return streamlines, streams, iso_affine
+    return streamlines, streams

@@ -8,15 +8,76 @@ import warnings
 warnings.simplefilter("ignore")
 import numpy as np
 import nibabel as nib
-from dipy.tracking.streamline import Streamlines
-import networkx as nx
-from itertools import combinations
-from collections import defaultdict
-import time
-from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
+
+
+def tens_mod_fa_est(gtab, dwi, nodif_B0_mask):
+    import os
+    from dipy.reconst.dti import TensorModel
+    from dipy.reconst.dti import fractional_anisotropy
+
+    data = nib.load(dwi).get_data()
+
+    print('Fitting tensor model...')
+    nodif_B0_img = nib.load(nodif_B0_mask)
+    nodif_B0_mask_data = nodif_B0_img.get_data().astype('bool')
+    nodif_B0_affine = nodif_B0_img.affine
+    model = TensorModel(gtab)
+    mod = model.fit(data, nodif_B0_mask_data)
+    print('Computing anisotropy measures (FA, MD, RGB)')
+    FA = fractional_anisotropy(mod.evals)
+    FA[np.isnan(FA)] = 0
+    fa_img = nib.Nifti1Image(FA.astype(np.float32), nodif_B0_affine)
+    fa_path = "%s%s" % (os.path.dirname(nodif_B0_mask), '/tensor_fa.nii.gz')
+    nib.save(fa_img, fa_path)
+    return fa_path
+
+
+def tens_mod_est(gtab, data, wm_in_dwi):
+    from dipy.reconst.dti import TensorModel
+    from dipy.data import get_sphere
+    print('Fitting tensor model...')
+    sphere = get_sphere('repulsion724')
+    wm_in_dwi_mask = nib.load(wm_in_dwi).get_data().astype('bool')
+    model = TensorModel(gtab)
+    mod = model.fit(data, wm_in_dwi_mask)
+    tensor_odf = mod.odf(sphere)
+    return tensor_odf
+
+
+def odf_mod_est(gtab, data, wm_in_dwi):
+    from dipy.reconst.shm import CsaOdfModel
+    print('Fitting CSA ODF model...')
+    wm_in_dwi_mask = nib.load(wm_in_dwi).get_data().astype('bool')
+    model = CsaOdfModel(gtab, sh_order=6)
+    mod = model.fit(data, wm_in_dwi_mask)
+    return mod
+
+
+def csd_mod_est(gtab, data, wm_in_dwi):
+    from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
+    print('Fitting CSD model...')
+    wm_in_dwi_mask = nib.load(wm_in_dwi).get_data().astype('bool')
+    try:
+        print('Attempting to use spherical harmonic basis first...')
+        model = ConstrainedSphericalDeconvModel(gtab, None, sh_order=6)
+    except:
+        print('Falling back to estimating recursive response...')
+        response = recursive_response(gtab, data, mask=wm_in_dwi_mask, sh_order=8,
+                                      peak_thr=0.01, init_fa=0.08, init_trace=0.0021, iter=8, convergence=0.001,
+                                      parallel=False)
+        print('CSD Reponse: ' + str(response))
+        model = ConstrainedSphericalDeconvModel(gtab, response)
+    mod = model.fit(data, wm_in_dwi_mask)
+    return mod
 
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, voxel_size='2mm'):
+    from dipy.tracking.streamline import Streamlines
+    from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
+    import networkx as nx
+    from itertools import combinations
+    from collections import defaultdict
+    import time
 
     # Read Streamlines
     streamlines_mni = nib.streamlines.load(streams).streamlines

@@ -7,6 +7,7 @@ Copyright (C) 2018
 import warnings
 warnings.simplefilter("ignore")
 import os
+import numpy as np
 try:
     FSLDIR = os.environ['FSLDIR']
 except KeyError:
@@ -225,6 +226,16 @@ def combine_xfms(xfm1, xfm2, xfmout):
     os.system(cmd)
 
 
+def transform_to_affine(streams, header, affine):
+    from dipy.tracking.utils import move_streamlines
+    rotation, scale = np.linalg.qr(affine)
+    streams = move_streamlines(streams, rotation)
+    scale[0:3, 0:3] = np.dot(scale[0:3, 0:3], np.diag(1. / header['voxel_sizes']))
+    scale[0:3, 3] = abs(scale[0:3, 3])
+    streams = move_streamlines(streams, scale)
+    return streams
+
+
 def reslice_to_xmm(infile, vox_sz=2):
     cmd = "flirt -in {} -ref {} -out {} -nosearch -applyisoxfm {}"
     out_file = "%s%s%s%s%s%s" % (os.path.dirname(infile), '/', os.path.basename(infile).split('.nii.gz')[0], '_res_',
@@ -232,3 +243,4 @@ def reslice_to_xmm(infile, vox_sz=2):
     cmd = cmd.format(infile, infile, out_file, vox_sz)
     os.system(cmd)
     return out_file
+
