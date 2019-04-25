@@ -328,7 +328,7 @@ def coords_masker(roi, coords, label_names, mask, error):
         indices.append(coords_vox.index(bad_coords))
 
     label_names = list(label_names)
-    coords = list(tuple(x) for x in coords)
+    coords = list(tuple(x) for x in coords_vox)
     try:
         for ix in sorted(indices, reverse=True):
             print("%s%s%s%s" % ('Removing: ', label_names[ix], ' at ', coords[ix]))
