@@ -1,9 +1,5 @@
 FROM debian:stretch-slim
 
-ENV AFNI_URL https://files.osf.io/v1/resources/fvuh8/providers/osfstorage/5a0dd9a7b83f69027512a12b
-ENV LIBXP_URL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb
-ENV LIBPNG_URL http://mirrors.kernel.org/debian/pool/main/libp/libpng/libpng12-0_1.2.49-1%2Bdeb7u2_amd64.deb
-
 # Pre-cache neurodebian key
 COPY docker/files/neurodebian.gpg /root/.neurodebian.gpg
 
@@ -76,51 +72,20 @@ RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.d
     apt-get install -y git-lfs
 
 # Install AFNI
-RUN apt-get update -qq && apt-get install -yq --no-install-recommends ed gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa fsl-atlases \
-    libgomp1 libjpeg62 libxm4 netpbm tcsh xfonts-base xvfb && \
-    libs_path=/usr/lib/x86_64-linux-gnu && \
-    if [ -f $libs_path/libgsl.so.19 ]; then \
-           ln $libs_path/libgsl.so.19 $libs_path/libgsl.so.0; \
-    fi
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+		    ed gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa \
+		    libgomp1 libjpeg62 libxm4 netpbm tcsh xfonts-base xvfb \
+                    afni=16.2.07~dfsg.1-5~nd16.04+1 \
+                    convert3d \
+                    git-annex-standalone && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN echo "Install libxp (not in all ubuntu/debian repositories)" && \
-    apt-get install -yq --no-install-recommends libxp6 \
-    || /bin/bash -c " \
-       curl --retry 5 -o /tmp/libxp6.deb -sSL \
-       && dpkg -i /tmp/libxp6.deb && rm -f /tmp/libxp6.deb $LIBXP_URL" && \
-    echo "Install libpng12 (not in all ubuntu/debian repositories" && \
-    apt-get install -yq --no-install-recommends libpng12-0 \
-    || /bin/bash -c " \
-       curl -o /tmp/libpng12.deb -sSL $LIBPNG_URL \
-       && dpkg -i /tmp/libpng12.deb && rm -f /tmp/libpng12.deb" && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-RUN mkdir -p /opt/afni && \
-    curl -o afni.tar.gz -sSLO "$AFNI_URL" && \
-    tar zxv -C /opt/afni --strip-components=1 -f afni.tar.gz && \
-    rm -rf afni.tar.gz
-ENV PATH=/opt/afni:$PATH
-
-# Install ANTS
-RUN wget -qO- "https://cmake.org/files/v3.12/cmake-3.12.1-Linux-x86_64.tar.gz" | \
-  tar --strip-components=1 -xz -C /usr/local
-
-ENV ANTS_VERSION=2.2.0
-WORKDIR /tmp
-RUN git clone git://github.com/stnava/ANTs.git ants \
-    && cd ants \
-    && mkdir build \
-    && cd build \
-    && cmake .. \
-    && make -j4 \
-    && mkdir -p /opt/ants \
-    && mv bin/* /opt/ants && mv ../Scripts/* /opt/ants \
-    && cd .. \
-    && rm -rf build
-
-ENV ANTSPATH=/opt/ants/ \
-    PATH=/opt/ants:$PATH
+# Installing ANTs 2.2.0 (NeuroDocker build)
+ENV ANTSPATH=/usr/lib/ants
+RUN mkdir -p $ANTSPATH && \
+    curl -sSL "https://dl.dropbox.com/s/2f4sui1z6lcgyek/ANTs-Linux-centos5_x86_64-v2.2.0-0740f91.tar.gz" \
+    | tar -xzC $ANTSPATH --strip-components 1
 
 USER neuro
 WORKDIR /home/neuro
@@ -192,9 +157,29 @@ ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
 ENV FSLOUTPUTTYPE=NIFTI_GZ
 
+# AFNI ENV Config
+ENV AFNI_MODELPATH="/usr/lib/afni/models" \
+    AFNI_IMSAVE_WARNINGS="NO" \
+    AFNI_TTATLAS_DATASET="/usr/share/afni/atlases" \
+    AFNI_PLUGINPATH="/usr/lib/afni/plugins"
+ENV PATH="/usr/lib/afni/bin:$PATH"
+
+# ANTs ENV Config
+ENV PATH=$ANTSPATH:$PATH
+ENV ANTS_VERSION=2.2.0
+
 # Misc environment vars
 ENV MPLCONFIGDIR /tmp/matplotlib
 ENV PYTHONWARNINGS ignore
+
+# Unless otherwise specified each process should only use one thread - nipype
+# will handle parallelization
+ENV MKL_NUM_THREADS=1 \
+    OMP_NUM_THREADS=1
+
+# Precaching fonts, set 'Agg' as default backend for matplotlib
+RUN python -c "from matplotlib import font_manager" && \
+    sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
 
 # and add it as an entrypoint
 #ENTRYPOINT ["pynets_run"]
