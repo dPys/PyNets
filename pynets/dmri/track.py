@@ -10,7 +10,8 @@ import numpy as np
 import nibabel as nib
 
 
-def reconstruction(conn_model, gtab, dwi, wm_in_dwi):
+def reconstruction(conn_model, gtab_file, dwi, wm_in_dwi):
+    from dipy.io import load_pickle
     try:
         import cPickle as pickle
     except ImportError:
@@ -18,6 +19,7 @@ def reconstruction(conn_model, gtab, dwi, wm_in_dwi):
     from pynets.dmri.estimation import tens_mod_est, csa_mod_est, csd_mod_est
     dwi_img = nib.load(dwi)
     data = dwi_img.get_data()
+    gtab = load_pickle(gtab_file)
     if conn_model == 'tensor':
         mod = tens_mod_est(gtab, data, wm_in_dwi)
     elif conn_model == 'csa':
@@ -144,19 +146,23 @@ def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_leng
 
 def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, labels_im_file,
               target_samples, curv_thr_list, step_list, track_type, max_length,
-              maxcrossing, directget, conn_model, gtab, dwi, network, node_size, dens_thresh, ID, roi, min_span_tree,
+              maxcrossing, directget, conn_model, gtab_file, dwi, network, node_size, dens_thresh, ID, roi, min_span_tree,
               disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni,
               life_run, min_length):
     try:
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
+    from dipy.io import load_pickle
     from dipy.tracking.local import LocalTracking, ParticleFilteringTracking
     from dipy.data import get_sphere
     from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines
     from pynets.dmri.track import prep_tissues, reconstruction, filter_streamlines
+
+    # Load gradient table
+    gtab = load_pickle(gtab_file)
 
     # Set max repetitions before assuming no further streamlines can be generated from seeds
     repetitions = int(np.round(float(target_samples)/10, 0))

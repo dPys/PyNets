@@ -482,6 +482,9 @@ def rescale_bvec(bvec, bvec_rescaled):
 
 
 def make_gtab_and_bmask(fbval, fbvec, dwi):
+    import os
+    from tempfile import mkstemp
+    from dipy.io import save_pickle
     import os.path as op
     from dipy.io import read_bvals_bvecs
     from dipy.core.gradients import gradient_table
@@ -498,6 +501,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi):
     nodif_b0_bet = "{}/nodif_b0_bet.nii.gz".format(outdir)
     nodif_b0_mask = "{}/nodif_b0_bet_mask.nii.gz".format(outdir)
     bvec_rescaled = "{}/bvec_scaled.bvec".format(outdir)
+    gtab_file = "{}/gtab.pkl".format(outdir)
 
     # loading bvecs/bvals
     bvals, bvecs = read_bvals_bvecs(fbval, fbvec)
@@ -524,6 +528,11 @@ def make_gtab_and_bmask(fbval, fbvec, dwi):
     # Show info
     print(gtab.info)
 
+    # Save gradient table to pickle
+    fd, gtab_file = mkstemp()
+    save_pickle(gtab_file, gtab)
+    os.close(fd)
+
     # Extract and Combine all b0s collected
     print('Extracting b0\'s...')
     cmds = []
@@ -545,7 +554,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi):
     # Get mean b0 brain mask
     cmd = 'bet ' + nodif_b0 + ' ' + nodif_b0_bet + ' -m -f 0.2'
     os.system(cmd)
-    return gtab, nodif_b0_bet, nodif_b0_mask
+    return gtab_file, nodif_b0_bet, nodif_b0_mask
 
 
 def check_orient_and_dims(infile, vox_size, bvecs=None):

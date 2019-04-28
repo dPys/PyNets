@@ -10,12 +10,14 @@ import numpy as np
 import nibabel as nib
 
 
-def tens_mod_fa_est(gtab, dwi, nodif_B0_mask):
+def tens_mod_fa_est(gtab_file, dwi, nodif_B0_mask):
     import os
+    from dipy.io import load_pickle
     from dipy.reconst.dti import TensorModel
     from dipy.reconst.dti import fractional_anisotropy
 
     data = nib.load(dwi).get_data()
+    gtab = load_pickle(gtab_file)
 
     print('Fitting tensor model...')
     nodif_B0_img = nib.load(nodif_B0_mask)

@@ -1438,10 +1438,10 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
             get_node_membership_node.iterables = get_node_membership_node_iterables
 
     gtab_node = pe.Node(niu.Function(input_names=['fbval', 'fbvec', 'dwi'],
-                                     output_names=['gtab', 'nodif_B0', 'nodif_B0_mask'],
+                                     output_names=['gtab_file', 'nodif_B0', 'nodif_B0_mask'],
                                      function=utils.make_gtab_and_bmask, imports=import_list), name="gtab_node")
 
-    get_fa_node = pe.Node(niu.Function(input_names=['gtab', 'dwi', 'nodif_B0_mask'], output_names=['fa_path'],
+    get_fa_node = pe.Node(niu.Function(input_names=['gtab_file', 'dwi', 'nodif_B0_mask'], output_names=['fa_path'],
                                        function=estimation.tens_mod_fa_est, imports=import_list), name="get_fa_node")
 
     register_node = pe.Node(niu.Function(input_names=['basedir_path', 'fa_path', 'nodif_B0_mask', 'anat_loc'],
@@ -1460,7 +1460,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                                           'tiss_class', 'dir_path', 'labels_im_file',
                                                           'target_samples', 'curv_thr_list',
                                                           'step_list', 'track_type', 'max_length', 'maxcrossing',
-                                                          'directget', 'conn_model', 'gtab', 'dwi', 'network',
+                                                          'directget', 'conn_model', 'gtab_file', 'dwi', 'network',
                                                           'node_size', 'dens_thresh', 'ID', 'roi', 'min_span_tree',
                                                           'disp_filt', 'parc', 'prune', 'atlas_select',
                                                           'uatlas_select', 'label_names', 'coords', 'norm', 'binary',
@@ -1886,7 +1886,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                             ('wm_in_dwi', 'wm_in_dwi')]),
         (gtab_node, run_tracking_node, [('nodif_B0_mask', 'nodif_B0_mask')]),
         (check_orient_and_dims_dwi_node, run_tracking_node, [('outfile', 'dwi')]),
-        (gtab_node, run_tracking_node, [('gtab', 'gtab')]),
+        (gtab_node, run_tracking_node, [('gtab_file', 'gtab_file')]),
         (register_atlas_node, run_tracking_node, [('dwi_aligned_atlas_wmgm_int', 'labels_im_file')]),
         (inputnode, run_tracking_node, [('conn_model', 'conn_model'),
                                         ('tiss_class', 'tiss_class'),
@@ -1912,7 +1912,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                             ('uatlas_select', 'uatlas_select')]),
         (inputnode, streams2graph_node, [('overlap_thr', 'overlap_thr')]),
         (gtab_node, get_fa_node, [('nodif_B0_mask', 'nodif_B0_mask'),
-                                  ('gtab', 'gtab')]),
+                                  ('gtab_file', 'gtab_file')]),
         (check_orient_and_dims_dwi_node, get_fa_node, [('outfile', 'dwi')]),
         (get_fa_node, register_node, [('fa_path', 'fa_path')]),
         (get_fa_node, register_atlas_node, [('fa_path', 'fa_path')]),
