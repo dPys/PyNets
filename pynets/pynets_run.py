@@ -1255,8 +1255,8 @@ def build_workflow(args, retval):
         cfg = dict(execution={'stop_on_first_crash': False, 'crashdump_dir': str(wf_multi.base_dir),
                               'crashfile_format': 'txt', 'parameterize_dirs': True, 'display_variable': ':0',
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
-                              'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
-                              'remove_node_directories': False})
+                              'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False, 
+                              'remove_node_directories': False, 'raise_insufficient': False, 'poll_sleep_duration': 0.01})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf_multi.config[key][setting] = value
@@ -1328,7 +1328,7 @@ def build_workflow(args, retval):
                               'parameterize_dirs': True, 'crashfile_format': 'txt', 'display_variable': ':0',
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
                               'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
-                              'remove_node_directories': False})
+                              'remove_node_directories': False, 'raise_insufficient': False, 'poll_sleep_duration': 0.01})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf.config[key][setting] = value
