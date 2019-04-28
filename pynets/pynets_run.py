@@ -1290,7 +1290,7 @@ def build_workflow(args, retval):
                                     directget, tiss_class)
 
         import shutil
-        base_dirname = "%s%s" % ('wf_single_subject_', str(ID))
+        base_dirname = "%s%s%s" % ('wf_single_subject_', ID, random.randint(1001, 9000))
         if func_file:
             if op.exists("%s%s" % ('/tmp/', base_dirname)):
                 shutil.rmtree("%s%s" % ('/tmp/', base_dirname))
