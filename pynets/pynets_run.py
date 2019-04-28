@@ -70,7 +70,7 @@ def get_parser():
                         help='Optionally specify smoothing width(s). Default is 0 / no smoothing. If you wish to iterate the pipeline across multiple smoothing values, separate the list by comma (e.g. 2,4,6).\n')
     parser.add_argument('-b',
                         metavar='Number of bootstraps (integer)',
-                        default=None,
+                        default=0,
                         help='Optionally specify the number of bootstraps with this flag if you wish to apply circular-block bootstrapped resampling of the node-extracted time-series. Size of blocks can be specified using the -bs flag.\n')
     parser.add_argument('-bs',
                         metavar='Size bootstrap blocks (integer)',
@@ -147,9 +147,9 @@ def get_parser():
                         help='Include this flag to binarize the resulting graph such that edges are boolean and not weighted.\n')
     parser.add_argument('-s',
                         metavar='Number of samples',
-                        default='5000',
-                        help='Include this flag to manually specify a number of streamline samples per ROI for in structural connectome estimation. Default is 5000. PyNets parallelizes tracking by samples.\n')
-    parser.add_argument('-fl',
+                        default='10000',
+                        help='Include this flag to manually specify a number of streamline samples per ROI for in structural connectome estimation. Default is 10000.\n')
+    parser.add_argument('-ml',
                         metavar='Maximum fiber length for tracking',
                         default='200',
                         help='Include this flag to manually specify a maximum tract length (mm) for structural connectome tracking. Default is 200.\n')
@@ -157,10 +157,6 @@ def get_parser():
                         metavar='Tracking algorithm',
                         default='local',
                         help='Include this flag to manually specify a tracking algorithm for structural connectome estimation. Options are: local and particle. Default is local.\n')
-    parser.add_argument('-lf',
-                        default=False,
-                        action='store_true',
-                        help='Include this flag to run Linear Fascicle Ealuation (LiFE) to prune FP streamlines produced by tractography (recommended).\n')
     parser.add_argument('-dg',
                         metavar='Direction getter',
                         default='det',
@@ -367,21 +363,21 @@ def build_workflow(args, retval):
         atlas_select = atlas_select[0]
         multi_atlas = None
     target_samples = args.s
-    max_length = args.fl
+    max_length = args.ml
     track_type = args.tt
     tiss_class = args.tc
     directget = args.dg
-    life_run = args.lf
 
     print('\n\n\n------------------------------------------------------------------------\n')
 
     # Hard-coded:
     maxcrossing = 1
-    min_length = 40
+    min_length = 10
     overlap_thr = 5
     overlap_thr_list = None
-    step_list = [0.2]
-    curv_thr_list = [6]
+    step_list = [0.2, 0.3, 0.4, 0.5]
+    curv_thr_list = [5, 10, 25, 50]
+    life_run = True
     nilearn_parc_atlases = ['atlas_harvard_oxford', 'atlas_aal', 'atlas_destrieux_2009',
                             'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe']
     nilearn_coord_atlases = ['coords_power_2011', 'coords_dosenbach_2010']
@@ -938,8 +934,8 @@ def build_workflow(args, retval):
                                maxcrossing, life_run, min_length, directget, tiss_class):
         wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_', random.randint(1, 1000)))
         inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'roi', 'multi_nets',
-                                                          'conn_model', 'plot_switch', 'graph', 'prune', 'smooth',
-                                                          'c_boot', 'norm', 'binary']),
+                                                          'conn_model', 'plot_switch', 'graph', 'prune',
+                                                          'norm', 'binary']),
                             name='inputnode')
         if verbose is True:
             from nipype import config, logging
@@ -969,8 +965,6 @@ def build_workflow(args, retval):
         inputnode.inputs.plot_switch = plot_switch
         inputnode.inputs.graph = graph
         inputnode.inputs.prune = prune
-        inputnode.inputs.smooth = smooth
-        inputnode.inputs.c_boot = c_boot
         inputnode.inputs.norm = norm
         inputnode.inputs.binary = binary
 
@@ -1008,6 +1002,8 @@ def build_workflow(args, retval):
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('register_node')._n_procs = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('register_node')._mem_gb = 2
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_fa_node')._n_procs = 1
+            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_fa_node')._mem_gb = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('run_tracking_node')._n_procs = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('run_tracking_node')._mem_gb = 4
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
@@ -1024,8 +1020,7 @@ def build_workflow(args, retval):
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
                                    iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
-                                              'roi', 'prune', 'node_size', 'smooth', 'c_boot',
-                                              'norm', 'binary'], nested=True)
+                                              'roi', 'prune', 'node_size', 'norm', 'binary'], nested=True)
 
         # Export graph analysis results to pandas dataframes
         export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name="Export2Pandas",
@@ -1051,8 +1046,6 @@ def build_workflow(args, retval):
                                                                       ('roi_iterlist', 'roi'),
                                                                       ('prune_iterlist', 'prune'),
                                                                       ('node_size_iterlist', 'node_size'),
-                                                                      ('smooth_iterlist', 'smooth'),
-                                                                      ('c_boot_iterlist', 'c_boot'),
                                                                       ('norm_iterlist', 'norm'),
                                                                       ('binary_iterlist', 'binary')]),
             (meta_wf.get_node('pass_meta_outs_node'), export_to_pandas_node, [('network_iterlist', 'network'),
@@ -1078,8 +1071,6 @@ def build_workflow(args, retval):
                              ('roi_iterlist', 'roi'),
                              ('prune_iterlist', 'prune'),
                              ('node_size_iterlist', 'node_size'),
-                             ('smooth_iterlist', 'smooth'),
-                             ('c_boot_iterlist', 'c_boot'),
                              ('norm_iterlist', 'norm'),
                              ('binary_iterlist', 'binary')])
                            ])
@@ -1095,12 +1086,10 @@ def build_workflow(args, retval):
                 net_mets_node.inputs.ID = [ID] * len(multi_graph)
                 net_mets_node.inputs.roi = [roi] * len(multi_graph)
                 net_mets_node.inputs.node_size = [node_size] * len(multi_graph)
-                net_mets_node.inputs.smooth = [smooth] * len(multi_graph)
                 net_mets_node.inputs.thr = [thr] * len(multi_graph)
                 net_mets_node.inputs.prune = [prune] * len(multi_graph)
                 net_mets_node.inputs.network = [network] * len(multi_graph)
                 net_mets_node.inputs.conn_model = conn_model_list
-                net_mets_node.inputs.c_boot = [c_boot] * len(multi_graph)
                 net_mets_node.inputs.norm = [norm] * len(multi_graph)
                 net_mets_node.inputs.binary = [binary] * len(multi_graph)
                 export_to_pandas_node.inputs.ID = [ID] * len(multi_graph)
@@ -1114,8 +1103,6 @@ def build_workflow(args, retval):
                                                         ('roi', 'roi'),
                                                         ('prune', 'prune'),
                                                         ('node_size', 'node_size'),
-                                                        ('smooth', 'smooth'),
-                                                        ('c_boot', 'c_boot'),
                                                         ('graph', 'est_path'),
                                                         ('norm', 'norm'),
                                                         ('binary', 'binary')])
@@ -1207,6 +1194,8 @@ def build_workflow(args, retval):
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('register_node')._n_procs = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('register_node')._mem_gb = 2
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_fa_node')._n_procs = 1
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_fa_node')._mem_gb = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('run_tracking_node')._n_procs = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('run_tracking_node')._mem_gb = 4
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
@@ -1307,15 +1296,15 @@ def build_workflow(args, retval):
         import shutil
         base_dirname = "%s%s" % ('wf_single_subject_', str(ID))
         if func_file:
-            if op.exists("%s%s%s" % (op.dirname(func_file), '/', base_dirname)):
-                shutil.rmtree("%s%s%s" % (op.dirname(func_file), '/', base_dirname))
-            os.mkdir("%s%s%s" % (op.dirname(func_file), '/', base_dirname))
-            wf.base_dir = op.dirname(func_file)
+            if op.exists("%s%s" % ('/tmp/', base_dirname)):
+                shutil.rmtree("%s%s" % ('/tmp/', base_dirname))
+            os.mkdir("%s%s" % ('/tmp/', base_dirname))
+            wf.base_dir = "%s%s" % ('/tmp/', base_dirname)
         elif dwi:
-            if op.exists("%s%s%s" % (os.path.dirname(dwi), '/', base_dirname)):
-                shutil.rmtree("%s%s%s" % (os.path.dirname(dwi), '/', base_dirname))
-            os.mkdir("%s%s%s" % (os.path.dirname(dwi), '/', base_dirname))
-            wf.base_dir = op.dirname(dwi)
+            if op.exists("%s%s" % ('/tmp/', base_dirname)):
+                shutil.rmtree("%s%s" % ('/tmp/', base_dirname))
+            os.mkdir("%s%s" % ('/tmp/', base_dirname))
+            wf.base_dir = "%s%s" % ('/tmp/', base_dirname)
 
         if verbose is True:
             from nipype import config, logging

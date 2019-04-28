@@ -823,7 +823,7 @@ def most_important(G):
 
 
 # Extract network metrics interface
-def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_size, smooth, c_boot, norm, binary):
+def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_size, norm, binary):
     import pandas as pd
     import yaml
     try:
@@ -910,35 +910,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
 
     # Load numpy matrix as networkx graph
     G_len = nx.from_numpy_matrix(mat_len)
-
-    if roi:
-        if network:
-            graphname = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_', os.path.basename(roi).split('.')[0], '_', thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.graphml') if float(smooth) > 0 else 'nosm'))
-        else:
-            graphname = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', os.path.basename(roi).split('.')[0], '_', thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.graphml') if float(smooth) > 0 else 'nosm'))
-    else:
-        if network:
-            graphname = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, '_', thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.graphml') if float(smooth) > 0 else 'nosm'))
-        else:
-            graphname = "%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.graphml') if float(smooth) > 0 else 'nosm'))
-
-    G.graph['ecount'] = nx.number_of_edges(G)
-    G = nx.convert_node_labels_to_integers(G, first_label=1)
-    if fmt == 'edgelist_csv':
-        nx.write_weighted_edgelist(G, "%s%s" % (graphname, '.csv'), encoding='utf-8')
-    elif fmt == 'gpickle':
-        nx.write_gpickle(G, "%s%s" % (graphname, '.pkl'))
-    elif fmt == 'graphml':
-        nx.write_graphml(G, "%s%s" % (graphname, '.graphml'))
-    elif fmt == 'txt':
-        np.savetxt("%s%s" % (graphname, '.txt'), nx.to_numpy_matrix(G))
-    elif fmt == 'npy':
-        np.save("%s%s" % (graphname, '.npy'), nx.to_numpy_matrix(G))
-    elif fmt == 'edgelist_ssv':
-        nx.write_weighted_edgelist(G, "%s%s" % (graphname, '.ssv'), delimiter=" ", encoding='utf-8')
-    else:
-        raise ValueError('\nERROR: File format not supported!')
-    pass
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # # # # Calculate global and local metrics from graph G # # # #
@@ -1341,7 +1312,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     pickle.dump(metric_list_names, open(met_list_picke_path, 'wb'), protocol=2)
 
     # And save results to csv
-    out_path = utils.create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot)
+    out_path = utils.create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size)
     np.savetxt(out_path, net_met_val_list_final, delimiter='\t')
 
     if frag is True:

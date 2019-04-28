@@ -437,7 +437,8 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
 
     # Save unthresholded
     unthr_path = utils.create_unthr_path(ID, network, conn_model, roi, dir_path)
-    np.save(unthr_path, conn_matrix)
+    utils.save_mat(conn_matrix, unthr_path)
+
     if min_span_tree is True:
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
@@ -469,13 +470,14 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         print('Warning: Fragmented graph')
 
     # Save thresholded mat
-    est_path = utils.create_est_path(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type)
-    np.save(est_path, conn_matrix_thr)
+    est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type)
+
+    utils.save_mat(conn_matrix_thr, est_path)
 
     return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary
 
 
-def thresh_diff(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary):
+def thresh_diff(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, target_samples, track_type):
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -485,7 +487,8 @@ def thresh_diff(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
 
     # Save unthresholded
     unthr_path = utils.create_unthr_path(ID, network, conn_model, roi, dir_path)
-    np.save(unthr_path, conn_matrix)
+    utils.save_mat(conn_matrix, unthr_path)
+
     if min_span_tree is True:
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
@@ -517,10 +520,8 @@ def thresh_diff(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         print('Warning: Fragmented graph')
 
     # Save thresholded mat
-    smooth=False
-    c_boot=False
-    est_path = utils.create_est_path(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type)
-    np.save(est_path, conn_matrix_thr)
+    est_path = utils.create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples, track_type, thr_type)
 
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, norm, binary
+    utils.save_mat(conn_matrix_thr, est_path)
 
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, norm, binary, target_samples, track_type

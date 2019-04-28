@@ -153,7 +153,7 @@ class Warp(object):
         print("Finished " + self.file_out)
 
 
-def direct_streamline_norm(streams, fa_path, dir_path):
+def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, basedir_path):
     from dipy.tracking.streamline import Streamlines
     from pynets.registration import reg_utils as mgru
     from pynets.registration.register import Warp
@@ -173,11 +173,11 @@ def direct_streamline_norm(streams, fa_path, dir_path):
 
 
     # Run ANTs reg
-    t_aff = "%s%s" % (dsn_dir, '/0GenericAffine.mat')
-    t_warp = "%s%s" % (dsn_dir, '/1Warp.nii.gz')
+    t_aff = "%s%s" % (basedir_path, '/0GenericAffine.mat')
+    t_warp = "%s%s" % (basedir_path, '/1Warp.nii.gz')
 
     if (os.path.isfile(t_aff) is False) and (os.path.isfile(t_warp) is False):
-        cmd = ants_path + '/antsRegistrationSyN.sh -d 3 -f ' + template_path + ' -m ' + fa_path + ' -o ' + dsn_dir + '/'
+        cmd = ants_path + '/antsRegistrationSyN.sh -d 3 -f ' + template_path + ' -m ' + fa_path + ' -o ' + basedir_path + '/'
         os.system(cmd)
 
     fa_path_img = nib.load(fa_path)
@@ -197,12 +197,12 @@ def direct_streamline_norm(streams, fa_path, dir_path):
     nib.streamlines.save(trkfile, streams_warp)
     print(streams_warp)
 
-    return streams_warp
+    return streams_warp, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni
 
 
 class DmriReg(object):
 
-    def __init__(self, dir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple):
+    def __init__(self, basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple):
         self.simple = simple
         self.fa_path = fa_path
         self.nodif_B0_mask = nodif_B0_mask
@@ -210,10 +210,10 @@ class DmriReg(object):
         self.vox_size = vox_size
         self.t1w_name = 't1w'
         self.dwi_name = 'dwi'
-        self.dir_path = dir_path
-        self.tmp_path = "%s%s" % (dir_path, '/tmp')
-        self.reg_path = "%s%s" % (dir_path, '/tmp/reg')
-        self.anat_path = "%s%s" % (dir_path, '/anat_reg')
+        self.basedir_path = basedir_path
+        self.tmp_path = "%s%s" % (basedir_path, '/tmp')
+        self.reg_path = "%s%s" % (basedir_path, '/tmp/reg')
+        self.anat_path = "%s%s" % (basedir_path, '/anat_reg')
         self.reg_path_mat = "%s%s" % (self.reg_path, '/mats')
         self.reg_path_warp = "%s%s" % (self.reg_path, '/warps')
         self.reg_path_img = "%s%s" % (self.reg_path, '/imgs')
@@ -379,7 +379,7 @@ class DmriReg(object):
         """
         self.atlas = atlas
         self.atlas_name = self.atlas.split('/')[-1].split('.')[0]
-        self.aligned_atlas_t1mni = "{}/{}_t1w_mni.nii.gz".format(self.dir_path, self.atlas_name)
+        self.aligned_atlas_t1mni = "{}/{}_t1w_mni.nii.gz".format(self.basedir_path, self.atlas_name)
         self.aligned_atlas_skull = "{}/{}_t1w_skull.nii.gz".format(self.anat_path, self.atlas_name)
         self.dwi_aligned_atlas = "{}/{}_dwi_track.nii.gz".format(self.reg_path_img, self.atlas_name)
         self.dwi_aligned_atlas_wmgm_int = "{}/{}_dwi_track_wmgm_int.nii.gz".format(self.reg_path_img, self.atlas_name)
@@ -522,10 +522,10 @@ class DmriReg(object):
         return
 
 
-def register_all(dir_path, fa_path, nodif_B0_mask, anat_loc, vox_size='2mm', simple=False, overwrite=True):
+def register_all(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size='2mm', simple=False, overwrite=True):
     import os.path as op
     from pynets.registration import register
-    reg = register.DmriReg(dir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple)
+    reg = register.DmriReg(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple)
 
     # if (overwrite is True) or (op.isfile(reg.t1w_brain) is False):
     #     # Perform anatomical segmentation
@@ -542,11 +542,11 @@ def register_all(dir_path, fa_path, nodif_B0_mask, anat_loc, vox_size='2mm', sim
     return reg.wm_gm_int_in_dwi, reg.wm_in_dwi, reg.gm_in_dwi, reg.vent_csf_in_dwi, reg.csf_mask_dwi
 
 
-def register_atlas(uatlas_select, dir_path, fa_path, nodif_B0_mask, anat_loc, wm_gm_int_in_dwi, vox_size='2mm', simple=False):
+def register_atlas(uatlas_select, basedir_path, fa_path, nodif_B0_mask, anat_loc, wm_gm_int_in_dwi, vox_size='2mm', simple=False):
     from pynets.registration import register
-    reg = register.DmriReg(dir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple)
+    reg = register.DmriReg(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple)
 
     # Apply warps/coregister atlas to dwi
-    [dwi_aligned_atlas, aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas_select)
+    [dwi_aligned_atlas_wmgm_int, aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas_select)
 
-    return dwi_aligned_atlas, aligned_atlas_t1mni
+    return dwi_aligned_atlas_wmgm_int, aligned_atlas_t1mni

@@ -173,8 +173,8 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
 
 def test_nodemaker_tools_masking_coords_RSN():
     # Set example inputs
-    #base_dir = str(Path(__file__).parent/"examples")
-    base_dir = '/Users/derekpisner/Applications/PyNets/tests/examples'
+    base_dir = str(Path(__file__).parent/"examples")
+    #base_dir = '/Users/derekpisner/Applications/PyNets/tests/examples'
     dir_path= base_dir + '/997'
     func_file = dir_path + '/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz'
     roi = dir_path + '/pDMN_3_bin.nii.gz'

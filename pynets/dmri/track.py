@@ -15,13 +15,13 @@ def reconstruction(conn_model, gtab, dwi, wm_in_dwi):
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
-    from pynets.dmri.estimation import tens_mod_est, odf_mod_est, csd_mod_est
+    from pynets.dmri.estimation import tens_mod_est, csa_mod_est, csd_mod_est
     dwi_img = nib.load(dwi)
     data = dwi_img.get_data()
     if conn_model == 'tensor':
         mod = tens_mod_est(gtab, data, wm_in_dwi)
     elif conn_model == 'csa':
-        mod = odf_mod_est(gtab, data, wm_in_dwi)
+        mod = csa_mod_est(gtab, data, wm_in_dwi)
     elif conn_model == 'csd':
         mod = csd_mod_est(gtab, data, wm_in_dwi)
     else:
@@ -30,7 +30,7 @@ def reconstruction(conn_model, gtab, dwi, wm_in_dwi):
     return mod
 
 
-def prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, cmc_step_size=0.2):
+def prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc_step_size=0.2):
     try:
         import cPickle as pickle
     except ImportError:
@@ -110,7 +110,8 @@ def save_streams(dwi_img, streamlines, dir_path):
 
 def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, labels_im_file,
               target_samples, curv_thr_list, step_list, track_type, max_length,
-              maxcrossing, directget, conn_model, gtab, dwi):
+              maxcrossing, directget, conn_model, gtab, dwi, network, node_size, dens_thresh, ID, roi, min_span_tree,
+              disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni):
     try:
         import cPickle as pickle
     except ImportError:
@@ -123,7 +124,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     from pynets.dmri.track import prep_tissues, reconstruction
 
     # Set max repetitions before assuming no further streamlines can be generated from seeds
-    repetitions = 1000
+    repetitions = int(np.round(float(target_samples)/10, 0))
 
     mod_fit = reconstruction(conn_model, gtab, dwi, wm_in_dwi)
 
@@ -134,7 +135,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     # Get sphere
     sphere = get_sphere('repulsion724')
 
-    tiss_classifier = prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path)
+    tiss_classifier = prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class)
 
     if np.sum(atlas_data) == 0:
         raise ValueError('ERROR: No non-zero voxels found in atlas. Check any roi masks and/or wm-gm interface images to verify overlap with dwi-registered atlas.')
@@ -143,46 +144,53 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     print("%s%s" % ('Target number of samples per ROI: ', target_samples))
     print("%s%s" % ('Using curvature threshold(s): ', curv_thr_list))
     print("%s%s" % ('Using step size(s): ', step_list))
+    print("%s%s" % ('Tracking type: ', track_type))
+    if directget == 'prob':
+        print('Using Probabilistic Direction...')
+    elif directget == 'boot':
+        print('Using Bootstrapped Direction...')
+    elif directget == 'closest':
+        print('Using Closest Peak Direction...')
+    elif directget == 'det':
+        print('Using Deterministic Maximum Direction...')
     streamlines_list = []
-    for roi in np.unique(atlas_data)[1:]:
+    for roi_mask in np.unique(atlas_data)[1:2]:
+    #for roi in np.unique(atlas_data)[1:]:
         print("%s%s" % ('ROI: ', roi))
         streamlines = nib.streamlines.array_sequence.ArraySequence()
         ix = 0
-        while (len(streamlines) < float(target_samples)) and (ix < int(repetitions)):
+        while (len(streamlines) < int(target_samples)) and (ix < int(repetitions)):
             for curv_thr in curv_thr_list:
+                print("%s%s" % ('Curvature: ', curv_thr))
 
                 # Create ProbabilisticDirectionGetter whose name is confusing because it is not getting directions.
                 if directget == 'prob':
-                    print('Using Probabilistic Direction...')
-                    dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit.shm_coeff, max_angle=float(curv_thr),
+                    dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
                                                                    sphere=sphere)
                 elif directget == 'boot':
-                    print('Using Bootstrapped Direction...')
-                    dg = BootDirectionGetter.from_shcoeff(mod_fit.shm_coeff, max_angle=float(curv_thr),
+                    dg = BootDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
                                                           sphere=sphere)
                 elif directget == 'closest':
-                    print('Using Closest Peak Direction...')
-                    dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit.shm_coeff, max_angle=float(curv_thr),
+                    dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
                                                                  sphere=sphere)
                 elif directget == 'det':
-                    print('Using Deterministic Maximum Direction...')
-                    dg = DeterministicMaximumDirectionGetter.from_shcoeff(mod_fit.shm_coeff, max_angle=float(curv_thr),
+                    dg = DeterministicMaximumDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
                                                                           sphere=sphere)
                 else:
                     raise ValueError('ERROR: No valid direction getter(s) specified.')
                 for step in step_list:
-                    seed = utils.random_seeds_from_mask(atlas_data==roi, seeds_count=1, seed_count_per_voxel=True,
+                    print("%s%s" % ('Step: ', step))
+                    seed = utils.random_seeds_from_mask(atlas_data==roi_mask, seeds_count=1, seed_count_per_voxel=True,
                                                         affine=np.eye(4))
-                    #print(seed)
+                    print(seed)
                     if track_type == 'local':
-                        print('Using Local Tracking...')
                         streamline_generator = LocalTracking(dg, tiss_classifier, seed, np.eye(4),
                                                              max_cross=int(maxcrossing), maxlen=int(max_length),
                                                              step_size=float(step), return_all=True)
                     elif track_type == 'particle':
-                        print('Using Particle Tracking...')
                         streamline_generator = ParticleFilteringTracking(dg, tiss_classifier, seed, np.eye(4),
-                                                                         max_cross=int(maxcrossing), step_size=float(step),
+                                                                         max_cross=int(maxcrossing),
+                                                                         step_size=float(step),
                                                                          maxlen=int(max_length),
                                                                          pft_back_tracking_dist=2,
                                                                          pft_front_tracking_dist=1,
@@ -206,12 +214,12 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
         print('\n')
         streamlines_list.append(streamlines)
 
-    print('Tracking complete...')
+    print('Tracking Complete')
 
-    return streamlines_list
+    return streamlines_list, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni
 
 
-def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length):
+def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni):
     from dipy.tracking import utils
     from pynets.dmri.track import save_streams, run_LIFE_all
 
@@ -227,7 +235,10 @@ def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_leng
         print('Fitting LiFE...')
         # Fit Linear Fascicle Evaluation (LiFE)
         [streamlines, rmse] = run_LIFE_all(data, gtab, streamlines)
-        print("%s%s" % ('Mean RMSE: ', np.mean(rmse)))
+        mean_rmse = np.mean(rmse)
+        print("%s%s" % ('Mean RMSE: ', mean_rmse))
+        if mean_rmse > 1:
+            print('WARNING: LiFE revealed high model error. Check streamlines output and review tracking parameters used.')
 
     # Create density map
     dm = utils.density_map(streamlines, dwi_img.shape, affine=np.eye(4))
@@ -239,4 +250,4 @@ def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_leng
     # Save streamlines to trk
     streams = save_streams(dwi_img, streamlines, dir_path)
 
-    return streamlines, streams
+    return streamlines, streams, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni

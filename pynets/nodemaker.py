@@ -646,6 +646,7 @@ def create_spherical_rois(node_size, coords, template_mask):
     mask_aff = mask_img.affine
 
     print("%s%s" % ('Creating spherical ROI atlas with radius: ', node_size))
+
     def mmToVox(nib_nifti, mmcoords):
         return nib.affines.apply_affine(np.linalg.inv(nib_nifti.affine), mmcoords)
 

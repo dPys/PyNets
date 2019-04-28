@@ -44,13 +44,13 @@ def tens_mod_est(gtab, data, wm_in_dwi):
     return tensor_odf
 
 
-def odf_mod_est(gtab, data, wm_in_dwi):
+def csa_mod_est(gtab, data, wm_in_dwi):
     from dipy.reconst.shm import CsaOdfModel
-    print('Fitting CSA ODF model...')
+    print('Fitting CSA model...')
     wm_in_dwi_mask = nib.load(wm_in_dwi).get_data().astype('bool')
     model = CsaOdfModel(gtab, sh_order=6)
     mod = model.fit(data, wm_in_dwi_mask)
-    return mod
+    return mod.shm_coeff
 
 
 def csd_mod_est(gtab, data, wm_in_dwi):
@@ -68,10 +68,12 @@ def csd_mod_est(gtab, data, wm_in_dwi):
         print('CSD Reponse: ' + str(response))
         model = ConstrainedSphericalDeconvModel(gtab, response)
     mod = model.fit(data, wm_in_dwi_mask)
-    return mod
+    return mod.shm_coeff
 
 
-def streams2graph(atlas_mni, streams, overlap_thr, dir_path, voxel_size='2mm'):
+def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
+                  dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names,
+                  coords, norm, binary, voxel_size='2mm'):
     from dipy.tracking.streamline import Streamlines
     from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
     import networkx as nx
@@ -128,15 +130,12 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, voxel_size='2mm'):
     nib.streamlines.save(Streamlines(stream_viz_list), "%s%s%s%s" % (dir_path, '/streamlines_graph_', overlap_thr, '_overlap.trk'))
 
     # Convert to numpy matrix
-    conn_matrix = nx.to_numpy_matrix(g)
+    conn_matrix_raw = nx.to_numpy_matrix(g)
 
     # Enforce symmetry
-    conn_matrix_symm = np.maximum(conn_matrix, conn_matrix.T)
+    conn_matrix_symm = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
 
     # Remove background label
-    conn_matrix_symm = conn_matrix_symm[1:, 1:]
+    conn_matrix = conn_matrix_symm[1:, 1:]
 
-    # Save matrix
-    est_path_raw = "%s%s%s%s" % (dir_path, '/conn_matrix_', overlap_thr, '_overlap.npy')
-    np.save(est_path_raw, conn_matrix_symm)
-    return conn_matrix_symm
+    return conn_matrix, track_type, target_samples, dir_path, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary
