@@ -327,8 +327,6 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
         meta_wf.get_node("%s%s" % (wf_selected, '.node_gen_node'))._mem_gb = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.thresh_diff_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.thresh_diff_node'))._mem_gb = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.filter_streamlines_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.filter_streamlines_node'))._mem_gb = 2
         meta_wf.get_node("%s%s" % (wf_selected, '.dsn_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.dsn_node'))._mem_gb = 2
         meta_wf.get_node("%s%s" % (wf_selected, '.streams2graph_node'))._n_procs = 1
@@ -1228,7 +1226,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                           'display_variable': ':0', 'job_finished_timeout': 65, 'matplotlib_backend': 'Agg',
                           'plugin': str(plugin_type), 'use_relative_paths': True, 'parameterize_dirs': True,
                           'remove_unnecessary_outputs': False, 'remove_node_directories': False,
-                          'raise_insufficient': False, 'poll_sleep_duration': 0.01})
+                          'raise_insufficient': True, 'poll_sleep_duration': 0.01})
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             functional_connectometry_wf.config[key][setting] = value
@@ -1466,8 +1464,8 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                                           'node_size', 'dens_thresh', 'ID', 'roi', 'min_span_tree',
                                                           'disp_filt', 'parc', 'prune', 'atlas_select',
                                                           'uatlas_select', 'label_names', 'coords', 'norm', 'binary',
-                                                          'atlas_mni'],
-                                             output_names=['streamlines_list', 'track_type', 'target_samples',
+                                                          'atlas_mni', 'life_run', 'min_length'],
+                                             output_names=['streamlines', 'streams', 'track_type', 'target_samples',
                                                            'conn_model', 'dir_path', 'network',  'node_size',
                                                            'dens_thresh', 'ID', 'roi', 'min_span_tree',
                                                            'disp_filt', 'parc', 'prune', 'atlas_select',
@@ -1482,21 +1480,6 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
     if conn_model_list:
         run_tracking_node_iterables.append(("conn_model", conn_model_list))
         run_tracking_node.iterables = run_tracking_node_iterables
-
-    filter_streamlines_node = pe.Node(niu.Function(input_names=['dwi', 'dir_path', 'gtab', 'streamlines_list',
-                                                                'life_run', 'min_length', 'track_type', 'target_samples',
-                                                                'conn_model', 'network', 'node_size', 'dens_thresh',
-                                                                'ID', 'roi', 'min_span_tree', 'disp_filt', 'parc',
-                                                                'prune', 'atlas_select', 'uatlas_select', 'label_names',
-                                                                'coords', 'norm', 'binary', 'atlas_mni'],
-                                                   output_names=['streamlines', 'streams', 'dir_path', 'track_type',
-                                                                 'target_samples', 'conn_model', 'network', 'node_size',
-                                                                 'dens_thresh', 'ID', 'roi', 'min_span_tree',
-                                                                 'disp_filt', 'parc', 'prune', 'atlas_select',
-                                                                 'uatlas_select', 'label_names', 'coords', 'norm',
-                                                                 'binary', 'atlas_mni'],
-                                                   function=track.filter_streamlines,
-                                                   imports=import_list), name="filter_streamlines_node")
 
     dsn_node = pe.Node(niu.Function(input_names=['streams', 'fa_path', 'dir_path', 'track_type', 'target_samples',
                                                  'conn_model', 'network', 'node_size', 'dens_thresh', 'ID', 'roi',
@@ -1601,9 +1584,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                              (get_node_membership_node, run_tracking_node,
                                               [('network', 'network'), ('net_coords', 'coords'),
                                                ('net_label_names', 'label_names')]),
-                                             (run_tracking_node, filter_streamlines_node,
-                                              [('network', 'network')]),
-                                             (filter_streamlines_node, dsn_node,
+                                             (run_tracking_node, dsn_node,
                                               [('network', 'network')]),
                                              (dsn_node, streams2graph_node,
                                               [('network', 'network')])
@@ -1616,9 +1597,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                               [('coords', 'coords'), ('label_names', 'label_names')]),
                                              (inputnode, run_tracking_node,
                                               [('network', 'network')]),
-                                             (run_tracking_node, filter_streamlines_node,
-                                              [('network', 'network')]),
-                                             (filter_streamlines_node, dsn_node,
+                                             (run_tracking_node, dsn_node,
                                               [('network', 'network')]),
                                              (dsn_node, streams2graph_node,
                                               [('network', 'network')])
@@ -1926,15 +1905,11 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                         ('track_type', 'track_type'),
                                         ('max_length', 'max_length'),
                                         ('maxcrossing', 'maxcrossing'),
-                                        ('directget', 'directget')]),
+                                        ('directget', 'directget'),
+                                        ('life_run', 'life_run'),
+                                        ('min_length', 'min_length')]),
         (node_gen_node, run_tracking_node, [('atlas_select', 'atlas_select'),
                                             ('uatlas_select', 'uatlas_select')]),
-        (run_tracking_node, filter_streamlines_node, [('streamlines_list', 'streamlines_list'),
-                                                      ('dir_path', 'dir_path')]),
-        (inputnode, filter_streamlines_node, [('life_run', 'life_run'),
-                                              ('min_length', 'min_length')]),
-        (check_orient_and_dims_dwi_node, filter_streamlines_node, [('outfile', 'dwi')]),
-        (gtab_node, filter_streamlines_node, [('gtab', 'gtab')]),
         (inputnode, streams2graph_node, [('overlap_thr', 'overlap_thr')]),
         (gtab_node, get_fa_node, [('nodif_B0_mask', 'nodif_B0_mask'),
                                   ('gtab', 'gtab')]),
@@ -1943,30 +1918,12 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
         (get_fa_node, register_atlas_node, [('fa_path', 'fa_path')]),
         (get_fa_node, dsn_node, [('fa_path', 'fa_path')]),
         (inputnode, dsn_node, [('basedir_path', 'basedir_path')]),
-        (filter_streamlines_node, dsn_node, [('dir_path', 'dir_path'),
+        (run_tracking_node, dsn_node, [('dir_path', 'dir_path'),
                                              ('streams', 'streams')]),
         (dsn_node, streams2graph_node, [('streams_warp', 'streams'),
                                         ('dir_path', 'dir_path')]),
         (register_atlas_node, run_tracking_node, [('aligned_atlas_t1mni', 'atlas_mni')]),
-        (run_tracking_node, filter_streamlines_node, [('track_type', 'track_type'),
-                                                      ('target_samples', 'target_samples'),
-                                                      ('conn_model', 'conn_model'),
-                                                      ('node_size', 'node_size'),
-                                                      ('dens_thresh', 'dens_thresh'),
-                                                      ('ID', 'ID'),
-                                                      ('roi', 'roi'),
-                                                      ('min_span_tree', 'min_span_tree'),
-                                                      ('disp_filt', 'disp_filt'),
-                                                      ('parc', 'parc'),
-                                                      ('prune', 'prune'),
-                                                      ('atlas_select', 'atlas_select'),
-                                                      ('uatlas_select', 'uatlas_select'),
-                                                      ('label_names', 'label_names'),
-                                                      ('coords', 'coords'),
-                                                      ('norm', 'norm'),
-                                                      ('binary', 'binary'),
-                                                      ('atlas_mni', 'atlas_mni')]),
-        (filter_streamlines_node, dsn_node, [('track_type', 'track_type'),
+        (run_tracking_node, dsn_node, [('track_type', 'track_type'),
                                              ('target_samples', 'target_samples'),
                                              ('conn_model', 'conn_model'),
                                              ('node_size', 'node_size'),
@@ -2086,10 +2043,6 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
     run_tracking_node.interface.mem_gb = 4
     thresh_diff_node.n_procs = 1
     thresh_diff_node._mem_gb = 1
-    filter_streamlines_node.n_procs = 1
-    filter_streamlines_node._mem_gb = 2
-    filter_streamlines_node.interface.n_procs = 1
-    filter_streamlines_node.interface.mem_gb = 2
     dsn_node.n_procs = 1
     dsn_node._mem_gb = 2
     dsn_node.interface.n_procs = 1
@@ -2103,7 +2056,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                           'display_variable': ':0', 'job_finished_timeout': 65, 'matplotlib_backend': 'Agg',
                           'plugin': str(plugin_type), 'use_relative_paths': True, 'parameterize_dirs': True,
                           'remove_unnecessary_outputs': False, 'remove_node_directories': False,
-                          'raise_insufficient': False, 'poll_sleep_duration': 0.01})
+                          'raise_insufficient': True, 'poll_sleep_duration': 0.01})
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             structural_connectometry_wf.config[key][setting] = value

@@ -1010,8 +1010,6 @@ def build_workflow(args, retval):
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_diff_node')._n_procs = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_diff_node')._mem_gb = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('filter_streamlines_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('filter_streamlines_node')._mem_gb = 2
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('dsn_node')._n_procs = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('dsn_node')._mem_gb = 2
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('streams2graph_node')._n_procs = 1
@@ -1202,8 +1200,6 @@ def build_workflow(args, retval):
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_diff_node')._n_procs = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_diff_node')._mem_gb = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('filter_streamlines_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('filter_streamlines_node')._mem_gb = 2
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('dsn_node')._n_procs = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('dsn_node')._mem_gb = 2
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('streams2graph_node')._n_procs = 1
@@ -1255,8 +1251,8 @@ def build_workflow(args, retval):
         cfg = dict(execution={'stop_on_first_crash': False, 'crashdump_dir': str(wf_multi.base_dir),
                               'crashfile_format': 'txt', 'parameterize_dirs': True, 'display_variable': ':0',
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
-                              'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False, 
-                              'remove_node_directories': False, 'raise_insufficient': False, 'poll_sleep_duration': 0.01})
+                              'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
+                              'remove_node_directories': False, 'raise_insufficient': True, 'poll_sleep_duration': 0.01})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf_multi.config[key][setting] = value
@@ -1328,7 +1324,7 @@ def build_workflow(args, retval):
                               'parameterize_dirs': True, 'crashfile_format': 'txt', 'display_variable': ':0',
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
                               'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
-                              'remove_node_directories': False, 'raise_insufficient': False, 'poll_sleep_duration': 0.01})
+                              'remove_node_directories': False, 'raise_insufficient': True, 'poll_sleep_duration': 0.01})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf.config[key][setting] = value
@@ -1388,7 +1384,7 @@ def main():
 
             if p.exitcode != 0:
                 sys.exit(p.exitcode)
-    except RuntimeWarning:
+    except:
         print('\nWARNING: Upgrade to python3 for forkserver functionality...')
         retval = dict()
         build_workflow(args, retval)

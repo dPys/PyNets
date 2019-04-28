@@ -448,7 +448,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
             thr_type = 'MSTdens'
             conn_matrix_thr = thresholding.local_thresholding_dens(conn_matrix, thr)
     elif disp_filt is True:
-        thr_type = 'DISPα'
+        thr_type = 'DISP_alpha'
         G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
         # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
         print('Computing edge disparity significance with alpha = %s' % thr)
@@ -498,7 +498,7 @@ def thresh_diff(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
             thr_type = 'MSTdens'
             conn_matrix_thr = thresholding.local_thresholding_dens(conn_matrix, thr)
     elif disp_filt is True:
-        thr_type = 'DISPα'
+        thr_type = 'DISP_alpha'
         G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
         # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
         print('Computing edge disparity significance with alpha = %s' % thr)

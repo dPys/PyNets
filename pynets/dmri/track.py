@@ -108,10 +108,45 @@ def save_streams(dwi_img, streamlines, dir_path):
     return streams
 
 
+def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length):
+    from dipy.tracking import utils
+    from pynets.dmri.track import save_streams, run_LIFE_all
+
+    dwi_img = nib.load(dwi)
+    data = dwi_img.get_data()
+
+    # Flatten streamlines list, and apply min length filter
+    print('Filtering streamlines...')
+    streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in np.concatenate(streamlines_list).ravel() if len(s) > float(min_length)])
+
+    # Fit LiFE model
+    if life_run is True:
+        print('Fitting LiFE...')
+        # Fit Linear Fascicle Evaluation (LiFE)
+        [streamlines, rmse] = run_LIFE_all(data, gtab, streamlines)
+        mean_rmse = np.mean(rmse)
+        print("%s%s" % ('Mean RMSE: ', mean_rmse))
+        if mean_rmse > 1:
+            print('WARNING: LiFE revealed high model error. Check streamlines output and review tracking parameters used.')
+
+    # Create density map
+    dm = utils.density_map(streamlines, dwi_img.shape, affine=np.eye(4))
+
+    # Save density map
+    dm_img = nib.Nifti1Image(dm.astype("int16"), dwi_img.affine)
+    dm_img.to_filename("%s%s" % (dir_path, "/density_map.nii.gz"))
+
+    # Save streamlines to trk
+    streams = save_streams(dwi_img, streamlines, dir_path)
+
+    return streamlines, streams, dir_path
+
+
 def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, labels_im_file,
               target_samples, curv_thr_list, step_list, track_type, max_length,
               maxcrossing, directget, conn_model, gtab, dwi, network, node_size, dens_thresh, ID, roi, min_span_tree,
-              disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni):
+              disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni,
+              life_run, min_length):
     try:
         import cPickle as pickle
     except ImportError:
@@ -121,7 +156,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines
-    from pynets.dmri.track import prep_tissues, reconstruction
+    from pynets.dmri.track import prep_tissues, reconstruction, filter_streamlines
 
     # Set max repetitions before assuming no further streamlines can be generated from seeds
     repetitions = int(np.round(float(target_samples)/10, 0))
@@ -216,38 +251,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
 
     print('Tracking Complete')
 
-    return streamlines_list, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni
+    # Perform streamline filtering routines
+    [streamlines, streams, dir_path] = filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length)
 
-
-def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni):
-    from dipy.tracking import utils
-    from pynets.dmri.track import save_streams, run_LIFE_all
-
-    dwi_img = nib.load(dwi)
-    data = dwi_img.get_data()
-
-    # Flatten streamlines list, and apply min length filter
-    print('Filtering streamlines...')
-    streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in np.concatenate(streamlines_list).ravel() if len(s) > float(min_length)])
-
-    # Fit LiFE model
-    if life_run is True:
-        print('Fitting LiFE...')
-        # Fit Linear Fascicle Evaluation (LiFE)
-        [streamlines, rmse] = run_LIFE_all(data, gtab, streamlines)
-        mean_rmse = np.mean(rmse)
-        print("%s%s" % ('Mean RMSE: ', mean_rmse))
-        if mean_rmse > 1:
-            print('WARNING: LiFE revealed high model error. Check streamlines output and review tracking parameters used.')
-
-    # Create density map
-    dm = utils.density_map(streamlines, dwi_img.shape, affine=np.eye(4))
-
-    # Save density map
-    dm_img = nib.Nifti1Image(dm.astype("int16"), dwi_img.affine)
-    dm_img.to_filename("%s%s" % (dir_path, "/density_map.nii.gz"))
-
-    # Save streamlines to trk
-    streams = save_streams(dwi_img, streamlines, dir_path)
-
-    return streamlines, streams, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni
+    return streamlines, streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni
