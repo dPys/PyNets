@@ -17,8 +17,6 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                       use_AAL_naming, smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size,
                       mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                       overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length, directget, tiss_class):
-    import os
-    import random
     from pynets import workflows
     from nipype import Workflow
     from nipype.pipeline import engine as pe
@@ -56,7 +54,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
             sub_func_wf = None
 
     # Create meta-workflow to organize graph simulation sets in prep for analysis
-    base_dirname = "%s%s%s" % ('Meta_wf_', ID, random.randint(1001, 9000))
+    base_dirname = "%s%s" % ('Meta_wf_', ID)
     meta_wf = Workflow(name=base_dirname)
 
     if verbose is True:
@@ -1241,7 +1239,6 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                              min_span_tree, use_AAL_naming, disp_filt, plugin_type, multi_nets, prune, mask, norm,
                              binary, target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
                              max_length, maxcrossing, life_run, min_length, directget, tiss_class, vox_size='2mm'):
-    import random
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets import nodemaker, thresholding, utils
@@ -1255,7 +1252,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
         print('FSLDIR environment variable not set!')
 
     import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib"]
-    base_dirname = "%s%s%s" % ('structural_connectometry_', ID, random.randint(1001, 9000))
+    base_dirname = "%s%s" % ('structural_connectometry_', ID)
     structural_connectometry_wf = pe.Workflow(name=base_dirname)
     if not os.path.isdir("%s%s" % ('/tmp/', base_dirname)):
         os.mkdir("%s%s" % ('/tmp/', base_dirname))

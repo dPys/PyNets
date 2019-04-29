@@ -1290,17 +1290,20 @@ def build_workflow(args, retval):
                                     directget, tiss_class)
 
         import shutil
-        base_dirname = "%s%s%s" % ('wf_single_subject_', ID, random.randint(1001, 9000))
+        import os
+        base_dirname = "%s%s" % ('wf_single_subject_', str(ID))
         if func_file:
-            if op.exists("%s%s" % ('/tmp/', base_dirname)):
-                shutil.rmtree("%s%s" % ('/tmp/', base_dirname))
-            os.mkdir("%s%s" % ('/tmp/', base_dirname))
-            wf.base_dir = "%s%s" % ('/tmp/', base_dirname)
+            func_dir = os.path.dirname(func_file)
+            if os.path.exists("%s%s%s" % (func_dir, '/', base_dirname)):
+                shutil.rmtree("%s%s%s" % (func_dir, '/', base_dirname))
+            os.mkdir("%s%s%s" % (func_dir, '/', base_dirname))
+            wf.base_dir = "%s%s%s" % (func_dir, '/', base_dirname)
         elif dwi:
-            if op.exists("%s%s" % ('/tmp/', base_dirname)):
-                shutil.rmtree("%s%s" % ('/tmp/', base_dirname))
-            os.mkdir("%s%s" % ('/tmp/', base_dirname))
-            wf.base_dir = "%s%s" % ('/tmp/', base_dirname)
+            dwi_dir = os.path.dirname(dwi)
+            if os.path.exists("%s%s%s" % (dwi_dir, '/', base_dirname)):
+                shutil.rmtree("%s%s%s" % (dwi_dir, '/', base_dirname))
+            os.mkdir("%s%s%s" % (dwi_dir, '/', base_dirname))
+            wf.base_dir = "%s%s%s" % (dwi_dir, '/', base_dirname)
 
         if verbose is True:
             from nipype import config, logging
