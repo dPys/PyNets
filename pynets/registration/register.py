@@ -173,8 +173,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
         os.mkdir(dsn_dir)
 
     streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_mni_', conn_model, '_', target_samples,
-                                                '_', node_size, 'mm_curv', curv_thr_list, '_step', step_list, '.trk')
-
+                                                '_', node_size, 'mm_curv', str(curv_thr_list).replace(', ', '_'),
+                                                '_step', str(step_list).replace(', ', '_'), '.trk')
 
     # Run ANTs reg
     t_aff = "%s%s" % (basedir_path, '/0GenericAffine.mat')
@@ -430,7 +430,7 @@ class DmriReg(object):
 
         # Set intensities to int
         self.atlas_img = nib.load(self.dwi_aligned_atlas)
-        self.atlas_data = self.atlas_img.get_data().astype('int')
+        self.atlas_data = self.atlas_img.get_fdata().astype('int')
         #node_num = len(np.unique(self.atlas_data))
         #self.atlas_data[self.atlas_data>node_num] = 0
         t_img = load_img(self.wm_gm_int_in_dwi)
@@ -484,17 +484,17 @@ class DmriReg(object):
 
         # Threshold WM to binary in dwi space
         thr_img = nib.load(self.wm_in_dwi)
-        thr_img.get_data()[thr_img.get_data() < 0.2] = 0
+        thr_img.get_fdata()[thr_img.get_fdata() < 0.2] = 0
         nib.save(thr_img, self.wm_in_dwi_bin)
 
         # Threshold GM to binary in dwi space
         thr_img = nib.load(self.gm_in_dwi)
-        thr_img.get_data()[thr_img.get_data() < 0.2] = 0
+        thr_img.get_fdata()[thr_img.get_fdata() < 0.2] = 0
         nib.save(thr_img, self.gm_in_dwi_bin)
 
         # Threshold CSF to binary in dwi space
         thr_img = nib.load(self.csf_mask_dwi)
-        thr_img.get_data()[thr_img.get_data() < 0.9] = 0
+        thr_img.get_fdata()[thr_img.get_fdata() < 0.9] = 0
         nib.save(thr_img, self.csf_mask_dwi)
 
         # Threshold WM to binary in dwi space

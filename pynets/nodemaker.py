@@ -26,7 +26,7 @@ def create_parcel_atlas(parcel_list):
     from nilearn.image import new_img_like, concat_imgs
     parcel_background = new_img_like(parcel_list[0], np.zeros(parcel_list[0].shape, dtype=bool))
     parcel_list_exp = [parcel_background] + parcel_list
-    parcellation = concat_imgs(parcel_list_exp).get_data()
+    parcellation = concat_imgs(parcel_list_exp).get_fdata()
     index_vec = np.array(range(len(parcel_list_exp))) + 1
     net_parcels_sum = np.sum(index_vec * parcellation, axis=3)
     net_parcels_map_nifti = nib.Nifti1Image(net_parcels_sum, affine=parcel_list[0].affine)
@@ -154,7 +154,7 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
     dict_df.Region.unique().tolist()
     ref_dict = {v: k for v, k in enumerate(dict_df.Region.unique().tolist())}
     par_img = nib.load(par_file)
-    par_data = par_img.get_data()
+    par_data = par_img.get_fdata()
     RSN_ix = list(ref_dict.keys())[list(ref_dict.values()).index(network)]
     RSNmask = par_data[:, :, :, RSN_ix]
 
@@ -202,7 +202,7 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
         net_label_names = []
         for parcel in parcel_list:
             parcel_vol = np.zeros(RSNmask.shape, dtype=bool)
-            parcel_data_reshaped = resample_img(parcel, target_affine=par_img.affine, target_shape=RSNmask.shape).get_data()
+            parcel_data_reshaped = resample_img(parcel, target_affine=par_img.affine, target_shape=RSNmask.shape).get_fdata()
             parcel_vol[parcel_data_reshaped == 1] = 1
             # Count number of unique voxels where overlap of parcel and mask occurs
             overlap_count = len(np.unique(np.where((RSNmask.astype('uint8') == 1) & (parcel_vol.astype('uint8') == 1))))
@@ -248,7 +248,7 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, mask, per
     for parcel in parcel_list:
         parcel_vol = np.zeros(mask_data.shape, dtype=bool)
         parcel_data_reshaped = resample_img(parcel, target_affine=mask_img.affine,
-                                            target_shape=mask_data.shape).get_data()
+                                            target_shape=mask_data.shape).get_fdata()
         parcel_vol[parcel_data_reshaped == 1] = 1
         # Count number of unique voxels where overlap of parcel and mask occurs
         overlap_count = len(np.unique(np.where((mask_data.astype('uint8') == 1) & (parcel_vol.astype('uint8') == 1))))
@@ -370,7 +370,7 @@ def gen_img_list(uatlas_select):
                          'flag exist(s)')
 
     bna_img = nib.load(uatlas_select)
-    bna_data = np.round(bna_img.get_data(), 1)
+    bna_data = np.round(bna_img.get_fdata(), 1)
     # Get an array of unique parcels
     bna_data_for_coords_uniq = np.unique(bna_data)
     # Number of parcels:
@@ -404,7 +404,7 @@ def gen_network_parcels(uatlas_select, network, labels, dir_path):
     img_list = nodemaker.gen_img_list(uatlas_select)
     print("%s%s%s" % ('\nExtracting parcels associated with ', network, ' network locations...\n'))
     net_parcels = [i for j, i in enumerate(img_list) if j in labels]
-    bna_4D = concat_imgs(net_parcels).get_data()
+    bna_4D = concat_imgs(net_parcels).get_fdata()
     index_vec = np.array(range(len(net_parcels))) + 1
     net_parcels_sum = np.sum(index_vec * bna_4D, axis=3)
     net_parcels_map_nifti = nib.Nifti1Image(net_parcels_sum, affine=np.eye(4))

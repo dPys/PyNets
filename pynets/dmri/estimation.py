@@ -16,12 +16,12 @@ def tens_mod_fa_est(gtab_file, dwi, nodif_B0_mask):
     from dipy.reconst.dti import TensorModel
     from dipy.reconst.dti import fractional_anisotropy
 
-    data = nib.load(dwi).get_data()
+    data = nib.load(dwi).get_fdata()
     gtab = load_pickle(gtab_file)
 
     print('Fitting tensor model...')
     nodif_B0_img = nib.load(nodif_B0_mask)
-    nodif_B0_mask_data = nodif_B0_img.get_data().astype('bool')
+    nodif_B0_mask_data = nodif_B0_img.get_fdata().astype('bool')
     nodif_B0_affine = nodif_B0_img.affine
     model = TensorModel(gtab)
     mod = model.fit(data, nodif_B0_mask_data)
@@ -39,7 +39,7 @@ def tens_mod_est(gtab, data, wm_in_dwi):
     from dipy.data import get_sphere
     print('Fitting tensor model...')
     sphere = get_sphere('repulsion724')
-    wm_in_dwi_mask = nib.load(wm_in_dwi).get_data().astype('bool')
+    wm_in_dwi_mask = nib.load(wm_in_dwi).get_fdata().astype('bool')
     model = TensorModel(gtab)
     mod = model.fit(data, wm_in_dwi_mask)
     tensor_odf = mod.odf(sphere)
@@ -49,7 +49,7 @@ def tens_mod_est(gtab, data, wm_in_dwi):
 def csa_mod_est(gtab, data, wm_in_dwi):
     from dipy.reconst.shm import CsaOdfModel
     print('Fitting CSA model...')
-    wm_in_dwi_mask = nib.load(wm_in_dwi).get_data().astype('bool')
+    wm_in_dwi_mask = nib.load(wm_in_dwi).get_fdata().astype('bool')
     model = CsaOdfModel(gtab, sh_order=6)
     mod = model.fit(data, wm_in_dwi_mask)
     return mod.shm_coeff
@@ -58,7 +58,7 @@ def csa_mod_est(gtab, data, wm_in_dwi):
 def csd_mod_est(gtab, data, wm_in_dwi):
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     print('Fitting CSD model...')
-    wm_in_dwi_mask = nib.load(wm_in_dwi).get_data().astype('bool')
+    wm_in_dwi_mask = nib.load(wm_in_dwi).get_fdata().astype('bool')
     try:
         print('Attempting to use spherical harmonic...')
         model = ConstrainedSphericalDeconvModel(gtab, None, sh_order=6)
@@ -88,7 +88,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     streamlines = Streamlines(streamlines_mni.streamlines)
 
     # Load parcellation
-    atlas_data = nib.load(atlas_mni).get_data()
+    atlas_data = nib.load(atlas_mni).get_fdata()
 
     # Instantiate empty networkX graph object & dictionary
     # Create voxel-affine mapping
@@ -132,12 +132,16 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         raise ValueError('ERROR: No connectivity streamlines found for node definition.')
 
     # Save graph-connected streamlines
-    stream_viz_list = np.vstack(stream_viz)
+    stream_viz_list = [np.vstack(stream_viz)]
     streams_graph = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_graph_', overlap_thr, '_overlap_',
                                                       conn_model, '_', target_samples, '_', node_size, 'mm_curv',
-                                                      curv_thr_list, '_step', step_list, '.trk')
-    tractogram = nib.streamlines.Tractogram(Streamlines(stream_viz_list), affine_to_rasmm=np.eye(4))
-    trkfile = nib.streamlines.trk.TrkFile(tractogram, header=streamlines_mni.header)
+                                                      str(curv_thr_list).replace(', ', '_'), '_step',
+                                                      str(step_list).replace(', ', '_'), '.trk')
+    streamlines_graph = nib.streamlines.array_sequence.ArraySequence(stream_viz_list)
+    tractogram = nib.streamlines.Tractogram(streamlines_graph, affine_to_rasmm=np.eye(4))
+    hdr = streamlines_mni.header
+    hdr['nb_streamlines'] = len(stream_viz_list)
+    trkfile = nib.streamlines.trk.TrkFile(tractogram, header=hdr)
     nib.streamlines.save(trkfile, streams_graph)
 
     # Convert to numpy matrix

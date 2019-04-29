@@ -170,7 +170,7 @@ def normalize(v):
 #     from pynets.fmri.estimation import generate_mask_from_voxels, normalize
 #     start_time = time.time()
 #     data = nib.load(func_file)
-#     activity_data = data.get_data()
+#     activity_data = data.get_fdata()
 #     volume_dims = np.shape(activity_data)[0:3]
 #     ref_affine = data.get_qform()
 #     ref_header = data.header

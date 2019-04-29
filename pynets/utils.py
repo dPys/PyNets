@@ -831,7 +831,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, sens):
     from dipy.align.reslice import reslice
     # Check dimensions
     img = nib.load(img_file)
-    data = img.get_data()
+    data = img.get_fdata()
     affine = img.get_affine()
     hdr = img.get_header()
     zooms = hdr.get_zooms()[:3]
