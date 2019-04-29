@@ -145,8 +145,8 @@ def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_leng
     return streams, dir_path
 
 
-def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, labels_im_file,
-              target_samples, curv_thr_list, step_list, track_type, max_length,
+def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, labels_im_file_wm_gm_int,
+              labels_im_file, target_samples, curv_thr_list, step_list, track_type, max_length,
               maxcrossing, directget, conn_model, gtab_file, dwi, network, node_size, dens_thresh, ID, roi, min_span_tree,
               disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni,
               life_run, min_length):
@@ -170,9 +170,11 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
 
     mod_fit = reconstruction(conn_model, gtab, dwi, wm_in_dwi)
 
-    # Load atlas parcellation
+    # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
     atlas_img = nib.load(labels_im_file)
     atlas_data = atlas_img.get_data().astype('int')
+    atlas_img_wm_gm_int = nib.load(labels_im_file_wm_gm_int)
+    atlas_data_wm_gm_int = atlas_img_wm_gm_int.get_data().astype('int')
     parcels = []
     i = 0
     for roi_val in np.unique(atlas_data)[1:]:
@@ -205,8 +207,8 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     streamlines_list = []
     # Commence Ensemble Tractography
     jx = 0
-    for roi_mask in np.unique(atlas_data)[1:20]:
-    #for roi_mask in np.unique(atlas_data)[1:]:
+    #for roi_mask in np.unique(atlas_data_wm_gm_int)[1:20]:
+    for roi_mask in np.unique(atlas_data_wm_gm_int)[1:]:
         parcel_vec = np.ones(len(parcels))
         print("%s%s" % ('ROI: ', roi_mask))
         streamlines = nib.streamlines.array_sequence.ArraySequence()
@@ -232,7 +234,8 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
                     raise ValueError('ERROR: No valid direction getter(s) specified.')
                 for step in step_list:
                     print("%s%s" % ('Step: ', step))
-                    seed = utils.random_seeds_from_mask(atlas_data == roi_mask, seeds_count=1, seed_count_per_voxel=True,
+                    seed = utils.random_seeds_from_mask(atlas_data_wm_gm_int == roi_mask,
+                                                        seeds_count=1, seed_count_per_voxel=True,
                                                         affine=np.eye(4))
                     print(seed)
                     if track_type == 'local':
@@ -253,7 +256,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
                     parcel_vec[jx] = 0
                     streamlines_more = Streamlines(select_by_rois(streamline_generator, parcels,
                                                                   parcel_vec.astype('bool'),
-                                                                  mode='any', affine=np.eye(4), tol=1.0))
+                                                                  mode='any', affine=np.eye(4), tol=None))
 
                     ix = ix + 1
                     for s in streamlines_more:

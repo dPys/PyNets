@@ -441,7 +441,7 @@ class DmriReg(object):
         cmd='fslmaths ' + self.dwi_aligned_atlas + ' -mas ' + self.nodif_B0_mask + ' -mas ' + self.wm_gm_int_in_dwi_bin + ' ' + self.dwi_aligned_atlas_wmgm_int
         os.system(cmd)
 
-        return self.dwi_aligned_atlas_wmgm_int, self.aligned_atlas_t1mni
+        return self.dwi_aligned_atlas_wmgm_int, self.dwi_aligned_atlas, self.aligned_atlas_t1mni
 
     def tissue2dwi_align(self):
         """

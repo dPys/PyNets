@@ -1489,13 +1489,14 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
 
     register_atlas_node = pe.Node(niu.Function(input_names=['uatlas_select', 'basedir_path', 'fa_path', 'nodif_B0_mask',
                                                             'anat_loc', 'wm_gm_int_in_dwi'],
-                                               output_names=['dwi_aligned_atlas_wmgm_int', 'aligned_atlas_t1mni'],
+                                               output_names=['dwi_aligned_atlas_wmgm_int', 'dwi_aligned_atlas',
+                                                             'aligned_atlas_t1mni'],
                                                function=register.register_atlas, imports=import_list),
                                   name="register_atlas_node")
 
     run_tracking_node = pe.Node(niu.Function(input_names=['nodif_B0_mask', 'gm_in_dwi', 'vent_csf_in_dwi', 'wm_in_dwi',
-                                                          'tiss_class', 'dir_path', 'labels_im_file',
-                                                          'target_samples', 'curv_thr_list',
+                                                          'tiss_class', 'dir_path', 'labels_im_file_wm_gm_int',
+                                                          'labels_im_file', 'target_samples', 'curv_thr_list',
                                                           'step_list', 'track_type', 'max_length', 'maxcrossing',
                                                           'directget', 'conn_model', 'gtab_file', 'dwi', 'network',
                                                           'node_size', 'dens_thresh', 'ID', 'roi', 'min_span_tree',
@@ -1889,7 +1890,8 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
         (gtab_node, run_tracking_node, [('nodif_B0_mask', 'nodif_B0_mask')]),
         (check_orient_and_dims_dwi_node, run_tracking_node, [('outfile', 'dwi')]),
         (gtab_node, run_tracking_node, [('gtab_file', 'gtab_file')]),
-        (register_atlas_node, run_tracking_node, [('dwi_aligned_atlas_wmgm_int', 'labels_im_file')]),
+        (register_atlas_node, run_tracking_node, [('dwi_aligned_atlas_wmgm_int', 'labels_im_file_wm_gm_int'),
+                                                  ('dwi_aligned_atlas', 'labels_im_file')]),
         (inputnode, run_tracking_node, [('conn_model', 'conn_model'),
                                         ('tiss_class', 'tiss_class'),
                                         ('dens_thresh', 'dens_thresh'),

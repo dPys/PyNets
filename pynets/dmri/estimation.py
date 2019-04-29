@@ -76,7 +76,6 @@ def csd_mod_est(gtab, data, wm_in_dwi):
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
                   dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names,
                   coords, norm, binary, curv_thr_list, step_list, voxel_size='2mm'):
-    from pynets.dmri.track import save_streams
     from dipy.tracking.streamline import Streamlines
     from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
     import networkx as nx
@@ -85,8 +84,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     import time
 
     # Read Streamlines
-    streamlines_mni = nib.streamlines.load(streams).streamlines
-    streamlines = Streamlines(streamlines_mni)
+    streamlines_mni = nib.streamlines.load(streams)
+    streamlines = Streamlines(streamlines_mni.streamlines)
 
     # Load parcellation
     atlas_data = nib.load(atlas_mni).get_data()
