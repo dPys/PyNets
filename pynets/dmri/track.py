@@ -168,6 +168,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     # Set max repetitions before assuming no further streamlines can be generated from seeds
     repetitions = int(np.round(float(target_samples)/10, 0))
 
+    # Fit diffusion model
     mod_fit = reconstruction(conn_model, gtab, dwi, wm_in_dwi)
 
     # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
@@ -175,6 +176,8 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     atlas_data = atlas_img.get_data().astype('int')
     atlas_img_wm_gm_int = nib.load(labels_im_file_wm_gm_int)
     atlas_data_wm_gm_int = atlas_img_wm_gm_int.get_data().astype('int')
+
+    # Build mask vector from atlas for later roi filtering
     parcels = []
     i = 0
     for roi_val in np.unique(atlas_data)[1:]:
@@ -184,6 +187,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     # Get sphere
     sphere = get_sphere('repulsion724')
 
+    # Instantiate tissue classifier
     tiss_classifier = prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class)
 
     if np.sum(atlas_data) == 0:
@@ -207,7 +211,6 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     streamlines_list = []
     # Commence Ensemble Tractography
     jx = 0
-    #for roi_mask in np.unique(atlas_data_wm_gm_int)[1:20]:
     for roi_mask in np.unique(atlas_data_wm_gm_int)[1:]:
         parcel_vec = np.ones(len(parcels))
         print("%s%s" % ('ROI: ', roi_mask))
@@ -217,7 +220,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
             for curv_thr in curv_thr_list:
                 print("%s%s" % ('Curvature: ', curv_thr))
 
-                # Create ProbabilisticDirectionGetter whose name is confusing because it is not getting directions.
+                # Instantiate DirectionGetter
                 if directget == 'prob':
                     dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
                                                                    sphere=sphere)
@@ -234,10 +237,12 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
                     raise ValueError('ERROR: No valid direction getter(s) specified.')
                 for step in step_list:
                     print("%s%s" % ('Step: ', step))
+                    # Perform wm-gm interface seeding
                     seed = utils.random_seeds_from_mask(atlas_data_wm_gm_int == roi_mask,
                                                         seeds_count=1, seed_count_per_voxel=True,
                                                         affine=np.eye(4))
                     print(seed)
+                    # Perform tracking
                     if track_type == 'local':
                         streamline_generator = LocalTracking(dg, tiss_classifier, seed, np.eye(4),
                                                              max_cross=int(maxcrossing), maxlen=int(max_length),
@@ -253,11 +258,13 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
                     else:
                         raise ValueError('ERROR: No valid tracking method(s) specified.')
 
+                    # Filter resulting streamlines by roi-intersection characteristics
                     parcel_vec[jx] = 0
                     streamlines_more = Streamlines(select_by_rois(streamline_generator, parcels,
                                                                   parcel_vec.astype('bool'),
                                                                   mode='any', affine=np.eye(4), tol=1.0))
 
+                    # Repeat process until target samples condition is met
                     ix = ix + 1
                     for s in streamlines_more:
                         streamlines.append(s)

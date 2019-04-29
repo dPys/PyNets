@@ -552,6 +552,6 @@ def register_atlas(uatlas_select, basedir_path, fa_path, nodif_B0_mask, anat_loc
     reg = register.DmriReg(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple)
 
     # Apply warps/coregister atlas to dwi
-    [dwi_aligned_atlas_wmgm_int, aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas_select)
+    [dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas_select)
 
-    return dwi_aligned_atlas_wmgm_int, aligned_atlas_t1mni
+    return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni

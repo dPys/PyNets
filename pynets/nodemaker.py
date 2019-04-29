@@ -650,7 +650,7 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select,
     return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select
 
 
-def create_spherical_rois(node_size, coords, template_mask):
+def create_spherical_roi_volumes(node_size, coords, template_mask):
     from pynets.nodemaker import get_sphere
     mask_img = nib.load(template_mask)
     mask_aff = mask_img.affine

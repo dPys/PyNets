@@ -1424,7 +1424,8 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
     if parc is False:
         prep_spherical_nodes_node = pe.Node(niu.Function(input_names=['coords', 'node_size', 'template_mask'],
                                                          output_names=['parcel_list', 'par_max', 'node_size', 'parc'],
-                                                         function=nodemaker.create_spherical_rois, imports=import_list),
+                                                         function=nodemaker.create_spherical_roi_volumes,
+                                                         imports=import_list),
                                             name="prep_spherical_nodes_node")
 
         if node_size_list:
