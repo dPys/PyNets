@@ -256,7 +256,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
                     parcel_vec[jx] = 0
                     streamlines_more = Streamlines(select_by_rois(streamline_generator, parcels,
                                                                   parcel_vec.astype('bool'),
-                                                                  mode='any', affine=np.eye(4), tol=None))
+                                                                  mode='any', affine=np.eye(4), tol=1.0))
 
                     ix = ix + 1
                     for s in streamlines_more:
