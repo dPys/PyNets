@@ -200,6 +200,8 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     elif directget == 'det':
         print('Using Deterministic Maximum Direction...')
     streamlines_list = []
+
+    # Commence Ensemble Tractography
     for roi_mask in np.unique(atlas_data)[1:2]:
     #for roi in np.unique(atlas_data)[1:]:
         print("%s%s" % ('ROI: ', roi_mask))

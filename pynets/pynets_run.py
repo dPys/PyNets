@@ -10,8 +10,8 @@ warnings.simplefilter("ignore")
 def get_parser():
     import argparse
     # Parse args
-    parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Graph Analysis of '
-                                                 'Functional and Structural Connectomes')
+    parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
+                                                 'Feature Engineering of Functional and Structural Connectomes')
     parser.add_argument('-func',
                         metavar='Path to input functional file (required for functional connectomes)',
                         default=None,
@@ -261,7 +261,7 @@ def get_parser():
     parser.add_argument('-names',
                         default=False,
                         action='store_true',
-                        help='Optionally use this flag if you wish to map nodes to AAL labels.\n')
+                        help='Optionally use this flag if you wish to perform automated anatomical labeling of nodes.\n')
     parser.add_argument('-v',
                         default=False,
                         action='store_true',

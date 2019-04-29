@@ -2003,11 +2003,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                                   [('parc', 'parc'),
                                                    ('parcel_list', 'parcel_list')]),
                                                  (get_node_membership_node, node_gen_node,
-                                                  [('net_coords', 'coords'), ('net_label_names', 'label_names')]),
-                                                 (run_tracking_node, dsn_node,
-                                                  [('network', 'network')]),
-                                                 (dsn_node, streams2graph_node,
-                                                  [('network', 'network')])
+                                                  [('net_coords', 'coords'), ('net_label_names', 'label_names')])
                                                  ])
         else:
             structural_connectometry_wf.disconnect([(fetch_nodes_and_labels_node, node_gen_node,
@@ -2018,7 +2014,15 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
             structural_connectometry_wf.connect([(prep_spherical_nodes_node, node_gen_node,
                                                   [('parcel_list', 'parcel_list'),
                                                    ('par_max', 'par_max'),
-                                                   ('parc', 'parc')])
+                                                   ('parc', 'parc')]),
+                                                 (fetch_nodes_and_labels_node, node_gen_node,
+                                                  [('coords', 'coords'),
+                                                   ('label_names', 'label_names')]),
+                                                 (fetch_nodes_and_labels_node, run_tracking_node,
+                                                  [('coords', 'coords'),
+                                                   ('label_names', 'label_names')]),
+                                                 (inputnode, run_tracking_node,
+                                                  [('network', 'network')])
                                                  ])
 
         structural_connectometry_wf.disconnect([(node_gen_node, register_atlas_node,
@@ -2040,12 +2044,13 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                              (node_gen_node, save_nifti_parcels_node,
                                               [('net_parcels_map_nifti', 'net_parcels_map_nifti')]),
                                              (save_nifti_parcels_node, register_atlas_node,
-                                              [('net_parcels_nii_path', 'uatlas_select')])
+                                              [('net_parcels_nii_path', 'uatlas_select')]),
+                                             (run_tracking_node, dsn_node,
+                                              [('network', 'network')]),
+                                             (dsn_node, streams2graph_node,
+                                              [('network', 'network')])
                                              ])
     else:
-        structural_connectometry_wf.connect([(inputnode, run_tracking_node,
-                                              [('node_size', 'node_size')])
-                                             ])
         if network or multi_nets:
             structural_connectometry_wf.connect([(inputnode, get_node_membership_node, [('network', 'network'),
                                                                                         ('template', 'infile'),
@@ -2062,11 +2067,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                                    ('network', 'network')]),
                                                  (get_node_membership_node, run_tracking_node,
                                                   [('network', 'network'), ('net_coords', 'coords'),
-                                                   ('net_label_names', 'label_names')]),
-                                                 (run_tracking_node, dsn_node,
-                                                  [('network', 'network')]),
-                                                 (dsn_node, streams2graph_node,
-                                                  [('network', 'network')])
+                                                   ('net_label_names', 'label_names')])
                                                  ])
         else:
             structural_connectometry_wf.connect([(fetch_nodes_and_labels_node, node_gen_node,
@@ -2075,12 +2076,16 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                                  (node_gen_node, run_tracking_node,
                                                   [('coords', 'coords'), ('label_names', 'label_names')]),
                                                  (inputnode, run_tracking_node,
-                                                  [('network', 'network')]),
-                                                 (run_tracking_node, dsn_node,
-                                                  [('network', 'network')]),
-                                                 (dsn_node, streams2graph_node,
                                                   [('network', 'network')])
                                                  ])
+
+        structural_connectometry_wf.connect([(inputnode, run_tracking_node,
+                                              [('node_size', 'node_size')]),
+                                             (run_tracking_node, dsn_node,
+                                              [('network', 'network')]),
+                                             (dsn_node, streams2graph_node,
+                                              [('network', 'network')])
+                                             ])
 
     fetch_nodes_and_labels_node.interface.mem_gb = 1
     fetch_nodes_and_labels_node.interface.n_procs = 1
