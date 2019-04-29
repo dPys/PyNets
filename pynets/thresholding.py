@@ -447,6 +447,9 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     if parc is True:
         node_size = 'parc'
 
+    if np.all(conn_matrix == 0):
+        raise ValueError('ERROR: Raw connectivity matrix contains only zeros.')
+
     # Save unthresholded
     unthr_path = utils.create_unthr_path(ID, network, conn_model, roi, dir_path)
     utils.save_mat(conn_matrix, unthr_path)
@@ -499,6 +502,9 @@ def thresh_diff(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     edge_threshold = "%s%s" % (str(thr_perc), '%')
     if parc is True:
         node_size = 'parc'
+
+    if np.all(conn_matrix == 0):
+        raise ValueError('ERROR: Raw connectivity matrix contains only zeros.')
 
     # Save unthresholded
     unthr_path = utils.create_unthr_path(ID, network, conn_model, roi, dir_path)

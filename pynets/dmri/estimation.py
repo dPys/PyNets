@@ -60,10 +60,10 @@ def csd_mod_est(gtab, data, wm_in_dwi):
     print('Fitting CSD model...')
     wm_in_dwi_mask = nib.load(wm_in_dwi).get_data().astype('bool')
     try:
-        print('Attempting to use spherical harmonic basis first...')
+        print('Attempting to use spherical harmonic...')
         model = ConstrainedSphericalDeconvModel(gtab, None, sh_order=6)
     except:
-        print('Falling back to estimating recursive response...')
+        print('Falling back to recursive response...')
         response = recursive_response(gtab, data, mask=wm_in_dwi_mask, sh_order=8,
                                       peak_thr=0.01, init_fa=0.08, init_trace=0.0021, iter=8, convergence=0.001,
                                       parallel=False)
@@ -75,7 +75,8 @@ def csd_mod_est(gtab, data, wm_in_dwi):
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
                   dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names,
-                  coords, norm, binary, voxel_size='2mm'):
+                  coords, norm, binary, curv_thr_list, step_list, voxel_size='2mm'):
+    from pynets.dmri.track import save_streams
     from dipy.tracking.streamline import Streamlines
     from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
     import networkx as nx
@@ -88,12 +89,12 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     streamlines = Streamlines(streamlines_mni)
 
     # Load parcellation
-    atlas_data = nib.load(atlas_mni).get_data().astype(np.int64)
+    atlas_data = nib.load(atlas_mni).get_data()
 
     # Instantiate empty networkX graph object & dictionary
     # Create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4), voxel_size)
-    mx = int(atlas_data.max())
+    mx = len(np.unique(atlas_data.astype(np.int64)))
     g = nx.Graph(ecount=0, vcount=mx)
     edge_dict = defaultdict(int)
 
@@ -128,9 +129,17 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     print("%s%s%s" % ('Graph construction runtime: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     # Stack and save remaining streamlines
+    if len(stream_viz) == 0:
+        raise ValueError('ERROR: No connectivity streamlines found for node definition.')
+
+    # Save graph-connected streamlines
     stream_viz_list = np.vstack(stream_viz)
-    nib.streamlines.save(Streamlines(stream_viz_list), "%s%s%s%s" % (dir_path, '/streamlines_graph_', overlap_thr,
-                                                                     '_overlap.trk'))
+    streams_graph = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_graph_', overlap_thr, '_overlap_',
+                                                      conn_model, '_', target_samples, '_', node_size, 'mm_curv',
+                                                      curv_thr_list, '_step', step_list, '.trk')
+    tractogram = nib.streamlines.Tractogram(Streamlines(stream_viz_list), affine_to_rasmm=np.eye(4))
+    trkfile = nib.streamlines.trk.TrkFile(tractogram, header=streamlines_mni.header)
+    nib.streamlines.save(trkfile, streams_graph)
 
     # Convert to numpy matrix
     conn_matrix_raw = nx.to_numpy_matrix(g)

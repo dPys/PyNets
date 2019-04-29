@@ -454,7 +454,8 @@ def link_communities(W, type_clustering='single'):
 
     # Set diagonal to mean weights
     np.fill_diagonal(W, 0)
-    W[range(n), range(n)] = (np.sum(W, axis=0) / np.sum(np.logical_not(W), axis=0) + np.sum(W.T, axis=0) / np.sum(np.logical_not(W.T), axis=0)) / 2
+    W[range(n), range(n)] = (np.sum(W, axis=0) / np.sum(np.logical_not(W), axis=0) + np.sum(W.T, axis=0) /
+                             np.sum(np.logical_not(W.T), axis=0)) / 2
 
     # Out/in norm squared
     No = np.sum(W**2, axis=1)
@@ -874,7 +875,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     # Load numpy matrix as networkx graph
     G_pre = nx.from_numpy_matrix(in_mat)
 
-    # Prune irrelevant nodes (i.e. nodes who are fully disconnected from the graph and/or those whose betweenness centrality are > 3 standard deviations below the mean)
+    # Prune irrelevant nodes (i.e. nodes who are fully disconnected from the graph and/or those whose betweenness
+    # centrality are > 3 standard deviations below the mean)
     if prune == 1:
         [G, _] = prune_disconnected(G_pre)
     elif prune == 2:
@@ -916,9 +918,11 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, eigenvector_centrality, communicability_betweenness_centrality, clustering, degree_centrality, rich_club_coefficient
     from pynets.stats.netstats import average_local_efficiency, global_efficiency, local_efficiency, modularity_louvain_und_sign, smallworldness, participation_coef, diversity_coef_sign
-    # For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the function  (with a G-only input) to the netstats module.
-    metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity]
-    #metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, smallworldness]
+    # For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the
+    # function  (with a G-only input) to the netstats module.
+    metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
+                        average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient,
+                        graph_number_of_cliques, transitivity]
     metric_list_comm = ['louvain_modularity']
     # with open("%s%s" % (str(Path(__file__).parent), '/global_graph_measures.yaml'), 'r') as stream:
     #     try:
@@ -957,7 +961,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
                     net_met_val = float(i(G))
                 else:
                     # Case where G is not fully connected
-                    print('WARNING: Calculating average shortest path length for a disconnected graph. This might take awhile...')
+                    print('WARNING: Calculating average shortest path length for a disconnected graph. '
+                          'This might take awhile...')
                     net_met_val = float(average_shortest_path_length_for_all(G))
             if custom_weight is not None and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
                 custom_weight_param = 'weight = ' + str(custom_weight)
@@ -1008,7 +1013,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     if 'participation_coefficient' in metric_list_nodal:
         try:
             if ci is None:
-                raise KeyError('Participation coefficient cannot be calculated for graph G in the absence of a community affiliation vector')
+                raise KeyError('Participation coefficient cannot be calculated for graph G in the absence of a '
+                               'community affiliation vector')
             pc_vector = participation_coef(in_mat, ci)
             print('\nExtracting Participation Coefficient vector for all network nodes...')
             pc_vals = list(pc_vector)
@@ -1042,7 +1048,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     if 'diversity_coefficient' in metric_list_nodal:
         try:
             if ci is None:
-                raise KeyError('Diversity coefficient cannot be calculated for graph G in the absence of a community affiliation vector')
+                raise KeyError('Diversity coefficient cannot be calculated for graph G in the absence of a community '
+                               'affiliation vector')
             [dc_vector, _] = diversity_coef_sign(in_mat, ci)
             print('\nExtracting Diversity Coefficient vector for all network nodes...')
             dc_vals = list(dc_vector)
@@ -1303,7 +1310,9 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
             pass
 
     if roi:
-        met_list_picke_path = "%s%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list', "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), os.path.basename(roi).split('.')[0])
+        met_list_picke_path = "%s%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list', "%s" %
+                                            ("%s%s%s" % ('_', network, '_') if network else "_"),
+                                            os.path.basename(roi).split('.')[0])
     else:
         if network:
             met_list_picke_path = "%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list_', network)

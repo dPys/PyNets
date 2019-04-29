@@ -155,7 +155,7 @@ class Warp(object):
 
 def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_samples, conn_model, network, node_size,
                            dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select,
-                           label_names, coords, norm, binary, atlas_mni, basedir_path):
+                           label_names, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list):
     from dipy.tracking.streamline import Streamlines
     from pynets.registration import reg_utils as mgru
     from pynets.registration.register import Warp
@@ -172,7 +172,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     if not os.path.isdir(dsn_dir):
         os.mkdir(dsn_dir)
 
-    streams_mni = "%s%s" % (dir_path, '/streamlines_mni.trk')
+    streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_mni_', conn_model, '_', target_samples,
+                                                '_', node_size, 'mm_curv', curv_thr_list, '_step', step_list, '.trk')
 
 
     # Run ANTs reg

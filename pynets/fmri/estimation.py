@@ -132,10 +132,12 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         model.fit(time_series)
         conn_matrix = -model.estimator_.precision_
     else:
-        raise ValueError('\nERROR! No connectivity model specified at runtime. Select a valid estimator using the -mod flag.')
+        raise ValueError('\nERROR! No connectivity model specified at runtime. Select a valid estimator using the '
+                         '-mod flag.')
 
     if conn_matrix.shape < (2, 2):
-        raise RuntimeError('\nERROR! Matrix estimation selection yielded an empty or 1-dimensional graph. Check time-series for errors or try using a different atlas')
+        raise RuntimeError('\nERROR! Matrix estimation selection yielded an empty or 1-dimensional graph. '
+                           'Check time-series for errors or try using a different atlas')
 
     coords = np.array(coords)
     label_names = np.array(label_names)
@@ -239,11 +241,13 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     #from sklearn.externals.joblib import Memory
 
     if not os.path.isfile(func_file):
-        raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag exist(s)')
+        raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
+                         'exist(s)')
 
     if conf:
         if not os.path.isfile(conf):
-            raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the -conf flag exist(s)')
+            raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the '
+                             '-conf flag exist(s)')
 
 
     # if fast is True:
@@ -286,11 +290,13 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     #from sklearn.externals.joblib import Memory
 
     if not os.path.isfile(func_file):
-        raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag exist(s)')
+        raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
+                         'exist(s)')
 
     if conf:
         if not os.path.isfile(conf):
-            raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the -conf flag exist(s)')
+            raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the '
+                             '-conf flag exist(s)')
 
     # if fast is True:
     #     ts_within_nodes = extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path)
@@ -316,7 +322,9 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         if ts_within_nodes is None:
             raise RuntimeError('\nERROR: Time-series extraction failed!')
     else:
-        raise RuntimeError('\nERROR: Cannot extract time-series from an empty list of coordinates. \nThis usually means that no nodes were generated based on the specified conditions at runtime (e.g. atlas was overly restricted by an RSN or some user-defined mask.')
+        raise RuntimeError('\nERROR: Cannot extract time-series from an empty list of coordinates. \nThis usually means '
+                           'that no nodes were generated based on the specified conditions at runtime (e.g. atlas was '
+                           'overly restricted by an RSN or some user-defined mask.')
 
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
                         len(coords), ' coordinate ROI\'s'))

@@ -85,9 +85,8 @@ def run_LIFE_all(data, gtab, streamlines):
     return streamlines_filt, mean_rmse
 
 
-def save_streams(dwi_img, streamlines, dir_path):
+def save_streams(dwi_img, streamlines, streams):
     hdr = dwi_img.header
-    streams = "%s%s" % (dir_path, '/streamlines.trk')
 
     # Save streamlines
     trk_affine = np.eye(4)
@@ -108,7 +107,7 @@ def save_streams(dwi_img, streamlines, dir_path):
     return streams
 
 
-def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length):
+def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length, conn_model, target_samples, node_size, curv_thr_list, step_list):
     from dipy.tracking import utils
     from pynets.dmri.track import save_streams, run_LIFE_all
 
@@ -134,11 +133,14 @@ def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_leng
     dm = utils.density_map(streamlines, dwi_img.shape, affine=np.eye(4))
 
     # Save density map
-    dm_img = nib.Nifti1Image(dm.astype("int16"), dwi_img.affine)
-    dm_img.to_filename("%s%s" % (dir_path, "/density_map.nii.gz"))
+    dm_img = nib.Nifti1Image(dm.astype('int16'), dwi_img.affine)
+    dm_img.to_filename("%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/density_map_', conn_model, '_', target_samples, '_',
+                                                     node_size, 'mm_curv', curv_thr_list, '_step', step_list, '.nii.gz'))
 
     # Save streamlines to trk
-    streams = save_streams(dwi_img, streamlines, dir_path)
+    streams = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_', conn_model, '_', target_samples, '_',
+                                            node_size, 'mm_curv', curv_thr_list, '_step', step_list, '.trk')
+    streams = save_streams(dwi_img, streamlines, streams)
 
     return streams, dir_path
 
@@ -199,11 +201,13 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
         print('Using Closest Peak Direction...')
     elif directget == 'det':
         print('Using Deterministic Maximum Direction...')
-    streamlines_list = []
 
+    streamlines_list = []
     # Commence Ensemble Tractography
-    for roi_mask in np.unique(atlas_data)[1:2]:
-    #for roi in np.unique(atlas_data)[1:]:
+    jx = 0
+    for roi_mask in np.unique(atlas_data)[1:20]:
+    #for roi_mask in np.unique(atlas_data)[1:]:
+        parcel_vec = np.ones(len(parcels))
         print("%s%s" % ('ROI: ', roi_mask))
         streamlines = nib.streamlines.array_sequence.ArraySequence()
         ix = 0
@@ -228,7 +232,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
                     raise ValueError('ERROR: No valid direction getter(s) specified.')
                 for step in step_list:
                     print("%s%s" % ('Step: ', step))
-                    seed = utils.random_seeds_from_mask(atlas_data==roi_mask, seeds_count=1, seed_count_per_voxel=True,
+                    seed = utils.random_seeds_from_mask(atlas_data == roi_mask, seeds_count=1, seed_count_per_voxel=True,
                                                         affine=np.eye(4))
                     print(seed)
                     if track_type == 'local':
@@ -245,8 +249,11 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
                                                                          particle_count=15, return_all=True)
                     else:
                         raise ValueError('ERROR: No valid tracking method(s) specified.')
-                    streamlines_more = Streamlines(select_by_rois(streamline_generator, parcels, np.ones(len(parcels)),
-                                                                  mode='both_end', affine=np.eye(4), tol=None))
+
+                    parcel_vec[jx] = 0
+                    streamlines_more = Streamlines(select_by_rois(streamline_generator, parcels,
+                                                                  parcel_vec.astype('bool'),
+                                                                  mode='any', affine=np.eye(4), tol=1.0))
 
                     ix = ix + 1
                     for s in streamlines_more:
@@ -259,6 +266,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
                             continue
 
             print("%s%s" % ('Streams: ', len(streamlines)))
+            jx = jx + 1
 
         print('\n')
         streamlines_list.append(streamlines)
@@ -266,6 +274,6 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     print('Tracking Complete')
 
     # Perform streamline filtering routines
-    [streams, dir_path] = filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length)
+    [streams, dir_path] = filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length, conn_model, target_samples, node_size, curv_thr_list, step_list)
 
-    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni
+    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, curv_thr_list, step_list
