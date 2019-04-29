@@ -10,89 +10,135 @@ warnings.simplefilter("ignore")
 def get_parser():
     import argparse
     # Parse args
-    parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Graph Analysis of Functional and Structural Connectomes')
+    parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Graph Analysis of '
+                                                 'Functional and Structural Connectomes')
     parser.add_argument('-func',
                         metavar='Path to input functional file (required for functional connectomes)',
                         default=None,
-                        help='Specify either a path to a preprocessed functional image in standard space and in .nii or .nii.gz format OR multiple paths to multiple preprocessed functional images in standard space and in .nii or .nii.gz format, separated by commas OR the path to a text file containing a list of paths to subject files.\n')
+                        help='Specify either a path to a preprocessed functional image in standard space and in .nii or '
+                             '.nii.gz format OR multiple paths to multiple preprocessed functional images in standard '
+                             'space and in .nii or .nii.gz format, separated by commas OR the path to a text file '
+                             'containing a list of paths to subject files.\n')
     parser.add_argument('-m',
                         metavar='Path to binarized mask image to apply to regions before extracting signals',
                         default=None,
-                        help='Specify either a path to a binarized brain mask image in standard space and in .nii or .nii.gz format OR multiple paths to multiple brain mask images in the case of running multiple participants, in which case paths should be separated by comma.\n')
+                        help='Specify either a path to a binarized brain mask image in standard space and in .nii or '
+                             '.nii.gz format OR multiple paths to multiple brain mask images in the case of running '
+                             'multiple participants, in which case paths should be separated by comma.\n')
     parser.add_argument('-g',
                         metavar='Path to graph file input.',
                         default=None,
-                        help='In either .txt or .npy format. This skips fMRI and dMRI graph estimation workflows and begins at the graph analysis stage.\n')
+                        help='In either .txt or .npy format. This skips fMRI and dMRI graph estimation workflows and '
+                             'begins at the graph analysis stage.\n')
     parser.add_argument('-dwi',
                         metavar='Path to diffusion-weighted imaging data file (required for structural connectomes)',
                         default=None,
-                        help='Specify either a path to a preprocessed structural diffusion image in native diffusion space and in .nii or .nii.gz format OR multiple paths to multiple preprocessed structural diffusion images in native diffusion space and in .nii or .nii.gz format.\n')
+                        help='Specify either a path to a preprocessed structural diffusion image in native diffusion '
+                             'space and in .nii or .nii.gz format OR multiple paths to multiple preprocessed structural '
+                             'diffusion images in native diffusion space and in .nii or .nii.gz format.\n')
     parser.add_argument('-bval',
                         metavar='Path to b-values file (required for structural connectomes)',
                         default=None,
-                        help='Specify either a path to a b-values text file containing gradient shell values per diffusion direction OR multiple paths to multiple b-values text files in the order of accompanying b-vectors and dwi files.\n')
+                        help='Specify either a path to a b-values text file containing gradient shell values per '
+                             'diffusion direction OR multiple paths to multiple b-values text files in the order of '
+                             'accompanying b-vectors and dwi files.\n')
     parser.add_argument('-bvec',
                         metavar='Path to b-vectors file (required for structural connectomes)',
                         default=None,
-                        help='Specify either a path to a b-vectors text file containing gradient directions (x,y,z) per diffusion direction OR multiple paths to multiple b-vectors text files in the order of accompanying b-values and dwi files.\n')
+                        help='Specify either a path to a b-vectors text file containing gradient directions (x,y,z) '
+                             'per diffusion direction OR multiple paths to multiple b-vectors text files in the order '
+                             'of accompanying b-values and dwi files.\n')
     parser.add_argument('-id',
                         metavar='A subject id (can be any arbitrary identifier)',
                         default=None,
                         required=True,
-                        help='An arbitrary subject identifier OR list of subject identifiers, separated by comma and of equivalent length to the list of input files indicated with the -func flag. If functional and structural connectomes are being generated simultaneously, then comma-separated id\'s need to be repeated to match the total input file count.\n')
+                        help='An arbitrary subject identifier OR list of subject identifiers, separated by comma and of '
+                             'equivalent length to the list of input files indicated with the -func flag. If functional '
+                             'and structural connectomes are being generated simultaneously, then comma-separated id\'s '
+                             'need to be repeated to match the total input file count.\n')
     parser.add_argument('-a',
                         metavar='Atlas',
                         default=None,
-                        help='Specify a coordinate atlas parcellation from those made publically available in nilearn. If you wish to iterate your pynets run over multiple nilearn atlases, separate them by comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\natlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl\ncoords_dosenbach_2010\ncoords_power_2011\natlas_pauli_2017.\n')
+                        help='Specify a coordinate atlas parcellation from those made publically available in nilearn. '
+                             'If you wish to iterate your pynets run over multiple nilearn atlases, separate them by '
+                             'comma. e.g. -a \'atlas_aal,atlas_destrieux_2009\' Available nilearn atlases are:'
+                             '\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\n'
+                             'atlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl\ncoords_dosenbach_2010\n'
+                             'coords_power_2011\natlas_pauli_2017.\n')
     parser.add_argument('-ua',
                         metavar='Path to parcellation file',
                         default=None,
-                        help='Optionally specify a path to a parcellation/atlas file in nifti format. If specifying a list of paths to multiple user atlases, separate them by comma.\n')
+                        help='Optionally specify a path to a parcellation/atlas file in nifti format. If specifying a '
+                             'list of paths to multiple user atlases, separate them by comma.\n')
     parser.add_argument('-pm',
                         metavar='Cores,memory',
                         default='2,4',
-                        help='Number of cores to use, number of GB of memory to use for single subject run, entered as two integers seperated by a comma.\n')
+                        help='Number of cores to use, number of GB of memory to use for single subject run, entered as '
+                             'two integers seperated by a comma.\n')
     parser.add_argument('-n',
                         metavar='Resting-state network',
                         default=None,
-                        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple RSNs, separate them by comma. (e.g. -n \'Default,Cont,SalVentAttn)\'.\n')
+                        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): '
+                             'Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, '
+                             'SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, '
+                             'ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple RSNs, '
+                             'separate them by comma. (e.g. -n \'Default,Cont,SalVentAttn)\'.\n')
     parser.add_argument('-thr',
                         metavar='Graph threshold',
                         default='1.00',
-                        help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. Default is proportional thresholding. If omitted, no thresholding will be applied.\n')
+                        help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. '
+                             'Default is proportional thresholding. If omitted, no thresholding will be applied.\n')
     parser.add_argument('-ns',
                         metavar='Spherical centroid node size',
                         default=4,
-                        help='Optionally specify coordinate-based node radius size(s). Default is 4 mm. If you wish to iterate the pipeline across multiple node sizes, separate the list by comma (e.g. 2,4,6).\n')
+                        help='Optionally specify coordinate-based node radius size(s). Default is 4 mm. If you wish to '
+                             'iterate the pipeline across multiple node sizes, separate the list by comma (e.g. 2,4,6).\n')
     parser.add_argument('-sm',
                         metavar='Smoothing value (mm fwhm)',
                         default=0,
-                        help='Optionally specify smoothing width(s). Default is 0 / no smoothing. If you wish to iterate the pipeline across multiple smoothing values, separate the list by comma (e.g. 2,4,6).\n')
+                        help='Optionally specify smoothing width(s). Default is 0 / no smoothing. If you wish to iterate '
+                             'the pipeline across multiple smoothing values, separate the list by comma (e.g. 2,4,6).\n')
     parser.add_argument('-b',
                         metavar='Number of bootstraps (integer)',
                         default=0,
-                        help='Optionally specify the number of bootstraps with this flag if you wish to apply circular-block bootstrapped resampling of the node-extracted time-series. Size of blocks can be specified using the -bs flag.\n')
+                        help='Optionally specify the number of bootstraps with this flag if you wish to apply '
+                             'circular-block bootstrapped resampling of the node-extracted time-series. Size of '
+                             'blocks can be specified using the -bs flag.\n')
     parser.add_argument('-bs',
                         metavar='Size bootstrap blocks (integer)',
                         default=None,
-                        help='Optionally specify a bootstrap block size for circular-block resampling of the node-extracted time-series.\n')
+                        help='Optionally specify a bootstrap block size for circular-block resampling of the '
+                             'node-extracted time-series.\n')
     parser.add_argument('-roi',
                         metavar='Path to binarized roi image',
                         default=None,
-                        help='Optionally specify a thresholded binarized ROI mask and retain only those nodes contained within that mask for functional connectome estimation, or constrain the tractography in the case of structural connectome estimation.\n')
+                        help='Optionally specify a thresholded binarized ROI mask and retain only those nodes contained '
+                             'within that mask for functional connectome estimation, or constrain the tractography '
+                             'in the case of structural connectome estimation.\n')
     parser.add_argument('-mod',
                         metavar='Graph estimation method',
                         default='partcorr',
                         required=True,
-                        help='Specify matrix estimation type. For fMRI, possible models include: corr for correlation, cov for covariance, sps for precision covariance, partcorr for partial correlation. sps type is used by default. If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. Default is partcorr for fMRI. For dMRI, models include ball_and_stick, tensor, and csd.\n')
+                        help='Specify matrix estimation type. For fMRI, possible models include: corr for correlation, '
+                             'cov for covariance, sps for precision covariance, partcorr for partial correlation. '
+                             'sps type is used by default. If skgmm is installed (https://github.com/skggm/skggm), '
+                             'then QuicGraphicalLasso, QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and '
+                             'AdaptiveQuicGraphicalLasso. Default is partcorr for fMRI. For dMRI, models include ball_'
+                             'and_stick, tensor, and csd.\n')
     parser.add_argument('-conf',
                         metavar='Confound regressor file (.tsv/.csv format)',
                         default=None,
-                        help='Optionally specify a path to a confound regressor file to reduce noise in the time-series estimation for the graph. This can also be a list of paths in the case of running multiple subjects, which requires separated by comma and of equivalent length to the list of input files indicated with the -func flag.\n')
+                        help='Optionally specify a path to a confound regressor file to reduce noise in the time-series '
+                             'estimation for the graph. This can also be a list of paths in the case of running multiple '
+                             'subjects, which requires separated by comma and of equivalent length to the list of input '
+                             'files indicated with the -func flag.\n')
     parser.add_argument('-anat',
                         metavar='Path to preprocessed anatomical image',
                         default=None,
-                        help='Required for structural and/or functional connectomes. Multiple paths to multiple anatomical files text in the order of accompanying functional and/or structural files. If functional and structural connectomes are being generated simultaneously, then comma-separated anatomical image paths need to be repeated.\n')
+                        help='Required for structural and/or functional connectomes. Multiple paths to multiple '
+                             'anatomical files text in the order of accompanying functional and/or structural files. '
+                             'If functional and structural connectomes are being generated simultaneously, then '
+                             'comma-separated anatomical image paths need to be repeated.\n')
     parser.add_argument('-min_thr',
                         metavar='Multi-thresholding minimum threshold',
                         default=None,
@@ -128,47 +174,61 @@ def get_parser():
     parser.add_argument('-cm',
                         metavar='Cluster mask',
                         default=None,
-                        help='Specify the path to the mask within which to perform clustering. If specifying a list of paths to multiple cluster masks, separate them by comma.')
+                        help='Specify the path to the mask within which to perform clustering. If specifying a list of '
+                             'paths to multiple cluster masks, separate them by comma.')
     parser.add_argument('-ct',
                         metavar='Clustering type',
                         default='ncut',
-                        help='Specify the types of clustering to use. Options include ncut, ward, kmeans, complete, and average. If specifying a list of clustering types, separate them by comma.')
+                        help='Specify the types of clustering to use. Options include ncut, ward, kmeans, complete, and '
+                             'average. If specifying a list of clustering types, separate them by comma.')
     parser.add_argument('-p',
                         metavar='Pruning strategy',
                         default=1,
-                        help='Include this flag to prune the resulting graph of any isolated (1) or isolated + fully disconnected (2) nodes. Default pruning=1 and removes isolated nodes. Include -p 0 to disable pruning.\n')
+                        help='Include this flag to prune the resulting graph of any isolated (1) or isolated + fully '
+                             'disconnected (2) nodes. Default pruning=1 and removes isolated nodes. Include -p 0 to '
+                             'disable pruning.\n')
     parser.add_argument('-norm',
                         metavar='Normalization strategy for resulting graph(s)',
                         default=None,
-                        help='Include this flag to normalize the resulting graph to values between 0-1 (1) or using log10 (2). Default is no normalization.\n')
+                        help='Include this flag to normalize the resulting graph to values between 0-1 (1) or using '
+                             'log10 (2). Default is no normalization.\n')
     parser.add_argument('-bin',
                         default=False,
                         action='store_true',
-                        help='Include this flag to binarize the resulting graph such that edges are boolean and not weighted.\n')
+                        help='Include this flag to binarize the resulting graph such that edges are boolean and not '
+                             'weighted.\n')
     parser.add_argument('-s',
                         metavar='Number of samples',
                         default='10000',
-                        help='Include this flag to manually specify a number of streamline samples per ROI for in structural connectome estimation. Default is 10000.\n')
+                        help='Include this flag to manually specify a number of streamline samples per ROI for in '
+                             'structural connectome estimation. Default is 10000.\n')
     parser.add_argument('-ml',
                         metavar='Maximum fiber length for tracking',
                         default='200',
-                        help='Include this flag to manually specify a maximum tract length (mm) for structural connectome tracking. Default is 200.\n')
+                        help='Include this flag to manually specify a maximum tract length (mm) for structural '
+                             'connectome tracking. Default is 200.\n')
     parser.add_argument('-tt',
                         metavar='Tracking algorithm',
                         default='local',
-                        help='Include this flag to manually specify a tracking algorithm for structural connectome estimation. Options are: local and particle. Default is local.\n')
+                        help='Include this flag to manually specify a tracking algorithm for structural connectome '
+                             'estimation. Options are: local and particle. Default is local.\n')
     parser.add_argument('-dg',
                         metavar='Direction getter',
                         default='det',
-                        help='Include this flag to manually specify the statistical approach to tracking for structural connectome estimation. Options are: det (deterministic) and prob (probabilistic). Default is det.\n')
+                        help='Include this flag to manually specify the statistical approach to tracking for structural '
+                             'connectome estimation. Options are: det (deterministic) and prob (probabilistic). '
+                             'Default is det.\n')
     parser.add_argument('-tc',
                         metavar='Tissue classification method',
                         default='cmc',
-                        help='Include this flag to manually specify a tissue classification method for structural connectome estimation. Options are: cmc (continuous), act (anatomically-constrained), and bin (binary to white-matter only). Default is cmc.\n')
+                        help='Include this flag to manually specify a tissue classification method for structural '
+                             'connectome estimation. Options are: cmc (continuous), act (anatomically-constrained), '
+                             'and bin (binary to white-matter only). Default is cmc.\n')
     parser.add_argument('-plug',
                         metavar='Scheduler type',
                         default='MultiProc',
-                        help='Include this flag to specify a workflow plugin other than the default MultiProc. Options include: Linear, SGE, PBS, SLURM, SGEgraph, SLURMgraph.\n')
+                        help='Include this flag to specify a workflow plugin other than the default MultiProc. Options '
+                             'include: Linear, SGE, PBS, SLURM, SGEgraph, SLURMgraph.\n')
     parser.add_argument('-parc',
                         default=False,
                         action='store_true',
@@ -176,15 +236,19 @@ def get_parser():
     parser.add_argument('-dt',
                         default=False,
                         action='store_true',
-                        help='Optionally use this flag if you wish to threshold to achieve a given density or densities indicated by the -thr and -min_thr, -max_thr, -step_thr flags, respectively.\n')
+                        help='Optionally use this flag if you wish to threshold to achieve a given density or densities '
+                             'indicated by the -thr and -min_thr, -max_thr, -step_thr flags, respectively.\n')
     parser.add_argument('-mst',
                         default=False,
                         action='store_true',
-                        help='Optionally use this flag if you wish to apply local thresholding via the Minimum Spanning Tree approach. -thr values in this case correspond to a target density (if the -dt flag is also included), otherwise a target proportional threshold.\n')
+                        help='Optionally use this flag if you wish to apply local thresholding via the Minimum Spanning '
+                             'Tree approach. -thr values in this case correspond to a target density (if the -dt flag is '
+                             'also included), otherwise a target proportional threshold.\n')
     parser.add_argument('-df',
                         default=False,
                         action='store_true',
-                        help='Optionally use this flag if you wish to apply local thresholding via the disparity filter approach. -thr values in this case correspond to α.\n')
+                        help='Optionally use this flag if you wish to apply local thresholding via the disparity filter '
+                             'approach. -thr values in this case correspond to α.\n')
     #    parser.add_argument('-at',
     #        default=False,
     #        action='store_true',
@@ -192,7 +256,8 @@ def get_parser():
     parser.add_argument('-plt',
                         default=False,
                         action='store_true',
-                        help='Optionally use this flag if you wish to activate plotting of adjacency matrices, connectomes, and time-series.\n')
+                        help='Optionally use this flag if you wish to activate plotting of adjacency matrices, '
+                             'connectomes, and time-series.\n')
     parser.add_argument('-names',
                         default=False,
                         action='store_true',
@@ -457,7 +522,8 @@ def build_workflow(args, retval):
                 raise ValueError("Error: Length of anat list does not correspond to length of input dwi file list.")
 
     if (c_boot and not block_size) or (block_size and not c_boot):
-        raise ValueError("Error: Both number of bootstraps (-b) and block size (-bs) must be specified to run bootstrapped resampling.")
+        raise ValueError("Error: Both number of bootstraps (-b) and block size (-bs) must be specified to run "
+                         "bootstrapped resampling.")
 
     if mask:
         if not roi:
@@ -656,7 +722,9 @@ def build_workflow(args, retval):
                             do_dir_path(atlas_select_clust, func_file)
             clust_mask = None
             clust_type = None
-        elif (user_atlas_list is not None or uatlas_select is not None) and (k_clustering == 4 or k_clustering == 3 or k_clustering == 2 or k_clustering == 1) and atlas_select is None:
+        elif (user_atlas_list is not None or uatlas_select is not None) and (k_clustering == 4 or k_clustering == 3 or
+                                                                             k_clustering == 2 or
+                                                                             k_clustering == 1) and atlas_select is None:
             print('Error: the -ua flag cannot be used alone with the clustering option. Use the -cm flag instead.')
             sys.exit(0)
 
@@ -666,20 +734,23 @@ def build_workflow(args, retval):
                 for func_file in func_subjects_list:
                     for atlas_select in multi_atlas:
                         if parc is True and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
-                            raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                            raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
+                                                         ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                         else:
                             print(atlas_select)
                             do_dir_path(atlas_select, func_file)
             else:
                 for atlas_select in multi_atlas:
                     if parc is True and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
-                        raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                        raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
+                                                     ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                     else:
                         print(atlas_select)
                         do_dir_path(atlas_select, func_file)
         elif atlas_select is not None:
             if parc is True and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
-                raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
+                                             ' is a coordinate atlas and cannot be combined with the -parc flag.'))
             else:
                 print("%s%s" % ("\nPredefined atlas: ", atlas_select))
                 if func_subjects_list:
@@ -738,12 +809,14 @@ def build_workflow(args, retval):
             print("%s%s" % ('\nUsing resting-state network pipeline for: ', network))
         elif multi_nets is not None:
             network = multi_nets[0]
-            print("%s%d%s%s%s" % ('\nIterating workflow across ', len(multi_nets), ' networks: ', str(', '.join(str(n) for n in multi_nets)), '...'))
+            print("%s%d%s%s%s" % ('\nIterating workflow across ', len(multi_nets), ' networks: ',
+                                  str(', '.join(str(n) for n in multi_nets)), '...'))
         else:
             print("\nUsing whole-brain pipeline...")
 
         if node_size_list:
-            print("%s%s%s" % ('\nGrowing spherical nodes across multiple radius sizes: ', str(', '.join(str(n) for n in node_size_list)), '...'))
+            print("%s%s%s" % ('\nGrowing spherical nodes across multiple radius sizes: ',
+                              str(', '.join(str(n) for n in node_size_list)), '...'))
         elif parc is True:
             print("\nUsing parcels as nodes")
         else:
@@ -767,10 +840,12 @@ def build_workflow(args, retval):
                         print('ERROR: size of bootstrap blocks indicated with the -bs flag must be an integer > 0.')
                 except ValueError:
                     print('ERROR: number of boostraps indicated with the -b flag must be an integer > 0.')
-                print("%s%s%s%s" % ('Applying circular block bootstrapping to the node-extracted time-series using: ', int(c_boot), ' bootstraps with block size ', int(block_size)))
+                print("%s%s%s%s" % ('Applying circular block bootstrapping to the node-extracted time-series using: ',
+                                    int(c_boot), ' bootstraps with block size ', int(block_size)))
 
         if conn_model_list:
-            print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ', str(', '.join(str(n) for n in conn_model_list)), '...'))
+            print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ',
+                              str(', '.join(str(n) for n in conn_model_list)), '...'))
         else:
             print("%s%s" % ("\nUsing connectivity model: ", conn_model))
 
@@ -804,20 +879,23 @@ def build_workflow(args, retval):
                 for dwi in struct_subjects_list:
                     for atlas_select in multi_atlas:
                         if parc is True and atlas_select in nilearn_coord_atlases:
-                            raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                            raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
+                                                         ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                         else:
                             print(atlas_select)
                             do_dir_path(atlas_select, dwi)
             else:
                 for atlas_select in multi_atlas:
                     if parc is True and atlas_select in nilearn_coord_atlases:
-                        raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                        raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
+                                                     ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                     else:
                         print(atlas_select)
                         do_dir_path(atlas_select, dwi)
         elif atlas_select is not None:
             if parc is True and atlas_select in nilearn_coord_atlases:
-                raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select, ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
+                                             ' is a coordinate atlas and cannot be combined with the -parc flag.'))
             else:
                 print("%s%s" % ("\nNilearn atlas: ", atlas_select))
                 if struct_subjects_list:
@@ -947,7 +1025,7 @@ def build_workflow(args, retval):
             config.enable_debug_mode()
             config.enable_resource_monitor()
 
-        cfg = dict(execution={'stop_on_first_crash': False, 'crashfile_format': 'txt', 'parameterize_dirs': True,
+        cfg = dict(execution={'stop_on_first_crash': True, 'crashfile_format': 'txt', 'parameterize_dirs': True,
                               'display_variable': ':0', 'matplotlib_backend': 'Agg',
                               'plugin': str(plugin_type), 'use_relative_paths': True, 'keep_inputs': True,
                               'remove_unnecessary_outputs': True, 'remove_node_directories': False})
@@ -1225,7 +1303,7 @@ def build_workflow(args, retval):
                                     life_run, min_length, directget, tiss_class)
 
         import shutil
-        wf_multi.base_dir = '/tmp/wf_multi_subject'
+        wf_multi.base_dir = '/tmp/Wf_multi_subject'
         if op.exists(wf_multi.base_dir):
             shutil.rmtree(wf_multi.base_dir)
         os.mkdir(wf_multi.base_dir)
@@ -1248,11 +1326,11 @@ def build_workflow(args, retval):
             handler = logging.FileHandler(callback_log_path)
             logger.addHandler(handler)
 
-        cfg = dict(execution={'stop_on_first_crash': False, 'crashdump_dir': str(wf_multi.base_dir),
+        cfg = dict(execution={'stop_on_first_crash': True, 'crashdump_dir': str(wf_multi.base_dir),
                               'crashfile_format': 'txt', 'parameterize_dirs': True, 'display_variable': ':0',
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
                               'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
-                              'remove_node_directories': False, 'raise_insufficient': True, 'poll_sleep_duration': 0.01})
+                              'remove_node_directories': False, 'raise_insufficient': True})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf_multi.config[key][setting] = value
@@ -1273,7 +1351,7 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
             print('Plotting resource profile from run...')
-            generate_gantt_chart('/tmp/wf_multi_subject/multi_sub_run_stats.log', cores=int(procmem[0]))
+            generate_gantt_chart('/tmp/Wf_multi_subject/multi_sub_run_stats.log', cores=int(procmem[0]))
 
     # Single-subject workflow generator
     else:
@@ -1291,7 +1369,7 @@ def build_workflow(args, retval):
 
         import shutil
         import os
-        base_dirname = "%s%s" % ('wf_single_subject_', str(ID))
+        base_dirname = "%s%s" % ('Wf_single_subject_', str(ID))
         if func_file:
             func_dir = os.path.dirname(func_file)
             if os.path.exists("%s%s%s" % (func_dir, '/', base_dirname)):
@@ -1323,11 +1401,11 @@ def build_workflow(args, retval):
             handler = logging.FileHandler(callback_log_path)
             logger.addHandler(handler)
 
-        cfg = dict(execution={'stop_on_first_crash': False, 'crashdump_dir': str(wf.base_dir),
+        cfg = dict(execution={'stop_on_first_crash': True, 'crashdump_dir': str(wf.base_dir),
                               'parameterize_dirs': True, 'crashfile_format': 'txt', 'display_variable': ':0',
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
                               'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
-                              'remove_node_directories': False, 'raise_insufficient': True, 'poll_sleep_duration': 0.01})
+                              'remove_node_directories': False, 'raise_insufficient': True})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf.config[key][setting] = value

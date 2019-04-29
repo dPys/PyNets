@@ -88,12 +88,12 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     streamlines = Streamlines(streamlines_mni)
 
     # Load parcellation
-    atlas_data = nib.load(atlas_mni).get_data()
+    atlas_data = nib.load(atlas_mni).get_data().astype(np.int64)
 
     # Instantiate empty networkX graph object & dictionary
     # Create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4), voxel_size)
-    mx = atlas_data.max()
+    mx = int(atlas_data.max())
     g = nx.Graph(ecount=0, vcount=mx)
     edge_dict = defaultdict(int)
 
@@ -129,7 +129,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Stack and save remaining streamlines
     stream_viz_list = np.vstack(stream_viz)
-    nib.streamlines.save(Streamlines(stream_viz_list), "%s%s%s%s" % (dir_path, '/streamlines_graph_', overlap_thr, '_overlap.trk'))
+    nib.streamlines.save(Streamlines(stream_viz_list), "%s%s%s%s" % (dir_path, '/streamlines_graph_', overlap_thr,
+                                                                     '_overlap.trk'))
 
     # Convert to numpy matrix
     conn_matrix_raw = nx.to_numpy_matrix(g)

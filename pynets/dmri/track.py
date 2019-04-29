@@ -10,8 +10,7 @@ import numpy as np
 import nibabel as nib
 
 
-def reconstruction(conn_model, gtab_file, dwi, wm_in_dwi):
-    from dipy.io import load_pickle
+def reconstruction(conn_model, gtab, dwi, wm_in_dwi):
     try:
         import cPickle as pickle
     except ImportError:
@@ -19,7 +18,6 @@ def reconstruction(conn_model, gtab_file, dwi, wm_in_dwi):
     from pynets.dmri.estimation import tens_mod_est, csa_mod_est, csd_mod_est
     dwi_img = nib.load(dwi)
     data = dwi_img.get_data()
-    gtab = load_pickle(gtab_file)
     if conn_model == 'tensor':
         mod = tens_mod_est(gtab, data, wm_in_dwi)
     elif conn_model == 'csa':
@@ -119,7 +117,8 @@ def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_leng
 
     # Flatten streamlines list, and apply min length filter
     print('Filtering streamlines...')
-    streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in np.concatenate(streamlines_list).ravel() if len(s) > float(min_length)])
+    streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in np.concatenate(streamlines_list).ravel()
+                                                                if len(s) > float(min_length)])
 
     # Fit LiFE model
     if life_run is True:
@@ -141,7 +140,7 @@ def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_leng
     # Save streamlines to trk
     streams = save_streams(dwi_img, streamlines, dir_path)
 
-    return streamlines, streams, dir_path
+    return streams, dir_path
 
 
 def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, labels_im_file,
@@ -158,7 +157,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     from dipy.data import get_sphere
     from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
     from dipy.tracking import utils
-    from dipy.tracking.streamline import Streamlines
+    from dipy.tracking.streamline import Streamlines, select_by_rois
     from pynets.dmri.track import prep_tissues, reconstruction, filter_streamlines
 
     # Load gradient table
@@ -172,6 +171,11 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     # Load atlas parcellation
     atlas_img = nib.load(labels_im_file)
     atlas_data = atlas_img.get_data().astype('int')
+    parcels = []
+    i = 0
+    for roi_val in np.unique(atlas_data)[1:]:
+        parcels.append(atlas_data == roi_val)
+        i = i + 1
 
     # Get sphere
     sphere = get_sphere('repulsion724')
@@ -179,7 +183,8 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     tiss_classifier = prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class)
 
     if np.sum(atlas_data) == 0:
-        raise ValueError('ERROR: No non-zero voxels found in atlas. Check any roi masks and/or wm-gm interface images to verify overlap with dwi-registered atlas.')
+        raise ValueError('ERROR: No non-zero voxels found in atlas. Check any roi masks and/or wm-gm interface images '
+                         'to verify overlap with dwi-registered atlas.')
 
     # Iteratively build a list of streamlines for each ROI while tracking
     print("%s%s" % ('Target number of samples per ROI: ', target_samples))
@@ -197,7 +202,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     streamlines_list = []
     for roi_mask in np.unique(atlas_data)[1:2]:
     #for roi in np.unique(atlas_data)[1:]:
-        print("%s%s" % ('ROI: ', roi))
+        print("%s%s" % ('ROI: ', roi_mask))
         streamlines = nib.streamlines.array_sequence.ArraySequence()
         ix = 0
         while (len(streamlines) < int(target_samples)) and (ix < int(repetitions)):
@@ -238,7 +243,8 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
                                                                          particle_count=15, return_all=True)
                     else:
                         raise ValueError('ERROR: No valid tracking method(s) specified.')
-                    streamlines_more = Streamlines(streamline_generator)
+                    streamlines_more = Streamlines(select_by_rois(streamline_generator, parcels, np.ones(len(parcels)),
+                                                                  mode='both_end', affine=np.eye(4), tol=None))
 
                     ix = ix + 1
                     for s in streamlines_more:
@@ -258,6 +264,6 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     print('Tracking Complete')
 
     # Perform streamline filtering routines
-    [streamlines, streams, dir_path] = filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length)
+    [streams, dir_path] = filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length)
 
-    return streamlines, streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni
+    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni

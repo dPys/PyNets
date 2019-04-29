@@ -12,7 +12,8 @@ warnings.simplefilter("ignore")
 
 def get_sphere(coords, r, vox_dims, dims):
     # Adapted from Neurosynth
-    # Return all points within r mm of coords. Generates a cube and then discards all points outside sphere. Only returns values that fall within the dimensions of the image."""
+    # Return all points within r mm of coords. Generates a cube and then discards all points outside sphere. Only
+    # returns values that fall within the dimensions of the image."""
     r = float(r)
     xx, yy, zz = [slice(-r / vox_dims[i], r / vox_dims[i] + 0.01, 1) for i in range(len(coords))]
     cube = np.vstack([row.ravel() for row in np.mgrid[xx, yy, zz]])
@@ -107,7 +108,7 @@ def nilearn_atlas_helper(atlas_select, parc):
     return label_names, networks_list, uatlas_select
 
 
-def get_node_membership(network, func_file, coords, label_names, parc, parcel_list, perc_overlap=0.75, error=2):
+def get_node_membership(network, infile, coords, label_names, parc, parcel_list, perc_overlap=0.75, error=2):
     from nilearn.image import resample_img
     from pynets.nodemaker import get_sphere
     import pkg_resources
@@ -120,7 +121,7 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
                       'DefaultC', 'TempPar']
 
     # Load subject func data
-    bna_img = nib.load(func_file)
+    bna_img = nib.load(infile)
     x_vox = np.diagonal(bna_img.affine[:3,0:3])[0]
     y_vox = np.diagonal(bna_img.affine[:3,0:3])[1]
     z_vox = np.diagonal(bna_img.affine[:3,0:3])[2]
@@ -145,7 +146,8 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
         nets_ref_txt = None
 
     if not nets_ref_txt:
-        raise ValueError("%s%s%s" % ('Network: ', str(network), ' not found!\nSee valid network names using the --help flag with pynets_run.py'))
+        raise ValueError("%s%s%s" % ('Network: ', str(network), ' not found!\nSee valid network names using the --help '
+                                                                'flag with pynets_run.py'))
 
     # Create membership dictionary
     dict_df = pd.read_csv(nets_ref_txt, sep="\t", header=None, names=["Index", "Region", "X", "Y", "Z"])
@@ -184,7 +186,8 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
                 inds = get_sphere(coords, error, (np.abs(x_vox), y_vox, z_vox), RSNmask.shape)
                 sphere_vol[tuple(inds.T)] = 1
                 if (RSNmask.astype('bool') & sphere_vol).any():
-                    print("%s%s%.2f%s%s%s" % (coords, ' coords is within a + or - ', float(error), ' mm neighborhood of ', network, '...'))
+                    print("%s%s%.2f%s%s%s" % (coords, ' coords is within a + or - ', float(error), ' mm neighborhood of ',
+                                              network, '...'))
                     RSN_coords_vox.append(coords)
                     net_label_names.append(label_names[i])
 
@@ -213,7 +216,8 @@ def get_node_membership(network, func_file, coords, label_names, parc, parcel_li
                 overlap = float(0)
 
             if overlap >= perc_overlap:
-                print("%.2f%s%s%s%s%s" % (100*overlap, '% of parcel ', label_names[i], ' falls within ', str(network), ' mask...'))
+                print("%.2f%s%s%s%s%s" % (100*overlap, '% of parcel ', label_names[i], ' falls within ', str(network),
+                                          ' mask...'))
                 RSN_parcels.append(parcel)
                 coords_with_parc.append(coords[i])
                 net_label_names.append(label_names[i])
@@ -276,7 +280,8 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, mask, per
         print('ERROR: Restrictive masking. No parcels remain after masking with brain mask/roi...')
 
     # Create a resampled 3D atlas that can be viewed alongside mask img for QA
-    resampled_parcels_nii_path = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_parcels_resampled2roimask_', op.basename(roi).split('.')[0], '.nii.gz')
+    resampled_parcels_nii_path = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_parcels_resampled2roimask_',
+                                                   op.basename(roi).split('.')[0], '.nii.gz')
     resampled_parcels_atlas, _ = nodemaker.create_parcel_atlas(parcel_list_adj)
     resampled_parcels_map_nifti = resample_img(resampled_parcels_atlas, target_affine=mask_img.affine,
                                                target_shape=mask_data.shape)
@@ -347,7 +352,8 @@ def get_names_and_coords_of_parcels(uatlas_select):
     import os.path as op
     from nilearn.plotting import find_parcellation_cut_coords
     if not op.isfile(uatlas_select):
-        raise ValueError('\nERROR: User-specified atlas input not found! Check that the file(s) specified with the -ua flag exist(s)')
+        raise ValueError('\nERROR: User-specified atlas input not found! Check that the file(s) specified with the -ua '
+                         'flag exist(s)')
 
     atlas_select = uatlas_select.split('/')[-1].split('.')[0]
     [coords, label_intensities] = find_parcellation_cut_coords(uatlas_select, return_label_names=True)
@@ -360,7 +366,8 @@ def gen_img_list(uatlas_select):
     import os.path as op
     from nilearn.image import new_img_like
     if not op.isfile(uatlas_select):
-        raise ValueError('\nERROR: User-specified atlas input not found! Check that the file(s) specified with the -ua flag exist(s)')
+        raise ValueError('\nERROR: User-specified atlas input not found! Check that the file(s) specified with the -ua '
+                         'flag exist(s)')
 
     bna_img = nib.load(uatlas_select)
     bna_data = np.round(bna_img.get_data(), 1)
@@ -391,7 +398,8 @@ def gen_network_parcels(uatlas_select, network, labels, dir_path):
     import os.path as op
 
     if not op.isfile(uatlas_select):
-        raise ValueError('\nERROR: User-specified atlas input not found! Check that the file(s) specified with the -ua flag exist(s)')
+        raise ValueError('\nERROR: User-specified atlas input not found! Check that the file(s) specified with the -ua '
+                         'flag exist(s)')
 
     img_list = nodemaker.gen_img_list(uatlas_select)
     print("%s%s%s" % ('\nExtracting parcels associated with ', network, ' network locations...\n'))
@@ -510,7 +518,8 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, in_file, 
             # Describe user atlas coords
             print("%s%s%s%s" % ('\n', atlas_select, ' comes with {0} '.format(par_max), 'parcels\n'))
         except ValueError:
-            print('\n\nError: Either you have specified the name of a nilearn atlas that does not exist or you have not supplied a 3d atlas parcellation image!\n\n')
+            print('\n\nError: Either you have specified the name of a nilearn atlas that does not exist or you have not '
+                  'supplied a 3d atlas parcellation image!\n\n')
             parcel_list = None
             par_max = None
             coords = None
@@ -540,7 +549,8 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, in_file, 
                             label_names = dict_df['Region'].tolist()
                             #print(label_names)
                         except:
-                            print("WARNING: label names from label reference file failed to populate or are invalid. Attempting AAL naming...")
+                            print("WARNING: label names from label reference file failed to populate or are invalid. "
+                                  "Attempting AAL naming...")
                             try:
                                 label_names = nodemaker.AAL_naming(coords)
                                 # print(label_names)

@@ -153,19 +153,22 @@ class Warp(object):
         print("Finished " + self.file_out)
 
 
-def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, basedir_path):
+def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_samples, conn_model, network, node_size,
+                           dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select,
+                           label_names, coords, norm, binary, atlas_mni, basedir_path):
     from dipy.tracking.streamline import Streamlines
     from pynets.registration import reg_utils as mgru
     from pynets.registration.register import Warp
     import pkg_resources
-    '''Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different spatial normalization approaches on tractography and structural brain networks. Network Neuroscience, 1-19.'''
+    '''Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different spatial normalization approaches on 
+    tractography and structural brain networks. Network Neuroscience, 1-19.'''
     template_path = pkg_resources.resource_filename("pynets", "templates/FSL_HCP1065_FA_2mm.nii.gz")
     try:
         ants_path = os.environ['ANTSPATH']
     except KeyError:
         print('ANTSDIR environment variable not set!')
 
-    dsn_dir = "%s%s" % (dir_path, '/tmp/DSN')
+    dsn_dir = "%s%s" % (basedir_path, '/tmp/DSN')
     if not os.path.isdir(dsn_dir):
         os.mkdir(dsn_dir)
 
@@ -542,7 +545,8 @@ def register_all(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size='2mm',
     return reg.wm_gm_int_in_dwi, reg.wm_in_dwi, reg.gm_in_dwi, reg.vent_csf_in_dwi, reg.csf_mask_dwi
 
 
-def register_atlas(uatlas_select, basedir_path, fa_path, nodif_B0_mask, anat_loc, wm_gm_int_in_dwi, vox_size='2mm', simple=False):
+def register_atlas(uatlas_select, basedir_path, fa_path, nodif_B0_mask, anat_loc, wm_gm_int_in_dwi, vox_size='2mm',
+                   simple=False):
     from pynets.registration import register
     reg = register.DmriReg(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple)
 
