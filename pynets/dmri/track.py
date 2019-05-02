@@ -213,7 +213,7 @@ def track_ensemble(target_samples, max_repetitions, atlas_data_wm_gm_int, parcel
                 ix = ix + 1
                 for s in streamlines_more:
                     streamlines.append(s)
-                    if len(streamlines) > float(target_samples):
+                    if int(stream_counter) > int(target_samples):
                         break
                     elif ix > int(max_repetitions):
                         print('Warning: Failed to achieve target streamline count within maximum allowable repetitions...')
