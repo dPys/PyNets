@@ -107,7 +107,8 @@ def save_streams(dwi_img, streamlines, streams):
     return streams
 
 
-def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length, conn_model, target_samples, node_size, curv_thr_list, step_list):
+def filter_streamlines(dwi, dir_path, gtab, streamlines, life_run, min_length, conn_model, target_samples,
+                       node_size, curv_thr_list, step_list):
     from dipy.tracking import utils
     from pynets.dmri.track import save_streams, run_LIFE_all
 
@@ -116,8 +117,7 @@ def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_leng
 
     # Flatten streamlines list, and apply min length filter
     print('Filtering streamlines...')
-    streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in np.concatenate(streamlines_list).ravel()
-                                                                if len(s) > float(min_length)])
+    streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in streamlines if len(s) > float(min_length)])
 
     # Fit LiFE model
     if life_run is True:
@@ -147,6 +147,87 @@ def filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_leng
     return streams, dir_path
 
 
+def track_ensemble(target_samples, max_repetitions, atlas_data_wm_gm_int, parcels, parcel_vec, mod_fit,
+                   tiss_classifier, sphere, directget, curv_thr_list, step_list, track_type, maxcrossing, max_length,
+                   n_seeds_per_iter=10):
+    from colorama import Fore, Style
+    from dipy.tracking import utils
+    from dipy.tracking.streamline import Streamlines, select_by_rois
+    from dipy.tracking.local import LocalTracking, ParticleFilteringTracking
+    from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
+
+    # Commence Ensemble Tractography
+    streamlines = nib.streamlines.array_sequence.ArraySequence()
+    ix = 0
+    stream_counter = 0
+    while (len(streamlines) < int(target_samples)) and (ix < int(max_repetitions)):
+        for curv_thr in curv_thr_list:
+            print("%s%s" % ('Curvature: ', curv_thr))
+
+            # Instantiate DirectionGetter
+            if directget == 'prob':
+                dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
+                                                               sphere=sphere)
+            elif directget == 'boot':
+                dg = BootDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
+                                                      sphere=sphere)
+            elif directget == 'closest':
+                dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
+                                                             sphere=sphere)
+            elif directget == 'det':
+                dg = DeterministicMaximumDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
+                                                                      sphere=sphere)
+            else:
+                raise ValueError('ERROR: No valid direction getter(s) specified.')
+
+            for step in step_list:
+                print("%s%s" % ('Step: ', step))
+                # Perform wm-gm interface seeding, using n_seeds at a time
+                seeds = utils.random_seeds_from_mask(atlas_data_wm_gm_int > 0, seeds_count=n_seeds_per_iter,
+                                                     seed_count_per_voxel=False, affine=np.eye(4))
+                if len(seeds) == 0:
+                    raise RuntimeWarning('Warning: No valid seed points found in wm-gm interface...')
+
+                print(seeds)
+                # Perform tracking
+                if track_type == 'local':
+                    streamline_generator = LocalTracking(dg, tiss_classifier, seeds, np.eye(4),
+                                                         max_cross=int(maxcrossing), maxlen=int(max_length),
+                                                         step_size=float(step), return_all=True)
+                elif track_type == 'particle':
+                    streamline_generator = ParticleFilteringTracking(dg, tiss_classifier, seeds, np.eye(4),
+                                                                     max_cross=int(maxcrossing),
+                                                                     step_size=float(step),
+                                                                     maxlen=int(max_length),
+                                                                     pft_back_tracking_dist=2,
+                                                                     pft_front_tracking_dist=1,
+                                                                     particle_count=15, return_all=True)
+                else:
+                    raise ValueError('ERROR: No valid tracking method(s) specified.')
+
+                # Filter resulting streamlines by roi-intersection characteristics
+                streamlines_more = Streamlines(select_by_rois(streamline_generator, parcels, parcel_vec.astype('bool'),
+                                                              mode='any', affine=np.eye(4), tol=2.0))
+
+                # Repeat process until target samples condition is met
+                ix = ix + 1
+                for s in streamlines_more:
+                    streamlines.append(s)
+                    if len(streamlines) > float(target_samples):
+                        break
+                    elif ix > int(max_repetitions):
+                        print('Warning: Failed to achieve target streamline count within maximum allowable repetitions...')
+                        break
+                    else:
+                        continue
+
+        stream_counter = stream_counter + len(streamlines)
+        print("%s%s%s" % ('Streams: ', Fore.CYAN, stream_counter))
+        print(Style.RESET_ALL)
+    print('\n')
+    return streamlines
+
+
 def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, labels_im_file_wm_gm_int,
               labels_im_file, target_samples, curv_thr_list, step_list, track_type, max_length,
               maxcrossing, directget, conn_model, gtab_file, dwi, network, node_size, dens_thresh, ID, roi, min_span_tree,
@@ -157,18 +238,15 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     except ImportError:
         import _pickle as pickle
     from dipy.io import load_pickle
-    from dipy.tracking.local import LocalTracking, ParticleFilteringTracking
+    from colorama import Fore, Style
     from dipy.data import get_sphere
-    from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
-    from dipy.tracking import utils
-    from dipy.tracking.streamline import Streamlines, select_by_rois
-    from pynets.dmri.track import prep_tissues, reconstruction, filter_streamlines
+    from pynets.dmri.track import prep_tissues, reconstruction, filter_streamlines, track_ensemble
 
     # Load gradient table
     gtab = load_pickle(gtab_file)
 
     # Set max repetitions before assuming no further streamlines can be generated from seeds
-    repetitions = int(np.round(float(target_samples)/10, 0))
+    max_repetitions = int(np.round(float(target_samples)/10, 0))
 
     # Fit diffusion model
     mod_fit = reconstruction(conn_model, gtab, dwi, wm_in_dwi)
@@ -185,6 +263,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     for roi_val in np.unique(atlas_data)[1:]:
         parcels.append(atlas_data == roi_val)
         i = i + 1
+    parcel_vec = np.ones(len(parcels))
 
     # Get sphere
     sphere = get_sphere('repulsion724')
@@ -197,102 +276,32 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
                          'to verify overlap with dwi-registered atlas.')
 
     # Iteratively build a list of streamlines for each ROI while tracking
-    print("%s%s" % ('Target number of samples per ROI: ', target_samples))
-    print("%s%s" % ('Using curvature threshold(s): ', curv_thr_list))
-    print("%s%s" % ('Using step size(s): ', step_list))
-    print("%s%s" % ('Tracking type: ', track_type))
+    print("%s%s%s%s" % (Fore.GREEN, 'Target number of samples per ROI: ', Fore.BLUE, target_samples))
+    print(Style.RESET_ALL)
+    print("%s%s%s%s" % (Fore.GREEN, 'Using curvature threshold(s): ', Fore.BLUE, curv_thr_list))
+    print(Style.RESET_ALL)
+    print("%s%s%s%s" % (Fore.GREEN, 'Using step size(s): ', Fore.BLUE, step_list))
+    print(Style.RESET_ALL)
+    print("%s%s%s%s" % (Fore.GREEN, 'Tracking type: ', Fore.BLUE, track_type))
+    print(Style.RESET_ALL)
     if directget == 'prob':
-        print('Using Probabilistic Direction...')
+        print("%s%s%s" % ('Using ', Fore.MAGENTA, 'Probabilistic Direction...'))
     elif directget == 'boot':
-        print('Using Bootstrapped Direction...')
+        print("%s%s%s" % ('Using ', Fore.MAGENTA, 'Bootstrapped Direction...'))
     elif directget == 'closest':
-        print('Using Closest Peak Direction...')
+        print("%s%s%s" % ('Using ', Fore.MAGENTA, 'Closest Peak Direction...'))
     elif directget == 'det':
-        print('Using Deterministic Maximum Direction...')
+        print("%s%s%s" % ('Using ', Fore.MAGENTA, 'Deterministic Maximum Direction...'))
+    print(Style.RESET_ALL)
 
-    streamlines_list = []
     # Commence Ensemble Tractography
-    jx = 0
-    for roi_mask in np.unique(atlas_data)[1:]:
-        parcel_vec = np.ones(len(parcels))
-        print("%s%s" % ('ROI: ', roi_mask))
-        streamlines = nib.streamlines.array_sequence.ArraySequence()
-        try:
-            ix = 0
-            while (len(streamlines) < int(target_samples)) and (ix < int(repetitions)):
-                for curv_thr in curv_thr_list:
-                    print("%s%s" % ('Curvature: ', curv_thr))
-
-                    # Instantiate DirectionGetter
-                    if directget == 'prob':
-                        dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
-                                                                       sphere=sphere)
-                    elif directget == 'boot':
-                        dg = BootDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
-                                                              sphere=sphere)
-                    elif directget == 'closest':
-                        dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
-                                                                     sphere=sphere)
-                    elif directget == 'det':
-                        dg = DeterministicMaximumDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
-                                                                              sphere=sphere)
-                    else:
-                        raise ValueError('ERROR: No valid direction getter(s) specified.')
-                    for step in step_list:
-                        print("%s%s" % ('Step: ', step))
-                        # Perform wm-gm interface seeding
-                        seed = utils.random_seeds_from_mask(atlas_data_wm_gm_int == roi_mask,
-                                                            seeds_count=1, seed_count_per_voxel=True,
-                                                            affine=np.eye(4))
-                        if len(seed) == 0:
-                            raise RuntimeWarning("%s%s" %
-                                                 ('Warning: No valid seed points found in wm-gm interface for roi: ',
-                                                  roi_mask))
-                        print(seed)
-                        # Perform tracking
-                        if track_type == 'local':
-                            streamline_generator = LocalTracking(dg, tiss_classifier, seed, np.eye(4),
-                                                                 max_cross=int(maxcrossing), maxlen=int(max_length),
-                                                                 step_size=float(step), return_all=True)
-                        elif track_type == 'particle':
-                            streamline_generator = ParticleFilteringTracking(dg, tiss_classifier, seed, np.eye(4),
-                                                                             max_cross=int(maxcrossing),
-                                                                             step_size=float(step),
-                                                                             maxlen=int(max_length),
-                                                                             pft_back_tracking_dist=2,
-                                                                             pft_front_tracking_dist=1,
-                                                                             particle_count=15, return_all=True)
-                        else:
-                            raise ValueError('ERROR: No valid tracking method(s) specified.')
-
-                        # Filter resulting streamlines by roi-intersection characteristics
-                        parcel_vec[jx] = 0
-                        streamlines_more = Streamlines(select_by_rois(streamline_generator, parcels,
-                                                                      parcel_vec.astype('bool'),
-                                                                      mode='any', affine=np.eye(4), tol=1.0))
-
-                        # Repeat process until target samples condition is met
-                        ix = ix + 1
-                        for s in streamlines_more:
-                            streamlines.append(s)
-                            if len(streamlines) > float(target_samples):
-                                break
-                            elif ix > int(repetitions):
-                                break
-                            else:
-                                continue
-
-                print("%s%s" % ('Streams: ', len(streamlines)))
-                jx = jx + 1
-        except:
-            continue
-
-        print('\n')
-        streamlines_list.append(streamlines)
-
+    streamlines = track_ensemble(target_samples, max_repetitions, atlas_data_wm_gm_int, parcels, parcel_vec,
+                                 mod_fit, tiss_classifier, sphere, directget, curv_thr_list, step_list, track_type,
+                                 maxcrossing, max_length)
     print('Tracking Complete')
 
     # Perform streamline filtering routines
-    [streams, dir_path] = filter_streamlines(dwi, dir_path, gtab, streamlines_list, life_run, min_length, conn_model, target_samples, node_size, curv_thr_list, step_list)
+    [streams, dir_path] = filter_streamlines(dwi, dir_path, gtab, streamlines, life_run, min_length, conn_model,
+                                             target_samples, node_size, curv_thr_list, step_list)
 
     return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, curv_thr_list, step_list

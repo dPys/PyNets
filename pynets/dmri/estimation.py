@@ -129,10 +129,10 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Stack and save remaining streamlines
     if len(stream_viz) == 0:
-        raise ValueError('ERROR: No connectivity streamlines found for node definition.')
+        raise ValueError('ERROR: No streamline connections found for this parcellation.')
 
     # Save graph-connected streamlines
-    stream_viz_list = [np.vstack(stream_viz)]
+    stream_viz_list = [np.concatenate(stream_viz)]
     streams_graph = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_graph_', overlap_thr, '_overlap_',
                                                       conn_model, '_', target_samples, '_', node_size, 'mm_curv',
                                                       str(curv_thr_list).replace(', ', '_'), '_step',

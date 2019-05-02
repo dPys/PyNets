@@ -526,22 +526,22 @@ class DmriReg(object):
         return
 
 
-def register_all(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size='2mm', simple=False, overwrite=True):
+def register_all(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size='2mm', simple=False, overwrite=False):
     import os.path as op
     from pynets.registration import register
     reg = register.DmriReg(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple)
 
-    # if (overwrite is True) or (op.isfile(reg.t1w_brain) is False):
-    #     # Perform anatomical segmentation
-    #     reg.gen_tissue()
-    #
-    # if (overwrite is True) or (op.isfile(reg.t1w2dwi) is False):
-    #     # Align t1w to dwi
-    #     reg.t1w2dwi_align()
-    #
-    # if (overwrite is True) or (op.isfile(reg.wm_gm_int_in_dwi) is False):
-    #     # Align tissue
-    #     reg.tissue2dwi_align()
+    if (overwrite is True) or (op.isfile(reg.t1w_brain) is False):
+        # Perform anatomical segmentation
+        reg.gen_tissue()
+
+    if (overwrite is True) or (op.isfile(reg.t1w2dwi) is False):
+        # Align t1w to dwi
+        reg.t1w2dwi_align()
+
+    if (overwrite is True) or (op.isfile(reg.wm_gm_int_in_dwi) is False):
+        # Align tissue
+        reg.tissue2dwi_align()
 
     return reg.wm_gm_int_in_dwi, reg.wm_in_dwi, reg.gm_in_dwi, reg.vent_csf_in_dwi, reg.csf_mask_dwi
 

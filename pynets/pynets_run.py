@@ -228,7 +228,7 @@ def get_parser():
                         metavar='Scheduler type',
                         default='MultiProc',
                         help='Include this flag to specify a workflow plugin other than the default MultiProc. Options '
-                             'include: Linear, SGE, PBS, SLURM, SGEgraph, SLURMgraph.\n')
+                             'include: Linear, MultiProc, SGE, PBS, SLURM, SGEgraph, SLURMgraph.\n')
     parser.add_argument('-parc',
                         default=False,
                         action='store_true',
@@ -436,12 +436,12 @@ def build_workflow(args, retval):
     print('\n\n\n------------------------------------------------------------------------\n')
 
     # Hard-coded:
-    maxcrossing = 1
-    min_length = 10
+    maxcrossing = 2
+    min_length = 20
     overlap_thr = 5
     overlap_thr_list = None
-    step_list = [0.2, 0.3, 0.4, 0.5]
-    curv_thr_list = [5, 10, 25, 50]
+    step_list = [0.2, 0.4]
+    curv_thr_list = [30, 60]
     life_run = True
     nilearn_parc_atlases = ['atlas_harvard_oxford', 'atlas_aal', 'atlas_destrieux_2009',
                             'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe']
@@ -468,7 +468,8 @@ def build_workflow(args, retval):
         func_subjects_list = None
 
     if dwi and (not anat_loc and not fbval and not fbvec):
-        raise ValueError('ERROR: Anatomical image(s) (-anat), b-values file(s) (-fbval), and b-vectors file(s) (-fbvec) must be specified for structural connectometry.')
+        raise ValueError('ERROR: Anatomical image(s) (-anat), b-values file(s) (-fbval), and b-vectors file(s) (-fbvec) '
+                         'must be specified for structural connectometry.')
 
     if dwi:
         if dwi.endswith('.txt'):
@@ -482,7 +483,8 @@ def build_workflow(args, retval):
         struct_subjects_list = None
 
     if func_file is None and dwi is None and graph is None and multi_graph is None:
-        raise ValueError("\nError: You must include a file path to either a standard space functional image in .nii or .nii.gz format with the -func flag.")
+        raise ValueError("\nError: You must include a file path to either a standard space functional image in .nii or "
+                         ".nii.gz format with the -func flag.")
 
     if ID is None and func_subjects_list is None:
         raise ValueError("\nError: You must include a subject ID in your command line call.")
@@ -496,7 +498,8 @@ def build_workflow(args, retval):
         if ',' in conf:
             conf = list(str(conf).split(','))
             if len(conf) != len(func_subjects_list):
-                raise ValueError("Error: Length of confound regressor list does not correspond to length of input file list.")
+                raise ValueError("Error: Length of confound regressor list does not correspond to length of input file "
+                                 "list.")
 
     if struct_subjects_list and ',' in ID:
         ID = list(str(ID).split(','))

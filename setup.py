@@ -25,6 +25,7 @@ requirements = [
     'configparser>=3.5.0',
     'PyYAML>=3.12',
     'boto3>=1.9.111',
+    'colorama>=0.3.9',
     'pybids>=0.6.4'
 ]
 

@@ -87,7 +87,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                            'smooth', 'smooth_list', 'disp_filt', 'clust_type',
                                                            'clust_type_list', 'c_boot', 'block_size', 'mask', 'norm',
                                                            'binary', 'fbval', 'fbvec', 'target_samples',
-                                                           'curv_thr_list', 'step_list', 'overlap_thr','overlap_thr_list',
+                                                           'curv_thr_list', 'step_list', 'overlap_thr', 'overlap_thr_list',
                                                            'track_type', 'max_length', 'maxcrossing', 'life_run',
                                                            'min_length', 'directget', 'tiss_class']),
                              name='meta_inputnode')
@@ -2087,6 +2087,8 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
 
         structural_connectometry_wf.connect([(inputnode, run_tracking_node,
                                               [('node_size', 'node_size')]),
+                                             (inputnode, node_gen_node,
+                                               [('parc', 'parc')]),
                                              (run_tracking_node, dsn_node,
                                               [('network', 'network')]),
                                              (dsn_node, streams2graph_node,

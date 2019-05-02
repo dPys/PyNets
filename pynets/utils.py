@@ -78,39 +78,39 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
             est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_',
                                                                  str(conn_model), '_', str(thr), thr_type, '_',
                                                                  str(op.basename(roi).split('.')[0]), '_', str(node_size),
-                                                                 '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                                 '%s' % ("mm_" if node_size != 'parc' else ''),
                                                                  "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                         else 'nb_'),
+                                                                         else ''),
                                                                  "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
-                                                                         else 'nosm'),
+                                                                         else ''),
                                                                  '.npy')
         else:
             est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_',
                                                              str(thr), thr_type, '_', str(op.basename(roi).split('.')[0]),
                                                              '_', str(node_size), '%s' % ("mm_" if node_size != 'parc'
-                                                                                          else "_"),
+                                                                                          else ''),
                                                              "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                     else 'nb_'),
+                                                                     else ''),
                                                              "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
-                                                                     else 'nosm'),
+                                                                     else ''),
                                                              '.npy')
     else:
         if network is not None:
             est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model),
                                                              '_', str(thr), thr_type, '_', str(node_size),
-                                                             '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                             '%s' % ("mm_" if node_size != 'parc' else ''),
                                                              "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                     else 'nb_'),
+                                                                     else ''),
                                                              "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
-                                                                     else 'nosm'), '.npy')
+                                                                     else ''), '.npy')
         else:
             est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_', str(thr),
-                                                         thr_type, '_', str(node_size), '%s' % ("mm_" if node_size != 'parc'
-                                                                                                else "_"),
+                                                         thr_type, '_', str(node_size),
+                                                         '%s' % ("mm_" if node_size != 'parc' else ''),
                                                          "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                 else 'nb_'),
+                                                                 else ''),
                                                          "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
-                                                                 else 'nosm'), '.npy')
+                                                                 else ''), '.npy')
     return est_path
 
 
@@ -120,32 +120,32 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
             est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_',
                                                                  str(conn_model), '_', str(thr), thr_type, '_',
                                                                  str(op.basename(roi).split('.')[0]), '_', str(node_size),
-                                                                 '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                                 '%s' % ("mm_" if node_size != 'parc' else ''),
                                                                  "%s" % ("%s%s" % (int(target_samples), 'samples_') if
-                                                                         float(target_samples) > 0 else 'samples_'),
+                                                                         float(target_samples) > 0 else ''),
                                                                  "%s%s" % (track_type, '_track'), '.npy')
         else:
             est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_',
                                                              str(thr), thr_type, '_', str(op.basename(roi).split('.')[0]),
                                                              '_', str(node_size), '%s' % ("mm_" if node_size != 'parc'
-                                                                                          else "_"),
+                                                                                          else ''),
                                                              "%s" % ("%s%s" % (int(target_samples), 'samples_') if
-                                                                     float(target_samples) > 0 else 'samples_'),
+                                                                     float(target_samples) > 0 else ''),
                                                              "%s%s" % (track_type, '_track'), '.npy')
     else:
         if network is not None:
             est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model),
                                                              '_', str(thr), thr_type, '_', str(node_size),
-                                                             '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                             '%s' % ("mm_" if node_size != 'parc' else ''),
                                                              "%s" % ("%s%s" % (int(target_samples), 'samples_') if
-                                                                     float(target_samples) > 0 else 'samples_'),
+                                                                     float(target_samples) > 0 else ''),
                                                              "%s%s" % (track_type, '_track'), '.npy')
         else:
             est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_', str(thr),
                                                          thr_type, '_', str(node_size),
-                                                         '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                         '%s' % ("mm_" if node_size != 'parc' else ''),
                                                          "%s" % ("%s%s" % (int(target_samples), 'samples_') if
-                                                                 float(target_samples) > 0 else 'samples_'),
+                                                                 float(target_samples) > 0 else ''),
                                                          "%s%s" % (track_type, '_track'), '.npy')
     return est_path
 
@@ -173,19 +173,19 @@ def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size):
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_net_metrics_',
                                                            conn_model, '_', str(thr), '_',
                                                            str(op.basename(roi).split('.')[0]), '_', str(node_size),
-                                                           '%s' % ("mm_" if node_size != 'parc' else "_"), '.csv')
+                                                           '%s' % ("mm_" if node_size != 'parc' else ''), '.csv')
         else:
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_net_metrics_', conn_model, '_', str(thr),
                                                        '_', str(op.basename(roi).split('.')[0]), '_', str(node_size),
-                                                       '%s' % ("mm_" if node_size != 'parc' else "_"), '.csv')
+                                                       '%s' % ("mm_" if node_size != 'parc' else ''), '.csv')
     else:
         if network is not None:
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_net_metrics_', conn_model,
                                                        '_', str(thr), '_', str(node_size),
-                                                       '%s' % ("mm_" if node_size != 'parc' else "_"), '.csv')
+                                                       '%s' % ("mm_" if node_size != 'parc' else ''), '.csv')
         else:
             out_path = "%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_net_metrics_', conn_model, '_', str(thr),
-                                                   '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                   '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else ''),
                                                    '.csv')
     return out_path
 
@@ -226,37 +226,37 @@ def assemble_mt_path(ID, func_file, atlas_select, network, conn_model, thr, roi,
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_', network,
                                                                  '_net_metrics_', conn_model, '_', str(thr), '_',
                                                                  str(op.basename(roi).split('.')[0]), '_', str(node_size),
-                                                                 '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                                 '%s' % ("mm_" if node_size != 'parc' else ''),
                                                                  "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                         else 'nb_'),
+                                                                         else ''),
                                                                  "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
-                                                                         else 'nosm'))
+                                                                         else ''))
         else:
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_net_metrics_',
                                                              conn_model, '_', str(thr), '_', str(op.basename(roi).split('.')[0]),
                                                              '_', str(node_size), '%s' % ("mm_" if node_size != 'parc'
-                                                                                          else "_"),
+                                                                                          else ''),
                                                              "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                     else 'nb_'),
+                                                                     else ''),
                                                              "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
-                                                                     else 'nosm'))
+                                                                     else ''))
     else:
         if network is not None:
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_', network,
                                                              '_net_metrics_', conn_model, '_', str(thr), '_', str(node_size),
                                                              '%s' % ("mm_" if node_size != 'parc' else "_"),
                                                              "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                     else 'nb_'),
+                                                                     else ''),
                                                              "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
-                                                                     else 'nosm'))
+                                                                     else ''))
         else:
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_net_metrics_',
                                                          conn_model, '_', str(thr), '_', str(node_size),
                                                          '%s' % ("mm_" if node_size != 'parc' else "_"),
                                                          "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                 else 'nb_'),
+                                                                 else ''),
                                                          "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
-                                                                 else 'nosm'))
+                                                                 else ''))
     return out_path
 
 
@@ -506,19 +506,19 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
     if roi is None:
         if network is not None:
             out_path_ts = "%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, "%s" % ("%s%s" % (int(c_boot), 'nb_') if
-                                                                                       float(c_boot) > 0 else 'nb_'),
+                                                                                       float(c_boot) > 0 else ''),
                                               '_rsn_net_ts.npy')
         else:
             out_path_ts = "%s%s%s%s%s" % (dir_path, '/', ID, "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                     else 'nb_'), '_wb_net_ts.npy')
+                                                                     else ''), '_wb_net_ts.npy')
     else:
         if network is not None:
             out_path_ts = "%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', op.basename(roi).split('.')[0], '_', network,
-                                                  "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
+                                                  "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
                                                   '_rsn_net_ts.npy')
         else:
             out_path_ts = "%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', op.basename(roi).split('.')[0],
-                                              "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
+                                              "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
                                               '_wb_net_ts.npy')
     np.save(out_path_ts, ts_within_nodes)
     return
@@ -632,9 +632,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi):
     print(gtab.info)
 
     # Save gradient table to pickle
-    fd, gtab_file = mkstemp()
     save_pickle(gtab_file, gtab)
-    os.close(fd)
 
     # Extract and Combine all b0s collected
     print('Extracting b0\'s...')
@@ -832,8 +830,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, sens):
     # Check dimensions
     img = nib.load(img_file)
     data = img.get_fdata()
-    affine = img.get_affine()
-    hdr = img.get_header()
+    affine = img.affine
+    hdr = img.header
     zooms = hdr.get_zooms()[:3]
     if vox_size == '1mm':
         print('Reslicing image ' + img_file + ' to 1mm...')
