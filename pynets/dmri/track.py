@@ -160,7 +160,7 @@ def track_ensemble(target_samples, max_repetitions, atlas_data_wm_gm_int, parcel
     streamlines = nib.streamlines.array_sequence.ArraySequence()
     ix = 0
     stream_counter = 0
-    while (len(streamlines) < int(target_samples)) and (ix < int(max_repetitions)):
+    while (int(stream_counter) < int(target_samples)) and (ix < int(max_repetitions)):
         for curv_thr in curv_thr_list:
             print("%s%s" % ('Curvature: ', curv_thr))
 
@@ -212,8 +212,9 @@ def track_ensemble(target_samples, max_repetitions, atlas_data_wm_gm_int, parcel
                 # Repeat process until target samples condition is met
                 ix = ix + 1
                 for s in streamlines_more:
+                    stream_counter = stream_counter + len(s)
                     streamlines.append(s)
-                    if int(stream_counter) > int(target_samples):
+                    if int(stream_counter) >= int(target_samples):
                         break
                     elif ix > int(max_repetitions):
                         print('Warning: Failed to achieve target streamline count within maximum allowable repetitions...')
@@ -221,8 +222,7 @@ def track_ensemble(target_samples, max_repetitions, atlas_data_wm_gm_int, parcel
                     else:
                         continue
 
-        stream_counter = stream_counter + len(streamlines)
-        print("%s%s%s" % ('Streams: ', Fore.CYAN, stream_counter))
+        print("%s%s%s" % ('Cumulative Streamline Count: ', Fore.CYAN, stream_counter))
         print(Style.RESET_ALL)
     print('\n')
     return streamlines
