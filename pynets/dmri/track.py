@@ -147,7 +147,7 @@ def filter_streamlines(dwi, dir_path, gtab, streamlines, life_run, min_length, c
     return streams, dir_path
 
 
-def track_ensemble(target_samples, max_repetitions, atlas_data_wm_gm_int, parcels, parcel_vec, mod_fit,
+def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mod_fit,
                    tiss_classifier, sphere, directget, curv_thr_list, step_list, track_type, maxcrossing, max_length,
                    n_seeds_per_iter=10):
     from colorama import Fore, Style
@@ -159,8 +159,9 @@ def track_ensemble(target_samples, max_repetitions, atlas_data_wm_gm_int, parcel
     # Commence Ensemble Tractography
     streamlines = nib.streamlines.array_sequence.ArraySequence()
     ix = 0
+    circuit_ix = 0
     stream_counter = 0
-    while (int(stream_counter) < int(target_samples)) and (ix < int(max_repetitions)):
+    while int(stream_counter) < int(target_samples):
         for curv_thr in curv_thr_list:
             print("%s%s" % ('Curvature: ', curv_thr))
 
@@ -216,14 +217,14 @@ def track_ensemble(target_samples, max_repetitions, atlas_data_wm_gm_int, parcel
                     streamlines.append(s)
                     if int(stream_counter) >= int(target_samples):
                         break
-                    elif ix > int(max_repetitions):
-                        print('Warning: Failed to achieve target streamline count within maximum allowable repetitions...')
-                        break
                     else:
                         continue
 
-        print("%s%s%s" % ('Cumulative Streamline Count: ', Fore.CYAN, stream_counter))
+        circuit_ix = circuit_ix + 1
+        print("%s%s%s%s%s" % ('Completed hyperparameter circuit: ', circuit_ix, '...\nCumulative Streamline Count: ',
+                              Fore.CYAN, stream_counter))
         print(Style.RESET_ALL)
+
     print('\n')
     return streamlines
 
@@ -244,9 +245,6 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
 
     # Load gradient table
     gtab = load_pickle(gtab_file)
-
-    # Set max repetitions before assuming no further streamlines can be generated from seeds
-    max_repetitions = int(np.round(float(target_samples)/10, 0))
 
     # Fit diffusion model
     mod_fit = reconstruction(conn_model, gtab, dwi, wm_in_dwi)
@@ -295,7 +293,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     print(Style.RESET_ALL)
 
     # Commence Ensemble Tractography
-    streamlines = track_ensemble(target_samples, max_repetitions, atlas_data_wm_gm_int, parcels, parcel_vec,
+    streamlines = track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec,
                                  mod_fit, tiss_classifier, sphere, directget, curv_thr_list, step_list, track_type,
                                  maxcrossing, max_length)
     print('Tracking Complete')

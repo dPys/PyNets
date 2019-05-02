@@ -440,8 +440,8 @@ def build_workflow(args, retval):
     min_length = 20
     overlap_thr = 2
     overlap_thr_list = None
-    step_list = [0.2, 0.3, 0.4, 0.5]
-    curv_thr_list = [10, 25, 50]
+    step_list = [0.2, 0.2, 0.2, 0.3, 0.3, 0.4, 0.5]
+    curv_thr_list = [60, 60, 60, 30, 30, 10]
     life_run = True
     nilearn_parc_atlases = ['atlas_harvard_oxford', 'atlas_aal', 'atlas_destrieux_2009',
                             'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe']
