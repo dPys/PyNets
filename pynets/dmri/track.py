@@ -149,7 +149,7 @@ def filter_streamlines(dwi, dir_path, gtab, streamlines, life_run, min_length, c
 
 def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mod_fit,
                    tiss_classifier, sphere, directget, curv_thr_list, step_list, track_type, maxcrossing, max_length,
-                   n_seeds_per_iter=500):
+                   n_seeds_per_iter=200):
     from colorama import Fore, Style
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
