@@ -208,7 +208,7 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mo
 
                 # Filter resulting streamlines by roi-intersection characteristics
                 streamlines_more = Streamlines(select_by_rois(streamline_generator, parcels, parcel_vec.astype('bool'),
-                                                              mode='any', affine=np.eye(4), tol=None))
+                                                              mode='any', affine=np.eye(4), tol=2))
 
                 # Repeat process until target samples condition is met
                 ix = ix + 1
@@ -273,7 +273,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
                          'to verify overlap with dwi-registered atlas.')
 
     # Iteratively build a list of streamlines for each ROI while tracking
-    print("%s%s%s%s" % (Fore.GREEN, 'Target number of samples per ROI: ', Fore.BLUE, target_samples))
+    print("%s%s%s%s" % (Fore.GREEN, 'Target number of samples: ', Fore.BLUE, target_samples))
     print(Style.RESET_ALL)
     print("%s%s%s%s" % (Fore.GREEN, 'Using curvature threshold(s): ', Fore.BLUE, curv_thr_list))
     print(Style.RESET_ALL)

@@ -199,9 +199,9 @@ def get_parser():
                              'weighted.\n')
     parser.add_argument('-s',
                         metavar='Number of samples',
-                        default='10000',
-                        help='Include this flag to manually specify a number of streamline samples per ROI for in '
-                             'structural connectome estimation. Default is 10000.\n')
+                        default='1000000',
+                        help='Include this flag to manually specify a number of cumulative streamline samples for '
+                             'tractography. Default is 1000000.\n')
     parser.add_argument('-ml',
                         metavar='Maximum fiber length for tracking',
                         default='200',

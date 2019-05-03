@@ -5,11 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/dmri/estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/estimation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/dmri/track.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/track.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/registration/register.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/register.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -26,11 +23,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="408">
-              <caret line="442" column="21" selection-start-line="442" selection-start-column="21" selection-end-line="442" selection-end-column="21" />
+            <state relative-caret-position="517">
+              <caret line="1472" column="23" lean-forward="true" selection-start-line="1472" selection-start-column="23" selection-end-line="1472" selection-end-column="23" />
             </state>
           </provider>
         </entry>
@@ -74,11 +71,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="247">
-              <caret line="152" column="36" lean-forward="true" selection-start-line="152" selection-start-column="36" selection-end-line="152" selection-end-column="36" />
+            <state relative-caret-position="359">
+              <caret line="208" column="82" lean-forward="true" selection-start-line="208" selection-start-column="82" selection-end-line="208" selection-end-column="82" />
             </state>
           </provider>
         </entry>
@@ -86,8 +83,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2685">
-              <caret line="2117" column="32" selection-start-line="2117" selection-start-column="32" selection-end-line="2117" selection-end-column="32" />
+            <state>
+              <caret line="1938" column="52" lean-forward="true" selection-start-line="1938" selection-start-column="52" selection-end-line="1938" selection-end-column="52" />
             </state>
           </provider>
         </entry>
@@ -225,9 +222,9 @@
         <option value="$PROJECT_DIR$/requirements.txt" />
         <option value="$PROJECT_DIR$/setup.py" />
         <option value="$PROJECT_DIR$/pynets/registration/register.py" />
-        <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
         <option value="$PROJECT_DIR$/pynets/dmri/estimation.py" />
         <option value="$PROJECT_DIR$/pynets/dmri/track.py" />
+        <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
       </list>
     </option>
   </component>
@@ -448,12 +445,12 @@
       <workItem from="1555524636837" duration="98000" />
       <workItem from="1555524754291" duration="8135000" />
       <workItem from="1555621726569" duration="1335000" />
-      <workItem from="1555696086993" duration="148171000" />
+      <workItem from="1555696086993" duration="148707000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="157739000" />
+    <option name="totallyTimeSpent" value="158275000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="243" y="116" width="1865" height="1097" extended-state="0" />
@@ -692,10 +689,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/thresholding.py">
+    <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1420">
-          <caret line="508" column="24" selection-start-line="508" selection-start-column="24" selection-end-line="508" selection-end-column="24" />
+        <state relative-caret-position="-3917">
+          <caret line="16" column="22" selection-start-line="16" selection-start-column="22" selection-end-line="16" selection-end-column="22" />
         </state>
       </provider>
     </entry>
@@ -709,10 +706,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
+    <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3917">
-          <caret line="16" column="22" selection-start-line="16" selection-start-column="22" selection-end-line="16" selection-end-column="22" />
+        <state relative-caret-position="457">
+          <caret line="211" column="42" selection-start-line="211" selection-start-column="42" selection-end-line="211" selection-end-column="42" />
         </state>
       </provider>
     </entry>
@@ -723,17 +720,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
+    <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="457">
-          <caret line="211" column="42" selection-start-line="211" selection-start-column="42" selection-end-line="211" selection-end-column="42" />
+        <state relative-caret-position="359">
+          <caret line="208" column="82" lean-forward="true" selection-start-line="208" selection-start-column="82" selection-end-line="208" selection-end-column="82" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
+    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="408">
-          <caret line="442" column="21" selection-start-line="442" selection-start-column="21" selection-end-line="442" selection-end-column="21" />
+        <state>
+          <caret line="1938" column="52" lean-forward="true" selection-start-line="1938" selection-start-column="52" selection-end-line="1938" selection-end-column="52" />
         </state>
       </provider>
     </entry>
@@ -744,17 +741,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
+    <entry file="file://$PROJECT_DIR$/pynets/thresholding.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2685">
-          <caret line="2117" column="32" selection-start-line="2117" selection-start-column="32" selection-end-line="2117" selection-end-column="32" />
+        <state relative-caret-position="1420">
+          <caret line="508" column="24" selection-start-line="508" selection-start-column="24" selection-end-line="508" selection-end-column="24" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
+    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="247">
-          <caret line="152" column="36" lean-forward="true" selection-start-line="152" selection-start-column="36" selection-end-line="152" selection-end-column="36" />
+        <state relative-caret-position="517">
+          <caret line="1472" column="23" lean-forward="true" selection-start-line="1472" selection-start-column="23" selection-end-line="1472" selection-end-column="23" />
         </state>
       </provider>
     </entry>
