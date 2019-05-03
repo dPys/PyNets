@@ -373,7 +373,7 @@ class DmriReg(object):
 
         return
 
-    def atlas2t1w2dwi_align(self, atlas):
+    def atlas2t1w2dwi_align(self, uatlas_select, atlas_select):
         """
         alignment from atlas --> T1 --> dwi
         A function to perform atlas alignment.
@@ -381,8 +381,8 @@ class DmriReg(object):
         does a linear registration instead.
         NOTE: for this to work, must first have called t1w2dwi_align.
         """
-        self.atlas = atlas
-        self.atlas_name = self.atlas.split('/')[-1].split('.')[0]
+        self.atlas = uatlas_select
+        self.atlas_name = atlas_select
         self.aligned_atlas_t1mni = "{}/{}_t1w_mni.nii.gz".format(self.basedir_path, self.atlas_name)
         self.aligned_atlas_skull = "{}/{}_t1w_skull.nii.gz".format(self.anat_path, self.atlas_name)
         self.dwi_aligned_atlas = "{}/{}_dwi_track.nii.gz".format(self.reg_path_img, self.atlas_name)
@@ -546,12 +546,16 @@ def register_all(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size='2mm',
     return reg.wm_gm_int_in_dwi, reg.wm_in_dwi, reg.gm_in_dwi, reg.vent_csf_in_dwi, reg.csf_mask_dwi
 
 
-def register_atlas(uatlas_select, basedir_path, fa_path, nodif_B0_mask, anat_loc, wm_gm_int_in_dwi, vox_size='2mm',
-                   simple=False):
+def register_atlas(uatlas_select, atlas_select, node_size, basedir_path, fa_path, nodif_B0_mask, anat_loc,
+                   wm_gm_int_in_dwi, vox_size='2mm', simple=False):
     from pynets.registration import register
     reg = register.DmriReg(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple)
 
+    if node_size is not None:
+        atlas_select = "%s%s%s" % (atlas_select, '_', node_size)
+
     # Apply warps/coregister atlas to dwi
-    [dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas_select)
+    [dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas_select,
+                                                                                                   atlas_select)
 
     return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni

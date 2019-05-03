@@ -173,19 +173,19 @@ def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size):
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_net_metrics_',
                                                            conn_model, '_', str(thr), '_',
                                                            str(op.basename(roi).split('.')[0]), '_', str(node_size),
-                                                           '%s' % ("mm_" if node_size != 'parc' else ''), '.csv')
+                                                           '%s' % ("mm" if node_size != 'parc' else ''), '.csv')
         else:
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_net_metrics_', conn_model, '_', str(thr),
                                                        '_', str(op.basename(roi).split('.')[0]), '_', str(node_size),
-                                                       '%s' % ("mm_" if node_size != 'parc' else ''), '.csv')
+                                                       '%s' % ("mm" if node_size != 'parc' else ''), '.csv')
     else:
         if network is not None:
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_net_metrics_', conn_model,
                                                        '_', str(thr), '_', str(node_size),
-                                                       '%s' % ("mm_" if node_size != 'parc' else ''), '.csv')
+                                                       '%s' % ("mm" if node_size != 'parc' else ''), '.csv')
         else:
             out_path = "%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_net_metrics_', conn_model, '_', str(thr),
-                                                   '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else ''),
+                                                   '_', str(node_size), '%s' % ("mm" if node_size != 'parc' else ''),
                                                    '.csv')
     return out_path
 
@@ -211,53 +211,6 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
         raise ValueError('\nERROR: File format not supported!')
 
     return
-
-
-def assemble_mt_path(ID, func_file, atlas_select, network, conn_model, thr, roi, node_size, smooth, c_boot):
-    #nilearn_parc_atlases=['atlas_aal', 'atlas_craddock_2012', 'atlas_destrieux_2009']
-    #nilearn_coord_atlases=['harvard_oxford', 'msdl', 'coords_power_2011', 'smith_2009', 'basc_multiscale_2015',
-    # 'allen_2011', 'coords_dosenbach_2010']
-    if conn_model == 'prob':
-        ID_dir = str(op.dirname(func_file))
-    else:
-        ID_dir = str(op.dirname(func_file).split('.')[0])
-    if roi is not None:
-        if network is not None:
-            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_', network,
-                                                                 '_net_metrics_', conn_model, '_', str(thr), '_',
-                                                                 str(op.basename(roi).split('.')[0]), '_', str(node_size),
-                                                                 '%s' % ("mm_" if node_size != 'parc' else ''),
-                                                                 "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                         else ''),
-                                                                 "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
-                                                                         else ''))
-        else:
-            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_net_metrics_',
-                                                             conn_model, '_', str(thr), '_', str(op.basename(roi).split('.')[0]),
-                                                             '_', str(node_size), '%s' % ("mm_" if node_size != 'parc'
-                                                                                          else ''),
-                                                             "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                     else ''),
-                                                             "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
-                                                                     else ''))
-    else:
-        if network is not None:
-            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_', network,
-                                                             '_net_metrics_', conn_model, '_', str(thr), '_', str(node_size),
-                                                             '%s' % ("mm_" if node_size != 'parc' else ''),
-                                                             "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                     else ''),
-                                                             "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
-                                                                     else ''))
-        else:
-            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_net_metrics_',
-                                                         conn_model, '_', str(thr), '_', str(node_size),
-                                                         '%s' % ("mm_" if node_size != 'parc' else ''),
-                                                         "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                 else ''),
-                                                         "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
-                                                                 else ''))
-    return out_path
 
 
 def pass_meta_outs(conn_model, est_path, network, node_size, thr, prune, ID, roi, norm, binary):

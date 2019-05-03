@@ -19,7 +19,7 @@ def tens_mod_fa_est(gtab_file, dwi, nodif_B0_mask):
     data = nib.load(dwi).get_fdata()
     gtab = load_pickle(gtab_file)
 
-    print('Fitting tensor model...')
+    print('Generating simple tensor FA image to use for registrations...')
     nodif_B0_img = nib.load(nodif_B0_mask)
     nodif_B0_mask_data = nodif_B0_img.get_fdata().astype('bool')
     nodif_B0_affine = nodif_B0_img.affine

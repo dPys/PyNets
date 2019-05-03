@@ -41,7 +41,7 @@ test_requirements = [
 
 setup(
     name='pynets',
-    version='0.7.32',
+    version='0.7.33',
     description="A Fully-Automated Workflow for Reproducible Graph Analysis of Functional and Structural Connectomes",
     #long_description=readme + '\n\n',
     author="Derek Pisner",

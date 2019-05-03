@@ -30,7 +30,7 @@ def plot_conn_mat(conn_matrix, label_names, out_path_fig):
     else:
         try:
             plot_matrix(conn_matrix, figure=(10, 10), vmax=z_max*0.5, vmin=z_min*0.5, auto_fit=True, grid=False,
-                    colorbar=False)
+                        colorbar=False)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')
     plt.savefig(out_path_fig, dpi=dpi_resolution)

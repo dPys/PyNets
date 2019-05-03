@@ -90,9 +90,10 @@ def get_parser():
                              'Default is proportional thresholding. If omitted, no thresholding will be applied.\n')
     parser.add_argument('-ns',
                         metavar='Spherical centroid node size',
-                        default=4,
-                        help='Optionally specify coordinate-based node radius size(s). Default is 4 mm. If you wish to '
-                             'iterate the pipeline across multiple node sizes, separate the list by comma (e.g. 2,4,6).\n')
+                        default=None,
+                        help='Optionally specify coordinate-based node radius size(s). Default is 4 mm for fMRI and 8mm '
+                             'for dMRI. If you wish to iterate the pipeline across multiple node sizes, separate the '
+                             'list by comma (e.g. 2,4,6).\n')
     parser.add_argument('-sm',
                         metavar='Smoothing value (mm fwhm)',
                         default=0,
@@ -369,6 +370,15 @@ def build_workflow(args, retval):
     anat_loc = args.anat
     num_total_samples = args.s
     parc = args.parc
+    if parc is True:
+        node_size = None
+        node_size_list = None
+    else:
+        if node_size is None:
+            if (func_file is not None) and (dwi is None):
+                node_size = 4
+            elif (func_file is None) and (dwi is not None):
+                node_size = 8
     ref_txt = args.ref
     k = args.k
     k_min = args.k_min
@@ -854,7 +864,7 @@ def build_workflow(args, retval):
 
     if dwi:
         if network is not None:
-            print("%s%s" % ('RSN: ', network))
+            print("%s%s" % ('\nRSN: ', network))
         if user_atlas_list is not None:
             print('\nIterating across multiple user atlases...')
             if struct_subjects_list:

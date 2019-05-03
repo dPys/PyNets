@@ -1488,8 +1488,9 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                          function=register.register_all, imports=import_list),
                             name="register_node")
 
-    register_atlas_node = pe.Node(niu.Function(input_names=['uatlas_select', 'basedir_path', 'fa_path', 'nodif_B0_mask',
-                                                            'anat_loc', 'wm_gm_int_in_dwi'],
+    register_atlas_node = pe.Node(niu.Function(input_names=['uatlas_select', 'atlas_select', 'node_size',
+                                                            'basedir_path', 'fa_path', 'nodif_B0_mask', 'anat_loc',
+                                                            'wm_gm_int_in_dwi'],
                                                output_names=['dwi_aligned_atlas_wmgm_int', 'dwi_aligned_atlas',
                                                              'aligned_atlas_t1mni'],
                                                function=register.register_atlas, imports=import_list),
@@ -1881,7 +1882,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
         (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_loc')]),
         (gtab_node, register_node, [('nodif_B0_mask', 'nodif_B0_mask')]),
         (inputnode, register_atlas_node, [('basedir_path', 'basedir_path')]),
-        (node_gen_node, register_atlas_node, [('uatlas_select', 'uatlas_select')]),
+        (node_gen_node, register_atlas_node, [('uatlas_select', 'uatlas_select'), ('atlas_select', 'atlas_select')]),
         (check_orient_and_dims_anat_node, register_atlas_node, [('outfile', 'anat_loc')]),
         (gtab_node, register_atlas_node, [('nodif_B0_mask', 'nodif_B0_mask')]),
         (register_node, register_atlas_node, [('wm_gm_int_in_dwi', 'wm_gm_int_in_dwi')]),
@@ -2051,6 +2052,8 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                               [('net_parcels_map_nifti', 'net_parcels_map_nifti')]),
                                              (save_nifti_parcels_node, register_atlas_node,
                                               [('net_parcels_nii_path', 'uatlas_select')]),
+                                             (prep_spherical_nodes_node, register_atlas_node,
+                                              [('node_size', 'node_size')]),
                                              (run_tracking_node, dsn_node,
                                               [('network', 'network')]),
                                              (dsn_node, streams2graph_node,
@@ -2091,6 +2094,8 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                                [('parc', 'parc')]),
                                              (run_tracking_node, dsn_node,
                                               [('network', 'network')]),
+                                             (inputnode, register_atlas_node,
+                                              [('node_size', 'node_size')]),
                                              (dsn_node, streams2graph_node,
                                               [('network', 'network')])
                                              ])
