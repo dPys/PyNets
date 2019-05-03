@@ -244,7 +244,7 @@ def assemble_mt_path(ID, func_file, atlas_select, network, conn_model, thr, roi,
         if network is not None:
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_', network,
                                                              '_net_metrics_', conn_model, '_', str(thr), '_', str(node_size),
-                                                             '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                             '%s' % ("mm_" if node_size != 'parc' else ''),
                                                              "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
                                                                      else ''),
                                                              "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
@@ -252,7 +252,7 @@ def assemble_mt_path(ID, func_file, atlas_select, network, conn_model, thr, roi,
         else:
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (ID_dir, '/', str(atlas_select), '/', str(ID), '_net_metrics_',
                                                          conn_model, '_', str(thr), '_', str(node_size),
-                                                         '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                         '%s' % ("mm_" if node_size != 'parc' else ''),
                                                          "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
                                                                  else ''),
                                                          "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0

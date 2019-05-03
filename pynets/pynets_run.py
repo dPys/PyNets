@@ -438,7 +438,7 @@ def build_workflow(args, retval):
     # Hard-coded:
     maxcrossing = 2
     min_length = 20
-    overlap_thr = 2
+    overlap_thr = 1
     overlap_thr_list = None
     step_list = [0.2, 0.3, 0.4, 0.5]
     curv_thr_list = [60, 30, 10]

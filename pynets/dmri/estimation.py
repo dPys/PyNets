@@ -96,6 +96,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     mx = len(np.unique(atlas_data.astype(np.int64)))
     g = nx.Graph(ecount=0, vcount=mx)
     edge_dict = defaultdict(int)
+    node_dict = dict(zip(np.unique(atlas_data), np.arange(mx)))
 
     # Add empty vertices
     for node in range(mx):
@@ -114,7 +115,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         for lab in np.unique(lab_arr):
             if lab > 0:
                 if np.sum(lab_arr == lab) >= overlap_thr:
-                    endlabels.append(lab)
+                    endlabels.append(node_dict[lab])
 
         edges = combinations(endlabels, 2)
         for edge in edges:

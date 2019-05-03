@@ -208,7 +208,7 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mo
 
                 # Filter resulting streamlines by roi-intersection characteristics
                 streamlines_more = Streamlines(select_by_rois(streamline_generator, parcels, parcel_vec.astype('bool'),
-                                                              mode='any', affine=np.eye(4), tol=2))
+                                                              mode='any', affine=np.eye(4), tol=8))
 
                 # Repeat process until target samples condition is met
                 ix = ix + 1
