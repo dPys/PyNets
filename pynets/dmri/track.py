@@ -149,7 +149,7 @@ def filter_streamlines(dwi, dir_path, gtab, streamlines, life_run, min_length, c
 
 def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mod_fit,
                    tiss_classifier, sphere, directget, curv_thr_list, step_list, track_type, maxcrossing, max_length,
-                   n_seeds_per_iter=10):
+                   n_seeds_per_iter=500):
     from colorama import Fore, Style
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
@@ -208,7 +208,7 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mo
 
                 # Filter resulting streamlines by roi-intersection characteristics
                 streamlines_more = Streamlines(select_by_rois(streamline_generator, parcels, parcel_vec.astype('bool'),
-                                                              mode='any', affine=np.eye(4), tol=2.0))
+                                                              mode='any', affine=np.eye(4), tol=None))
 
                 # Repeat process until target samples condition is met
                 ix = ix + 1
@@ -230,10 +230,9 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mo
 
 
 def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, labels_im_file_wm_gm_int,
-              labels_im_file, target_samples, curv_thr_list, step_list, track_type, max_length,
-              maxcrossing, directget, conn_model, gtab_file, dwi, network, node_size, dens_thresh, ID, roi, min_span_tree,
-              disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni,
-              life_run, min_length):
+              labels_im_file, target_samples, curv_thr_list, step_list, track_type, max_length, maxcrossing, directget,
+              conn_model, gtab_file, dwi, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
+              prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, life_run, min_length):
     try:
         import cPickle as pickle
     except ImportError:

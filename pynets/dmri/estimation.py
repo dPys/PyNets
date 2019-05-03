@@ -103,7 +103,6 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Build graph
     start_time = time.time()
-    stream_viz = []
     for s in streamlines:
         # Map the streamlines coordinates to voxel coordinates
         points = _to_voxel_coordinates(s, lin_T, offset)
@@ -116,7 +115,6 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
             if lab > 0:
                 if np.sum(lab_arr == lab) >= overlap_thr:
                     endlabels.append(lab)
-                    stream_viz.append(s)
 
         edges = combinations(endlabels, 2)
         for edge in edges:
@@ -126,23 +124,6 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         edge_list = [(k[0], k[1], v) for k, v in edge_dict.items()]
         g.add_weighted_edges_from(edge_list)
     print("%s%s%s" % ('Graph construction runtime: ', str(np.round(time.time() - start_time, 1)), 's'))
-
-    # Stack and save remaining streamlines
-    if len(stream_viz) == 0:
-        raise ValueError('ERROR: No streamline connections found for this parcellation.')
-
-    # Save graph-connected streamlines
-    stream_viz_list = [np.concatenate(stream_viz)]
-    streams_graph = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_graph_', overlap_thr, '_overlap_',
-                                                      conn_model, '_', target_samples, '_', node_size, 'mm_curv',
-                                                      str(curv_thr_list).replace(', ', '_'), '_step',
-                                                      str(step_list).replace(', ', '_'), '.trk')
-    streamlines_graph = nib.streamlines.array_sequence.ArraySequence(stream_viz_list)
-    tractogram = nib.streamlines.Tractogram(streamlines_graph, affine_to_rasmm=np.eye(4))
-    hdr = streamlines_mni.header
-    hdr['nb_streamlines'] = len(stream_viz_list)
-    trkfile = nib.streamlines.trk.TrkFile(tractogram, header=hdr)
-    nib.streamlines.save(trkfile, streams_graph)
 
     # Convert to numpy matrix
     conn_matrix_raw = nx.to_numpy_matrix(g)

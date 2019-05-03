@@ -531,7 +531,7 @@ def register_all(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size='2mm',
     from pynets.registration import register
     reg = register.DmriReg(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple)
 
-    if (overwrite is True) or (op.isfile(reg.t1w_brain) is False):
+    if (overwrite is True) or (op.isfile(reg.map_path) is False):
         # Perform anatomical segmentation
         reg.gen_tissue()
 
