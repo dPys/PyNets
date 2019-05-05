@@ -1,0 +1,152 @@
+{
+    "groups": [
+        {
+            "name": "Group_00001",
+            "procs": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10
+            ],
+            "total": 11
+        }
+    ],
+    "links": [
+        {
+            "source": 0,
+            "target": 1,
+            "value": 1
+        },
+        {
+            "source": 0,
+            "target": 2,
+            "value": 1
+        },
+        {
+            "source": 1,
+            "target": 2,
+            "value": 1
+        },
+        {
+            "source": 2,
+            "target": 3,
+            "value": 1
+        },
+        {
+            "source": 5,
+            "target": 6,
+            "value": 1
+        },
+        {
+            "source": 6,
+            "target": 7,
+            "value": 1
+        },
+        {
+            "source": 6,
+            "target": 8,
+            "value": 1
+        },
+        {
+            "source": 7,
+            "target": 8,
+            "value": 1
+        },
+        {
+            "source": 9,
+            "target": 10,
+            "value": 1
+        },
+        {
+            "source": 8,
+            "target": 9,
+            "value": 1
+        },
+        {
+            "source": 4,
+            "target": 5,
+            "value": 1
+        },
+        {
+            "source": 3,
+            "target": 4,
+            "value": 1
+        }
+    ],
+    "maxN": 11,
+    "nodes": [
+        {
+            "group": 1,
+            "name": "0_fetch_nodes_and_labels_node",
+            "report": "/Meta_wf_127/functional_connectometry_127/fetch_nodes_and_labels_node/_report/report.rst",
+            "result": "/Meta_wf_127/functional_connectometry_127/fetch_nodes_and_labels_node/result_fetch_nodes_and_labels_node.pklz"
+        },
+        {
+            "group": 1,
+            "name": "1_node_gen_node",
+            "report": "/Meta_wf_127/functional_connectometry_127/node_gen_node/_report/report.rst",
+            "result": "/Meta_wf_127/functional_connectometry_127/node_gen_node/result_node_gen_node.pklz"
+        },
+        {
+            "group": 1,
+            "name": "2_extract_ts_node",
+            "report": "/Meta_wf_127/functional_connectometry_127/extract_ts_node/_report/report.rst",
+            "result": "/Meta_wf_127/functional_connectometry_127/extract_ts_node/result_extract_ts_node.pklz"
+        },
+        {
+            "group": 1,
+            "name": "3_get_conn_matrix_node",
+            "report": "/Meta_wf_127/functional_connectometry_127/get_conn_matrix_node/_report/report.rst",
+            "result": "/Meta_wf_127/functional_connectometry_127/get_conn_matrix_node/result_get_conn_matrix_node.pklz"
+        },
+        {
+            "group": 1,
+            "name": "4_thresh_func_node",
+            "report": "/Meta_wf_127/functional_connectometry_127/_thr_1.0/thresh_func_node/_report/report.rst",
+            "result": "/Meta_wf_127/functional_connectometry_127/_thr_1.0/thresh_func_node/result_thresh_func_node.pklz"
+        },
+        {
+            "group": 1,
+            "name": "5_pass_meta_ins_node",
+            "report": "/Meta_wf_127/_thr_1.0/pass_meta_ins_node/_report/report.rst",
+            "result": "/Meta_wf_127/_thr_1.0/pass_meta_ins_node/result_pass_meta_ins_node.pklz"
+        },
+        {
+            "group": 1,
+            "name": "6_pass_meta_outs_node",
+            "report": "/Meta_wf_127/_thr_1.0/pass_meta_outs_node/_report/report.rst",
+            "result": "/Meta_wf_127/_thr_1.0/pass_meta_outs_node/result_pass_meta_outs_node.pklz"
+        },
+        {
+            "group": 1,
+            "name": "7_ExtractNetStats",
+            "report": "/_thr_1.0/ExtractNetStats/_report/report.rst",
+            "result": "/_thr_1.0/ExtractNetStats/result_ExtractNetStats.pklz"
+        },
+        {
+            "group": 1,
+            "name": "8_Export2Pandas",
+            "report": "/_thr_1.0/Export2Pandas/_report/report.rst",
+            "result": "/_thr_1.0/Export2Pandas/result_Export2Pandas.pklz"
+        },
+        {
+            "group": 1,
+            "name": "9_AggregatePandasPickles",
+            "report": "/_thr_1.0/AggregatePandasPickles/_report/report.rst",
+            "result": "/_thr_1.0/AggregatePandasPickles/result_AggregatePandasPickles.pklz"
+        },
+        {
+            "group": 1,
+            "name": "10_CollectPandasDfs",
+            "report": "/_thr_1.0/CollectPandasDfs/_report/report.rst",
+            "result": "/_thr_1.0/CollectPandasDfs/result_CollectPandasDfs.pklz"
+        }
+    ]
+}

@@ -21,7 +21,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
     from nipype import Workflow
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
-    from pynets.utils import pass_meta_outs
+    from pynets.utils import pass_meta_ins, pass_meta_outs, PassMetaOuts
 
 
     # Workflow 1: Functional connectome
@@ -91,6 +91,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                            'track_type', 'max_length', 'maxcrossing', 'life_run',
                                                            'min_length', 'directget', 'tiss_class']),
                              name='meta_inputnode')
+
     meta_inputnode.inputs.in_file = func_file
     meta_inputnode.inputs.ID = ID
     meta_inputnode.inputs.atlas_select = atlas_select
@@ -156,7 +157,15 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
     meta_inputnode.inputs.directget = directget
     meta_inputnode.inputs.tiss_class = tiss_class
 
-    if sub_func_wf:
+    if func_file:
+        pass_meta_ins_func_node = pe.Node(niu.Function(input_names=['conn_model', 'est_path', 'network', 'node_size',
+                                                                    'thr', 'prune', 'ID', 'roi', 'norm', 'binary'],
+                                                       output_names=['conn_model_iterlist', 'est_path_iterlist',
+                                                                     'network_iterlist', 'node_size_iterlist',
+                                                                     'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
+                                                                     'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
+                                                       function=pass_meta_ins), name='pass_meta_ins_func_node')
+
         meta_wf.add_nodes([sub_func_wf])
         meta_wf.connect([(meta_inputnode, sub_func_wf, [('ID', 'inputnode.ID'),
                                                         ('atlas_select', 'inputnode.atlas_select'),
@@ -201,36 +210,29 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                         ('binary', 'inputnode.binary')])
                          ])
 
-        pass_meta_ins_node = pe.Node(niu.Function(input_names=['conn_model', 'est_path', 'network', 'node_size', 'thr',
-                                                               'prune', 'ID', 'roi', 'norm', 'binary'],
-                                                  output_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                                'network_iterlist', 'node_size_iterlist',
-                                                                'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
-                                                                'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
-                                                  function=pass_meta_outs), name='pass_meta_ins_node')
+        # Connect outputs of nested workflow to parent wf
+        meta_wf.connect([(sub_func_wf.get_node('outputnode'), pass_meta_ins_func_node, [('conn_model', 'conn_model'),
+                                                                                    ('est_path', 'est_path'),
+                                                                                    ('network', 'network'),
+                                                                                    ('node_size', 'node_size'),
+                                                                                    ('thr', 'thr'),
+                                                                                    ('prune', 'prune'),
+                                                                                    ('ID', 'ID'),
+                                                                                    ('roi', 'roi'),
+                                                                                    ('norm', 'norm'),
+                                                                                    ('binary', 'binary')])
+                     ])
 
-        pass_meta_outs_join_node = pe.JoinNode(niu.IdentityInterface(fields=['conn_model_iterlist', 'est_path_iterlist',
-                                                                             'network_iterlist', 'node_size_iterlist',
-                                                                             'thr_iterlist', 'prune_iterlist',
-                                                                             'ID_iterlist', 'roi_iterlist',
-                                                                             'norm_iterlist', 'binary_iterlist']),
-                                               name='pass_meta_outs_join_node', joinsource=pass_meta_ins_node,
-                                               joinfield=['conn_model_iterlist', 'est_path_iterlist',
-                                                          'network_iterlist', 'node_size_iterlist',
-                                                          'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
-                                                          'roi_iterlist', 'norm_iterlist', 'binary_iterlist'])
+    if dwi_file:
+        pass_meta_ins_struct_node = pe.Node(niu.Function(input_names=['conn_model', 'est_path', 'network', 'node_size',
+                                                                      'thr', 'prune', 'ID', 'roi', 'norm', 'binary'],
+                                                         output_names=['conn_model_iterlist', 'est_path_iterlist',
+                                                                       'network_iterlist', 'node_size_iterlist',
+                                                                       'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
+                                                                       'roi_iterlist', 'norm_iterlist',
+                                                                       'binary_iterlist'], function=pass_meta_ins),
+                                            name='pass_meta_ins_struct_node')
 
-        pass_meta_outs_node = pe.Node(niu.Function(input_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                                'network_iterlist', 'node_size_iterlist',
-                                                                'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
-                                                                'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
-                                                   output_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                                 'network_iterlist', 'node_size_iterlist',
-                                                                 'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
-                                                                 'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
-                                                   function=pass_meta_outs), name='pass_meta_outs_node')
-
-    if sub_struct_wf:
         meta_wf.add_nodes([sub_struct_wf])
         meta_wf.connect([(meta_inputnode, sub_struct_wf, [('ID', 'inputnode.ID'),
                                                           ('dwi_file', 'inputnode.dwi_file'),
@@ -280,39 +282,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                          ])
 
         # Connect outputs of nested workflow to parent wf
-        if sub_func_wf and sub_struct_wf:
-            meta_wf.connect([(sub_struct_wf.get_node('outputnode'), pass_meta_ins_node,
-                              [('conn_model', 'conn_model'),
-                               ('est_path', 'est_path'),
-                               ('network', 'network'),
-                               ('node_size', 'node_size'),
-                               ('thr', 'thr'),
-                               ('prune', 'prune'),
-                               ('ID', 'ID'),
-                               ('roi', 'roi'),
-                               ('norm', 'norm'),
-                               ('binary', 'binary')]),
-                              (pass_meta_ins_node, pass_meta_outs_join_node,
-                               [('conn_model_iterlist', 'conn_model_iterlist'),
-                                ('est_path_iterlist', 'est_path_iterlist'),
-                                ('network_iterlist', 'network_iterlist'),
-                                ('node_size_iterlist', 'node_size_iterlist'),
-                                ('thr_iterlist', 'thr_iterlist'),
-                                ('prune_iterlist', 'prune_iterlist'),
-                                ('ID_iterlist', 'ID_iterlist'),
-                                ('norm_iterlist', 'norm_iterlist')]),
-                               (pass_meta_outs_join_node, pass_meta_outs_node,
-                                [('conn_model_iterlist', 'conn_model_iterlist'),
-                                 ('est_path_iterlist', 'est_path_iterlist'),
-                                 ('network_iterlist', 'network_iterlist'),
-                                 ('node_size_iterlist', 'node_size_iterlist'),
-                                 ('thr_iterlist', 'thr_iterlist'),
-                                 ('prune_iterlist', 'prune_iterlist'),
-                                 ('ID_iterlist', 'ID_iterlist'),
-                                 ('norm_iterlist', 'norm_iterlist')])
-                               ])
-        else:
-            meta_wf.connect([(sub_struct_wf.get_node('outputnode'), pass_meta_ins_node, [('conn_model', 'conn_model'),
+        meta_wf.connect([(sub_struct_wf.get_node('outputnode'), pass_meta_ins_struct_node, [('conn_model', 'conn_model'),
                                                                                           ('est_path', 'est_path'),
                                                                                           ('network', 'network'),
                                                                                           ('node_size', 'node_size'),
@@ -321,19 +291,76 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                                                           ('ID', 'ID'),
                                                                                           ('roi', 'roi'),
                                                                                           ('norm', 'norm'),
-                                                                                          ('binary', 'binary')]),
-                             (pass_meta_ins_node, pass_meta_outs_node, [('conn_model_iterlist', 'conn_model_iterlist'),
-                                                                        ('est_path_iterlist', 'est_path_iterlist'),
-                                                                        ('network_iterlist', 'network_iterlist'),
-                                                                        ('node_size_iterlist', 'node_size_iterlist'),
-                                                                        ('thr_iterlist', 'thr_iterlist'),
-                                                                        ('prune_iterlist', 'prune_iterlist'),
-                                                                        ('ID_iterlist', 'ID_iterlist'),
-                                                                        ('norm_iterlist', 'norm_iterlist')])
+                                                                                          ('binary', 'binary')])
+                         ])
+
+    if (func_file and not dwi_file) or (dwi_file and not func_file):
+        pass_meta_outs_node = pe.Node(niu.Function(input_names=['conn_model_iterlist', 'est_path_iterlist',
+                                                                'network_iterlist', 'node_size_iterlist',
+                                                                'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
+                                                                'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
+                                                   output_names=['conn_model_iterlist', 'est_path_iterlist',
+                                                                 'network_iterlist', 'node_size_iterlist',
+                                                                 'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
+                                                                 'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
+                                                   function=pass_meta_outs), name='pass_meta_outs_node')
+        if func_file and not dwi_file:
+            meta_wf.connect([(pass_meta_ins_func_node, pass_meta_outs_node, [('conn_model_iterlist', 'conn_model_iterlist'),
+                                                                            ('est_path_iterlist', 'est_path_iterlist'),
+                                                                            ('network_iterlist', 'network_iterlist'),
+                                                                            ('node_size_iterlist', 'node_size_iterlist'),
+                                                                            ('thr_iterlist', 'thr_iterlist'),
+                                                                            ('prune_iterlist', 'prune_iterlist'),
+                                                                            ('ID_iterlist', 'ID_iterlist'),
+                                                                            ('roi_iterlist', 'roi_iterlist'),
+                                                                            ('norm_iterlist', 'norm_iterlist'),
+                                                                            ('binary_iterlist', 'binary_iterlist')])
                              ])
+        elif dwi_file and not func_file:
+            meta_wf.connect([(pass_meta_ins_struct_node, pass_meta_outs_node, [('conn_model_iterlist', 'conn_model_iterlist'),
+                                                                            ('est_path_iterlist', 'est_path_iterlist'),
+                                                                            ('network_iterlist', 'network_iterlist'),
+                                                                            ('node_size_iterlist', 'node_size_iterlist'),
+                                                                            ('thr_iterlist', 'thr_iterlist'),
+                                                                            ('prune_iterlist', 'prune_iterlist'),
+                                                                            ('ID_iterlist', 'ID_iterlist'),
+                                                                            ('roi_iterlist', 'roi_iterlist'),
+                                                                            ('norm_iterlist', 'norm_iterlist'),
+                                                                            ('binary_iterlist', 'binary_iterlist')])
+                             ])
+    elif func_file and dwi_file:
+        pass_meta_outs_node = pe.MapNode(interface=PassMetaOuts(), name='pass_meta_outs_node',
+                                         iterfield=['conn_model_iterlist', 'est_path_iterlist', 'network_iterlist',
+                                                    'node_size_iterlist', 'thr_iterlist', 'prune_iterlist',
+                                                    'ID_iterlist', 'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
+                                         nested=True)
+
+        meta_wf.connect([(pass_meta_ins_struct_node, pass_meta_outs_node, [('conn_model_iterlist', 'conn_model_iterlist'),
+                                                                           ('est_path_iterlist', 'est_path_iterlist'),
+                                                                           ('network_iterlist', 'network_iterlist'),
+                                                                           ('node_size_iterlist', 'node_size_iterlist'),
+                                                                           ('thr_iterlist', 'thr_iterlist'),
+                                                                           ('prune_iterlist', 'prune_iterlist'),
+                                                                           ('ID_iterlist', 'ID_iterlist'),
+                                                                           ('roi_iterlist', 'roi_iterlist'),
+                                                                           ('norm_iterlist', 'norm_iterlist'),
+                                                                           ('binary_iterlist', 'binary_iterlist')]),
+                         (pass_meta_ins_func_node, pass_meta_outs_node, [('conn_model_iterlist', 'conn_model_iterlist'),
+                                                                         ('est_path_iterlist', 'est_path_iterlist'),
+                                                                         ('network_iterlist', 'network_iterlist'),
+                                                                         ('node_size_iterlist', 'node_size_iterlist'),
+                                                                         ('thr_iterlist', 'thr_iterlist'),
+                                                                         ('prune_iterlist', 'prune_iterlist'),
+                                                                         ('ID_iterlist', 'ID_iterlist'),
+                                                                         ('roi_iterlist', 'roi_iterlist'),
+                                                                         ('norm_iterlist', 'norm_iterlist'),
+                                                                         ('binary_iterlist', 'binary_iterlist')])
+                         ])
+    else:
+        raise ValueError('ERROR: meta-workflow options not defined.')
 
     # Set resource restrictions at level of the meta wf
-    if sub_func_wf:
+    if func_file:
         wf_selected = "%s%s" % ('functional_connectometry_', ID)
         meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._mem_gb = 1
@@ -349,7 +376,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
         meta_wf.get_node("%s%s" % (wf_selected, '.thresh_func_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.thresh_func_node'))._mem_gb = 1
 
-    if sub_struct_wf:
+    if dwi_file:
         wf_selected = "%s%s" % ('structural_connectometry_', ID)
         meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._n_procs = 1
         meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._mem_gb = 1

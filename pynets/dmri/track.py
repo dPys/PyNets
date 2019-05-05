@@ -126,7 +126,7 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
         [streamlines, rmse] = run_LIFE_all(data, gtab, streamlines)
         mean_rmse = np.mean(rmse)
         print("%s%s" % ('Mean RMSE: ', mean_rmse))
-        if mean_rmse > 1:
+        if mean_rmse > 5:
             print('WARNING: LiFE revealed high model error. Check streamlines output and review tracking parameters used.')
 
     # Create density map
