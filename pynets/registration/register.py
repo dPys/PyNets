@@ -206,11 +206,11 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
 class DmriReg(object):
 
-    def __init__(self, basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple):
+    def __init__(self, basedir_path, fa_path, nodif_B0_mask, anat_file, vox_size, simple):
         self.simple = simple
         self.fa_path = fa_path
         self.nodif_B0_mask = nodif_B0_mask
-        self.t1w = anat_loc
+        self.t1w = anat_file
         self.vox_size = vox_size
         self.t1w_name = 't1w'
         self.dwi_name = 'dwi'
@@ -526,10 +526,10 @@ class DmriReg(object):
         return
 
 
-def register_all(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size='2mm', simple=False, overwrite=False):
+def register_all(basedir_path, fa_path, nodif_B0_mask, anat_file, vox_size='2mm', simple=False, overwrite=False):
     import os.path as op
     from pynets.registration import register
-    reg = register.DmriReg(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple)
+    reg = register.DmriReg(basedir_path, fa_path, nodif_B0_mask, anat_file, vox_size, simple)
 
     if (overwrite is True) or (op.isfile(reg.map_path) is False):
         # Perform anatomical segmentation
@@ -546,10 +546,10 @@ def register_all(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size='2mm',
     return reg.wm_gm_int_in_dwi, reg.wm_in_dwi, reg.gm_in_dwi, reg.vent_csf_in_dwi, reg.csf_mask_dwi
 
 
-def register_atlas(uatlas_select, atlas_select, node_size, basedir_path, fa_path, nodif_B0_mask, anat_loc,
+def register_atlas(uatlas_select, atlas_select, node_size, basedir_path, fa_path, nodif_B0_mask, anat_file,
                    wm_gm_int_in_dwi, vox_size='2mm', simple=False):
     from pynets.registration import register
-    reg = register.DmriReg(basedir_path, fa_path, nodif_B0_mask, anat_loc, vox_size, simple)
+    reg = register.DmriReg(basedir_path, fa_path, nodif_B0_mask, anat_file, vox_size, simple)
 
     if node_size is not None:
         atlas_select = "%s%s%s" % (atlas_select, '_', node_size)

@@ -537,7 +537,7 @@ def rescale_bvec(bvec, bvec_rescaled):
     return bvec_rescaled
 
 
-def make_gtab_and_bmask(fbval, fbvec, dwi):
+def make_gtab_and_bmask(fbval, fbvec, dwi_file):
     import os
     from tempfile import mkstemp
     from dipy.io import save_pickle
@@ -551,7 +551,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi):
     **Positional Arguments:**
     """
     # Use b0's from the DWI to create a more stable DWI image for registration
-    outdir = op.dirname(dwi)
+    outdir = op.dirname(dwi_file)
 
     nodif_b0 = "{}/nodif_b0.nii.gz".format(outdir)
     nodif_b0_bet = "{}/nodif_b0_bet.nii.gz".format(outdir)
@@ -594,7 +594,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi):
     for b0 in b0s:
         print(b0)
         b0_bbr = "{}/{}_b0.nii.gz".format(outdir, str(b0))
-        cmd = 'fslroi ' + dwi + ' ' + b0_bbr + ' ' + str(b0) + ' 1'
+        cmd = 'fslroi ' + dwi_file + ' ' + b0_bbr + ' ' + str(b0) + ' 1'
         cmds.append(cmd)
         b0s_bbr.append(b0_bbr)
 

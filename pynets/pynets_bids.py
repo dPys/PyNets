@@ -1,6 +1,5 @@
 """
 BIDS-functions to return inputs for the run.py functions.
-
 """
 import bids
 from itertools import product
@@ -197,10 +196,9 @@ if __name__ == '__main__':
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     bids_dir = '/Users/PSYC-dap3463/Downloads/test_subs/HBN'
     subject = 'NDARBA507GCT'
-    output_dir = '/Users/PSYC-dap3463/Downloads/test_subs/HBN/outputs'
+    output_dir = '/Users/derekpisner/Downloads/test_subs/HBN/outputs'
     modality = 'dwi'
     #[outs, output_dir] = main(bids_dir, subject, modality, output_dir)
 
     #kargs = build_args()
     #build_workflow(kargs)
-

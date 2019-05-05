@@ -10,13 +10,13 @@ import numpy as np
 import nibabel as nib
 
 
-def reconstruction(conn_model, gtab, dwi, wm_in_dwi):
+def reconstruction(conn_model, gtab, dwi_file, wm_in_dwi):
     try:
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
     from pynets.dmri.estimation import tens_mod_est, csa_mod_est, csd_mod_est
-    dwi_img = nib.load(dwi)
+    dwi_img = nib.load(dwi_file)
     data = dwi_img.get_fdata()
     if conn_model == 'tensor':
         mod = tens_mod_est(gtab, data, wm_in_dwi)
@@ -107,12 +107,12 @@ def save_streams(dwi_img, streamlines, streams):
     return streams
 
 
-def filter_streamlines(dwi, dir_path, gtab, streamlines, life_run, min_length, conn_model, target_samples,
+def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_length, conn_model, target_samples,
                        node_size, curv_thr_list, step_list):
     from dipy.tracking import utils
     from pynets.dmri.track import save_streams, run_LIFE_all
 
-    dwi_img = nib.load(dwi)
+    dwi_img = nib.load(dwi_file)
     data = dwi_img.get_fdata()
 
     # Flatten streamlines list, and apply min length filter
@@ -231,7 +231,7 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mo
 
 def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, dir_path, labels_im_file_wm_gm_int,
               labels_im_file, target_samples, curv_thr_list, step_list, track_type, max_length, maxcrossing, directget,
-              conn_model, gtab_file, dwi, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
+              conn_model, gtab_file, dwi_file, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
               prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, life_run, min_length):
     try:
         import cPickle as pickle
@@ -246,7 +246,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     gtab = load_pickle(gtab_file)
 
     # Fit diffusion model
-    mod_fit = reconstruction(conn_model, gtab, dwi, wm_in_dwi)
+    mod_fit = reconstruction(conn_model, gtab, dwi_file, wm_in_dwi)
 
     # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
     atlas_img = nib.load(labels_im_file)
@@ -298,7 +298,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     print('Tracking Complete')
 
     # Perform streamline filtering routines
-    [streams, dir_path] = filter_streamlines(dwi, dir_path, gtab, streamlines, life_run, min_length, conn_model,
+    [streams, dir_path] = filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_length, conn_model,
                                              target_samples, node_size, curv_thr_list, step_list)
 
     return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, curv_thr_list, step_list

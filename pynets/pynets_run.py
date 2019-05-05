@@ -11,7 +11,7 @@ def get_parser():
     import argparse
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
-                                                 'Feature Engineering of Functional and Structural Connectomes')
+                                                 'Graph Analysis of Functional and Structural Connectomes')
     parser.add_argument('-func',
                         metavar='Path to input functional file (required for functional connectomes)',
                         default=None,
@@ -288,7 +288,7 @@ def build_workflow(args, retval):
     # Set Arguments to global variables
     func_file = args.func
     mask = args.m
-    dwi = args.dwi
+    dwi_file = args.dwi
     fbval = args.bval
     fbvec = args.bvec
     graph_pre = args.g
@@ -367,7 +367,7 @@ def build_workflow(args, retval):
     min_thr = args.min_thr
     max_thr = args.max_thr
     step_thr = args.step_thr
-    anat_loc = args.anat
+    anat_file = args.anat
     num_total_samples = args.s
     parc = args.parc
     if parc is True:
@@ -375,9 +375,9 @@ def build_workflow(args, retval):
         node_size_list = None
     else:
         if node_size is None:
-            if (func_file is not None) and (dwi is None):
+            if (func_file is not None) and (dwi_file is None):
                 node_size = 4
-            elif (func_file is None) and (dwi is not None):
+            elif (func_file is None) and (dwi_file is not None):
                 node_size = 8
     ref_txt = args.ref
     k = args.k
@@ -477,22 +477,22 @@ def build_workflow(args, retval):
     else:
         func_subjects_list = None
 
-    if dwi and (not anat_loc and not fbval and not fbvec):
+    if dwi_file and (not anat_file and not fbval and not fbvec):
         raise ValueError('ERROR: Anatomical image(s) (-anat), b-values file(s) (-fbval), and b-vectors file(s) (-fbvec) '
                          'must be specified for structural connectometry.')
 
-    if dwi:
-        if dwi.endswith('.txt'):
+    if dwi_file:
+        if dwi_file.endswith('.txt'):
             with open(func_file) as f:
                 struct_subjects_list = f.read().splitlines()
-        elif ',' in dwi:
-            struct_subjects_list = list(str(dwi).split(','))
+        elif ',' in dwi_file:
+            struct_subjects_list = list(str(dwi_file).split(','))
         else:
             struct_subjects_list = None
     else:
         struct_subjects_list = None
 
-    if func_file is None and dwi is None and graph is None and multi_graph is None:
+    if func_file is None and dwi_file is None and graph is None and multi_graph is None:
         raise ValueError("\nError: You must include a file path to either a standard space functional image in .nii or "
                          ".nii.gz format with the -func flag.")
 
@@ -528,10 +528,10 @@ def build_workflow(args, retval):
             if len(fbvec) != len(struct_subjects_list):
                 raise ValueError("Error: Length of fbvec list does not correspond to length of input dwi file list.")
 
-    if anat_loc:
-        if ',' in anat_loc:
-            anat_loc = list(str(anat_loc).split(','))
-            if len(anat_loc) != len(struct_subjects_list):
+    if anat_file:
+        if ',' in anat_file:
+            anat_file = list(str(anat_file).split(','))
+            if len(anat_file) != len(struct_subjects_list):
                 raise ValueError("Error: Length of anat list does not correspond to length of input dwi file list.")
 
     if (c_boot and not block_size) or (block_size and not c_boot):
@@ -862,41 +862,41 @@ def build_workflow(args, retval):
         else:
             print("%s%s" % ("\nUsing connectivity model: ", conn_model))
 
-    if dwi:
+    if dwi_file:
         if network is not None:
             print("%s%s" % ('\nRSN: ', network))
         if user_atlas_list is not None:
             print('\nIterating across multiple user atlases...')
             if struct_subjects_list:
-                for dwi in struct_subjects_list:
+                for dwi_file in struct_subjects_list:
                     for uatlas_select in user_atlas_list:
                         atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
                         print(atlas_select_par)
-                        do_dir_path(atlas_select_par, dwi)
+                        do_dir_path(atlas_select_par, dwi_file)
             else:
                 for uatlas_select in user_atlas_list:
                     atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
                     print(atlas_select_par)
-                    do_dir_path(atlas_select_par, dwi)
+                    do_dir_path(atlas_select_par, dwi_file)
         elif uatlas_select is not None and user_atlas_list is None:
             atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
             ref_txt = "%s%s" % (uatlas_select.split('/')[-1:][0].split('.')[0], '.txt')
             if struct_subjects_list:
-                for dwi in struct_subjects_list:
-                    do_dir_path(atlas_select_par, dwi)
+                for dwi_file in struct_subjects_list:
+                    do_dir_path(atlas_select_par, dwi_file)
             else:
-                do_dir_path(atlas_select_par, dwi)
+                do_dir_path(atlas_select_par, dwi_file)
         if multi_atlas is not None:
             print('\nIterating across multiple predefined atlases...')
             if struct_subjects_list:
-                for dwi in struct_subjects_list:
+                for dwi_file in struct_subjects_list:
                     for atlas_select in multi_atlas:
                         if parc is True and atlas_select in nilearn_coord_atlases:
                             raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
                                                          ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                         else:
                             print(atlas_select)
-                            do_dir_path(atlas_select, dwi)
+                            do_dir_path(atlas_select, dwi_file)
             else:
                 for atlas_select in multi_atlas:
                     if parc is True and atlas_select in nilearn_coord_atlases:
@@ -904,7 +904,7 @@ def build_workflow(args, retval):
                                                      ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                     else:
                         print(atlas_select)
-                        do_dir_path(atlas_select, dwi)
+                        do_dir_path(atlas_select, dwi_file)
         elif atlas_select is not None:
             if parc is True and atlas_select in nilearn_coord_atlases:
                 raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
@@ -912,29 +912,29 @@ def build_workflow(args, retval):
             else:
                 print("%s%s" % ("\nNilearn atlas: ", atlas_select))
                 if struct_subjects_list:
-                    for dwi in struct_subjects_list:
-                        do_dir_path(atlas_select, dwi)
+                    for dwi_file in struct_subjects_list:
+                        do_dir_path(atlas_select, dwi_file)
                 else:
-                    do_dir_path(atlas_select, dwi)
+                    do_dir_path(atlas_select, dwi_file)
         else:
             if uatlas_select is None:
                 raise KeyError('\nERROR: No atlas specified!')
             else:
                 pass
 
-    if dwi and not func_file:
+    if dwi_file and not func_file:
         print('\nRunning structural connectometry only...')
         if struct_subjects_list:
-            for (dwi, fbval, fbvec, anat_loc) in struct_subjects_list:
-                print("%s%s" % ('Diffusion-Weighted Image ', dwi))
+            for (dwi_file, fbval, fbvec, anat_file) in struct_subjects_list:
+                print("%s%s" % ('Diffusion-Weighted Image ', dwi_file))
                 print("%s%s" % ('B-Values ', fbval))
                 print("%s%s" % ('B-Vectors ', fbvec))
-                print("%s%s" % ('Anatomical Image: ', anat_loc))
+                print("%s%s" % ('Anatomical Image: ', anat_file))
         else:
-            print("%s%s" % ('Diffusion-Weighted Image ', dwi))
+            print("%s%s" % ('Diffusion-Weighted Image ', dwi_file))
             print("%s%s" % ('B-Values ', fbval))
             print("%s%s" % ('B-Vectors ', fbvec))
-            print("%s%s" % ('Anatomical Image: ', anat_loc))
+            print("%s%s" % ('Anatomical Image: ', anat_file))
         conf = None
         k = None
         clust_mask = None
@@ -948,20 +948,20 @@ def build_workflow(args, retval):
         clust_type_list = None
         c_boot = None
         block_size = None
-    elif func_file and dwi is None:
+    elif func_file and dwi_file is None:
         print('\nRunning functional connectometry only...')
         if func_subjects_list:
             for func_file in func_subjects_list:
                 print("%s%s" % ('Functional file: ', func_file))
         else:
             print("%s%s" % ('Functional file: ', func_file))
-    elif func_file and dwi:
+    elif func_file and dwi_file:
         print('\nRunning joint structural-functional connectometry...')
         print("%s%s" % ('Functional file: ', func_file))
-        print("%s%s" % ('Diffusion-Weighted Image ', dwi))
+        print("%s%s" % ('Diffusion-Weighted Image ', dwi_file))
         print("%s%s" % ('B-Values ', fbval))
         print("%s%s" % ('B-Vectors ', fbvec))
-        print("%s%s" % ('Anatomical Image: ', anat_loc))
+        print("%s%s" % ('Anatomical Image: ', anat_file))
     print('\n-------------------------------------------------------------------------\n\n')
 
     # print('\n\n\n\n\n')
@@ -1015,8 +1015,8 @@ def build_workflow(args, retval):
     from pynets.workflows import workflow_selector
 
     def init_wf_single_subject(ID, func_file, atlas_select, network, node_size, roi, thr, uatlas_select,
-                               multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi,
-                               multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k,
+                               multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
+                               multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_file, parc, ref_txt, procmem, k,
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
@@ -1060,8 +1060,8 @@ def build_workflow(args, retval):
         inputnode.inputs.binary = binary
 
         meta_wf = workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr, uatlas_select,
-                                    multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi,
-                                    anat_loc, parc, ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr,
+                                    multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
+                                    anat_file, parc, ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr,
                                     step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list, disp_filt,
@@ -1087,7 +1087,7 @@ def build_workflow(args, retval):
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_func_node')._n_procs = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_func_node')._mem_gb = 1
 
-        if dwi:
+        if dwi_file:
             wf_selected = "%s%s" % ('structural_connectometry_', ID)
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 1
             wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 1
@@ -1205,8 +1205,8 @@ def build_workflow(args, retval):
 
     # Multi-subject pipeline
     def wf_multi_subject(ID, func_subjects_list, struct_subjects_list, atlas_select, network, node_size, roi, thr,
-                         uatlas_select, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi,
-                         multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt, procmem, k,
+                         uatlas_select, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
+                         multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_file, parc, ref_txt, procmem, k,
                          clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                          node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type,
                          use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list,
@@ -1244,8 +1244,8 @@ def build_workflow(args, retval):
                 ID=ID[i], func_file=func_file, atlas_select=atlas_select,
                 network=network, node_size=node_size, roi=roi, thr=thr, uatlas_select=uatlas_select,
                 multi_nets=multi_nets, conn_model=conn_model, dens_thresh=dens_thresh, conf=conf_sub,
-                adapt_thresh=adapt_thresh, plot_switch=plot_switch, dwi=dwi_file, multi_thr=multi_thr,
-                multi_atlas=multi_atlas, min_thr=min_thr, max_thr=max_thr, step_thr=step_thr, anat_loc=anat_loc,
+                adapt_thresh=adapt_thresh, plot_switch=plot_switch, dwi_file=dwi_file, multi_thr=multi_thr,
+                multi_atlas=multi_atlas, min_thr=min_thr, max_thr=max_thr, step_thr=step_thr, anat_file=anat_file,
                 parc=parc, ref_txt=ref_txt, procmem='auto', k=k, clust_mask=clust_mask, k_min=k_min, k_max=k_max,
                 k_step=k_step, k_clustering=k_clustering, user_atlas_list=user_atlas_list,
                 clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
@@ -1276,7 +1276,7 @@ def build_workflow(args, retval):
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_func_node')._n_procs = 1
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_func_node')._mem_gb = 1
 
-            if dwi:
+            if dwi_file:
                 wf_selected = "%s%s" % ('structural_connectometry_', ID)
                 meta_wf_name = "%s%s" % ('Meta_wf_', ID[i])
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 1
@@ -1304,8 +1304,8 @@ def build_workflow(args, retval):
     if (func_subjects_list or struct_subjects_list) or (func_subjects_list and struct_subjects_list):
         wf_multi = wf_multi_subject(ID, func_subjects_list, struct_subjects_list, network, node_size, roi,
                                     thr, uatlas_select, multi_nets, conn_model, dens_thresh,
-                                    conf, adapt_thresh, plot_switch, dwi, multi_thr,
-                                    multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc,
+                                    conf, adapt_thresh, plot_switch, dwi_file, multi_thr,
+                                    multi_atlas, min_thr, max_thr, step_thr, anat_file, parc,
                                     ref_txt, procmem, k, clust_mask, k_min, k_max, k_step,
                                     k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, graph, conn_model_list,
@@ -1370,8 +1370,8 @@ def build_workflow(args, retval):
     else:
         # Single-subject pipeline
         wf = init_wf_single_subject(ID, func_file, atlas_select, network, node_size, roi, thr, uatlas_select,
-                                    multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi,
-                                    multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_loc, parc, ref_txt,
+                                    multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
+                                    multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_file, parc, ref_txt,
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
@@ -1389,8 +1389,8 @@ def build_workflow(args, retval):
                 shutil.rmtree("%s%s%s" % (func_dir, '/', base_dirname))
             os.mkdir("%s%s%s" % (func_dir, '/', base_dirname))
             wf.base_dir = "%s%s%s" % (func_dir, '/', base_dirname)
-        elif dwi:
-            dwi_dir = os.path.dirname(dwi)
+        elif dwi_file:
+            dwi_dir = os.path.dirname(dwi_file)
             if os.path.exists("%s%s%s" % (dwi_dir, '/', base_dirname)):
                 shutil.rmtree("%s%s%s" % (dwi_dir, '/', base_dirname))
             os.mkdir("%s%s%s" % (dwi_dir, '/', base_dirname))
