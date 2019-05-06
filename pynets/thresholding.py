@@ -447,8 +447,8 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     if parc is True:
         node_size = 'parc'
 
-    if len(np.unique(conn_matrix)) == 1:
-        raise ValueError('ERROR: Raw connectivity matrix has no variance.')
+    if np.count_nonzero(conn_matrix) == 0:
+        raise ValueError('ERROR: Raw connectivity matrix contains only zeros.')
 
     # Save unthresholded
     unthr_path = utils.create_unthr_path(ID, network, conn_model, roi, dir_path)
@@ -495,7 +495,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
 
 def thresh_diff(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
                 disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, target_samples,
-                track_type):
+                track_type, atlas_mni, streams):
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -503,8 +503,8 @@ def thresh_diff(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     if parc is True:
         node_size = 'parc'
 
-    if len(np.unique(conn_matrix)) == 1:
-        raise ValueError('ERROR: Raw connectivity matrix has no variance.')
+    if np.count_nonzero(conn_matrix) == 0:
+        raise ValueError('ERROR: Raw connectivity matrix contains only zeros.')
 
     # Save unthresholded
     unthr_path = utils.create_unthr_path(ID, network, conn_model, roi, dir_path)
@@ -546,4 +546,4 @@ def thresh_diff(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
 
     utils.save_mat(conn_matrix_thr, est_path)
 
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, norm, binary, target_samples, track_type
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, norm, binary, target_samples, track_type, atlas_mni, streams

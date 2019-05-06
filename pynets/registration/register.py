@@ -20,6 +20,7 @@ except KeyError:
 
 def transform_pts(pts, t_aff, t_warp, ref_img_path, ants_path, template_path, dsn_dir,
                   out_volume="", output_space="ras_voxels"):
+    import random
     """
     return coordinates in
     "ras_voxels" if you want to streamlines in ras ijk coordinates or
@@ -28,8 +29,9 @@ def transform_pts(pts, t_aff, t_warp, ref_img_path, ants_path, template_path, ds
     if not output_space in ("ras_voxels", "lps_voxmm"):
         raise ValueError("Must specify output space")
 
+    run_hash = random.randint(1, 1000)
     warped_csv_out = dsn_dir + "/warped_output.csv"
-    aattp_out = dsn_dir + "/aattp.csv"
+    aattp_out = dsn_dir + '/aattp_' + str(run_hash) + '.csv'
     transforms = "-t [" + str(t_aff) + ", 1] " + "-t " + str(t_warp)
 
     # Load the volume from DSI Studio
@@ -68,7 +70,7 @@ def transform_pts(pts, t_aff, t_warp, ref_img_path, ants_path, template_path, ds
 
     # Write out an image
     if out_volume:
-        newdata = np.zeros(template.get_shape())
+        newdata = np.zeros(template.shape)
         ti, tj, tk = new_voxels.astype(np.int)
         newdata[ti, tj, tk] = 1
         warped_out = nib.Nifti1Image(newdata, warped_affine).to_filename(out_volume)
@@ -76,7 +78,7 @@ def transform_pts(pts, t_aff, t_warp, ref_img_path, ants_path, template_path, ds
         return new_voxels.astype(np.int).T
 
     elif output_space == "lps_voxmm":
-        template_extents = template.get_shape()
+        template_extents = template.shape
         lps_voxels = new_voxels.copy()
         lps_voxels[0] = template_extents[0] - lps_voxels[0]
         lps_voxels[1] = template_extents[1] - lps_voxels[1]
@@ -526,7 +528,8 @@ class DmriReg(object):
         return
 
 
-def register_all(basedir_path, fa_path, nodif_B0_mask, anat_file, vox_size='2mm', simple=False, overwrite=False):
+def register_all(basedir_path, fa_path, nodif_B0_mask, anat_file, gtab_file, dwi_file, vox_size='2mm', simple=False,
+                 overwrite=False):
     import os.path as op
     from pynets.registration import register
     reg = register.DmriReg(basedir_path, fa_path, nodif_B0_mask, anat_file, vox_size, simple)
@@ -543,11 +546,12 @@ def register_all(basedir_path, fa_path, nodif_B0_mask, anat_file, vox_size='2mm'
         # Align tissue
         reg.tissue2dwi_align()
 
-    return reg.wm_gm_int_in_dwi, reg.wm_in_dwi, reg.gm_in_dwi, reg.vent_csf_in_dwi, reg.csf_mask_dwi
+    return reg.wm_gm_int_in_dwi, reg.wm_in_dwi, reg.gm_in_dwi, reg.vent_csf_in_dwi, reg.csf_mask_dwi, anat_file, nodif_B0_mask, fa_path, gtab_file, dwi_file
 
 
 def register_atlas(uatlas_select, atlas_select, node_size, basedir_path, fa_path, nodif_B0_mask, anat_file,
-                   wm_gm_int_in_dwi, vox_size='2mm', simple=False):
+                   wm_gm_int_in_dwi, coords, label_names, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, gtab_file, dwi_file,
+                   vox_size='2mm', simple=False):
     from pynets.registration import register
     reg = register.DmriReg(basedir_path, fa_path, nodif_B0_mask, anat_file, vox_size, simple)
 
@@ -558,4 +562,4 @@ def register_atlas(uatlas_select, atlas_select, node_size, basedir_path, fa_path
     [dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas_select,
                                                                                                    atlas_select)
 
-    return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni
+    return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni, uatlas_select, atlas_select, coords, label_names, node_size, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, fa_path, gtab_file, nodif_B0_mask, dwi_file

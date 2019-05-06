@@ -1,0 +1,35 @@
+[
+    [
+        "ID",
+        "127"
+    ],
+    [
+        "multi_nets",
+        null
+    ],
+    [
+        "net_pickle_mt_list",
+        [
+            [
+                "/Users/derekpisner/Applications/PyNets/tests/examples/997/atlas_aal/127_net_metrics_sps_0.2_4mm",
+                "ef316be1725903098083ca1080d4ab1d"
+            ],
+            [
+                "/Users/derekpisner/Applications/PyNets/tests/examples/997/atlas_aal/127_net_metrics_sps_0.3_4mm",
+                "be000e543b1a7db61a65591ab3984572"
+            ],
+            [
+                "/Users/derekpisner/Applications/PyNets/tests/examples/997/atlas_aal/127_net_metrics_sps_0.4_4mm",
+                "f2b0fab9aceb06b3c346c11a4d724155"
+            ]
+        ]
+    ],
+    [
+        "network",
+        null
+    ],
+    [
+        "plot_switch",
+        false
+    ]
+]

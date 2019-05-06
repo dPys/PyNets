@@ -25,13 +25,12 @@ def tens_mod_fa_est(gtab_file, dwi_file, nodif_B0_mask):
     nodif_B0_affine = nodif_B0_img.affine
     model = TensorModel(gtab)
     mod = model.fit(data, nodif_B0_mask_data)
-    print('Computing anisotropy measures (FA, MD, RGB)')
     FA = fractional_anisotropy(mod.evals)
     FA[np.isnan(FA)] = 0
     fa_img = nib.Nifti1Image(FA.astype(np.float32), nodif_B0_affine)
     fa_path = "%s%s" % (os.path.dirname(nodif_B0_mask), '/tensor_fa.nii.gz')
     nib.save(fa_img, fa_path)
-    return fa_path
+    return fa_path, nodif_B0_mask, gtab_file, dwi_file
 
 
 def tens_mod_est(gtab, data, wm_in_dwi):
@@ -135,4 +134,4 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     # Remove background label
     conn_matrix = conn_matrix_symm[1:, 1:]
 
-    return conn_matrix, track_type, target_samples, dir_path, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary
+    return atlas_mni, streams, conn_matrix, track_type, target_samples, dir_path, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary

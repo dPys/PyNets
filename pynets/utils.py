@@ -73,6 +73,8 @@ def do_dir_path(atlas_select, in_file):
 
 
 def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type):
+    if node_size is None:
+        node_size = 'parc'
     if roi is not None:
         if network is not None:
             est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_',
@@ -115,6 +117,8 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
 
 
 def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples, track_type, thr_type):
+    if node_size is None:
+        node_size = 'parc'
     if roi is not None:
         if network is not None:
             est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_',
@@ -168,6 +172,8 @@ def create_unthr_path(ID, network, conn_model, roi, dir_path):
 
 
 def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size):
+    if node_size is None:
+        node_size = 'parc'
     if roi is not None:
         if network is not None:
             out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_net_metrics_',
@@ -544,7 +550,6 @@ def rescale_bvec(bvec, bvec_rescaled):
 
 def make_gtab_and_bmask(fbval, fbvec, dwi_file):
     import os
-    from tempfile import mkstemp
     from dipy.io import save_pickle
     import os.path as op
     from dipy.io import read_bvals_bvecs
@@ -613,7 +618,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file):
     # Get mean b0 brain mask
     cmd = 'bet ' + nodif_b0 + ' ' + nodif_b0_bet + ' -m -f 0.2'
     os.system(cmd)
-    return gtab_file, nodif_b0_bet, nodif_b0_mask
+    return gtab_file, nodif_b0_bet, nodif_b0_mask, dwi_file
 
 
 def check_orient_and_dims(infile, vox_size, bvecs=None):
@@ -751,11 +756,6 @@ def reorient_t1w(t1w, out_dir):
         os.system(cmd)
         cmd = 'fslreorient2std ' + t1w + ' ' + t1w
         os.system(cmd)
-        #cmd = 'fslorient -getorient ' + t1w
-        #orient = os.popen(cmd).read().strip('\n')
-        #if orient == 'NEUROLOGICAL':
-        #    cmd = 'fslorient -swaporient ' + t1w
-        #    os.system(cmd)
     else:
         print('Radiological (t1w)...')
         t1w_orig = t1w

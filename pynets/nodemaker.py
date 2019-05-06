@@ -590,7 +590,8 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, in_file, 
     return label_names, coords, atlas_name, networks_list, parcel_list, par_max, uatlas_select, dir_path
 
 
-def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select, mask):
+def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select, mask,
+                     node_size=None):
     from pynets import nodemaker
     import os.path as op
     try:
@@ -619,10 +620,10 @@ def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, 
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f, protocol=2)
 
-    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select
+    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select, node_size
 
 
-def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select):
+def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select, node_size=None):
     try:
         import cPickle as pickle
     except ImportError:
@@ -647,7 +648,7 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select,
         with open(labels_path, 'wb') as f:
             pickle.dump(label_names, f, protocol=2)
 
-    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select
+    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select, node_size
 
 
 def create_spherical_roi_volumes(node_size, coords, template_mask):
