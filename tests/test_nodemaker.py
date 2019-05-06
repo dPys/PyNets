@@ -174,7 +174,7 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
 def test_nodemaker_tools_masking_coords_RSN():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
+    #base_dir = '/Users/derekpisner/Applications/PyNets/tests/examples'
     dir_path= base_dir + '/997'
     func_file = dir_path + '/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz'
     roi = dir_path + '/pDMN_3_bin.nii.gz'
@@ -197,9 +197,9 @@ def test_nodemaker_tools_masking_coords_RSN():
     str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
-    [net_coords_masked, net_label_names_masked] = nodemaker.coord_masker(roi,
+    [net_coords_masked, net_label_names_masked] = nodemaker.coords_masker(roi,
     net_coords, net_label_names, mask, error)
-    print("%s%s%s" % ('coord_masker (Masking RSN version) --> finished: ',
+    print("%s%s%s" % ('coords_masker (Masking RSN version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
     assert coords is not None
@@ -328,8 +328,8 @@ def test_nodemaker_tools_masking_coords_WB():
     print("%s%s%s" % ('fetch_nilearn_atlas_coords (Masking whole-brain coords version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
-    [WB_coords_masked, WB_label_names_masked] = nodemaker.coord_masker(roi, WB_coords, WB_label_names, mask, error)
-    print("%s%s%s" % ('coord_masker (Masking whole-brain coords version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
+    [WB_coords_masked, WB_label_names_masked] = nodemaker.coords_masker(roi, WB_coords, WB_label_names, mask, error)
+    print("%s%s%s" % ('coords_masker (Masking whole-brain coords version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     assert WB_coords is not None
     assert WB_coords is not None

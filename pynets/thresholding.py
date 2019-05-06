@@ -4,10 +4,10 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
-import numpy as np
-import networkx as nx
 import warnings
 warnings.simplefilter("ignore")
+import numpy as np
+import networkx as nx
 
 
 def threshold_absolute(W, thr, copy=True):
@@ -53,21 +53,17 @@ def normalize(W, copy=True):
     return W
 
 
-def density_thresholding(conn_matrix, thr):
+def density_thresholding(conn_matrix, thr, thr_max=1000):
     from pynets import thresholding
-    work_thr = 0.0
-    conn_matrix = thresholding.normalize(conn_matrix)
+    work_thr = 0
     np.fill_diagonal(conn_matrix, 0)
     i = 1
-    thr_max = 0.50
-    G = nx.from_numpy_matrix(conn_matrix)
-    density = nx.density(G)
-    while float(work_thr) <= float(thr_max) and float(density) > float(thr):
-        work_thr = float(work_thr) + float(0.01)
-        conn_matrix = thresholding.threshold_proportional(conn_matrix, work_thr)
-        G = nx.from_numpy_matrix(conn_matrix)
-        density = nx.density(G)
-        print("%s%d%s%.2f%s%.2f%s" % ('Iteratively thresholding -- Iteration ', i, ' -- with thresh: ', float(work_thr), ' and Density: ', float(density), '...'))
+    density = nx.density(nx.from_numpy_matrix(conn_matrix))
+    while float(work_thr) < thr_max and float(thr) < float(density):
+        work_thr = float(work_thr) + float(1)
+        density = nx.density(nx.from_numpy_matrix(thresholding.threshold_absolute(conn_matrix, work_thr)))
+        print("%s%d%s%.2f%s%.2f%s" % ('Iteration ', i, ' -- with Thresh: ', float(work_thr), ' and Density: ',
+                                      float(density), '...'))
         i = i + 1
     return conn_matrix
 
@@ -76,8 +72,8 @@ def density_thresholding(conn_matrix, thr):
 def est_density(func_mat):
     '''# Adapted from bctpy
     '''
-    fG=nx.from_numpy_matrix(func_mat)
-    density=nx.density(fG)
+    fG = nx.from_numpy_matrix(func_mat)
+    density = nx.density(fG)
     return density
 
 
@@ -143,14 +139,15 @@ def autofix(W, copy=True):
 
 def disparity_filter(G, weight='weight'):
     from scipy import integrate
-    ''' 
+    '''
     Compute significance scores (alpha) for weighted edges in G as defined in Serrano et al. 2009
         Args
             G: Weighted NetworkX graph
         Returns
             Weighted graph with a significance score (alpha) assigned to each edge
         References
-            M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks. PNAS, 106:16, pp. 6483-6488.
+            M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks. PNAS, 106:16, 
+            pp. 6483-6488.
     '''
 
     if nx.is_directed(G):  # directed case
@@ -229,7 +226,8 @@ def disparity_filter_alpha_cut(G, weight='weight', alpha_t=0.4, cut_mode='or'):
 
         References
         ---------
-        .. M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks. PNAS, 106:16, pp. 6483-6488.
+        .. M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks. PNAS, 106:16,
+        pp. 6483-6488.
     '''
 
     if nx.is_directed(G):  # Directed case:
@@ -300,7 +298,8 @@ def knn(conn_matrix, k):
 
 
 def local_thresholding_prop(conn_matrix, thr):
-    from pynets import netstats, thresholding
+    from pynets import thresholding
+    from pynets.stats import netstats
     '''
     Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
     successive N-nearest neighbour degree graphs to achieve target proportional threshold.
@@ -321,13 +320,16 @@ def local_thresholding_prop(conn_matrix, thr):
     weights = weights[~np.isnan(weights)]
     edgenum = int(float(thr) * float(len(weights)))
     if len_edges > edgenum:
-        print("%s%s%s" % ('Warning: The minimum spanning tree already has: ', len_edges, ' edges, select more edges. Local Threshold will be applied by just retaining the Minimum Spanning Tree'))
+        print("%s%s%s" % ('Warning: The minimum spanning tree already has: ', len_edges,
+                          ' edges, select more edges. Local Threshold will be applied by just retaining the Minimum '
+                          'Spanning Tree'))
         conn_matrix_thr = nx.to_numpy_array(G)
         return conn_matrix_thr
 
     k = 1
     len_edge_list = []
-    while len_edges < edgenum and k <= np.shape(conn_matrix)[0] and (len(len_edge_list[-fail_tol:]) - len(set(len_edge_list[-fail_tol:]))) < (fail_tol-1):
+    while len_edges < edgenum and k <= np.shape(conn_matrix)[0] and (len(len_edge_list[-fail_tol:]) -
+                                                                     len(set(len_edge_list[-fail_tol:]))) < (fail_tol-1):
         print(k)
         print(len_edges)
         len_edge_list.append(len_edges)
@@ -356,19 +358,22 @@ def local_thresholding_prop(conn_matrix, thr):
                 break
 
         if (len(len_edge_list[-fail_tol:]) - len(set(len_edge_list[-fail_tol:]))) >= (fail_tol-1):
-            print("%s%s%s" % ('Cannot apply local thresholding to achieve threshold of: ', thr, '. Using maximally saturated connected matrix instead...'))
+            print("%s%s%s" % ('Cannot apply local thresholding to achieve threshold of: ', thr,
+                              '. Using maximally saturated connected matrix instead...'))
 
         k += 1
 
     conn_matrix_thr = nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64)
     if len(min_t.nodes()) < conn_matrix.shape[0]:
-        raise RuntimeWarning("%s%s%s" % ('Cannot apply local thresholding to achieve threshold of: ', thr, '. Try a higher -thr or -min_thr'))
+        raise RuntimeWarning("%s%s%s" % ('Cannot apply local thresholding to achieve threshold of: ', thr,
+                                         '. Try a higher -thr or -min_thr'))
 
     return conn_matrix_thr
 
 
 def local_thresholding_dens(conn_matrix, thr):
-    from pynets import netstats, thresholding
+    from pynets import thresholding
+    from pynets.stats import netstats
     '''
     Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
     successive N-nearest neighbour degree graphs to achieve target density.
@@ -385,7 +390,8 @@ def local_thresholding_dens(conn_matrix, thr):
     mst_density = nx.density(min_t)
     G_density = nx.density(G)
     if mst_density > G_density:
-        print("%s%s%s" % ('Warning: The minimum spanning tree already has: ', thr, ' density. Local Threshold will be applied by just retaining the Minimum Spanning Tree'))
+        print("%s%s%s" % ('Warning: The minimum spanning tree already has: ', thr,
+                          ' density. Local Threshold will be applied by just retaining the Minimum Spanning Tree'))
         conn_matrix_thr = nx.to_numpy_array(G)
         return conn_matrix_thr
 
@@ -419,18 +425,21 @@ def local_thresholding_dens(conn_matrix, thr):
                 break
 
         if (len(dense_list[-fail_tol:]) - len(set(dense_list[-fail_tol:]))) >= (fail_tol - 1):
-            print("%s%s%s" % ('Cannot apply local thresholding to achieve density of: ', thr, '. Using maximally saturated connected matrix instead...'))
+            print("%s%s%s" % ('Cannot apply local thresholding to achieve density of: ', thr,
+                              '. Using maximally saturated connected matrix instead...'))
 
         k += 1
 
     conn_matrix_thr = nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64)
     if len(min_t.nodes()) < conn_matrix.shape[0]:
-        raise RuntimeWarning("%s%s%s" % ('Cannot apply local thresholding to achieve density of: ', thr, '. Try a higher -thr or -min_thr'))
+        raise RuntimeWarning("%s%s%s" % ('Cannot apply local thresholding to achieve density of: ', thr,
+                                         '. Try a higher -thr or -min_thr'))
 
     return conn_matrix_thr
 
 
-def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree, smooth, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot):
+def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
+                smooth, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary):
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -438,9 +447,13 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     if parc is True:
         node_size = 'parc'
 
+    if np.count_nonzero(conn_matrix) == 0:
+        raise ValueError('ERROR: Raw connectivity matrix contains only zeros.')
+
     # Save unthresholded
     unthr_path = utils.create_unthr_path(ID, network, conn_model, roi, dir_path)
-    np.save(unthr_path, conn_matrix)
+    utils.save_mat(conn_matrix, unthr_path)
+
     if min_span_tree is True:
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
@@ -450,7 +463,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
             thr_type = 'MSTdens'
             conn_matrix_thr = thresholding.local_thresholding_dens(conn_matrix, thr)
     elif disp_filt is True:
-        thr_type = 'DISPα'
+        thr_type = 'DISP_alpha'
         G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
         # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
         print('Computing edge disparity significance with alpha = %s' % thr)
@@ -472,20 +485,30 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         print('Warning: Fragmented graph')
 
     # Save thresholded mat
-    est_path = utils.create_est_path(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type)
-    np.save(est_path, conn_matrix_thr)
+    est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot,
+                                          thr_type)
 
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot
+    utils.save_mat(conn_matrix_thr, est_path)
+
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary
 
 
-def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, roi, node_size, conn_matrix, parc, min_span_tree,
-                disp_filt, atlas_select, uatlas_select, label_names, coords):
+def thresh_diff(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
+                disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, target_samples,
+                track_type, atlas_mni, streams):
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
     edge_threshold = "%s%s" % (str(thr_perc), '%')
     if parc is True:
         node_size = 'parc'
+
+    if np.count_nonzero(conn_matrix) == 0:
+        raise ValueError('ERROR: Raw connectivity matrix contains only zeros.')
+
+    # Save unthresholded
+    unthr_path = utils.create_unthr_path(ID, network, conn_model, roi, dir_path)
+    utils.save_mat(conn_matrix, unthr_path)
 
     if min_span_tree is True:
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
@@ -496,7 +519,7 @@ def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, roi, node_s
             thr_type = 'MSTdens'
             conn_matrix_thr = thresholding.local_thresholding_dens(conn_matrix, thr)
     elif disp_filt is True:
-        thr_type = 'DISPα'
+        thr_type = 'DISP_alpha'
         G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
         # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
         print('Computing edge disparity significance with alpha = %s' % thr)
@@ -506,7 +529,7 @@ def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, roi, node_s
         conn_matrix_thr = nx.to_numpy_array(G1)
     else:
         if dens_thresh is False:
-            thr_type = 'prop'
+            thr_type='prop'
             print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         else:
@@ -518,7 +541,9 @@ def thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path, roi, node_s
         print('Warning: Fragmented graph')
 
     # Save thresholded mat
-    smooth = 0
-    est_path = utils.create_est_path(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, thr_type)
-    np.save(est_path, conn_matrix_thr)
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, atlas_select, uatlas_select, label_names, coords
+    est_path = utils.create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples,
+                                          track_type, thr_type)
+
+    utils.save_mat(conn_matrix_thr, est_path)
+
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, norm, binary, target_samples, track_type, atlas_mni, streams

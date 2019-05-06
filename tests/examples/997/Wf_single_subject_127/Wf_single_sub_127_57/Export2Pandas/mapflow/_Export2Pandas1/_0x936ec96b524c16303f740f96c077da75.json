@@ -1,0 +1,21 @@
+[
+    [
+        "ID",
+        "127"
+    ],
+    [
+        "csv_loc",
+        [
+            "/Users/derekpisner/Applications/PyNets/tests/examples/997/atlas_aal/127_net_metrics_sps_0.3_4mm.csv",
+            "3aa08ceeecbefdd6a39041853d1614ee"
+        ]
+    ],
+    [
+        "network",
+        null
+    ],
+    [
+        "roi",
+        null
+    ]
+]

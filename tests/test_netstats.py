@@ -10,7 +10,7 @@ import numpy as np
 import networkx as nx
 import time
 from pathlib import Path
-from pynets import netstats
+from pynets.stats import netstats
 
 
 def test_average_shortest_path_length_for_all():
@@ -215,8 +215,10 @@ def test_extractnetstats():
     node_size = 'parc'
     smooth = 2
     c_boot = 0
+    norm = 1
+    binary = False
 
     start_time = time.time()
-    out_path = netstats.extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_size, smooth, c_boot)
+    out_path = netstats.extractnetstats(ID, network, thr, conn_model, est_path, mask, prune, node_size, smooth, c_boot, norm, binary)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
     assert out_path is not None

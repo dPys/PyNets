@@ -34,6 +34,8 @@ def test_thresh_func():
     parc = False
     node_size = 'TEST'
     prune = 1
+    norm = 1
+    binary = False
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     uatlas_select = None
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
@@ -45,9 +47,9 @@ def test_thresh_func():
 
     start_time = time.time()
     [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _, _, _, _, _, _,
-    _, _, _, _] = thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model,
+    _, _, _, _, _, _] = thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model,
     network, ID, dir_path, roi, node_size, min_span_tree, smooth, disp_filt,
-    parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot)
+    parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary)
     print("%s%s%s" %
     ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))

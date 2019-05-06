@@ -13,7 +13,7 @@ try:
     import cPickle as pickle
 except ImportError:
     import _pickle as pickle
-from pynets import estimation
+from pynets.fmri import estimation
 from pathlib import Path
 
 
@@ -24,8 +24,6 @@ def test_get_conn_matrix_cov():
     time_series_file = dir_path + '/coords_power_2011/997_wb_net_ts.txt'
     time_series = np.genfromtxt(time_series_file)
     conn_model = 'cov'
-
-
     node_size = 2
     smooth = 2
     c_boot = 0
@@ -37,6 +35,8 @@ def test_get_conn_matrix_cov():
     disp_filt = False
     parc = None
     prune = 1
+    norm = 1
+    binary = False
     atlas_select = 'whole_brain_cluster_labels_PCA200'
     uatlas_select = None
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
@@ -49,9 +49,9 @@ def test_get_conn_matrix_cov():
     start_time = time.time()
     [conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network,
     ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select,
-    label_names, coords, c_boot] = estimation.get_conn_matrix(time_series, conn_model,
+    label_names, coords, c_boot, norm, binary] = estimation.get_conn_matrix(time_series, conn_model,
     dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot)
+    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary)
     print("%s%s%s" %
     ('get_conn_matrix --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 

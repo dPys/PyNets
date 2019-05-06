@@ -5,13 +5,12 @@ Created on Wed Dec 27 16:19:14 2017
 @authors: Derek Pisner & Ryan Hammonds
 
 """
-from pynets import clustools
 try:
     import cPickle as pickle
 except ImportError:
     import _pickle as pickle
 from pathlib import Path
-
+from pynets.fmri import clustools
 
 def test_individual_tcorr_clustering():
     base_dir = str(Path(__file__).parent/"examples")

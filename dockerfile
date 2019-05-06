@@ -25,6 +25,7 @@ RUN apt-get update -qq \
         libgl1-mesa-glx \
         graphviz \
         libpng-dev \
+        gnupg \
         build-essential \
         libgomp1 \
         libmpich-dev \
@@ -33,19 +34,20 @@ RUN apt-get update -qq \
         unzip \
         screen \
         git \
-        mesa-common-dev \
-        libglu1-mesa-dev \
         g++ \
-        libgtk2.0-dev \
-        libglib2.0-dev \
-        libglibmm-2.4-dev \
-        libgtkmm-2.4-dev \
-        libgtkglext1-dev \
+        zip \
+        unzip \
+        libglu1 \
+        zlib1g-dev \
+        libfreetype6-dev \
+        pkg-config \
+        r-base-core \
         libgsl0-dev \
-        libgl1-mesa-dev \
-        qt5-default \
-        libqt5svg5* \
-        libeigen3-dev \
+        openssl \
+        gsl-bin \
+        libglu1-mesa-dev \
+        libglib2.0-0 \
+        libglw1-mesa \ 
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && curl -o /tmp/libxp6.deb -sSL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
@@ -56,12 +58,34 @@ RUN apt-get update -qq \
     && chmod 777 -R /opt
 
 # Add Neurodebian package repositories (i.e. for FSL)
-RUN apt-get update && apt-get install -my wget gnupg
 RUN curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key add /root/.neurodebian.gpg && \
     (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true) && \
     apt-get update -qq
-RUN apt-get update -qq && apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates
+RUN apt-get update -qq && apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates fsl-first-data
+
+# Add git-lfs
+# Configure git-lfs
+RUN apt-get install -y apt-transport-https debian-archive-keyring
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
+    apt-get update && \
+    apt-get install -y git-lfs
+
+# Install AFNI
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+		    ed gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa \
+		    libgomp1 libjpeg62 libxm4 netpbm tcsh xfonts-base xvfb \
+                    afni=16.2.07~dfsg.1-5~nd16.04+1 \
+                    convert3d \
+                    git-annex-standalone && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Installing ANTs 2.2.0 (NeuroDocker build)
+ENV ANTSPATH=/usr/lib/ants
+RUN mkdir -p $ANTSPATH && \
+    curl -sSL "https://dl.dropbox.com/s/2f4sui1z6lcgyek/ANTs-Linux-centos5_x86_64-v2.2.0-0740f91.tar.gz" \
+    | tar -xzC $ANTSPATH --strip-components 1
 
 USER neuro
 WORKDIR /home/neuro
@@ -78,13 +102,10 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh
 
 # Install pynets.
-RUN conda install -yq \
-      python=3.6 \
-      ipython \
-    && conda clean -tipsy \
-#    && pip install scipy scikit-learn>=0.19 \
-#    && pip install -e git://github.com/dPys/nilearn.git#egg=0.4.2 \
-    && pip install pynets==0.7.31
+RUN conda install -yq python=3.6 ipython
+RUN pip install --upgrade pip
+RUN conda clean -tipsy
+RUN pip install pynets==0.7.33 awscli pybids boto3 python-dateutil requests dipy
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
@@ -98,15 +119,6 @@ RUN conda install -yq \
     && conda clean -tipsy \
     && pip install skggm
 
-# Install brainiak
-#RUN conda install -yq -c brainiak -c defaults -c conda-forge brainiak
-
-# Install mrtrix
-#RUN git clone https://github.com/MRtrix3/mrtrix3.git /opt/mrtrix3
-#ENV EIGEN_CFLAGS="-isystem /usr/include/eigen3"
-#RUN cd /opt/mrtrix3 && ./configure && ./build && ./set_path
-#ENV PATH=/opt/mrtrix3/bin:$PATH
-
 USER root
 RUN chown -R neuro /opt \
     && chmod a+s -R /opt \
@@ -118,6 +130,9 @@ RUN chown -R neuro /opt \
 RUN apt-get remove --purge -y \
     git \
     build-essential
+
+# Delete buggy line in dipy
+RUN sed -i -e '189d;190d' /opt/conda/lib/python3.6/site-packages/dipy/tracking/eudx.py
 
 USER neuro
 
@@ -141,3 +156,30 @@ ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
 ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
 ENV FSLOUTPUTTYPE=NIFTI_GZ
+
+# AFNI ENV Config
+ENV AFNI_MODELPATH="/usr/lib/afni/models" \
+    AFNI_IMSAVE_WARNINGS="NO" \
+    AFNI_TTATLAS_DATASET="/usr/share/afni/atlases" \
+    AFNI_PLUGINPATH="/usr/lib/afni/plugins"
+ENV PATH="/usr/lib/afni/bin:$PATH"
+
+# ANTs ENV Config
+ENV PATH=$ANTSPATH:$PATH
+ENV ANTS_VERSION=2.2.0
+
+# Misc environment vars
+ENV MPLCONFIGDIR /tmp/matplotlib
+ENV PYTHONWARNINGS ignore
+
+# Unless otherwise specified each process should only use one thread - nipype
+# will handle parallelization
+ENV MKL_NUM_THREADS=1 \
+    OMP_NUM_THREADS=1
+
+# Precaching fonts, set 'Agg' as default backend for matplotlib
+RUN python -c "from matplotlib import font_manager" && \
+    sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
+
+# and add it as an entrypoint
+#ENTRYPOINT ["pynets_run"]

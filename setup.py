@@ -15,15 +15,18 @@ requirements = [
     'numpy>=1.12.1',
     'seaborn>=0.7.1',
     'matplotlib>=2.0.0',
-    'nilearn>=0.5.0a0',
-    'pandas>=0.19.2',
+    'nilearn>=0.5.0',
+    'pandas>=0.24.2',
     'networkx>=2.0',
     'nibabel>=2.1.0',
     'scikit_learn>=0.18.2',
     'pathlib>=1.0.1',
     'setuptools>=39.0.1',
     'configparser>=3.5.0',
-    'PyYAML>=3.12'
+    'PyYAML>=3.12',
+    'boto3>=1.9.111',
+    'colorama>=0.3.9',
+    'pybids>=0.6.4'
 ]
 
 setup_requirements = [
@@ -38,13 +41,13 @@ test_requirements = [
 
 setup(
     name='pynets',
-    version='0.7.31',
+    version='0.7.33',
     description="A Fully-Automated Workflow for Reproducible Graph Analysis of Functional and Structural Connectomes",
     #long_description=readme + '\n\n',
     author="Derek Pisner",
     author_email='dpisner@utexas.edu',
     url='https://github.com/dPys/pynets',
-    packages=find_packages(include=['pynets']),
+    packages=['pynets'],
     entry_points={
         'console_scripts': [
             'pynets=pynets.cli:main'
