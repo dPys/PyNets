@@ -4,87 +4,7 @@
     <bookmark url="file://$PROJECT_DIR$/../ndmg/ndmg/scripts/ndmg_cloud.py" description="    print(&quot;Generating job for each subject...&quot;)&#10;  ..." line="105" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/pynets/dmri/estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/estimation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/dmri/track.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/track.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/nodemaker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/registration/register.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/register.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/thresholding.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/_thr_1.0/pass_meta_ins_node/_0xcdc10ff4ff0d19631bbf02a8813b849d.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/_thr_1.0/pass_meta_ins_node/_inputs.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/_thr_1.0/pass_meta_ins_node/_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/_thr_1.0/pass_meta_ins_node/_report/report.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/_thr_1.0/pass_meta_ins_node/result_pass_meta_ins_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/_thr_1.0/pass_meta_outs_node/_0x923e16f16c71211b6851665365bd71d0.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/_thr_1.0/pass_meta_outs_node/_inputs.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/_thr_1.0/pass_meta_outs_node/_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/_thr_1.0/pass_meta_outs_node/_report/report.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/_thr_1.0/pass_meta_outs_node/result_pass_meta_outs_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/_thr_1.0/thresh_func_node/_0xa4f29894437c56a96a964139ffc8d87f.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/_thr_1.0/thresh_func_node/_inputs.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/_thr_1.0/thresh_func_node/_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/_thr_1.0/thresh_func_node/_report/report.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/_thr_1.0/thresh_func_node/result_thresh_func_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/extract_ts_node/_0xc4d2e808d5bb8247341aae20783ec1ad.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/extract_ts_node/_inputs.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/extract_ts_node/_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/extract_ts_node/_report/report.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/extract_ts_node/result_extract_ts_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/fetch_nodes_and_labels_node/_0x6432762e912c92be045896afbb50a2b2.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/fetch_nodes_and_labels_node/_inputs.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/fetch_nodes_and_labels_node/_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/fetch_nodes_and_labels_node/_report/report.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/fetch_nodes_and_labels_node/result_fetch_nodes_and_labels_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/get_conn_matrix_node/_0xc36a8db43bf4ac661909bf8d89d51df8.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/get_conn_matrix_node/_inputs.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/get_conn_matrix_node/_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/get_conn_matrix_node/_report/report.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/get_conn_matrix_node/result_get_conn_matrix_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/node_gen_node/_0x731b35523868133b40eb4402a126da81.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/node_gen_node/_inputs.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/node_gen_node/_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/node_gen_node/_report/report.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/Meta_wf_127/functional_connectometry_127/node_gen_node/result_node_gen_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/AggregatePandasPickles/_0xed13b086fa20d6dbc659abf8518f935c.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/AggregatePandasPickles/_inputs.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/AggregatePandasPickles/_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/AggregatePandasPickles/_report/report.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/AggregatePandasPickles/result_AggregatePandasPickles.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/CollectPandasDfs/_0xfa6cc2bf1e78be74ba861848293fa6b3.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/CollectPandasDfs/_inputs.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/CollectPandasDfs/_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/CollectPandasDfs/_report/report.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/CollectPandasDfs/result_CollectPandasDfs.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/Export2Pandas/_0x98598169be6b40db2a0e7b2da42c9878.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/Export2Pandas/_inputs.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/Export2Pandas/_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/Export2Pandas/_report/report.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/Export2Pandas/mapflow/_Export2Pandas0/_0x95be26b80bee300b997c9aa659da0f24.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/Export2Pandas/mapflow/_Export2Pandas0/_inputs.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/Export2Pandas/mapflow/_Export2Pandas0/_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/Export2Pandas/mapflow/_Export2Pandas0/_report/report.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/Export2Pandas/mapflow/_Export2Pandas0/result__Export2Pandas0.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/Export2Pandas/result_Export2Pandas.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/ExtractNetStats/_0x7101fef4e39a9b472139c133133ff09c.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/ExtractNetStats/_inputs.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/ExtractNetStats/_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/ExtractNetStats/_report/report.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/ExtractNetStats/mapflow/_ExtractNetStats0/_0xb6d4d36125dca25b9acc25b28de482ab.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/ExtractNetStats/mapflow/_ExtractNetStats0/_inputs.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/ExtractNetStats/mapflow/_ExtractNetStats0/_node.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/ExtractNetStats/mapflow/_ExtractNetStats0/_report/report.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/ExtractNetStats/mapflow/_ExtractNetStats0/result__ExtractNetStats0.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/_thr_1.0/ExtractNetStats/result_ExtractNetStats.pklz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/d3.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/graph.dot" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/graph.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/graph.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/graph1.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/Wf_single_subject_127/Wf_single_sub_127_356/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/997/atlas_aal/net_metric_list" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/997/atlas_aal/net_metric_list" afterDir="false" />
-    </list>
+    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="" />
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -109,11 +29,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="373">
-              <caret line="650" column="69" selection-start-line="650" selection-start-column="69" selection-end-line="650" selection-end-column="82" />
+            <state relative-caret-position="678">
+              <caret line="650" column="82" lean-forward="true" selection-start-line="650" selection-start-column="82" selection-end-line="650" selection-end-column="93" />
               <folding>
                 <element signature="e#109#127#0" expanded="true" />
               </folding>
@@ -121,7 +41,7 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="310">
@@ -204,7 +124,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>dwi</find>
       <find>anat_loc</find>
       <find>lab_arr</find>
       <find>pass_meta</find>
@@ -234,6 +153,7 @@
       <find>net_parce</find>
       <find>save_nifti_parcels_node</find>
       <find>aattp.csv</find>
+      <find>get_shape</find>
     </findStrings>
     <replaceStrings>
       <replace>join_iters</replace>
@@ -315,8 +235,8 @@
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="325" />
-    <option name="y" value="23" />
+    <option name="x" value="240" />
+    <option name="y" value="642" />
     <option name="width" value="1503" />
     <option name="height" value="1097" />
   </component>
@@ -531,15 +451,15 @@
       <workItem from="1555524636837" duration="98000" />
       <workItem from="1555524754291" duration="8135000" />
       <workItem from="1555621726569" duration="1335000" />
-      <workItem from="1555696086993" duration="187860000" />
+      <workItem from="1555696086993" duration="188064000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="197428000" />
+    <option name="totallyTimeSpent" value="197632000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="325" y="23" width="1503" height="1097" extended-state="0" />
+    <frame x="240" y="642" width="1503" height="1097" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49950248" visible="true" weight="0.02053388" />
@@ -803,16 +723,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="373">
-          <caret line="650" column="69" selection-start-line="650" selection-start-column="69" selection-end-line="650" selection-end-column="82" />
-          <folding>
-            <element signature="e#109#127#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="597">
@@ -838,6 +748,16 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="310">
           <caret line="80" column="41" selection-start-line="80" selection-start-column="41" selection-end-line="80" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="678">
+          <caret line="650" column="82" lean-forward="true" selection-start-line="650" selection-start-column="82" selection-end-line="650" selection-end-column="93" />
+          <folding>
+            <element signature="e#109#127#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
