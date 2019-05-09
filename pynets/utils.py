@@ -849,45 +849,6 @@ def merge_dicts(x, y):
     return z
 
 
-class PassMetaOutsInputSpec(BaseInterfaceInputSpec):
-    conn_model_iterlist = traits.Any(mandatory=True)
-    est_path_iterlist = traits.Any(mandatory=False)
-    node_size_iterlist = traits.Any(mandatory=True)
-    thr_iterlist = traits.Str(mandatory=True)
-    prune_iterlist = File(exists=True, mandatory=True, desc="")
-    ID_iterlist = traits.Any(mandatory=False)
-    roi_iterlist = traits.Any(mandatory=False)
-    norm_iterlist = traits.Any(mandatory=False)
-    binary_iterlist = traits.Any(mandatory=False)
-
-
-class PassMetaOutsOutputSpec(TraitedSpec):
-    out_file = File()
-
-
-class PassMetaOuts(BaseInterface):
-    input_spec = PassMetaOutsInputSpec
-    output_spec = PassMetaOutsOutputSpec
-
-    def _run_interface(self, runtime):
-        out = pass_meta_outs(
-            self.inputs.conn_model_iterlist,
-            self.inputs.est_path_iterlist,
-            self.inputs.node_size_iterlist,
-            self.inputs.thr_iterlist,
-            self.inputs.prune_iterlist,
-            self.inputs.ID_iterlist,
-            self.inputs.roi_iterlist,
-            self.inputs.norm_iterlist,
-            self.inputs.binary_iterlist)
-        setattr(self, '_outpath', out)
-        return runtime
-
-    def _list_outputs(self):
-        import os.path as op
-        return {'out_file': op.abspath(getattr(self, '_outpath'))}
-
-
 class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
     ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=False)

@@ -294,16 +294,17 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                                                           ('binary', 'binary')])
                          ])
 
+    pass_meta_outs_node = pe.Node(niu.Function(input_names=['conn_model_iterlist', 'est_path_iterlist',
+                                                            'network_iterlist', 'node_size_iterlist',
+                                                            'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
+                                                            'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
+                                               output_names=['conn_model_iterlist', 'est_path_iterlist',
+                                                             'network_iterlist', 'node_size_iterlist',
+                                                             'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
+                                                             'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
+                                               function=pass_meta_outs), name='pass_meta_outs_node')
+
     if (func_file and not dwi_file) or (dwi_file and not func_file):
-        pass_meta_outs_node = pe.Node(niu.Function(input_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                                'network_iterlist', 'node_size_iterlist',
-                                                                'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
-                                                                'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
-                                                   output_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                                 'network_iterlist', 'node_size_iterlist',
-                                                                 'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
-                                                                 'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
-                                                   function=pass_meta_outs), name='pass_meta_outs_node')
         if func_file and not dwi_file:
             meta_wf.connect([(pass_meta_ins_func_node, pass_meta_outs_node, [('conn_model_iterlist', 'conn_model_iterlist'),
                                                                             ('est_path_iterlist', 'est_path_iterlist'),
@@ -329,12 +330,6 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                                             ('binary_iterlist', 'binary_iterlist')])
                              ])
     elif func_file and dwi_file:
-        pass_meta_outs_node = pe.MapNode(interface=PassMetaOuts(), name='pass_meta_outs_node',
-                                         iterfield=['conn_model_iterlist', 'est_path_iterlist', 'network_iterlist',
-                                                    'node_size_iterlist', 'thr_iterlist', 'prune_iterlist',
-                                                    'ID_iterlist', 'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
-                                         nested=True)
-
         meta_wf.connect([(pass_meta_ins_struct_node, pass_meta_outs_node, [('conn_model_iterlist', 'conn_model_iterlist'),
                                                                            ('est_path_iterlist', 'est_path_iterlist'),
                                                                            ('network_iterlist', 'network_iterlist'),
