@@ -366,134 +366,124 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     return
 
 
-def structural_plotting(conn_matrix_symm, label_names, atlas_select, ID, bedpostx_dir, network, parc, roi, coords,
-                        dir_path, conn_model, thr, node_size, smooth):
-    import matplotlib
-    matplotlib.use('agg')
-    from matplotlib import pyplot as plt
-    import nipype.interfaces.fsl as fsl
-    import nipype.pipeline.engine as pe
-    import seaborn as sns
+def structural_plotting(conn_matrix, uatlas_select, streamlines_mni, template_mask, interactive=False):
+    import nibabel as nib
+    import numpy as np
+    import networkx as nx
+    import os
     import pkg_resources
-    from matplotlib import colors
-    from nilearn import plotting as niplot
-    from pynets.plotting import plot_gen, plot_graphs
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
+    from nibabel.affines import apply_affine
+    from fury import actor, window, colormap, ui
+    from dipy.tracking.utils import streamline_near_roi
+    from nilearn.plotting import find_parcellation_cut_coords
+    from nilearn.image import resample_to_img
+    from pynets.thresholding import normalize
 
-    edge_threshold = 0.10
-    connectome_fdt_thresh = 90
-    dpi_resolution = 500
-    bpx_trx = False
-
-    # # Auto-set INPUTS# #
-    try:
-        FSLDIR = os.environ['FSLDIR']
-    except NameError:
-        print('FSLDIR environment variable not set!')
-    nodif_brain_mask_path = "%s%s" % (bedpostx_dir, '/nodif_brain_mask.nii.gz')
-
-    if parc is True:
-        node_size = 'parc'
-
-    if network:
-        probtrackx_output_dir_path = "%s%s%s%s%s%s" % (dir_path, '/probtrackx_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else 'nosm_'), network)
-    else:
-        probtrackx_output_dir_path = "%s%s%s%s%s" % (dir_path, '/probtrackx_WB_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0 else 'nosm'))
-    # # Auto-set INPUTS# #
-
-    # G_pre=nx.from_numpy_matrix(conn_matrix_symm)
-    # if pruning is True:
-    #     [G, pruned_nodes] = most_important(G_pre)
-    # else:
-    #     G = G_pre
-    # conn_matrix = nx.to_numpy_array(G)
-    #
-    # pruned_nodes.sort(reverse=True)
-    # for j in pruned_nodes:
-    #     del label_names[label_names.index(label_names[j])]
-    #     del coords[coords.index(coords[j])]
-    #
-    # pruned_edges.sort(reverse=True)
-    # for j in pruned_edges:
-    #     del label_names[label_names.index(label_names[j])]
-    #     del coords[coords.index(coords[j])]
-
-    # Plot adj. matrix based on determined inputs
-    plot_graphs.plot_conn_mat_struct(conn_matrix_symm, conn_model, atlas_select, dir_path, ID, network, label_names, roi,
-                                  thr, node_size, smooth)
-
-    if bpx_trx is True:
-        # Prepare glass brain figure
-        fdt_paths_loc = "%s%s" % (probtrackx_output_dir_path, '/fdt_paths.nii.gz')
-
-        # Create transform matrix between diff and MNI using FLIRT
-        flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-        flirt.inputs.reference = "%s%s" % (FSLDIR, '/data/standard/MNI152_T1_1mm_brain.nii.gz')
-        flirt.inputs.in_file = nodif_brain_mask_path
-        flirt.inputs.out_matrix_file = "%s%s" % (bedpostx_dir, '/xfms/diff2MNI.mat')
-        flirt.inputs.out_file = '/tmp/out_flirt.nii.gz'
-        flirt.run()
-
-        # Apply transform between diff and MNI using FLIRT
-        flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-        flirt.inputs.reference = "%s%s" % (FSLDIR, '/data/standard/MNI152_T1_1mm_brain.nii.gz')
-        flirt.inputs.in_file = nodif_brain_mask_path
-        flirt.inputs.apply_xfm = True
-        flirt.inputs.in_matrix_file = "%s%s" % (bedpostx_dir, '/xfms/diff2MNI.mat')
-        flirt.inputs.out_file = "%s%s" % (bedpostx_dir, '/xfms/diff2MNI_affine.nii.gz')
-        flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
-        flirt.run()
-
-        flirt = pe.Node(interface=fsl.FLIRT(cost_func='mutualinfo'), name='coregister')
-        flirt.inputs.reference = "%s%s" % (FSLDIR, '/data/standard/MNI152_T1_1mm_brain.nii.gz')
-        flirt.inputs.in_file = fdt_paths_loc
-        out_file_MNI = "%s%s" % (fdt_paths_loc.split('.nii')[0], '_MNI.nii.gz')
-        flirt.inputs.out_file = out_file_MNI
-        flirt.inputs.out_matrix_file = '/tmp/out_flirt.mat'
-        flirt.inputs.apply_xfm = True
-        flirt.inputs.in_matrix_file = "%s%s" % (bedpostx_dir, '/xfms/diff2MNI.mat')
-        flirt.run()
-
-        fdt_paths_MNI_loc = "%s%s" % (probtrackx_output_dir_path, '/fdt_paths_MNI.nii.gz')
-    else:
-        fdt_paths_MNI_loc = None
-
-    colors.Normalize(vmin=-1, vmax=1)
-    clust_pal = sns.color_palette("Blues_r", 4)
-    clust_colors = colors.to_rgba_array(clust_pal)
-
-    # Plotting with glass brain
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
-    connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
-    connectome.add_overlay(ch2better_loc, alpha=0.5, cmap=plt.cm.gray)
-    [z_min, z_max] = -np.abs(conn_matrix_symm).max(), np.abs(conn_matrix_symm).max()
-    connectome.add_graph(conn_matrix_symm, coords, edge_threshold=edge_threshold, node_color=clust_colors,
-                         edge_cmap=plt.cm.binary, edge_vmax=z_max, edge_vmin=z_min, node_size=4)
-    if bpx_trx is True and fdt_paths_MNI_loc:
-        connectome.add_overlay(img=fdt_paths_MNI_loc, threshold=connectome_fdt_thresh, cmap=niplot.cm.cyan_copper_r,
-                               alpha=0.6)
 
-    # Plot connectome
-    if roi:
-        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(op.basename(roi).split('.')[0]), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else 'nosm_'), 'struct_glass_viz.png')
-        coord_path = "%s%s%s%s" % (dir_path, '/struct_coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
-        labels_path = "%s%s%s%s" % (dir_path, '/struct_labelnames_', op.basename(roi).split('.')[0], '_plotting.pkl')
+    # Instantiate scene
+    r = window.Renderer()
+
+    # Set camera
+    r.set_camera(position=(-176.42, 118.52, 128.20),
+                 focal_point=(113.30, 128.31, 76.56),
+                 view_up=(0.18, 0.00, 0.98))
+
+    # Load atlas rois
+    atlas_img = nib.load(uatlas_select)
+    atlas_img_data = atlas_img.get_data()
+
+    # Collapse list of connected streamlines for visualization
+    streamlines = nib.streamlines.load(streamlines_mni).streamlines
+    parcels = []
+    i = 0
+    for roi in np.unique(atlas_img_data)[1:]:
+        parcels.append(atlas_img_data == roi)
+        i = i + 1
+
+    # Add streamlines as cloud of 'white-matter'
+    streamlines_actor = actor.line(streamlines,
+                                   colormap.create_colormap(np.ones([len(streamlines)]), name='Greys_r', auto=True),
+                                   lod_points=10000, depth_cue=True, linewidth=0.2, fake_tube=True, opacity=1.0)
+    r.add(streamlines_actor)
+
+    # Creat palette of roi colors and add them to the scene as faint contours
+    roi_colors = np.random.rand(int(np.max(atlas_img_data)), 3)
+    parcel_contours = []
+    i = 0
+    for roi in np.unique(atlas_img_data)[1:]:
+        include_roi_coords = np.array(np.where(atlas_img_data == roi)).T
+        x_include_roi_coords = apply_affine(np.eye(4), include_roi_coords)
+        bool_list = []
+        for sl in streamlines:
+            bool_list.append(streamline_near_roi(sl, x_include_roi_coords, tol=1.0, mode='either_end'))
+        if sum(bool_list) > 0:
+            print('ROI: ' + str(i))
+            parcel_contours.append(actor.contour_from_roi(atlas_img_data == roi, color=roi_colors[i], opacity=0.2))
+        else:
+            pass
+        i = i + 1
+
+    for vol_actor in parcel_contours:
+        r.add(vol_actor)
+
+    # Get voxel coordinates of parcels and add them as 3d spherical centroid nodes
+    [coords, label_names] = find_parcellation_cut_coords(atlas_img, background_label=0, return_label_names=True)
+
+    def mmToVox(nib_nifti, mmcoords):
+        return nib.affines.apply_affine(np.linalg.inv(nib_nifti.affine), mmcoords)
+
+    coords_vox = []
+    for i in coords:
+        coords_vox.append(mmToVox(atlas_img, i))
+    coords_vox = list(set(list(tuple(x) for x in coords_vox)))
+
+    # Build an edge list of 3d lines
+    G = nx.from_numpy_array(normalize(conn_matrix))
+    for i in G.nodes():
+        nx.set_node_attributes(G, {i: coords_vox[i]}, label_names[i])
+
+    G.remove_nodes_from(list(nx.isolates(G)))
+    G_filt = nx.Graph()
+    fedges = filter(lambda x: G.degree()[x[0]] > 0 and G.degree()[x[1]] > 0, G.edges())
+    G_filt.add_edges_from(fedges)
+
+    coord_nodes = []
+    for i in range(len(G.edges())):
+        edge = list(G.edges())[i]
+        [x, y] = edge
+        x_coord = list(G.nodes[x].values())[0]
+        x_label = list(G.nodes[x].keys())[0]
+        l_x = actor.label(text=str(x_label), pos=x_coord, scale=(1, 1, 1), color=(50, 50, 50))
+        r.add(l_x)
+        y_coord = list(G.nodes[y].values())[0]
+        y_label = list(G.nodes[y].keys())[0]
+        l_y = actor.label(text=str(y_label), pos=y_coord, scale=(1, 1, 1), color=(50, 50, 50))
+        r.add(l_y)
+        coord_nodes.append(x_coord)
+        coord_nodes.append(y_coord)
+        c = actor.line([(x_coord, y_coord)], window.colors.coral,
+                       linewidth=100 * (float(G.get_edge_data(x, y)['weight'])) ^ 2)
+        r.add(c)
+
+    point_actor = actor.point(list(set(coord_nodes)), window.colors.grey, point_radius=0.75)
+    r.add(point_actor)
+
+    # Load glass brain template and resample to MNI152_2mm brain
+    template_img = nib.load(ch2better_loc)
+    template_target_img = nib.load(template_mask)
+    res_brain_img = resample_to_img(template_img, template_target_img)
+    template_img_data = res_brain_img.get_data().astype('bool')
+    template_actor = actor.contour_from_roi(template_img_data, color=(50, 50, 50), opacity=0.05)
+    r.add(template_actor)
+
+    # Show scene
+    if interactive is True:
+        window.show(r, size=(600, 600), reset_camera=False)
     else:
-        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else 'nosm_'), 'struct_glass_viz.png')
-        coord_path = "%s%s" % (dir_path, '/struct_coords_plotting.pkl')
-        labels_path = "%s%s" % (dir_path, '/struct_labelnames_plotting.pkl')
-    # Save coords to pickle
-    with open(coord_path, 'wb') as f:
-        pickle.dump(coords, f, protocol=2)
-    # Save labels to pickle
-    with open(labels_path, 'wb') as f:
-        pickle.dump(label_names, f, protocol=2)
-    connectome.savefig(out_path_fig, dpi=dpi_resolution)
-    # connectome.savefig(out_path_fig, dpi=dpi_resolution, facecolor ='k', edgecolor ='k')
-    connectome.close()
+        fig_path = os.path.dirname(streamlines_mni) + '/3d_connectome_fig.png'
+        window.record(r, out_path=fig_path, size=(600, 600))
+
     return
 
 

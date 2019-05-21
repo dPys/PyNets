@@ -1007,6 +1007,11 @@ def build_workflow(args, retval):
     # import sys
     # sys.exit(0)
 
+    runtime_dict = {'fetch_nodes_and_labels_node': (1, 1), 'extract_ts_node': (1, 4), 'node_gen_node': (1, 1),
+                    'clustering_node': (1, 4), 'get_conn_matrix_node': (1, 1), 'thresh_func_node': (1, 1),
+                    'register_node': (1, 2), 'get_fa_node': (1, 1), 'run_tracking_node': (1, 4),
+                    'thresh_diff_node': (1, 1), 'dsn_node': (1, 2), 'streams2graph_node': (1, 2)}
+
     # Import wf core and interfaces
     import random
     from pynets.utils import CollectPandasDfs, Export2Pandas, ExtractNetStats, CollectPandasJoin
@@ -1022,7 +1027,8 @@ def build_workflow(args, retval):
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
                                clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples,
                                curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
-                               maxcrossing, life_run, min_length, directget, tiss_class):
+                               maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict):
+
         wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_', random.randint(1, 1000)))
         inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'roi', 'multi_nets',
                                                           'conn_model', 'plot_switch', 'graph', 'prune',
@@ -1067,44 +1073,26 @@ def build_workflow(args, retval):
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list, disp_filt,
                                     clust_type, clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec,
                                     target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
-                                    max_length, maxcrossing, life_run, min_length, directget, tiss_class)
+                                    max_length, maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict)
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
         if func_file:
             wf_selected = "%s%s" % ('functional_connectometry_', ID)
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 4
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 1
+            for node_name in wf.get_node(meta_wf.name).get_node(wf_selected).list_node_names():
+                if node_name in runtime_dict:
+                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
+                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
             if k_clustering > 0:
                 wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._n_procs = 1
                 wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 4
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_func_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_func_node')._mem_gb = 1
 
         if dwi_file:
             wf_selected = "%s%s" % ('structural_connectometry_', ID)
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('register_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('register_node')._mem_gb = 2
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_fa_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('get_fa_node')._mem_gb = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('run_tracking_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('run_tracking_node')._mem_gb = 4
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_diff_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('thresh_diff_node')._mem_gb = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('dsn_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('dsn_node')._mem_gb = 2
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('streams2graph_node')._n_procs = 1
-            wf.get_node(meta_wf.name).get_node(wf_selected).get_node('streams2graph_node')._mem_gb = 2
+            for node_name in wf.get_node(meta_wf.name).get_node(wf_selected).list_node_names():
+                if node_name in runtime_dict:
+                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
+                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
@@ -1126,8 +1114,10 @@ def build_workflow(args, retval):
                                           input_names=['network', 'ID', 'net_pickle_mt_list', 'plot_switch',
                                                        'multi_nets'])
 
+        handshake_node = meta_wf.get_node('pass_meta_outs_node')
+
         wf.connect([
-            (meta_wf.get_node('pass_meta_outs_node'), net_mets_node, [('est_path_iterlist', 'est_path'),
+            (handshake_node, net_mets_node, [('est_path_iterlist', 'est_path'),
                                                                       ('network_iterlist', 'network'),
                                                                       ('thr_iterlist', 'thr'),
                                                                       ('ID_iterlist', 'ID'),
@@ -1137,7 +1127,7 @@ def build_workflow(args, retval):
                                                                       ('node_size_iterlist', 'node_size'),
                                                                       ('norm_iterlist', 'norm'),
                                                                       ('binary_iterlist', 'binary')]),
-            (meta_wf.get_node('pass_meta_outs_node'), export_to_pandas_node, [('network_iterlist', 'network'),
+            (handshake_node, export_to_pandas_node, [('network_iterlist', 'network'),
                                                                               ('ID_iterlist', 'ID'),
                                                                               ('roi_iterlist', 'roi')]),
             (net_mets_node, export_to_pandas_node, [('out_file', 'csv_loc')]),
@@ -1151,7 +1141,7 @@ def build_workflow(args, retval):
 
         # Raw graph case
         if graph or multi_graph:
-            wf.disconnect([(meta_wf.get_node('pass_meta_outs_node'), net_mets_node,
+            wf.disconnect([(handshake_node, net_mets_node,
                             [('est_path_iterlist', 'est_path'),
                              ('network_iterlist', 'network'),
                              ('thr_iterlist', 'thr'),
@@ -1163,7 +1153,7 @@ def build_workflow(args, retval):
                              ('norm_iterlist', 'norm'),
                              ('binary_iterlist', 'binary')])
                            ])
-            wf.disconnect([(meta_wf.get_node('pass_meta_outs_node'), export_to_pandas_node,
+            wf.disconnect([(handshake_node, export_to_pandas_node,
                             [('network_iterlist', 'network'),
                              ('ID_iterlist', 'ID'),
                              ('roi_iterlist', 'roi')])
@@ -1212,9 +1202,10 @@ def build_workflow(args, retval):
                          use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list,
                          c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
                          overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
-                         directget, tiss_class):
+                         directget, tiss_class, runtime_dict):
 
         wf_multi = pe.Workflow(name="%s%s" % ('Wf_multisub_', random.randint(1001, 9000)))
+
         if func_subjects_list and not struct_subjects_list:
             struct_subjects_list = len(func_subjects_list) * [None]
         elif struct_subjects_list and not func_subjects_list:
@@ -1256,45 +1247,28 @@ def build_workflow(args, retval):
                 mask=mask_sub, norm=norm, binary=binary, fbval=fbval_sub, fbvec=fbvec_sub, target_samples=target_samples,
                 curv_thr_list=curv_thr_list, step_list=step_list, overlap_thr=overlap_thr,
                 overlap_thr_list=overlap_thr_list, track_type=track_type, max_length=max_length, maxcrossing=maxcrossing,
-                life_run=life_run, min_length=min_length, directget=directget, tiss_class=tiss_class)
+                life_run=life_run, min_length=min_length, directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict)
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
                 wf_selected = "%s%s" % ('functional_connectometry_', ID[i])
                 meta_wf_name = "%s%s" % ('Meta_wf_', ID[i])
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('extract_ts_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('extract_ts_node')._mem_gb = 4
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 1
+                for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
+                    if node_name in runtime_dict:
+                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
+                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
                 if k_clustering > 0:
                     wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._n_procs = 1
                     wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 4
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_conn_matrix_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_conn_matrix_node')._mem_gb = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_func_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_func_node')._mem_gb = 1
 
             if dwi_file:
                 wf_selected = "%s%s" % ('structural_connectometry_', ID)
                 meta_wf_name = "%s%s" % ('Meta_wf_', ID[i])
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('fetch_nodes_and_labels_node')._mem_gb = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('register_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('register_node')._mem_gb = 2
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_fa_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('get_fa_node')._mem_gb = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('run_tracking_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('run_tracking_node')._mem_gb = 4
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('node_gen_node')._mem_gb = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_diff_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('thresh_diff_node')._mem_gb = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('dsn_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('dsn_node')._mem_gb = 2
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('streams2graph_node')._n_procs = 1
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('streams2graph_node')._mem_gb = 2
+                for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
+                    if node_name in runtime_dict:
+                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
+                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+
             i = i + 1
 
         return wf_multi
@@ -1313,7 +1287,7 @@ def build_workflow(args, retval):
                                     smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot,
                                     block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list,
                                     step_list, overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing,
-                                    life_run, min_length, directget, tiss_class)
+                                    life_run, min_length, directget, tiss_class, runtime_dict)
 
         import shutil
         wf_multi.base_dir = '/tmp/Wf_multi_subject'
@@ -1378,7 +1352,7 @@ def build_workflow(args, retval):
                                     smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask,
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
-                                    directget, tiss_class)
+                                    directget, tiss_class, runtime_dict)
 
         import shutil
         import os

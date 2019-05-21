@@ -59,7 +59,7 @@ def csd_mod_est(gtab, data, wm_in_dwi):
     print('Fitting CSD model...')
     wm_in_dwi_mask = nib.load(wm_in_dwi).get_fdata().astype('bool')
     try:
-        print('Attempting to use spherical harmonic...')
+        print('Attempting from spherical harmonic...')
         model = ConstrainedSphericalDeconvModel(gtab, None, sh_order=6)
     except:
         print('Falling back to recursive response...')

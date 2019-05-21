@@ -16,12 +16,13 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                       node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
                       use_AAL_naming, smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size,
                       mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
-                      overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length, directget, tiss_class):
+                      overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length, directget,
+                      tiss_class, runtime_dict):
     from pynets import workflows
     from nipype import Workflow
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
-    from pynets.utils import pass_meta_ins, pass_meta_outs, PassMetaOuts
+    from pynets.utils import pass_meta_ins, pass_meta_outs
 
 
     # Workflow 1: Functional connectome
@@ -35,7 +36,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                          conn_model_list, min_span_tree, use_AAL_naming, smooth,
                                                          smooth_list, disp_filt, prune, multi_nets, clust_type,
                                                          clust_type_list, plugin_type, c_boot, block_size, mask,
-                                                         norm, binary)
+                                                         norm, binary, runtime_dict)
         if dwi_file is None:
             sub_struct_wf = None
     # Workflow 2: Structural connectome
@@ -49,7 +50,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                            plugin_type, multi_nets, prune, mask, norm, binary,
                                                            target_samples, curv_thr_list, step_list, overlap_thr,
                                                            overlap_thr_list, track_type, max_length, maxcrossing,
-                                                           life_run, min_length, directget, tiss_class)
+                                                           life_run, min_length, directget, tiss_class, runtime_dict)
         if func_file is None:
             sub_func_wf = None
 
@@ -68,8 +69,8 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
         config.enable_resource_monitor()
     cfg = dict(execution={'stop_on_first_crash': False, 'crashfile_format': 'txt', 'parameterize_dirs': True,
                           'display_variable': ':0', 'job_finished_timeout': 120, 'matplotlib_backend': 'Agg',
-                          'plugin': str(plugin_type), 'use_relative_paths': True,
-                          'remove_unnecessary_outputs': False, 'remove_node_directories': False})
+                          'plugin': str(plugin_type), 'use_relative_paths': True, 'remove_unnecessary_outputs': False,
+                          'remove_node_directories': False})
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             meta_wf.config[key][setting] = value
@@ -87,9 +88,10 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                            'smooth', 'smooth_list', 'disp_filt', 'clust_type',
                                                            'clust_type_list', 'c_boot', 'block_size', 'mask', 'norm',
                                                            'binary', 'fbval', 'fbvec', 'target_samples',
-                                                           'curv_thr_list', 'step_list', 'overlap_thr', 'overlap_thr_list',
-                                                           'track_type', 'max_length', 'maxcrossing', 'life_run',
-                                                           'min_length', 'directget', 'tiss_class']),
+                                                           'curv_thr_list', 'step_list', 'overlap_thr',
+                                                           'overlap_thr_list', 'track_type', 'max_length',
+                                                           'maxcrossing', 'life_run', 'min_length', 'directget',
+                                                           'tiss_class']),
                              name='meta_inputnode')
 
     meta_inputnode.inputs.in_file = func_file
@@ -357,38 +359,20 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
     # Set resource restrictions at level of the meta wf
     if func_file:
         wf_selected = "%s%s" % ('functional_connectometry_', ID)
-        meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._mem_gb = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.extract_ts_node'))._mem_gb = 4
-        meta_wf.get_node("%s%s" % (wf_selected, '.node_gen_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.node_gen_node'))._mem_gb = 1
+        for node_name in sub_func_wf.list_node_names():
+            if node_name in runtime_dict:
+                meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._n_procs = runtime_dict[node_name][0]
+                meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._mem_gb = runtime_dict[node_name][1]
         if k_clustering > 0:
             meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._n_procs = 1
             meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._mem_gb = 4
-        meta_wf.get_node("%s%s" % (wf_selected, '.get_conn_matrix_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.get_conn_matrix_node'))._mem_gb = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.thresh_func_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.thresh_func_node'))._mem_gb = 1
 
     if dwi_file:
         wf_selected = "%s%s" % ('structural_connectometry_', ID)
-        meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.fetch_nodes_and_labels_node'))._mem_gb = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.register_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.register_node'))._mem_gb = 2
-        meta_wf.get_node("%s%s" % (wf_selected, '.get_fa_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.get_fa_node'))._mem_gb = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.run_tracking_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.run_tracking_node'))._mem_gb = 4
-        meta_wf.get_node("%s%s" % (wf_selected, '.node_gen_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.node_gen_node'))._mem_gb = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.thresh_diff_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.thresh_diff_node'))._mem_gb = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.dsn_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.dsn_node'))._mem_gb = 2
-        meta_wf.get_node("%s%s" % (wf_selected, '.streams2graph_node'))._n_procs = 1
-        meta_wf.get_node("%s%s" % (wf_selected, '.streams2graph_node'))._mem_gb = 2
+        for node_name in sub_struct_wf.list_node_names():
+            if node_name in runtime_dict:
+                meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._n_procs = runtime_dict[node_name][0]
+                meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._mem_gb = runtime_dict[node_name][1]
 
     return meta_wf
 
@@ -399,7 +383,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                              k_clustering, user_atlas_list, clust_mask_list, node_size_list, conn_model_list,
                              min_span_tree, use_AAL_naming, smooth, smooth_list, disp_filt, prune, multi_nets,
                              clust_type, clust_type_list, plugin_type, c_boot, block_size, mask, norm, binary,
-                             vox_size='2mm'):
+                             runtime_dict, vox_size='2mm'):
     import os
     import os.path as op
     from nipype.pipeline import engine as pe
@@ -526,6 +510,14 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
     # print('\n\n\n\n\n')
 
     # Create function nodes
+    # check_orient_and_dims_func_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'], output_names=['outfile'],
+    #                                                        function=utils.check_orient_and_dims, imports=import_list),
+    #                                           name="check_orient_and_dims_func_node")
+    #
+    # check_orient_and_dims_anat_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'], output_names=['outfile'],
+    #                                                        function=utils.check_orient_and_dims, imports=import_list),
+    #                                           name="check_orient_and_dims_anat_node")
+
     # Clustering
     if float(k_clustering) > 0:
         clustering_node = pe.Node(niu.Function(input_names=['func_file', 'clust_mask', 'ID', 'k', 'clust_type'],
@@ -533,6 +525,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                                                              'clust_mask', 'k', 'clust_type'],
                                                function=clustools.individual_tcorr_clustering,
                                                imports=import_list), name="clustering_node")
+
         # Don't forget that this setting exists
         clustering_node.synchronize = True
         # clustering_node iterables and names
@@ -1295,29 +1288,18 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
         ])
 
     # Set cpu/memory reqs
+    for node_name in functional_connectometry_wf.list_node_names():
+        if node_name in runtime_dict:
+            functional_connectometry_wf.get_node(node_name).interface.n_procs = runtime_dict[node_name][0]
+            functional_connectometry_wf.get_node(node_name).interface.mem_gb = runtime_dict[node_name][1]
+            functional_connectometry_wf.get_node(node_name).n_procs = runtime_dict[node_name][0]
+            functional_connectometry_wf.get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+
     if k_clustering > 0:
         clustering_node._mem_gb = 4
         clustering_node.n_procs = 1
         clustering_node.interface.mem_gb = 4
         clustering_node.interface.n_procs = 1
-    fetch_nodes_and_labels_node.interface.mem_gb = 1
-    fetch_nodes_and_labels_node.interface.n_procs = 1
-    fetch_nodes_and_labels_node._mem_gb = 1
-    fetch_nodes_and_labels_node.n_procs = 1
-    node_gen_node.interface.mem_gb = 1
-    node_gen_node.interface.n_procs = 1
-    node_gen_node._mem_gb = 1
-    node_gen_node.n_procs = 1
-    extract_ts_node.interface.mem_gb = 4
-    extract_ts_node.interface.n_procs = 1
-    extract_ts_node._mem_gb = 4
-    extract_ts_node.n_procs = 1
-    get_conn_matrix_node.interface.mem_gb = 1
-    get_conn_matrix_node.interface.n_procs = 1
-    get_conn_matrix_node._mem_gb = 1
-    get_conn_matrix_node.n_procs = 1
-    thresh_func_node._mem_gb = 1
-    thresh_func_node.n_procs = 1
 
     # Set runtime/logging configurations
     cfg = dict(execution={'stop_on_first_crash': True, 'hash_method': 'content', 'crashfile_format': 'txt',
@@ -1337,7 +1319,8 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                              multi_thr, multi_atlas, max_thr, min_thr, step_thr, node_size_list, conn_model_list,
                              min_span_tree, use_AAL_naming, disp_filt, plugin_type, multi_nets, prune, mask, norm,
                              binary, target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
-                             max_length, maxcrossing, life_run, min_length, directget, tiss_class, vox_size='2mm'):
+                             max_length, maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict,
+                             vox_size='2mm'):
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets import nodemaker, thresholding, utils
@@ -2183,36 +2166,12 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                               [('network', 'network')])
                                              ])
 
-    fetch_nodes_and_labels_node.interface.mem_gb = 1
-    fetch_nodes_and_labels_node.interface.n_procs = 1
-    fetch_nodes_and_labels_node._mem_gb = 1
-    fetch_nodes_and_labels_node.n_procs = 1
-    node_gen_node.interface.mem_gb = 1
-    node_gen_node.interface.n_procs = 1
-    node_gen_node._mem_gb = 1
-    node_gen_node.n_procs = 1
-    register_node.n_procs = 1
-    register_node._mem_gb = 2
-    register_node.interface.n_procs = 1
-    register_node.interface.mem_gb = 2
-    get_fa_node.n_procs = 1
-    get_fa_node._mem_gb = 1
-    get_fa_node.interface.n_procs = 1
-    get_fa_node.interface.mem_gb = 1
-    run_tracking_node.n_procs = 1
-    run_tracking_node._mem_gb = 4
-    run_tracking_node.interface.n_procs = 1
-    run_tracking_node.interface.mem_gb = 4
-    thresh_diff_node.n_procs = 1
-    thresh_diff_node._mem_gb = 1
-    dsn_node.n_procs = 1
-    dsn_node._mem_gb = 2
-    dsn_node.interface.n_procs = 1
-    dsn_node.interface.mem_gb = 2
-    streams2graph_node.n_procs = 1
-    streams2graph_node._mem_gb = 2
-    streams2graph_node.interface.n_procs = 1
-    streams2graph_node.interface.mem_gb = 2
+    for node_name in structural_connectometry_wf.list_node_names():
+        if node_name in runtime_dict:
+            structural_connectometry_wf.get_node(node_name).interface.n_procs = runtime_dict[node_name][0]
+            structural_connectometry_wf.get_node(node_name).interface.mem_gb = runtime_dict[node_name][1]
+            structural_connectometry_wf.get_node(node_name).n_procs = runtime_dict[node_name][0]
+            structural_connectometry_wf.get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
     cfg = dict(execution={'stop_on_first_crash': True, 'hash_method': 'content', 'crashfile_format': 'txt',
                           'display_variable': ':0', 'job_finished_timeout': 65, 'matplotlib_backend': 'Agg',

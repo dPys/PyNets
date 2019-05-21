@@ -34,7 +34,7 @@ def transform_pts(pts, t_aff, t_warp, ref_img_path, ants_path, template_path, ds
     aattp_out = dsn_dir + '/aattp_' + str(run_hash) + '.csv'
     transforms = "-t [" + str(t_aff) + ", 1] " + "-t " + str(t_warp)
 
-    # Load the volume from DSI Studio
+    # Load the volume from .trk
     ref_img = nib.load(ref_img_path)
     voxel_size = np.array(ref_img.header.get_zooms())
     extents = np.array(ref_img.shape)
@@ -287,10 +287,10 @@ class DmriReg(object):
         self.gm_mask = self.maps['gm_prob']
         self.csf_mask = self.maps['csf_prob']
 
-        self.t1w_brain = utils.match_target_vox_res(self.t1w_brain, self.vox_size, self.anat_path, sens='anat')
-        self.wm_mask = utils.match_target_vox_res(self.wm_mask, self.vox_size, self.anat_path, sens='anat')
-        self.gm_mask = utils.match_target_vox_res(self.gm_mask, self.vox_size, self.anat_path, sens='anat')
-        self.csf_mask = utils.match_target_vox_res(self.csf_mask, self.vox_size, self.anat_path, sens='anat')
+        self.t1w_brain = utils.check_orient_and_dims(self.t1w_brain, self.vox_size)
+        self.wm_mask = utils.check_orient_and_dims(self.wm_mask, self.vox_size)
+        self.gm_mask = utils.check_orient_and_dims(self.gm_mask, self.vox_size)
+        self.csf_mask = utils.check_orient_and_dims(self.csf_mask, self.vox_size)
 
         # Threshold WM to binary in dwi space
         self.t_img = load_img(self.wm_mask)
