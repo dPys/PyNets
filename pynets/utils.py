@@ -636,13 +636,20 @@ def check_orient_and_dims(infile, vox_size, bvecs=None):
     if (vols > 1) and (bvecs is not None):
         # dwi case
         [infile, bvecs] = reorient_dwi(infile, bvecs, outdir)
+        # Check dimensions
+        outfile = match_target_vox_res(infile, vox_size, outdir, sens='dwi')
+    elif (vols > 1) and (bvecs is None):
+        # func case
+        infile = reorient_img(infile, outdir)
+        # Check dimensions
+        outfile = match_target_vox_res(infile, vox_size, outdir, sens='func')
     else:
         # t1w case
         infile = reorient_img(infile, outdir)
+        # Check dimensions
+        outfile = match_target_vox_res(infile, vox_size, outdir, sens='t1w')
 
-
-    # Check dimensions
-    outfile = match_target_vox_res(infile, vox_size, outdir, sens='dwi')
+    print(outfile)
 
     if bvecs is None:
         return outfile
@@ -655,19 +662,19 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
     # Check orientation (dwi_prep)
     cmd = 'fslorient -getorient ' + dwi_prep
     orient = os.popen(cmd).read().strip('\n')
+    dwi_orig = dwi_prep
+    dwi_prep = "{}/{}_pre_reor.nii.gz".format(out_dir, dwi_prep.split('/')[-1].split('.nii.gz')[0])
+    shutil.copyfile(dwi_orig, dwi_prep)
+    bvecs_orig = bvecs
+    bvecs = "{}/bvecs.bvec".format(out_dir)
+    shutil.copyfile(bvecs_orig, bvecs)
+    bvecs_mat = np.genfromtxt(bvecs)
+    cmd = 'fslorient -getqform ' + dwi_prep
+    qform = os.popen(cmd).read().strip('\n')
     if orient == 'NEUROLOGICAL':
+        reoriented = True
         print('Neurological (dwi), reorienting to radiological...')
         # Orient dwi to RADIOLOGICAL
-        dwi_orig = dwi_prep
-        dwi_prep = "{}/dwi_prep_reor.nii.gz".format(out_dir)
-        shutil.copyfile(dwi_orig, dwi_prep)
-        # Invert bvecs
-        bvecs_orig = bvecs
-        bvecs = "{}/bvecs_reor.bvec".format(out_dir)
-        shutil.copyfile(bvecs_orig, bvecs)
-        bvecs_mat = np.genfromtxt(bvecs)
-        cmd = 'fslorient -getqform ' + dwi_prep
-        qform = os.popen(cmd).read().strip('\n')
         # Posterior-Anterior Reorientation
         if float(qform.split(' ')[:-1][5]) <= 0:
             dwi_prep_PA = "{}/dwi_reor_PA.nii.gz".format(out_dir)
@@ -692,15 +699,6 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
         np.savetxt(bvecs, bvecs_mat)
     else:
         print('Radiological (dwi)...')
-        dwi_orig = dwi_prep
-        dwi_prep = "{}/dwi_prep.nii.gz".format(out_dir)
-        shutil.copyfile(dwi_orig, dwi_prep)
-        bvecs_orig = bvecs
-        bvecs = "{}/bvecs.bvec".format(out_dir)
-        shutil.copyfile(bvecs_orig, bvecs)
-        bvecs_mat = np.genfromtxt(bvecs)
-        cmd = 'fslorient -getqform ' + dwi_prep
-        qform = os.popen(cmd).read().strip('\n')
         # Posterior-Anterior Reorientation
         if float(qform.split(' ')[:-1][5]) <= 0:
             dwi_prep_PA = "{}/dwi_reor_PA.nii.gz".format(out_dir)
@@ -711,6 +709,7 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
             cmd = 'fslorient -getqform ' + dwi_prep_PA
             qform = os.popen(cmd).read().strip('\n')
             dwi_prep = dwi_prep_PA
+            reoriented = True
         # Inferior-Superior Reorientation
         if float(qform.split(' ')[:-1][10]) <= 0:
             dwi_prep_IS = "{}/dwi_reor_IS.nii.gz".format(out_dir)
@@ -719,22 +718,25 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
             os.system(cmd)
             bvecs_mat[:,2] = -bvecs_mat[:,2]
             dwi_prep = dwi_prep_IS
+            reoriented = True
         np.savetxt(bvecs, bvecs_mat)
 
-    # Remove offsets
-    imgg = nib.load(dwi_prep)
-    data = imgg.get_fdata()
-    affine = imgg.affine
-    hdr = imgg.header
-    affine[0:3,3] = np.zeros(3)
-    imgg = nib.Nifti1Image(data, affine=affine, header=hdr)
-    imgg.set_sform(affine)
-    imgg.set_qform(affine)
-    imgg.update_header()
-    nib.save(imgg, dwi_prep)
+    if reoriented is True:
+        imgg = nib.load(dwi_prep)
+        data = imgg.get_fdata()
+        affine = imgg.affine
+        hdr = imgg.header
+        imgg = nib.Nifti1Image(data, affine=affine, header=hdr)
+        imgg.set_sform(affine)
+        imgg.set_qform(affine)
+        imgg.update_header()
+        nib.save(imgg, dwi_prep)
 
-    print('Reoriented affine: ')
-    print(affine)
+        print('Reoriented affine: ')
+        print(affine)
+    else:
+        dwi_prep = dwi_orig
+        print('Image already in RAS+')
 
     return dwi_prep, bvecs
 
@@ -743,14 +745,15 @@ def reorient_img(img, out_dir):
     import shutil
     cmd = 'fslorient -getorient ' + img
     orient = os.popen(cmd).read().strip('\n')
+    img_orig = img
+    img = "{}/{}_pre_reor.nii.gz".format(out_dir, img.split('/')[-1].split('.nii.gz')[0])
+    shutil.copyfile(img_orig, img)
+    cmd = 'fslorient -getqform ' + img
+    qform = os.popen(cmd).read().strip('\n')
     if orient == 'NEUROLOGICAL':
+        reoriented = True
         print('Neurological (img), reorienting to radiological...')
         # Orient img to std
-        img_orig = img
-        img = "{}/img_pre_reor.nii.gz".format(out_dir)
-        shutil.copyfile(img_orig, img)
-        cmd = 'fslorient -getqform ' + img
-        qform = os.popen(cmd).read().strip('\n')
         # Posterior-Anterior Reorientation
         if float(qform.split(' ')[:-1][5]) <= 0:
             img_PA = "{}/img_reor_PA.nii.gz".format(out_dir)
@@ -771,11 +774,7 @@ def reorient_img(img, out_dir):
         os.system(cmd)
     else:
         print('Radiological (img)...')
-        img_orig = img
-        img = "{}/img.nii.gz".format(out_dir)
-        shutil.copyfile(img_orig, img)
-        cmd = 'fslorient -getqform ' + img
-        qform = os.popen(cmd).read().strip('\n')
+        reoriented = False
         # Posterior-Anterior Reorientation
         if float(qform.split(' ')[:-1][5]) <= 0:
             img_PA = "{}/img_reor_PA.nii.gz".format(out_dir)
@@ -785,6 +784,7 @@ def reorient_img(img, out_dir):
             cmd = 'fslorient -getqform ' + img_PA
             qform = os.popen(cmd).read().strip('\n')
             img = img_PA
+            reoriented = True
         # Inferior-Superior Reorientation
         if float(qform.split(' ')[:-1][10]) <= 0:
             img_IS = "{}/img_reor_IS.nii.gz".format(out_dir)
@@ -792,21 +792,24 @@ def reorient_img(img, out_dir):
             cmd = 'fslswapdim ' + img + ' -x y -z ' + img_IS
             os.system(cmd)
             img = img_IS
+            reoriented = True
 
-    # Remove offsets
-    imgg = nib.load(img)
-    data = imgg.get_fdata()
-    affine = imgg.affine
-    hdr = imgg.header
-    affine[0:3,3] = np.zeros(3)
-    imgg = nib.Nifti1Image(data, affine=affine, header=hdr)
-    imgg.set_sform(affine)
-    imgg.set_qform(affine)
-    imgg.update_header()
-    nib.save(imgg, img)
+    if reoriented is True:
+        imgg = nib.load(img)
+        data = imgg.get_fdata()
+        affine = imgg.affine
+        hdr = imgg.header
+        imgg = nib.Nifti1Image(data, affine=affine, header=hdr)
+        imgg.set_sform(affine)
+        imgg.set_qform(affine)
+        imgg.update_header()
+        nib.save(imgg, img)
 
-    print('Reoriented affine: ')
-    print(affine)
+        print('Reoriented affine: ')
+        print(affine)
+    else:
+        img = img_orig
+        print('Image already in RAS+')
 
     return img
 
@@ -820,39 +823,35 @@ def match_target_vox_res(img_file, vox_size, out_dir, sens):
     hdr = img.header
     zooms = hdr.get_zooms()[:3]
     if vox_size == '1mm':
-        print('Reslicing image ' + img_file + ' to 1mm...')
         new_zooms = (1., 1., 1.)
     elif vox_size == '2mm':
-        print('Reslicing image ' + img_file + ' to 2mm...')
         new_zooms = (2., 2., 2.)
 
     if (abs(zooms[0]), abs(zooms[1]), abs(zooms[2])) != new_zooms:
-        if sens == 'dwi':
-            img_file_pre = "{}/{}_pre_res.nii.gz".format(out_dir, os.path.basename(img_file).split('.nii.gz')[0])
-        elif sens == 't1w':
-            img_file_pre = "{}/{}_pre_res.nii.gz".format(out_dir, os.path.basename(img_file).split('.nii.gz')[0])
+        print('Reslicing image ' + img_file + ' to ' + vox_size + '...')
+        img_file_pre = "{}/{}_pre_res.nii.gz".format(out_dir, os.path.basename(img_file).split('.nii.gz')[0])
         shutil.copyfile(img_file, img_file_pre)
 
         data2, affine2 = reslice(data, affine, zooms, new_zooms)
-        affine2[0:3,3] = np.zeros(3)
-        affine2 = np.abs(affine2)
-        affine2[0:3, 0:3] = np.eye(3) * np.array(new_zooms)
+        if sens == 'dwi':
+            affine2[0:3,3] = np.zeros(3)
+            affine2 = np.abs(affine2)
+            affine2[0:3, 0:3] = np.eye(3) * np.array(new_zooms)
         img2 = nib.Nifti1Image(data2, affine=affine2, header=hdr)
         img2.set_qform(affine2)
         img2.set_sform(affine2)
         img2.update_header()
         nib.save(img2, img_file)
+        print('Resliced affine: ')
+        print(nib.load(img_file).affine)
     else:
-        affine[0:3,3] = np.zeros(3)
-        affine = np.abs(affine)
-        img = nib.Nifti1Image(data, affine=affine, header=hdr)
-        img.set_sform(affine)
-        img.set_qform(affine)
-        img.update_header()
-        nib.save(img, img_file)
-
-    print('Resliced affine: ')
-    print(nib.load(img_file).affine)
+        if sens == 'dwi':
+            affine[0:3,3] = np.zeros(3)
+            img = nib.Nifti1Image(data, affine=affine, header=hdr)
+            img.set_sform(affine)
+            img.set_qform(affine)
+            img.update_header()
+            nib.save(img, img_file)
 
     return img_file
 

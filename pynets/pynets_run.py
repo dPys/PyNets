@@ -24,7 +24,8 @@ def get_parser():
                         default=None,
                         help='Specify either a path to a binarized brain mask image in standard space and in .nii or '
                              '.nii.gz format OR multiple paths to multiple brain mask images in the case of running '
-                             'multiple participants, in which case paths should be separated by comma.\n')
+                             'multiple participants, in which case paths should be separated by comma. If no brain '
+                             'mask is supplied, a default MNI152 template mask will be used\n')
     parser.add_argument('-g',
                         metavar='Path to graph file input.',
                         default=None,
@@ -539,8 +540,6 @@ def build_workflow(args, retval):
                          "bootstrapped resampling.")
 
     if mask:
-        if not roi:
-            roi = mask
         if ',' in mask:
             mask = list(str(mask).split(','))
             if len(mask) != len(func_subjects_list):

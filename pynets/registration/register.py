@@ -528,7 +528,7 @@ class DmriReg(object):
         return
 
 
-def register_all(basedir_path, fa_path, nodif_B0_mask, anat_file, gtab_file, dwi_file, vox_size='2mm', simple=False,
+def register_all_dwi(basedir_path, fa_path, nodif_B0_mask, anat_file, gtab_file, dwi_file, vox_size='2mm', simple=False,
                  overwrite=False):
     import os.path as op
     from pynets.registration import register

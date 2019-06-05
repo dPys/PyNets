@@ -71,16 +71,6 @@ RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.d
     apt-get update && \
     apt-get install -y git-lfs
 
-# Install AFNI
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-		    ed gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa \
-		    libgomp1 libjpeg62 libxm4 netpbm tcsh xfonts-base xvfb \
-                    afni=16.2.07~dfsg.1-5~nd16.04+1 \
-                    convert3d \
-                    git-annex-standalone && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
 # Installing ANTs 2.2.0 (NeuroDocker build)
 ENV ANTSPATH=/usr/lib/ants
 RUN mkdir -p $ANTSPATH && \

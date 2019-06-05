@@ -231,14 +231,11 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
     return coords_mm, RSN_parcels, net_label_names, network
 
 
-def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, mask, perc_overlap):
+def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_overlap):
     from pynets import nodemaker
     from nilearn.image import resample_img
     from nilearn import masking
     import os.path as op
-
-    if mask and roi == mask:
-        perc_overlap = 0.9
 
     mask_img = nib.load(roi)
     mask_data, _ = masking._load_mask_img(roi)
@@ -262,7 +259,7 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, mask, per
             overlap = float(0)
 
         if overlap >= perc_overlap:
-            print("%.2f%s%s%s" % (100*overlap, '% of parcel ', label_names[i], ' falls within roi mask...'))
+            print("%.2f%s%s%s" % (100*overlap, '% of parcel ', label_names[i], ' falls within mask...'))
         else:
             indices.append(i)
         i = i + 1
@@ -294,11 +291,8 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, mask, per
     return coords_adj, label_names_adj, parcel_list_adj
 
 
-def coords_masker(roi, coords, label_names, mask, error):
+def coords_masker(roi, coords, label_names, error):
     from nilearn import masking
-
-    if mask and roi == mask:
-        error = 0
 
     mask_data, mask_aff = masking._load_mask_img(roi)
     x_vox = np.diagonal(mask_aff[:3,0:3])[0]
@@ -318,7 +312,7 @@ def coords_masker(roi, coords, label_names, mask, error):
         sphere_vol = np.zeros(mask_data.shape, dtype=bool)
         sphere_vol[tuple(coords)] = 1
         if (mask_data & sphere_vol).any():
-            print("%s%s" % (coords, ' falls within roi mask...'))
+            print("%s%s" % (coords, ' falls within mask...'))
             continue
         inds = get_sphere(coords, error, (np.abs(x_vox), y_vox, z_vox), mask_data.shape)
         sphere_vol[tuple(inds.T)] = 1
@@ -477,7 +471,7 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, in_file, 
         else:
             raise ValueError("%s%s%s" % ('\nERROR: Atlas file for ', atlas_select, ' not found!'))
     elif uatlas_select is None and parc is False and atlas_select in nilearn_coords_atlases:
-        print('Fetching coords and labels from nilearn coordsinate-based atlas library...')
+        print('Fetching coords and labels from nilearn coordinate-based atlas library...')
         # Fetch nilearn atlas coords
         [coords, _, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
         parcel_list = None
@@ -591,7 +585,7 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, in_file, 
 
 
 def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select, mask,
-                     node_size=None):
+                     perc_overlap=0.75, error=4):
     from pynets import nodemaker
     import os.path as op
     try:
@@ -602,14 +596,12 @@ def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, 
     # Mask Parcels
     if parc is True:
         # For parcel masking, specify overlap thresh and error cushion in mm voxels
-        perc_overlap = 0.75
         [coords, label_names, parcel_list_masked] = nodemaker.parcel_masker(roi, coords, parcel_list, label_names,
-                                                                            dir_path, ID, mask, perc_overlap)
+                                                                            dir_path, ID, perc_overlap)
         [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list_masked)
     # Mask Coordinates
     else:
-        error = 2
-        [coords, label_names] = nodemaker.coords_masker(roi, coords, label_names, mask, error)
+        [coords, label_names] = nodemaker.coords_masker(roi, coords, label_names, error)
         # Save coords to pickle
         coords_path = "%s%s%s%s" % (dir_path, '/atlas_coords_', op.basename(roi).split('.')[0], '.pkl')
         with open(coords_path, 'wb') as f:
@@ -620,10 +612,10 @@ def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, 
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f, protocol=2)
 
-    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select, node_size
+    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select
 
 
-def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select, node_size=None):
+def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select):
     try:
         import cPickle as pickle
     except ImportError:
@@ -648,7 +640,25 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select,
         with open(labels_path, 'wb') as f:
             pickle.dump(label_names, f, protocol=2)
 
-    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select, node_size
+    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select
+
+
+def mask_roi(dir_path, roi, mask, img_file):
+    import os
+    import os.path as op
+    from nilearn import masking
+
+    img_mask_path = "%s%s%s%s" % (dir_path, '/', op.basename(img_file).split('.')[0], '_mask.nii.gz')
+    img_mask = masking.compute_epi_mask(img_file)
+    nib.save(img_mask, img_mask_path)
+
+    if roi and mask:
+        print('Refining ROI...')
+        roi_red_path = "%s%s%s%s" % (dir_path, '/', op.basename(roi).split('.')[0], '_mask.nii.gz')
+        cmd = 'fslmaths ' + roi + ' -mas ' + mask + ' -mas ' + img_mask_path + ' -bin ' + roi_red_path
+        os.system(cmd)
+        roi = roi_red_path
+    return roi
 
 
 def create_spherical_roi_volumes(node_size, coords, template_mask):
