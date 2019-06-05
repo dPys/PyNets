@@ -5,6 +5,7 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
+
 warnings.filterwarnings("ignore")
 import numpy as np
 import nibabel as nib
@@ -174,7 +175,8 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
         mean_rmse = np.mean(rmse)
         print("%s%s" % ('Mean RMSE: ', mean_rmse))
         if mean_rmse > 5:
-            print('WARNING: LiFE revealed high model error. Check streamlines output and review tracking parameters used.')
+            print(
+                'WARNING: LiFE revealed high model error. Check streamlines output and review tracking parameters used.')
 
     # Create density map
     dm = utils.density_map(streamlines, dwi_img.shape, affine=np.eye(4))
@@ -219,7 +221,8 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mo
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
     from dipy.tracking.local import LocalTracking, ParticleFilteringTracking
-    from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
+    from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, \
+        DeterministicMaximumDirectionGetter
 
     # Commence Ensemble Tractography
     streamlines = nib.streamlines.array_sequence.ArraySequence()

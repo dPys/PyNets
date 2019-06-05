@@ -242,23 +242,19 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     wS = Warp(ants_path, streams, streams_mni, template_path, t_aff, t_warp, fa_path, dsn_dir)
     wS.streamlines()
 
+    # Flip FOV and translate along x-plane
     s_aff[0][0] = np.negative(np.sign(s_aff[0][0])) * np.abs(s_aff[0][0])
-    s_aff[:3, 3] = np.array([180, 0, 0])
+    s_aff[:3, 3] = np.array([270, 0, 0])
     streamlines_mni = nib.streamlines.load(streams_mni)
     streamlines_mni_s = streamlines_mni.streamlines
-    streamlines_trans = Streamlines(mgru.transform_to_affine(streamlines_mni_s, streamlines_mni.header, s_aff))
-    streams_warp = streams_mni.split('.trk')[0] + '_warped.trk'
-    tractogram = nib.streamlines.Tractogram(streamlines_trans, affine_to_rasmm=np.eye(4))
-    trkfile = nib.streamlines.trk.TrkFile(tractogram, header=streamlines_mni.header)
-    nib.streamlines.save(trkfile, streams_warp)
+    streamlines_trans1 = Streamlines(mgru.transform_to_affine(streamlines_mni_s, streamlines_mni.header, s_aff))
 
+    # Flip back x-dimension and zero offsets
     s_aff[0][0] = np.negative(np.sign(s_aff[0][0])) * np.abs(s_aff[0][0])
     s_aff[:3, 3] = np.array([0, 0, 0])
-    streamlines_mni = nib.streamlines.load(streams_warp)
-    streamlines_mni_s = streamlines_mni.streamlines
-    streamlines_trans = Streamlines(mgru.transform_to_affine(streamlines_mni_s, streamlines_mni.header, s_aff))
+    streamlines_trans2 = Streamlines(mgru.transform_to_affine(streamlines_trans1, streamlines_mni.header, s_aff))
     streams_warp = streams_mni.split('.trk')[0] + '_warped.trk'
-    tractogram = nib.streamlines.Tractogram(streamlines_trans, affine_to_rasmm=np.eye(4))
+    tractogram = nib.streamlines.Tractogram(streamlines_trans2, affine_to_rasmm=np.eye(4))
     trkfile = nib.streamlines.trk.TrkFile(tractogram, header=streamlines_mni.header)
     nib.streamlines.save(trkfile, streams_warp)
     print(streams_warp)
