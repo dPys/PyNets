@@ -5,7 +5,7 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore")
 import numpy as np
 import networkx as nx
 
@@ -54,6 +54,13 @@ def normalize(W, copy=True):
 
 
 def density_thresholding(conn_matrix, thr, thr_max=1000):
+    """
+
+    :param conn_matrix:
+    :param thr:
+    :param thr_max:
+    :return:
+    """
     from pynets import thresholding
     work_thr = 0
     np.fill_diagonal(conn_matrix, 0)
@@ -138,6 +145,12 @@ def autofix(W, copy=True):
 
 
 def disparity_filter(G, weight='weight'):
+    """
+
+    :param G:
+    :param weight:
+    :return:
+    """
     from scipy import integrate
     '''
     Compute significance scores (alpha) for weighted edges in G as defined in Serrano et al. 2009
@@ -298,6 +311,12 @@ def knn(conn_matrix, k):
 
 
 def local_thresholding_prop(conn_matrix, thr):
+    """
+
+    :param conn_matrix:
+    :param thr:
+    :return:
+    """
     from pynets import thresholding
     from pynets.stats import netstats
     '''
@@ -372,6 +391,12 @@ def local_thresholding_prop(conn_matrix, thr):
 
 
 def local_thresholding_dens(conn_matrix, thr):
+    """
+
+    :param conn_matrix:
+    :param thr:
+    :return:
+    """
     from pynets import thresholding
     from pynets.stats import netstats
     '''
@@ -440,6 +465,31 @@ def local_thresholding_dens(conn_matrix, thr):
 
 def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
                 smooth, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary):
+    """
+
+    :param dens_thresh:
+    :param thr:
+    :param conn_matrix:
+    :param conn_model:
+    :param network:
+    :param ID:
+    :param dir_path:
+    :param roi:
+    :param node_size:
+    :param min_span_tree:
+    :param smooth:
+    :param disp_filt:
+    :param parc:
+    :param prune:
+    :param atlas_select:
+    :param uatlas_select:
+    :param label_names:
+    :param coords:
+    :param c_boot:
+    :param norm:
+    :param binary:
+    :return:
+    """
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -496,6 +546,33 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
 def thresh_diff(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
                 disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, target_samples,
                 track_type, atlas_mni, streams):
+    """
+
+    :param dens_thresh:
+    :param thr:
+    :param conn_matrix:
+    :param conn_model:
+    :param network:
+    :param ID:
+    :param dir_path:
+    :param roi:
+    :param node_size:
+    :param min_span_tree:
+    :param disp_filt:
+    :param parc:
+    :param prune:
+    :param atlas_select:
+    :param uatlas_select:
+    :param label_names:
+    :param coords:
+    :param norm:
+    :param binary:
+    :param target_samples:
+    :param track_type:
+    :param atlas_mni:
+    :param streams:
+    :return:
+    """
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)

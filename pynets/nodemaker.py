@@ -7,10 +7,18 @@ Copyright (C) 2018
 import numpy as np
 import nibabel as nib
 import warnings
-warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore")
 
 
 def get_sphere(coords, r, vox_dims, dims):
+    """
+
+    :param coords:
+    :param r:
+    :param vox_dims:
+    :param dims:
+    :return:
+    """
     # Adapted from Neurosynth
     # Return all points within r mm of coords. Generates a cube and then discards all points outside sphere. Only
     # returns values that fall within the dimensions of the image."""
@@ -23,6 +31,11 @@ def get_sphere(coords, r, vox_dims, dims):
 
 
 def create_parcel_atlas(parcel_list):
+    """
+
+    :param parcel_list:
+    :return:
+    """
     from nilearn.image import new_img_like, concat_imgs
     parcel_background = new_img_like(parcel_list[0], np.zeros(parcel_list[0].shape, dtype=bool))
     parcel_list_exp = [parcel_background] + parcel_list
@@ -34,6 +47,11 @@ def create_parcel_atlas(parcel_list):
 
 
 def fetch_nilearn_atlas_coords(atlas_select):
+    """
+
+    :param atlas_select:
+    :return:
+    """
     from nilearn import datasets
     atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
     atlas_name = atlas['description'].splitlines()[0]
@@ -60,6 +78,12 @@ def fetch_nilearn_atlas_coords(atlas_select):
 
 
 def nilearn_atlas_helper(atlas_select, parc):
+    """
+
+    :param atlas_select:
+    :param parc:
+    :return:
+    """
     from nilearn import datasets
     if atlas_select == 'atlas_harvard_oxford':
         atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'atlas_name')('cort-maxprob-thr0-1mm')
@@ -109,6 +133,18 @@ def nilearn_atlas_helper(atlas_select, parc):
 
 
 def get_node_membership(network, infile, coords, label_names, parc, parcel_list, perc_overlap=0.75, error=2):
+    """
+
+    :param network:
+    :param infile:
+    :param coords:
+    :param label_names:
+    :param parc:
+    :param parcel_list:
+    :param perc_overlap:
+    :param error:
+    :return:
+    """
     from nilearn.image import resample_img
     from pynets.nodemaker import get_sphere
     import pkg_resources
@@ -159,9 +195,21 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
     RSNmask = par_data[:, :, :, RSN_ix]
 
     def mmToVox(nib_nifti, mmcoords):
+        """
+
+        :param nib_nifti:
+        :param mmcoords:
+        :return:
+        """
         return nib.affines.apply_affine(np.linalg.inv(nib_nifti.affine), mmcoords)
 
     def VoxTomm(nib_nifti, voxcoords):
+        """
+
+        :param nib_nifti:
+        :param voxcoords:
+        :return:
+        """
         return nib.affines.apply_affine(nib_nifti.affine, voxcoords)
 
     coords_vox = []
@@ -232,6 +280,17 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
 
 
 def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_overlap):
+    """
+
+    :param roi:
+    :param coords:
+    :param parcel_list:
+    :param label_names:
+    :param dir_path:
+    :param ID:
+    :param perc_overlap:
+    :return:
+    """
     from pynets import nodemaker
     from nilearn.image import resample_img
     from nilearn import masking
@@ -292,6 +351,14 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_over
 
 
 def coords_masker(roi, coords, label_names, error):
+    """
+
+    :param roi:
+    :param coords:
+    :param label_names:
+    :param error:
+    :return:
+    """
     from nilearn import masking
 
     mask_data, mask_aff = masking._load_mask_img(roi)
@@ -300,6 +367,12 @@ def coords_masker(roi, coords, label_names, error):
     z_vox = np.diagonal(mask_aff[:3,0:3])[2]
 
     def mmToVox(mask_aff, mmcoords):
+        """
+
+        :param mask_aff:
+        :param mmcoords:
+        :return:
+        """
         return nib.affines.apply_affine(np.linalg.inv(mask_aff), mmcoords)
 
 #    mask_coords = list(zip(*np.where(mask_data == True)))
@@ -343,6 +416,11 @@ def coords_masker(roi, coords, label_names, error):
 
 
 def get_names_and_coords_of_parcels(uatlas_select):
+    """
+
+    :param uatlas_select:
+    :return:
+    """
     import os.path as op
     from nilearn.plotting import find_parcellation_cut_coords
     if not op.isfile(uatlas_select):
@@ -357,6 +435,11 @@ def get_names_and_coords_of_parcels(uatlas_select):
 
 
 def gen_img_list(uatlas_select):
+    """
+
+    :param uatlas_select:
+    :return:
+    """
     import os.path as op
     from nilearn.image import new_img_like
     if not op.isfile(uatlas_select):
@@ -387,6 +470,14 @@ def gen_img_list(uatlas_select):
 
 
 def gen_network_parcels(uatlas_select, network, labels, dir_path):
+    """
+
+    :param uatlas_select:
+    :param network:
+    :param labels:
+    :param dir_path:
+    :return:
+    """
     from nilearn.image import concat_imgs
     from pynets import nodemaker
     import os.path as op
@@ -409,6 +500,11 @@ def gen_network_parcels(uatlas_select, network, labels, dir_path):
 
 
 def AAL_naming(coords):
+    """
+
+    :param coords:
+    :return:
+    """
     import pandas as pd
     import csv
     from pathlib import Path
@@ -445,6 +541,17 @@ def AAL_naming(coords):
 
 
 def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, in_file, use_AAL_naming, clustering=False):
+    """
+
+    :param atlas_select:
+    :param uatlas_select:
+    :param ref_txt:
+    :param parc:
+    :param in_file:
+    :param use_AAL_naming:
+    :param clustering:
+    :return:
+    """
     from pynets import utils, nodemaker
     import pandas as pd
     import time
@@ -586,6 +693,22 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, in_file, 
 
 def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select, mask,
                      perc_overlap=0.75, error=4):
+    """
+
+    :param roi:
+    :param coords:
+    :param parcel_list:
+    :param label_names:
+    :param dir_path:
+    :param ID:
+    :param parc:
+    :param atlas_select:
+    :param uatlas_select:
+    :param mask:
+    :param perc_overlap:
+    :param error:
+    :return:
+    """
     from pynets import nodemaker
     import os.path as op
     try:
@@ -616,6 +739,18 @@ def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, 
 
 
 def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select):
+    """
+
+    :param coords:
+    :param parcel_list:
+    :param label_names:
+    :param dir_path:
+    :param ID:
+    :param parc:
+    :param atlas_select:
+    :param uatlas_select:
+    :return:
+    """
     try:
         import cPickle as pickle
     except ImportError:
@@ -644,6 +779,14 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select,
 
 
 def mask_roi(dir_path, roi, mask, img_file):
+    """
+
+    :param dir_path:
+    :param roi:
+    :param mask:
+    :param img_file:
+    :return:
+    """
     import os
     import os.path as op
     from nilearn import masking
@@ -662,6 +805,13 @@ def mask_roi(dir_path, roi, mask, img_file):
 
 
 def create_spherical_roi_volumes(node_size, coords, template_mask):
+    """
+
+    :param node_size:
+    :param coords:
+    :param template_mask:
+    :return:
+    """
     from pynets.nodemaker import get_sphere
     mask_img = nib.load(template_mask)
     mask_aff = mask_img.affine
@@ -669,6 +819,12 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     print("%s%s" % ('Creating spherical ROI atlas with radius: ', node_size))
 
     def mmToVox(nib_nifti, mmcoords):
+        """
+
+        :param nib_nifti:
+        :param mmcoords:
+        :return:
+        """
         return nib.affines.apply_affine(np.linalg.inv(nib_nifti.affine), mmcoords)
 
     coords_vox = []

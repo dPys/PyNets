@@ -10,6 +10,10 @@
   <component name="PyDocumentationSettings">
     <option name="renderExternalDocumentation" value="true" />
   </component>
+  <component name="ReSTService">
+    <option name="workdir" value="$MODULE_DIR$/docs/_modules" />
+    <option name="DOC_DIR" value="$MODULE_DIR$/docs/_modules" />
+  </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_FOLDERS">
       <list>

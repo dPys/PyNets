@@ -5,12 +5,20 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore")
 import numpy as np
 import nibabel as nib
 
 
 def reconstruction(conn_model, gtab, dwi_file, wm_in_dwi):
+    """
+
+    :param conn_model:
+    :param gtab:
+    :param dwi_file:
+    :param wm_in_dwi:
+    :return:
+    """
     try:
         import cPickle as pickle
     except ImportError:
@@ -31,6 +39,16 @@ def reconstruction(conn_model, gtab, dwi_file, wm_in_dwi):
 
 
 def prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc_step_size=0.2):
+    """
+
+    :param nodif_B0_mask:
+    :param gm_in_dwi:
+    :param vent_csf_in_dwi:
+    :param wm_in_dwi:
+    :param tiss_class:
+    :param cmc_step_size:
+    :return:
+    """
     try:
         import cPickle as pickle
     except ImportError:
@@ -68,6 +86,13 @@ def prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_clas
 
 
 def run_LIFE_all(data, gtab, streamlines):
+    """
+
+    :param data:
+    :param gtab:
+    :param streamlines:
+    :return:
+    """
     import dipy.tracking.life as life
     import dipy.core.optimize as opt
     fiber_model = life.FiberModel(gtab)
@@ -86,6 +111,13 @@ def run_LIFE_all(data, gtab, streamlines):
 
 
 def save_streams(dwi_img, streamlines, streams):
+    """
+
+    :param dwi_img:
+    :param streamlines:
+    :param streams:
+    :return:
+    """
     hdr = dwi_img.header
 
     # Save streamlines
@@ -109,6 +141,21 @@ def save_streams(dwi_img, streamlines, streams):
 
 def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_length, conn_model, target_samples,
                        node_size, curv_thr_list, step_list):
+    """
+
+    :param dwi_file:
+    :param dir_path:
+    :param gtab:
+    :param streamlines:
+    :param life_run:
+    :param min_length:
+    :param conn_model:
+    :param target_samples:
+    :param node_size:
+    :param curv_thr_list:
+    :param step_list:
+    :return:
+    """
     from dipy.tracking import utils
     from pynets.dmri.track import save_streams, run_LIFE_all
 
@@ -150,6 +197,24 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
 def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mod_fit,
                    tiss_classifier, sphere, directget, curv_thr_list, step_list, track_type, maxcrossing, max_length,
                    n_seeds_per_iter=200):
+    """
+
+    :param target_samples:
+    :param atlas_data_wm_gm_int:
+    :param parcels:
+    :param parcel_vec:
+    :param mod_fit:
+    :param tiss_classifier:
+    :param sphere:
+    :param directget:
+    :param curv_thr_list:
+    :param step_list:
+    :param track_type:
+    :param maxcrossing:
+    :param max_length:
+    :param n_seeds_per_iter:
+    :return:
+    """
     from colorama import Fore, Style
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
@@ -234,6 +299,46 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
               conn_model, gtab_file, dwi_file, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
               prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, life_run, min_length,
               fa_path):
+    """
+
+    :param nodif_B0_mask:
+    :param gm_in_dwi:
+    :param vent_csf_in_dwi:
+    :param wm_in_dwi:
+    :param tiss_class:
+    :param labels_im_file_wm_gm_int:
+    :param labels_im_file:
+    :param target_samples:
+    :param curv_thr_list:
+    :param step_list:
+    :param track_type:
+    :param max_length:
+    :param maxcrossing:
+    :param directget:
+    :param conn_model:
+    :param gtab_file:
+    :param dwi_file:
+    :param network:
+    :param node_size:
+    :param dens_thresh:
+    :param ID:
+    :param roi:
+    :param min_span_tree:
+    :param disp_filt:
+    :param parc:
+    :param prune:
+    :param atlas_select:
+    :param uatlas_select:
+    :param label_names:
+    :param coords:
+    :param norm:
+    :param binary:
+    :param atlas_mni:
+    :param life_run:
+    :param min_length:
+    :param fa_path:
+    :return:
+    """
     try:
         import cPickle as pickle
     except ImportError:

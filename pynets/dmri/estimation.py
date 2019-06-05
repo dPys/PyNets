@@ -5,12 +5,19 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore")
 import numpy as np
 import nibabel as nib
 
 
 def tens_mod_fa_est(gtab_file, dwi_file, nodif_B0_mask):
+    """
+
+    :param gtab_file:
+    :param dwi_file:
+    :param nodif_B0_mask:
+    :return:
+    """
     import os
     from dipy.io import load_pickle
     from dipy.reconst.dti import TensorModel
@@ -34,6 +41,13 @@ def tens_mod_fa_est(gtab_file, dwi_file, nodif_B0_mask):
 
 
 def tens_mod_est(gtab, data, wm_in_dwi):
+    """
+
+    :param gtab:
+    :param data:
+    :param wm_in_dwi:
+    :return:
+    """
     from dipy.reconst.dti import TensorModel
     from dipy.data import get_sphere
     print('Fitting tensor model...')
@@ -46,6 +60,13 @@ def tens_mod_est(gtab, data, wm_in_dwi):
 
 
 def csa_mod_est(gtab, data, wm_in_dwi):
+    """
+
+    :param gtab:
+    :param data:
+    :param wm_in_dwi:
+    :return:
+    """
     from dipy.reconst.shm import CsaOdfModel
     print('Fitting CSA model...')
     wm_in_dwi_mask = nib.load(wm_in_dwi).get_fdata().astype('bool')
@@ -55,6 +76,13 @@ def csa_mod_est(gtab, data, wm_in_dwi):
 
 
 def csd_mod_est(gtab, data, wm_in_dwi):
+    """
+
+    :param gtab:
+    :param data:
+    :param wm_in_dwi:
+    :return:
+    """
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     print('Fitting CSD model...')
     wm_in_dwi_mask = nib.load(wm_in_dwi).get_fdata().astype('bool')
@@ -75,6 +103,35 @@ def csd_mod_est(gtab, data, wm_in_dwi):
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
                   dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names,
                   coords, norm, binary, curv_thr_list, step_list, voxel_size='2mm'):
+    """
+
+    :param atlas_mni:
+    :param streams:
+    :param overlap_thr:
+    :param dir_path:
+    :param track_type:
+    :param target_samples:
+    :param conn_model:
+    :param network:
+    :param node_size:
+    :param dens_thresh:
+    :param ID:
+    :param roi:
+    :param min_span_tree:
+    :param disp_filt:
+    :param parc:
+    :param prune:
+    :param atlas_select:
+    :param uatlas_select:
+    :param label_names:
+    :param coords:
+    :param norm:
+    :param binary:
+    :param curv_thr_list:
+    :param step_list:
+    :param voxel_size:
+    :return:
+    """
     from dipy.tracking.streamline import Streamlines
     from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
     import networkx as nx

@@ -47,7 +47,7 @@ RUN apt-get update -qq \
         gsl-bin \
         libglu1-mesa-dev \
         libglib2.0-0 \
-        libglw1-mesa \ 
+        libglw1-mesa \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && curl -o /tmp/libxp6.deb -sSL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
@@ -95,7 +95,13 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
 RUN conda install -yq python=3.6 ipython
 RUN pip install --upgrade pip
 RUN conda clean -tipsy
-RUN pip install pynets==0.7.34 awscli pybids boto3 python-dateutil requests dipy
+RUN pip install awscli pybids boto3 python-dateutil requests dipy
+
+RUN git clone -b development https://github.com/dPys/PyNets PyNets && \
+    chmod 775 -R PyNets/*/*.py && \
+    cd PyNets && \
+    pip install -r requirements.txt && \
+    python setup.py install
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
@@ -112,7 +118,6 @@ RUN conda install -yq \
 USER root
 RUN chown -R neuro /opt \
     && chmod a+s -R /opt \
-    && chmod 777 -R /opt/conda/lib/python3.6/site-packages/pynets \
     && chmod 775 -R /opt/conda/lib/python3.6/site-packages \
     && find /opt -type f -iname "*.py" -exec chmod 777 {} \;
 
@@ -123,6 +128,13 @@ RUN apt-get remove --purge -y \
 
 # Delete buggy line in dipy
 RUN sed -i -e '189d;190d' /opt/conda/lib/python3.6/site-packages/dipy/tracking/eudx.py
+
+# Create mountpoints
+RUN mkdir /data && \
+    chmod -R 777 /data
+
+RUN mkdir /outputs && \
+    chmod -R 777 /outputs
 
 USER neuro
 
@@ -172,4 +184,4 @@ RUN python -c "from matplotlib import font_manager" && \
     sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
 
 # and add it as an entrypoint
-#ENTRYPOINT ["pynets_run"]
+ENTRYPOINT ["pynets_run"]

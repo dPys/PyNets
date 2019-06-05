@@ -5,7 +5,7 @@ Copyright (C) 2018
 @author: Derek Pisner
 """
 import warnings
-warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore")
 import os
 import numpy as np
 try:
@@ -227,6 +227,13 @@ def combine_xfms(xfm1, xfm2, xfmout):
 
 
 def transform_to_affine(streams, header, affine):
+    """
+
+    :param streams:
+    :param header:
+    :param affine:
+    :return:
+    """
     from dipy.tracking.utils import move_streamlines
     rotation, scale = np.linalg.qr(affine)
     streams = move_streamlines(streams, rotation)
@@ -234,13 +241,3 @@ def transform_to_affine(streams, header, affine):
     scale[0:3, 3] = abs(scale[0:3, 3])
     streams = move_streamlines(streams, scale)
     return streams
-
-
-def reslice_to_xmm(infile, vox_sz=2):
-    cmd = "flirt -in {} -ref {} -out {} -nosearch -applyisoxfm {}"
-    out_file = "%s%s%s%s%s%s" % (os.path.dirname(infile), '/', os.path.basename(infile).split('.nii.gz')[0], '_res_',
-                                 int(vox_sz), 'mm.nii.gz')
-    cmd = cmd.format(infile, infile, out_file, vox_sz)
-    os.system(cmd)
-    return out_file
-

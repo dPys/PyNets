@@ -13,6 +13,11 @@ warnings.simplefilter("ignore")
 
 
 def average_shortest_path_length_for_all(G):
+    """
+
+    :param G:
+    :return:
+    """
     import math
     subgraphs = [sbg for sbg in nx.connected_component_subgraphs(G) if len(sbg) > 1]
     return math.fsum(nx.average_shortest_path_length(sg) for sg in subgraphs) / len(subgraphs)
@@ -161,10 +166,23 @@ def average_local_efficiency(G, weight=None):
     return total/N
 
 def create_random_graph(G, n, p):
+    """
+
+    :param G:
+    :param n:
+    :param p:
+    :return:
+    """
     rG = nx.erdos_renyi_graph(n, p, seed=42)
     return rG
 
 def smallworldness_measure(G, rG):
+    """
+
+    :param G:
+    :param rG:
+    :return:
+    """
     C_g = nx.algorithms.average_clustering(G)
     C_r = nx.algorithms.average_clustering(rG)
     try:
@@ -180,6 +198,12 @@ def smallworldness_measure(G, rG):
 
 
 def smallworldness(G, rep=1000):
+    """
+
+    :param G:
+    :param rep:
+    :return:
+    """
     print("%s%s%s" % ('Estimating smallworldness using ', rep, ' random graphs...'))
     #import multiprocessing
     n = nx.number_of_nodes(G)
@@ -206,6 +230,12 @@ def smallworldness(G, rep=1000):
 
 
 def create_communities(node_comm_aff_mat, node_num):
+    """
+
+    :param node_comm_aff_mat:
+    :param node_num:
+    :return:
+    """
     com_assign = np.zeros((node_num,1))
     for i in range(len(node_comm_aff_mat)):
         community = node_comm_aff_mat[i,:]
@@ -281,6 +311,13 @@ def participation_coef(W, ci, degree='undirected'):
 
 
 def modularity(W, qtype='sta', seed=42):
+    """
+
+    :param W:
+    :param qtype:
+    :param seed:
+    :return:
+    """
     ## ADAPTED FROM BCTPY ##
     np.random.seed(seed)
     n = len(W)
@@ -405,6 +442,11 @@ def diversity_coef_sign(W, ci):
     # Number of modules
     m = np.max(ci)
     def entropy(w_):
+        """
+
+        :param w_:
+        :return:
+        """
         # Strength
         S = np.sum(w_, axis=1)
         # Node-to-module degree
@@ -425,6 +467,12 @@ def diversity_coef_sign(W, ci):
 
 
 def link_communities(W, type_clustering='single'):
+    """
+
+    :param W:
+    :param type_clustering:
+    :return:
+    """
     from pynets.thresholding import normalize
     ## ADAPTED FROM BCTPY ##
     '''
@@ -825,6 +873,20 @@ def most_important(G):
 
 # Extract network metrics interface
 def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_size, norm, binary):
+    """
+
+    :param ID:
+    :param network:
+    :param thr:
+    :param conn_model:
+    :param est_path:
+    :param roi:
+    :param prune:
+    :param node_size:
+    :param norm:
+    :param binary:
+    :return:
+    """
     import pandas as pd
     import yaml
     try:

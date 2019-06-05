@@ -5,7 +5,7 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore")
 import numpy as np
 
 
@@ -36,7 +36,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                          conn_model_list, min_span_tree, use_AAL_naming, smooth,
                                                          smooth_list, disp_filt, prune, multi_nets, clust_type,
                                                          clust_type_list, plugin_type, c_boot, block_size, mask,
-                                                         norm, binary, runtime_dict)
+                                                         norm, binary, runtime_dict, anat_file)
         if dwi_file is None:
             sub_struct_wf = None
     # Workflow 2: Structural connectome
@@ -169,6 +169,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
 
         meta_wf.add_nodes([sub_func_wf])
         meta_wf.connect([(meta_inputnode, sub_func_wf, [('ID', 'inputnode.ID'),
+                                                        ('anat_file', 'inputnode.anat_file'),
                                                         ('atlas_select', 'inputnode.atlas_select'),
                                                         ('network', 'inputnode.network'),
                                                         ('thr', 'inputnode.thr'),
@@ -382,7 +383,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                              k_clustering, user_atlas_list, clust_mask_list, node_size_list, conn_model_list,
                              min_span_tree, use_AAL_naming, smooth, smooth_list, disp_filt, prune, multi_nets,
                              clust_type, clust_type_list, plugin_type, c_boot, block_size, mask, norm, binary,
-                             runtime_dict, vox_size='2mm'):
+                             runtime_dict, anat_file, vox_size='2mm'):
     import os
     import os.path as op
     from nipype.pipeline import engine as pe
@@ -390,12 +391,14 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
     from pynets import nodemaker, utils, thresholding
     from pynets.plotting import plot_gen
     from pynets.fmri import estimation, clustools
+    from pynets.registration import register
     try:
         FSLDIR = os.environ['FSLDIR']
     except KeyError:
         print('FSLDIR environment variable not set!')
 
-    import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib"]
+    import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib",
+                   "import warnings", "warnings.filterwarnings(\"ignore\")"]
     functional_connectometry_wf = pe.Workflow(name="%s%s" % ('functional_connectometry_', ID))
     base_dirname = "%s%s" % ('functional_connectometry_', ID)
     if not os.path.isdir("%s%s" % ('/tmp/', base_dirname)):
@@ -405,6 +408,9 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
     # Set paths to templates
     template = "%s%s%s%s" % (FSLDIR, '/data/standard/MNI152_T1_', vox_size, '_brain.nii.gz')
     template_mask = "%s%s%s%s" % (FSLDIR, '/data/standard/MNI152_T1_', vox_size, '_brain_mask.nii.gz')
+
+    # Create basedir_path
+    basedir_path = utils.do_dir_path('registration', func_file)
 
     # Create input/output nodes
     inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID', 'atlas_select', 'network',
@@ -417,7 +423,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                                                       'min_span_tree', 'use_AAL_naming', 'smooth',
                                                       'disp_filt', 'prune', 'multi_nets', 'clust_type',
                                                       'c_boot', 'block_size', 'mask', 'norm', 'binary', 'template',
-                                                      'template_mask', 'vox_size']),
+                                                      'template_mask', 'vox_size', 'anat_file', 'basedir_path']),
                         name='inputnode')
 
     inputnode.inputs.func_file = func_file
@@ -465,6 +471,8 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
     inputnode.inputs.template = template
     inputnode.inputs.template_mask = template_mask
     inputnode.inputs.vox_size = vox_size
+    inputnode.inputs.anat_file = anat_file
+    inputnode.inputs.basedir_path = basedir_path
 
     # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
@@ -508,6 +516,8 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
     # print("%s%s" % ('template: ', template))
     # print("%s%s" % ('template_mask: ', template_mask))
     # print("%s%s" % ('vox_size: ', vox_size))
+    # print("%s%s" % ('anat_file: ', anat_file))
+    # print("%s%s" % ('basedir_path: ', basedir_path))
     # print('\n\n\n\n\n')
 
     # Create function nodes
@@ -520,12 +530,22 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                                               name="check_orient_and_dims_anat_node")
 
     check_orient_and_dims_roi_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'], output_names=['outfile'],
-                                                           function=utils.check_orient_and_dims, imports=import_list),
-                                              name="check_orient_and_dims_roi_node")
+                                                          function=utils.check_orient_and_dims, imports=import_list),
+                                             name="check_orient_and_dims_roi_node")
 
     check_orient_and_dims_mask_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'], output_names=['outfile'],
                                                            function=utils.check_orient_and_dims, imports=import_list),
                                               name="check_orient_and_dims_mask_node")
+
+    register_node = pe.Node(niu.Function(input_names=['basedir_path', 'anat_file'],
+                                         function=register.register_all_fmri, imports=import_list),
+                            name="register_node")
+
+    register_atlas_node = pe.Node(niu.Function(input_names=['uatlas_select', 'atlas_select', 'node_size',
+                                                            'basedir_path', 'anat_file'],
+                                               output_names=['aligned_atlas_t1mni_gm'],
+                                               function=register.register_atlas_fmri, imports=import_list),
+                                  name="register_atlas_node")
 
     # Clustering
     if float(k_clustering) > 0:
@@ -903,7 +923,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
         extract_ts_node = pe.Node(niu.Function(input_names=['net_parcels_map_nifti', 'conf', 'func_file', 'coords',
                                                             'roi', 'dir_path', 'ID', 'network', 'smooth',
                                                             'atlas_select', 'uatlas_select', 'label_names', 'coords',
-                                                            'c_boot', 'block_size', 'mask'],
+                                                            'c_boot', 'block_size'],
                                                output_names=['ts_within_nodes', 'node_size', 'smooth', 'dir_path',
                                                              'atlas_select', 'uatlas_select', 'label_names', 'coords',
                                                              'c_boot'],
@@ -923,8 +943,7 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
         # Coordinate case
         extract_ts_node = pe.Node(niu.Function(input_names=['node_size', 'conf', 'func_file', 'coords', 'dir_path',
                                                             'ID', 'roi', 'network', 'smooth', 'atlas_select',
-                                                            'uatlas_select', 'label_names', 'c_boot', 'block_size',
-                                                            'mask'],
+                                                            'uatlas_select', 'label_names', 'c_boot', 'block_size'],
                                                output_names=['ts_within_nodes', 'node_size', 'smooth', 'dir_path',
                                                              'atlas_select', 'uatlas_select', 'label_names', 'coords',
                                                              'c_boot'],
@@ -1263,12 +1282,15 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                                             ('ID', 'ID'), ('prune', 'prune'), ('norm', 'norm'), ('binary', 'binary')])
         ])
 
+    # Handle masking scenarios (brain mask and/or roi)
     if roi and not mask:
         functional_connectometry_wf.connect([
             (inputnode, check_orient_and_dims_roi_node, [('roi', 'infile'), ('vox_size', 'vox_size')]),
             (check_orient_and_dims_roi_node, node_gen_node, [('outfile', 'roi')]),
             (check_orient_and_dims_roi_node, extract_ts_node, [('outfile', 'roi')]),
-            (check_orient_and_dims_roi_node, get_conn_matrix_node, [('outfile', 'roi')])
+            (check_orient_and_dims_roi_node, get_conn_matrix_node, [('outfile', 'roi')]),
+            (inputnode, check_orient_and_dims_mask_node, [('mask', 'mask')]),
+            (inputnode, node_gen_node, [('mask', 'mask')])
         ])
     elif not roi and not mask:
         functional_connectometry_wf.connect([
@@ -1276,37 +1298,71 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
             (inputnode, extract_ts_node, [('roi', 'roi')]),
             (inputnode, get_conn_matrix_node, [('roi', 'roi')]),
             (inputnode, check_orient_and_dims_mask_node, [('mask', 'mask')]),
-            (inputnode, extract_ts_node, [('mask', 'mask')]),
-            (inputnode, node_gen_node, [('mask', 'mask')])
+            (inputnode, node_gen_node, [('mask', 'mask'), ('vox_size', 'vox_size')])
         ])
     elif mask and not roi:
         functional_connectometry_wf.connect([
+            (inputnode, node_gen_node, [('roi', 'roi')]),
+            (inputnode, extract_ts_node, [('roi', 'roi')]),
+            (inputnode, get_conn_matrix_node, [('roi', 'roi')]),
             (inputnode, check_orient_and_dims_mask_node, [('mask', 'infile'), ('vox_size', 'vox_size')]),
-            (check_orient_and_dims_mask_node, extract_ts_node, [('outfile', 'mask')]),
             (check_orient_and_dims_mask_node, node_gen_node, [('outfile', 'mask')])
         ])
-    elif op.isfile(template_mask) and not roi:
+    elif not mask and op.isfile(template_mask) and not roi:
         functional_connectometry_wf.connect([
-            (inputnode, check_orient_and_dims_mask_node, [('template_mask', 'infile')]),
-            (check_orient_and_dims_mask_node, extract_ts_node, [('outfile', 'mask')]),
-            (check_orient_and_dims_mask_node, node_gen_node, [('outfile', 'mask')])
+            (inputnode, node_gen_node, [('roi', 'roi')]),
+            (inputnode, extract_ts_node, [('roi', 'roi')]),
+            (inputnode, get_conn_matrix_node, [('roi', 'roi')]),
+            (inputnode, node_gen_node, [('template_mask', 'infile'), ('vox_size', 'vox_size')]),
         ])
-    elif roi and (mask or op.isfile(template_mask)):
+    else:
+        functional_connectometry_wf.connect([
+            (inputnode, node_gen_node, [('roi', 'roi')]),
+            (inputnode, extract_ts_node, [('roi', 'roi')]),
+            (inputnode, get_conn_matrix_node, [('roi', 'roi')]),
+            (inputnode, node_gen_node, [('mask', 'mask'), ('vox_size', 'vox_size')]),
+        ])
+
+    if roi and (mask or op.isfile(template_mask)):
         mask_roi_node = pe.Node(niu.Function(input_names=['dir_path', 'roi', 'mask', 'img_file'],
                                              output_names=['roi'],
                                              function=nodemaker.mask_roi, imports=import_list), name="mask_roi_node")
-        functional_connectometry_wf.disconnect([
-            (check_orient_and_dims_roi_node, extract_ts_node, [('outfile', 'roi')]),
-            (check_orient_and_dims_roi_node, node_gen_node, [('outfile', 'roi')])
-        ])
+        if roi:
+            functional_connectometry_wf.disconnect([
+                (check_orient_and_dims_roi_node, node_gen_node, [('outfile', 'roi')])
+            ])
+        else:
+            functional_connectometry_wf.disconnect([
+                (inputnode, node_gen_node, [('roi', 'roi')])
+            ])
+        if mask:
+            functional_connectometry_wf.disconnect([
+                (check_orient_and_dims_mask_node, node_gen_node, [('outfile', 'mask')])
+            ])
+        else:
+            if op.isfile(template_mask):
+                functional_connectometry_wf.disconnect([
+                    (inputnode, node_gen_node, [('template_mask', 'mask')])
+                ])
+            else:
+                functional_connectometry_wf.disconnect([
+                    (inputnode, node_gen_node, [('mask', 'mask')])
+                ])
         functional_connectometry_wf.connect([
-            (check_orient_and_dims_mask_node, mask_roi_node, [('outfile', 'mask')]),
             (check_orient_and_dims_roi_node, mask_roi_node, [('outfile', 'roi')]),
             (mask_roi_node, extract_ts_node, [('roi', 'roi')]),
             (mask_roi_node, node_gen_node, [('roi', 'roi')]),
             (fetch_nodes_and_labels_node, mask_roi_node, [('dir_path', 'dir_path')]),
             (check_orient_and_dims_func_node, mask_roi_node, [('outfile', 'img_file')]),
         ])
+        if mask:
+            functional_connectometry_wf.connect([
+                (check_orient_and_dims_mask_node, mask_roi_node, [('outfile', 'mask')]),
+            ])
+        else:
+            functional_connectometry_wf.connect([
+                (inputnode, mask_roi_node, [('template_mask', 'mask')]),
+            ])
 
     # Connect remaining nodes of workflow
     functional_connectometry_wf.connect([
@@ -1343,6 +1399,21 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
                                                  ('atlas_select', 'atlas_select'), ('uatlas_select', 'uatlas_select'),
                                                  ('c_boot', 'c_boot')]),
         (join_iters_node, thresh_func_node, map_connects)
+        ])
+
+    # Handle case that t1w image is available to refine parcellation
+    if anat_file and (parc is True or float(k_clustering) > 0):
+        functional_connectometry_wf.disconnect([
+            (node_gen_node, extract_ts_node, [('uatlas_select', 'uatlas_select')]),
+        ])
+        functional_connectometry_wf.connect([
+            (inputnode, check_orient_and_dims_anat_node, [('anat_file', 'infile'), ('vox_size', 'vox_size')]),
+            (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_file')]),
+            (check_orient_and_dims_anat_node, register_atlas_node, [('outfile', 'anat_file')]),
+            (inputnode, register_node, [('basedir_path', 'basedir_path')]),
+            (inputnode, register_atlas_node, [('basedir_path', 'basedir_path'), ('node_size', 'node_size')]),
+            (node_gen_node, register_atlas_node, [('atlas_select', 'atlas_select'), ('uatlas_select', 'uatlas_select')]),
+            (register_atlas_node, extract_ts_node, [('aligned_atlas_t1mni_gm', 'uatlas_select')]),
         ])
 
     # Set cpu/memory reqs
@@ -1391,7 +1462,8 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
     except KeyError:
         print('FSLDIR environment variable not set!')
 
-    import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib"]
+    import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib",
+                   "import warnings", "warnings.filterwarnings(\"ignore\")"]
     base_dirname = "%s%s" % ('structural_connectometry_', ID)
     structural_connectometry_wf = pe.Workflow(name=base_dirname)
     if not os.path.isdir("%s%s" % ('/tmp/', base_dirname)):
@@ -1602,7 +1674,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
                                                              'coords', 'label_names', 'node_size', 'gm_in_dwi',
                                                              'vent_csf_in_dwi', 'wm_in_dwi', 'fa_path', 'gtab_file',
                                                              'nodif_B0_mask', 'dwi_file'],
-                                               function=register.register_atlas, imports=import_list),
+                                               function=register.register_atlas_dwi, imports=import_list),
                                   name="register_atlas_node")
 
     run_tracking_node = pe.Node(niu.Function(input_names=['nodif_B0_mask', 'gm_in_dwi', 'vent_csf_in_dwi', 'wm_in_dwi',

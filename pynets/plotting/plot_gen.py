@@ -9,10 +9,21 @@ import networkx as nx
 import os
 import os.path as op
 import warnings
-warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore")
 
 
 def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names):
+    """
+
+    :param conn_matrix:
+    :param conn_model:
+    :param atlas_select:
+    :param dir_path:
+    :param ID:
+    :param network:
+    :param label_names:
+    :return:
+    """
     import json
     from pathlib import Path
     from networkx.readwrite import json_graph
@@ -45,6 +56,12 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
             del label_names[label_names.index(label_names[j])]
 
     def doClust(X, clust_levels):
+        """
+
+        :param X:
+        :param clust_levels:
+        :return:
+        """
         # get the linkage diagram
         Z = linkage(X, 'ward')
         # choose # cluster levels
@@ -102,9 +119,21 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
         [label_arr, clust_levels_tmp] = doClust(conn_matrix, clust_levels)
 
     def get_node_label(node_idx, labels, clust_levels_tmp):
+        """
+
+        :param node_idx:
+        :param labels:
+        :param clust_levels_tmp:
+        :return:
+        """
         from collections import OrderedDict
 
         def write_roman(num):
+            """
+
+            :param num:
+            :return:
+            """
             roman = OrderedDict()
             roman[1000] = "M"
             roman[900] = "CM"
@@ -121,6 +150,10 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
             roman[1] = "I"
 
             def roman_num(num):
+                """
+
+                :param num:
+                """
                 for r in roman.keys():
                     x, y = divmod(num, r)
                     yield roman[r] * x
@@ -236,6 +269,15 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
 
 
 def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
+    """
+
+    :param time_series:
+    :param network:
+    :param ID:
+    :param dir_path:
+    :param atlas_select:
+    :param labels:
+    """
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
@@ -258,6 +300,28 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
 
 def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, roi, coords, thr,
              node_size, edge_threshold, smooth, prune, uatlas_select, c_boot, norm, binary):
+    """
+
+    :param conn_matrix:
+    :param conn_model:
+    :param atlas_select:
+    :param dir_path:
+    :param ID:
+    :param network:
+    :param label_names:
+    :param roi:
+    :param coords:
+    :param thr:
+    :param node_size:
+    :param edge_threshold:
+    :param smooth:
+    :param prune:
+    :param uatlas_select:
+    :param c_boot:
+    :param norm:
+    :param binary:
+    :return:
+    """
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
@@ -367,6 +431,15 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
 
 
 def structural_plotting(conn_matrix, uatlas_select, streamlines_mni, template_mask, interactive=False):
+    """
+
+    :param conn_matrix:
+    :param uatlas_select:
+    :param streamlines_mni:
+    :param template_mask:
+    :param interactive:
+    :return:
+    """
     import nibabel as nib
     import numpy as np
     import networkx as nx
@@ -431,6 +504,12 @@ def structural_plotting(conn_matrix, uatlas_select, streamlines_mni, template_ma
     [coords, label_names] = find_parcellation_cut_coords(atlas_img, background_label=0, return_label_names=True)
 
     def mmToVox(nib_nifti, mmcoords):
+        """
+
+        :param nib_nifti:
+        :param mmcoords:
+        :return:
+        """
         return nib.affines.apply_affine(np.linalg.inv(nib_nifti.affine), mmcoords)
 
     coords_vox = []
@@ -488,6 +567,13 @@ def structural_plotting(conn_matrix, uatlas_select, streamlines_mni, template_ma
 
 
 def plot_graph_measure_hists(df_concat, measures, net_pick_file):
+    """
+
+    :param df_concat:
+    :param measures:
+    :param net_pick_file:
+    :return:
+    """
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt

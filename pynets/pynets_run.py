@@ -4,7 +4,7 @@
 # Copyright (C) 2018
 # @author: Derek Pisner (dPys)
 import warnings
-warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore")
 
 
 def get_parser():

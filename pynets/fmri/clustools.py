@@ -31,6 +31,12 @@ import numpy as np
 
 # simple function to translate 1D vector coordinates to 3D matrix coordinates for a 3D matrix of size sz
 def indx_1dto3d(idx, sz):
+    """
+
+    :param idx:
+    :param sz:
+    :return:
+    """
     from scipy import divide, prod
     x = divide(idx, prod(sz[1:3]))
     y = divide(idx-x*prod(sz[1:3]), sz[2])
@@ -40,6 +46,12 @@ def indx_1dto3d(idx, sz):
 
 # simple function to translate 3D matrix coordinates to 1D vector coordinates for a 3D matrix of size sz
 def indx_3dto1d(idx, sz):
+    """
+
+    :param idx:
+    :param sz:
+    :return:
+    """
     from scipy import prod, rank
     if rank(idx) == 1:
         idx1 = idx[0]*prod(sz[1:3])+idx[1]*sz[2]+idx[2]
@@ -49,6 +61,13 @@ def indx_3dto1d(idx, sz):
 
 
 def make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh):
+    """
+
+    :param func_file:
+    :param clust_mask:
+    :param outfile:
+    :param thresh:
+    """
     from scipy.sparse import csc_matrix
     from scipy import prod, rank
     neighbors = np.array([[-1, -1, -1], [0, -1, -1], [1, -1, -1],
@@ -165,6 +184,13 @@ def make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh):
 
 
 def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
+    """
+
+    :param func_file:
+    :param clust_mask:
+    :param outfile:
+    :param thresh:
+    """
     from scipy.sparse import csc_matrix
     from scipy import prod, rank
     from itertools import product
@@ -260,6 +286,12 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
 
 
 def ncut(W, nbEigenValues):
+    """
+
+    :param W:
+    :param nbEigenValues:
+    :return:
+    """
     from scipy.sparse.linalg import eigsh
     from scipy.sparse import spdiags
     from numpy.linalg import norm
@@ -309,6 +341,11 @@ def ncut(W, nbEigenValues):
 
 
 def discretisation(eigen_vec):
+    """
+
+    :param eigen_vec:
+    :return:
+    """
     import scipy as sp
     from scipy.sparse import csc_matrix
     from scipy.linalg import LinAlgError, svd
@@ -375,6 +412,12 @@ def discretisation(eigen_vec):
 
 
 def binfile_parcellate(infile, outfile, k):
+    """
+
+    :param infile:
+    :param outfile:
+    :param k:
+    """
     from scipy.sparse import csc_matrix
     # check how long it takes
 
@@ -417,6 +460,12 @@ def binfile_parcellate(infile, outfile, k):
 
 
 def make_image_from_bin_renum(image, binfile, mask):
+    """
+
+    :param image:
+    :param binfile:
+    :param mask:
+    """
     # read in the mask
     nim = nib.load(mask)
 
@@ -448,6 +497,17 @@ def make_image_from_bin_renum(image, binfile, mask):
 
 
 def nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_select):
+    """
+
+    :param func_file:
+    :param clust_mask:
+    :param k:
+    :param clust_type:
+    :param ID:
+    :param dir_path:
+    :param uatlas_select:
+    :return:
+    """
     import time
     import nibabel as nib
     from nilearn.regions import Parcellations
@@ -467,6 +527,16 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_se
 
 
 def individual_tcorr_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
+    """
+
+    :param func_file:
+    :param clust_mask:
+    :param ID:
+    :param k:
+    :param clust_type:
+    :param thresh:
+    :return:
+    """
     import os
     from pynets import utils
     from pynets.fmri import clustools

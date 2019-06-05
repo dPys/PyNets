@@ -5,12 +5,36 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore")
 import numpy as np
 
 
 def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
                     disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary):
+    """
+
+    :param time_series:
+    :param conn_model:
+    :param dir_path:
+    :param node_size:
+    :param smooth:
+    :param dens_thresh:
+    :param network:
+    :param ID:
+    :param roi:
+    :param min_span_tree:
+    :param disp_filt:
+    :param parc:
+    :param prune:
+    :param atlas_select:
+    :param uatlas_select:
+    :param label_names:
+    :param coords:
+    :param c_boot:
+    :param norm:
+    :param binary:
+    :return:
+    """
     from nilearn.connectome import ConnectivityMeasure
     from sklearn.covariance import GraphicalLassoCV
 
@@ -145,6 +169,12 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
 
 
 def generate_mask_from_voxels(voxel_coords, volume_dims):
+    """
+
+    :param voxel_coords:
+    :param volume_dims:
+    :return:
+    """
     mask = np.zeros(volume_dims)
     for voxel in voxel_coords:
         mask[tuple(voxel)] = 1
@@ -152,6 +182,11 @@ def generate_mask_from_voxels(voxel_coords, volume_dims):
 
 
 def normalize(v):
+    """
+
+    :param v:
+    :return:
+    """
     norm = np.linalg.norm(v, ord=1)
     if norm == 0:
         norm = np.finfo(v.dtype).eps
@@ -159,7 +194,26 @@ def normalize(v):
 
 
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas_select,
-                    uatlas_select, label_names, c_boot, block_size, mask, detrending=True):
+                    uatlas_select, label_names, c_boot, block_size, detrending=True):
+    """
+
+    :param net_parcels_map_nifti:
+    :param conf:
+    :param func_file:
+    :param coords:
+    :param roi:
+    :param dir_path:
+    :param ID:
+    :param network:
+    :param smooth:
+    :param atlas_select:
+    :param uatlas_select:
+    :param label_names:
+    :param c_boot:
+    :param block_size:
+    :param detrending:
+    :return:
+    """
     import os.path as op
     from nilearn import input_data
     from pynets import utils
@@ -193,7 +247,26 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
 
 
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, network, smooth, atlas_select,
-                      uatlas_select, label_names, c_boot, block_size, mask, detrending=True):
+                      uatlas_select, label_names, c_boot, block_size, detrending=True):
+    """
+
+    :param node_size:
+    :param conf:
+    :param func_file:
+    :param coords:
+    :param dir_path:
+    :param ID:
+    :param roi:
+    :param network:
+    :param smooth:
+    :param atlas_select:
+    :param uatlas_select:
+    :param label_names:
+    :param c_boot:
+    :param block_size:
+    :param detrending:
+    :return:
+    """
     import os.path as op
     from nilearn import input_data
     from pynets import utils
