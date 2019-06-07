@@ -8,6 +8,7 @@ import warnings
 warnings.filterwarnings("ignore")
 import os
 import numpy as np
+np.warnings.filterwarnings('ignore')
 try:
     FSLDIR = os.environ['FSLDIR']
 except KeyError:

@@ -7,6 +7,7 @@ Copyright (C) 2018
 from __future__ import division
 import os
 import numpy as np
+np.warnings.filterwarnings('ignore')
 import networkx as nx
 import warnings
 warnings.simplefilter("ignore")
@@ -871,6 +872,68 @@ def most_important(G):
      return Gt, pruned_nodes
 
 
+def timeout(seconds=10):
+    from functools import wraps
+    import errno
+    import os
+    import signal
+
+    class TimeoutError(Exception):
+        pass
+
+    def decorator(func):
+        def _handle_timeout(signum, frame):
+            error_message = os.strerror(errno.ETIME)
+            raise TimeoutError(error_message)
+
+        def wrapper(*args, **kwargs):
+            signal.signal(signal.SIGALRM, _handle_timeout)
+            signal.alarm(seconds)
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                signal.alarm(0)
+            return result
+
+        return wraps(func)(wrapper)
+
+    return decorator
+
+
+# Institute 10-second timeout rule with signal decorator
+@timeout
+def raw_mets(G, i, custom_weight):
+    if i is 'average_shortest_path_length':
+        if nx.is_connected(G) is True:
+            # try:
+            #     net_met_val = float(i(G_dir))
+            #     print('Calculating from directed graph...')
+            # except:
+            #     net_met_val = float(i(G))
+            net_met_val = float(i(G))
+        else:
+            # Case where G is not fully connected
+            print('WARNING: Calculating average shortest path length for a disconnected graph. '
+                  'This might take awhile...')
+            net_met_val = float(average_shortest_path_length_for_all(G))
+    if custom_weight is not None and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
+        custom_weight_param = 'weight = ' + str(custom_weight)
+        # try:
+        #     net_met_val = float(i(G_dir, custom_weight_param))
+        #     print('Calculating from directed graph...')
+        # except:
+        #     net_met_val = float(i(G, custom_weight_param))
+        net_met_val = float(i(G, custom_weight_param))
+    else:
+        # try:
+        #     net_met_val = float(i(G_dir))
+        #     print('Calculating from directed graph...')
+        # except:
+        #     net_met_val = float(i(G))
+        net_met_val = float(i(G))
+    return net_met_val
+
+
 # Extract network metrics interface
 def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_size, norm, binary):
     """
@@ -1013,34 +1076,11 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
         met_name = str(i).split('<function ')[1].split(' at')[0]
         net_met = met_name
         try:
-            if i is 'average_shortest_path_length':
-                if nx.is_connected(G) is True:
-                    # try:
-                    #     net_met_val = float(i(G_dir))
-                    #     print('Calculating from directed graph...')
-                    # except:
-                    #     net_met_val = float(i(G))
-                    net_met_val = float(i(G))
-                else:
-                    # Case where G is not fully connected
-                    print('WARNING: Calculating average shortest path length for a disconnected graph. '
-                          'This might take awhile...')
-                    net_met_val = float(average_shortest_path_length_for_all(G))
-            if custom_weight is not None and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
-                custom_weight_param = 'weight = ' + str(custom_weight)
-                # try:
-                #     net_met_val = float(i(G_dir, custom_weight_param))
-                #     print('Calculating from directed graph...')
-                # except:
-                #     net_met_val = float(i(G, custom_weight_param))
-                net_met_val = float(i(G, custom_weight_param))
-            else:
-                # try:
-                #     net_met_val = float(i(G_dir))
-                #     print('Calculating from directed graph...')
-                # except:
-                #     net_met_val = float(i(G))
-                net_met_val = float(i(G))
+            try:
+                net_met_val = raw_mets(G, i, custom_weight)
+            except:
+                print("%s%s%s" % ('WARNING: ', str(i), ' times out for graph G'))
+                net_met_val = np.nan
         except:
             print("%s%s%s" % ('WARNING: ', str(i), ' is undefined for graph G'))
             net_met_val = np.nan

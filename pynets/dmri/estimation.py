@@ -7,6 +7,7 @@ Copyright (C) 2018
 import warnings
 warnings.filterwarnings("ignore")
 import numpy as np
+np.warnings.filterwarnings('ignore')
 import nibabel as nib
 
 

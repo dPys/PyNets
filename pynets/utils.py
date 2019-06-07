@@ -11,6 +11,7 @@ import os
 import os.path as op
 import nibabel as nib
 import numpy as np
+np.warnings.filterwarnings('ignore')
 import shutil
 from pynets.stats.netstats import extractnetstats
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface
@@ -293,7 +294,7 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
 
 
 def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist,
-                  prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist):
+                  prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=True):
     """
 
     :param conn_model_iterlist:
@@ -308,6 +309,9 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, nod
     :param binary_iterlist:
     :return:
     """
+    if embed is True:
+        build_omnetome(est_path_iterlist, ID_iterlist[0])
+
     return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 
 
@@ -375,32 +379,52 @@ def flatten(l):
             yield el
 
 
-def random_forest_ensemble(df_in):
+def build_omnetome(est_path_iterlist, ID):
+    from sklearn.feature_selection import VarianceThreshold
+    from graspy.embed import OmnibusEmbed, ClassicalMDS
     """
 
-    :param df_in:
+    :param net_pickle_mt_lis:
     :return:
     """
-    import pandas as pd
-    from sklearn.ensemble import RandomForestRegressor
-    #from sklearn.model_selection import cross_val_score
-    from random import randint
-    estimator = RandomForestRegressor(random_state=0, n_estimators=100)
-    df_train = df_in.drop(columns=['modularity', 'average_diversity_coefficient'])
+    atlases = list(set([x.split('/')[-2].split('/')[0] for x in est_path_iterlist]))
+    parcel_dict = dict.fromkeys(atlases)
+    for key in parcel_dict:
+        parcel_dict[key] = []
 
-    for column in list(df_train.columns):
-        try:
-            df_train[column] = (df_train[column].str.split()).apply(lambda x: float(x[0]))
-        except:
-            continue
+    for atlas in atlases:
+        for graph_path in est_path_iterlist:
+            if atlas in graph_path:
+                parcel_dict[atlas].append(graph_path)
+        pop_array = []
+        #lab_array = []
+        for graph in parcel_dict[atlas]:
+            pop_array.append(np.load(graph))
+            #lab_array.append(graph.split('/')[-1].split('.npy')[0].split('est_')[1])
 
-    y = df_train.T[randint(1, len(df_train.T))]
-    df_train_in = df_train.T
-    #full_scores = cross_val_score(estimator, np.array(df_train_in), np.array(y), scoring='neg_mean_squared_error', cv=5)
-    fit = estimator.fit(df_train_in, y)
-    df = pd.DataFrame(fit.predict(df_train_in)).T
-    df.columns = list(df_train.T.index)
-    return df
+        variance_threshold = VarianceThreshold(threshold=0.07)
+        diags = np.array([np.triu(pop_array[i]) for i in range(len(pop_array))])
+        diags_red = diags.reshape(diags.shape[0], diags.shape[1]*diags.shape[2])
+        var_thr = variance_threshold.fit(diags_red.T)
+        graphs_ix_keep = var_thr.get_support(indices=True)
+        pop_array_red = [pop_array[i] for i in graphs_ix_keep]
+        #lab_array_red = [lab_array[i] for i in graphs_ix_keep]
+
+        # Omnibus embedding -- random dot product graph (rdpg)
+        print("%s%s%s" % ('Embedding ensemble for atlas: ', atlas, '...'))
+        omni = OmnibusEmbed(check_lcc=False)
+        omni_fit = omni.fit_transform(pop_array_red)
+
+        # Transform omnibus tensor into dissimilarity feature
+        mds = ClassicalMDS()
+        mds_fit = mds.fit_transform(omni_fit)
+        dir_path = os.path.dirname(graph_path)
+        out_path = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_omnetome_embedding_', atlas, '.npy')
+        print('Saving...')
+        np.save(out_path, mds_fit)
+        del mds, mds_fit, omni, omni_fit
+
+    return
 
 
 def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
@@ -475,17 +499,6 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
                 net_pick_out_path = "%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle, '_mean')
             df_concatted_final.to_pickle(net_pick_out_path)
             df_concatted_final.to_csv(net_pick_out_path + '.csv', index=False)
-
-            if rand_forest is True:
-                df_rnd_forest = random_forest_ensemble(df_concat.loc[:, measures])
-                if network:
-                    net_pick_out_path = "%s%s%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle,
-                                                              '_', network, '_rand_forest')
-                else:
-                    net_pick_out_path = "%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle,
-                                                          '_rand_forest')
-                df_rnd_forest.to_pickle(net_pick_out_path)
-                df_rnd_forest.to_csv(net_pick_out_path + '.csv', index=False)
 
         except RuntimeWarning:
             print("%s%s%s" % ('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ', str(ID), '!\n'))
@@ -1050,7 +1063,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, sens):
 
         data2, affine2 = reslice(data, affine, zooms, new_zooms)
         if sens == 'dwi':
-            affine2[0:3,3] = np.zeros(3)
+            affine2[0:3, 3] = np.zeros(3)
             affine2[0:3, 0:3] = np.eye(3) * np.array(new_zooms) * np.sign(affine2[0:3, 0:3])
         img2 = nib.Nifti1Image(data2, affine=affine2, header=hdr)
         img2.set_qform(affine2)

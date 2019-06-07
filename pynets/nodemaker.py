@@ -5,6 +5,7 @@ Copyright (C) 2018
 @author: Derek Pisner
 """
 import numpy as np
+np.warnings.filterwarnings('ignore')
 import nibabel as nib
 import warnings
 warnings.filterwarnings("ignore")

@@ -26,7 +26,8 @@ requirements = [
     'PyYAML>=3.12',
     'boto3>=1.9.111',
     'colorama>=0.3.9',
-    'pybids>=0.6.4'
+    'pybids>=0.6.4',
+    'graspy==0.0.2'
 ]
 
 setup_requirements = [
@@ -71,5 +72,5 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     setup_requires=setup_requirements,
-    scripts=["pynets/pynets_run.py"]
+    scripts=["pynets/pynets_run.py", "pynets/runconfig.yaml"]
 )

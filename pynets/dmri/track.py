@@ -5,9 +5,9 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-
 warnings.filterwarnings("ignore")
 import numpy as np
+np.warnings.filterwarnings('ignore')
 import nibabel as nib
 
 
@@ -81,7 +81,8 @@ def prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_clas
         tiss_classifier = CmcTissueClassifier.from_pve(wm_mask_data, gm_mask_data, vent_csf_in_dwi_data,
                                                        step_size=cmc_step_size, average_voxel_size=voxel_size)
     else:
-        raise ValueError("%s%s%s" % ('Error: tissuer classification method: ', tiss_class, 'not found'))
+        nodif_B0_mask_data = nib.load(nodif_B0_mask).get_fdata().astype('bool')
+        tiss_classifier = BinaryTissueClassifier(nodif_B0_mask_data)
 
     return tiss_classifier
 
@@ -183,9 +184,10 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
 
     # Save density map
     dm_img = nib.Nifti1Image(dm.astype('int16'), dwi_img.affine)
-    dm_img.to_filename("%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/density_map_', conn_model, '_', target_samples, '_',
+    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/density_map_', conn_model, '_', target_samples, '_',
                                                      node_size, 'mm_curv', str(curv_thr_list).replace(', ', '_'),
-                                                     '_step', str(step_list).replace(', ', '_'), '.nii.gz'))
+                                                     '_step', str(step_list).replace(', ', '_'), '.nii.gz')
+    dm_img.to_filename(dm_path)
 
     # Save streamlines to trk
     streams = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_', conn_model, '_', target_samples, '_',
@@ -193,7 +195,7 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
                                             '_step', str(step_list).replace(', ', '_'), '.trk')
     streams = save_streams(dwi_img, streamlines, streams)
 
-    return streams, dir_path
+    return streams, dir_path, dm_path
 
 
 def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mod_fit,
@@ -240,7 +242,7 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mo
             elif directget == 'boot':
                 dg = BootDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
                                                       sphere=sphere)
-            elif directget == 'closest':
+            elif directget == 'clos':
                 dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
                                                              sphere=sphere)
             elif directget == 'det':
@@ -409,7 +411,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
 
     # Perform streamline filtering routines
     dir_path = utils.do_dir_path(atlas_select, dwi_file)
-    [streams, dir_path] = filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_length, conn_model,
+    [streams, dir_path, dm_path] = filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_length, conn_model,
                                              target_samples, node_size, curv_thr_list, step_list)
 
-    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path
+    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path

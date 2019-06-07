@@ -9,6 +9,7 @@ warnings.filterwarnings("ignore")
 import os
 import nibabel as nib
 import numpy as np
+np.warnings.filterwarnings('ignore')
 from pynets.registration import reg_utils as mgru
 from pynets import utils
 from nilearn.image import load_img, math_img
@@ -32,13 +33,13 @@ def transform_pts(pts, t_aff, t_warp, ref_img_path, ants_path, template_path, ds
     :param out_volume:
     :param output_space:
     :return:
-    """
-    import random
-    """
+
+
     return coordinates in
     "ras_voxels" if you want to streamlines in ras ijk coordinates or
     "lps_voxmm" if you want dsi studio streamline coordinates relative to the template
     """
+    import random
     if not output_space in ("ras_voxels", "lps_voxmm"):
         raise ValueError("Must specify output space")
 
@@ -177,7 +178,8 @@ class Warp(object):
 
 def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_samples, conn_model, network, node_size,
                            dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select,
-                           label_names, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list):
+                           label_names, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list,
+                           overwrite=True):
     """
 
     :param streams:
@@ -206,13 +208,15 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     :param curv_thr_list:
     :param step_list:
     :return:
+
+    Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different spatial normalization approaches on
+    tractography and structural brain networks. Network Neuroscience, 1-19.
     """
     from dipy.tracking.streamline import Streamlines
     from pynets.registration import reg_utils as mgru
     from pynets.registration.register import Warp
     import pkg_resources
-    '''Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different spatial normalization approaches on 
-    tractography and structural brain networks. Network Neuroscience, 1-19.'''
+
     template_path = pkg_resources.resource_filename("pynets", "templates/FSL_HCP1065_FA_2mm.nii.gz")
     try:
         ants_path = os.environ['ANTSPATH']
@@ -231,35 +235,36 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     t_aff = "%s%s" % (basedir_path, '/0GenericAffine.mat')
     t_warp = "%s%s" % (basedir_path, '/1Warp.nii.gz')
 
-    if (os.path.isfile(t_aff) is False) and (os.path.isfile(t_warp) is False):
+    streamlines_native = nib.streamlines.load(streams)
+    streamlines_native_s = streamlines_native.streamlines
+    streams_warp = streams.split('.trk')[0] + '_warped.trk'
+    tractogram = nib.streamlines.Tractogram(streamlines_native_s, affine_to_rasmm=np.eye(4)*np.array([-1,1,1,1]))
+    trkfile = nib.streamlines.trk.TrkFile(tractogram, header=streamlines_native.header)
+    nib.streamlines.save(trkfile, streams_warp)
+    print(streams_warp)
+
+    if (os.path.isfile(t_aff) is False) and (os.path.isfile(t_warp) is False) and (overwrite is False):
         cmd = ants_path + '/antsRegistrationSyN.sh -d 3 -f ' + template_path + ' -m ' + fa_path + ' -o ' + basedir_path + '/'
         os.system(cmd)
 
-    fa_path_img = nib.load(fa_path)
-    s_aff = fa_path_img.affine
-
     # Warp streamlines
-    wS = Warp(ants_path, streams, streams_mni, template_path, t_aff, t_warp, fa_path, dsn_dir)
+    wS = Warp(ants_path, streams_warp, streams_mni, template_path, t_aff, t_warp, fa_path, dsn_dir)
     wS.streamlines()
 
-    # Flip FOV and translate along x-plane
-    s_aff[0][0] = np.negative(np.sign(s_aff[0][0])) * np.abs(s_aff[0][0])
-    s_aff[:3, 3] = np.array([270, 0, 0])
+    fa_path_img = nib.load(fa_path)
+    s_aff = fa_path_img.affine
+    s_aff[0] = -s_aff[0]
+    s_aff[:3, 3] = np.array([0, 0, 0])
     streamlines_mni = nib.streamlines.load(streams_mni)
     streamlines_mni_s = streamlines_mni.streamlines
-    streamlines_trans1 = Streamlines(mgru.transform_to_affine(streamlines_mni_s, streamlines_mni.header, s_aff))
-
-    # Flip back x-dimension and zero offsets
-    s_aff[0][0] = np.negative(np.sign(s_aff[0][0])) * np.abs(s_aff[0][0])
-    s_aff[:3, 3] = np.array([0, 0, 0])
-    streamlines_trans2 = Streamlines(mgru.transform_to_affine(streamlines_trans1, streamlines_mni.header, s_aff))
+    streamlines_trans = Streamlines(mgru.transform_to_affine(streamlines_mni_s, streamlines_mni.header, s_aff))
     streams_warp = streams_mni.split('.trk')[0] + '_warped.trk'
-    tractogram = nib.streamlines.Tractogram(streamlines_trans2, affine_to_rasmm=np.eye(4))
+    tractogram = nib.streamlines.Tractogram(streamlines_trans, affine_to_rasmm=np.eye(4))
     trkfile = nib.streamlines.trk.TrkFile(tractogram, header=streamlines_mni.header)
     nib.streamlines.save(trkfile, streams_warp)
     print(streams_warp)
 
-    return streams_warp, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni
+    return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni
 
 
 class DmriReg(object):
