@@ -13,6 +13,34 @@ import warnings
 warnings.simplefilter("ignore")
 
 
+def timeout(seconds=20):
+    from functools import wraps
+    import errno
+    import os
+    import signal
+
+    class TimeoutError(Exception):
+        pass
+
+    def decorator(func):
+        def _handle_timeout(signum, frame):
+            error_message = os.strerror(errno.ETIME)
+            raise TimeoutError(error_message)
+
+        def wrapper(*args, **kwargs):
+            signal.signal(signal.SIGALRM, _handle_timeout)
+            signal.alarm(seconds)
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                signal.alarm(0)
+            return result
+
+        return wraps(func)(wrapper)
+
+    return decorator
+
+@timeout
 def average_shortest_path_length_for_all(G):
     """
 
@@ -166,6 +194,7 @@ def average_local_efficiency(G, weight=None):
     N = len(eff)
     return total/N
 
+
 def create_random_graph(G, n, p):
     """
 
@@ -176,6 +205,7 @@ def create_random_graph(G, n, p):
     """
     rG = nx.erdos_renyi_graph(n, p, seed=42)
     return rG
+
 
 def smallworldness_measure(G, rG):
     """
@@ -272,6 +302,7 @@ def _compute_rc(G):
     return rc
 
 
+@timeout
 def participation_coef(W, ci, degree='undirected'):
     ## ADAPTED FROM BCTPY ##
     '''
@@ -872,35 +903,7 @@ def most_important(G):
      return Gt, pruned_nodes
 
 
-def timeout(seconds=10):
-    from functools import wraps
-    import errno
-    import os
-    import signal
-
-    class TimeoutError(Exception):
-        pass
-
-    def decorator(func):
-        def _handle_timeout(signum, frame):
-            error_message = os.strerror(errno.ETIME)
-            raise TimeoutError(error_message)
-
-        def wrapper(*args, **kwargs):
-            signal.signal(signal.SIGALRM, _handle_timeout)
-            signal.alarm(seconds)
-            try:
-                result = func(*args, **kwargs)
-            finally:
-                signal.alarm(0)
-            return result
-
-        return wraps(func)(wrapper)
-
-    return decorator
-
-
-# Institute 10-second timeout rule with signal decorator
+# Institute 20-second timeout rule with signal decorator
 @timeout
 def raw_mets(G, i, custom_weight):
     if i is 'average_shortest_path_length':
@@ -1079,7 +1082,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
             try:
                 net_met_val = raw_mets(G, i, custom_weight)
             except:
-                print("%s%s%s" % ('WARNING: ', str(i), ' times out for graph G'))
+                print("%s%s%s" % ('WARNING: ', net_met, ' times out for graph G'))
                 net_met_val = np.nan
         except:
             print("%s%s%s" % ('WARNING: ', str(i), ' is undefined for graph G'))
@@ -1099,7 +1102,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
         metric_list_names.append(i)
 
     # Run miscellaneous functions that generate multiple outputs
-
     # Calculate modularity using the Louvain algorithm
     if 'louvain_modularity' in metric_list_comm:
         try:

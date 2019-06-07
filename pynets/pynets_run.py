@@ -54,7 +54,6 @@ def get_parser():
     parser.add_argument('-dwi',
                         metavar='Path to diffusion-weighted imaging data file (required for structural connectomes)',
                         default=None,
-                        nargs='+',
                         help='Specify either a path to a preprocessed structural diffusion image in native diffusion '
                              'space and in .nii or .nii.gz format OR multiple paths to multiple preprocessed structural '
                              'diffusion images in native diffusion space and in .nii or .nii.gz format.\n')
@@ -1208,8 +1207,8 @@ def build_workflow(args, retval):
                                              ('norm_iterlist', 'norm'),
                                              ('binary_iterlist', 'binary')]),
             (handshake_node, export_to_pandas_node, [('network_iterlist', 'network'),
-                                                                              ('ID_iterlist', 'ID'),
-                                                                              ('roi_iterlist', 'roi')]),
+                                                     ('ID_iterlist', 'ID'),
+                                                     ('roi_iterlist', 'roi')]),
             (net_mets_node, export_to_pandas_node, [('out_file', 'csv_loc')]),
             (inputnode, collect_pandas_dfs_node, [('network', 'network'),
                                                   ('ID', 'ID'),
