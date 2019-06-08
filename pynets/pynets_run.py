@@ -228,12 +228,12 @@ def get_parser():
                              'Default is det.\n')
     parser.add_argument('-tc',
                         metavar='Tissue classification method',
-                        default=None,
+                        default='wb',
                         nargs=1,
-                        choices=[None, 'cmc', 'act', 'bin'],
+                        choices=['wb', 'cmc', 'act', 'bin'],
                         help='Include this flag to manually specify a tissue classification method for structural '
                              'connectome estimation. Options are: cmc (continuous), act (anatomically-constrained), '
-                             'and bin (binary to white-matter only). Default is None.\n')
+                             'wb (whole-brain mask), and bin (binary to white-matter only). Default is wb.\n')
     parser.add_argument('-thr',
                         metavar='Graph threshold',
                         default='1.00',
@@ -530,15 +530,10 @@ def build_workflow(args, retval):
     if directget:
         if (type(directget) is list) and (len(directget) > 1):
             multi_directget = directget
-            directget = None
-        elif directget == ['None']:
-            directget = None
-            multi_directget = None
         elif type(directget) is list:
             directget = directget[0]
             multi_directget = None
         else:
-            directget = None
             multi_directget = None
     else:
         multi_directget = None
