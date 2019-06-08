@@ -526,6 +526,8 @@ def build_workflow(args, retval):
     tiss_class = args.tc
     if type(tiss_class) is list:
         tiss_class = tiss_class[0]
+    if track_type == 'particle':
+        tiss_class = 'cmc'
     directget = args.dg
     if directget:
         if (type(directget) is list) and (len(directget) > 1):

@@ -32,8 +32,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="359">
-              <caret line="527" column="34" selection-start-line="527" selection-start-column="34" selection-end-line="527" selection-end-column="34" />
+            <state relative-caret-position="380">
+              <caret line="532" column="31" selection-start-line="532" selection-start-column="31" selection-end-line="532" selection-end-column="31" />
             </state>
           </provider>
         </entry>
@@ -50,8 +50,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2129">
-              <caret line="229" column="64" selection-start-line="229" selection-start-column="64" selection-end-line="229" selection-end-column="64" />
+            <state relative-caret-position="401">
+              <caret line="73" column="29" lean-forward="true" selection-start-line="73" selection-start-column="29" selection-end-line="73" selection-end-column="29" />
             </state>
           </provider>
         </entry>
@@ -133,7 +133,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>block_size</find>
       <find>node_size</find>
       <find>is None</find>
       <find>if len(</find>
@@ -159,10 +158,11 @@
       <find>Using node size of:</find>
       <find>Using connectivity model:</find>
       <find>Diffusion-Weighted Image</find>
-      <find>registration</find>
-      <find>directget</find>
       <find>node_gen_masking</find>
       <find>tiss_class</find>
+      <find>-tc</find>
+      <find>directget</find>
+      <find>registration</find>
     </findStrings>
     <replaceStrings>
       <replace>CollectPandasJoin</replace>
@@ -193,8 +193,8 @@
       <replace>anat_file</replace>
       <replace>get_fdata()</replace>
       <replace>dwi_file</replace>
-      <replace>multi_directget</replace>
       <replace>nargs='+'</replace>
+      <replace>multi_directget</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -527,12 +527,12 @@
       <workItem from="1555621726569" duration="1335000" />
       <workItem from="1555696086993" duration="222689000" />
       <workItem from="1559331639739" duration="25065000" />
-      <workItem from="1559749197482" duration="85126000" />
+      <workItem from="1559749197482" duration="85420000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="342448000" />
+    <option name="totallyTimeSpent" value="342742000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="267" y="24" width="1388" height="978" extended-state="0" />
@@ -799,13 +799,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="480">
-          <caret line="32" column="104" selection-start-line="32" selection-start-column="104" selection-end-line="32" selection-end-column="104" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-5834">
@@ -844,13 +837,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2129">
-          <caret line="229" column="64" selection-start-line="229" selection-start-column="64" selection-end-line="229" selection-end-column="64" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="10470">
@@ -858,10 +844,24 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="401">
+          <caret line="73" column="29" lean-forward="true" selection-start-line="73" selection-start-column="29" selection-end-line="73" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="480">
+          <caret line="32" column="104" selection-start-line="32" selection-start-column="104" selection-end-line="32" selection-end-column="104" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="359">
-          <caret line="527" column="34" selection-start-line="527" selection-start-column="34" selection-end-line="527" selection-end-column="34" />
+        <state relative-caret-position="380">
+          <caret line="532" column="31" selection-start-line="532" selection-start-column="31" selection-end-line="532" selection-end-column="31" />
         </state>
       </provider>
     </entry>
