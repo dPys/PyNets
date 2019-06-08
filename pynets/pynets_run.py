@@ -1141,12 +1141,12 @@ def build_workflow(args, retval):
         print('\nRunning structural connectometry only...')
         if struct_subjects_list:
             for (dwi_file, fbval, fbvec, anat_file) in struct_subjects_list:
-                print("%s%s" % ('\nDiffusion-Weighted Image:\n', dwi_file))
+                print("%s%s" % ('Diffusion-Weighted Image:\n', dwi_file))
                 print("%s%s" % ('B-Values:\n', fbval))
                 print("%s%s" % ('B-Vectors:\n', fbvec))
                 print("%s%s" % ('Anatomical Image:\n', anat_file))
         else:
-            print("%s%s" % ('\nDiffusion-Weighted Image\n', dwi_file))
+            print("%s%s" % ('Diffusion-Weighted Image:\n', dwi_file))
             print("%s%s" % ('B-Values:\n', fbval))
             print("%s%s" % ('B-Vectors:\n', fbvec))
             print("%s%s" % ('Anatomical Image:\n', anat_file))
@@ -1172,7 +1172,7 @@ def build_workflow(args, retval):
             print("%s%s" % ('Functional file: ', func_file))
     elif func_file and dwi_file:
         print('\nRunning joint structural-functional connectometry...')
-        print("%s%s" % ('\nFunctional file:\n', func_file))
+        print("%s%s" % ('Functional file:\n', func_file))
         print("%s%s" % ('Diffusion-Weighted Image:\n', dwi_file))
         print("%s%s" % ('B-Values:\n', fbval))
         print("%s%s" % ('B-Vectors:\n', fbvec))
@@ -1585,7 +1585,13 @@ def build_workflow(args, retval):
 
         import shutil
         import os
-        base_dirname = "%s%s" % ('Wf_single_subject_', str(ID))
+        if (func_file is not None) and (dwi_file is None):
+            base_dirname = "%s%s" % ('Wf_single_subject_fmri_', str(ID))
+        elif (dwi_file is not None) and (func_file is None):
+            base_dirname = "%s%s" % ('Wf_single_subject_dmri_', str(ID))
+        else:
+            base_dirname = "%s%s" % ('Wf_single_subject', str(ID))
+
         if func_file:
             func_dir = os.path.dirname(func_file)
             if os.path.exists("%s%s%s" % (func_dir, '/', base_dirname)):
