@@ -127,7 +127,7 @@ def get_parser():
                         help='Optionally use this flag if you wish to perform automated anatomical labeling of nodes.\n')
     parser.add_argument('-ns',
                         metavar='Spherical centroid node size',
-                        default=None,
+                        default=4,
                         nargs='+',
                         help='Optionally specify coordinate-based node radius size(s). Default is 4 mm for fMRI and 8mm '
                              'for dMRI. If you wish to iterate the pipeline across multiple node sizes, separate the '
@@ -213,7 +213,7 @@ def get_parser():
     parser.add_argument('-tt',
                         metavar='Tracking algorithm',
                         default='local',
-                        nargs='+',
+                        nargs=1,
                         choices=['local', 'particle'],
                         help='Include this flag to manually specify a tracking algorithm for structural connectome '
                              'estimation. Options are: local and particle. Default is local.\n')
@@ -313,6 +313,7 @@ def build_workflow(args, retval):
     import timeit
     import numpy as np
     from pathlib import Path
+    import types
     import warnings
     warnings.filterwarnings("ignore")
     np.warnings.filterwarnings('ignore')
@@ -333,15 +334,16 @@ def build_workflow(args, retval):
     fbval = args.bval
     fbvec = args.bvec
     graph_pre = args.g
-    multi_graph = list(str(graph_pre).split(','))
-    if multi_graph:
-        if len(multi_graph) > 1:
+    graph = list(str(graph_pre).split(','))
+    if graph:
+        if len(graph) > 1:
+            multi_graph = graph
             graph = None
-        elif multi_graph == ['None']:
+        elif graph == ['None']:
             graph = None
             multi_graph = None
         else:
-            graph = multi_graph[0]
+            graph = graph[0]
             multi_graph = None
     else:
         multi_graph = None
@@ -357,28 +359,34 @@ def build_workflow(args, retval):
     node_size_pre = args.ns
     node_size = node_size_pre
     if node_size:
-        if len(node_size) > 1:
+        if (type(node_size) is list) and (len(node_size) > 1):
             node_size_list = node_size
             node_size = None
         elif node_size == ['None']:
             node_size = None
             node_size_list = None
-        else:
+        elif type(node_size) is list:
             node_size = node_size[0]
+            node_size_list = None
+        else:
+            node_size = None
             node_size_list = None
     else:
         node_size_list = None
     smooth_pre = args.sm
     smooth = smooth_pre
     if smooth:
-        if len(smooth) > 1:
+        if (type(smooth) is list) and (len(smooth) > 1):
             smooth_list = smooth
             smooth = 0
         elif smooth == ['None']:
             smooth = 0
             smooth_list = None
-        else:
+        elif type(smooth) is list:
             smooth = smooth[0]
+            smooth_list = None
+        else:
+            smooth = 0
             smooth_list = None
     else:
         smooth_list = None
@@ -388,14 +396,14 @@ def build_workflow(args, retval):
     conn_model_pre = args.mod
     conn_model = conn_model_pre
     if conn_model:
-        if len(conn_model) > 1:
+        if (type(conn_model) is list) and (len(conn_model) > 1):
             conn_model_list = conn_model
-            conn_model = None
         elif conn_model == ['None']:
-            conn_model = None
+            conn_model_list = None
+        elif type(conn_model) is list:
+            conn_model = conn_model[0]
             conn_model_list = None
         else:
-            conn_model = conn_model[0]
             conn_model_list = None
     else:
         conn_model_list = None
@@ -406,18 +414,21 @@ def build_workflow(args, retval):
     clust_type_pre = args.ct
     clust_type = clust_type_pre
     if clust_type:
-        if len(clust_type) > 1:
+        if (type(clust_type) is list) and len(clust_type) > 1:
             clust_type_list = clust_type
             clust_type = None
         elif clust_type == ['None']:
             clust_type = None
             clust_type_list = None
-        else:
+        elif type(clust_type) is list:
             clust_type = clust_type[0]
+            clust_type_list = None
+        else:
+            clust_type = None
             clust_type_list = None
     else:
         clust_type_list = None
-#    adapt_thresh=args.at
+    # adapt_thresh=args.at
     adapt_thresh = False
     plot_switch = args.plt
     min_thr = args.min_thr
@@ -431,10 +442,11 @@ def build_workflow(args, retval):
         node_size_list = None
     else:
         if node_size:
-            if func_file and not dwi_file:
-                node_size = 4
-            elif not func_file and dwi_file:
-                node_size = 8
+            if node_size is None:
+                if (func_file is not None) and (dwi_file is None):
+                    node_size = 4
+                elif (func_file is None) and (dwi_file is not None):
+                    node_size = 8
     ref_txt = args.ref
     k = args.k
     k_min = args.k_min
@@ -443,73 +455,93 @@ def build_workflow(args, retval):
     clust_mask_pre = args.cm
     prune = args.p
     norm = args.norm
+    if type(norm) is list:
+        norm = norm[0]
     binary = args.bin
     plugin_type = args.plug
+    if type(plugin_type) is list:
+        plugin_type = plugin_type[0]
     use_AAL_naming = args.names
     verbose = args.v
     clust_mask = list(str(clust_mask_pre).split(','))
-    if clust_mask:
-        if len(clust_mask) > 1:
-            clust_mask_list = clust_mask
-            clust_mask = None
-        elif clust_mask == ['None']:
-            clust_mask = None
-            clust_mask_list = None
-        else:
-            clust_mask = clust_mask[0]
-            clust_mask_list = None
+    if len(clust_mask) > 1:
+        clust_mask_list = clust_mask
+        clust_mask = None
+    elif clust_mask == ['None']:
+        clust_mask = None
+        clust_mask_list = None
     else:
+        clust_mask = clust_mask[0]
         clust_mask_list = None
     network_pre = args.n
     network = network_pre
     if network:
-        if len(network) > 1:
+        if (type(network) is list) and (len(network) > 1):
             multi_nets = network
             network = None
         elif network == ['None']:
             network = None
             multi_nets = None
-        else:
+        elif type(network) is list:
             network = network[0]
+            multi_nets = None
+        else:
+            network = None
             multi_nets = None
     else:
         multi_nets = None
     uatlas_select_pre = args.ua
     atlas_select_pre = args.a
     uatlas_select = list(str(uatlas_select_pre).split(','))
-    if uatlas_select:
-        if len(uatlas_select) > 1:
-            user_atlas_list = uatlas_select
-            uatlas_select = user_atlas_list[0]
-        elif uatlas_select == ['None']:
-            uatlas_select = None
-            user_atlas_list = None
-        else:
-            uatlas_select = uatlas_select[0]
-            user_atlas_list = None
+    if len(uatlas_select) > 1:
+        user_atlas_list = uatlas_select
+        uatlas_select = None
+    elif uatlas_select == ['None']:
+        uatlas_select = None
+        user_atlas_list = None
     else:
+        uatlas_select = uatlas_select[0]
         user_atlas_list = None
     atlas_select = atlas_select_pre
     if atlas_select:
-        if len(atlas_select) > 1:
+        if (type(atlas_select) is list) and (len(atlas_select) > 1):
             multi_atlas = atlas_select
-            atlas_select = atlas_select[0]
-        elif len(atlas_select) > 1:
-            multi_atlas = atlas_select
-            atlas_select = atlas_select[0]
-        elif atlas_select == ['None']:
             atlas_select = None
+        elif atlas_select == ['None']:
+            multi_atlas = None
+            atlas_select = None
+        elif type(atlas_select) is list:
+            atlas_select = atlas_select[0]
             multi_atlas = None
         else:
-            atlas_select = atlas_select[0]
+            atlas_select = None
             multi_atlas = None
     else:
         multi_atlas = None
     target_samples = args.s
     max_length = args.ml
     track_type = args.tt
+    if type(track_type) is list:
+        track_type = track_type[0]
     tiss_class = args.tc
+    if type(tiss_class) is list:
+        tiss_class = tiss_class[0]
     directget = args.dg
+    if directget:
+        if (type(directget) is list) and (len(directget) > 1):
+            multi_directget = directget
+            directget = None
+        elif directget == ['None']:
+            directget = None
+            multi_directget = None
+        elif type(directget) is list:
+            directget = directget[0]
+            multi_directget = None
+        else:
+            directget = None
+            multi_directget = None
+    else:
+        multi_directget = None
     embed = args.embed
 
     print('\n\n\n------------------------------------------------------------------------\n')
@@ -528,12 +560,16 @@ def build_workflow(args, retval):
             nilearn_parc_atlases = hardcoded_params['nilearn_parc_atlases']
             nilearn_coord_atlases = hardcoded_params['nilearn_coord_atlases']
             nilearn_prob_atlases = hardcoded_params['nilearn_prob_atlases']
+            runtime_dict = {'fetch_nodes_and_labels_node': (1, 1), 'extract_ts_node': (1, 4), 'node_gen_node': (1, 1),
+                            'clustering_node': (1, 4), 'get_conn_matrix_node': (1, 1), 'thresh_func_node': (1, 1),
+                            'register_node': (1, 2), 'get_fa_node': (1, 1), 'run_tracking_node': (1, 4),
+                            'thresh_diff_node': (1, 1), 'dsn_node': (1, 2), 'streams2graph_node': (1, 2)}
         except FileNotFoundError:
             print('Failed to parse runconfig.yaml')
 
-    if min_thr and max_thr and step_thr:
+    if (min_thr is not None) and (max_thr is not None) and (step_thr is not None):
         multi_thr = True
-    elif min_thr or max_thr or step_thr:
+    elif (min_thr is not None) or (max_thr is not None) or (step_thr is not None):
         raise ValueError('Error: Missing either min_thr, max_thr, or step_thr flags!')
     else:
         multi_thr = False
@@ -565,11 +601,11 @@ def build_workflow(args, retval):
     else:
         struct_subjects_list = None
 
-    if not func_file and not dwi_file and not graph and not multi_graph:
+    if (func_file is None) and (dwi_file is None) and (graph is None) and (multi_graph is None):
         raise ValueError("\nError: You must include a file path to either a standard space functional image in .nii or "
                          ".nii.gz format with the -func flag.")
 
-    if not ID and not func_subjects_list:
+    if (ID is None) and (func_subjects_list is None):
         raise ValueError("\nError: You must include a subject ID in your command line call.")
 
     if func_subjects_list and ',' in ID:
@@ -612,6 +648,8 @@ def build_workflow(args, retval):
                          "bootstrapped resampling.")
 
     if mask:
+        if not roi:
+            roi = mask
         if ',' in mask:
             mask = list(str(mask).split(','))
             if len(mask) != len(func_subjects_list):
@@ -624,33 +662,33 @@ def build_workflow(args, retval):
         max_thr = None
         step_thr = None
 
-    if (k_min and k_max) and not k and clust_mask_list and clust_type_list:
+    if (k_min is not None and k_max is not None) and k is None and clust_mask_list is not None and clust_type_list is not None:
         k_clustering = 8
-    elif k and (not k_min and not k_max) and clust_mask_list and clust_type_list:
+    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is not None and clust_type_list is not None:
         k_clustering = 7
-    elif (k_min and k_max) and not k and not clust_mask_list and clust_type_list:
+    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is None and clust_type_list is not None:
         k_clustering = 6
-    elif k and (not k_min and not k_max) and not clust_mask_list and clust_type_list:
+    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is None and clust_type_list is not None:
         k_clustering = 5
-    elif (k_min and k_max) and not k and clust_mask_list and not clust_type_list:
+    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is not None and clust_type_list is None:
         k_clustering = 4
-    elif k and (not k_min and not k_max) and clust_mask_list and not clust_type_list:
+    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is not None and clust_type_list is None:
         k_clustering = 3
-    elif (k_min and k_max) and not k and not clust_mask_list and not clust_type_list:
+    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is None and clust_type_list is None:
         k_clustering = 2
-    elif k and (not k_min and not k_max) and not clust_mask_list and not clust_type_list:
+    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is None and clust_type_list is None:
         k_clustering = 1
     else:
         k_clustering = 0
 
     if func_subjects_list or struct_subjects_list:
         print('\nRunning workflow of workflows across multiple subjects:')
-    elif not func_subjects_list and not struct_subjects_list:
+    elif func_subjects_list is None and struct_subjects_list is None:
         print('\nRunning workflow across single subject:')
     print(str(ID))
 
     if func_file:
-        if uatlas_select and k_clustering == 0 and not user_atlas_list:
+        if (uatlas_select is not None) and (k_clustering == 0) and (user_atlas_list is None):
             atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
             print("%s%s" % ("\nUser atlas: ", atlas_select_par))
             if func_subjects_list:
@@ -658,7 +696,7 @@ def build_workflow(args, retval):
                     do_dir_path(atlas_select_par, func_file)
             else:
                 do_dir_path(atlas_select_par, func_file)
-        elif uatlas_select and not user_atlas_list and k_clustering == 0:
+        elif (uatlas_select is not None) and (user_atlas_list is None) and (k_clustering == 0):
             atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
             print("%s%s" % ("\nUser atlas: ", atlas_select_par))
             if func_subjects_list:
@@ -666,7 +704,7 @@ def build_workflow(args, retval):
                     do_dir_path(atlas_select_par, func_file)
             else:
                 do_dir_path(atlas_select_par, func_file)
-        elif user_atlas_list:
+        elif user_atlas_list is not None:
             print('\nIterating across multiple user atlases...')
             if func_subjects_list:
                 for uatlas_select in user_atlas_list:
@@ -806,18 +844,18 @@ def build_workflow(args, retval):
                             do_dir_path(atlas_select_clust, func_file)
             clust_mask = None
             clust_type = None
-        elif (user_atlas_list or uatlas_select) and (k_clustering == 4 or k_clustering == 3 or
+        elif (user_atlas_list is not None or uatlas_select is not None) and (k_clustering == 4 or k_clustering == 3 or
                                                                              k_clustering == 2 or
-                                                                             k_clustering == 1) and not atlas_select:
+                                                                             k_clustering == 1) and atlas_select is None:
             print('Error: the -ua flag cannot be used alone with the clustering option. Use the -cm flag instead.')
             sys.exit(0)
 
-        if multi_atlas:
+        if multi_atlas is not None:
             print('\nIterating across multiple predefined atlases...')
             if func_subjects_list:
                 for func_file in func_subjects_list:
                     for atlas_select in multi_atlas:
-                        if parc is True and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
+                        if (parc is True) and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
                             raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
                                                          ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                         else:
@@ -825,14 +863,14 @@ def build_workflow(args, retval):
                             do_dir_path(atlas_select, func_file)
             else:
                 for atlas_select in multi_atlas:
-                    if parc is True and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
+                    if (parc is True) and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
                         raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
                                                      ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                     else:
                         print(atlas_select)
                         do_dir_path(atlas_select, func_file)
-        elif atlas_select:
-            if parc is True and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
+        elif atlas_select is not None:
+            if (parc is True) and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
                 raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
                                              ' is a coordinate atlas and cannot be combined with the -parc flag.'))
             else:
@@ -843,7 +881,7 @@ def build_workflow(args, retval):
                 else:
                     do_dir_path(atlas_select, func_file)
         else:
-            if not uatlas_select and k == 0:
+            if (uatlas_select is None) and (k == 0):
                 raise KeyError('\nERROR: No atlas specified!')
             else:
                 pass
@@ -888,10 +926,10 @@ def build_workflow(args, retval):
             atlas_select = "%s%s%s" % (graph_name, '_', ID)
             do_dir_path(atlas_select, graph)
 
-    if not graph and not multi_graph:
-        if network:
+    if graph is None and multi_graph is None:
+        if network is not None:
             print("%s%s" % ('\nUsing resting-state network pipeline for: ', network))
-        elif multi_nets:
+        elif multi_nets is not None:
             network = multi_nets[0]
             print("%s%d%s%s%s" % ('\nIterating workflow across ', len(multi_nets), ' networks: ',
                                   str(', '.join(str(n) for n in multi_nets)), '...'))
@@ -902,8 +940,10 @@ def build_workflow(args, retval):
             print("%s%s%s" % ('\nGrowing spherical nodes across multiple radius sizes: ',
                               str(', '.join(str(n) for n in node_size_list)), '...'))
         elif parc is True:
-            print("\nUsing parcels as nodes")
+            print("\nUsing parcels as nodes...")
         else:
+            if node_size is None:
+                node_size = 4
             print("%s%s%s" % ("\nUsing node size of: ", node_size, 'mm...'))
 
         if smooth_list:
@@ -931,7 +971,107 @@ def build_workflow(args, retval):
             print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ',
                               str(', '.join(str(n) for n in conn_model_list)), '...'))
         else:
-            print("%s%s" % ("\nUsing connectivity model: ", conn_model))
+            print("%s%s%s" % ("\nUsing connectivity model:\n", conn_model, '\n'))
+
+    if dwi_file:
+        if network is not None:
+            print("%s%s" % ('\nRSN: ', network))
+        if user_atlas_list is not None:
+            print('\nIterating across multiple user atlases...')
+            if struct_subjects_list:
+                for dwi_file in struct_subjects_list:
+                    for uatlas_select in user_atlas_list:
+                        atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
+                        print(atlas_select_par)
+                        do_dir_path(atlas_select_par, dwi_file)
+            else:
+                for uatlas_select in user_atlas_list:
+                    atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
+                    print(atlas_select_par)
+                    do_dir_path(atlas_select_par, dwi_file)
+        elif (uatlas_select is not None) and (user_atlas_list is None):
+            atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
+            ref_txt = "%s%s" % (uatlas_select.split('/')[-1:][0].split('.')[0], '.txt')
+            if struct_subjects_list:
+                for dwi_file in struct_subjects_list:
+                    do_dir_path(atlas_select_par, dwi_file)
+            else:
+                do_dir_path(atlas_select_par, dwi_file)
+        if multi_atlas is not None:
+            print('\nIterating across multiple predefined atlases...')
+            if struct_subjects_list:
+                for dwi_file in struct_subjects_list:
+                    for atlas_select in multi_atlas:
+                        if (parc is True) and (atlas_select in nilearn_coord_atlases):
+                            raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
+                                                         ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                        else:
+                            print(atlas_select)
+                            do_dir_path(atlas_select, dwi_file)
+            else:
+                for atlas_select in multi_atlas:
+                    if (parc is True) and (atlas_select in nilearn_coord_atlases):
+                        raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
+                                                     ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                    else:
+                        print(atlas_select)
+                        do_dir_path(atlas_select, dwi_file)
+        elif atlas_select is not None:
+            if (parc is True) and (atlas_select in nilearn_coord_atlases):
+                raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
+                                             ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+            else:
+                print("%s%s" % ("\nNilearn atlas: ", atlas_select))
+                if struct_subjects_list:
+                    for dwi_file in struct_subjects_list:
+                        do_dir_path(atlas_select, dwi_file)
+                else:
+                    do_dir_path(atlas_select, dwi_file)
+        else:
+            if uatlas_select is None:
+                raise KeyError('\nERROR: No atlas specified!')
+            else:
+                pass
+
+    elif graph or multi_graph:
+        network = 'custom_graph'
+        thr = 0
+        roi = 'None'
+        k_clustering = 0
+        node_size = 'None'
+        smooth = 'None'
+        conn_model = 'None'
+        c_boot = 'None'
+        if multi_graph:
+            print('\nUsing multiple custom input graphs...')
+            conn_model = None
+            conn_model_list = []
+            i = 1
+            for graph in multi_graph:
+                conn_model_list.append(str(i))
+                if '.txt' in graph:
+                    graph_name = op.basename(graph).split('.txt')[0]
+                elif '.npy' in graph:
+                    graph_name = op.basename(graph).split('.npy')[0]
+                else:
+                    print('Error: input graph file format not recognized. See -help for supported formats.')
+                    sys.exit(0)
+                print(graph_name)
+                atlas_select = "%s%s%s" % (graph_name, '_', ID)
+                do_dir_path(atlas_select, graph)
+                i = i + 1
+        else:
+            if '.txt' in graph:
+                graph_name = op.basename(graph).split('.txt')[0]
+            elif '.npy' in graph:
+                graph_name = op.basename(graph).split('.npy')[0]
+            else:
+                print('Error: input graph file format not recognized. See -help for supported formats.')
+                sys.exit(0)
+            print('\nUsing single custom graph input...')
+            print(graph_name)
+            atlas_select = "%s%s%s" % (graph_name, '_', ID)
+            do_dir_path(atlas_select, graph)
 
     if dwi_file:
         if network:
@@ -949,7 +1089,7 @@ def build_workflow(args, retval):
                     atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
                     print(atlas_select_par)
                     do_dir_path(atlas_select_par, dwi_file)
-        elif uatlas_select and not user_atlas_list:
+        elif (uatlas_select is not None) and (user_atlas_list is None):
             atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
             ref_txt = "%s%s" % (uatlas_select.split('/')[-1:][0].split('.')[0], '.txt')
             if struct_subjects_list:
@@ -962,7 +1102,7 @@ def build_workflow(args, retval):
             if struct_subjects_list:
                 for dwi_file in struct_subjects_list:
                     for atlas_select in multi_atlas:
-                        if parc is True and atlas_select in nilearn_coord_atlases:
+                        if (parc is True) and (atlas_select in nilearn_coord_atlases):
                             raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
                                                          ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                         else:
@@ -970,14 +1110,14 @@ def build_workflow(args, retval):
                             do_dir_path(atlas_select, dwi_file)
             else:
                 for atlas_select in multi_atlas:
-                    if parc is True and atlas_select in nilearn_coord_atlases:
+                    if (parc is True) and (atlas_select in nilearn_coord_atlases):
                         raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
                                                      ' is a coordinate atlas and cannot be combined with the -parc flag.'))
                     else:
                         print(atlas_select)
                         do_dir_path(atlas_select, dwi_file)
         elif atlas_select:
-            if parc is True and atlas_select in nilearn_coord_atlases:
+            if (parc is True) and (atlas_select in nilearn_coord_atlases):
                 raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
                                              ' is a coordinate atlas and cannot be combined with the -parc flag.'))
             else:
@@ -988,24 +1128,28 @@ def build_workflow(args, retval):
                 else:
                     do_dir_path(atlas_select, dwi_file)
         else:
-            if not uatlas_select:
+            if uatlas_select is None:
                 raise KeyError('\nERROR: No atlas specified!')
             else:
                 pass
+        if target_samples:
+            print("%s%s%s" % ('Using ', target_samples, ' samples...'))
+        if max_length:
+            print("%s%s%s" % ('Using ', max_length, ' maximum length of streamlines...'))
 
     if dwi_file and not func_file:
         print('\nRunning structural connectometry only...')
         if struct_subjects_list:
             for (dwi_file, fbval, fbvec, anat_file) in struct_subjects_list:
-                print("%s%s" % ('Diffusion-Weighted Image ', dwi_file))
-                print("%s%s" % ('B-Values ', fbval))
-                print("%s%s" % ('B-Vectors ', fbvec))
-                print("%s%s" % ('Anatomical Image: ', anat_file))
+                print("%s%s" % ('\nDiffusion-Weighted Image:\n', dwi_file))
+                print("%s%s" % ('B-Values:\n', fbval))
+                print("%s%s" % ('B-Vectors:\n', fbvec))
+                print("%s%s" % ('Anatomical Image:\n', anat_file))
         else:
-            print("%s%s" % ('Diffusion-Weighted Image ', dwi_file))
-            print("%s%s" % ('B-Values ', fbval))
-            print("%s%s" % ('B-Vectors ', fbvec))
-            print("%s%s" % ('Anatomical Image: ', anat_file))
+            print("%s%s" % ('\nDiffusion-Weighted Image\n', dwi_file))
+            print("%s%s" % ('B-Values:\n', fbval))
+            print("%s%s" % ('B-Vectors:\n', fbvec))
+            print("%s%s" % ('Anatomical Image:\n', anat_file))
         conf = None
         k = None
         clust_mask = None
@@ -1019,7 +1163,7 @@ def build_workflow(args, retval):
         clust_type_list = None
         c_boot = None
         block_size = None
-    elif func_file and not dwi_file:
+    elif func_file and dwi_file is None:
         print('\nRunning functional connectometry only...')
         if func_subjects_list:
             for func_file in func_subjects_list:
@@ -1028,11 +1172,11 @@ def build_workflow(args, retval):
             print("%s%s" % ('Functional file: ', func_file))
     elif func_file and dwi_file:
         print('\nRunning joint structural-functional connectometry...')
-        print("%s%s" % ('Functional file: ', func_file))
-        print("%s%s" % ('Diffusion-Weighted Image ', dwi_file))
-        print("%s%s" % ('B-Values ', fbval))
-        print("%s%s" % ('B-Vectors ', fbvec))
-        print("%s%s" % ('Anatomical Image: ', anat_file))
+        print("%s%s" % ('\nFunctional file:\n', func_file))
+        print("%s%s" % ('Diffusion-Weighted Image:\n', dwi_file))
+        print("%s%s" % ('B-Values:\n', fbval))
+        print("%s%s" % ('B-Vectors:\n', fbvec))
+        print("%s%s" % ('Anatomical Image:\n', anat_file))
     print('\n-------------------------------------------------------------------------\n\n')
 
     # print('\n\n\n\n\n')
@@ -1048,7 +1192,7 @@ def build_workflow(args, retval):
     # print("%s%s" % ('dens_thresh: ', dens_thresh))
     # print("%s%s" % ('conf: ', conf))
     # print("%s%s" % ('plot_switch: ', plot_switch))
-    # print("%s%s" % ('multi_thr): ', multi_thr))
+    # print("%s%s" % ('multi_thr: ', multi_thr))
     # print("%s%s" % ('multi_atlas: ', multi_atlas))
     # print("%s%s" % ('min_thr: ', min_thr))
     # print("%s%s" % ('max_thr: ', max_thr))
@@ -1060,7 +1204,7 @@ def build_workflow(args, retval):
     # print("%s%s" % ('clust_mask: ', clust_mask))
     # print("%s%s" % ('k_min: ', k_min))
     # print("%s%s" % ('k_max: ', k_max))
-    # print("%s%s" % ('k_step): ', k_step))
+    # print("%s%s" % ('k_step: ', k_step))
     # print("%s%s" % ('k_clustering: ', k_clustering))
     # print("%s%s" % ('user_atlas_list: ', user_atlas_list))
     # print("%s%s" % ('clust_mask_list: ', clust_mask_list))
@@ -1075,14 +1219,13 @@ def build_workflow(args, retval):
     # print("%s%s" % ('norm: ', norm))
     # print("%s%s" % ('binary: ', binary))
     # print("%s%s" % ('embed: ', embed))
+    # print("%s%s" % ('track_type: ', track_type))
+    # print("%s%s" % ('tiss_class: ', tiss_class))
+    # print("%s%s" % ('directget: ', directget))
+    # print("%s%s" % ('multi_directget: ', multi_directget))
     # print('\n\n\n\n\n')
     # import sys
     # sys.exit(0)
-
-    runtime_dict = {'fetch_nodes_and_labels_node': (1, 1), 'extract_ts_node': (1, 4), 'node_gen_node': (1, 1),
-                    'clustering_node': (1, 4), 'get_conn_matrix_node': (1, 1), 'thresh_func_node': (1, 1),
-                    'register_node': (1, 2), 'get_fa_node': (1, 1), 'run_tracking_node': (1, 4),
-                    'thresh_diff_node': (1, 1), 'dsn_node': (1, 2), 'streams2graph_node': (1, 2)}
 
     # Import wf core and interfaces
     import random
@@ -1099,9 +1242,15 @@ def build_workflow(args, retval):
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
                                clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples,
                                curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
-                               maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict, embed):
+                               maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict, embed,
+                               multi_directget):
 
-        wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_', random.randint(1, 1000)))
+        if (func_file is not None) and (dwi_file is None):
+            wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_fmri_', random.randint(1, 1000)))
+        elif (dwi_file is not None) and (func_file is None):
+            wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_dmri_', random.randint(1, 1000)))
+        else:
+            wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_', random.randint(1, 1000)))
         import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx",
                        "import nibabel as nib", "import warnings", "warnings.filterwarnings(\"ignore\")",
                        "np.warnings.filterwarnings(\"ignore\")"]
@@ -1149,7 +1298,7 @@ def build_workflow(args, retval):
                                     clust_type, clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec,
                                     target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
                                     max_length, maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict,
-                                    embed)
+                                    embed, multi_directget)
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
@@ -1281,7 +1430,7 @@ def build_workflow(args, retval):
                          use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list,
                          c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
                          overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
-                         directget, tiss_class, runtime_dict, embed):
+                         directget, tiss_class, runtime_dict, embed, multi_directget):
 
         wf_multi = pe.Workflow(name="%s%s" % ('Wf_multisub_', random.randint(1001, 9000)))
 
@@ -1327,7 +1476,7 @@ def build_workflow(args, retval):
                 curv_thr_list=curv_thr_list, step_list=step_list, overlap_thr=overlap_thr,
                 overlap_thr_list=overlap_thr_list, track_type=track_type, max_length=max_length, maxcrossing=maxcrossing,
                 life_run=life_run, min_length=min_length, directget=directget, tiss_class=tiss_class,
-                runtime_dict=runtime_dict, embed=embed)
+                runtime_dict=runtime_dict, embed=embed, multi_directget=multi_directget)
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
@@ -1367,7 +1516,7 @@ def build_workflow(args, retval):
                                     smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot,
                                     block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list,
                                     step_list, overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing,
-                                    life_run, min_length, directget, tiss_class, runtime_dict, embed)
+                                    life_run, min_length, directget, tiss_class, runtime_dict, embed, multi_directget)
 
         import shutil
         wf_multi.base_dir = '/tmp/Wf_multi_subject'
@@ -1432,7 +1581,7 @@ def build_workflow(args, retval):
                                     smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask,
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
-                                    directget, tiss_class, runtime_dict, embed)
+                                    directget, tiss_class, runtime_dict, embed, multi_directget)
 
         import shutil
         import os

@@ -223,7 +223,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     except KeyError:
         print('ANTSDIR environment variable not set!')
 
-    dsn_dir = "%s%s" % (basedir_path, '/tmp/DSN')
+    dsn_dir = "%s%s" % (basedir_path, '/dmri_tmp/DSN')
     if not os.path.isdir(dsn_dir):
         os.mkdir(dsn_dir)
 
@@ -277,8 +277,8 @@ class DmriReg(object):
         self.t1w_name = 't1w'
         self.dwi_name = 'dwi'
         self.basedir_path = basedir_path
-        self.tmp_path = "%s%s" % (basedir_path, '/tmp')
-        self.reg_path = "%s%s" % (basedir_path, '/tmp/reg')
+        self.tmp_path = "%s%s" % (basedir_path, '/dmri_tmp')
+        self.reg_path = "%s%s" % (basedir_path, '/dmri_tmp/reg')
         self.anat_path = "%s%s" % (basedir_path, '/anat_reg')
         self.reg_path_mat = "%s%s" % (self.reg_path, '/mats')
         self.reg_path_warp = "%s%s" % (self.reg_path, '/warps')
@@ -597,8 +597,8 @@ class FmriReg(object):
         self.vox_size = vox_size
         self.t1w_name = 't1w'
         self.basedir_path = basedir_path
-        self.tmp_path = "%s%s" % (basedir_path, '/tmp')
-        self.reg_path = "%s%s" % (basedir_path, '/tmp/reg')
+        self.tmp_path = "%s%s" % (basedir_path, '/fmri_tmp')
+        self.reg_path = "%s%s" % (basedir_path, '/fmri_tmp/reg')
         self.anat_path = "%s%s" % (basedir_path, '/anat_reg')
         self.reg_path_mat = "%s%s" % (self.reg_path, '/mats')
         self.reg_path_warp = "%s%s" % (self.reg_path, '/warps')

@@ -9,10 +9,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/stats/netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/stats/netstats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/stats/nodal_graph_measures.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/stats/nodal_graph_measures.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/registration/register.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/register.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/workflows.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -32,11 +32,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="720">
-              <caret line="139" column="34" selection-start-line="139" selection-start-column="34" selection-end-line="139" selection-end-column="34" />
+            <state relative-caret-position="350">
+              <caret line="1181" column="25" lean-forward="true" selection-start-line="1181" selection-start-column="25" selection-end-line="1181" selection-end-column="25" />
             </state>
           </provider>
         </entry>
@@ -44,17 +44,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="105">
-              <caret line="7" column="36" selection-start-line="7" selection-start-column="36" selection-end-line="7" selection-end-column="36" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="150">
-              <caret line="10" column="36" selection-start-line="10" selection-start-column="36" selection-end-line="10" selection-end-column="36" />
+            <state relative-caret-position="52">
+              <caret line="698" column="15" selection-start-line="698" selection-start-column="15" selection-end-line="698" selection-end-column="15" />
             </state>
           </provider>
         </entry>
@@ -62,8 +53,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="285">
-              <caret line="19" column="21" selection-start-line="19" selection-start-column="21" selection-end-line="19" selection-end-column="21" />
+            <state relative-caret-position="609">
+              <caret line="229" column="64" selection-start-line="229" selection-start-column="64" selection-end-line="229" selection-end-column="64" />
             </state>
           </provider>
         </entry>
@@ -71,7 +62,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/dmri/estimation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2011">
+            <state relative-caret-position="-2041">
               <caret line="11" selection-start-line="11" selection-end-line="11" />
             </state>
           </provider>
@@ -80,20 +71,17 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="165">
-              <caret line="11" column="36" selection-start-line="11" selection-start-column="36" selection-end-line="11" selection-end-column="36" />
+            <state relative-caret-position="260">
+              <caret line="417" column="53" selection-start-line="417" selection-start-column="41" selection-end-line="417" selection-end-column="53" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="735">
-              <caret line="1096" lean-forward="true" selection-start-line="1096" selection-end-line="1096" />
-              <folding>
-                <element signature="e#109#140#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="659">
+              <caret line="301" selection-start-line="301" selection-end-line="301" />
             </state>
           </provider>
         </entry>
@@ -111,19 +99,28 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
+        <entry file="file://$PROJECT_DIR$/pynets/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="105">
-              <caret line="7" column="33" selection-start-line="7" selection-start-column="33" selection-end-line="7" selection-end-column="33" />
+            <state relative-caret-position="260">
+              <caret line="792" column="78" selection-start-line="792" selection-start-column="66" selection-end-line="792" selection-end-column="78" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/utils.py">
+        <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="15990">
-              <caret line="1066" column="92" selection-start-line="1066" selection-start-column="92" selection-end-line="1066" selection-end-column="92" />
+            <state relative-caret-position="24761">
+              <caret line="1665" column="13" selection-start-line="1665" selection-start-column="13" selection-end-line="1665" selection-end-column="13" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="105">
+              <caret line="7" column="33" selection-start-line="7" selection-start-column="33" selection-end-line="7" selection-end-column="33" />
             </state>
           </provider>
         </entry>
@@ -139,39 +136,38 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>check</find>
-      <find>est_path</find>
-      <find>trk_hdr</find>
-      <find>est_path_list</find>
-      <find>pass_meta_outs</find>
-      <find>est_path_iterlist</find>
-      <find>yaml</find>
-      <find>runtime_dict</find>
-      <find>TimeoutError</find>
-      <find>net_met</find>
-      <find>nargs='?',</find>
-      <find>nargs=1,</find>
-      <find>choices</find>
+      <find>(meta_inputnode, pass_meta_ins_join_node, [('ID', 'ID')]),</find>
+      <find>block_size</find>
+      <find>node_size</find>
+      <find>is None</find>
+      <find>if len(</find>
+      <find>node_size = node_size[0]</find>
+      <find>uatlas_select</find>
+      <find>atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]</find>
+      <find>user_atlas_list</find>
+      <find>node_gen_node</find>
       <find>list(str(</find>
-      <find>nargs</find>
-      <find>nargs='?'</find>
-      <find>not None</find>
-      <find>multi_atlas</find>
-      <find>imports</find>
-      <find>pass_meta_outs_node</find>
-      <find>import_list</find>
-      <find>comma</find>
-      <find>norm</find>
-      <find>importlib</find>
-      <find>numpy</find>
-      <find>wf_multi</find>
-      <find>'+'</find>
-      <find>participation_coef</find>
-      <find>communicability_betweenness_centrality</find>
-      <find>metric_list_nodal</find>
+      <find>uatlas_select.split('/')[-1].split('.')[0]</find>
+      <find>timeseries</find>
+      <find>conn_model_list</find>
+      <find>conn_model</find>
+      <find>track_type</find>
+      <find>tt</find>
+      <find>nargs=1</find>
+      <find>elif c</find>
+      <find>multi_track_type</find>
+      <find>multi_directget</find>
+      <find>min_length, directget, tiss_class, runtime_dict)</find>
+      <find>tmp</find>
+      <find>directget</find>
+      <find>node_gen_masking</find>
+      <find>Using parcels as nodes</find>
+      <find>registration</find>
+      <find>Using node size of:</find>
+      <find>Using connectivity model:</find>
+      <find>Diffusion-Weighted Image</find>
     </findStrings>
     <replaceStrings>
-      <replace>join_iters</replace>
       <replace>CollectPandasJoin</replace>
       <replace>pynets.fmri</replace>
       <replace>b0</replace>
@@ -201,6 +197,7 @@
       <replace>get_fdata()</replace>
       <replace>dwi_file</replace>
       <replace>nargs='+'</replace>
+      <replace>multi_directget</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -240,21 +237,21 @@
         <option value="$PROJECT_DIR$/pynets/thresholding.py" />
         <option value="$PROJECT_DIR$/pynets/plotting/plot_graphs.py" />
         <option value="$PROJECT_DIR$/pynets/plotting/plot_gen.py" />
-        <option value="$PROJECT_DIR$/pynets/workflows.py" />
-        <option value="$PROJECT_DIR$/pynets/utils.py" />
-        <option value="$PROJECT_DIR$/pynets/registration/register.py" />
         <option value="$PROJECT_DIR$/pynets/dmri/estimation.py" />
         <option value="$PROJECT_DIR$/pynets/dmri/track.py" />
         <option value="$PROJECT_DIR$/pynets/registration/reg_utils.py" />
         <option value="$PROJECT_DIR$/pynets/nodemaker.py" />
-        <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
         <option value="$PROJECT_DIR$/pynets/stats/netstats.py" />
+        <option value="$PROJECT_DIR$/pynets/utils.py" />
+        <option value="$PROJECT_DIR$/pynets/registration/register.py" />
+        <option value="$PROJECT_DIR$/pynets/workflows.py" />
+        <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="255" />
-    <option name="y" value="23" />
+    <option name="x" value="267" />
+    <option name="y" value="24" />
     <option name="width" value="1388" />
     <option name="height" value="978" />
   </component>
@@ -278,6 +275,18 @@
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
               <item name="pynets" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="pynets" type="462c0819:PsiDirectoryNode" />
+              <item name="fmri" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="pynets" type="462c0819:PsiDirectoryNode" />
+              <item name="registration" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -521,20 +530,20 @@
       <workItem from="1555621726569" duration="1335000" />
       <workItem from="1555696086993" duration="222689000" />
       <workItem from="1559331639739" duration="25065000" />
-      <workItem from="1559749197482" duration="64204000" />
+      <workItem from="1559749197482" duration="83607000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="321526000" />
+    <option name="totallyTimeSpent" value="340929000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="255" y="23" width="1388" height="978" extended-state="0" />
+    <frame x="267" y="24" width="1388" height="978" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.496614" visible="true" weight="0.17756315" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49649534" visible="true" weight="0.17756315" />
       <window_info id="Structure" order="1" sideWeight="0.50369006" side_tool="true" weight="0.1166419" />
-      <window_info active="true" id="Favorites" order="2" sideWeight="0.503386" side_tool="true" visible="true" weight="0.17756315" />
+      <window_info id="Favorites" order="2" sideWeight="0.5035047" side_tool="true" visible="true" weight="0.17756315" />
       <window_info anchor="bottom" id="Inspection Results" weight="0.3295711" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" sideWeight="0.4984326" weight="0.036848795" />
@@ -546,7 +555,7 @@
       <window_info anchor="bottom" id="Docker" order="7" sideWeight="0.4992378" weight="0.25282168" />
       <window_info anchor="bottom" id="Version Control" order="8" weight="0.033783782" />
       <window_info anchor="bottom" id="Database Changes" order="9" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Python Console" order="10" sideWeight="0.49955475" weight="0.029850746" />
+      <window_info anchor="bottom" id="Python Console" order="10" sideWeight="0.49955475" visible="true" weight="0.033860046" />
       <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.4960815" weight="0.24943566" />
       <window_info anchor="bottom" id="Event Log" order="12" sideWeight="0.5003579" side_tool="true" weight="0.32731378" />
       <window_info anchor="bottom" id="Concurrent Activities Diagram" order="13" sideWeight="0.49955475" weight="0.32909784" />
@@ -742,13 +751,6 @@
     <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="67">
-          <caret line="7" column="23" selection-start-line="7" selection-start-column="23" selection-end-line="7" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch.sh">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="15">
@@ -783,14 +785,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
+    <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15990">
-          <caret line="1066" column="92" selection-start-line="1066" selection-start-column="92" selection-end-line="1066" selection-end-column="92" />
+        <state relative-caret-position="293">
+          <caret line="1076" column="9" selection-start-line="1076" selection-start-column="9" selection-end-line="1076" selection-end-column="9" />
+          <folding>
+            <element signature="e#109#140#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
+    <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="105">
           <caret line="7" column="33" selection-start-line="7" selection-start-column="33" selection-end-line="7" selection-end-column="33" />
@@ -807,55 +812,59 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
+    <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="11" column="36" selection-start-line="11" selection-start-column="36" selection-end-line="11" selection-end-column="36" />
+        <state relative-caret-position="659">
+          <caret line="301" selection-start-line="301" selection-end-line="301" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/dmri/estimation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2011">
+        <state relative-caret-position="-2041">
           <caret line="11" selection-start-line="11" selection-end-line="11" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="285">
-          <caret line="19" column="21" selection-start-line="19" selection-start-column="21" selection-end-line="19" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="10" column="36" selection-start-line="10" selection-start-column="36" selection-end-line="10" selection-end-column="36" />
+        <state relative-caret-position="609">
+          <caret line="229" column="64" selection-start-line="229" selection-start-column="64" selection-end-line="229" selection-end-column="64" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="105">
-          <caret line="7" column="36" selection-start-line="7" selection-start-column="36" selection-end-line="7" selection-end-column="36" />
+        <state relative-caret-position="52">
+          <caret line="698" column="15" selection-start-line="698" selection-start-column="15" selection-end-line="698" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="260">
+          <caret line="417" column="53" selection-start-line="417" selection-start-column="41" selection-end-line="417" selection-end-column="53" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="260">
+          <caret line="792" column="78" selection-start-line="792" selection-start-column="66" selection-end-line="792" selection-end-column="78" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="24761">
+          <caret line="1665" column="13" selection-start-line="1665" selection-start-column="13" selection-end-line="1665" selection-end-column="13" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="720">
-          <caret line="139" column="34" selection-start-line="139" selection-start-column="34" selection-end-line="139" selection-end-column="34" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="735">
-          <caret line="1096" lean-forward="true" selection-start-line="1096" selection-end-line="1096" />
-          <folding>
-            <element signature="e#109#140#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="350">
+          <caret line="1181" column="25" lean-forward="true" selection-start-line="1181" selection-start-column="25" selection-end-line="1181" selection-end-column="25" />
         </state>
       </provider>
     </entry>

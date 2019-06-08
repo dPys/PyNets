@@ -295,6 +295,7 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
 
 def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist,
                   prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=True):
+    from pynets.utils import build_omnetome
     """
 
     :param conn_model_iterlist:
@@ -340,6 +341,35 @@ def pass_meta_ins(conn_model, est_path, network, node_size, thr, prune, ID, roi,
     roi_iterlist = roi
     norm_iterlist = norm
     binary_iterlist = binary
+    # print('\n\nParam-iters:\n')
+    # print(conn_model_iterlist)
+    # print(est_path_iterlist)
+    # print(network_iterlist)
+    # print(node_size_iterlist)
+    # print(thr_iterlist)
+    # print(prune_iterlist)
+    # print(ID_iterlist)
+    # print(roi_iterlist)
+    # print(norm_iterlist)
+    # print(binary_iterlist)
+    # print('\n\n')
+    return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
+
+
+def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, node_size_func, thr_func, prune_func, ID_func,
+                        roi_func, norm_func, binary_func, conn_model_struct, est_path_struct, network_struct,
+                        node_size_struct, thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct):
+
+    est_path_iterlist = [est_path_func, est_path_struct]
+    conn_model_iterlist = [conn_model_func, conn_model_struct]
+    network_iterlist = [network_func, network_struct]
+    node_size_iterlist = [node_size_func, node_size_struct]
+    thr_iterlist = [thr_func, thr_struct]
+    prune_iterlist = [prune_func, prune_struct]
+    ID_iterlist = [ID_func, ID_struct]
+    roi_iterlist = [roi_func, roi_struct]
+    norm_iterlist = [norm_func, norm_struct]
+    binary_iterlist = [binary_func, binary_struct]
     # print('\n\nParam-iters:\n')
     # print(conn_model_iterlist)
     # print(est_path_iterlist)
