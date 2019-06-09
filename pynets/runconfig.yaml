@@ -5,7 +5,7 @@ min_length:
 overlap_thr:
     - 1
 overlap_thr_list:
-    - None
+    - null
 step_list:
     - 0.2
     - 0.3
@@ -16,7 +16,7 @@ curv_thr_list:
     - 30
     - 10
 life_run:
-    - True
+    - False
 nilearn_parc_atlases:
     - 'atlas_harvard_oxford'
     - 'atlas_aal'

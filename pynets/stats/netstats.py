@@ -1082,7 +1082,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
             try:
                 net_met_val = raw_mets(G, i, custom_weight)
             except:
-                print("%s%s%s" % ('WARNING: ', net_met, ' times out for graph G'))
+                print("%s%s%s" % ('WARNING: ', net_met, ' timeout for graph G. Most likely this is because the graph is either disconnected or because it is fully saturated. See thresholding and pruning options in pynets_run.py -h.'))
                 net_met_val = np.nan
         except:
             print("%s%s%s" % ('WARNING: ', str(i), ' is undefined for graph G'))

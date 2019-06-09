@@ -6,7 +6,6 @@ Copyright (C) 2018
 """
 import numpy as np
 import networkx as nx
-import os
 import os.path as op
 import warnings
 warnings.filterwarnings("ignore")

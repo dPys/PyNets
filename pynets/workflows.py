@@ -77,131 +77,95 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
         for setting, value in cfg[key].items():
             meta_wf.config[key][setting] = value
 
+    meta_inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID', 'atlas_select', 'network', 'thr',
+                                                              'node_size', 'roi', 'uatlas_select', 'multi_nets',
+                                                              'conn_model', 'dens_thresh', 'conf', 'adapt_thresh',
+                                                              'plot_switch', 'dwi_file', 'anat_file', 'parc',
+                                                              'ref_txt', 'procmem', 'multi_thr', 'multi_atlas',
+                                                              'max_thr', 'min_thr', 'step_thr', 'k', 'clust_mask',
+                                                              'k_min', 'k_max', 'k_step', 'k_clustering',
+                                                              'user_atlas_list', 'clust_mask_list', 'prune',
+                                                              'node_size_list', 'num_total_samples',
+                                                              'conn_model_list', 'min_span_tree', 'verbose',
+                                                              'plugin_type', 'use_AAL_naming', 'smooth',
+                                                              'smooth_list', 'disp_filt', 'clust_type',
+                                                              'clust_type_list', 'c_boot', 'block_size', 'mask',
+                                                              'norm', 'binary', 'fbval', 'fbvec', 'target_samples',
+                                                              'curv_thr_list', 'step_list', 'overlap_thr',
+                                                              'overlap_thr_list', 'track_type', 'max_length',
+                                                              'maxcrossing', 'life_run', 'min_length', 'directget',
+                                                              'tiss_class', 'embed', 'multi_directget']),
+                             name='meta_inputnode')
+    meta_inputnode.inputs.func_file = func_file
+    meta_inputnode.inputs.ID = ID
+    meta_inputnode.inputs.atlas_select = atlas_select
+    meta_inputnode.inputs.network = network
+    meta_inputnode.inputs.thr = thr
+    meta_inputnode.inputs.node_size = node_size
+    meta_inputnode.inputs.roi = roi
+    meta_inputnode.inputs.uatlas_select = uatlas_select
+    meta_inputnode.inputs.multi_nets = multi_nets
+    meta_inputnode.inputs.conn_model = conn_model
+    meta_inputnode.inputs.dens_thresh = dens_thresh
+    meta_inputnode.inputs.conf = conf
+    meta_inputnode.inputs.adapt_thresh = adapt_thresh
+    meta_inputnode.inputs.plot_switch = plot_switch
+    meta_inputnode.inputs.dwi_file = dwi_file
+    meta_inputnode.inputs.fbval = fbval
+    meta_inputnode.inputs.fbvec = fbvec
+    meta_inputnode.inputs.anat_file = anat_file
+    meta_inputnode.inputs.parc = parc
+    meta_inputnode.inputs.ref_txt = ref_txt
+    meta_inputnode.inputs.procmem = procmem
+    meta_inputnode.inputs.multi_thr = multi_thr
+    meta_inputnode.inputs.multi_atlas = multi_atlas
+    meta_inputnode.inputs.max_thr = max_thr
+    meta_inputnode.inputs.min_thr = min_thr
+    meta_inputnode.inputs.step_thr = step_thr
+    meta_inputnode.inputs.k = k
+    meta_inputnode.inputs.clust_mask = clust_mask
+    meta_inputnode.inputs.k_min = k_min
+    meta_inputnode.inputs.k_max = k_max
+    meta_inputnode.inputs.k_step = k_step
+    meta_inputnode.inputs.k_clustering = k_clustering
+    meta_inputnode.inputs.user_atlas_list = user_atlas_list
+    meta_inputnode.inputs.clust_mask_list = clust_mask_list
+    meta_inputnode.inputs.prune = prune
+    meta_inputnode.inputs.node_size_list = node_size_list
+    meta_inputnode.inputs.num_total_samples = num_total_samples
+    meta_inputnode.inputs.conn_model_list = conn_model_list
+    meta_inputnode.inputs.min_span_tree = min_span_tree
+    meta_inputnode.inputs.verbose = verbose
+    meta_inputnode.inputs.plugin_type = plugin_type
+    meta_inputnode.inputs.use_AAL_naming = use_AAL_naming
+    meta_inputnode.inputs.smooth = smooth
+    meta_inputnode.inputs.smooth_list = smooth_list
+    meta_inputnode.inputs.disp_filt = disp_filt
+    meta_inputnode.inputs.clust_type = clust_type
+    meta_inputnode.inputs.clust_type_list = clust_type_list
+    meta_inputnode.inputs.c_boot = c_boot
+    meta_inputnode.inputs.block_size = block_size
+    meta_inputnode.inputs.mask = mask
+    meta_inputnode.inputs.norm = norm
+    meta_inputnode.inputs.binary = binary
+    meta_inputnode.inputs.target_samples = target_samples
+    meta_inputnode.inputs.curv_thr_list = curv_thr_list
+    meta_inputnode.inputs.step_list = step_list
+    meta_inputnode.inputs.overlap_thr = overlap_thr
+    meta_inputnode.inputs.overlap_thr_list = overlap_thr_list
+    meta_inputnode.inputs.track_type = track_type
+    meta_inputnode.inputs.max_length = max_length
+    meta_inputnode.inputs.maxcrossing = maxcrossing
+    meta_inputnode.inputs.life_run = life_run
+    meta_inputnode.inputs.min_length = min_length
+    meta_inputnode.inputs.directget = directget
+    meta_inputnode.inputs.tiss_class = tiss_class
+    meta_inputnode.inputs.embed = embed
+    meta_inputnode.inputs.multi_directget = multi_directget
+
     if func_file and dwi_file:
         # Create input/output nodes
-        meta_inputnode = pe.MapNode(niu.IdentityInterface(fields=['func_file', 'ID', 'atlas_select', 'network', 'thr',
-                                                                  'node_size', 'roi', 'uatlas_select', 'multi_nets',
-                                                                  'conn_model', 'dens_thresh', 'conf', 'adapt_thresh',
-                                                                  'plot_switch', 'dwi_file', 'anat_file', 'parc',
-                                                                  'ref_txt', 'procmem', 'multi_thr', 'multi_atlas',
-                                                                  'max_thr', 'min_thr', 'step_thr', 'k', 'clust_mask',
-                                                                  'k_min', 'k_max', 'k_step', 'k_clustering',
-                                                                  'user_atlas_list', 'clust_mask_list', 'prune',
-                                                                  'node_size_list', 'num_total_samples',
-                                                                  'conn_model_list', 'min_span_tree', 'verbose',
-                                                                  'plugin_type', 'use_AAL_naming', 'smooth',
-                                                                  'smooth_list', 'disp_filt', 'clust_type',
-                                                                  'clust_type_list', 'c_boot', 'block_size', 'mask',
-                                                                  'norm', 'binary', 'fbval', 'fbvec', 'target_samples',
-                                                                  'curv_thr_list', 'step_list', 'overlap_thr',
-                                                                  'overlap_thr_list', 'track_type', 'max_length',
-                                                                  'maxcrossing', 'life_run', 'min_length', 'directget',
-                                                                  'tiss_class', 'embed', 'multi_directget']),
-                                    iterfield=['func_file', 'ID', 'atlas_select', 'network', 'thr',
-                                               'node_size', 'roi', 'uatlas_select', 'multi_nets',
-                                               'conn_model', 'dens_thresh', 'conf', 'adapt_thresh',
-                                               'plot_switch', 'dwi_file', 'anat_file', 'parc', 'ref_txt',
-                                               'procmem', 'multi_thr', 'multi_atlas', 'max_thr',
-                                               'min_thr', 'step_thr', 'k', 'clust_mask', 'k_min', 'k_max',
-                                               'k_step', 'k_clustering', 'user_atlas_list',
-                                               'clust_mask_list', 'prune', 'node_size_list',
-                                               'num_total_samples', 'conn_model_list',
-                                               'min_span_tree', 'verbose', 'plugin_type', 'use_AAL_naming',
-                                               'smooth', 'smooth_list', 'disp_filt', 'clust_type',
-                                               'clust_type_list', 'c_boot', 'block_size', 'mask', 'norm',
-                                               'binary', 'fbval', 'fbvec', 'target_samples',
-                                               'curv_thr_list', 'step_list', 'overlap_thr',
-                                               'overlap_thr_list', 'track_type', 'max_length',
-                                               'maxcrossing', 'life_run', 'min_length', 'directget',
-                                               'tiss_class', 'embed', 'multi_directget'], name='meta_inputnode',
-                                    nested=True)
-
         print('Running Multimodal Meta-Workflow...')
-        meta_inputnode.inputs.func_file = [func_file, func_file]
-        meta_inputnode.inputs.ID = [ID, ID]
-        meta_inputnode.inputs.atlas_select = [atlas_select, atlas_select]
-        meta_inputnode.inputs.network = [network, network]
-        meta_inputnode.inputs.thr = [thr, thr]
-        meta_inputnode.inputs.node_size = [node_size, node_size]
-        meta_inputnode.inputs.roi = [roi, roi]
-        meta_inputnode.inputs.uatlas_select = [uatlas_select, uatlas_select]
-        meta_inputnode.inputs.multi_nets = [multi_nets, multi_nets]
-        meta_inputnode.inputs.conn_model = [conn_model, conn_model]
-        meta_inputnode.inputs.dens_thresh = [dens_thresh, dens_thresh]
-        meta_inputnode.inputs.conf = [conf, conf]
-        meta_inputnode.inputs.adapt_thresh = [adapt_thresh, adapt_thresh]
-        meta_inputnode.inputs.plot_switch = [plot_switch, plot_switch]
-        meta_inputnode.inputs.dwi_file = [dwi_file, dwi_file]
-        meta_inputnode.inputs.fbval = [fbval, fbval]
-        meta_inputnode.inputs.fbvec = [fbvec, fbvec]
-        meta_inputnode.inputs.anat_file = [anat_file, anat_file]
-        meta_inputnode.inputs.parc = [parc, parc]
-        meta_inputnode.inputs.ref_txt = [ref_txt, ref_txt]
-        meta_inputnode.inputs.procmem = [procmem, procmem]
-        meta_inputnode.inputs.multi_thr = [multi_thr, multi_thr]
-        meta_inputnode.inputs.multi_atlas = [multi_atlas, multi_atlas]
-        meta_inputnode.inputs.max_thr = [max_thr, max_thr]
-        meta_inputnode.inputs.min_thr = [min_thr, min_thr]
-        meta_inputnode.inputs.step_thr = [step_thr, step_thr]
-        meta_inputnode.inputs.k = [k, k]
-        meta_inputnode.inputs.clust_mask = [clust_mask, clust_mask]
-        meta_inputnode.inputs.k_min = [k_min, k_min]
-        meta_inputnode.inputs.k_max = [k_max, k_max]
-        meta_inputnode.inputs.k_step = [k_step, k_step]
-        meta_inputnode.inputs.k_clustering = [k_clustering, k_clustering]
-        meta_inputnode.inputs.user_atlas_list = [user_atlas_list, user_atlas_list]
-        meta_inputnode.inputs.clust_mask_list = [clust_mask_list, clust_mask_list]
-        meta_inputnode.inputs.prune = [prune, prune]
-        meta_inputnode.inputs.node_size_list = [node_size_list, node_size_list]
-        meta_inputnode.inputs.num_total_samples = [num_total_samples, num_total_samples]
-        meta_inputnode.inputs.conn_model_list = [conn_model_list, conn_model_list]
-        meta_inputnode.inputs.min_span_tree = [min_span_tree, min_span_tree]
-        meta_inputnode.inputs.verbose = [verbose, verbose]
-        meta_inputnode.inputs.plugin_type = [plugin_type, plugin_type]
-        meta_inputnode.inputs.use_AAL_naming = [use_AAL_naming, use_AAL_naming]
-        meta_inputnode.inputs.smooth = [smooth, smooth]
-        meta_inputnode.inputs.smooth_list = [smooth_list, smooth_list]
-        meta_inputnode.inputs.disp_filt = [disp_filt, disp_filt]
-        meta_inputnode.inputs.clust_type = [clust_type, clust_type]
-        meta_inputnode.inputs.clust_type_list = [clust_type_list, clust_type_list]
-        meta_inputnode.inputs.c_boot = [c_boot, c_boot]
-        meta_inputnode.inputs.block_size = [block_size, block_size]
-        meta_inputnode.inputs.mask = [mask, mask]
-        meta_inputnode.inputs.norm = [norm, norm]
-        meta_inputnode.inputs.binary = [binary, binary]
-        meta_inputnode.inputs.target_samples = [target_samples, target_samples]
-        meta_inputnode.inputs.curv_thr_list = [curv_thr_list, curv_thr_list]
-        meta_inputnode.inputs.step_list = [step_list, step_list]
-        meta_inputnode.inputs.overlap_thr = [overlap_thr, overlap_thr]
-        meta_inputnode.inputs.overlap_thr_list = [overlap_thr_list, overlap_thr_list]
-        meta_inputnode.inputs.track_type = [track_type, track_type]
-        meta_inputnode.inputs.max_length = [max_length, max_length]
-        meta_inputnode.inputs.maxcrossing = [maxcrossing, maxcrossing]
-        meta_inputnode.inputs.life_run = [life_run, life_run]
-        meta_inputnode.inputs.min_length = [min_length, min_length]
-        meta_inputnode.inputs.directget = [directget, directget]
-        meta_inputnode.inputs.tiss_class = [tiss_class, tiss_class]
-        meta_inputnode.inputs.embed = [embed, embed]
-        meta_inputnode.inputs.multi_directget = [multi_directget, multi_directget]
-
-        pass_meta_ins_join_node = pe.JoinNode(
-            niu.Function(niu.IdentityInterface(fields=['conn_model_func', 'est_path_func',
-                                                       'network_func',  'node_size_func', 'thr_func',
-                                                       'prune_func', 'ID_func', 'roi_func', 'norm_func',
-                                                       'binary_func', 'conn_model_struct', 'est_path_struct',
-                                                       'network_struct', 'node_size_struct', 'thr_struct',
-                                                       'prune_struct', 'ID_struct', 'roi_struct',
-                                                       'norm_struct', 'binary_struct']),
-                         joinfield=['conn_model_func', 'est_path_func',
-                                                       'network_func',  'node_size_func', 'thr_func',
-                                                       'prune_func', 'ID_func', 'roi_func', 'norm_func',
-                                                       'binary_func', 'conn_model_struct', 'est_path_struct',
-                                                       'network_struct', 'node_size_struct', 'thr_struct',
-                                                       'prune_struct', 'ID_struct', 'roi_struct',
-                                                       'norm_struct', 'binary_struct'],
-                         joinsource=meta_inputnode),
-            name='pass_meta_ins_join_node')
-
         pass_meta_ins_multi_node = pe.Node(niu.Function(input_names=['conn_model_func', 'est_path_func', 'network_func',
                                                                      'node_size_func', 'thr_func', 'prune_func',
                                                                      'ID_func', 'roi_func', 'norm_func', 'binary_func',
@@ -214,7 +178,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                                        'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
                                                                        'roi_iterlist', 'norm_iterlist',
                                                                        'binary_iterlist'], function=pass_meta_ins_multi),
-                                            name='pass_meta_ins_multi_node')
+                                           name='pass_meta_ins_multi_node')
 
         meta_wf.add_nodes([sub_struct_wf])
         meta_wf.add_nodes([sub_func_wf])
@@ -312,7 +276,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
 
         # Connect outputs of nested workflow to parent wf
         meta_wf.connect([
-            (sub_func_wf.get_node('outputnode'), pass_meta_ins_join_node, [('conn_model', 'conn_model_func'),
+            (sub_func_wf.get_node('outputnode'), pass_meta_ins_multi_node, [('conn_model', 'conn_model_func'),
                                                                             ('est_path', 'est_path_func'),
                                                                             ('network', 'network_func'),
                                                                             ('node_size', 'node_size_func'),
@@ -322,7 +286,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                                             ('roi', 'roi_func'),
                                                                             ('norm', 'norm_func'),
                                                                             ('binary', 'binary_func')]),
-            (sub_struct_wf.get_node('outputnode'), pass_meta_ins_join_node, [('conn_model', 'conn_model_struct'),
+            (sub_struct_wf.get_node('outputnode'), pass_meta_ins_multi_node, [('conn_model', 'conn_model_struct'),
                                                                                ('est_path', 'est_path_struct'),
                                                                                ('network', 'network_struct'),
                                                                                ('node_size', 'node_size_struct'),
@@ -331,121 +295,11 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                                                ('ID', 'ID_struct'),
                                                                                ('roi', 'roi_struct'),
                                                                                ('norm', 'norm_struct'),
-                                                                               ('binary', 'binary_struct')]),
-            (pass_meta_ins_join_node, pass_meta_ins_multi_node, [('conn_model_func', 'conn_model_func'),
-                                                                            ('est_path_func', 'est_path_func'),
-                                                                            ('network_func', 'network_func'),
-                                                                            ('node_size_func', 'node_size_func'),
-                                                                            ('thr_func', 'thr_func'),
-                                                                            ('prune_func', 'prune_func'),
-                                                                            ('ID_func', 'ID_func'),
-                                                                            ('roi_func', 'roi_func'),
-                                                                            ('norm_func', 'norm_func'),
-                                                                            ('binary_func', 'binary_func')]),
-            (pass_meta_ins_join_node, pass_meta_ins_multi_node, [('conn_model_struct', 'conn_model_struct'),
-                                                                             ('est_path_struct', 'est_path_struct'),
-                                                                             ('network_struct', 'network_struct'),
-                                                                             ('node_size_struct', 'node_size_struct'),
-                                                                             ('thr_struct', 'thr_struct'),
-                                                                             ('prune_struct', 'prune_struct'),
-                                                                             ('ID_struct', 'ID_struct'),
-                                                                             ('roi_struct', 'roi_struct'),
-                                                                             ('norm_struct', 'norm_struct'),
-                                                                             ('binary_struct', 'binary_struct')])
+                                                                               ('binary', 'binary_struct')])
              ])
 
     else:
-        meta_inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID', 'atlas_select', 'network', 'thr',
-                                                               'node_size', 'roi', 'uatlas_select', 'multi_nets',
-                                                               'conn_model', 'dens_thresh', 'conf', 'adapt_thresh',
-                                                               'plot_switch', 'dwi_file', 'anat_file', 'parc',
-                                                               'ref_txt',
-                                                               'procmem', 'multi_thr', 'multi_atlas', 'max_thr',
-                                                               'min_thr', 'step_thr', 'k', 'clust_mask', 'k_min',
-                                                               'k_max',
-                                                               'k_step', 'k_clustering', 'user_atlas_list',
-                                                               'clust_mask_list', 'prune', 'node_size_list',
-                                                               'num_total_samples', 'conn_model_list',
-                                                               'min_span_tree', 'verbose', 'plugin_type',
-                                                               'use_AAL_naming',
-                                                               'smooth', 'smooth_list', 'disp_filt', 'clust_type',
-                                                               'clust_type_list', 'c_boot', 'block_size', 'mask',
-                                                               'norm',
-                                                               'binary', 'fbval', 'fbvec', 'target_samples',
-                                                               'curv_thr_list', 'step_list', 'overlap_thr',
-                                                               'overlap_thr_list',
-                                                               'track_type', 'max_length', 'maxcrossing', 'life_run',
-                                                               'min_length', 'directget', 'tiss_class', 'embed',
-                                                               'multi_directget']),
-                                 name='meta_inputnode')
-
         print('Running Unimodal Meta-Workflow...')
-        meta_inputnode.inputs.func_file = func_file
-        meta_inputnode.inputs.ID = ID
-        meta_inputnode.inputs.atlas_select = atlas_select
-        meta_inputnode.inputs.network = network
-        meta_inputnode.inputs.thr = thr
-        meta_inputnode.inputs.node_size = node_size
-        meta_inputnode.inputs.roi = roi
-        meta_inputnode.inputs.uatlas_select = uatlas_select
-        meta_inputnode.inputs.multi_nets = multi_nets
-        meta_inputnode.inputs.conn_model = conn_model
-        meta_inputnode.inputs.dens_thresh = dens_thresh
-        meta_inputnode.inputs.conf = conf
-        meta_inputnode.inputs.adapt_thresh = adapt_thresh
-        meta_inputnode.inputs.plot_switch = plot_switch
-        meta_inputnode.inputs.dwi_file = dwi_file
-        meta_inputnode.inputs.fbval = fbval
-        meta_inputnode.inputs.fbvec = fbvec
-        meta_inputnode.inputs.anat_file = anat_file
-        meta_inputnode.inputs.parc = parc
-        meta_inputnode.inputs.ref_txt = ref_txt
-        meta_inputnode.inputs.procmem = procmem
-        meta_inputnode.inputs.multi_thr = multi_thr
-        meta_inputnode.inputs.multi_atlas = multi_atlas
-        meta_inputnode.inputs.max_thr = max_thr
-        meta_inputnode.inputs.min_thr = min_thr
-        meta_inputnode.inputs.step_thr = step_thr
-        meta_inputnode.inputs.k = k
-        meta_inputnode.inputs.clust_mask = clust_mask
-        meta_inputnode.inputs.k_min = k_min
-        meta_inputnode.inputs.k_max = k_max
-        meta_inputnode.inputs.k_step = k_step
-        meta_inputnode.inputs.k_clustering = k_clustering
-        meta_inputnode.inputs.user_atlas_list = user_atlas_list
-        meta_inputnode.inputs.clust_mask_list = clust_mask_list
-        meta_inputnode.inputs.prune = prune
-        meta_inputnode.inputs.node_size_list = node_size_list
-        meta_inputnode.inputs.num_total_samples = num_total_samples
-        meta_inputnode.inputs.conn_model_list = conn_model_list
-        meta_inputnode.inputs.min_span_tree = min_span_tree
-        meta_inputnode.inputs.verbose = verbose
-        meta_inputnode.inputs.plugin_type = plugin_type
-        meta_inputnode.inputs.use_AAL_naming = use_AAL_naming
-        meta_inputnode.inputs.smooth = smooth
-        meta_inputnode.inputs.smooth_list = smooth_list
-        meta_inputnode.inputs.disp_filt = disp_filt
-        meta_inputnode.inputs.clust_type = clust_type
-        meta_inputnode.inputs.clust_type_list = clust_type_list
-        meta_inputnode.inputs.c_boot = c_boot
-        meta_inputnode.inputs.block_size = block_size
-        meta_inputnode.inputs.mask = mask
-        meta_inputnode.inputs.norm = norm
-        meta_inputnode.inputs.binary = binary
-        meta_inputnode.inputs.target_samples = target_samples
-        meta_inputnode.inputs.curv_thr_list = curv_thr_list
-        meta_inputnode.inputs.step_list = step_list
-        meta_inputnode.inputs.overlap_thr = overlap_thr
-        meta_inputnode.inputs.overlap_thr_list = overlap_thr_list
-        meta_inputnode.inputs.track_type = track_type
-        meta_inputnode.inputs.max_length = max_length
-        meta_inputnode.inputs.maxcrossing = maxcrossing
-        meta_inputnode.inputs.life_run = life_run
-        meta_inputnode.inputs.min_length = min_length
-        meta_inputnode.inputs.directget = directget
-        meta_inputnode.inputs.tiss_class = tiss_class
-        meta_inputnode.inputs.embed = embed
-        meta_inputnode.inputs.multi_directget = multi_directget
 
         if dwi_file:
             pass_meta_ins_struct_node = pe.Node(niu.Function(input_names=['conn_model', 'est_path', 'network', 'node_size',
@@ -682,7 +536,8 @@ def functional_connectometry(func_file, ID, atlas_select, network, node_size, ro
         print('FSLDIR environment variable not set!')
 
     import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib",
-                   "import warnings", "warnings.filterwarnings(\"ignore\")", "np.warnings.filterwarnings(\"ignore\")"]
+                   "import warnings", "warnings.filterwarnings(\"ignore\")", "np.warnings.filterwarnings(\"ignore\")",
+                   "warnings.filterwarnings(\"ignore\")"]
     functional_connectometry_wf = pe.Workflow(name="%s%s" % ('functional_connectometry_', ID))
     base_dirname = "%s%s" % ('functional_connectometry_', ID)
     if not os.path.isdir("%s%s" % ('/tmp/', base_dirname)):
@@ -1670,7 +1525,8 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
         print('FSLDIR environment variable not set!')
 
     import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib",
-                   "import warnings", "warnings.filterwarnings(\"ignore\")", "np.warnings.filterwarnings(\"ignore\")"]
+                   "import warnings", "warnings.filterwarnings(\"ignore\")", "np.warnings.filterwarnings(\"ignore\")",
+                   "warnings.filterwarnings(\"ignore\")"]
     base_dirname = "%s%s" % ('structural_connectometry_', ID)
     structural_connectometry_wf = pe.Workflow(name=base_dirname)
     if not os.path.isdir("%s%s" % ('/tmp/', base_dirname)):

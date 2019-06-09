@@ -6,6 +6,7 @@ Copyright (C) 2018
 """
 import warnings
 warnings.filterwarnings("ignore")
+warnings.simplefilter("ignore", ResourceWarning)
 import os
 import nibabel as nib
 import numpy as np
@@ -46,6 +47,7 @@ def transform_pts(pts, t_aff, t_warp, ref_img_path, ants_path, template_path, ds
     run_hash = random.randint(1, 1000)
     warped_csv_out = dsn_dir + "/warped_output.csv"
     aattp_out = dsn_dir + '/aattp_' + str(run_hash) + '.csv'
+    open(aattp_out, 'w').close()
     transforms = "-t [" + str(t_aff) + ", 1] " + "-t " + str(t_warp)
 
     # Load the volume from .trk
@@ -94,7 +96,7 @@ def transform_pts(pts, t_aff, t_warp, ref_img_path, ants_path, template_path, ds
     elif output_space == "lps_voxmm":
         template_extents = template.shape
         lps_voxels = new_voxels.copy()
-        lps_voxels[0] = template_extents[0] - lps_voxels[0]
+        lps_voxels[0] = template_extents[0] + lps_voxels[0]
         lps_voxels[1] = template_extents[1] - lps_voxels[1]
         lps_voxmm = lps_voxels.T * np.array(template.header.get_zooms())[:3]
         return lps_voxmm
@@ -179,7 +181,7 @@ class Warp(object):
 def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_samples, conn_model, network, node_size,
                            dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select,
                            label_names, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list,
-                           overwrite=True):
+                           overwrite=False):
     """
 
     :param streams:
@@ -232,29 +234,27 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                                                 '_step', str(step_list).replace(', ', '_'), '.trk')
 
     # Run ANTs reg
-    t_aff = "%s%s" % (basedir_path, '/0GenericAffine.mat')
-    t_warp = "%s%s" % (basedir_path, '/1Warp.nii.gz')
+    t_aff = "%s%s" % (dsn_dir, '/0GenericAffine.mat')
+    t_warp = "%s%s" % (dsn_dir, '/1Warp.nii.gz')
 
-    streamlines_native = nib.streamlines.load(streams)
-    streamlines_native_s = streamlines_native.streamlines
-    streams_warp = streams.split('.trk')[0] + '_warped.trk'
-    tractogram = nib.streamlines.Tractogram(streamlines_native_s, affine_to_rasmm=np.eye(4)*np.array([-1,1,1,1]))
-    trkfile = nib.streamlines.trk.TrkFile(tractogram, header=streamlines_native.header)
-    nib.streamlines.save(trkfile, streams_warp)
-    print(streams_warp)
+    fa_path_img = nib.load(fa_path)
+    fa_flip_path = fa_path.split('.nii.gz')[0] + '_flip.nii.gz'
+    s_aff = fa_path_img.affine
+    s_aff[0][0] = -s_aff[0][0]
+    fa_path_img.set_sform(s_aff)
+    fa_path_img.set_qform(s_aff)
+    fa_path_img.update_header()
+    nib.save(fa_path_img, fa_flip_path)
 
-    if (os.path.isfile(t_aff) is False) and (os.path.isfile(t_warp) is False) and (overwrite is False):
-        cmd = ants_path + '/antsRegistrationSyN.sh -d 3 -f ' + template_path + ' -m ' + fa_path + ' -o ' + basedir_path + '/'
+    if ((os.path.isfile(t_aff) is False) and (os.path.isfile(t_warp) is False)) or (overwrite is True):
+        cmd = ants_path + '/antsRegistrationSyN.sh -d 3 -f ' + template_path + ' -m ' + fa_flip_path + ' -o ' + dsn_dir + '/'
         os.system(cmd)
 
     # Warp streamlines
-    wS = Warp(ants_path, streams_warp, streams_mni, template_path, t_aff, t_warp, fa_path, dsn_dir)
+    wS = Warp(ants_path, streams, streams_mni, template_path, t_aff, t_warp, fa_path, dsn_dir)
     wS.streamlines()
 
-    fa_path_img = nib.load(fa_path)
-    s_aff = fa_path_img.affine
-    s_aff[0] = -s_aff[0]
-    s_aff[:3, 3] = np.array([0, 0, 0])
+    s_aff[:3, 3] = np.array([270, 0, 0])
     streamlines_mni = nib.streamlines.load(streams_mni)
     streamlines_mni_s = streamlines_mni.streamlines
     streamlines_trans = Streamlines(mgru.transform_to_affine(streamlines_mni_s, streamlines_mni.header, s_aff))
@@ -264,7 +264,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     nib.streamlines.save(trkfile, streams_warp)
     print(streams_warp)
 
-    return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni
+    return streams_warp, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni
 
 
 class DmriReg(object):

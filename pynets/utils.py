@@ -432,7 +432,7 @@ def build_omnetome(est_path_iterlist, ID):
             pop_array.append(np.load(graph))
             #lab_array.append(graph.split('/')[-1].split('.npy')[0].split('est_')[1])
 
-        variance_threshold = VarianceThreshold(threshold=0.07)
+        variance_threshold = VarianceThreshold(threshold=0.05)
         diags = np.array([np.triu(pop_array[i]) for i in range(len(pop_array))])
         diags_red = diags.reshape(diags.shape[0], diags.shape[1]*diags.shape[2])
         var_thr = variance_threshold.fit(diags_red.T)
@@ -449,7 +449,7 @@ def build_omnetome(est_path_iterlist, ID):
         mds = ClassicalMDS()
         mds_fit = mds.fit_transform(omni_fit)
         dir_path = os.path.dirname(graph_path)
-        out_path = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_omnetome_embedding_', atlas, '.npy')
+        out_path = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_omnetome_', atlas, '.npy')
         print('Saving...')
         np.save(out_path, mds_fit)
         del mds, mds_fit, omni, omni_fit
@@ -862,6 +862,7 @@ def check_orient_and_dims(infile, vox_size, bvecs=None):
     :param bvecs:
     :return:
     """
+    import os
     import os.path as op
     from pynets.utils import reorient_dwi, reorient_img, match_target_vox_res
 
@@ -869,22 +870,43 @@ def check_orient_and_dims(infile, vox_size, bvecs=None):
     img = nib.load(infile)
     vols = img.shape[-1]
 
+    reoriented = "{}/{}_pre_reor.nii.gz".format(outdir, infile.split('/')[-1].split('.nii.gz')[0])
+    resampled = "{}/{}_pre_res.nii.gz".format(outdir, os.path.basename(infile).split('.nii.gz')[0])
+
     # Check orientation
     if (vols > 1) and (bvecs is not None):
         # dwi case
-        [infile, bvecs] = reorient_dwi(infile, bvecs, outdir)
+        outdir = "%s%s" % (outdir, '/std_dmri')
+        if not os.path.isdir(outdir):
+            os.mkdir(outdir)
+        # Check orientation
+        if not os.path.isfile(reoriented):
+            [infile, bvecs] = reorient_dwi(infile, bvecs, outdir)
         # Check dimensions
-        outfile = match_target_vox_res(infile, vox_size, outdir, sens='dwi')
+        if not os.path.isfile(resampled):
+            outfile = match_target_vox_res(infile, vox_size, outdir, sens='dwi')
     elif (vols > 1) and (bvecs is None):
         # func case
-        infile = reorient_img(infile, outdir)
+        outdir = "%s%s" % (outdir, '/std_fmri')
+        if not os.path.isdir(outdir):
+            os.mkdir(outdir)
+        # Check orientation
+        if not os.path.isfile(reoriented):
+            infile = reorient_img(infile, outdir)
         # Check dimensions
-        outfile = match_target_vox_res(infile, vox_size, outdir, sens='func')
+        if not os.path.isfile(resampled):
+            outfile = match_target_vox_res(infile, vox_size, outdir, sens='func')
     else:
         # t1w case
-        infile = reorient_img(infile, outdir)
-        # Check dimensions
-        outfile = match_target_vox_res(infile, vox_size, outdir, sens='t1w')
+        outdir = "%s%s" % (outdir, '/std_anat_')
+        if not os.path.isdir(outdir):
+            os.mkdir(outdir)
+        # Check orientation
+        if not os.path.isfile(reoriented):
+            infile = reorient_img(infile, outdir)
+        if not os.path.isfile(resampled):
+            # Check dimensions
+            outfile = match_target_vox_res(infile, vox_size, outdir, sens='t1w')
 
     print(outfile)
 
@@ -905,7 +927,9 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
     import shutil
     # Check orientation (dwi_prep)
     cmd = 'fslorient -getorient ' + dwi_prep
-    orient = os.popen(cmd).read().strip('\n')
+    cmd_run = os.popen(cmd)
+    orient = cmd_run.read().strip('\n')
+    cmd_run.close()
     dwi_orig = dwi_prep
     dwi_prep = "{}/{}_pre_reor.nii.gz".format(out_dir, dwi_prep.split('/')[-1].split('.nii.gz')[0])
     shutil.copyfile(dwi_orig, dwi_prep)
@@ -914,7 +938,9 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
     shutil.copyfile(bvecs_orig, bvecs)
     bvecs_mat = np.genfromtxt(bvecs)
     cmd = 'fslorient -getqform ' + dwi_prep
-    qform = os.popen(cmd).read().strip('\n')
+    cmd_run = os.popen(cmd)
+    qform = cmd_run.read().strip('\n')
+    cmd_run.close()
     reoriented = False
     if orient == 'NEUROLOGICAL':
         reoriented = True
@@ -928,7 +954,9 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
             os.system(cmd)
             bvecs_mat[:,1] = -bvecs_mat[:,1]
             cmd = 'fslorient -getqform ' + dwi_prep_PA
-            qform = os.popen(cmd).read().strip('\n')
+            cmd_run = os.popen(cmd)
+            qform = cmd_run.read().strip('\n')
+            cmd_run.close()
             dwi_prep = dwi_prep_PA
         # Inferior-Superior Reorientation
         if float(qform.split(' ')[:-1][10]) <= 0:
@@ -952,7 +980,9 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
             os.system(cmd)
             bvecs_mat[:,1] = -bvecs_mat[:,1]
             cmd = 'fslorient -getqform ' + dwi_prep_PA
-            qform = os.popen(cmd).read().strip('\n')
+            cmd_run = os.popen(cmd)
+            qform = cmd_run.read().strip('\n')
+            cmd_run.close()
             dwi_prep = dwi_prep_PA
             reoriented = True
         # Inferior-Superior Reorientation
@@ -995,12 +1025,16 @@ def reorient_img(img, out_dir):
     """
     import shutil
     cmd = 'fslorient -getorient ' + img
-    orient = os.popen(cmd).read().strip('\n')
+    cmd_run = os.popen(cmd)
+    orient = cmd_run.read().strip('\n')
+    cmd_run.close()
     img_orig = img
     img = "{}/{}_pre_reor.nii.gz".format(out_dir, img.split('/')[-1].split('.nii.gz')[0])
     shutil.copyfile(img_orig, img)
     cmd = 'fslorient -getqform ' + img
-    qform = os.popen(cmd).read().strip('\n')
+    cmd_run = os.popen(cmd)
+    qform = cmd_run.read().strip('\n')
+    cmd_run.close()
     reoriented = False
     if orient == 'NEUROLOGICAL':
         reoriented = True
@@ -1013,7 +1047,9 @@ def reorient_img(img, out_dir):
             cmd = 'fslswapdim ' + img + ' -x -y z ' + img_PA
             os.system(cmd)
             cmd = 'fslorient -getqform ' + img_PA
-            qform = os.popen(cmd).read().strip('\n')
+            cmd_run = os.popen(cmd)
+            qform = cmd_run.read().strip('\n')
+            cmd_run.close()
             img = img_PA
         # Inferior-Superior Reorientation
         if float(qform.split(' ')[:-1][10]) <= 0:
@@ -1033,7 +1069,9 @@ def reorient_img(img, out_dir):
             cmd = 'fslswapdim ' + img + ' -x -y z ' + img_PA
             os.system(cmd)
             cmd = 'fslorient -getqform ' + img_PA
-            qform = os.popen(cmd).read().strip('\n')
+            cmd_run = os.popen(cmd)
+            qform = cmd_run.read().strip('\n')
+            cmd_run.close()
             img = img_PA
             reoriented = True
         # Inferior-Superior Reorientation

@@ -207,7 +207,7 @@ def get_parser():
                              'tractography. Default is 1000000.\n')
     parser.add_argument('-ml',
                         metavar='Maximum fiber length for tracking',
-                        default='200',
+                        default=200,
                         help='Include this flag to manually specify a maximum tract length (mm) for structural '
                              'connectome tracking. Default is 200.\n')
     parser.add_argument('-tt',
@@ -236,7 +236,7 @@ def get_parser():
                              'wb (whole-brain mask), and bin (binary to white-matter only). Default is wb.\n')
     parser.add_argument('-thr',
                         metavar='Graph threshold',
-                        default='1.00',
+                        default=1.00,
                         help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. '
                              'Default is proportional thresholding. If omitted, no thresholding will be applied.\n')
     parser.add_argument('-min_thr',
@@ -313,9 +313,9 @@ def build_workflow(args, retval):
     import timeit
     import numpy as np
     from pathlib import Path
-    import types
     import warnings
     warnings.filterwarnings("ignore")
+    warnings.simplefilter("ignore")
     np.warnings.filterwarnings('ignore')
     import yaml
     try:
@@ -1250,7 +1250,7 @@ def build_workflow(args, retval):
             wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_', random.randint(1, 1000)))
         import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx",
                        "import nibabel as nib", "import warnings", "warnings.filterwarnings(\"ignore\")",
-                       "np.warnings.filterwarnings(\"ignore\")"]
+                       "np.warnings.filterwarnings(\"ignore\")", "warnings.simplefilter(\"ignore\")"]
         inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'roi', 'multi_nets',
                                                           'conn_model', 'plot_switch', 'graph', 'prune',
                                                           'norm', 'binary']),
