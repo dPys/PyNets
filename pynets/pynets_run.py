@@ -1297,7 +1297,7 @@ def build_workflow(args, retval):
                                     clust_type, clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec,
                                     target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
                                     max_length, maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict,
-                                    embed, multi_directget)
+                                    embed, multi_directget, multimodal)
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf

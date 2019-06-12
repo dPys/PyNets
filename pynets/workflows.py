@@ -18,7 +18,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                       use_AAL_naming, smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size,
                       mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                       overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length, directget,
-                      tiss_class, runtime_dict, embed, multi_directget):
+                      tiss_class, runtime_dict, embed, multi_directget, multimodal):
     from pynets import workflows
     from nipype import Workflow
     from nipype.pipeline import engine as pe
@@ -127,7 +127,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                            'curv_thr_list', 'step_list', 'overlap_thr',
                                                            'overlap_thr_list', 'track_type', 'max_length',
                                                            'maxcrossing', 'life_run', 'min_length', 'directget',
-                                                           'tiss_class', 'embed', 'multi_directget']),
+                                                           'tiss_class', 'embed', 'multi_directget', 'multimodal']),
                              name='meta_inputnode')
     meta_inputnode.inputs.func_file = func_file
     meta_inputnode.inputs.ID = ID
@@ -196,9 +196,10 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
     meta_inputnode.inputs.directget = directget
     meta_inputnode.inputs.tiss_class = tiss_class
     meta_inputnode.inputs.embed = embed
+    meta_inputnode.inputs.multimodal = multimodal
     meta_inputnode.inputs.multi_directget = multi_directget
 
-    if func_file and dwi_file:
+    if multimodal is True:
         # Create input/output nodes
         print('Running Multimodal Meta-Workflow...')
         pass_meta_ins_multi_node = pe.Node(niu.Function(input_names=['conn_model_func', 'est_path_func', 'network_func',
@@ -479,14 +480,16 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
     pass_meta_outs_node = pe.Node(niu.Function(input_names=['conn_model_iterlist', 'est_path_iterlist',
                                                             'network_iterlist', 'node_size_iterlist',
                                                             'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
-                                                            'roi_iterlist', 'norm_iterlist', 'binary_iterlist', 'embed'],
+                                                            'roi_iterlist', 'norm_iterlist', 'binary_iterlist', 'embed',
+                                                            'multimodal'],
                                                output_names=['conn_model_iterlist', 'est_path_iterlist',
                                                              'network_iterlist', 'node_size_iterlist',
                                                              'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
                                                              'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
                                                function=pass_meta_outs), name='pass_meta_outs_node')
 
-    meta_wf.connect([(meta_inputnode, pass_meta_outs_node, [('embed', 'embed')])
+    meta_wf.connect([(meta_inputnode, pass_meta_outs_node, [('embed', 'embed'),
+                                                            ('multimodal', 'multimodal')])
                      ])
 
     if (func_file and not dwi_file) or (dwi_file and not func_file):

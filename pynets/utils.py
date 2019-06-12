@@ -294,7 +294,8 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
 
 
 def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist,
-                  prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=True):
+                  prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=True,
+                   multimodal=False):
     from pynets.utils import build_omnetome
     """
 
@@ -311,7 +312,7 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, nod
     :return:
     """
     if embed is True:
-        build_omnetome(est_path_iterlist, ID_iterlist[0])
+        build_omnetome(est_path_iterlist, ID_iterlist[0], multimodal)
 
     return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 
@@ -409,7 +410,8 @@ def flatten(l):
             yield el
 
 
-def build_omnetome(est_path_iterlist, ID):
+def build_omnetome(est_path_iterlist, ID, multimodal):
+    import os
     from sklearn.feature_selection import VarianceThreshold
     from graspy.embed import OmnibusEmbed, ClassicalMDS
     """
@@ -417,21 +419,8 @@ def build_omnetome(est_path_iterlist, ID):
     :param net_pickle_mt_lis:
     :return:
     """
-    atlases = list(set([x.split('/')[-2].split('/')[0] for x in est_path_iterlist]))
-    parcel_dict = dict.fromkeys(atlases)
-    for key in parcel_dict:
-        parcel_dict[key] = []
 
-    for atlas in atlases:
-        for graph_path in est_path_iterlist:
-            if atlas in graph_path:
-                parcel_dict[atlas].append(graph_path)
-        pop_array = []
-        #lab_array = []
-        for graph in parcel_dict[atlas]:
-            pop_array.append(np.load(graph))
-            #lab_array.append(graph.split('/')[-1].split('.npy')[0].split('est_')[1])
-
+    def omni_embed(pop_array):
         variance_threshold = VarianceThreshold(threshold=0.05)
         diags = np.array([np.triu(pop_array[i]) for i in range(len(pop_array))])
         diags_red = diags.reshape(diags.shape[0], diags.shape[1]*diags.shape[2])
@@ -453,7 +442,44 @@ def build_omnetome(est_path_iterlist, ID):
         print('Saving...')
         np.save(out_path, mds_fit)
         del mds, mds_fit, omni, omni_fit
+        return
 
+    atlases = list(set([x.split('/')[-2].split('/')[0] for x in est_path_iterlist]))
+    parcel_dict = dict.fromkeys(atlases)
+    for key in parcel_dict:
+        parcel_dict[key] = []
+
+    func_models = ['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
+                   'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso']
+
+    struct_models = ['csa', 'tensor', 'csd']
+
+    if multimodal is True:
+        est_path_iterlist_dwi = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in struct_models]))
+        est_path_iterlist_func = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in func_models]))
+
+        for atlas in atlases:
+            for graph_path in est_path_iterlist_dwi:
+                if atlas in graph_path:
+                    parcel_dict[atlas].append(graph_path)
+            for graph_path in est_path_iterlist_func:
+                if atlas in graph_path:
+                    parcel_dict[atlas].append(graph_path)
+            pop_array = []
+            for graph in parcel_dict[atlas]:
+                pop_array.append(np.load(graph))
+            omni_embed(pop_array)
+    elif multimodal is False and len(est_path_iterlist) > 1:
+        for atlas in atlases:
+            for graph_path in est_path_iterlist:
+                if atlas in graph_path:
+                    parcel_dict[atlas].append(graph_path)
+            pop_array = []
+            for graph in parcel_dict[atlas]:
+                pop_array.append(np.load(graph))
+            omni_embed(pop_array)
+    else:
+        raise RuntimeError('ERROR: Only one graph sampled, omnibus embedding not appropriate.')
     return
 
 
