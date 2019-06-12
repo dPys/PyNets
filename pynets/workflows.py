@@ -25,14 +25,45 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
     from nipype.interfaces import utility as niu
     from pynets.utils import pass_meta_ins, pass_meta_outs, pass_meta_ins_multi
 
+    func_models = ['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
+                   'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso']
+
+    struct_models = ['csa', 'tensor', 'csd']
+
+    if func_file and dwi_file:
+        func_model_list = []
+        dwi_model_list = []
+        if conn_model_list is not None:
+            for conn_model in conn_model_list:
+                if conn_model in func_models:
+                    func_model_list.append(conn_model)
+                if conn_model in struct_models:
+                    dwi_model_list.append(conn_model)
+            if len(func_model_list) == 1:
+                conn_model_func = func_model_list[0]
+                func_model_list = None
+            if len(dwi_model_list) == 1:
+                conn_model_dwi = dwi_model_list[0]
+                dwi_model_list = None
+        else:
+            raise RuntimeError('ERROR: Multimodal fMRI-dMRI pipeline specified, but only one connectivity model specified.')
+    elif (dwi_file is not None) and (func_file is None):
+        conn_model_dwi = conn_model
+        dwi_model_list = conn_model_list
+    elif (func_file is not None) and (dwi_file is None):
+        conn_model_func = conn_model
+        func_model_list = conn_model_list
+        conn_model_dwi = None
+        dwi_model_list = conn_model_list
+
     # Workflow 1: Structural connectome
     if dwi_file is not None:
         sub_struct_wf = workflows.structural_connectometry(ID, atlas_select, network, node_size, roi,
                                                            uatlas_select, plot_switch, parc, ref_txt, procmem,
                                                            dwi_file, fbval, fbvec, anat_file, thr, dens_thresh,
-                                                           conn_model, user_atlas_list, multi_thr, multi_atlas,
+                                                           conn_model_func, user_atlas_list, multi_thr, multi_atlas,
                                                            max_thr, min_thr, step_thr, node_size_list,
-                                                           conn_model_list, min_span_tree, use_AAL_naming, disp_filt,
+                                                           dwi_model_list, min_span_tree, use_AAL_naming, disp_filt,
                                                            plugin_type, multi_nets, prune, mask, norm, binary,
                                                            target_samples, curv_thr_list, step_list, overlap_thr,
                                                            overlap_thr_list, track_type, max_length, maxcrossing,
@@ -43,13 +74,15 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
 
     # Workflow 2: Functional connectome
     if func_file is not None:
+        if conn_model_func:
+            conn_model = conn_model_func
         sub_func_wf = workflows.functional_connectometry(func_file, ID, atlas_select, network, node_size,
-                                                         roi, thr, uatlas_select, conn_model, dens_thresh, conf,
+                                                         roi, thr, uatlas_select, conn_model_dwi, dens_thresh, conf,
                                                          plot_switch, parc, ref_txt, procmem,
                                                          multi_thr, multi_atlas, max_thr, min_thr, step_thr,
                                                          k, clust_mask, k_min, k_max, k_step, k_clustering,
                                                          user_atlas_list, clust_mask_list, node_size_list,
-                                                         conn_model_list, min_span_tree, use_AAL_naming, smooth,
+                                                         func_model_list, min_span_tree, use_AAL_naming, smooth,
                                                          smooth_list, disp_filt, prune, multi_nets, clust_type,
                                                          clust_type_list, plugin_type, c_boot, block_size, mask,
                                                          norm, binary, anat_file, runtime_dict)
@@ -78,23 +111,23 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
             meta_wf.config[key][setting] = value
 
     meta_inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID', 'atlas_select', 'network', 'thr',
-                                                              'node_size', 'roi', 'uatlas_select', 'multi_nets',
-                                                              'conn_model', 'dens_thresh', 'conf', 'adapt_thresh',
-                                                              'plot_switch', 'dwi_file', 'anat_file', 'parc',
-                                                              'ref_txt', 'procmem', 'multi_thr', 'multi_atlas',
-                                                              'max_thr', 'min_thr', 'step_thr', 'k', 'clust_mask',
-                                                              'k_min', 'k_max', 'k_step', 'k_clustering',
-                                                              'user_atlas_list', 'clust_mask_list', 'prune',
-                                                              'node_size_list', 'num_total_samples',
-                                                              'conn_model_list', 'min_span_tree', 'verbose',
-                                                              'plugin_type', 'use_AAL_naming', 'smooth',
-                                                              'smooth_list', 'disp_filt', 'clust_type',
-                                                              'clust_type_list', 'c_boot', 'block_size', 'mask',
-                                                              'norm', 'binary', 'fbval', 'fbvec', 'target_samples',
-                                                              'curv_thr_list', 'step_list', 'overlap_thr',
-                                                              'overlap_thr_list', 'track_type', 'max_length',
-                                                              'maxcrossing', 'life_run', 'min_length', 'directget',
-                                                              'tiss_class', 'embed', 'multi_directget']),
+                                                           'node_size', 'roi', 'uatlas_select', 'multi_nets',
+                                                           'conn_model_func', 'conn_model_dwi', 'dens_thresh',
+                                                           'conf', 'adapt_thresh', 'plot_switch', 'dwi_file',
+                                                           'anat_file', 'parc', 'ref_txt', 'procmem', 'multi_thr',
+                                                           'multi_atlas', 'max_thr', 'min_thr', 'step_thr', 'k',
+                                                           'clust_mask', 'k_min', 'k_max', 'k_step', 'k_clustering',
+                                                           'user_atlas_list', 'clust_mask_list', 'prune',
+                                                           'node_size_list', 'num_total_samples',
+                                                           'func_model_list', 'dwi_model_list', 'min_span_tree',
+                                                           'verbose', 'plugin_type', 'use_AAL_naming', 'smooth',
+                                                           'smooth_list', 'disp_filt', 'clust_type',
+                                                           'clust_type_list', 'c_boot', 'block_size', 'mask',
+                                                           'norm', 'binary', 'fbval', 'fbvec', 'target_samples',
+                                                           'curv_thr_list', 'step_list', 'overlap_thr',
+                                                           'overlap_thr_list', 'track_type', 'max_length',
+                                                           'maxcrossing', 'life_run', 'min_length', 'directget',
+                                                           'tiss_class', 'embed', 'multi_directget']),
                              name='meta_inputnode')
     meta_inputnode.inputs.func_file = func_file
     meta_inputnode.inputs.ID = ID
@@ -105,7 +138,8 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
     meta_inputnode.inputs.roi = roi
     meta_inputnode.inputs.uatlas_select = uatlas_select
     meta_inputnode.inputs.multi_nets = multi_nets
-    meta_inputnode.inputs.conn_model = conn_model
+    meta_inputnode.inputs.conn_model_func = conn_model_func
+    meta_inputnode.inputs.conn_model_dwi = conn_model_dwi
     meta_inputnode.inputs.dens_thresh = dens_thresh
     meta_inputnode.inputs.conf = conf
     meta_inputnode.inputs.adapt_thresh = adapt_thresh
@@ -133,7 +167,8 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
     meta_inputnode.inputs.prune = prune
     meta_inputnode.inputs.node_size_list = node_size_list
     meta_inputnode.inputs.num_total_samples = num_total_samples
-    meta_inputnode.inputs.conn_model_list = conn_model_list
+    meta_inputnode.inputs.func_model_list = func_model_list
+    meta_inputnode.inputs.dwi_model_list = dwi_model_list
     meta_inputnode.inputs.min_span_tree = min_span_tree
     meta_inputnode.inputs.verbose = verbose
     meta_inputnode.inputs.plugin_type = plugin_type
@@ -194,7 +229,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                           ('roi', 'inputnode.roi'),
                                                           ('uatlas_select', 'inputnode.uatlas_select'),
                                                           ('multi_nets', 'inputnode.multi_nets'),
-                                                          ('conn_model', 'inputnode.conn_model'),
+                                                          ('conn_model_dwi', 'inputnode.conn_model'),
                                                           ('dens_thresh', 'inputnode.dens_thresh'),
                                                           ('plot_switch', 'inputnode.plot_switch'),
                                                           ('parc', 'inputnode.parc'),
@@ -207,7 +242,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                           ('step_thr', 'inputnode.step_thr'),
                                                           ('user_atlas_list', 'inputnode.user_atlas_list'),
                                                           ('prune', 'inputnode.prune'),
-                                                          ('conn_model_list', 'inputnode.conn_model_list'),
+                                                          ('dwi_model_list', 'inputnode.conn_model_list'),
                                                           ('min_span_tree', 'inputnode.min_span_tree'),
                                                           ('use_AAL_naming', 'inputnode.use_AAL_naming'),
                                                           ('disp_filt', 'inputnode.disp_filt'),
@@ -239,7 +274,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                         ('roi', 'inputnode.roi'),
                                                         ('uatlas_select', 'inputnode.uatlas_select'),
                                                         ('multi_nets', 'inputnode.multi_nets'),
-                                                        ('conn_model', 'inputnode.conn_model'),
+                                                        ('conn_model_func', 'inputnode.conn_model'),
                                                         ('dens_thresh', 'inputnode.dens_thresh'),
                                                         ('conf', 'inputnode.conf'),
                                                         ('plot_switch', 'inputnode.plot_switch'),
@@ -260,7 +295,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                         ('user_atlas_list', 'inputnode.user_atlas_list'),
                                                         ('clust_mask_list', 'inputnode.clust_mask_list'),
                                                         ('prune', 'inputnode.prune'),
-                                                        ('conn_model_list', 'inputnode.conn_model_list'),
+                                                        ('func_model_list', 'inputnode.conn_model_list'),
                                                         ('min_span_tree', 'inputnode.min_span_tree'),
                                                         ('use_AAL_naming', 'inputnode.use_AAL_naming'),
                                                         ('smooth', 'inputnode.smooth'),
@@ -324,7 +359,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                               ('roi', 'inputnode.roi'),
                                                               ('uatlas_select', 'inputnode.uatlas_select'),
                                                               ('multi_nets', 'inputnode.multi_nets'),
-                                                              ('conn_model', 'inputnode.conn_model'),
+                                                              ('conn_model_dwi', 'inputnode.conn_model'),
                                                               ('dens_thresh', 'inputnode.dens_thresh'),
                                                               ('plot_switch', 'inputnode.plot_switch'),
                                                               ('parc', 'inputnode.parc'),
@@ -337,7 +372,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                               ('step_thr', 'inputnode.step_thr'),
                                                               ('user_atlas_list', 'inputnode.user_atlas_list'),
                                                               ('prune', 'inputnode.prune'),
-                                                              ('conn_model_list', 'inputnode.conn_model_list'),
+                                                              ('dwi_model_list', 'inputnode.conn_model_list'),
                                                               ('min_span_tree', 'inputnode.min_span_tree'),
                                                               ('use_AAL_naming', 'inputnode.use_AAL_naming'),
                                                               ('disp_filt', 'inputnode.disp_filt'),
@@ -393,7 +428,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                             ('roi', 'inputnode.roi'),
                                                             ('uatlas_select', 'inputnode.uatlas_select'),
                                                             ('multi_nets', 'inputnode.multi_nets'),
-                                                            ('conn_model', 'inputnode.conn_model'),
+                                                            ('conn_model_func', 'inputnode.conn_model'),
                                                             ('dens_thresh', 'inputnode.dens_thresh'),
                                                             ('conf', 'inputnode.conf'),
                                                             ('plot_switch', 'inputnode.plot_switch'),
@@ -414,7 +449,7 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                             ('user_atlas_list', 'inputnode.user_atlas_list'),
                                                             ('clust_mask_list', 'inputnode.clust_mask_list'),
                                                             ('prune', 'inputnode.prune'),
-                                                            ('conn_model_list', 'inputnode.conn_model_list'),
+                                                            ('func_model_list', 'inputnode.conn_model_list'),
                                                             ('min_span_tree', 'inputnode.min_span_tree'),
                                                             ('use_AAL_naming', 'inputnode.use_AAL_naming'),
                                                             ('smooth', 'inputnode.smooth'),
@@ -1519,6 +1554,7 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
     from pynets.dmri import estimation, track
     from pynets.plotting import plot_gen
     import os
+    import os.path as op
     try:
         FSLDIR = os.environ['FSLDIR']
     except KeyError:
@@ -2111,6 +2147,16 @@ def structural_connectometry(ID, atlas_select, network, node_size, roi, uatlas_s
         thr_info_node.iterables = ("thr", iter_thresh)
     else:
         thr_info_node.iterables = ("thr", [thr])
+
+    # Handle masking scenarios (brain mask and/or roi)
+    if (mask is None) and (op.isfile(template_mask) is True):
+        structural_connectometry_wf.connect([
+            (inputnode, node_gen_node, [('template_mask', 'mask')]),
+        ])
+    else:
+        structural_connectometry_wf.connect([
+            (inputnode, node_gen_node, [('mask', 'mask')]),
+        ])
 
     # Connect nodes of workflow
     structural_connectometry_wf.connect([

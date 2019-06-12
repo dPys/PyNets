@@ -468,11 +468,9 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
     """
     import pandas as pd
     import numpy as np
-    import os
     import matplotlib
     matplotlib.use('Agg')
     from itertools import chain
-    rand_forest = False
 
     # Check for existence of net_pickle files, condensing final list to only those that were actually produced.
     net_pickle_mt_list_exist = []
@@ -543,7 +541,7 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
     return
 
 
-def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets):
+def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, multimodal):
     """
 
     :param network:
@@ -555,15 +553,32 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets):
     """
     from pynets.utils import collect_pandas_df_make, flatten
 
+    func_models = ['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
+                   'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso']
+
+    struct_models = ['csa', 'tensor', 'csd']
+
     net_pickle_mt_list = list(flatten(net_pickle_mt_list))
 
     if multi_nets is not None:
         net_pickle_mt_list_nets = net_pickle_mt_list
         for network in multi_nets:
             net_pickle_mt_list = list(set([i for i in net_pickle_mt_list_nets if network in i]))
-            collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
+            if multimodal is True:
+                net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in struct_models]))
+                collect_pandas_df_make(net_pickle_mt_list_dwi, ID, network, plot_switch)
+                net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in func_models]))
+                collect_pandas_df_make(net_pickle_mt_list_func, ID, network, plot_switch)
+            else:
+                collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
     else:
-        collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
+        if multimodal is True:
+            net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in struct_models]))
+            collect_pandas_df_make(net_pickle_mt_list_dwi, ID, network, plot_switch)
+            net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in func_models]))
+            collect_pandas_df_make(net_pickle_mt_list_func, ID, network, plot_switch)
+        else:
+            collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
 
     return
 
@@ -643,6 +658,7 @@ def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network)
 
 
 def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
+    import os.path as op
     """
 
     :param ID:
@@ -1024,12 +1040,14 @@ def reorient_img(img, out_dir):
     :return:
     """
     import shutil
+    import random
     cmd = 'fslorient -getorient ' + img
     cmd_run = os.popen(cmd)
     orient = cmd_run.read().strip('\n')
     cmd_run.close()
     img_orig = img
-    img = "{}/{}_pre_reor.nii.gz".format(out_dir, img.split('/')[-1].split('.nii.gz')[0])
+    hash = str(random.randint(1, 10000))
+    img = "{}/{}_pre_reor_{}.nii.gz".format(out_dir, img.split('/')[-1].split('.nii.gz')[0], hash)
     shutil.copyfile(img_orig, img)
     cmd = 'fslorient -getqform ' + img
     cmd_run = os.popen(cmd)
@@ -1250,6 +1268,7 @@ class CollectPandasDfsInputSpec(BaseInterfaceInputSpec):
     net_pickle_mt_list = traits.List(mandatory=True)
     plot_switch = traits.Any(mandatory=True)
     multi_nets = traits.Any(mandatory=True)
+    multimodal = traits.Any(mandatory=True)
 
 
 class CollectPandasDfs(SimpleInterface):
@@ -1261,5 +1280,6 @@ class CollectPandasDfs(SimpleInterface):
             self.inputs.ID,
             self.inputs.net_pickle_mt_list,
             self.inputs.plot_switch,
-            self.inputs.multi_nets)
+            self.inputs.multi_nets,
+            self.inputs.multimodal)
         return runtime

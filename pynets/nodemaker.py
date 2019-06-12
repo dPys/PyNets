@@ -296,6 +296,8 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_over
     from nilearn.image import resample_img
     from nilearn import masking
     import os.path as op
+    import warnings
+    warnings.filterwarnings("ignore")
 
     mask_img = nib.load(roi)
     mask_data, _ = masking._load_mask_img(roi)
@@ -314,8 +316,8 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_over
         # Calculate % overlap
         try:
             overlap = float(overlap_count/total_count)
-        except RuntimeWarning:
-            print('\nWarning: No overlap with roi mask!\n')
+        except:
+            print("%s%s%s" % ('\nWarning: No overlap of parcel', label_names[i],  'with roi mask!\n'))
             overlap = float(0)
 
         if overlap >= perc_overlap:
@@ -688,6 +690,11 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, in_file, 
     print("%s%s" % ('Labels:\n', label_names))
     atlas_name = atlas_select
     dir_path = utils.do_dir_path(atlas_select, in_file)
+
+    if len(coords) != len(label_names):
+        label_names = len(coords) * [np.nan]
+        if len(coords) != len(label_names):
+            raise ValueError('ERROR: length of coordinates is not equal to length of label names')
 
     return label_names, coords, atlas_name, networks_list, parcel_list, par_max, uatlas_select, dir_path
 

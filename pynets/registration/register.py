@@ -445,7 +445,7 @@ class DmriReg(object):
         """
         self.atlas = uatlas_select
         self.atlas_name = atlas_select
-        self.aligned_atlas_t1mni = "{}/{}_t1w_mni.nii.gz".format(self.basedir_path, self.atlas_name)
+        self.aligned_atlas_t1mni = "{}/{}_t1w_mni.nii.gz".format(self.anat_path, self.atlas_name)
         self.aligned_atlas_skull = "{}/{}_t1w_skull.nii.gz".format(self.anat_path, self.atlas_name)
         self.dwi_aligned_atlas = "{}/{}_dwi_track.nii.gz".format(self.reg_path_img, self.atlas_name)
         self.dwi_aligned_atlas_wmgm_int = "{}/{}_dwi_track_wmgm_int.nii.gz".format(self.reg_path_img, self.atlas_name)
@@ -692,10 +692,10 @@ class FmriReg(object):
         """
         self.atlas = uatlas_select
         self.atlas_name = atlas_select
-        self.aligned_atlas_t1mni = "{}/{}_t1w_mni.nii.gz".format(self.basedir_path, self.atlas_name)
+        self.aligned_atlas_t1mni = "{}/{}_t1w_mni.nii.gz".format(self.anat_path, self.atlas_name)
         self.aligned_atlas_skull = "{}/{}_t1w_skull.nii.gz".format(self.anat_path, self.atlas_name)
         self.gm_mask_mni = "{}/{}_gm_mask_t1w_mni.nii.gz".format(self.anat_path, self.t1w_name)
-        self.aligned_atlas_t1mni_gm = "{}/{}_t1w_mni_gm.nii.gz".format(self.basedir_path, self.atlas_name)
+        self.aligned_atlas_t1mni_gm = "{}/{}_t1w_mni_gm.nii.gz".format(self.anat_path, self.atlas_name)
 
         mgru.align(self.atlas, self.t1_aligned_mni, init=None, xfm=None, out=self.aligned_atlas_t1mni, dof=12,
                    searchrad=True, interp="nearestneighbour", cost='mutualinfo')
@@ -705,7 +705,7 @@ class FmriReg(object):
                         warp=self.mni2t1w_warp, interp='nn', sup=True)
 
         # Apply warp resulting from the inverse MNI->T1w created earlier
-        mgru.apply_warp(self.t1w_brain, self.gm_mask_mni, self.gm_mask_thr, warp=self.mni2t1w_warp,
+        mgru.apply_warp(self.t1w_brain, self.gm_mask_thr, self.gm_mask_mni, warp=self.mni2t1w_warp,
                         interp='nn', sup=True)
 
 
@@ -793,7 +793,7 @@ def register_atlas_dwi(uatlas_select, atlas_select, node_size, basedir_path, fa_
     return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni, uatlas_select, atlas_select, coords, label_names, node_size, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, fa_path, gtab_file, nodif_B0_mask, dwi_file
 
 
-def register_all_fmri(basedir_path, anat_file, vox_size='2mm', overwrite=False):
+def register_all_fmri(basedir_path, anat_file, vox_size='2mm', overwrite=True):
     """
 
     :param basedir_path:

@@ -1168,6 +1168,7 @@ def build_workflow(args, retval):
         else:
             print("%s%s" % ('Functional file: ', func_file))
     elif func_file and dwi_file:
+        multimodal = True
         print('\nRunning joint structural-functional connectometry...')
         print("%s%s" % ('Functional file:\n', func_file))
         print("%s%s" % ('Diffusion-Weighted Image:\n', dwi_file))
@@ -1240,7 +1241,7 @@ def build_workflow(args, retval):
                                clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples,
                                curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
                                maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict, embed,
-                               multi_directget):
+                               multi_directget, multimodal):
 
         if (func_file is not None) and (dwi_file is None):
             wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_fmri_', random.randint(1, 1000)))
@@ -1253,7 +1254,7 @@ def build_workflow(args, retval):
                        "np.warnings.filterwarnings(\"ignore\")", "warnings.simplefilter(\"ignore\")"]
         inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'roi', 'multi_nets',
                                                           'conn_model', 'plot_switch', 'graph', 'prune',
-                                                          'norm', 'binary']),
+                                                          'norm', 'binary', 'multimodal']),
                             name='inputnode', imports=import_list)
         if verbose is True:
             from nipype import config, logging
@@ -1285,6 +1286,7 @@ def build_workflow(args, retval):
         inputnode.inputs.prune = prune
         inputnode.inputs.norm = norm
         inputnode.inputs.binary = binary
+        inputnode.inputs.multimodal = multimodal
 
         meta_wf = workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr, uatlas_select,
                                     multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
@@ -1337,7 +1339,7 @@ def build_workflow(args, retval):
         # Combine dataframes across models
         collect_pandas_dfs_node = pe.Node(interface=CollectPandasDfs(), name="CollectPandasDfs",
                                           input_names=['network', 'ID', 'net_pickle_mt_list', 'plot_switch',
-                                                       'multi_nets'], imports=import_list)
+                                                       'multi_nets', 'multimodal'], imports=import_list)
 
         handshake_node = meta_wf.get_node('pass_meta_outs_node')
 
@@ -1359,7 +1361,8 @@ def build_workflow(args, retval):
             (inputnode, collect_pandas_dfs_node, [('network', 'network'),
                                                   ('ID', 'ID'),
                                                   ('plot_switch', 'plot_switch'),
-                                                  ('multi_nets', 'multi_nets')]),
+                                                  ('multi_nets', 'multi_nets'),
+                                                  ('multimodal', 'multimodal')]),
             (export_to_pandas_node, collect_pd_list_net_pickles_node, [('net_pickle_mt', 'net_pickle_mt')]),
             (collect_pd_list_net_pickles_node, collect_pandas_dfs_node, [('net_pickle_mt_out', 'net_pickle_mt_list')])
         ])
@@ -1427,7 +1430,7 @@ def build_workflow(args, retval):
                          use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list,
                          c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
                          overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
-                         directget, tiss_class, runtime_dict, embed, multi_directget):
+                         directget, tiss_class, runtime_dict, embed, multi_directget, multimodal):
 
         wf_multi = pe.Workflow(name="%s%s" % ('Wf_multisub_', random.randint(1001, 9000)))
 
@@ -1473,7 +1476,7 @@ def build_workflow(args, retval):
                 curv_thr_list=curv_thr_list, step_list=step_list, overlap_thr=overlap_thr,
                 overlap_thr_list=overlap_thr_list, track_type=track_type, max_length=max_length, maxcrossing=maxcrossing,
                 life_run=life_run, min_length=min_length, directget=directget, tiss_class=tiss_class,
-                runtime_dict=runtime_dict, embed=embed, multi_directget=multi_directget)
+                runtime_dict=runtime_dict, embed=embed, multi_directget=multi_directget, multimodal=multimodal)
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
@@ -1513,7 +1516,8 @@ def build_workflow(args, retval):
                                     smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot,
                                     block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list,
                                     step_list, overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing,
-                                    life_run, min_length, directget, tiss_class, runtime_dict, embed, multi_directget)
+                                    life_run, min_length, directget, tiss_class, runtime_dict, embed, multi_directget,
+                                    multimodal)
 
         import shutil
         wf_multi.base_dir = '/tmp/Wf_multi_subject'
@@ -1578,7 +1582,7 @@ def build_workflow(args, retval):
                                     smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask,
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
-                                    directget, tiss_class, runtime_dict, embed, multi_directget)
+                                    directget, tiss_class, runtime_dict, embed, multi_directget, multimodal)
 
         import shutil
         import os
