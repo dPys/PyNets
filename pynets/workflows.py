@@ -37,8 +37,10 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
             for conn_model in conn_model_list:
                 if conn_model in func_models:
                     func_model_list.append(conn_model)
+                    conn_model_func = None
                 if conn_model in struct_models:
                     dwi_model_list.append(conn_model)
+                    conn_model_dwi = None
             if len(func_model_list) == 1:
                 conn_model_func = func_model_list[0]
                 func_model_list = None
@@ -50,11 +52,13 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
     elif (dwi_file is not None) and (func_file is None):
         conn_model_dwi = conn_model
         dwi_model_list = conn_model_list
+        conn_model_func = None
+        func_model_list = None
     elif (func_file is not None) and (dwi_file is None):
         conn_model_func = conn_model
         func_model_list = conn_model_list
         conn_model_dwi = None
-        dwi_model_list = conn_model_list
+        dwi_model_list = None
 
     # Workflow 1: Structural connectome
     if dwi_file is not None:
@@ -74,8 +78,6 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
 
     # Workflow 2: Functional connectome
     if func_file is not None:
-        if conn_model_func:
-            conn_model = conn_model_func
         sub_func_wf = workflows.functional_connectometry(func_file, ID, atlas_select, network, node_size,
                                                          roi, thr, uatlas_select, conn_model_dwi, dens_thresh, conf,
                                                          plot_switch, parc, ref_txt, procmem,
@@ -415,7 +417,8 @@ def workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr,
                                                            output_names=['conn_model_iterlist', 'est_path_iterlist',
                                                                          'network_iterlist', 'node_size_iterlist',
                                                                          'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
-                                                                         'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
+                                                                         'roi_iterlist', 'norm_iterlist',
+                                                                         'binary_iterlist'],
                                                            function=pass_meta_ins), name='pass_meta_ins_func_node')
 
             meta_wf.add_nodes([sub_func_wf])

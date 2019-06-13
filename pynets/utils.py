@@ -296,7 +296,7 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
 def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist,
                   prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=True,
                    multimodal=False):
-    from pynets.utils import build_omnetome
+    from pynets.utils import build_omnetome, flatten
     """
 
     :param conn_model_iterlist:
@@ -312,7 +312,7 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, nod
     :return:
     """
     if embed is True:
-        build_omnetome(est_path_iterlist, ID_iterlist[0], multimodal)
+        build_omnetome(list(flatten(est_path_iterlist)), list(flatten(ID_iterlist))[0], multimodal)
 
     return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 
@@ -412,6 +412,7 @@ def flatten(l):
 
 def build_omnetome(est_path_iterlist, ID, multimodal):
     import os
+    from pynets.utils import flatten
     from sklearn.feature_selection import VarianceThreshold
     from graspy.embed import OmnibusEmbed, ClassicalMDS
     """
@@ -427,18 +428,22 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
         var_thr = variance_threshold.fit(diags_red.T)
         graphs_ix_keep = var_thr.get_support(indices=True)
         pop_array_red = [pop_array[i] for i in graphs_ix_keep]
-        #lab_array_red = [lab_array[i] for i in graphs_ix_keep]
 
         # Omnibus embedding -- random dot product graph (rdpg)
         print("%s%s%s" % ('Embedding ensemble for atlas: ', atlas, '...'))
         omni = OmnibusEmbed(check_lcc=False)
-        omni_fit = omni.fit_transform(pop_array_red)
+        try:
+            omni_fit = omni.fit_transform(pop_array_red)
+            mds = ClassicalMDS()
+            mds_fit = mds.fit_transform(omni_fit)
+        except:
+            omni_fit = omni.fit_transform(pop_array)
+            mds = ClassicalMDS()
+            mds_fit = mds.fit_transform(omni_fit)
 
         # Transform omnibus tensor into dissimilarity feature
-        mds = ClassicalMDS()
-        mds_fit = mds.fit_transform(omni_fit)
         dir_path = os.path.dirname(graph_path)
-        out_path = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_omnetome_', atlas, '.npy')
+        out_path = "%s%s%s%s%s%s" % (dir_path, '/', list(flatten(ID))[0], '_omnetome_', atlas, '.npy')
         print('Saving...')
         np.save(out_path, mds_fit)
         del mds, mds_fit, omni, omni_fit
@@ -468,7 +473,11 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
             pop_array = []
             for graph in parcel_dict[atlas]:
                 pop_array.append(np.load(graph))
-            omni_embed(pop_array)
+            if len(pop_array) > 1:
+                print('WARNING: Only one graph sampled, omnibus embedding not appropriate.')
+                omni_embed(pop_array)
+            else:
+                pass
     elif multimodal is False and len(est_path_iterlist) > 1:
         for atlas in atlases:
             for graph_path in est_path_iterlist:

@@ -10,7 +10,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/workflows.py" afterDir="false" />
     </list>
@@ -32,11 +31,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="374">
-              <caret line="1676" lean-forward="true" selection-start-line="1676" selection-end-line="1676" />
+            <state relative-caret-position="25425">
+              <caret line="1695" selection-start-line="1695" selection-end-line="1695" />
             </state>
           </provider>
         </entry>
@@ -44,8 +43,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="16335">
-              <caret line="1089" column="35" selection-start-line="1089" selection-start-column="35" selection-end-line="1089" selection-end-column="35" />
+            <state relative-caret-position="-93">
+              <caret line="15" selection-start-line="15" selection-end-line="42" selection-end-column="8" />
               <folding>
                 <element signature="e#109#140#0" expanded="true" />
               </folding>
@@ -107,11 +106,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="323">
-              <caret line="300" lean-forward="true" selection-start-line="300" selection-end-line="300" />
+            <state relative-caret-position="-1">
+              <caret line="452" column="40" lean-forward="true" selection-start-line="452" selection-start-column="40" selection-end-line="452" selection-end-column="40" />
             </state>
           </provider>
         </entry>
@@ -119,8 +118,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="300">
-              <caret line="20" column="82" selection-start-line="20" selection-start-column="82" selection-end-line="20" selection-end-column="82" />
+            <state relative-caret-position="456">
+              <caret line="420" column="73" selection-start-line="420" selection-start-column="73" selection-end-line="420" selection-end-column="73" />
             </state>
           </provider>
         </entry>
@@ -136,9 +135,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>streams_warp</find>
-      <find>transform_to_affine</find>
-      <find>dsn_node</find>
       <find>times out</find>
       <find>overlap_thr</find>
       <find>out_dir</find>
@@ -160,12 +156,15 @@
       <find>rand_forest</find>
       <find>net_pickle_mt_list</find>
       <find>collect_pand</find>
-      <find>omnetome</find>
       <find>pop_array</find>
       <find>pass_meta_outs</find>
-      <find>build_omnetome</find>
-      <find>embed</find>
       <find>plot_switch</find>
+      <find>embed</find>
+      <find>build_omnetome</find>
+      <find>conn_model_func</find>
+      <find>flatten</find>
+      <find>omnetome</find>
+      <find>build_omn</find>
     </findStrings>
     <replaceStrings>
       <replace>CollectPandasJoin</replace>
@@ -243,14 +242,14 @@
         <option value="$PROJECT_DIR$/pynets/nodemaker.py" />
         <option value="$PROJECT_DIR$/pynets/registration/register.py" />
         <option value="$PROJECT_DIR$/pynets/fmri/estimation.py" />
-        <option value="$PROJECT_DIR$/pynets/utils.py" />
-        <option value="$PROJECT_DIR$/pynets/workflows.py" />
         <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
+        <option value="$PROJECT_DIR$/pynets/workflows.py" />
+        <option value="$PROJECT_DIR$/pynets/utils.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="503" />
+    <option name="x" value="302" />
     <option name="y" value="23" />
     <option name="width" value="1145" />
     <option name="height" value="978" />
@@ -519,15 +518,15 @@
       <workItem from="1555696086993" duration="222689000" />
       <workItem from="1559331639739" duration="25065000" />
       <workItem from="1559749197482" duration="90355000" />
-      <workItem from="1560024174324" duration="36838000" />
+      <workItem from="1560024174324" duration="39497000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="384515000" />
+    <option name="totallyTimeSpent" value="387174000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="503" y="23" width="1145" height="978" extended-state="0" />
+    <frame x="302" y="23" width="1145" height="978" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="aws.explorer" side_tool="true" />
@@ -786,34 +785,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="303">
-          <caret line="697" column="64" selection-start-line="697" selection-start-column="64" selection-end-line="697" selection-end-column="64" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="367">
           <caret line="30" column="23" selection-start-line="30" selection-start-column="23" selection-end-line="30" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="595">
-          <caret line="326" column="21" selection-start-line="326" selection-start-column="21" selection-end-line="326" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="16335">
-          <caret line="1089" column="35" selection-start-line="1089" selection-start-column="35" selection-end-line="1089" selection-end-column="35" />
-          <folding>
-            <element signature="e#109#140#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -824,6 +799,13 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="303">
+          <caret line="697" column="64" selection-start-line="697" selection-start-column="64" selection-end-line="697" selection-end-column="64" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/dmri/estimation.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-1785">
@@ -831,17 +813,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
+    <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="323">
-          <caret line="300" lean-forward="true" selection-start-line="300" selection-end-line="300" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="20" column="82" selection-start-line="20" selection-start-column="82" selection-end-line="20" selection-end-column="82" />
+        <state relative-caret-position="595">
+          <caret line="326" column="21" selection-start-line="326" selection-start-column="21" selection-end-line="326" selection-end-column="21" />
         </state>
       </provider>
     </entry>
@@ -854,8 +829,32 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="374">
-          <caret line="1676" lean-forward="true" selection-start-line="1676" selection-end-line="1676" />
+        <state relative-caret-position="25425">
+          <caret line="1695" selection-start-line="1695" selection-end-line="1695" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-93">
+          <caret line="15" selection-start-line="15" selection-end-line="42" selection-end-column="8" />
+          <folding>
+            <element signature="e#109#140#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="456">
+          <caret line="420" column="73" selection-start-line="420" selection-start-column="73" selection-end-line="420" selection-end-column="73" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1">
+          <caret line="452" column="40" lean-forward="true" selection-start-line="452" selection-start-column="40" selection-end-line="452" selection-end-column="40" />
         </state>
       </provider>
     </entry>
