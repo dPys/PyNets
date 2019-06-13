@@ -93,7 +93,7 @@ Visualize communities of restricted networks
 ![](docs/glass_brain_communities.png)
 Use connectograms to visualize community structure (including link communities)
 ![](docs/link_communities.png)
-
+![](docs/graph.png)
 Happy Netting!
 
 Please cite all uses with reference to the github repository: https://github.com/dPys/PyNets

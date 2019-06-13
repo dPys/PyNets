@@ -474,11 +474,11 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
             for graph in parcel_dict[atlas]:
                 pop_array.append(np.load(graph))
             if len(pop_array) > 1:
-                print('WARNING: Only one graph sampled, omnibus embedding not appropriate.')
                 omni_embed(pop_array)
             else:
+                print('WARNING: Only one graph sampled, omnibus embedding not appropriate.')
                 pass
-    elif multimodal is False and len(est_path_iterlist) > 1:
+    elif (multimodal is False) and (len(est_path_iterlist) > 1):
         for atlas in atlases:
             for graph_path in est_path_iterlist:
                 if atlas in graph_path:
