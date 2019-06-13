@@ -31,6 +31,12 @@ import numpy as np
 
 # simple function to translate 1D vector coordinates to 3D matrix coordinates for a 3D matrix of size sz
 def indx_1dto3d(idx, sz):
+    """
+
+    :param idx:
+    :param sz:
+    :return:
+    """
     from scipy import divide, prod
     x = divide(idx, prod(sz[1:3]))
     y = divide(idx-x*prod(sz[1:3]), sz[2])
@@ -40,6 +46,12 @@ def indx_1dto3d(idx, sz):
 
 # simple function to translate 3D matrix coordinates to 1D vector coordinates for a 3D matrix of size sz
 def indx_3dto1d(idx, sz):
+    """
+
+    :param idx:
+    :param sz:
+    :return:
+    """
     from scipy import prod, rank
     if rank(idx) == 1:
         idx1 = idx[0]*prod(sz[1:3])+idx[1]*sz[2]+idx[2]
@@ -48,7 +60,137 @@ def indx_3dto1d(idx, sz):
     return idx1
 
 
+def make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh):
+    """
+
+    :param func_file:
+    :param clust_mask:
+    :param outfile:
+    :param thresh:
+    """
+    from scipy.sparse import csc_matrix
+    from scipy import prod, rank
+    neighbors = np.array([[-1, -1, -1], [0, -1, -1], [1, -1, -1],
+                           [-1, 0, -1], [0, 0, -1], [1, 0, -1],
+                           [-1, 1, -1], [0, 1, -1], [1, 1, -1],
+                           [-1, -1, 0], [0, -1, 0], [1, -1, 0],
+                           [-1, 0, 0], [0, 0, 0], [1, 0, 0],
+                           [-1, 1, 0], [0, 1, 0], [1, 1, 0],
+                           [-1, -1, 1], [0, -1, 1], [1, -1, 1],
+                           [-1, 0, 1], [0, 0, 1], [1, 0, 1],
+                           [-1, 1, 1], [0, 1, 1], [1, 1, 1]])
+
+    # read in the mask
+    msk = nib.load(clust_mask)
+    msz = msk.shape
+
+    # convert the 3D mask array into a 1D vector
+    mskdat = np.reshape(msk.get_data(), prod(msz))
+
+    # determine the 1D coordinates of the non-zero
+    # elements of the mask
+    iv = np.nonzero(mskdat)[0]
+
+    # read in the fmri data
+    # NOTE the format of x,y,z axes and time dimension after reading
+    # nb.load('x.nii.gz').shape -> (x,y,z,t)
+    nim = nib.load(func_file)
+    sz = nim.shape
+    print(sz, ' dimensions of the 4D fMRI data')
+
+    # reshape fmri data to a num_voxels x num_timepoints array
+    imdat = np.reshape(nim.get_data(), (prod(sz[:3]), sz[3]))
+
+    # mask the datset to only then in-mask voxels
+    imdat = imdat[iv, :]
+    imdat_sz = imdat.shape
+
+    # zscore fmri time courses, this makes calculation of the
+    # correlation coefficient a simple matrix product
+    imdat_s = np.tile(np.std(imdat, 1), (imdat_sz[1], 1)).T
+    # replace 0 with really large number to avoid div by zero
+    imdat_s[imdat_s == 0] = 1000000
+    imdat_m = np.tile(np.mean(imdat, 1), (imdat_sz[1], 1)).T
+    imdat = (imdat - imdat_m) / imdat_s
+
+    # set values with no variance to zero
+    imdat[imdat_s == 0] = 0
+    imdat[np.isnan(imdat)] = 0
+
+    # remove voxels with zero variance, do this here
+    # so that the mapping will be consistent across
+    # subjects
+    vndx = np.nonzero(np.var(imdat, 1) != 0)[0]
+    iv = iv[vndx]
+
+    m = len(iv)
+    print(m, ' # of non-zero valued or non-zero variance voxels in the mask')
+
+    # construct a sparse matrix from the mask
+    msk = csc_matrix((vndx + 1, (iv, np.zeros(m))), shape=(prod(msz), 1))
+
+    sparse_i = []
+    sparse_j = []
+    sparse_w = [[]]
+
+    for i in range(0, m):
+        if i % 1000 == 0:
+            print('voxel #', i)
+        # convert index into 3D and calculate neighbors
+        ndx3d = indx_1dto3d(iv[i], sz[:-1]) + neighbors
+        # convert resulting 3D indices into 1D
+        ndx1d = indx_3dto1d(ndx3d, sz[:-1])
+        # convert 1D indices into masked versions
+        ondx1d = msk[ndx1d].todense()
+        # exclude indices not in the mask
+        ndx1d = ndx1d[np.nonzero(ondx1d)[0]]
+        ndx1d = ndx1d.flatten()
+        ondx1d = np.array(ondx1d[np.nonzero(ondx1d)[0]])
+        ondx1d = ondx1d.flatten() - 1
+        # keep track of the index corresponding to the "seed"
+        nndx = np.nonzero(ndx1d == iv[i])[0]
+        # extract the time courses corresponding to the "seed"
+        # and 3D neighborhood voxels
+        tc = imdat[ondx1d, :]
+        # calculate functional connectivity maps for "seed"
+        # and 3D neighborhood voxels
+        fc = np.dot(tc, imdat.T) / (sz[3] - 1)
+        # calculate the spatial correlation between FC maps
+        R = np.corrcoef(fc)
+        if rank(R) == 0:
+            R = np.reshape(R, (1, 1))
+        # set NaN values to 0
+        R[np.isnan(R)] = 0
+        # set values below thresh to 0
+        R[R < thresh] = 0
+        # keep track of the indices and the correlation weights
+        # to construct sparse connectivity matrix
+        sparse_i = np.append(sparse_i, ondx1d, 0)
+        sparse_j = np.append(sparse_j, (ondx1d[nndx]) * np.ones(len(ondx1d)))
+        sparse_w = np.append(sparse_w, R[nndx, :], 1)
+
+    # insure that the weight vector is the correct shape
+    sparse_w = np.reshape(sparse_w, prod(np.shape(sparse_w)))
+
+    # concatenate the i, j, and w_ij vectors
+    outlist = sparse_i
+    outlist = np.append(outlist, sparse_j)
+    outlist = np.append(outlist, sparse_w)
+
+    # save the output file to a .NPY file
+    np.save(outfile, outlist)
+
+    print('finished ', func_file, ' len ', len(outlist))
+
+
 def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
+    """
+
+    :param func_file:
+    :param clust_mask:
+    :param outfile:
+    :param thresh:
+    """
     from scipy.sparse import csc_matrix
     from scipy import prod, rank
     from itertools import product
@@ -144,6 +286,12 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
 
 
 def ncut(W, nbEigenValues):
+    """
+
+    :param W:
+    :param nbEigenValues:
+    :return:
+    """
     from scipy.sparse.linalg import eigsh
     from scipy.sparse import spdiags
     from numpy.linalg import norm
@@ -193,6 +341,11 @@ def ncut(W, nbEigenValues):
 
 
 def discretisation(eigen_vec):
+    """
+
+    :param eigen_vec:
+    :return:
+    """
     import scipy as sp
     from scipy.sparse import csc_matrix
     from scipy.linalg import LinAlgError, svd
@@ -259,6 +412,12 @@ def discretisation(eigen_vec):
 
 
 def binfile_parcellate(infile, outfile, k):
+    """
+
+    :param infile:
+    :param outfile:
+    :param k:
+    """
     from scipy.sparse import csc_matrix
     # check how long it takes
 
@@ -301,6 +460,12 @@ def binfile_parcellate(infile, outfile, k):
 
 
 def make_image_from_bin_renum(image, binfile, mask):
+    """
+
+    :param image:
+    :param binfile:
+    :param mask:
+    """
     # read in the mask
     nim = nib.load(mask)
 
@@ -332,6 +497,17 @@ def make_image_from_bin_renum(image, binfile, mask):
 
 
 def nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_select):
+    """
+
+    :param func_file:
+    :param clust_mask:
+    :param k:
+    :param clust_type:
+    :param ID:
+    :param dir_path:
+    :param uatlas_select:
+    :return:
+    """
     import time
     import nibabel as nib
     from nilearn.regions import Parcellations
@@ -351,6 +527,16 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_se
 
 
 def individual_tcorr_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
+    """
+
+    :param func_file:
+    :param clust_mask:
+    :param ID:
+    :param k:
+    :param clust_type:
+    :param thresh:
+    :return:
+    """
     import os
     from pynets import utils
     from pynets.fmri import clustools

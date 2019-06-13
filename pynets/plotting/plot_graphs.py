@@ -6,10 +6,17 @@ Copyright (C) 2018
 """
 import numpy as np
 import warnings
-warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore")
 
 
 def plot_conn_mat(conn_matrix, label_names, out_path_fig):
+    """
+
+    :param conn_matrix:
+    :param label_names:
+    :param out_path_fig:
+    :return:
+    """
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
@@ -39,6 +46,14 @@ def plot_conn_mat(conn_matrix, label_names, out_path_fig):
 
 
 def plot_community_conn_mat(conn_matrix, label_names, out_path_fig_comm, community_aff):
+    """
+
+    :param conn_matrix:
+    :param label_names:
+    :param out_path_fig_comm:
+    :param community_aff:
+    :return:
+    """
     import matplotlib
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
@@ -88,6 +103,22 @@ def plot_community_conn_mat(conn_matrix, label_names, out_path_fig_comm, communi
 
 
 def plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, roi, thr, node_size, smooth, c_boot):
+    """
+
+    :param conn_matrix:
+    :param conn_model:
+    :param atlas_select:
+    :param dir_path:
+    :param ID:
+    :param network:
+    :param label_names:
+    :param roi:
+    :param thr:
+    :param node_size:
+    :param smooth:
+    :param c_boot:
+    :return:
+    """
     import networkx as nx
     import os.path as op
     from pynets.plotting import plot_graphs
@@ -116,6 +147,22 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, netw
 
 
 def plot_conn_mat_struct(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, roi, thr, node_size, smooth, c_boot):
+    """
+
+    :param conn_matrix:
+    :param conn_model:
+    :param atlas_select:
+    :param dir_path:
+    :param ID:
+    :param network:
+    :param label_names:
+    :param roi:
+    :param thr:
+    :param node_size:
+    :param smooth:
+    :param c_boot:
+    :return:
+    """
     from pynets.plotting import plot_graphs
     if roi:
         out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(op.basename(roi).split('.')[0]), '_struct_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else 'nosm.png'))

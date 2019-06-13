@@ -6,23 +6,36 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore")
 import os
 import os.path as op
 import nibabel as nib
 import numpy as np
+np.warnings.filterwarnings('ignore')
 import shutil
 from pynets.stats.netstats import extractnetstats
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface
 
 
 def get_file():
+    """
+
+    :return:
+    """
     base_path = str(__file__)
     return base_path
 
 
 # Save net metric files to pandas dataframes interface
 def export_to_pandas(csv_loc, ID, network, roi):
+    """
+
+    :param csv_loc:
+    :param ID:
+    :param network:
+    :param roi:
+    :return:
+    """
     import pandas as pd
     try:
         import cPickle as pickle
@@ -64,6 +77,12 @@ def export_to_pandas(csv_loc, ID, network, roi):
 
 
 def do_dir_path(atlas_select, in_file):
+    """
+
+    :param atlas_select:
+    :param in_file:
+    :return:
+    """
     dir_path = "%s%s%s" % (op.dirname(op.realpath(in_file)), '/', atlas_select)
     if not op.exists(dir_path) and atlas_select is not None:
         os.makedirs(dir_path)
@@ -73,6 +92,20 @@ def do_dir_path(atlas_select, in_file):
 
 
 def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type):
+    """
+
+    :param ID:
+    :param network:
+    :param conn_model:
+    :param thr:
+    :param roi:
+    :param dir_path:
+    :param node_size:
+    :param smooth:
+    :param c_boot:
+    :param thr_type:
+    :return:
+    """
     if node_size is None:
         node_size = 'parc'
     if roi is not None:
@@ -117,6 +150,20 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
 
 
 def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples, track_type, thr_type):
+    """
+
+    :param ID:
+    :param network:
+    :param conn_model:
+    :param thr:
+    :param roi:
+    :param dir_path:
+    :param node_size:
+    :param target_samples:
+    :param track_type:
+    :param thr_type:
+    :return:
+    """
     if node_size is None:
         node_size = 'parc'
     if roi is not None:
@@ -155,6 +202,15 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
 
 
 def create_unthr_path(ID, network, conn_model, roi, dir_path):
+    """
+
+    :param ID:
+    :param network:
+    :param conn_model:
+    :param roi:
+    :param dir_path:
+    :return:
+    """
     if roi is not None:
         if network is not None:
             unthr_path = "%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model), '_',
@@ -172,6 +228,17 @@ def create_unthr_path(ID, network, conn_model, roi, dir_path):
 
 
 def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size):
+    """
+
+    :param ID:
+    :param network:
+    :param conn_model:
+    :param thr:
+    :param roi:
+    :param dir_path:
+    :param node_size:
+    :return:
+    """
     if node_size is None:
         node_size = 'parc'
     if roi is not None:
@@ -197,6 +264,13 @@ def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size):
 
 
 def save_mat(conn_matrix, est_path, fmt='npy'):
+    """
+
+    :param conn_matrix:
+    :param est_path:
+    :param fmt:
+    :return:
+    """
     import networkx as nx
     G = nx.from_numpy_array(conn_matrix)
     G.graph['ecount'] = nx.number_of_edges(G)
@@ -220,11 +294,44 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
 
 
 def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist,
-                  prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist):
+                  prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=True,
+                   multimodal=False):
+    from pynets.utils import build_omnetome, flatten
+    """
+
+    :param conn_model_iterlist:
+    :param est_path_iterlist:
+    :param network_iterlist:
+    :param node_size_iterlist:
+    :param thr_iterlist:
+    :param prune_iterlist:
+    :param ID_iterlist:
+    :param roi_iterlist:
+    :param norm_iterlist:
+    :param binary_iterlist:
+    :return:
+    """
+    if embed is True:
+        build_omnetome(list(flatten(est_path_iterlist)), list(flatten(ID_iterlist))[0], multimodal)
+
     return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 
 
 def pass_meta_ins(conn_model, est_path, network, node_size, thr, prune, ID, roi, norm, binary):
+    """
+
+    :param conn_model:
+    :param est_path:
+    :param network:
+    :param node_size:
+    :param thr:
+    :param prune:
+    :param ID:
+    :param roi:
+    :param norm:
+    :param binary:
+    :return:
+    """
     est_path_iterlist = est_path
     conn_model_iterlist = conn_model
     network_iterlist = network
@@ -250,12 +357,50 @@ def pass_meta_ins(conn_model, est_path, network, node_size, thr, prune, ID, roi,
     return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 
 
+def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, node_size_func, thr_func, prune_func, ID_func,
+                        roi_func, norm_func, binary_func, conn_model_struct, est_path_struct, network_struct,
+                        node_size_struct, thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct):
+
+    est_path_iterlist = [est_path_func, est_path_struct]
+    conn_model_iterlist = [conn_model_func, conn_model_struct]
+    network_iterlist = [network_func, network_struct]
+    node_size_iterlist = [node_size_func, node_size_struct]
+    thr_iterlist = [thr_func, thr_struct]
+    prune_iterlist = [prune_func, prune_struct]
+    ID_iterlist = [ID_func, ID_struct]
+    roi_iterlist = [roi_func, roi_struct]
+    norm_iterlist = [norm_func, norm_struct]
+    binary_iterlist = [binary_func, binary_struct]
+    # print('\n\nParam-iters:\n')
+    # print(conn_model_iterlist)
+    # print(est_path_iterlist)
+    # print(network_iterlist)
+    # print(node_size_iterlist)
+    # print(thr_iterlist)
+    # print(prune_iterlist)
+    # print(ID_iterlist)
+    # print(roi_iterlist)
+    # print(norm_iterlist)
+    # print(binary_iterlist)
+    # print('\n\n')
+    return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
+
+
 def CollectPandasJoin(net_pickle_mt):
+    """
+
+    :param net_pickle_mt:
+    :return:
+    """
     net_pickle_mt_out = net_pickle_mt
     return net_pickle_mt_out
 
 
 def flatten(l):
+    """
+
+    :param l:
+    """
     import collections
     for el in l:
         if isinstance(el, collections.Iterable) and not isinstance(el, (str, bytes)):
@@ -265,37 +410,102 @@ def flatten(l):
             yield el
 
 
-def random_forest_ensemble(df_in):
-    import pandas as pd
-    from sklearn.ensemble import RandomForestRegressor
-    #from sklearn.model_selection import cross_val_score
-    from random import randint
-    estimator = RandomForestRegressor(random_state=0, n_estimators=100)
-    df_train = df_in.drop(columns=['modularity', 'average_diversity_coefficient'])
+def build_omnetome(est_path_iterlist, ID, multimodal):
+    import os
+    from pynets.utils import flatten
+    from sklearn.feature_selection import VarianceThreshold
+    from graspy.embed import OmnibusEmbed, ClassicalMDS
+    """
 
-    for column in list(df_train.columns):
+    :param net_pickle_mt_lis:
+    :return:
+    """
+
+    def omni_embed(pop_array):
+        variance_threshold = VarianceThreshold(threshold=0.05)
+        diags = np.array([np.triu(pop_array[i]) for i in range(len(pop_array))])
+        diags_red = diags.reshape(diags.shape[0], diags.shape[1]*diags.shape[2])
+        var_thr = variance_threshold.fit(diags_red.T)
+        graphs_ix_keep = var_thr.get_support(indices=True)
+        pop_array_red = [pop_array[i] for i in graphs_ix_keep]
+
+        # Omnibus embedding -- random dot product graph (rdpg)
+        print("%s%s%s" % ('Embedding ensemble for atlas: ', atlas, '...'))
+        omni = OmnibusEmbed(check_lcc=False)
         try:
-            df_train[column] = (df_train[column].str.split()).apply(lambda x: float(x[0]))
+            omni_fit = omni.fit_transform(pop_array_red)
+            mds = ClassicalMDS()
+            mds_fit = mds.fit_transform(omni_fit)
         except:
-            continue
+            omni_fit = omni.fit_transform(pop_array)
+            mds = ClassicalMDS()
+            mds_fit = mds.fit_transform(omni_fit)
 
-    y = df_train.T[randint(1, len(df_train.T))]
-    df_train_in = df_train.T
-    #full_scores = cross_val_score(estimator, np.array(df_train_in), np.array(y), scoring='neg_mean_squared_error', cv=5)
-    fit = estimator.fit(df_train_in, y)
-    df = pd.DataFrame(fit.predict(df_train_in)).T
-    df.columns = list(df_train.T.index)
-    return df
+        # Transform omnibus tensor into dissimilarity feature
+        dir_path = os.path.dirname(graph_path)
+        out_path = "%s%s%s%s%s%s" % (dir_path, '/', list(flatten(ID))[0], '_omnetome_', atlas, '.npy')
+        print('Saving...')
+        np.save(out_path, mds_fit)
+        del mds, mds_fit, omni, omni_fit
+        return
+
+    atlases = list(set([x.split('/')[-2].split('/')[0] for x in est_path_iterlist]))
+    parcel_dict = dict.fromkeys(atlases)
+    for key in parcel_dict:
+        parcel_dict[key] = []
+
+    func_models = ['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
+                   'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso']
+
+    struct_models = ['csa', 'tensor', 'csd']
+
+    if multimodal is True:
+        est_path_iterlist_dwi = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in struct_models]))
+        est_path_iterlist_func = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in func_models]))
+
+        for atlas in atlases:
+            for graph_path in est_path_iterlist_dwi:
+                if atlas in graph_path:
+                    parcel_dict[atlas].append(graph_path)
+            for graph_path in est_path_iterlist_func:
+                if atlas in graph_path:
+                    parcel_dict[atlas].append(graph_path)
+            pop_array = []
+            for graph in parcel_dict[atlas]:
+                pop_array.append(np.load(graph))
+            if len(pop_array) > 1:
+                print('WARNING: Only one graph sampled, omnibus embedding not appropriate.')
+                omni_embed(pop_array)
+            else:
+                pass
+    elif multimodal is False and len(est_path_iterlist) > 1:
+        for atlas in atlases:
+            for graph_path in est_path_iterlist:
+                if atlas in graph_path:
+                    parcel_dict[atlas].append(graph_path)
+            pop_array = []
+            for graph in parcel_dict[atlas]:
+                pop_array.append(np.load(graph))
+            omni_embed(pop_array)
+    else:
+        raise RuntimeError('ERROR: Only one graph sampled, omnibus embedding not appropriate.')
+    return
 
 
 def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
+    """
+
+    :param net_pickle_mt_list:
+    :param ID:
+    :param network:
+    :param plot_switch:
+    :return:
+    """
     import pandas as pd
     import numpy as np
-    import os
     import matplotlib
     matplotlib.use('Agg')
     from itertools import chain
-    rand_forest = False
 
     # Check for existence of net_pickle files, condensing final list to only those that were actually produced.
     net_pickle_mt_list_exist = []
@@ -353,17 +563,6 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
             df_concatted_final.to_pickle(net_pick_out_path)
             df_concatted_final.to_csv(net_pick_out_path + '.csv', index=False)
 
-            if rand_forest is True:
-                df_rnd_forest = random_forest_ensemble(df_concat.loc[:, measures])
-                if network:
-                    net_pick_out_path = "%s%s%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle,
-                                                              '_', network, '_rand_forest')
-                else:
-                    net_pick_out_path = "%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle,
-                                                          '_rand_forest')
-                df_rnd_forest.to_pickle(net_pick_out_path)
-                df_rnd_forest.to_csv(net_pick_out_path + '.csv', index=False)
-
         except RuntimeWarning:
             print("%s%s%s" % ('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ', str(ID), '!\n'))
             pass
@@ -377,8 +576,22 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
     return
 
 
-def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets):
+def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, multimodal):
+    """
+
+    :param network:
+    :param ID:
+    :param net_pickle_mt_list:
+    :param plot_switch:
+    :param multi_nets:
+    :return:
+    """
     from pynets.utils import collect_pandas_df_make, flatten
+
+    func_models = ['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
+                   'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso']
+
+    struct_models = ['csa', 'tensor', 'csd']
 
     net_pickle_mt_list = list(flatten(net_pickle_mt_list))
 
@@ -386,14 +599,37 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets):
         net_pickle_mt_list_nets = net_pickle_mt_list
         for network in multi_nets:
             net_pickle_mt_list = list(set([i for i in net_pickle_mt_list_nets if network in i]))
-            collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
+            if multimodal is True:
+                net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in struct_models]))
+                collect_pandas_df_make(net_pickle_mt_list_dwi, ID, network, plot_switch)
+                net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in func_models]))
+                collect_pandas_df_make(net_pickle_mt_list_func, ID, network, plot_switch)
+            else:
+                collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
     else:
-        collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
+        if multimodal is True:
+            net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in struct_models]))
+            collect_pandas_df_make(net_pickle_mt_list_dwi, ID, network, plot_switch)
+            net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in func_models]))
+            collect_pandas_df_make(net_pickle_mt_list_func, ID, network, plot_switch)
+        else:
+            collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
 
     return
 
 
 def list_first_mems(est_path, network, thr, dir_path, node_size, smooth, c_boot):
+    """
+
+    :param est_path:
+    :param network:
+    :param thr:
+    :param dir_path:
+    :param node_size:
+    :param smooth:
+    :param c_boot:
+    :return:
+    """
     est_path = est_path[0]
     network = network[0]
     thr = thr[0]
@@ -412,6 +648,11 @@ def list_first_mems(est_path, network, thr, dir_path, node_size, smooth, c_boot)
 
 
 def check_est_path_existence(est_path_list):
+    """
+
+    :param est_path_list:
+    :return:
+    """
     est_path_list_ex = []
     bad_ixs = []
     i = -1
@@ -428,6 +669,14 @@ def check_est_path_existence(est_path_list):
 
 
 def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network):
+    """
+
+    :param coords:
+    :param label_names:
+    :param dir_path:
+    :param network:
+    :return:
+    """
     try:
         import cPickle as pickle
     except ImportError:
@@ -444,6 +693,16 @@ def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network)
 
 
 def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
+    import os.path as op
+    """
+
+    :param ID:
+    :param dir_path:
+    :param roi:
+    :param network:
+    :param net_parcels_map_nifti:
+    :return:
+    """
     if roi:
         if network:
             net_parcels_nii_path = "%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_parcels_masked_', network, '_',
@@ -462,10 +721,25 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
 
 
 def cuberoot(x):
+    """
+
+    :param x:
+    :return:
+    """
     return np.sign(x) * np.abs(x)**(1 / 3)
 
 
 def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
+    """
+
+    :param roi:
+    :param network:
+    :param ID:
+    :param dir_path:
+    :param ts_within_nodes:
+    :param c_boot:
+    :return:
+    """
     # Save time series as txt file
     if roi is None:
         if network is not None:
@@ -549,6 +823,13 @@ def rescale_bvec(bvec, bvec_rescaled):
 
 
 def make_gtab_and_bmask(fbval, fbvec, dwi_file):
+    """
+
+    :param fbval:
+    :param fbvec:
+    :param dwi_file:
+    :return:
+    """
     import os
     from dipy.io import save_pickle
     import os.path as op
@@ -572,7 +853,10 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file):
     # loading bvecs/bvals
     bvals, bvecs = read_bvals_bvecs(fbval, fbvec)
     bvecs[np.where(np.any(abs(bvecs) >= 10, axis=1) == True)] = [1, 0, 0]
-    bvecs[np.where(np.any(bvals == 0, axis=0) == True)] = 0
+    bvecs[np.where(bvals == 0)] = 0
+    if len(bvecs[np.where(np.logical_and(bvals > 50, np.all(abs(bvecs)==np.array([0, 0, 0]), axis=1)))]) > 0:
+        raise ValueError('WARNING: Encountered potentially corrupted bval/bvecs. Check to ensure volumes with a '
+                         'diffusion weighting are not being treated as B0\'s along the bvecs')
     np.savetxt(fbval, bvals)
     np.savetxt(fbvec, bvecs)
     bvec_rescaled = rescale_bvec(fbvec, bvec_rescaled)
@@ -622,21 +906,60 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file):
 
 
 def check_orient_and_dims(infile, vox_size, bvecs=None):
+    """
+
+    :param infile:
+    :param vox_size:
+    :param bvecs:
+    :return:
+    """
+    import os
     import os.path as op
-    from pynets.utils import reorient_dwi, reorient_t1w, match_target_vox_res
+    from pynets.utils import reorient_dwi, reorient_img, match_target_vox_res
 
     outdir = op.dirname(infile)
     img = nib.load(infile)
     vols = img.shape[-1]
 
-    # Check orientation
-    if ((vols > 1) and (bvecs is not None)):
-        [infile, bvecs] = reorient_dwi(infile, bvecs, outdir)
-    elif vols <= 1:
-        infile = reorient_t1w(infile, outdir)
+    reoriented = "{}/{}_pre_reor.nii.gz".format(outdir, infile.split('/')[-1].split('.nii.gz')[0])
+    resampled = "{}/{}_pre_res.nii.gz".format(outdir, os.path.basename(infile).split('.nii.gz')[0])
 
-    # Check dimensions
-    outfile = match_target_vox_res(infile, vox_size, outdir, sens='dwi')
+    # Check orientation
+    if (vols > 1) and (bvecs is not None):
+        # dwi case
+        outdir = "%s%s" % (outdir, '/std_dmri')
+        if not os.path.isdir(outdir):
+            os.mkdir(outdir)
+        # Check orientation
+        if not os.path.isfile(reoriented):
+            [infile, bvecs] = reorient_dwi(infile, bvecs, outdir)
+        # Check dimensions
+        if not os.path.isfile(resampled):
+            outfile = match_target_vox_res(infile, vox_size, outdir, sens='dwi')
+    elif (vols > 1) and (bvecs is None):
+        # func case
+        outdir = "%s%s" % (outdir, '/std_fmri')
+        if not os.path.isdir(outdir):
+            os.mkdir(outdir)
+        # Check orientation
+        if not os.path.isfile(reoriented):
+            infile = reorient_img(infile, outdir)
+        # Check dimensions
+        if not os.path.isfile(resampled):
+            outfile = match_target_vox_res(infile, vox_size, outdir, sens='func')
+    else:
+        # t1w case
+        outdir = "%s%s" % (outdir, '/std_anat_')
+        if not os.path.isdir(outdir):
+            os.mkdir(outdir)
+        # Check orientation
+        if not os.path.isfile(reoriented):
+            infile = reorient_img(infile, outdir)
+        if not os.path.isfile(resampled):
+            # Check dimensions
+            outfile = match_target_vox_res(infile, vox_size, outdir, sens='t1w')
+
+    print(outfile)
 
     if bvecs is None:
         return outfile
@@ -645,33 +968,46 @@ def check_orient_and_dims(infile, vox_size, bvecs=None):
 
 
 def reorient_dwi(dwi_prep, bvecs, out_dir):
+    """
+
+    :param dwi_prep:
+    :param bvecs:
+    :param out_dir:
+    :return:
+    """
     import shutil
     # Check orientation (dwi_prep)
     cmd = 'fslorient -getorient ' + dwi_prep
-    orient = os.popen(cmd).read().strip('\n')
+    cmd_run = os.popen(cmd)
+    orient = cmd_run.read().strip('\n')
+    cmd_run.close()
+    dwi_orig = dwi_prep
+    dwi_prep = "{}/{}_pre_reor.nii.gz".format(out_dir, dwi_prep.split('/')[-1].split('.nii.gz')[0])
+    shutil.copyfile(dwi_orig, dwi_prep)
+    bvecs_orig = bvecs
+    bvecs = "{}/bvecs.bvec".format(out_dir)
+    shutil.copyfile(bvecs_orig, bvecs)
+    bvecs_mat = np.genfromtxt(bvecs)
+    cmd = 'fslorient -getqform ' + dwi_prep
+    cmd_run = os.popen(cmd)
+    qform = cmd_run.read().strip('\n')
+    cmd_run.close()
+    reoriented = False
     if orient == 'NEUROLOGICAL':
+        reoriented = True
         print('Neurological (dwi), reorienting to radiological...')
         # Orient dwi to RADIOLOGICAL
-        dwi_orig = dwi_prep
-        dwi_prep = "{}/dwi_prep_reor.nii.gz".format(out_dir)
-        shutil.copyfile(dwi_orig, dwi_prep)
-        # Invert bvecs
-        bvecs_orig = bvecs
-        bvecs = "{}/bvecs_reor.bvec".format(out_dir)
-        shutil.copyfile(bvecs_orig, bvecs)
-        bvecs_mat = np.genfromtxt(bvecs)
-        bvecs_mat[0] = -bvecs_mat[0]
-        cmd = 'fslorient -getqform ' + dwi_prep
-        qform = os.popen(cmd).read().strip('\n')
         # Posterior-Anterior Reorientation
         if float(qform.split(' ')[:-1][5]) <= 0:
             dwi_prep_PA = "{}/dwi_reor_PA.nii.gz".format(out_dir)
             print('Reorienting P-A flip (dwi)...')
             cmd = 'fslswapdim ' + dwi_prep + ' -x -y z ' + dwi_prep_PA
             os.system(cmd)
-            bvecs_mat[1] = -bvecs_mat[1]
+            bvecs_mat[:,1] = -bvecs_mat[:,1]
             cmd = 'fslorient -getqform ' + dwi_prep_PA
-            qform = os.popen(cmd).read().strip('\n')
+            cmd_run = os.popen(cmd)
+            qform = cmd_run.read().strip('\n')
+            cmd_run.close()
             dwi_prep = dwi_prep_PA
         # Inferior-Superior Reorientation
         if float(qform.split(' ')[:-1][10]) <= 0:
@@ -679,111 +1015,156 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
             print('Reorienting I-S flip (dwi)...')
             cmd = 'fslswapdim ' + dwi_prep + ' -x y -z ' + dwi_prep_IS
             os.system(cmd)
-            bvecs_mat[2] = -bvecs_mat[2]
+            bvecs_mat[:,2] = -bvecs_mat[:,2]
             dwi_prep = dwi_prep_IS
+        bvecs_mat[:, 0] = -bvecs_mat[:, 0]
         cmd = 'fslorient -forceradiological ' + dwi_prep
         os.system(cmd)
-        cmd = 'fslorient -getorient ' + dwi_prep
-        orient = os.popen(cmd).read().strip('\n')
-        if orient == 'NEUROLOGICAL':
-            cmd = 'fslorient -swaporient ' + dwi_prep
-            os.system(cmd)
-
         np.savetxt(bvecs, bvecs_mat)
     else:
         print('Radiological (dwi)...')
-        dwi_orig = dwi_prep
-        dwi_prep = "{}/dwi_prep.nii.gz".format(out_dir)
-        shutil.copyfile(dwi_orig, dwi_prep)
-        bvecs_orig = bvecs
-        bvecs = "{}/bvecs.bvec".format(out_dir)
-        shutil.copyfile(bvecs_orig, bvecs)
-        bvecs_mat = np.genfromtxt(bvecs)
-        cmd = 'fslorient -getqform ' + dwi_prep
-        qform = os.popen(cmd).read().strip('\n')
         # Posterior-Anterior Reorientation
         if float(qform.split(' ')[:-1][5]) <= 0:
             dwi_prep_PA = "{}/dwi_reor_PA.nii.gz".format(out_dir)
             print('Reorienting P-A flip (dwi)...')
-            cmd = 'fslswapdim ' + dwi_prep + ' x -y z ' + dwi_prep_PA
+            cmd = 'fslswapdim ' + dwi_prep + ' -x -y z ' + dwi_prep_PA
             os.system(cmd)
-            bvecs_mat[1] = -bvecs_mat[1]
+            bvecs_mat[:,1] = -bvecs_mat[:,1]
             cmd = 'fslorient -getqform ' + dwi_prep_PA
-            qform = os.popen(cmd).read().strip('\n')
+            cmd_run = os.popen(cmd)
+            qform = cmd_run.read().strip('\n')
+            cmd_run.close()
             dwi_prep = dwi_prep_PA
+            reoriented = True
         # Inferior-Superior Reorientation
         if float(qform.split(' ')[:-1][10]) <= 0:
             dwi_prep_IS = "{}/dwi_reor_IS.nii.gz".format(out_dir)
             print('Reorienting I-S flip (dwi)...')
-            cmd = 'fslswapdim ' + dwi_prep + ' x y -z ' + dwi_prep_IS
+            cmd = 'fslswapdim ' + dwi_prep + ' -x y -z ' + dwi_prep_IS
             os.system(cmd)
-            bvecs_mat[2] = -bvecs_mat[2]
+            bvecs_mat[:,2] = -bvecs_mat[:,2]
             dwi_prep = dwi_prep_IS
+            reoriented = True
         np.savetxt(bvecs, bvecs_mat)
+
+    if reoriented is True:
+        imgg = nib.load(dwi_prep)
+        data = imgg.get_fdata()
+        affine = imgg.affine
+        hdr = imgg.header
+        imgg = nib.Nifti1Image(data, affine=affine, header=hdr)
+        imgg.set_sform(affine)
+        imgg.set_qform(affine)
+        imgg.update_header()
+        nib.save(imgg, dwi_prep)
+
+        print('Reoriented affine: ')
+        print(affine)
+    else:
+        dwi_prep = dwi_orig
+        print('Image already in RAS+')
 
     return dwi_prep, bvecs
 
 
-def reorient_t1w(t1w, out_dir):
+def reorient_img(img, out_dir):
+    """
+
+    :param img:
+    :param out_dir:
+    :return:
+    """
     import shutil
-    cmd = 'fslorient -getorient ' + t1w
-    orient = os.popen(cmd).read().strip('\n')
+    import random
+    cmd = 'fslorient -getorient ' + img
+    cmd_run = os.popen(cmd)
+    orient = cmd_run.read().strip('\n')
+    cmd_run.close()
+    img_orig = img
+    hash = str(random.randint(1, 10000))
+    img = "{}/{}_pre_reor_{}.nii.gz".format(out_dir, img.split('/')[-1].split('.nii.gz')[0], hash)
+    shutil.copyfile(img_orig, img)
+    cmd = 'fslorient -getqform ' + img
+    cmd_run = os.popen(cmd)
+    qform = cmd_run.read().strip('\n')
+    cmd_run.close()
+    reoriented = False
     if orient == 'NEUROLOGICAL':
-        print('Neurological (t1w), reorienting to radiological...')
-        # Orient t1w to std
-        t1w_orig = t1w
-        t1w = "{}/t1w_pre_reor.nii.gz".format(out_dir)
-        shutil.copyfile(t1w_orig, t1w)
-        cmd = 'fslorient -getqform ' + t1w
-        qform = os.popen(cmd).read().strip('\n')
+        reoriented = True
+        print('Neurological (img), reorienting to radiological...')
+        # Orient img to std
         # Posterior-Anterior Reorientation
         if float(qform.split(' ')[:-1][5]) <= 0:
-            t1w_PA = "{}/t1w_reor_PA.nii.gz".format(out_dir)
-            print('Reorienting P-A flip (t1w)...')
-            cmd = 'fslswapdim ' + t1w + ' -x -y z ' + t1w_PA
+            img_PA = "{}/img_reor_PA.nii.gz".format(out_dir)
+            print('Reorienting P-A flip (img)...')
+            cmd = 'fslswapdim ' + img + ' -x -y z ' + img_PA
             os.system(cmd)
-            cmd = 'fslorient -getqform ' + t1w_PA
-            qform = os.popen(cmd).read().strip('\n')
-            t1w = t1w_PA
+            cmd = 'fslorient -getqform ' + img_PA
+            cmd_run = os.popen(cmd)
+            qform = cmd_run.read().strip('\n')
+            cmd_run.close()
+            img = img_PA
         # Inferior-Superior Reorientation
         if float(qform.split(' ')[:-1][10]) <= 0:
-            t1w_IS = "{}/t1w_reor_IS.nii.gz".format(out_dir)
-            print('Reorienting I-S flip (t1w)...')
-            cmd = 'fslswapdim ' + t1w + ' -x y -z ' + t1w_IS
+            img_IS = "{}/img_reor_IS.nii.gz".format(out_dir)
+            print('Reorienting I-S flip (img)...')
+            cmd = 'fslswapdim ' + img + ' -x y -z ' + img_IS
             os.system(cmd)
-            t1w = t1w_IS
-        cmd = 'fslorient -forceradiological ' + t1w
-        os.system(cmd)
-        cmd = 'fslreorient2std ' + t1w + ' ' + t1w
+            img = img_IS
+        cmd = 'fslorient -forceradiological ' + img
         os.system(cmd)
     else:
-        print('Radiological (t1w)...')
-        t1w_orig = t1w
-        t1w = "{}/t1w.nii.gz".format(out_dir)
-        shutil.copyfile(t1w_orig, t1w)
-        cmd = 'fslorient -getqform ' + t1w
-        qform = os.popen(cmd).read().strip('\n')
+        print('Radiological (img)...')
         # Posterior-Anterior Reorientation
         if float(qform.split(' ')[:-1][5]) <= 0:
-            t1w_PA = "{}/t1w_reor_PA.nii.gz".format(out_dir)
-            print('Reorienting P-A flip (t1w)...')
-            cmd = 'fslswapdim ' + t1w + ' x -y z ' + t1w_PA
+            img_PA = "{}/img_reor_PA.nii.gz".format(out_dir)
+            print('Reorienting P-A flip (img)...')
+            cmd = 'fslswapdim ' + img + ' -x -y z ' + img_PA
             os.system(cmd)
-            cmd = 'fslorient -getqform ' + t1w_PA
-            qform = os.popen(cmd).read().strip('\n')
-            t1w = t1w_PA
+            cmd = 'fslorient -getqform ' + img_PA
+            cmd_run = os.popen(cmd)
+            qform = cmd_run.read().strip('\n')
+            cmd_run.close()
+            img = img_PA
+            reoriented = True
         # Inferior-Superior Reorientation
         if float(qform.split(' ')[:-1][10]) <= 0:
-            t1w_IS = "{}/t1w_reor_IS.nii.gz".format(out_dir)
-            print('Reorienting I-S flip (t1w)...')
-            cmd = 'fslswapdim ' + t1w + ' x y -z ' + t1w_IS
+            img_IS = "{}/img_reor_IS.nii.gz".format(out_dir)
+            print('Reorienting I-S flip (img)...')
+            cmd = 'fslswapdim ' + img + ' -x y -z ' + img_IS
             os.system(cmd)
-            t1w = t1w_IS
+            img = img_IS
+            reoriented = True
 
-    return t1w
+    if reoriented is True:
+        imgg = nib.load(img)
+        data = imgg.get_fdata()
+        affine = imgg.affine
+        hdr = imgg.header
+        imgg = nib.Nifti1Image(data, affine=affine, header=hdr)
+        imgg.set_sform(affine)
+        imgg.set_qform(affine)
+        imgg.update_header()
+        nib.save(imgg, img)
+
+        print('Reoriented affine: ')
+        print(affine)
+    else:
+        img = img_orig
+        print('Image already in RAS+')
+
+    return img
 
 
 def match_target_vox_res(img_file, vox_size, out_dir, sens):
+    """
+
+    :param img_file:
+    :param vox_size:
+    :param out_dir:
+    :param sens:
+    :return:
+    """
     from dipy.align.reslice import reslice
     # Check dimensions
     img = nib.load(img_file)
@@ -792,32 +1173,29 @@ def match_target_vox_res(img_file, vox_size, out_dir, sens):
     hdr = img.header
     zooms = hdr.get_zooms()[:3]
     if vox_size == '1mm':
-        print('Reslicing image ' + img_file + ' to 1mm...')
         new_zooms = (1., 1., 1.)
     elif vox_size == '2mm':
-        print('Reslicing image ' + img_file + ' to 2mm...')
         new_zooms = (2., 2., 2.)
 
     if (abs(zooms[0]), abs(zooms[1]), abs(zooms[2])) != new_zooms:
-        if sens == 'dwi':
-            img_file_pre = "{}/{}_pre_res.nii.gz".format(out_dir, os.path.basename(img_file).split('.nii.gz')[0])
-        elif sens == 't1w':
-            img_file_pre = "{}/{}_pre_res.nii.gz".format(out_dir, os.path.basename(img_file).split('.nii.gz')[0])
+        print('Reslicing image ' + img_file + ' to ' + vox_size + '...')
+        img_file_pre = "{}/{}_pre_res.nii.gz".format(out_dir, os.path.basename(img_file).split('.nii.gz')[0])
         shutil.copyfile(img_file, img_file_pre)
 
         data2, affine2 = reslice(data, affine, zooms, new_zooms)
-        affine2[0:3,3] = np.zeros(3)
-        affine2 = np.abs(affine2)
-        affine2[0:3,0:3] = np.eye(3) * np.array([-1, 1, 1]) * np.array(new_zooms)
+        if sens == 'dwi':
+            affine2[0:3, 3] = np.zeros(3)
+            affine2[0:3, 0:3] = np.eye(3) * np.array(new_zooms) * np.sign(affine2[0:3, 0:3])
         img2 = nib.Nifti1Image(data2, affine=affine2, header=hdr)
-        print(affine2)
         img2.set_qform(affine2)
         img2.set_sform(affine2)
         img2.update_header()
         nib.save(img2, img_file)
+        print('Resliced affine: ')
+        print(nib.load(img_file).affine)
     else:
-        affine[0:3,3] = np.zeros(3)
-        affine = np.abs(affine)
+        if sens == 'dwi':
+            affine[0:3,3] = np.zeros(3)
         img = nib.Nifti1Image(data, affine=affine, header=hdr)
         img.set_sform(affine)
         img.set_qform(affine)
@@ -847,45 +1225,6 @@ def merge_dicts(x, y):
     z = x.copy()
     z.update(y)
     return z
-
-
-class PassMetaOutsInputSpec(BaseInterfaceInputSpec):
-    conn_model_iterlist = traits.Any(mandatory=True)
-    est_path_iterlist = traits.Any(mandatory=False)
-    node_size_iterlist = traits.Any(mandatory=True)
-    thr_iterlist = traits.Str(mandatory=True)
-    prune_iterlist = File(exists=True, mandatory=True, desc="")
-    ID_iterlist = traits.Any(mandatory=False)
-    roi_iterlist = traits.Any(mandatory=False)
-    norm_iterlist = traits.Any(mandatory=False)
-    binary_iterlist = traits.Any(mandatory=False)
-
-
-class PassMetaOutsOutputSpec(TraitedSpec):
-    out_file = File()
-
-
-class PassMetaOuts(BaseInterface):
-    input_spec = PassMetaOutsInputSpec
-    output_spec = PassMetaOutsOutputSpec
-
-    def _run_interface(self, runtime):
-        out = pass_meta_outs(
-            self.inputs.conn_model_iterlist,
-            self.inputs.est_path_iterlist,
-            self.inputs.node_size_iterlist,
-            self.inputs.thr_iterlist,
-            self.inputs.prune_iterlist,
-            self.inputs.ID_iterlist,
-            self.inputs.roi_iterlist,
-            self.inputs.norm_iterlist,
-            self.inputs.binary_iterlist)
-        setattr(self, '_outpath', out)
-        return runtime
-
-    def _list_outputs(self):
-        import os.path as op
-        return {'out_file': op.abspath(getattr(self, '_outpath'))}
 
 
 class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
@@ -964,6 +1303,7 @@ class CollectPandasDfsInputSpec(BaseInterfaceInputSpec):
     net_pickle_mt_list = traits.List(mandatory=True)
     plot_switch = traits.Any(mandatory=True)
     multi_nets = traits.Any(mandatory=True)
+    multimodal = traits.Any(mandatory=True)
 
 
 class CollectPandasDfs(SimpleInterface):
@@ -975,5 +1315,6 @@ class CollectPandasDfs(SimpleInterface):
             self.inputs.ID,
             self.inputs.net_pickle_mt_list,
             self.inputs.plot_switch,
-            self.inputs.multi_nets)
+            self.inputs.multi_nets,
+            self.inputs.multimodal)
         return runtime

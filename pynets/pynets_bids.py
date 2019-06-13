@@ -32,7 +32,7 @@ def sweep_directory(bdir, subj=None, sesh=None, task=None, run=None, modality=No
         assert subj in subjs, "subject {} is not in the bids folder".format(subj)
     for sub in subjs:
         if not sesh:
-            seshs = layout.get_sessions(subject=sub, derivatives=True)
+            seshs = layout.get_sessions(subject=sub, derivatives=False)
             # in case there are non-session level inputs
             seshs += [None]
         else:
@@ -40,13 +40,13 @@ def sweep_directory(bdir, subj=None, sesh=None, task=None, run=None, modality=No
             seshs = as_list(sesh)
 
         if not task:
-            tasks = layout.get_tasks(subject=sub, derivatives=True)
+            tasks = layout.get_tasks(subject=sub, derivatives=False)
             tasks += [None]
         else:
             tasks = as_list(task)
 
         if not run:
-            runs = layout.get_runs(subject=sub, derivatives=True)
+            runs = layout.get_runs(subject=sub, derivatives=False)
             runs += [None]
         else:
             runs = as_list(run)
@@ -194,9 +194,9 @@ def main(bids_dir, subject, modality, output_dir):
 
 if __name__ == '__main__':
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
-    bids_dir = '/Users/PSYC-dap3463/Downloads/test_subs/HBN'
-    subject = 'NDARBA507GCT'
-    output_dir = '/Users/derekpisner/Downloads/test_subs/HBN/outputs'
+    bids_dir = '/Users/derekpisner/Downloads/test_subs/HNU1'
+    subject = '0025427'
+    output_dir = '/Users/derekpisner/Downloads/test_subs/outputs'
     modality = 'dwi'
     #[outs, output_dir] = main(bids_dir, subject, modality, output_dir)
 

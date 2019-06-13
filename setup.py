@@ -26,7 +26,8 @@ requirements = [
     'PyYAML>=3.12',
     'boto3>=1.9.111',
     'colorama>=0.3.9',
-    'pybids>=0.6.4'
+    'pybids>=0.6.4',
+    'graspy==0.0.2'
 ]
 
 setup_requirements = [
@@ -41,7 +42,7 @@ test_requirements = [
 
 setup(
     name='pynets',
-    version='0.7.33',
+    version='0.7.39',
     description="A Fully-Automated Workflow for Reproducible Graph Analysis of Functional and Structural Connectomes",
     #long_description=readme + '\n\n',
     author="Derek Pisner",
@@ -71,5 +72,5 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     setup_requires=setup_requirements,
-    scripts=["pynets/pynets_run.py"]
+    scripts=["pynets/pynets_run.py", "pynets/runconfig.yaml"]
 )

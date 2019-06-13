@@ -5,12 +5,36 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore")
 import numpy as np
 
 
 def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
                     disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary):
+    """
+
+    :param time_series:
+    :param conn_model:
+    :param dir_path:
+    :param node_size:
+    :param smooth:
+    :param dens_thresh:
+    :param network:
+    :param ID:
+    :param roi:
+    :param min_span_tree:
+    :param disp_filt:
+    :param parc:
+    :param prune:
+    :param atlas_select:
+    :param uatlas_select:
+    :param label_names:
+    :param coords:
+    :param c_boot:
+    :param norm:
+    :param binary:
+    :return:
+    """
     from nilearn.connectome import ConnectivityMeasure
     from sklearn.covariance import GraphicalLassoCV
 
@@ -145,6 +169,12 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
 
 
 def generate_mask_from_voxels(voxel_coords, volume_dims):
+    """
+
+    :param voxel_coords:
+    :param volume_dims:
+    :return:
+    """
     mask = np.zeros(volume_dims)
     for voxel in voxel_coords:
         mask[tuple(voxel)] = 1
@@ -152,120 +182,54 @@ def generate_mask_from_voxels(voxel_coords, volume_dims):
 
 
 def normalize(v):
+    """
+
+    :param v:
+    :return:
+    """
     norm = np.linalg.norm(v, ord=1)
     if norm == 0:
         norm = np.finfo(v.dtype).eps
     return v/norm
 
 
-# def extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path):
-#     import nibabel as nib
-#     import time
-#     import subprocess
-#     try:
-#         from StringIO import StringIO
-#     except ImportError:
-#         from io import BytesIO as StringIO
-#     from pynets.nodemaker import get_sphere
-#     from pynets.fmri.estimation import generate_mask_from_voxels, normalize
-#     start_time = time.time()
-#     data = nib.load(func_file)
-#     activity_data = data.get_fdata()
-#     volume_dims = np.shape(activity_data)[0:3]
-#     ref_affine = data.get_qform()
-#     ref_header = data.header
-#     vox_dims = tuple(ref_header['pixdim'][1:4])
-#     print("%s%s%s" % ('Data loaded: ', str(np.round(time.time() - start_time, 1)), 's'))
-#     label_mask = np.zeros(volume_dims)
-#     label_file = "%s%s" % (dir_path, '/label_file_tmp.nii.gz')
-#
-#     [x_vox, y_vox, z_vox] = vox_dims
-#     # finding sphere voxels
-#     #print(len(coords))
-#     def mmToVox(mmcoords):
-#         voxcoords = ['', '', '']
-#         voxcoords[0] = int((round(int(mmcoords[0])/x_vox))+45)
-#         voxcoords[1] = int((round(int(mmcoords[1])/y_vox))+63)
-#         voxcoords[2] = int((round(int(mmcoords[2])/z_vox))+36)
-#         return voxcoords
-#
-#     coords_vox = []
-#     for i in coords:
-#         coords_vox.append(mmToVox(i))
-#     coords = list(tuple(x) for x in coords_vox)
-#
-#     for coord in range(len(coords)):
-#         sphere_voxels = get_sphere(coords=coords[coord], r=node_size, vox_dims=vox_dims, dims=volume_dims)
-#         # creating mask from found voxels
-#         sphere_mask = generate_mask_from_voxels(sphere_voxels, volume_dims)
-#         label_mask = label_mask + (coord+1)*sphere_mask
-#
-#     nib.save(nib.Nifti1Image(label_mask, ref_affine, header=ref_header), label_file)
-#     print("%s%s%s" % ('Sphere mask saved: ', str(np.round(time.time() - start_time, 1)), 's'))
-#     cmd = "%s%s%s%s" % ('fslmeants -i ', func_file, ' --label=', label_file)
-#     stdout_extracted_ts = subprocess.check_output(cmd, shell=True)
-#     ts_within_nodes = np.loadtxt(StringIO(stdout_extracted_ts))
-#     ts_within_nodes = normalize(ts_within_nodes)
-#     print("%s%s%s" % ('Mean time series extracted: ', str(np.round(time.time() - start_time, 1)), 's'))
-#     print("%s%s" % ('Number of ROIs expected: ', str(len(coords))))
-#     print("%s%s" % ('Number of ROIs found: ', str(ts_within_nodes.shape[1])))
-#     return ts_within_nodes, node_size
-#
-#
-# def extract_ts_parc_fast(label_file, conf, func_file, dir_path):
-#     import time
-#     import subprocess
-#     from pynets.fmri.estimation import normalize
-#     try:
-#         from StringIO import StringIO
-#     except ImportError:
-#         from io import BytesIO as StringIO
-#     start_time = time.time()
-#     cmd = "%s%s%s%s" % ('fslmeants -i ', func_file, ' --label=', label_file)
-#     stdout_extracted_ts = subprocess.check_output(cmd, shell=True)
-#     ts_within_nodes = np.loadtxt(StringIO(stdout_extracted_ts))
-#     ts_within_nodes = normalize(ts_within_nodes)
-#     print("%s%s%s" % ('Mean time series extracted: ', str(np.round(time.time() - start_time, 1)), 's'))
-#     print("%s%s" % ('Number of ROIs found: ', str(len(ts_within_nodes))))
-#
-#     node_size = None
-#     return ts_within_nodes, node_size
-
-
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas_select,
-                    uatlas_select, label_names, c_boot, block_size, mask):
-    import os.path
-    from nilearn import input_data
-    # from pynets.fmri.estimation import extract_ts_parc_fast
-    from pynets import utils
-    #from sklearn.externals.joblib import Memory
+                    uatlas_select, label_names, c_boot, block_size, detrending=True):
+    """
 
-    if not os.path.isfile(func_file):
+    :param net_parcels_map_nifti:
+    :param conf:
+    :param func_file:
+    :param coords:
+    :param roi:
+    :param dir_path:
+    :param ID:
+    :param network:
+    :param smooth:
+    :param atlas_select:
+    :param uatlas_select:
+    :param label_names:
+    :param c_boot:
+    :param block_size:
+    :param detrending:
+    :return:
+    """
+    import os.path as op
+    from nilearn import input_data
+    from pynets import utils
+
+    if not op.isfile(func_file):
         raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
                          'exist(s)')
 
     if conf:
-        if not os.path.isfile(conf):
+        if not op.isfile(conf):
             raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the '
                              '-conf flag exist(s)')
 
-
-    # if fast is True:
-    #     ts_within_nodes = extract_ts_parc_fast(net_parcels_map_nifti, conf, func_file, dir_path)
-    # else:
-    detrending = True
-    # parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
-    #                                              standardize=True, smoothing_fwhm=float(smooth),
-    #                                              detrend=detrending,
-    #                                              memory=Memory(cachedir="%s%s%s" % (dir_path,
-    #                                                                                 '/SpheresMasker_cache_',
-    #                                                                                 str(ID)), verbose=2),
-    #                                              memory_level=1)
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth),
-                                                 detrend=detrending, verbose=2, mask_img=mask)
-    # parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
-    #                                              standardize=True)
+                                                 detrend=detrending, verbose=2, resampling_target='data')
     ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
     if ts_within_nodes is None:
         raise RuntimeError('\nERROR: Time-series extraction failed!')
@@ -275,6 +239,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
                         len(coords), ' volumetric ROI\'s'))
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
+
     # Save time series as txt file
     utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
     node_size = None
@@ -282,39 +247,43 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
 
 
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, network, smooth, atlas_select,
-                      uatlas_select, label_names, c_boot, block_size, mask):
-    import os.path
-    from nilearn import input_data
-    # from pynets.fmri.estimation import extract_ts_coords_fast
-    from pynets import utils
-    #from sklearn.externals.joblib import Memory
+                      uatlas_select, label_names, c_boot, block_size, detrending=True):
+    """
 
-    if not os.path.isfile(func_file):
+    :param node_size:
+    :param conf:
+    :param func_file:
+    :param coords:
+    :param dir_path:
+    :param ID:
+    :param roi:
+    :param network:
+    :param smooth:
+    :param atlas_select:
+    :param uatlas_select:
+    :param label_names:
+    :param c_boot:
+    :param block_size:
+    :param detrending:
+    :return:
+    """
+    import os.path as op
+    from nilearn import input_data
+    from pynets import utils
+
+    if not op.isfile(func_file):
         raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
                          'exist(s)')
 
     if conf:
-        if not os.path.isfile(conf):
+        if not op.isfile(conf):
             raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the '
                              '-conf flag exist(s)')
 
-    # if fast is True:
-    #     ts_within_nodes = extract_ts_coords_fast(node_size, conf, func_file, coords, dir_path)
-    # else:
-    detrending = True
-    # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
-    #                                                standardize=True, smoothing_fwhm=float(smooth),
-    #                                                detrend=detrending,
-    #                                                memory=Memory(cachedir="%s%s%s" % (dir_path,
-    #                                                                                   '/SpheresMasker_cache_',
-    #                                                                                   str(ID)), verbose=2),
-    #                                                memory_level=1)
     if len(coords) > 0:
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                        standardize=True, smoothing_fwhm=float(smooth),
-                                                       detrend=detrending, verbose=2, mask_img=mask)
-        # spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
-        #                                                standardize=True, verbose=1)
+                                                       detrend=detrending, verbose=2)
         ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
         if float(c_boot) > 0:
             print("%s%s%s" % ('Performing circular block bootstrapping iteration: ', c_boot, '...'))
@@ -330,6 +299,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
                         len(coords), ' coordinate ROI\'s'))
     print("%s%s%s" % ('Using node radius: ', node_size, ' mm'))
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
+
     # Save time series as txt file
     utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
     return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot

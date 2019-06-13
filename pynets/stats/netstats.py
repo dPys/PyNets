@@ -7,12 +7,46 @@ Copyright (C) 2018
 from __future__ import division
 import os
 import numpy as np
+np.warnings.filterwarnings('ignore')
 import networkx as nx
 import warnings
 warnings.simplefilter("ignore")
 
 
+def timeout(seconds=20):
+    from functools import wraps
+    import errno
+    import os
+    import signal
+
+    class TimeoutError(Exception):
+        pass
+
+    def decorator(func):
+        def _handle_timeout(signum, frame):
+            error_message = os.strerror(errno.ETIME)
+            raise TimeoutError(error_message)
+
+        def wrapper(*args, **kwargs):
+            signal.signal(signal.SIGALRM, _handle_timeout)
+            signal.alarm(seconds)
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                signal.alarm(0)
+            return result
+
+        return wraps(func)(wrapper)
+
+    return decorator
+
+@timeout
 def average_shortest_path_length_for_all(G):
+    """
+
+    :param G:
+    :return:
+    """
     import math
     subgraphs = [sbg for sbg in nx.connected_component_subgraphs(G) if len(sbg) > 1]
     return math.fsum(nx.average_shortest_path_length(sg) for sg in subgraphs) / len(subgraphs)
@@ -160,11 +194,26 @@ def average_local_efficiency(G, weight=None):
     N = len(eff)
     return total/N
 
+
 def create_random_graph(G, n, p):
+    """
+
+    :param G:
+    :param n:
+    :param p:
+    :return:
+    """
     rG = nx.erdos_renyi_graph(n, p, seed=42)
     return rG
 
+
 def smallworldness_measure(G, rG):
+    """
+
+    :param G:
+    :param rG:
+    :return:
+    """
     C_g = nx.algorithms.average_clustering(G)
     C_r = nx.algorithms.average_clustering(rG)
     try:
@@ -180,6 +229,12 @@ def smallworldness_measure(G, rG):
 
 
 def smallworldness(G, rep=1000):
+    """
+
+    :param G:
+    :param rep:
+    :return:
+    """
     print("%s%s%s" % ('Estimating smallworldness using ', rep, ' random graphs...'))
     #import multiprocessing
     n = nx.number_of_nodes(G)
@@ -206,6 +261,12 @@ def smallworldness(G, rep=1000):
 
 
 def create_communities(node_comm_aff_mat, node_num):
+    """
+
+    :param node_comm_aff_mat:
+    :param node_num:
+    :return:
+    """
     com_assign = np.zeros((node_num,1))
     for i in range(len(node_comm_aff_mat)):
         community = node_comm_aff_mat[i,:]
@@ -241,6 +302,7 @@ def _compute_rc(G):
     return rc
 
 
+@timeout
 def participation_coef(W, ci, degree='undirected'):
     ## ADAPTED FROM BCTPY ##
     '''
@@ -281,6 +343,13 @@ def participation_coef(W, ci, degree='undirected'):
 
 
 def modularity(W, qtype='sta', seed=42):
+    """
+
+    :param W:
+    :param qtype:
+    :param seed:
+    :return:
+    """
     ## ADAPTED FROM BCTPY ##
     np.random.seed(seed)
     n = len(W)
@@ -405,6 +474,11 @@ def diversity_coef_sign(W, ci):
     # Number of modules
     m = np.max(ci)
     def entropy(w_):
+        """
+
+        :param w_:
+        :return:
+        """
         # Strength
         S = np.sum(w_, axis=1)
         # Node-to-module degree
@@ -425,6 +499,12 @@ def diversity_coef_sign(W, ci):
 
 
 def link_communities(W, type_clustering='single'):
+    """
+
+    :param W:
+    :param type_clustering:
+    :return:
+    """
     from pynets.thresholding import normalize
     ## ADAPTED FROM BCTPY ##
     '''
@@ -823,8 +903,56 @@ def most_important(G):
      return Gt, pruned_nodes
 
 
+# Institute 20-second timeout rule with signal decorator
+@timeout
+def raw_mets(G, i, custom_weight):
+    if i is 'average_shortest_path_length':
+        if nx.is_connected(G) is True:
+            # try:
+            #     net_met_val = float(i(G_dir))
+            #     print('Calculating from directed graph...')
+            # except:
+            #     net_met_val = float(i(G))
+            net_met_val = float(i(G))
+        else:
+            # Case where G is not fully connected
+            print('WARNING: Calculating average shortest path length for a disconnected graph. '
+                  'This might take awhile...')
+            net_met_val = float(average_shortest_path_length_for_all(G))
+    if custom_weight is not None and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
+        custom_weight_param = 'weight = ' + str(custom_weight)
+        # try:
+        #     net_met_val = float(i(G_dir, custom_weight_param))
+        #     print('Calculating from directed graph...')
+        # except:
+        #     net_met_val = float(i(G, custom_weight_param))
+        net_met_val = float(i(G, custom_weight_param))
+    else:
+        # try:
+        #     net_met_val = float(i(G_dir))
+        #     print('Calculating from directed graph...')
+        # except:
+        #     net_met_val = float(i(G))
+        net_met_val = float(i(G))
+    return net_met_val
+
+
 # Extract network metrics interface
 def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_size, norm, binary):
+    """
+
+    :param ID:
+    :param network:
+    :param thr:
+    :param conn_model:
+    :param est_path:
+    :param roi:
+    :param prune:
+    :param node_size:
+    :param norm:
+    :param binary:
+    :return:
+    """
     import pandas as pd
     import yaml
     try:
@@ -951,34 +1079,11 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
         met_name = str(i).split('<function ')[1].split(' at')[0]
         net_met = met_name
         try:
-            if i is 'average_shortest_path_length':
-                if nx.is_connected(G) is True:
-                    # try:
-                    #     net_met_val = float(i(G_dir))
-                    #     print('Calculating from directed graph...')
-                    # except:
-                    #     net_met_val = float(i(G))
-                    net_met_val = float(i(G))
-                else:
-                    # Case where G is not fully connected
-                    print('WARNING: Calculating average shortest path length for a disconnected graph. '
-                          'This might take awhile...')
-                    net_met_val = float(average_shortest_path_length_for_all(G))
-            if custom_weight is not None and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
-                custom_weight_param = 'weight = ' + str(custom_weight)
-                # try:
-                #     net_met_val = float(i(G_dir, custom_weight_param))
-                #     print('Calculating from directed graph...')
-                # except:
-                #     net_met_val = float(i(G, custom_weight_param))
-                net_met_val = float(i(G, custom_weight_param))
-            else:
-                # try:
-                #     net_met_val = float(i(G_dir))
-                #     print('Calculating from directed graph...')
-                # except:
-                #     net_met_val = float(i(G))
-                net_met_val = float(i(G))
+            try:
+                net_met_val = raw_mets(G, i, custom_weight)
+            except:
+                print("%s%s%s" % ('WARNING: ', net_met, ' timeout for graph G. Most likely this is because the graph is either disconnected or because it is fully saturated. See thresholding and pruning options in pynets_run.py -h.'))
+                net_met_val = np.nan
         except:
             print("%s%s%s" % ('WARNING: ', str(i), ' is undefined for graph G'))
             net_met_val = np.nan
@@ -997,7 +1102,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
         metric_list_names.append(i)
 
     # Run miscellaneous functions that generate multiple outputs
-
     # Calculate modularity using the Louvain algorithm
     if 'louvain_modularity' in metric_list_comm:
         try:

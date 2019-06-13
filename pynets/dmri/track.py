@@ -5,12 +5,21 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore")
 import numpy as np
+np.warnings.filterwarnings('ignore')
 import nibabel as nib
 
 
 def reconstruction(conn_model, gtab, dwi_file, wm_in_dwi):
+    """
+
+    :param conn_model:
+    :param gtab:
+    :param dwi_file:
+    :param wm_in_dwi:
+    :return:
+    """
     try:
         import cPickle as pickle
     except ImportError:
@@ -31,6 +40,16 @@ def reconstruction(conn_model, gtab, dwi_file, wm_in_dwi):
 
 
 def prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc_step_size=0.2):
+    """
+
+    :param nodif_B0_mask:
+    :param gm_in_dwi:
+    :param vent_csf_in_dwi:
+    :param wm_in_dwi:
+    :param tiss_class:
+    :param cmc_step_size:
+    :return:
+    """
     try:
         import cPickle as pickle
     except ImportError:
@@ -62,12 +81,20 @@ def prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_clas
         tiss_classifier = CmcTissueClassifier.from_pve(wm_mask_data, gm_mask_data, vent_csf_in_dwi_data,
                                                        step_size=cmc_step_size, average_voxel_size=voxel_size)
     else:
-        raise ValueError("%s%s%s" % ('Error: tissuer classification method: ', tiss_class, 'not found'))
+        nodif_B0_mask_data = nib.load(nodif_B0_mask).get_fdata().astype('bool')
+        tiss_classifier = BinaryTissueClassifier(nodif_B0_mask_data)
 
     return tiss_classifier
 
 
 def run_LIFE_all(data, gtab, streamlines):
+    """
+
+    :param data:
+    :param gtab:
+    :param streamlines:
+    :return:
+    """
     import dipy.tracking.life as life
     import dipy.core.optimize as opt
     fiber_model = life.FiberModel(gtab)
@@ -86,6 +113,13 @@ def run_LIFE_all(data, gtab, streamlines):
 
 
 def save_streams(dwi_img, streamlines, streams):
+    """
+
+    :param dwi_img:
+    :param streamlines:
+    :param streams:
+    :return:
+    """
     hdr = dwi_img.header
 
     # Save streamlines
@@ -109,6 +143,21 @@ def save_streams(dwi_img, streamlines, streams):
 
 def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_length, conn_model, target_samples,
                        node_size, curv_thr_list, step_list):
+    """
+
+    :param dwi_file:
+    :param dir_path:
+    :param gtab:
+    :param streamlines:
+    :param life_run:
+    :param min_length:
+    :param conn_model:
+    :param target_samples:
+    :param node_size:
+    :param curv_thr_list:
+    :param step_list:
+    :return:
+    """
     from dipy.tracking import utils
     from pynets.dmri.track import save_streams, run_LIFE_all
 
@@ -127,16 +176,18 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
         mean_rmse = np.mean(rmse)
         print("%s%s" % ('Mean RMSE: ', mean_rmse))
         if mean_rmse > 5:
-            print('WARNING: LiFE revealed high model error. Check streamlines output and review tracking parameters used.')
+            print(
+                'WARNING: LiFE revealed high model error. Check streamlines output and review tracking parameters used.')
 
     # Create density map
     dm = utils.density_map(streamlines, dwi_img.shape, affine=np.eye(4))
 
     # Save density map
     dm_img = nib.Nifti1Image(dm.astype('int16'), dwi_img.affine)
-    dm_img.to_filename("%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/density_map_', conn_model, '_', target_samples, '_',
+    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/density_map_', conn_model, '_', target_samples, '_',
                                                      node_size, 'mm_curv', str(curv_thr_list).replace(', ', '_'),
-                                                     '_step', str(step_list).replace(', ', '_'), '.nii.gz'))
+                                                     '_step', str(step_list).replace(', ', '_'), '.nii.gz')
+    dm_img.to_filename(dm_path)
 
     # Save streamlines to trk
     streams = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_', conn_model, '_', target_samples, '_',
@@ -144,17 +195,36 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
                                             '_step', str(step_list).replace(', ', '_'), '.trk')
     streams = save_streams(dwi_img, streamlines, streams)
 
-    return streams, dir_path
+    return streams, dir_path, dm_path
 
 
 def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mod_fit,
                    tiss_classifier, sphere, directget, curv_thr_list, step_list, track_type, maxcrossing, max_length,
                    n_seeds_per_iter=200):
+    """
+
+    :param target_samples:
+    :param atlas_data_wm_gm_int:
+    :param parcels:
+    :param parcel_vec:
+    :param mod_fit:
+    :param tiss_classifier:
+    :param sphere:
+    :param directget:
+    :param curv_thr_list:
+    :param step_list:
+    :param track_type:
+    :param maxcrossing:
+    :param max_length:
+    :param n_seeds_per_iter:
+    :return:
+    """
     from colorama import Fore, Style
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
     from dipy.tracking.local import LocalTracking, ParticleFilteringTracking
-    from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
+    from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, \
+        DeterministicMaximumDirectionGetter
 
     # Commence Ensemble Tractography
     streamlines = nib.streamlines.array_sequence.ArraySequence()
@@ -172,7 +242,7 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mo
             elif directget == 'boot':
                 dg = BootDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
                                                       sphere=sphere)
-            elif directget == 'closest':
+            elif directget == 'clos':
                 dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
                                                              sphere=sphere)
             elif directget == 'det':
@@ -234,6 +304,46 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
               conn_model, gtab_file, dwi_file, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
               prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, life_run, min_length,
               fa_path):
+    """
+
+    :param nodif_B0_mask:
+    :param gm_in_dwi:
+    :param vent_csf_in_dwi:
+    :param wm_in_dwi:
+    :param tiss_class:
+    :param labels_im_file_wm_gm_int:
+    :param labels_im_file:
+    :param target_samples:
+    :param curv_thr_list:
+    :param step_list:
+    :param track_type:
+    :param max_length:
+    :param maxcrossing:
+    :param directget:
+    :param conn_model:
+    :param gtab_file:
+    :param dwi_file:
+    :param network:
+    :param node_size:
+    :param dens_thresh:
+    :param ID:
+    :param roi:
+    :param min_span_tree:
+    :param disp_filt:
+    :param parc:
+    :param prune:
+    :param atlas_select:
+    :param uatlas_select:
+    :param label_names:
+    :param coords:
+    :param norm:
+    :param binary:
+    :param atlas_mni:
+    :param life_run:
+    :param min_length:
+    :param fa_path:
+    :return:
+    """
     try:
         import cPickle as pickle
     except ImportError:
@@ -301,7 +411,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
 
     # Perform streamline filtering routines
     dir_path = utils.do_dir_path(atlas_select, dwi_file)
-    [streams, dir_path] = filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_length, conn_model,
-                                             target_samples, node_size, curv_thr_list, step_list)
+    [streams, dir_path, dm_path] = filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_length,
+                                                      conn_model, target_samples, node_size, curv_thr_list, step_list)
 
-    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path
+    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path

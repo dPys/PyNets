@@ -11,13 +11,17 @@
         </value>
       </option>
     </inspection_tool>
+    <inspection_tool class="PyMissingOrEmptyDocstringInspection" enabled="true" level="WEAK WARNING" enabled_by_default="false">
+      <scope name="Project Files" level="WEAK WARNING" enabled="true" />
+    </inspection_tool>
     <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoredPackages">
         <value>
-          <list size="3">
+          <list size="4">
             <item index="0" class="java.lang.String" itemvalue="futures" />
             <item index="1" class="java.lang.String" itemvalue="" />
             <item index="2" class="java.lang.String" itemvalue="pybids" />
+            <item index="3" class="java.lang.String" itemvalue="graspy" />
           </list>
         </value>
       </option>
