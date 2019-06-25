@@ -12,13 +12,29 @@ import nibabel as nib
 
 
 def tens_mod_fa_est(gtab_file, dwi_file, nodif_B0_mask):
-    """
+    '''
+    Estimate a tensor FA image to use for registrations.
 
-    :param gtab_file:
-    :param dwi_file:
-    :param nodif_B0_mask:
-    :return:
-    """
+    Parameters
+    ----------
+    gtab_file : str
+        File path to pickled DiPy gradient table object.
+    dwi_file : str
+        File path to diffusion weighted image.
+    nodif_B0_mask : str
+        File path to B0 brain mask.
+
+    Returns
+    -------
+    fa_path : str
+        File path to FA Nifti1Image.
+    nodif_B0_mask : str
+        File path to B0 brain mask Nifti1Image.
+    gtab_file : str
+        File path to pickled DiPy gradient table object.
+    dwi_file : str
+        File path to diffusion weighted Nifti1Image.
+    '''
     import os
     from dipy.io import load_pickle
     from dipy.reconst.dti import TensorModel
@@ -42,13 +58,23 @@ def tens_mod_fa_est(gtab_file, dwi_file, nodif_B0_mask):
 
 
 def tens_mod_est(gtab, data, wm_in_dwi):
-    """
+    '''
+    Estimate a tensor model from dwi data.
 
-    :param gtab:
-    :param data:
-    :param wm_in_dwi:
-    :return:
-    """
+    Parameters
+    ----------
+    gtab : Obj
+        DiPy object storing diffusion gradient information
+    data : array
+        4D numpy array of diffusion image data.
+    wm_in_dwi : str
+        File path to white-matter tissue segmentation Nifti1Image.
+
+    Returns
+    -------
+    tensor_odf : obj
+        Tensor-estimated orientation distribution function.
+    '''
     from dipy.reconst.dti import TensorModel
     from dipy.data import get_sphere
     print('Fitting tensor model...')
@@ -61,78 +87,182 @@ def tens_mod_est(gtab, data, wm_in_dwi):
 
 
 def csa_mod_est(gtab, data, wm_in_dwi):
-    """
+    '''
+    Estimate a Constant Solid Angle (CSA) model from dwi data.
 
-    :param gtab:
-    :param data:
-    :param wm_in_dwi:
-    :return:
-    """
+    Parameters
+    ----------
+    gtab : Obj
+        DiPy object storing diffusion gradient information
+    data : array
+        4D numpy array of diffusion image data.
+    wm_in_dwi : str
+        File path to white-matter tissue segmentation Nifti1Image.
+
+    Returns
+    -------
+    csa_mod : obj
+        Spherical harmonics coefficients of the CSA-estimated reconstruction model.
+    '''
     from dipy.reconst.shm import CsaOdfModel
     print('Fitting CSA model...')
     wm_in_dwi_mask = nib.load(wm_in_dwi).get_fdata().astype('bool')
     model = CsaOdfModel(gtab, sh_order=6)
-    mod = model.fit(data, wm_in_dwi_mask)
-    return mod.shm_coeff
+    csa_mod = model.fit(data, wm_in_dwi_mask).shm_coeff
+    return csa_mod
 
 
 def csd_mod_est(gtab, data, wm_in_dwi):
-    """
+    '''
+    Estimate a Constrained Spherical Deconvolution (CSD) model from dwi data.
 
-    :param gtab:
-    :param data:
-    :param wm_in_dwi:
-    :return:
-    """
+    Parameters
+    ----------
+    gtab : Obj
+        DiPy object storing diffusion gradient information.
+    data : array
+        4D numpy array of diffusion image data.
+    wm_in_dwi : str
+        File path to white-matter tissue segmentation Nifti1Image.
+
+    Returns
+    -------
+    csd_mod : obj
+        Spherical harmonics coefficients of the CSD-estimated reconstruction model.
+    '''
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     print('Fitting CSD model...')
     wm_in_dwi_mask = nib.load(wm_in_dwi).get_fdata().astype('bool')
     try:
-        print('Attempting from spherical harmonic...')
+        print('Reconstructing...')
         model = ConstrainedSphericalDeconvModel(gtab, None, sh_order=6)
     except:
         print('Falling back to recursive response...')
-        response = recursive_response(gtab, data, mask=wm_in_dwi_mask, sh_order=8,
-                                      peak_thr=0.01, init_fa=0.08, init_trace=0.0021, iter=8, convergence=0.001,
-                                      parallel=False)
+        response = recursive_response(gtab, data, mask=wm_in_dwi_mask, sh_order=8, peak_thr=0.01, init_fa=0.08,
+                                      init_trace=0.0021, iter=8, convergence=0.001, parallel=False)
         print('CSD Reponse: ' + str(response))
         model = ConstrainedSphericalDeconvModel(gtab, response)
-    mod = model.fit(data, wm_in_dwi_mask)
-    return mod.shm_coeff
+    csd_mod = model.fit(data, wm_in_dwi_mask).shm_coeff
+    return csd_mod
 
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
                   dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names,
-                  coords, norm, binary, curv_thr_list, step_list, voxel_size='2mm'):
-    """
+                  coords, norm, binary, voxel_size='2mm'):
+    '''
+    Use tracked streamlines as a basis for estimating a structural connectome.
 
-    :param atlas_mni:
-    :param streams:
-    :param overlap_thr:
-    :param dir_path:
-    :param track_type:
-    :param target_samples:
-    :param conn_model:
-    :param network:
-    :param node_size:
-    :param dens_thresh:
-    :param ID:
-    :param roi:
-    :param min_span_tree:
-    :param disp_filt:
-    :param parc:
-    :param prune:
-    :param atlas_select:
-    :param uatlas_select:
-    :param label_names:
-    :param coords:
-    :param norm:
-    :param binary:
-    :param curv_thr_list:
-    :param step_list:
-    :param voxel_size:
-    :return:
-    """
+    Parameters
+    ----------
+    atlas_mni : str
+        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    streams : str
+        File path to streamline array sequence in .trk format.
+    overlap_thr : int
+        Number of voxels for which a given streamline must intersect with an ROI
+        for an edge to be counted.
+    dir_path : str
+        Path to directory containing subject derivative data for a given pynets run.
+    track_type : str
+        Tracking algorithm used (e.g. 'local' or 'particle').
+    target_samples : int
+        Total number of streamline samples specified to generate streams.
+    conn_model : str
+        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+        used to filter nodes in the study of brain subgraphs.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's for tracking.
+    dens_thresh : bool
+        Indicates whether a target graph density is to be used as the basis for
+        thresholding.
+    ID : str
+        A subject id or other unique identifier.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    min_span_tree : bool
+        Indicates whether local thresholding from the Minimum Spanning Tree
+        should be used.
+    disp_filt : bool
+        Indicates whether local thresholding using a disparity filter and
+        'backbone network' should be used.
+    parc : bool
+        Indicates whether to use parcels instead of coordinates as ROI nodes.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
+    atlas_select : str
+        Name of atlas parcellation used.
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    label_names : list
+        List of string labels corresponding to graph nodes.
+    coords : list
+        List of (x, y, z) tuples corresponding to a coordinate atlas used or
+        which represent the center-of-mass of each parcellation node.
+    norm : int
+        Indicates method of normalizing resulting graph.
+    binary : bool
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted graph.
+    voxel_size : str
+        Target isotropic voxel resolution of all input Nifti1Image files.
+
+    Returns
+    -------
+    atlas_mni : str
+        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    streams : str
+        File path to streamline array sequence in .trk format.
+    conn_matrix : array
+        Adjacency matrix stored as an m x n array of nodes and edges.
+    track_type : str
+        Tracking algorithm used (e.g. 'local' or 'particle').
+    target_samples : int
+        Total number of streamline samples specified to generate streams.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    conn_model : str
+        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+        used to filter nodes in the study of brain subgraphs.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's for tracking.
+    dens_thresh : bool
+        Indicates whether a target graph density is to be used as the basis for
+        thresholding.
+    ID : str
+        A subject id or other unique identifier.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    min_span_tree : bool
+        Indicates whether local thresholding from the Minimum Spanning Tree
+        should be used.
+    disp_filt : bool
+        Indicates whether local thresholding using a disparity filter and
+        'backbone network' should be used.
+    parc : bool
+        Indicates whether to use parcels instead of coordinates as ROI nodes.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
+    atlas_select : str
+        Name of atlas parcellation used.
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    label_names : list
+        List of string labels corresponding to graph nodes.
+    coords : list
+        List of (x, y, z) tuples corresponding to a coordinate atlas used or
+        which represent the center-of-mass of each parcellation node.
+    norm : int
+        Indicates method of normalizing resulting graph.
+    binary : bool
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted graph.
+    '''
     from dipy.tracking.streamline import Streamlines
     from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
     import networkx as nx
@@ -181,7 +311,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
         edge_list = [(k[0], k[1], v) for k, v in edge_dict.items()]
         g.add_weighted_edges_from(edge_list)
-    print("%s%s%s" % ('Graph construction runtime: ', str(np.round(time.time() - start_time, 1)), 's'))
+    print("%s%s%s" % ('Graph construction runtime: ',
+    np.round(time.time() - start_time, 1), 's'))
 
     # Convert to numpy matrix
     conn_matrix_raw = nx.to_numpy_matrix(g)

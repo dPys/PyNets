@@ -18,10 +18,6 @@ from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, Traite
 
 
 def get_file():
-    """
-
-    :return:
-    """
     base_path = str(__file__)
     return base_path
 
@@ -91,7 +87,7 @@ def do_dir_path(atlas_select, in_file):
     return dir_path
 
 
-def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type):
+def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type, hpass):
     """
 
     :param ID:
@@ -104,48 +100,59 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
     :param smooth:
     :param c_boot:
     :param thr_type:
+    :param hpass:
     :return:
     """
     if node_size is None:
         node_size = 'parc'
     if roi is not None:
         if network is not None:
-            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_',
+            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_',
                                                                  str(conn_model), '_', str(thr), thr_type, '_',
                                                                  str(op.basename(roi).split('.')[0]), '_', str(node_size),
                                                                  '%s' % ("mm_" if node_size != 'parc' else ''),
                                                                  "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
                                                                          else ''),
-                                                                 "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
+                                                                 "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0
+                                                                         else ''),
+                                                                 "%s" % ("%s%s" % (hpass, 'Hz') if hpass is not None
                                                                          else ''),
                                                                  '.npy')
         else:
-            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_',
+            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_',
                                                              str(thr), thr_type, '_', str(op.basename(roi).split('.')[0]),
                                                              '_', str(node_size), '%s' % ("mm_" if node_size != 'parc'
                                                                                           else ''),
                                                              "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
                                                                      else ''),
-                                                             "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
+                                                             "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0
+                                                                     else ''),
+                                                             "%s" % ("%s%s" % (hpass, 'Hz') if hpass is not None
                                                                      else ''),
                                                              '.npy')
     else:
         if network is not None:
-            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model),
+            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model),
                                                              '_', str(thr), thr_type, '_', str(node_size),
                                                              '%s' % ("mm_" if node_size != 'parc' else ''),
                                                              "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
                                                                      else ''),
-                                                             "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
-                                                                     else ''), '.npy')
+                                                             "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0
+                                                                     else ''),
+                                                             "%s" % ("%s%s" % (hpass, 'Hz') if hpass is not None
+                                                                     else ''),
+                                                             '.npy')
         else:
-            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_', str(thr),
+            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_', str(thr),
                                                          thr_type, '_', str(node_size),
                                                          '%s' % ("mm_" if node_size != 'parc' else ''),
                                                          "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
                                                                  else ''),
-                                                         "%s" % ("%s%s" % (smooth, 'fwhm') if float(smooth) > 0
-                                                                 else ''), '.npy')
+                                                         "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0
+                                                                 else ''),
+                                                         "%s" % ("%s%s" % (hpass, 'Hz') if hpass is not None
+                                                                 else ''),
+                                                         '.npy')
     return est_path
 
 
@@ -460,8 +467,10 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
     struct_models = ['csa', 'tensor', 'csd']
 
     if multimodal is True:
-        est_path_iterlist_dwi = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in struct_models]))
-        est_path_iterlist_func = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in func_models]))
+        est_path_iterlist_dwi = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in
+                                          struct_models]))
+        est_path_iterlist_func = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in
+                                           func_models]))
 
         for atlas in atlases:
             for graph_path in est_path_iterlist_dwi:
@@ -618,7 +627,7 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, 
     return
 
 
-def list_first_mems(est_path, network, thr, dir_path, node_size, smooth, c_boot):
+def list_first_mems(est_path, network, thr, dir_path, node_size, smooth, c_boot, hpass):
     """
 
     :param est_path:
@@ -628,6 +637,7 @@ def list_first_mems(est_path, network, thr, dir_path, node_size, smooth, c_boot)
     :param node_size:
     :param smooth:
     :param c_boot:
+    :param hpass:
     :return:
     """
     est_path = est_path[0]
@@ -643,8 +653,9 @@ def list_first_mems(est_path, network, thr, dir_path, node_size, smooth, c_boot)
     print(node_size)
     print(smooth)
     print(c_boot)
+    print(hpass)
     print('\n\n\n\n')
-    return est_path, network, thr, dir_path, node_size, smooth, c_boot
+    return est_path, network, thr, dir_path, node_size, smooth, c_boot, hpass
 
 
 def check_est_path_existence(est_path_list):
@@ -689,7 +700,7 @@ def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network)
     labels_path = "%s%s%s%s" % (dir_path, '/', network, '_func_labelnames_rsn.pkl')
     with open(labels_path, 'wb') as f:
         pickle.dump(label_names, f, protocol=2)
-    return
+    return coord_path, labels_path
 
 
 def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
@@ -759,7 +770,7 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
                                               "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
                                               '_wb_net_ts.npy')
     np.save(out_path_ts, ts_within_nodes)
-    return
+    return out_path_ts
 
 
 def timeseries_bootstrap(tseries, block_size):

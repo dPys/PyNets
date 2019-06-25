@@ -493,8 +493,6 @@ class DmriReg(object):
         # Set intensities to int
         self.atlas_img = nib.load(self.dwi_aligned_atlas)
         self.atlas_data = self.atlas_img.get_fdata().astype('int')
-        #node_num = len(np.unique(self.atlas_data))
-        #self.atlas_data[self.atlas_data>node_num] = 0
         t_img = load_img(self.wm_gm_int_in_dwi)
         mask = math_img('img > 0', img=t_img)
         mask.to_filename(self.wm_gm_int_in_dwi_bin)
@@ -712,8 +710,6 @@ class FmriReg(object):
         # Set intensities to int
         self.atlas_img = nib.load(self.aligned_atlas_t1mni)
         self.atlas_data = self.atlas_img.get_fdata().astype('int')
-        #node_num = len(np.unique(self.atlas_data))
-        #self.atlas_data[self.atlas_data>node_num] = 0
         nib.save(nib.Nifti1Image(self.atlas_data.astype(np.int32), affine=self.atlas_img.affine,
                                  header=self.atlas_img.header), self.aligned_atlas_t1mni)
         cmd='fslmaths ' + self.aligned_atlas_t1mni + ' -mas ' + self.gm_mask_mni + ' ' + self.aligned_atlas_t1mni_gm

@@ -11,26 +11,27 @@ def get_parser():
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
                                                  'Graph Analysis of Functional and Structural Connectomes')
     parser.add_argument('-id',
-                        metavar='A subject id (can be any arbitrary identifier)',
+                        metavar='A subject id or other unique identifier',
                         default=None,
                         required=True,
-                        help='An arbitrary subject identifier OR list of subject identifiers, separated by comma and of '
-                             'equivalent length to the list of input files indicated with the -func flag. If functional '
+                        help='An subject identifier OR list of subject identifiers, separated by comma and of '
+                             'equivalent length to the list of input files indicated with the -func flag. This parameter '
+                             'must be an alphanumeric string and can be arbitrarily chosen. If functional '
                              'and structural connectomes are being generated simultaneously, then comma-separated id\'s '
                              'need to be repeated to match the total input file count.\n')
     parser.add_argument('-mod',
-                        metavar='Graph estimation method',
+                        metavar='Connectivity estimation/reconstruction method',
                         default='partcorr',
                         required=True,
                         nargs='+',
                         choices=['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
                                  'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso', 'csa', 'tensor', 'csd'],
-                        help='Specify matrix estimation type. For fMRI, possible models include: corr for correlation, '
-                             'cov for covariance, sps for precision covariance, partcorr for partial correlation. '
-                             'sps type is used by default. If skgmm is installed (https://github.com/skggm/skggm), '
-                             'then QuicGraphicalLasso, QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and '
-                             'AdaptiveQuicGraphicalLasso. Default is partcorr for fMRI. For dMRI, models include csa'
-                             'tensor, and csd.\n')
+                        help='Specify connectivity estimation model. For fMRI, possible models include: '
+                             'corr for correlation, cov for covariance, sps for precision covariance, partcorr for '
+                             'partial correlation. sps type is used by default. '
+                             'If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, '
+                             'QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. '
+                             'Default is partcorr for fMRI. For dMRI, models include csa tensor, and csd.\n')
     parser.add_argument('-g',
                         metavar='Path to graph file input.',
                         default=None,
@@ -39,11 +40,11 @@ def get_parser():
     parser.add_argument('-func',
                         metavar='Path to input functional file (required for functional connectomes)',
                         default=None,
-                        help='Specify either a path to a preprocessed functional image in '
-                              'standard space and in .nii or .nii.gz format OR multiple paths '
-                              'to multiple preprocessed functional images in standard '
-                              'space and in .nii or .nii.gz format, separated by commas OR the '
-                              'path to a text file containing a list of paths to subject files.\n')
+                        help='Specify either a path to a preprocessed functional Nifti1Image in '
+                              'standard space OR multiple paths to multiple preprocessed functional '
+                              'Nifti1Image files in standard space and in .nii or .nii.gz format, '
+                              'separated by commas OR the path to a text file containing a list of paths '
+                              'to subject files.\n')
     parser.add_argument('-conf',
                         metavar='Confound regressor file (.tsv/.csv format)',
                         default=None,
@@ -54,9 +55,9 @@ def get_parser():
     parser.add_argument('-dwi',
                         metavar='Path to diffusion-weighted imaging data file (required for structural connectomes)',
                         default=None,
-                        help='Specify either a path to a preprocessed structural diffusion image in native diffusion '
+                        help='Specify either a path to a preprocessed structural diffusion Nifti1Image in native diffusion '
                              'space and in .nii or .nii.gz format OR multiple paths to multiple preprocessed structural '
-                             'diffusion images in native diffusion space and in .nii or .nii.gz format.\n')
+                             'diffusion Nifti1Image files in native diffusion space and in .nii or .nii.gz format.\n')
     parser.add_argument('-bval',
                         metavar='Path to b-values file (required for structural connectomes)',
                         default=None,
@@ -70,21 +71,21 @@ def get_parser():
                              'per diffusion direction OR multiple paths to multiple b-vectors text files in the order '
                              'of accompanying b-values and dwi files.\n')
     parser.add_argument('-anat',
-                        metavar='Path to preprocessed anatomical image',
+                        metavar='Path to preprocessed anatomical Nifti1Image',
                         default=None,
                         help='Required for structural and/or functional connectomes. Multiple paths to multiple '
                              'anatomical files text in the order of accompanying functional and/or structural files. '
                              'If functional and structural connectomes are being generated simultaneously, then '
-                             'comma-separated anatomical image paths need to be repeated.\n')
+                             'comma-separated anatomical Nifti1Image file paths need to be repeated.\n')
     parser.add_argument('-m',
-                        metavar='Path to binarized mask image to apply to regions before extracting signals',
+                        metavar='Path to binarized mask Nifti1Image to apply to regions before extracting signals',
                         default=None,
-                        help='Specify either a path to a binarized brain mask image in standard space and in .nii or '
-                             '.nii.gz format OR multiple paths to multiple brain mask images in the case of running '
+                        help='Specify either a path to a binarized brain mask Nifti1Image in standard space '
+                             'OR multiple paths to multiple brain mask Nifti1Image files in the case of running '
                              'multiple participants, in which case paths should be separated by comma. If no brain '
                              'mask is supplied, a default MNI152 template mask will be used\n')
     parser.add_argument('-roi',
-                        metavar='Path to binarized roi image',
+                        metavar='Path to binarized region-of-interest Nifti1Image',
                         default=None,
                         help='Optionally specify a thresholded binarized ROI mask and retain only those nodes contained '
                              'within that mask for functional connectome estimation, or constrain the tractography '
@@ -92,18 +93,19 @@ def get_parser():
     parser.add_argument('-cm',
                         metavar='Cluster mask',
                         default=None,
-                        help='Specify the path to the mask within which to perform clustering. ' 
+                        help='Specify the path to a Nifti1Image mask file to constrained functional clustering. '
                              'If specifying a list of paths to multiple cluster masks, separate '
                              'them by comma.\n')
     parser.add_argument('-ua',
                         metavar='Path to parcellation file',
                         default=None,
-                        help='Optionally specify a path to a parcellation/atlas file in nifti format. If specifying a '
+                        help='Optionally specify a path to a parcellation/atlas Nifti1Image file. If specifying a '
                              'list of paths to multiple user atlases, separate them by comma.\n')
     parser.add_argument('-ref',
                         metavar='Atlas reference file path',
                         default=None,
-                        help='Specify the path to the atlas reference .txt file.\n')
+                        help='Specify the path to the atlas reference .txt file that maps labels to '
+                             'intensities corresponding to the atlas parcellation file specified with the -ua flag.\n')
     parser.add_argument('-a',
                         metavar='Atlas',
                         default=None,
@@ -171,11 +173,18 @@ def get_parser():
                              'RSNs, separate them by space. (e.g. -n \'Default\' \'Cont\' \'SalVentAttn\')\'.\n')
     parser.add_argument('-sm',
                         metavar='Smoothing value (mm fwhm)',
+                        default=None,
+                        nargs='+',
+                        help='Optionally specify smoothing width(s). Default is 0 / no smoothing. '
+                             'If you wish to iterate the pipeline across multiple smoothing '
+                             'separate the list by space (e.g. 2 4 6).\n')
+    parser.add_argument('-hp',
+                        metavar='High-pass filter (Hz)',
                         default=0,
                         nargs='+',
-                        help='Optionally specify smoothing width(s). Default is 0 / no smoothing. ' 
-                             'If you wish to iterate the pipeline across multiple smoothing '
-                             'values, separate the list by space (e.g. 2 4 6).\n')
+                        help='Optionally specify high-pass filter values to apply to node-extracted time-series '
+                             'for fMRI. Default is None. If you wish to iterate the pipeline across multiple high-pass '
+                             'filter thresholds, values, separate the list by space (e.g. 0.008 0.01).\n')
     parser.add_argument('-b',
                         metavar='Number of bootstraps (integer)',
                         default=0,
@@ -390,6 +399,23 @@ def build_workflow(args, retval):
             smooth_list = None
     else:
         smooth_list = None
+    hpass_pre = args.hp
+    hpass = hpass_pre
+    if hpass is not None:
+        if (type(hpass) is list) and (len(hpass) > 1):
+            hpass_list = hpass
+            hpass = None
+        elif hpass == ['None']:
+            hpass = None
+            hpass_list = None
+        elif type(hpass) is list:
+            hpass = hpass[0]
+            hpass_list = None
+        else:
+            hpass = None
+            hpass_list = None
+    else:
+        hpass_list = None
     c_boot = args.b
     block_size = args.bs
     roi = args.roi
@@ -890,6 +916,7 @@ def build_workflow(args, retval):
         k_clustering = 0
         node_size = 'None'
         smooth = 'None'
+        hpass = 'None'
         conn_model = 'None'
         c_boot = 'None'
         if multi_graph:
@@ -950,6 +977,14 @@ def build_workflow(args, retval):
             print("%s%s%s" % ("\nApplying smoothing to node signal at: ", smooth, 'FWHM mm...'))
         else:
             smooth = 0
+
+        if hpass_list:
+            print("%s%s%s" % ('\nApplying high-pass filter to node signal at multiple Hz values: ',
+                              str(', '.join(str(n) for n in hpass_list)), '...'))
+        elif hpass is not None:
+            print("%s%s%s" % ("\nApplying high-pass filter to node signal at: ", hpass, 'Hz...'))
+        else:
+            hpass = None
 
         if func_file:
             if float(c_boot) > 0:
@@ -1036,7 +1071,7 @@ def build_workflow(args, retval):
         roi = 'None'
         k_clustering = 0
         node_size = 'None'
-        smooth = 'None'
+        hpass = 'None'
         conn_model = 'None'
         c_boot = 'None'
         if multi_graph:
@@ -1155,7 +1190,7 @@ def build_workflow(args, retval):
         k_step = None
         k_clustering = None
         clust_mask_list = None
-        smooth = None
+        hpass = None
         clust_type = None
         clust_type_list = None
         c_boot = None
@@ -1183,6 +1218,8 @@ def build_workflow(args, retval):
     # print("%s%s" % ('network: ', network))
     # print("%s%s" % ('node_size: ', node_size))
     # print("%s%s" % ('smooth: ', smooth))
+    # print("%s%s" % ('hpass: ', hpass))
+    # print("%s%s" % ('hpass_list: ', hpass_list))
     # print("%s%s" % ('roi: ', roi))
     # print("%s%s" % ('thr: ', thr))
     # print("%s%s" % ('uatlas_select: ', uatlas_select))
@@ -1241,7 +1278,7 @@ def build_workflow(args, retval):
                                clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples,
                                curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
                                maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict, embed,
-                               multi_directget, multimodal):
+                               multi_directget, multimodal, hpass, hpass_list):
 
         if (func_file is not None) and (dwi_file is None):
             wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_fmri_', random.randint(1, 1000)))
@@ -1297,7 +1334,7 @@ def build_workflow(args, retval):
                                     clust_type, clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec,
                                     target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
                                     max_length, maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict,
-                                    embed, multi_directget, multimodal)
+                                    embed, multi_directget, multimodal, hpass, hpass_list)
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
@@ -1430,7 +1467,7 @@ def build_workflow(args, retval):
                          use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list,
                          c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
                          overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
-                         directget, tiss_class, runtime_dict, embed, multi_directget, multimodal):
+                         directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list):
 
         wf_multi = pe.Workflow(name="%s%s" % ('Wf_multisub_', random.randint(1001, 9000)))
 
@@ -1476,7 +1513,8 @@ def build_workflow(args, retval):
                 curv_thr_list=curv_thr_list, step_list=step_list, overlap_thr=overlap_thr,
                 overlap_thr_list=overlap_thr_list, track_type=track_type, max_length=max_length, maxcrossing=maxcrossing,
                 life_run=life_run, min_length=min_length, directget=directget, tiss_class=tiss_class,
-                runtime_dict=runtime_dict, embed=embed, multi_directget=multi_directget, multimodal=multimodal)
+                runtime_dict=runtime_dict, embed=embed, multi_directget=multi_directget, multimodal=multimodal,
+                hpass=hpass, hpass_list=hpass_list)
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
@@ -1517,7 +1555,7 @@ def build_workflow(args, retval):
                                     block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list,
                                     step_list, overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing,
                                     life_run, min_length, directget, tiss_class, runtime_dict, embed, multi_directget,
-                                    multimodal)
+                                    multimodal, hpass, hpass_list)
 
         import shutil
         wf_multi.base_dir = '/tmp/Wf_multi_subject'
@@ -1582,7 +1620,8 @@ def build_workflow(args, retval):
                                     smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask,
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
-                                    directget, tiss_class, runtime_dict, embed, multi_directget, multimodal)
+                                    directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass,
+                                    hpass_list)
 
         import shutil
         import os
@@ -1639,7 +1678,8 @@ def build_workflow(args, retval):
         if procmem != 'auto':
             if verbose is True:
                 from nipype.utils.profiler import log_nodes_cb
-                plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'status_callback': log_nodes_cb}
+                plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]),
+                               'status_callback': log_nodes_cb}
             else:
                 plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
             print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
