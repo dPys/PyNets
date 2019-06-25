@@ -13,7 +13,7 @@ import warnings
 warnings.simplefilter("ignore")
 
 
-def timeout(seconds=20):
+def timeout(seconds):
     from functools import wraps
     import errno
     import os
@@ -40,12 +40,25 @@ def timeout(seconds=20):
 
     return decorator
 
-@timeout
-def average_shortest_path_length_for_all(G):
-    """
 
-    :param G:
-    :return:
+@timeout(20)
+def average_shortest_path_length_for_all(G):
+    """Return the global efficiency of the graph G
+
+    Parameters
+    ----------
+    G : NetworkX graph
+
+    Returns
+    -------
+    average_shortest_path_length : float
+
+    Notes
+    -----
+    A helper function for calculating average shortest path length in the case that a graph is disconnected.
+    Calculation occurs across all subgraphs detected in G.
+
+
     """
     import math
     subgraphs = [sbg for sbg in nx.connected_component_subgraphs(G) if len(sbg) > 1]
@@ -195,71 +208,6 @@ def average_local_efficiency(G, weight=None):
     return total/N
 
 
-def create_random_graph(G, n, p):
-    """
-
-    :param G:
-    :param n:
-    :param p:
-    :return:
-    """
-    rG = nx.erdos_renyi_graph(n, p, seed=42)
-    return rG
-
-
-def smallworldness_measure(G, rG):
-    """
-
-    :param G:
-    :param rG:
-    :return:
-    """
-    C_g = nx.algorithms.average_clustering(G)
-    C_r = nx.algorithms.average_clustering(rG)
-    try:
-        L_g = nx.average_shortest_path_length(G)
-        L_r = nx.average_shortest_path_length(rG)
-    except:
-        L_g = average_shortest_path_length_for_all(G)
-        L_r = average_shortest_path_length_for_all(rG)
-    gam = float(C_g) / float(C_r)
-    lam = float(L_g) / float(L_r)
-    swm = gam / lam
-    return swm
-
-
-def smallworldness(G, rep=1000):
-    """
-
-    :param G:
-    :param rep:
-    :return:
-    """
-    print("%s%s%s" % ('Estimating smallworldness using ', rep, ' random graphs...'))
-    #import multiprocessing
-    n = nx.number_of_nodes(G)
-    m = nx.number_of_edges(G)
-    p = float(m) * 2 /(n*(n-1))
-    ss = []
-    for bb in range(rep):
-        rG = create_random_graph(G, n, p)
-        swm = smallworldness_measure(G, rG)
-        ss.append(swm)
-    #def small_iters(bb):
-    #    rG = create_random_graph(G, n, p)
-    #    swm = smallworldness_measure(G, rG)
-    #    return swm
-    #number_processes = int(multiprocessing.cpu_count()-1)
-    #pool = multiprocessing.Pool(number_processes)
-    #bb = range(rep)
-    #result = pool.map_async(small_iters, bb)
-    #pool.close()
-    #pool.join()
-    #ss = result.get()
-    mean_s = np.mean(ss)
-    return mean_s
-
-
 def create_communities(node_comm_aff_mat, node_num):
     """
 
@@ -302,7 +250,7 @@ def _compute_rc(G):
     return rc
 
 
-@timeout
+@timeout(20)
 def participation_coef(W, ci, degree='undirected'):
     ## ADAPTED FROM BCTPY ##
     '''
@@ -902,9 +850,7 @@ def most_important(G):
 
      return Gt, pruned_nodes
 
-
-# Institute 20-second timeout rule with signal decorator
-@timeout
+@timeout(60)
 def raw_mets(G, i, custom_weight):
     if i is 'average_shortest_path_length':
         if nx.is_connected(G) is True:
@@ -1044,13 +990,13 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # # # # Calculate global and local metrics from graph G # # # #
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, eigenvector_centrality, communicability_betweenness_centrality, clustering, degree_centrality, rich_club_coefficient
-    from pynets.stats.netstats import average_local_efficiency, global_efficiency, local_efficiency, modularity_louvain_und_sign, smallworldness, participation_coef, diversity_coef_sign
+    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, eigenvector_centrality, communicability_betweenness_centrality, clustering, degree_centrality, rich_club_coefficient, omega
+    from pynets.stats.netstats import average_local_efficiency, global_efficiency, local_efficiency, modularity_louvain_und_sign, participation_coef, diversity_coef_sign
     # For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the
     # function  (with a G-only input) to the netstats module.
     metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
                         average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient,
-                        graph_number_of_cliques, transitivity]
+                        graph_number_of_cliques, transitivity, omega]
     metric_list_comm = ['louvain_modularity']
     # with open("%s%s" % (str(Path(__file__).parent), '/global_graph_measures.yaml'), 'r') as stream:
     #     try:
@@ -1082,7 +1028,9 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
             try:
                 net_met_val = raw_mets(G, i, custom_weight)
             except:
-                print("%s%s%s" % ('WARNING: ', net_met, ' timeout for graph G. Most likely this is because the graph is either disconnected or because it is fully saturated. See thresholding and pruning options in pynets_run.py -h.'))
+                print("%s%s%s" % ('WARNING: ', net_met, ' timeout for graph G. Most likely this is because the graph '
+                                                        'is either disconnected or because it is fully saturated. See '
+                                                        'thresholding and pruning options in pynets_run.py -h.'))
                 net_met_val = np.nan
         except:
             print("%s%s%s" % ('WARNING: ', str(i), ' is undefined for graph G'))

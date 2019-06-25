@@ -6,5 +6,4 @@ metric_list_nodal:
     - 'degree_centrality'
     - 'betweenness_centrality'
     - 'eigenvector_centrality'
-#    - 'communicability_centrality'
     - 'rich_club_coefficient'

@@ -20,21 +20,20 @@ def segment_t1w(t1w, basename, opts=''):
     A function to use FSL's FAST to segment an anatomical
     image into GM, WM, and CSF prob maps.
 
-    **Positional Arguments:**
+    Parameters
+    ----------
+    t1w : str
+        File path to an anatomical T1-weighted image.
+    basename : str
+        A basename to use for output files.
+    opts : str
+        Additional options that can optionally be passed to fast.
+        Desirable options might be -P, which will use prior probability maps if the input T1w MRI is in standard space.
 
-        t1w:
-            - an anatomical T1w image.
-        basename:
-            - the basename for outputs. Often it will be
-              most convenient for this to be the dataset,
-              followed by the subject, followed by the step of
-              processing. Note that this anticipates a path as well;
-              ie, /path/to/dataset_sub_nuis, with no extension.
-        opts:
-            - additional options that can optionally be passed to
-              fast. Desirable options might be -P, which will use
-              prior probability maps if the input T1w MRI is in
-              standard space.
+    Returns
+    -------
+    out : str
+        File path to the probability map Nifti1Image consisting of GM, WM, and CSF in the 4th dimension.
     """
     print("Segmenting Anatomical Image into WM, GM, and CSF...")
     # run FAST, with options -t for the image type and -n to
@@ -49,32 +48,35 @@ def segment_t1w(t1w, basename, opts=''):
 
 
 def align(inp, ref, xfm=None, out=None, dof=12, searchrad=True, bins=256, interp=None, cost="mutualinfo", sch=None,
-          wmseg=None, init=None, finesearch=None):
+          wmseg=None, init=None):
     """
-    Aligns two images and stores the transform between them
-    **Positional Arguments:**
-            inp:
-                - Input impage to be aligned as a nifti image file
-            ref:
-                - Image being aligned to as a nifti image file
-            xfm:
-                - Returned transform between two images
-            out:
-                - determines whether the image will be automatically
-                aligned.
-            dof:
-                - the number of degrees of freedom of the alignment.
-            searchrad:
-                - a bool indicating whether to use the predefined
-                searchradius parameter (180 degree sweep in x, y, and z).
-            interp:
-                - the interpolation method to use.
-            sch:
-                - the optional FLIRT schedule file.
-            wmseg:
-                - an optional white-matter segmentation for bbr.
-            init:
-                - an initial guess of an alignment.
+    Aligns two images using linear registration (FSL's FLIRT).
+
+    Parameters
+    ----------
+        inp : str
+            File path to input Nifti1Image to be aligned for registration.
+        ref : str
+            File path to reference Nifti1Image to use as the target for alignment.
+        xfm : str
+            File path for the transformation matrix output in .xfm.
+        out : str
+            File path to input Nifti1Image output following registration alignment.
+        dof : int
+            Number of degrees of freedom to use in the alignment.
+        searchrad : bool
+            Indicating whether to use the predefined searchradius parameter (180 degree sweep in x, y, and z).
+            Default is True.
+        bins : int
+            Number of histogram bins. Default is 256.
+        interp : str
+            Interpolation method to use. Default is mutualinfo.
+        sch : str
+            Optional file path to a FLIRT schedule file.
+        wmseg : str
+            Optional file path to white-matter segmentation Nifti1Image for boundary-based registration (BBR).
+        init : str
+            File path to a transformation matrix in .xfm format to use as an initial guess for the alignment.
     """
     cmd = "flirt -in {} -ref {}".format(inp, ref)
     if xfm is not None:
@@ -99,23 +101,31 @@ def align(inp, ref, xfm=None, out=None, dof=12, searchrad=True, bins=256, interp
         cmd += " -init {}".format(init)
     print(cmd)
     os.system(cmd)
+    return
 
 
 def align_nonlinear(inp, ref, xfm, out, warp, ref_mask=None, in_mask=None, config=None):
     """
-    Aligns two images using nonlinear methods and stores the
-    transform between them.
+    Aligns two images using nonlinear registration and stores the transform between them.
 
-    **Positional Arguments:**
-
-        inp:
-            - the input image.
-        ref:
-            - the reference image.
-        affxfm:
-            - the affine transform to use.
-        warp:
-            - the path to store the nonlinear warp.
+    Parameters
+    ----------
+        inp : str
+            File path to input Nifti1Image to be aligned for registration.
+        ref : str
+            File path to reference Nifti1Image to use as the target for alignment.
+        xfm : str
+            File path for the transformation matrix output in .xfm.
+        out : str
+            File path to input Nifti1Image output following registration alignment.
+        warp : str
+            File path to input Nifti1Image output for the nonlinear warp following alignment.
+        ref_mask : str
+            Optional file path to a mask in reference image space.
+        in_mask : str
+            Optional file path to a mask in input image space.
+        config : str
+            Optional file path to config file specifying command line arguments.
     """
     cmd = "fnirt --in={} --ref={} --aff={} --iout={} --cout={} --warpres=8,8,8"
     cmd = cmd.format(inp, ref, xfm, out, warp, config)
@@ -127,48 +137,57 @@ def align_nonlinear(inp, ref, xfm, out, warp, ref_mask=None, in_mask=None, confi
         cmd += " --config={}".format(config)
     print(cmd)
     os.system(cmd)
+    return
 
 
 def applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6):
     """
-    Aligns two images with a given transform
+    Aligns two images with a given transform.
 
-    **Positional Arguments:**
-
-            inp:
-                - Input impage to be aligned as a nifti image file
-            ref:
-                - Image being aligned to as a nifti image file
-            xfm:
-                - Transform between two images
-            aligned:
-                - Aligned output image as a nifti image file
+    Parameters
+    ----------
+        inp : str
+            File path to input Nifti1Image to be aligned for registration.
+        ref : str
+            File path to reference Nifti1Image to use as the target for alignment.
+        xfm : str
+            File path for the transformation matrix output in .xfm.
+        aligned : str
+            File path to input Nifti1Image output following registration alignment.
+        interp : str
+            Interpolation method to use. Default is trilinear.
+        dof : int
+            Number of degrees of freedom to use in the alignment.
     """
     cmd = "flirt -in {} -ref {} -out {} -init {} -interp {} -dof {} -applyxfm"
     cmd = cmd.format(inp, ref, aligned, xfm, interp, dof)
     print(cmd)
     os.system(cmd)
+    return
 
 
 def apply_warp(ref, inp, out, warp, xfm=None, mask=None, interp=None, sup=False):
     """
-    Applies a warp from the functional to reference space
-    in a single step, using information about the structural->ref
-    mapping as well as the functional to structural mapping.
+    Applies a warp to a Nifti1Image which transforms the image to the reference space used in generating the warp.
 
-    **Positional Arguments:**
-
-        inp:
-            - the input image to be aligned as a nifti image file.
-        out:
-            - the output aligned image.
-        ref:
-            - the image being aligned to.
-        warp:
-            - the warp from the structural to reference space.
-        premat:
-            - the affine transformation from functional to
-            structural space.
+    Parameters
+    ----------
+        ref : str
+            File path to reference Nifti1Image to use as the target for alignment.
+        inp : str
+            File path to input Nifti1Image to be aligned for registration.
+        out : str
+            File path to input Nifti1Image output following registration alignment.
+        warp : str
+            File path to input Nifti1Image output for the nonlinear warp following alignment.
+        xfm : str
+            File path for the transformation matrix output in .xfm.
+        mask : str
+            Optional file path to a mask in reference image space.
+        interp : str
+            Interpolation method to use.
+        sup : bool
+            Intermediary supersampling of output. Default is False.
     """
     cmd = "applywarp --ref=" + ref + " --in=" + inp + " --out=" + out +\
           " --warp=" + warp
@@ -182,58 +201,65 @@ def apply_warp(ref, inp, out, warp, xfm=None, mask=None, interp=None, sup=False)
         cmd += " --super --superlevel=a"
     print(cmd)
     os.system(cmd)
+    return
 
 
 def inverse_warp(ref, out, warp):
     """
-    Applies a warp from the functional to reference space
-    in a single step, using information about the structural->ref
-    mapping as well as the functional to structural mapping.
+    Generates the inverse of a warp from a reference image space to the input image space.
+    space used in generating the warp.
 
-    **Positional Arguments:**
-
-        inp:
-            - the input image to be aligned as a nifti image file.
-        out:
-            - the output aligned image.
-        ref:
-            - the image being aligned to.
-        warp:
-            - the warp from the structural to reference space.
-        premat:
-            - the affine transformation from functional to
-            structural space.
+    Parameters
+    ----------
+        ref : str
+            File path to reference Nifti1Image to use as the target for alignment.
+        out : str
+            File path to input Nifti1Image output following registration alignment.
+        warp : str
+            File path to input Nifti1Image output for the nonlinear warp following alignment.
     """
     cmd = "invwarp --warp=" + warp + " --out=" + out + " --ref=" + ref
     print(cmd)
     os.system(cmd)
+    return
 
 
 def combine_xfms(xfm1, xfm2, xfmout):
     """
-    A function to combine two transformations, and output the
-    resulting transformation.
+    A function to combine two transformations, and output the resulting transformation.
 
-    **Positional Arguments**
-        xfm1:
-            - the path to the first transformation
-        xfm2:
-            - the path to the second transformation
-        xfmout:
-            - the path to the output transformation
+    Parameters
+    ----------
+        xfm1 : str
+            File path to the first transformation.
+        xfm2 : str
+            File path to the second transformation.
+        xfmout : str
+            File path to the output transformation.
     """
     cmd = "convert_xfm -omat {} -concat {} {}".format(xfmout, xfm1, xfm2)
     print(cmd)
     os.system(cmd)
+    return
 
 
 def transform_to_affine(streams, header, affine):
     """
+    A function to transform .trk file of tractography streamlines to a given affine.
 
-    :param streams:
-    :param header:
-    :param affine:
-    :return:
+    Parameters
+    ----------
+    streams : str
+        File path to input streamline array sequence in .trk format.
+    header : Dict
+        Nibabel trackvis header object to use for transformed streamlines file.
+    affine : array
+        4 x 4 2D numpy array representing the target affine for streamline transformation.
+
+    Returns
+    -------
+    streams : str
+        File path to transformed streamline array sequence in .trk format.
     """
     from dipy.tracking.utils import move_streamlines
     rotation, scale = np.linalg.qr(affine)

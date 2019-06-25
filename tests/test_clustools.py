@@ -12,13 +12,13 @@ except ImportError:
 from pathlib import Path
 from pynets.fmri import clustools
 
+
 def test_individual_tcorr_clustering():
     base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
-    dir_path = base_dir + '/997'
-    func_file = dir_path + '/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz'
-    clust_mask = dir_path + '/triple_net_ICA_overlap_3_sig_bin.nii.gz'
-    ID='997'
+    dir_path = base_dir + '/002/fmri'
+    func_file = dir_path + '/002.nii.gz'
+    clust_mask = base_dir + '/pDMN_3_bin.nii.gz'
+    ID='002'
     k = 3
     clust_type = 'kmeans'
 

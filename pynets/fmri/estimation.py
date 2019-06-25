@@ -10,30 +10,118 @@ import numpy as np
 
 
 def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-                    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary):
+                    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary,
+                    hpass):
     """
+    Computes a functional connectivity matrix based on a node-extracted time-series array.
+    Includes a library of routines across Nilearn, scikit-learn, and skggm packages, among others.
 
-    :param time_series:
-    :param conn_model:
-    :param dir_path:
-    :param node_size:
-    :param smooth:
-    :param dens_thresh:
-    :param network:
-    :param ID:
-    :param roi:
-    :param min_span_tree:
-    :param disp_filt:
-    :param parc:
-    :param prune:
-    :param atlas_select:
-    :param uatlas_select:
-    :param label_names:
-    :param coords:
-    :param c_boot:
-    :param norm:
-    :param binary:
-    :return:
+    Parameters
+    ----------
+    time_series : array
+        2D m x n array consisting of the time-series signal for each ROI node where m = number of scans and
+        n = number of ROI's.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's for tracking.
+    smooth : int
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    dens_thresh : bool
+        Indicates whether a target graph density is to be used as the basis for
+        thresholding.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    ID : str
+        A subject id or other unique identifier.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    min_span_tree : bool
+        Indicates whether local thresholding from the Minimum Spanning Tree
+        should be used.
+    disp_filt : bool
+        Indicates whether local thresholding using a disparity filter and
+        'backbone network' should be used.
+    parc : bool
+        Indicates whether to use parcels instead of coordinates as ROI nodes.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
+    atlas_select : str
+        Name of atlas parcellation used.
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    label_names : list
+        List of string labels corresponding to ROI nodes.
+    coords : list
+        List of (x, y, z) tuples corresponding to a coordinate atlas used or
+        which represent the center-of-mass of each parcellation node.
+    c_boot : int
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    norm : int
+        Indicates method of normalizing resulting graph.
+    binary : bool
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted graph.
+    hpass : bool
+        High-pass filter values (Hz) to apply to node-extracted time-series.
+
+    Returns
+    -------
+    conn_matrix : array
+        Adjacency matrix stored as an m x n array of nodes and edges.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's for tracking.
+    smooth : int
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    dens_thresh : bool
+        Indicates whether a target graph density is to be used as the basis for
+        thresholding.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    ID : str
+        A subject id or other unique identifier.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    min_span_tree : bool
+        Indicates whether local thresholding from the Minimum Spanning Tree
+        should be used.
+    disp_filt : bool
+        Indicates whether local thresholding using a disparity filter and
+        'backbone network' should be used.
+    parc : bool
+        Indicates whether to use parcels instead of coordinates as ROI nodes.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
+    atlas_select : str
+        Name of atlas parcellation used.
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    label_names : list
+        List of string labels corresponding to graph nodes.
+    coords : list
+        List of (x, y, z) tuples corresponding to a coordinate atlas used or
+        which represent the center-of-mass of each parcellation node.
+    c_boot : int
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    norm : int
+        Indicates method of normalizing resulting graph.
+    binary : bool
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted graph.
+    hpass : bool
+        High-pass filter values (Hz) to apply to node-extracted time-series.
     """
     from nilearn.connectome import ConnectivityMeasure
     from sklearn.covariance import GraphicalLassoCV
@@ -165,55 +253,76 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
 
     coords = np.array(coords)
     label_names = np.array(label_names)
-    return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary
-
-
-def generate_mask_from_voxels(voxel_coords, volume_dims):
-    """
-
-    :param voxel_coords:
-    :param volume_dims:
-    :return:
-    """
-    mask = np.zeros(volume_dims)
-    for voxel in voxel_coords:
-        mask[tuple(voxel)] = 1
-    return mask
-
-
-def normalize(v):
-    """
-
-    :param v:
-    :return:
-    """
-    norm = np.linalg.norm(v, ord=1)
-    if norm == 0:
-        norm = np.finfo(v.dtype).eps
-    return v/norm
+    return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary, hpass
 
 
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas_select,
-                    uatlas_select, label_names, c_boot, block_size, detrending=True):
+                    uatlas_select, label_names, c_boot, block_size, hpass, detrending=True):
+    """
+    API for employing Nilearn's NiftiLabelsMasker to extract fMRI time-series data from spherical ROI's based on a
+    given 3D atlas image of integer-based voxel intensities. The resulting time-series can then optionally be resampled
+    using circular-block bootrapping. The final 2D m x n array is ultimately saved to file in .npy format
+
+    Parameters
+    ----------
+    net_parcels_map_nifti : Nifti1Image
+        A nibabel-based nifti image consisting of a 3D array with integer voxel intensities corresponding to ROI
+        membership.
+    conf : str
+        File path to a confound regressor file for reduce noise in the time-series when extracting from ROI's.
+    func_file : str
+        File path to a preprocessed functional Nifti1Image in standard space.
+    coords : list
+        List of (x, y, z) tuples corresponding to the center-of-mass of each parcellation node.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    ID : str
+        A subject id or other unique identifier.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+        used to filter nodes in the study of brain subgraphs.
+    smooth : int
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    atlas_select : str
+        Name of atlas parcellation used.
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    label_names : list
+        List of string labels corresponding to graph nodes.
+    c_boot : int
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    block_size : int
+        Size bootstrap blocks if bootstrapping (c_boot) is performed.
+    hpass : bool
+        High-pass filter values (Hz) to apply to node-extracted time-series.
+    detrending : bool
+        Indicates whether to remove linear trends from time-series when extracting across nodes. Default is True.
+
+    Returns
+    -------
+    ts_within_nodes : array
+        2D m x n array consisting of the time-series signal for each ROI node where m = number of scans and
+        n = number of ROI's, where ROI's are parcel volumes.
+    smooth : int
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    atlas_select : str
+        Name of atlas parcellation used.
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    label_names : list
+        List of string labels corresponding to ROI nodes.
+    coords : list
+        List of (x, y, z) tuples corresponding to the center-of-mass of each parcellation node.
+    c_boot : int
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    hpass : bool
+        High-pass filter values (Hz) to apply to node-extracted time-series.
     """
 
-    :param net_parcels_map_nifti:
-    :param conf:
-    :param func_file:
-    :param coords:
-    :param roi:
-    :param dir_path:
-    :param ID:
-    :param network:
-    :param smooth:
-    :param atlas_select:
-    :param uatlas_select:
-    :param label_names:
-    :param c_boot:
-    :param block_size:
-    :param detrending:
-    :return:
-    """
     import os.path as op
     from nilearn import input_data
     from pynets import utils
@@ -228,7 +337,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
                              '-conf flag exist(s)')
 
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
-                                                 standardize=True, smoothing_fwhm=float(smooth),
+                                                 standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                  detrend=detrending, verbose=2, resampling_target='data')
     ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
     if ts_within_nodes is None:
@@ -239,33 +348,83 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
                         len(coords), ' volumetric ROI\'s'))
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
+    print("%s%s%s" % ('Applying high-pass filter: ', hpass, ' Hz\n'))
 
     # Save time series as txt file
     utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
     node_size = None
-    return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot
+    return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot, hpass
 
 
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, network, smooth, atlas_select,
-                      uatlas_select, label_names, c_boot, block_size, detrending=True):
+                      uatlas_select, label_names, c_boot, block_size, hpass, detrending=True):
     """
+    API for employing Nilearn's NiftiSpheresMasker to extract fMRI time-series data from spherical ROI's based on a
+    given list of seed coordinates. The resulting time-series can then optionally be resampled using circular-block
+    bootrapping. The final 2D m x n array is ultimately saved to file in .npy format
 
-    :param node_size:
-    :param conf:
-    :param func_file:
-    :param coords:
-    :param dir_path:
-    :param ID:
-    :param roi:
-    :param network:
-    :param smooth:
-    :param atlas_select:
-    :param uatlas_select:
-    :param label_names:
-    :param c_boot:
-    :param block_size:
-    :param detrending:
-    :return:
+    Parameters
+    ----------
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's for tracking.
+    conf : str
+        File path to a confound regressor file for reduce noise in the time-series when extracting from ROI's.
+    func_file : str
+        File path to a preprocessed functional Nifti1Image in standard space.
+    coords : list
+        List of (x, y, z) tuples corresponding to an a-priori defined set (e.g. a coordinate atlas).
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    ID : str
+        A subject id or other unique identifier.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+        used to filter nodes in the study of brain subgraphs.
+    smooth : int
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    atlas_select : str
+        Name of atlas parcellation used.
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    label_names : list
+        List of string labels corresponding to graph nodes.
+    c_boot : int
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    block_size : int
+        Size bootstrap blocks if bootstrapping (c_boot) is performed.
+    hpass : bool
+        High-pass filter values (Hz) to apply to node-extracted time-series.
+    detrending : bool
+        Indicates whether to remove linear trends from time-series when extracting across nodes. Default is True.
+
+    Returns
+    -------
+    ts_within_nodes : array
+        2D m x n array consisting of the time-series signal for each ROI node where m = number of scans and
+        n = number of ROI's, where ROI's are spheres.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's for tracking.
+    smooth : int
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    atlas_select : str
+        Name of atlas parcellation used.
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    label_names : list
+        List of string labels corresponding to ROI nodes.
+    coords : list
+        List of (x, y, z) tuples corresponding to a coordinate atlas used or
+        which represent the center-of-mass of each parcellation node.
+    c_boot : int
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    hpass : bool
+        High-pass filter values (Hz) to apply to node-extracted time-series.
     """
     import os.path as op
     from nilearn import input_data
@@ -282,7 +441,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
 
     if len(coords) > 0:
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
-                                                       standardize=True, smoothing_fwhm=float(smooth),
+                                                       standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                        detrend=detrending, verbose=2)
         ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
         if float(c_boot) > 0:
@@ -299,7 +458,8 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
                         len(coords), ' coordinate ROI\'s'))
     print("%s%s%s" % ('Using node radius: ', node_size, ' mm'))
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
+    print("%s%s%s" % ('Applying high-pass filter: ', hpass, ' Hz\n'))
 
     # Save time series as txt file
     utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
-    return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot
+    return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot, hpass

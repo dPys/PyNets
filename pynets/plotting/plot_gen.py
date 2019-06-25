@@ -298,7 +298,7 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels):
 
 
 def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, roi, coords, thr,
-             node_size, edge_threshold, smooth, prune, uatlas_select, c_boot, norm, binary):
+             node_size, edge_threshold, smooth, prune, uatlas_select, c_boot, norm, binary, hpass):
     """
 
     :param conn_matrix:
@@ -319,6 +319,7 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
     :param c_boot:
     :param norm:
     :param binary:
+    :param hpass:
     :return:
     """
     import matplotlib
@@ -378,11 +379,11 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
         if not node_size or node_size == 'None':
             node_size = 'parc'
         plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, roi,
-                                    thr, node_size, smooth, c_boot)
+                                    thr, node_size, smooth, c_boot, hpass)
 
         # Plot connectome
         if roi:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(op.basename(roi).split('.')[0]), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else 'nosm_'), 'func_glass_viz.png')
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), '_', str(op.basename(roi).split('.')[0]), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''), "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None else ''), 'func_glass_viz.png')
             # Save coords to pickle
             coord_path = "%s%s%s%s" % (dir_path, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
             with open(coord_path, 'wb') as f:
@@ -392,7 +393,7 @@ def plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label
             with open(labels_path, 'wb') as f:
                 pickle.dump(label_names, f, protocol=2)
         else:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else 'nosm_'), 'func_glass_viz.png')
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', str(atlas_select), '_', str(conn_model), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''), "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None else ''), 'func_glass_viz.png')
             # Save coords to pickle
             coord_path = "%s%s" % (dir_path, '/coords_plotting.pkl')
             with open(coord_path, 'wb') as f:

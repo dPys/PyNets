@@ -20,3 +20,58 @@ def test_bigref():
     assert bigref2mm is not None
     assert smallref1mm is not None
     assert smallref2mm is not None
+
+
+def test_atlases():
+    base_dir = "%s%s" % (str(Path(__file__).parent), '/../pynets/atlases')
+    whole_brain_cluster_labels_PCA200 = nib.load("%s%s" % (base_dir, '/whole_brain_cluster_labels_PCA200.nii.gz'))
+    AAL2zourioMazoyer2002 = nib.load("%s%s" % (base_dir, '/AAL2zourioMazoyer2002.nii.gz'))
+    AALTzourioMazoyer2002 = nib.load("%s%s" % (base_dir, '/AALTzourioMazoyer2002.nii.gz'))
+    AICHAJoliot2015 = nib.load("%s%s" % (base_dir, '/AICHAJoliot2015.nii.gz'))
+    AICHAreorderedJoliot2015 = nib.load("%s%s" % (base_dir, '/AICHAreorderedJoliot2015.nii.gz'))
+    BrainnetomeAtlasFan2016 = nib.load("%s%s" % (base_dir, '/BrainnetomeAtlasFan2016.nii.gz'))
+    CorticalAreaParcellationfromRestingStateCorrelationsGordon2014 = nib.load(
+        "%s%s" % (base_dir, '/CorticalAreaParcellationfromRestingStateCorrelationsGordon2014.nii.gz'))
+    DesikanKlein2012 = nib.load("%s%s" % (base_dir, '/DesikanKlein2012.nii.gz'))
+    destrieux2009_rois = nib.load("%s%s" % (base_dir, '/destrieux2009_rois.nii.gz'))
+    Hammers_mithAtlasn30r83Hammers2003Gousias2008 = nib.load(
+        "%s%s" % (base_dir, '/Hammers_mithAtlasn30r83Hammers2003Gousias2008.nii.gz'))
+    HarvardOxfordThr252mmWholeBrainMakris2006 = nib.load(
+        "%s%s" % (base_dir, '/HarvardOxfordThr252mmWholeBrainMakris2006.nii.gz'))
+    Juelichgmthr252mmEickhoff2005 = nib.load("%s%s" % (base_dir, '/Juelichgmthr252mmEickhoff2005.nii.gz'))
+    MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics = nib.load(
+        "%s%s" % (base_dir, '/MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics.nii.gz'))
+    RandomParcellationsc05meanalll43Craddock2011 = nib.load(
+        "%s%s" % (base_dir, '/RandomParcellationsc05meanalll43Craddock2011.nii.gz'))
+    VoxelwiseParcellationt058kLeadDBS = nib.load("%s%s" % (base_dir, '/VoxelwiseParcellationt058kLeadDBS.nii.gz'))
+    VoxelwiseParcellationt0435kLeadDBS = nib.load("%s%s" % (base_dir, '/VoxelwiseParcellationt0435kLeadDBS.nii.gz'))
+    VoxelwiseParcellationt0515kLeadDBS = nib.load("%s%s" % (base_dir, '/VoxelwiseParcellationt0515kLeadDBS.nii.gz'))
+    whole_brain_cluster_labels_PCA100 = nib.load("%s%s" % (base_dir, '/whole_brain_cluster_labels_PCA100.nii.gz'))
+    assert whole_brain_cluster_labels_PCA200 is not None
+    assert AAL2zourioMazoyer2002 is not None
+    assert AALTzourioMazoyer2002 is not None
+    assert AICHAJoliot2015 is not None
+    assert AICHAreorderedJoliot2015 is not None
+    assert BrainnetomeAtlasFan2016 is not None
+    assert CorticalAreaParcellationfromRestingStateCorrelationsGordon2014 is not None
+    assert DesikanKlein2012 is not None
+    assert destrieux2009_rois is not None
+    assert Hammers_mithAtlasn30r83Hammers2003Gousias2008 is not None
+    assert HarvardOxfordThr252mmWholeBrainMakris2006 is not None
+    assert Juelichgmthr252mmEickhoff2005 is not None
+    assert MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics is not None
+    assert RandomParcellationsc05meanalll43Craddock2011 is not None
+    assert VoxelwiseParcellationt058kLeadDBS is not None
+    assert VoxelwiseParcellationt0435kLeadDBS is not None
+    assert VoxelwiseParcellationt0515kLeadDBS is not None
+    assert whole_brain_cluster_labels_PCA100 is not None
+
+
+def test_templates():
+    base_dir = "%s%s" % (str(Path(__file__).parent), '/../pynets/templates')
+    ch2better = nib.load("%s%s" % (base_dir, '/ch2better.nii.gz'))
+    FSL_HCP1065_FA_2mm = nib.load("%s%s" % (base_dir, '/FSL_HCP1065_FA_2mm.nii.gz'))
+    MNI152_T1_2mm_brain = nib.load("%s%s" % (base_dir, '/MNI152_T1_2mm_brain.nii.gz'))
+    assert ch2better is not None
+    assert FSL_HCP1065_FA_2mm is not None
+    assert MNI152_T1_2mm_brain is not None

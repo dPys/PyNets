@@ -38,7 +38,6 @@ def threshold_proportional(W, p, copy=True):
     I = np.argsort(W[ind])[::-1]
     en = int(round((n * n - n) * p / ud))
     W[(ind[0][I][en:], ind[1][I][en:])] = 0
-    #W[np.ix_(ind[0][I][en:], ind[1][I][en:])]=0
     if ud == 2:
         W[:, :] = W + W.T
     return W
@@ -464,7 +463,8 @@ def local_thresholding_dens(conn_matrix, thr):
 
 
 def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
-                smooth, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary):
+                smooth, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary,
+                hpass):
     """
 
     :param dens_thresh:
@@ -488,6 +488,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     :param c_boot:
     :param norm:
     :param binary:
+    :param hpass:
     :return:
     """
     from pynets import utils, thresholding
@@ -536,11 +537,11 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
 
     # Save thresholded mat
     est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot,
-                                          thr_type)
+                                          thr_type, hpass)
 
     utils.save_mat(conn_matrix_thr, est_path)
 
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary, hpass
 
 
 def thresh_diff(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,

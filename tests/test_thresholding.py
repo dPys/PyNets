@@ -18,8 +18,7 @@ from pynets import thresholding
 
 def test_thresh_func():
     base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
-    dir_path = base_dir + '/997'
+    dir_path = base_dir + '/002/fmri'
     dens_thresh = False
     thr = 0.95
     smooth = 2
@@ -28,11 +27,12 @@ def test_thresh_func():
     conn_model = 'cov'
     network = 'Default'
     min_span_tree = False
-    ID = '997'
+    ID = '002'
     disp_filt = False
     roi = None
     parc = False
     node_size = 'TEST'
+    hpass = 0.10
     prune = 1
     norm = 1
     binary = False
@@ -47,12 +47,11 @@ def test_thresh_func():
 
     start_time = time.time()
     [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _, _, _, _, _, _,
-    _, _, _, _, _, _] = thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model,
+    _, _, _, _, _, _, _] = thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model,
     network, ID, dir_path, roi, node_size, min_span_tree, smooth, disp_filt,
-    parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary)
-    print("%s%s%s" %
-    ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
-    str(np.round(time.time() - start_time, 1)), 's'))
+    parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary, hpass)
+    print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
+    np.round(time.time() - start_time, 1), 's'))
 
     assert conn_matrix_thr is not None
     assert edge_threshold is not None
@@ -62,8 +61,8 @@ def test_thresh_func():
 # def test_thresh_diff():
 #     # Set example inputs
 #     base_dir = str(Path(__file__).parent/"examples")
-#     #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
-#     dir_path = base_dir + '/997'
+#
+#     dir_path = base_dir + '/002/fmri'
 #     dens_thresh = False
 #     thr = 0.95
 #     conn_matrix=np.random.rand(3,3)

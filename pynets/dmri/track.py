@@ -12,14 +12,25 @@ import nibabel as nib
 
 
 def reconstruction(conn_model, gtab, dwi_file, wm_in_dwi):
-    """
+    '''
+    Estimate a tensor model from dwi data.
 
-    :param conn_model:
-    :param gtab:
-    :param dwi_file:
-    :param wm_in_dwi:
-    :return:
-    """
+    Parameters
+    ----------
+    conn_model : str
+        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
+    gtab : Obj
+        DiPy object storing diffusion gradient information.
+    dwi_file : str
+        File path to diffusion weighted image.
+    wm_in_dwi : str
+        File path to white-matter tissue segmentation Nifti1Image.
+
+    Returns
+    -------
+    mod : obj
+        Connectivity reconstruction model.
+    '''
     try:
         import cPickle as pickle
     except ImportError:
@@ -40,16 +51,30 @@ def reconstruction(conn_model, gtab, dwi_file, wm_in_dwi):
 
 
 def prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc_step_size=0.2):
-    """
+    '''
+    Estimate a tissue classifier for tractography.
 
-    :param nodif_B0_mask:
-    :param gm_in_dwi:
-    :param vent_csf_in_dwi:
-    :param wm_in_dwi:
-    :param tiss_class:
-    :param cmc_step_size:
-    :return:
-    """
+    Parameters
+    ----------
+    nodif_B0_mask : str
+        File path to B0 brain mask.
+    gm_in_dwi : str
+        File path to grey-matter tissue segmentation Nifti1Image.
+    vent_csf_in_dwi : str
+        File path to ventricular CSF tissue segmentation Nifti1Image.
+    wm_in_dwi : str
+        File path to white-matter tissue segmentation Nifti1Image.
+    tiss_class : str
+        Tissue classification method.
+    cmc_step_size : float
+        Step size from CMC tissue classification method.
+
+    Returns
+    -------
+    tiss_classifier : obj
+        Tissue classifier object.
+    '''
+
     try:
         import cPickle as pickle
     except ImportError:
@@ -88,13 +113,26 @@ def prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_clas
 
 
 def run_LIFE_all(data, gtab, streamlines):
-    """
+    '''
+    Filters tractography streamlines using Linear Fascicle Evaluation (LiFE).
 
-    :param data:
-    :param gtab:
-    :param streamlines:
-    :return:
-    """
+    Parameters
+    ----------
+    data : array
+        4D numpy array of diffusion image data.
+    gtab : Obj
+        DiPy object storing diffusion gradient information.
+    streamlines : ArraySequence
+        DiPy list/array-like object of streamline points from tractography.
+
+    Returns
+    -------
+    streamlines_filt : ArraySequence
+        DiPy list/array-like object of filtered streamline fibers with positive beta-coefficients
+        after fitting LiFE model.
+    mean_rmse : float
+        Root Mean-Squared Error (RMSE) when using LiFE-filtered fibers to predict diffusion data.
+    '''
     import dipy.tracking.life as life
     import dipy.core.optimize as opt
     fiber_model = life.FiberModel(gtab)
@@ -113,13 +151,24 @@ def run_LIFE_all(data, gtab, streamlines):
 
 
 def save_streams(dwi_img, streamlines, streams):
-    """
+    '''
+    Save streamlines as .trk file with DTK-compatible trackvis header.
 
-    :param dwi_img:
-    :param streamlines:
-    :param streams:
-    :return:
-    """
+    Parameters
+    ----------
+    dwi_img : Nifti1Image
+        File path to diffusion weighted Nifti1Image.
+    streamlines : ArraySequence
+        DiPy list/array-like object of streamline points from tractography.
+    streams : str
+        File path to save streamline array sequence in .trk format.
+
+    Returns
+    -------
+    streams : str
+        File path to saved streamline array sequence in DTK-compatible trackvis (.trk) format.
+    '''
+
     hdr = dwi_img.header
 
     # Save streamlines
@@ -143,21 +192,45 @@ def save_streams(dwi_img, streamlines, streams):
 
 def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_length, conn_model, target_samples,
                        node_size, curv_thr_list, step_list):
-    """
+    '''
+    Perform various routines for reducing false-positive streamlines from tractography.
 
-    :param dwi_file:
-    :param dir_path:
-    :param gtab:
-    :param streamlines:
-    :param life_run:
-    :param min_length:
-    :param conn_model:
-    :param target_samples:
-    :param node_size:
-    :param curv_thr_list:
-    :param step_list:
-    :return:
-    """
+    Parameters
+    ----------
+    dwi_file : str
+        File path to diffusion weighted image.
+    dir_path : str
+        Path to directory containing subject derivative data for a given pynets run.
+    gtab : Obj
+        DiPy object storing diffusion gradient information.
+    streamlines : ArraySequence
+        DiPy list/array-like object of streamline points from tractography.
+    life_run : bool
+        Indicates whether to perform Linear Fascicle Evaluation (LiFE).
+    min_length : int
+        Minimum fiber length threshold in mm.
+    conn_model : str
+        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
+    target_samples : int
+        Total number of streamline samples specified to generate streams.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's for tracking.
+    curv_thr_list : list
+        List of integer curvature thresholds used to perform ensemble tracking.
+    step_list : list
+        List of float step-sizes used to perform ensemble tracking.
+
+    Returns
+    -------
+    streams : str
+        File path to saved streamline array sequence in DTK-compatible trackvis (.trk) format.
+    dir_path : str
+        Path to directory containing subject derivative data for a given pynets run.
+    dm_path : str
+        File path to fiber density map Nifti1Image.
+    '''
+
     from dipy.tracking import utils
     from pynets.dmri.track import save_streams, run_LIFE_all
 
@@ -176,8 +249,7 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
         mean_rmse = np.mean(rmse)
         print("%s%s" % ('Mean RMSE: ', mean_rmse))
         if mean_rmse > 5:
-            print(
-                'WARNING: LiFE revealed high model error. Check streamlines output and review tracking parameters used.')
+            print('WARNING: LiFE revealed high model error. Check streamlines output and review tracking parameters used.')
 
     # Create density map
     dm = utils.density_map(streamlines, dwi_img.shape, affine=np.eye(4))
@@ -185,8 +257,8 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
     # Save density map
     dm_img = nib.Nifti1Image(dm.astype('int16'), dwi_img.affine)
     dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/density_map_', conn_model, '_', target_samples, '_',
-                                                     node_size, 'mm_curv', str(curv_thr_list).replace(', ', '_'),
-                                                     '_step', str(step_list).replace(', ', '_'), '.nii.gz')
+                                            node_size, 'mm_curv', str(curv_thr_list).replace(', ', '_'),
+                                            '_step', str(step_list).replace(', ', '_'), '.nii.gz')
     dm_img.to_filename(dm_path)
 
     # Save streamlines to trk
@@ -198,35 +270,74 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
     return streams, dir_path, dm_path
 
 
-def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mod_fit,
-                   tiss_classifier, sphere, directget, curv_thr_list, step_list, track_type, maxcrossing, max_length,
-                   n_seeds_per_iter=200):
+def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere, directget,
+                   curv_thr_list, step_list, track_type, maxcrossing, max_length, n_seeds_per_iter=200,
+                   pft_back_tracking_dist=2, pft_front_tracking_dist=1, particle_count=15, roi_neighborhood_tol=8):
     """
+    Perform native-space ensemble tractography, restricted to a vector of ROI masks.
 
-    :param target_samples:
-    :param atlas_data_wm_gm_int:
-    :param parcels:
-    :param parcel_vec:
-    :param mod_fit:
-    :param tiss_classifier:
-    :param sphere:
-    :param directget:
-    :param curv_thr_list:
-    :param step_list:
-    :param track_type:
-    :param maxcrossing:
-    :param max_length:
-    :param n_seeds_per_iter:
-    :return:
+    target_samples : int
+        Total number of streamline samples specified to generate streams.
+    atlas_data_wm_gm_int : array
+        3D int32 numpy array of atlas parcellation intensities from Nifti1Image in T1w-warped native diffusion space,
+        restricted to wm-gm interface.
+    parcels : list
+        List of 3D boolean numpy arrays of atlas parcellation ROI masks from a Nifti1Image in T1w-warped native
+        diffusion space.
+    mod : obj
+        Connectivity reconstruction model.
+    tiss_classifier : str
+        Tissue classification method.
+    sphere : obj
+        DiPy object for modeling diffusion directions on a sphere.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
+    curv_thr_list : list
+        List of integer curvature thresholds used to perform ensemble tracking.
+    step_list : list
+        List of float step-sizes used to perform ensemble tracking.
+    track_type : str
+        Tracking algorithm used (e.g. 'local' or 'particle').
+    maxcrossing : int
+        Maximum number if diffusion directions that can be assumed per voxel while tracking.
+    max_length : int
+        Maximum fiber length threshold in mm to restrict tracking.
+    n_seeds_per_iter : int
+        Number of seeds from which to initiate tracking for each unique ensemble combination.
+        By default this is set to 200.
+    particle_count
+        pft_back_tracking_dist : float
+        Distance in mm to back track before starting the particle filtering
+        tractography. The total particle filtering tractography distance is
+        equal to back_tracking_dist + front_tracking_dist. By default this is set to 2 mm.
+    pft_front_tracking_dist : float
+        Distance in mm to run the particle filtering tractography after the
+        the back track distance. The total particle filtering tractography
+        distance is equal to back_tracking_dist + front_tracking_dist. By
+        default this is set to 1 mm.
+    particle_count : int
+        Number of particles to use in the particle filter.
+    roi_neighborhood_tol : float
+        Distance (in the units of the streamlines, usually mm). If any
+        coordinate in the streamline is within this distance from the center
+        of any voxel in the ROI, the filtering criterion is set to True for
+        this streamline, otherwise False. Defaults to the distance between
+        the center of each voxel and the corner of the voxel.
+
+    Returns
+    -------
+    streamlines : ArraySequence
+        DiPy list/array-like object of streamline points from tractography.
     """
     from colorama import Fore, Style
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
     from dipy.tracking.local import LocalTracking, ParticleFilteringTracking
-    from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, \
-        DeterministicMaximumDirectionGetter
+    from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
 
     # Commence Ensemble Tractography
+    parcel_vec = np.ones(len(parcels)).astype('bool')
     streamlines = nib.streamlines.array_sequence.ArraySequence()
     ix = 0
     circuit_ix = 0
@@ -270,15 +381,15 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec, mo
                                                                      max_cross=int(maxcrossing),
                                                                      step_size=float(step),
                                                                      maxlen=int(max_length),
-                                                                     pft_back_tracking_dist=2,
-                                                                     pft_front_tracking_dist=1,
-                                                                     particle_count=15, return_all=True)
+                                                                     pft_back_tracking_dist=pft_back_tracking_dist,
+                                                                     pft_front_tracking_dist=pft_front_tracking_dist,
+                                                                     particle_count=particle_count, return_all=True)
                 else:
                     raise ValueError('ERROR: No valid tracking method(s) specified.')
 
                 # Filter resulting streamlines by roi-intersection characteristics
-                streamlines_more = Streamlines(select_by_rois(streamline_generator, parcels, parcel_vec.astype('bool'),
-                                                              mode='any', affine=np.eye(4), tol=8))
+                streamlines_more = Streamlines(select_by_rois(streamline_generator, parcels, parcel_vec,
+                                                              mode='any', affine=np.eye(4), tol=roi_neighborhood_tol))
 
                 # Repeat process until target samples condition is met
                 ix = ix + 1
@@ -304,46 +415,153 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
               conn_model, gtab_file, dwi_file, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
               prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, life_run, min_length,
               fa_path):
-    """
+    '''
+    Run all ensemble tractography and filtering routines.
 
-    :param nodif_B0_mask:
-    :param gm_in_dwi:
-    :param vent_csf_in_dwi:
-    :param wm_in_dwi:
-    :param tiss_class:
-    :param labels_im_file_wm_gm_int:
-    :param labels_im_file:
-    :param target_samples:
-    :param curv_thr_list:
-    :param step_list:
-    :param track_type:
-    :param max_length:
-    :param maxcrossing:
-    :param directget:
-    :param conn_model:
-    :param gtab_file:
-    :param dwi_file:
-    :param network:
-    :param node_size:
-    :param dens_thresh:
-    :param ID:
-    :param roi:
-    :param min_span_tree:
-    :param disp_filt:
-    :param parc:
-    :param prune:
-    :param atlas_select:
-    :param uatlas_select:
-    :param label_names:
-    :param coords:
-    :param norm:
-    :param binary:
-    :param atlas_mni:
-    :param life_run:
-    :param min_length:
-    :param fa_path:
-    :return:
-    """
+    Parameters
+    ----------
+    nodif_B0_mask : str
+        File path to B0 brain mask.
+    gm_in_dwi : str
+        File path to grey-matter tissue segmentation Nifti1Image.
+    vent_csf_in_dwi : str
+        File path to ventricular CSF tissue segmentation Nifti1Image.
+    wm_in_dwi : str
+        File path to white-matter tissue segmentation Nifti1Image.
+    tiss_class : str
+        Tissue classification method.
+    labels_im_file_wm_gm_int : str
+        File path to atlas parcellation Nifti1Image in T1w-warped native diffusion space, restricted to wm-gm interface.
+    labels_im_file : str
+        File path to atlas parcellation Nifti1Image in T1w-warped native diffusion space.
+    target_samples : int
+        Total number of streamline samples specified to generate streams.
+    curv_thr_list : list
+        List of integer curvature thresholds used to perform ensemble tracking.
+    step_list : list
+        List of float step-sizes used to perform ensemble tracking.
+    track_type : str
+        Tracking algorithm used (e.g. 'local' or 'particle').
+    max_length : int
+        Maximum fiber length threshold in mm to restrict tracking.
+    maxcrossing : int
+        Maximum number if diffusion directions that can be assumed per voxel while tracking.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
+    conn_model : str
+        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
+    gtab_file : str
+        File path to pickled DiPy gradient table object.
+    dwi_file : str
+        File path to diffusion weighted image.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+        used to filter nodes in the study of brain subgraphs.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's for tracking.
+    dens_thresh : bool
+        Indicates whether a target graph density is to be used as the basis for
+        thresholding.
+    ID : str
+        A subject id or other unique identifier.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    min_span_tree : bool
+        Indicates whether local thresholding from the Minimum Spanning Tree
+        should be used.
+    disp_filt : bool
+        Indicates whether local thresholding using a disparity filter and
+        'backbone network' should be used.
+    parc : bool
+        Indicates whether to use parcels instead of coordinates as ROI nodes.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
+    atlas_select : str
+        Name of atlas parcellation used.
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    label_names : list
+        List of string labels corresponding to graph nodes.
+    coords : list
+        List of (x, y, z) tuples corresponding to a coordinate atlas used or
+        which represent the center-of-mass of each parcellation node.
+    norm : int
+        Indicates method of normalizing resulting graph.
+    binary : bool
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted graph.
+    atlas_mni : str
+        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    life_run : bool
+        Indicates whether to perform Linear Fascicle Evaluation (LiFE).
+    min_length : int
+        Minimum fiber length threshold in mm.
+    fa_path : str
+        File path to FA Nifti1Image.
+
+    Returns
+    -------
+    streams : str
+        File path to save streamline array sequence in .trk format.
+    track_type : str
+        Tracking algorithm used (e.g. 'local' or 'particle').
+    target_samples : int
+        Total number of streamline samples specified to generate streams.
+    conn_model : str
+        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
+    dir_path : str
+        Path to directory containing subject derivative data for a given pynets run.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+        used to filter nodes in the study of brain subgraphs.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's for tracking.
+    dens_thresh : bool
+        Indicates whether a target graph density is to be used as the basis for
+        thresholding.
+    ID : str
+        A subject id or other unique identifier.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    min_span_tree : bool
+        Indicates whether local thresholding from the Minimum Spanning Tree
+        should be used.
+    disp_filt : bool
+        Indicates whether local thresholding using a disparity filter and
+        'backbone network' should be used.
+    parc : bool
+        Indicates whether to use parcels instead of coordinates as ROI nodes.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
+    atlas_select : str
+        Name of atlas parcellation used.
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    label_names : list
+        List of string labels corresponding to graph nodes.
+    coords : list
+        List of (x, y, z) tuples corresponding to a coordinate atlas used or
+        which represent the center-of-mass of each parcellation node.
+    norm : int
+        Indicates method of normalizing resulting graph.
+    binary : bool
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted graph.
+    atlas_mni : str
+        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    curv_thr_list : list
+        List of integer curvature thresholds used to perform ensemble tracking.
+    step_list : list
+        List of float step-sizes used to perform ensemble tracking.
+    fa_path : str
+        File path to FA Nifti1Image.
+    dm_path : str
+        File path to fiber density map Nifti1Image.
+    '''
+
     try:
         import cPickle as pickle
     except ImportError:
@@ -372,7 +590,6 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     for roi_val in np.unique(atlas_data)[1:]:
         parcels.append(atlas_data == roi_val)
         i = i + 1
-    parcel_vec = np.ones(len(parcels))
 
     # Get sphere
     sphere = get_sphere('repulsion724')
@@ -404,9 +621,8 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     print(Style.RESET_ALL)
 
     # Commence Ensemble Tractography
-    streamlines = track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, parcel_vec,
-                                 mod_fit, tiss_classifier, sphere, directget, curv_thr_list, step_list, track_type,
-                                 maxcrossing, max_length)
+    streamlines = track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere,
+                                 directget, curv_thr_list, step_list, track_type, maxcrossing, max_length)
     print('Tracking Complete')
 
     # Perform streamline filtering routines

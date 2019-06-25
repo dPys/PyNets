@@ -13,26 +13,27 @@ try:
     import cPickle as pickle
 except ImportError:
     import _pickle as pickle
-from pynets.fmri import estimation
+from pynets.fmri import estimation as fmri_estimation
+from pynets.dmri import estimation as dmri_estimation
 from pathlib import Path
 
 
 def test_get_conn_matrix_cov():
     base_dir = str(Path(__file__).parent/"examples")
-    #ase_dir = '/Users/rxh180012/PyNets-development/tests/examples'
-    dir_path = base_dir + '/997'
-    time_series_file = dir_path + '/coords_power_2011/997_wb_net_ts.txt'
-    time_series = np.genfromtxt(time_series_file)
+    dir_path = base_dir + '/002/fmri'
+    time_series_file = dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_rsn_net_ts.npy'
+    time_series = np.load(time_series_file)
     conn_model = 'cov'
     node_size = 2
     smooth = 2
     c_boot = 0
     dens_thresh = False
     network = 'Default'
-    ID = '997'
+    ID = '002'
     roi = None
     min_span_tree = False
     disp_filt = False
+    hpass = None
     parc = None
     prune = 1
     norm = 1
@@ -49,9 +50,9 @@ def test_get_conn_matrix_cov():
     start_time = time.time()
     [conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network,
     ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select,
-    label_names, coords, c_boot, norm, binary] = estimation.get_conn_matrix(time_series, conn_model,
+    label_names, coords, c_boot, norm, binary, hpass] = fmri_estimation.get_conn_matrix(time_series, conn_model,
     dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary)
+    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary, hpass)
     print("%s%s%s" %
     ('get_conn_matrix --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -74,17 +75,16 @@ def test_get_conn_matrix_cov():
     #assert label_names is not None
     assert coords is not None
 
+
 def test_extract_ts_rsn_parc():
     # Set example inputs
-
     base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
-    dir_path = base_dir + '/997'
-    net_parcels_map_nifti_file = dir_path + '/whole_brain_cluster_labels_PCA200/997_parcels_Default.nii.gz'
-    func_file = dir_path + '/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz'
+    dir_path = base_dir + '/002/fmri'
+    net_parcels_map_nifti_file = dir_path + '/whole_brain_cluster_labels_PCA200/002_parcels_Default.nii.gz'
+    func_file = dir_path + '/002.nii.gz'
     roi = None
     network = 'Default'
-    ID = '997'
+    ID = '002'
     smooth = 2
     c_boot = 0
     boot_size = 3
@@ -98,29 +98,28 @@ def test_extract_ts_rsn_parc():
     labels_file = open(labels_file_path, 'rb')
     label_names = pickle.load(labels_file)
     mask = None
-
+    hpass = None
     start_time = time.time()
     net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
     [ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select,
-    label_names, coords, c_boot] = estimation.extract_ts_parc(net_parcels_map_nifti,
+    label_names, coords, c_boot, hpass] = fmri_estimation.extract_ts_parc(net_parcels_map_nifti,
     conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas_select,
-    uatlas_select, label_names, c_boot, boot_size, mask)
+    uatlas_select, label_names, c_boot, boot_size, hpass)
     print("%s%s%s" % ('extract_ts_parc --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     assert ts_within_nodes is not None
     #assert node_size is not None
     #node_size is none
 
+
 def test_extract_ts_rsn_coords():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    #base_dir = '/Users/rxh180012/PyNets-development/tests/examples'
-    dir_path = base_dir + '/997'
-
-    func_file = dir_path + '/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz'
+    dir_path = base_dir + '/002/fmri'
+    func_file = dir_path + '/002.nii.gz'
     roi = None
     network = 'Default'
-    ID = '997'
+    ID = '002'
     conf = None
     node_size = 2
     smooth = 2
@@ -134,12 +133,12 @@ def test_extract_ts_rsn_coords():
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path, 'rb')
     label_names = pickle.load(labels_file)
-    mask = None
+    hpass = None
     start_time = time.time()
     [ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select,
-     label_names, coords, c_boot] = estimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi,
+     label_names, coords, c_boot, hpass] = fmri_estimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi,
                                                                  network, smooth, atlas_select, uatlas_select,
-                                                                 label_names, c_boot, boot_size, mask)
+                                                                 label_names, c_boot, boot_size, hpass)
     print("%s%s%s" % ('extract_ts_coords --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     assert ts_within_nodes is not None
@@ -148,43 +147,14 @@ def test_extract_ts_rsn_coords():
     assert dir_path is not None
     assert c_boot is not None
 
-# def test_extract_ts_rsn_parc_fast():
-#     # Set example inputs
-#     base_dir = str(Path(__file__).parent/"examples")
-#     dir_path = base_dir + '/997'
-#     net_parcels_map_nifti_file = dir_path + '/whole_brain_cluster_labels_PCA200/997_parcels_Default.nii.gz'
-#     func_file = dir_path + '/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz'
-#     roi = None
-#     network = 'Default'
-#     ID = '997'
-#     conf = None
-#     wb_coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
-#     file_ = open(wb_coords_file, 'rb')
-#     coords = pickle.load(file_)
-#
-#     start_time = time.time()
-#     net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
-#     ts_within_nodes = estimation.extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path,
-#                                                       ID, network, fast=True)
-#     print("%s%s%s" % ('extract_ts_parc (fast) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
-#     assert ts_within_nodes is not None
 
-# def test_extract_ts_rsn_coords_fast():
-#     # Set example inputs
-#     base_dir = str(Path(__file__).parent/"examples")
-#     dir_path = base_dir + '/997'
-#     func_file = dir_path + '/sub-997_ses-01_task-REST_run-01_bold_space-MNI152NLin2009cAsym_preproc_masked.nii.gz'
-#     roi = None
-#     network = 'Default'
-#     ID = '997'
-#     conf = None
-#     node_size = 2
-#     wb_coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
-#     file_ = open(wb_coords_file, 'rb')
-#     coords = pickle.load(file_)
-#
-#     start_time = time.time()
-#     ts_within_nodes = estimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, network,
-#                                                         fast=True)
-#     print("%s%s%s" % ('extract_ts_coords (fast) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
-#     assert ts_within_nodes is not None
+def generate_mask_from_voxels():
+    # Set example inputs
+    base_dir = str(Path(__file__).parent/"examples")
+    dir_path = base_dir + '/002/fmri'
+    func_file = dir_path + '/002.nii.gz'
+    volume_dims = nib.load(func_file).shape
+    voxel_coords = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
+    mask = fmri_estimation.generate_mask_from_voxels(voxel_coords, volume_dims)
+    assert mask is not None
+
