@@ -151,16 +151,16 @@ def disparity_filter(G, weight='weight'):
     :return:
     """
     from scipy import integrate
-    '''
-    Compute significance scores (alpha) for weighted edges in G as defined in Serrano et al. 2009
-        Args
-            G: Weighted NetworkX graph
-        Returns
-            Weighted graph with a significance score (alpha) assigned to each edge
-        References
-            M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks. PNAS, 106:16, 
-            pp. 6483-6488.
-    '''
+    # '''
+    # Compute significance scores (alpha) for weighted edges in G as defined in Serrano et al. 2009
+    #     Args
+    #         G: Weighted NetworkX graph
+    #     Returns
+    #         Weighted graph with a significance score (alpha) assigned to each edge
+    #     References
+    #         M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks. PNAS, 106:16,
+    #         pp. 6483-6488.
+    # '''
 
     if nx.is_directed(G):  # directed case
         N = nx.DiGraph()
@@ -210,37 +210,37 @@ def disparity_filter(G, weight='weight'):
 
 
 def disparity_filter_alpha_cut(G, weight='weight', alpha_t=0.4, cut_mode='or'):
-    '''
-    Performs a cut of the graph previously filtered through the disparity_filter function.
-
-        Args
-        ----
-        G: Weighted NetworkX graph
-
-        weight: string (default='weight')
-            Key for edge data used as the edge weight w_ij.
-
-        alpha_t: double (default='0.4')
-            The threshold for the alpha parameter that is used to select the surviving edges.
-            It has to be a number between 0 and 1.
-
-        cut_mode: string (default='or')
-            Possible strings: 'or', 'and'.
-            It works only for directed graphs. It represents the logic operation to filter out edges
-            that do not pass the threshold value, combining the alpha_in and alpha_out attributes
-            resulting from the disparity_filter function.
-
-
-        Returns
-        -------
-        B: Weighted NetworkX graph
-            The resulting graph contains only edges that survived from the filtering with the alpha_t threshold
-
-        References
-        ---------
-        .. M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks. PNAS, 106:16,
-        pp. 6483-6488.
-    '''
+    # '''
+    # Performs a cut of the graph previously filtered through the disparity_filter function.
+    #
+    #     Args
+    #     ----
+    #     G: Weighted NetworkX graph
+    #
+    #     weight: string (default='weight')
+    #         Key for edge data used as the edge weight w_ij.
+    #
+    #     alpha_t: double (default='0.4')
+    #         The threshold for the alpha parameter that is used to select the surviving edges.
+    #         It has to be a number between 0 and 1.
+    #
+    #     cut_mode: string (default='or')
+    #         Possible strings: 'or', 'and'.
+    #         It works only for directed graphs. It represents the logic operation to filter out edges
+    #         that do not pass the threshold value, combining the alpha_in and alpha_out attributes
+    #         resulting from the disparity_filter function.
+    #
+    #
+    #     Returns
+    #     -------
+    #     B: Weighted NetworkX graph
+    #         The resulting graph contains only edges that survived from the filtering with the alpha_t threshold
+    #
+    #     References
+    #     ---------
+    #     .. M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks. PNAS, 106:16,
+    #     pp. 6483-6488.
+    # '''
 
     if nx.is_directed(G):  # Directed case:
         B = nx.DiGraph()
@@ -318,10 +318,10 @@ def local_thresholding_prop(conn_matrix, thr):
     """
     from pynets import thresholding
     from pynets.stats import netstats
-    '''
-    Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
-    successive N-nearest neighbour degree graphs to achieve target proportional threshold.
-    '''
+    # '''
+    # Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
+    # successive N-nearest neighbour degree graphs to achieve target proportional threshold.
+    # '''
 
     fail_tol = 10
     conn_matrix = np.nan_to_num(conn_matrix)
@@ -398,10 +398,10 @@ def local_thresholding_dens(conn_matrix, thr):
     """
     from pynets import thresholding
     from pynets.stats import netstats
-    '''
-    Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
-    successive N-nearest neighbour degree graphs to achieve target density.
-    '''
+    # '''
+    # Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
+    # successive N-nearest neighbour degree graphs to achieve target density.
+    # '''
     fail_tol = 10
     conn_matrix = np.nan_to_num(conn_matrix)
     G = nx.from_numpy_matrix(conn_matrix)

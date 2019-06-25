@@ -774,26 +774,26 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
 
 
 def timeseries_bootstrap(tseries, block_size):
-    """
-    Generates a bootstrap sample derived from the input time-series.
-    Utilizes Circular-block-bootstrap method described in [1]_.
-    Parameters
-    ----------
-    tseries : array_like
-        A matrix of shapes (`M`, `N`) with `M` timepoints and `N` variables
-    block_size : integer
-        Size of the bootstrapped blocks
-    Returns
-    -------
-    bseries : array_like
-        Bootstrap sample of the input timeseries
-    References
-    ----------
-    .. [1] P. Bellec; G. Marrelec; H. Benali, A bootstrap test to investigate
-       changes in brain connectivity for functional MRI. Statistica Sinica,
-       special issue on Statistical Challenges and Advances in Brain Science,
-       2008, 18: 1253-1268.
-    """
+    # """
+    # Generates a bootstrap sample derived from the input time-series.
+    # Utilizes Circular-block-bootstrap method described in [1]_.
+    # Parameters
+    # ----------
+    # tseries : array_like
+    #     A matrix of shapes (`M`, `N`) with `M` timepoints and `N` variables
+    # block_size : integer
+    #     Size of the bootstrapped blocks
+    # Returns
+    # -------
+    # bseries : array_like
+    #     Bootstrap sample of the input timeseries
+    # References
+    # ----------
+    # .. [1] P. Bellec; G. Marrelec; H. Benali, A bootstrap test to investigate
+    #    changes in brain connectivity for functional MRI. Statistica Sinica,
+    #    special issue on Statistical Challenges and Advances in Brain Science,
+    #    2008, 18: 1253-1268.
+    # """
     np.random.seed(int(42))
 
     # calculate number of blocks
@@ -811,17 +811,17 @@ def timeseries_bootstrap(tseries, block_size):
 
 
 def rescale_bvec(bvec, bvec_rescaled):
-    """
-    Normalizes b-vectors to be of unit length for the non-zero b-values. If the
-    b-value is 0, the vector is untouched.
-
-    Positional Arguments:
-            - bvec:
-                    File name of the original b-vectors file
-            - bvec_new:
-                    File name of the new (normalized) b-vectors file. Must have
-                    extension `.bvec`
-    """
+    # """
+    # Normalizes b-vectors to be of unit length for the non-zero b-values. If the
+    # b-value is 0, the vector is untouched.
+    #
+    # Positional Arguments:
+    #         - bvec:
+    #                 File name of the original b-vectors file
+    #         - bvec_new:
+    #                 File name of the new (normalized) b-vectors file. Must have
+    #                 extension `.bvec`
+    # """
     bv1 = np.array(np.loadtxt(bvec))
     # Enforce proper dimensions
     bv1 = bv1.T if bv1.shape[0] == 3 else bv1
@@ -848,10 +848,10 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file):
     from dipy.core.gradients import gradient_table
     from nilearn.image import mean_img
     from pynets.utils import rescale_bvec
-    """
-    Takes bval and bvec files and produces a structure in dipy format
-    **Positional Arguments:**
-    """
+    # """
+    # Takes bval and bvec files and produces a structure in dipy format
+    # **Positional Arguments:**
+    # """
     # Use b0's from the DWI to create a more stable DWI image for registration
     outdir = op.dirname(dwi_file)
 
