@@ -150,3 +150,5 @@ tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.9.txt fi
 tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.91_pDMN_3_bin.csv filter=lfs diff=lfs merge=lfs -text
 tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.9_pDMN_3_bin filter=lfs diff=lfs merge=lfs -text
 lfsobjects filter=lfs diff=lfs merge=lfs -text
+002.nii.gz filter=lfs diff=lfs merge=lfs -text
+tests/examples/002/*/*/*/* filter=lfs diff=lfs merge=lfs -text
