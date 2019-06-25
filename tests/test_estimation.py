@@ -22,7 +22,7 @@ def test_get_conn_matrix_cov():
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
     time_series_file = dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_rsn_net_ts.npy'
-    time_series = np.genfromtxt(time_series_file)
+    time_series = np.load(time_series_file)
     conn_model = 'cov'
     node_size = 2
     smooth = 2
@@ -33,6 +33,7 @@ def test_get_conn_matrix_cov():
     roi = None
     min_span_tree = False
     disp_filt = False
+    hpass = None
     parc = None
     prune = 1
     norm = 1
@@ -49,9 +50,9 @@ def test_get_conn_matrix_cov():
     start_time = time.time()
     [conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network,
     ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select,
-    label_names, coords, c_boot, norm, binary] = fmri_estimation.get_conn_matrix(time_series, conn_model,
+    label_names, coords, c_boot, norm, binary, hpass] = fmri_estimation.get_conn_matrix(time_series, conn_model,
     dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary)
+    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary, hpass)
     print("%s%s%s" %
     ('get_conn_matrix --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -97,13 +98,13 @@ def test_extract_ts_rsn_parc():
     labels_file = open(labels_file_path, 'rb')
     label_names = pickle.load(labels_file)
     mask = None
-
+    hpass = None
     start_time = time.time()
     net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
     [ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select,
-    label_names, coords, c_boot] = fmri_estimation.extract_ts_parc(net_parcels_map_nifti,
+    label_names, coords, c_boot, hpass] = fmri_estimation.extract_ts_parc(net_parcels_map_nifti,
     conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas_select,
-    uatlas_select, label_names, c_boot, boot_size, mask)
+    uatlas_select, label_names, c_boot, boot_size, hpass)
     print("%s%s%s" % ('extract_ts_parc --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     assert ts_within_nodes is not None
@@ -132,12 +133,12 @@ def test_extract_ts_rsn_coords():
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path, 'rb')
     label_names = pickle.load(labels_file)
-    mask = None
+    hpass = None
     start_time = time.time()
     [ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select,
-     label_names, coords, c_boot] = fmri_estimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi,
+     label_names, coords, c_boot, hpass] = fmri_estimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi,
                                                                  network, smooth, atlas_select, uatlas_select,
-                                                                 label_names, c_boot, boot_size, mask)
+                                                                 label_names, c_boot, boot_size, hpass)
     print("%s%s%s" % ('extract_ts_coords --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     assert ts_within_nodes is not None

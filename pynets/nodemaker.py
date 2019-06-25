@@ -12,8 +12,8 @@ warnings.filterwarnings("ignore")
 
 
 def get_sphere(coords, r, vox_dims, dims):
-    ## ADAPTED FROM NeuroSynth ##
     """
+    ## ADAPTED FROM NeuroSynth ##
     Return all points within r mm of coords. Generates a cube and then discards all points outside sphere.
 
     Parameters
@@ -118,7 +118,6 @@ def fetch_nilearn_atlas_coords(atlas_select):
     return coords, atlas_name, networks_list, label_names
 
 
-
 def nilearn_atlas_helper(atlas_select, parc):
     """
     Meta-API for nilearn's parcellation-based atlas fetching API to retrieve any publically-available parcellation-based
@@ -189,32 +188,32 @@ def nilearn_atlas_helper(atlas_select, parc):
     return label_names, networks_list, uatlas_select
 
 
-def mmToVox(nib_nifti, mmcoords):
+def mmToVox(img_affine, mmcoords):
     """
     Function to convert a list of mm coordinates to voxel coordinates.
 
     Parameters
     ----------
-    nib_nifti : Obj
-        Nibabel Nifti1Image object whose affine will provide reference for the conversion.
+    img_affine : array
+        4 x 4 2D Numpy array that is the affine of the image space that the coordinates inhabit.
     mmcoords : list
         List of [x, y, z] or (x, y, z) coordinates in mm-space.
     """
-    return nib.affines.apply_affine(np.linalg.inv(nib_nifti.affine), mmcoords)
+    return nib.affines.apply_affine(np.linalg.inv(img_affine), mmcoords)
 
 
-def VoxTomm(nib_nifti, voxcoords):
+def VoxTomm(img_affine, voxcoords):
     """
     Function to convert a list of voxel coordinates to mm coordinates.
 
     Parameters
     ----------
-    nib_nifti : Obj
-        Nibabel Nifti1Image object whose affine will provide reference for the conversion.
+    img_affine : array
+        4 x 4 2D Numpy array that is the affine of the image space that the coordinates inhabit.
     voxcoords : list
         List of [x, y, z] or (x, y, z) coordinates in voxel-space.
     """
-    return nib.affines.apply_affine(nib_nifti.affine, voxcoords)
+    return nib.affines.apply_affine(img_affine, voxcoords)
 
 
 def get_node_membership(network, infile, coords, label_names, parc, parcel_list, perc_overlap=0.75, error=4):
@@ -306,10 +305,11 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
     par_data = par_img.get_fdata()
     RSN_ix = list(ref_dict.keys())[list(ref_dict.values()).index(network)]
     RSNmask = par_data[:, :, :, RSN_ix]
+    bna_aff = bna_img.affine
 
     coords_vox = []
     for i in coords:
-        coords_vox.append(mmToVox(bna_img, i))
+        coords_vox.append(mmToVox(bna_aff, i))
     coords_vox = list(tuple(map(lambda y: isinstance(y, float) and int(round(y, 0)), x)) for x in coords_vox)
     if parc is False:
         i = -1
@@ -326,7 +326,7 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
                 net_label_names.append(label_names[i])
                 continue
             else:
-                inds = get_sphere(coords, error, (x_vox, y_vox, z_vox), RSNmask.shape)
+                inds = get_sphere(coords, error, (np.abs(x_vox), y_vox, z_vox), RSNmask.shape)
                 sphere_vol[tuple(inds.T)] = 1
                 if (RSNmask.astype('bool') & sphere_vol).any():
                     print("%s%s%.2f%s%s%s" % (coords, ' coords is within a + or - ', float(error),
@@ -337,7 +337,7 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
 
         coords_mm = []
         for i in RSN_coords_vox:
-            coords_mm.append(VoxTomm(bna_img, i))
+            coords_mm.append(VoxTomm(bna_aff, i))
         coords_mm = list(set(list(tuple(x) for x in coords_mm)))
     else:
         i = 0
@@ -520,7 +520,7 @@ def coords_masker(roi, coords, label_names, error):
         if (mask_data & sphere_vol).any():
             print("%s%s" % (coords, ' falls within mask...'))
             continue
-        inds = get_sphere(coords, error, (x_vox, y_vox, z_vox), mask_data.shape)
+        inds = get_sphere(coords, error, (np.abs(x_vox), y_vox, z_vox), mask_data.shape)
         sphere_vol[tuple(inds.T)] = 1
         if (mask_data & sphere_vol).any():
             print("%s%s%.2f%s" % (coords, ' is within a + or - ', float(error), ' mm neighborhood...'))
@@ -1125,7 +1125,7 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
 
     coords_vox = []
     for i in coords:
-        coords_vox.append(mmToVox(mask_img, i))
+        coords_vox.append(mmToVox(mask_aff, i))
     coords_vox = list(set(list(tuple(x) for x in coords_vox)))
 
     x_vox = np.diagonal(mask_img.affine[:3,0:3])[0]
@@ -1135,7 +1135,7 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     parcel_list = []
     i = 0
     for coord in coords_vox:
-        inds = get_sphere(coord, node_size, (x_vox, y_vox, z_vox), mask_img.shape)
+        inds = get_sphere(coord, node_size, (np.abs(x_vox), y_vox, z_vox), mask_img.shape)
         sphere_vol[tuple(inds.T)] = i*1
         parcel_list.append(nib.Nifti1Image(sphere_vol.astype('int'), affine=mask_aff))
         i = i + 1
