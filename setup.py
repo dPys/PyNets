@@ -4,6 +4,10 @@
 """The setup script."""
 
 from setuptools import setup, find_packages
+#from pynets.__about__ import __version__, DOWNLOAD_URL
+from pynets.__about__ import __version__
+import versioneer
+cmdclass = versioneer.get_cmdclass()
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -27,7 +31,8 @@ requirements = [
     'boto3>=1.9.111',
     'colorama>=0.3.9',
     'pybids>=0.6.4',
-#    'graspy==0.0.2'
+    'graspy==0.0.2',
+    'python-louvain==0.13'
 ]
 
 setup_requirements = [
@@ -42,9 +47,9 @@ test_requirements = [
 
 setup(
     name='pynets',
-    version='0.7.39',
-    description="A Fully-Automated Workflow for Reproducible Graph Analysis of Functional and Structural Connectomes",
-    #long_description=readme + '\n\n',
+    version=__version__,
+    cmdclass=cmdclass,
+    description="A Fully-Automated Workflow for Reproducible Ensemble Graph Analysis of Functional and Structural Connectomes",
     author="Derek Pisner",
     author_email='dpisner@utexas.edu',
     url='https://github.com/dPys/pynets',
@@ -64,10 +69,9 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+	'Programming Language :: Python :: 3.7'
     ],
     test_suite='tests',
     tests_require=test_requirements,

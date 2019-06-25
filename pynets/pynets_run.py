@@ -6,6 +6,7 @@
 
 
 def get_parser():
+    """Parse command-line inputs"""
     import argparse
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
@@ -154,7 +155,7 @@ def get_parser():
                         metavar='Clustering type',
                         default='ncut',
                         nargs='+',
-                        choices=['ncut', 'ward', 'kmeans', 'complete', 'average'],
+                        choices=['ncut_tcorr', 'ncut_scorr', 'ward', 'kmeans', 'complete', 'average'],
                         help='Specify the types of clustering to use. Options include ncut, '
                              'ward, kmeans, complete, and average. If specifying a list of '
                              'clustering types, separate them by space.\n')
@@ -610,8 +611,8 @@ def build_workflow(args, retval):
         func_subjects_list = None
 
     if dwi_file and (not anat_file and not fbval and not fbvec):
-        raise ValueError('ERROR: Anatomical image(s) (-anat), b-values file(s) (-fbval), and b-vectors file(s) (-fbvec) '
-                         'must be specified for structural connectometry.')
+        raise ValueError('ERROR: Anatomical image(s) (-anat), b-values file(s) (-fbval), and b-vectors file(s) '
+                         '(-fbvec) must be specified for structural connectometry.')
 
     if dwi_file:
         if dwi_file.endswith('.txt'):
@@ -880,7 +881,8 @@ def build_workflow(args, retval):
                     for atlas_select in multi_atlas:
                         if (parc is True) and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
                             raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
-                                                         ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                                                         ' is a coordinate atlas and cannot be combined with the -parc '
+                                                         'flag.'))
                         else:
                             print(atlas_select)
                             do_dir_path(atlas_select, func_file)
@@ -888,7 +890,8 @@ def build_workflow(args, retval):
                 for atlas_select in multi_atlas:
                     if (parc is True) and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
                         raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
-                                                     ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                                                     ' is a coordinate atlas and cannot be combined with the -parc '
+                                                     'flag.'))
                     else:
                         print(atlas_select)
                         do_dir_path(atlas_select, func_file)
@@ -1036,7 +1039,8 @@ def build_workflow(args, retval):
                     for atlas_select in multi_atlas:
                         if (parc is True) and (atlas_select in nilearn_coord_atlases):
                             raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
-                                                         ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                                                         ' is a coordinate atlas and cannot be combined with the -parc '
+                                                         'flag.'))
                         else:
                             print(atlas_select)
                             do_dir_path(atlas_select, dwi_file)
@@ -1044,7 +1048,8 @@ def build_workflow(args, retval):
                 for atlas_select in multi_atlas:
                     if (parc is True) and (atlas_select in nilearn_coord_atlases):
                         raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
-                                                     ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                                                     ' is a coordinate atlas and cannot be combined with the -parc '
+                                                     'flag.'))
                     else:
                         print(atlas_select)
                         do_dir_path(atlas_select, dwi_file)
@@ -1136,7 +1141,8 @@ def build_workflow(args, retval):
                     for atlas_select in multi_atlas:
                         if (parc is True) and (atlas_select in nilearn_coord_atlases):
                             raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
-                                                         ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                                                         ' is a coordinate atlas and cannot be combined with the -parc '
+                                                         'flag.'))
                         else:
                             print(atlas_select)
                             do_dir_path(atlas_select, dwi_file)
@@ -1144,7 +1150,8 @@ def build_workflow(args, retval):
                 for atlas_select in multi_atlas:
                     if (parc is True) and (atlas_select in nilearn_coord_atlases):
                         raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
-                                                     ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                                                     ' is a coordinate atlas and cannot be combined with the -parc '
+                                                     'flag.'))
                     else:
                         print(atlas_select)
                         do_dir_path(atlas_select, dwi_file)
@@ -1279,7 +1286,7 @@ def build_workflow(args, retval):
                                curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
                                maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict, embed,
                                multi_directget, multimodal, hpass, hpass_list):
-
+        """A function interface for generating a single-subject workflow"""
         if (func_file is not None) and (dwi_file is None):
             wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_fmri_', random.randint(1, 1000)))
         elif (dwi_file is not None) and (func_file is None):
@@ -1468,7 +1475,7 @@ def build_workflow(args, retval):
                          c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
                          overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
                          directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list):
-
+        """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         wf_multi = pe.Workflow(name="%s%s" % ('Wf_multisub_', random.randint(1001, 9000)))
 
         if func_subjects_list and not struct_subjects_list:
@@ -1630,7 +1637,7 @@ def build_workflow(args, retval):
         elif (dwi_file is not None) and (func_file is None):
             base_dirname = "%s%s" % ('Wf_single_subject_dmri_', str(ID))
         else:
-            base_dirname = "%s%s" % ('Wf_single_subject', str(ID))
+            base_dirname = "%s%s" % ('Wf_single_subject_', str(ID))
 
         if func_file:
             func_dir = os.path.dirname(func_file)
@@ -1703,6 +1710,7 @@ def build_workflow(args, retval):
 
 
 def main():
+    """Initializes main script from command-line call to generate single-subject or multi-subject workflow(s)"""
     import sys
     import warnings
     warnings.filterwarnings("ignore")

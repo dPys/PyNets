@@ -11,7 +11,28 @@ import networkx as nx
 
 
 def threshold_absolute(W, thr, copy=True):
-    '''# Adapted from bctpy
+    '''
+    ## ADAPTED FROM BCTPY ##
+
+    This function thresholds the connectivity matrix by absolute weight
+    magnitude. All weights below the given threshold, and all weights
+    on the main diagonal (self-self connections) are set to 0.
+    If copy is not set, this function will *modify W in place.*
+
+    Parameters
+    ----------
+    W : np.ndarray
+        weighted connectivity matrix
+    thr : float
+        absolute weight threshold
+    copy : bool
+        if True, returns a copy of the matrix. Otherwise, modifies the matrix
+        in place. Default value=True.
+
+    Returns
+    -------
+    W : np.ndarray
+        thresholded connectivity matrix
     '''
     if copy:
         W = W.copy()
@@ -21,7 +42,47 @@ def threshold_absolute(W, thr, copy=True):
 
 
 def threshold_proportional(W, p, copy=True):
-    '''# Adapted from bctpy
+    '''
+    ## ADAPTED FROM BCTPY ##
+
+    This function "thresholds" the connectivity matrix by preserving a
+    proportion p (0<p<1) of the strongest weights. All other weights, and
+    all weights on the main diagonal (self-self connections) are set to 0.
+    If copy is not set, this function will *modify W in place.*
+
+    Parameters
+    ----------
+    W : np.ndarray
+        weighted connectivity matrix
+    p : float
+        proportional weight threshold (0<p<1)
+    copy : bool
+        if True, returns a copy of the matrix. Otherwise, modifies the matrix
+        in place. Default value=True.
+
+    Returns
+    -------
+    W : np.ndarray
+        thresholded connectivity matrix
+
+    Notes
+    -----
+    The proportion of elements set to 0 is a fraction of all elements
+    in the matrix, whether or not they are already 0. That is, this function
+    has the following behavior:
+    >> x = np.random.random_sample((10,10))
+    >> x_25 = threshold_proportional(x, .25)
+    >> np.size(np.where(x_25)) #note this double counts each nonzero element
+    46
+    >> x_125 = threshold_proportional(x, .125)
+    >> np.size(np.where(x_125))
+    22
+    >> x_test = threshold_proportional(x_25, .5)
+    >> np.size(np.where(x_test))
+    46
+    That is, the 50% thresholding of x_25 does nothing because >=50% of the
+    elements in x_25 are aleady <=0. This behavior is the same as in BCT. Be
+    careful with matrices that are both signed and sparse.
     '''
     if p > 1 or p < 0:
         raise ValueError('Threshold must be in range [0,1]')
@@ -44,7 +105,22 @@ def threshold_proportional(W, p, copy=True):
 
 
 def normalize(W, copy=True):
-    '''# Adapted from bctpy
+    '''
+    ## ADAPTED FROM BCTPY ##
+
+    Normalizes an input weighted connection matrix.  If copy is not set, this
+    function will *modify W in place.*
+    Parameters
+    ----------
+    W : np.ndarray
+        weighted connectivity matrix
+    copy : bool
+        if True, returns a copy of the matrix. Otherwise, modifies the matrix
+        in place. Default value=True.
+    Returns
+    -------
+    W : np.ndarray
+        normalized connectivity matrix
     '''
     if copy:
         W = W.copy()
@@ -76,16 +152,38 @@ def density_thresholding(conn_matrix, thr, thr_max=1000):
 
 # Calculate density
 def est_density(func_mat):
-    '''# Adapted from bctpy
-    '''
+    """
+    Calculates the density of a given graph.
+
+    Parameters
+    ----------
+    func_mat : NxN np.ndarray
+        weighted connectivity matrix.
+
+    Returns
+    -------
+    density : float
+        Density of the graph.
+    """
     fG = nx.from_numpy_matrix(func_mat)
     density = nx.density(fG)
     return density
 
 
 def thr2prob(W, copy=True):
-    '''# Adapted from bctpy
-    '''
+    """
+    Thresholds the near-zero ranks of a ranked graph.
+
+    Parameters
+    ----------
+    W : NxN np.ndarray
+        Weighted connectivity matrix of ranks.
+
+    Returns
+    -------
+    W : NxN np.ndarray
+        Weighted connectivity matrix of ranks with no near-zero entries.
+    """
     if copy:
         W = W.copy()
     W[W < 0.001] = 0
@@ -93,7 +191,24 @@ def thr2prob(W, copy=True):
 
 
 def binarize(W, copy=True):
-    '''# Adapted from bctpy
+    '''
+    ## ADAPTED FROM BCTPY ##
+
+    Binarizes an input weighted connection matrix.  If copy is not set, this
+    function will *modify W in place.*
+
+    Parameters
+    ----------
+    W : NxN np.ndarray
+        weighted connectivity matrix
+    copy : bool
+        if True, returns a copy of the matrix. Otherwise, modifies the matrix
+        in place. Default value=True.
+
+    Returns
+    -------
+    W : NxN np.ndarray
+        binary connectivity matrix
     '''
     if copy:
         W = W.copy()
@@ -102,7 +217,26 @@ def binarize(W, copy=True):
 
 
 def invert(W, copy=False):
-    '''# Adapted from bctpy
+    '''
+    ## ADAPTED FROM BCTPY ##
+
+    Inverts elementwise the weights in an input connection matrix.
+    In other words, change the from the matrix of internode strengths to the
+    matrix of internode distances.
+    If copy is not set, this function will *modify W in place.*
+
+    Parameters
+    ----------
+    W : np.ndarray
+        weighted connectivity matrix
+    copy : bool
+        if True, returns a copy of the matrix. Otherwise, modifies the matrix
+        in place. Default value=True.
+
+    Returns
+    -------
+    W : np.ndarray
+        inverted connectivity matrix
     '''
     if copy:
         W = W.copy()
@@ -112,7 +246,50 @@ def invert(W, copy=False):
 
 
 def weight_conversion(W, wcm, copy=True):
-    '''# Adapted from bctpy
+    '''
+    ## ADAPTED FROM BCTPY ##
+
+    W_bin = weight_conversion(W, 'binarize');
+    W_nrm = weight_conversion(W, 'normalize');
+    L = weight_conversion(W, 'lengths');
+    This function may either binarize an input weighted connection matrix,
+    normalize an input weighted connection matrix or convert an input
+    weighted connection matrix to a weighted connection-length matrix.
+    Binarization converts all present connection weights to 1.
+    Normalization scales all weight magnitudes to the range [0,1] and
+    should be done prior to computing some weighted measures, such as the
+    weighted clustering coefficient.
+    Conversion of connection weights to connection lengths is needed
+    prior to computation of weighted distance-based measures, such as
+    distance and betweenness centrality. In a weighted connection network,
+    higher weights are naturally interpreted as shorter lengths. The
+    connection-lengths matrix here is defined as the inverse of the
+    connection-weights matrix.
+    If copy is not set, this function will *modify W in place.*
+
+    Parameters
+    ----------
+    W : NxN np.ndarray
+        weighted connectivity matrix
+    wcm : str
+        weight conversion command.
+        'binarize' : binarize weights
+        'normalize' : normalize weights
+        'lengths' : convert weights to lengths (invert matrix)
+    copy : bool
+        if True, returns a copy of the matrix. Otherwise, modifies the matrix
+        in place. Default value=True.
+
+    Returns
+    -------
+    W : NxN np.ndarray
+        connectivity matrix with specified changes
+
+    Notes
+    -----
+    This function is included for compatibility with BCT. But there are
+    other functions binarize(), normalize() and invert() which are simpler to
+    call directly.
     '''
     if wcm == 'binarize':
         return binarize(W, copy)
@@ -121,7 +298,22 @@ def weight_conversion(W, wcm, copy=True):
 
 
 def autofix(W, copy=True):
-    '''# Adapted from bctpy
+    '''
+    Fix a bunch of common problems. More specifically, remove Inf and NaN,
+    ensure exact binariness and symmetry (i.e. remove floating point
+    instability), and zero diagonal.
+
+    Parameters
+    ----------
+    W : np.ndarray
+        weighted connectivity matrix.
+    copy : bool
+        if True, returns a copy of the matrix. Otherwise, modifies the matrix
+        in place. Default value=True.
+    Returns
+    -------
+    W : np.ndarray
+        connectivity matrix with fixes applied.
     '''
     if copy:
         W = W.copy()
@@ -145,22 +337,27 @@ def autofix(W, copy=True):
 
 def disparity_filter(G, weight='weight'):
     """
+    Compute significance scores (alpha) for weighted edges in G as defined in Serrano et al. 2009.
 
-    :param G:
-    :param weight:
-    :return:
+    Parameters
+    ----------
+    G : Object
+        Weighted NetworkX graph.
+
+    weight : str
+        Key for edge data used as the edge weight w_ij. Default is 'weight'.
+
+    Returns
+    -------
+    B : Object
+        Weighted NetworkX graph with a significance score (alpha) assigned to each edge.
+
+    References
+    ----------
+    .. [1] M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks.
+       PNAS, 106:16, pp. 6483-6488.
     """
     from scipy import integrate
-    # '''
-    # Compute significance scores (alpha) for weighted edges in G as defined in Serrano et al. 2009
-    #     Args
-    #         G: Weighted NetworkX graph
-    #     Returns
-    #         Weighted graph with a significance score (alpha) assigned to each edge
-    #     References
-    #         M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks. PNAS, 106:16,
-    #         pp. 6483-6488.
-    # '''
 
     if nx.is_directed(G):  # directed case
         N = nx.DiGraph()
@@ -210,37 +407,36 @@ def disparity_filter(G, weight='weight'):
 
 
 def disparity_filter_alpha_cut(G, weight='weight', alpha_t=0.4, cut_mode='or'):
-    # '''
-    # Performs a cut of the graph previously filtered through the disparity_filter function.
-    #
-    #     Args
-    #     ----
-    #     G: Weighted NetworkX graph
-    #
-    #     weight: string (default='weight')
-    #         Key for edge data used as the edge weight w_ij.
-    #
-    #     alpha_t: double (default='0.4')
-    #         The threshold for the alpha parameter that is used to select the surviving edges.
-    #         It has to be a number between 0 and 1.
-    #
-    #     cut_mode: string (default='or')
-    #         Possible strings: 'or', 'and'.
-    #         It works only for directed graphs. It represents the logic operation to filter out edges
-    #         that do not pass the threshold value, combining the alpha_in and alpha_out attributes
-    #         resulting from the disparity_filter function.
-    #
-    #
-    #     Returns
-    #     -------
-    #     B: Weighted NetworkX graph
-    #         The resulting graph contains only edges that survived from the filtering with the alpha_t threshold
-    #
-    #     References
-    #     ---------
-    #     .. M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks. PNAS, 106:16,
-    #     pp. 6483-6488.
-    # '''
+    """
+    Compute significance scores (alpha) for weighted edges in G as defined in Serrano et al. 2009.
+
+    Parameters
+    ----------
+    G : Object
+        Weighted NetworkX graph.
+
+    weight : str
+        Key for edge data used as the edge weight w_ij. Default is 'weight'.
+
+    alpha_t : float
+            The threshold, between 0 and 1, for the alpha parameter
+            used to select the surviving edges. Default is 0.4.
+
+    cut_mode : str
+            In the case of directed graphs. It represents the logic operation to filter out edges
+            that do not pass the threshold value, combining the alpha_in and alpha_out attributes
+            resulting from the disparity_filter function. Default is 'or'. Possible strings: 'or', 'and'.
+    Returns
+    -------
+    B : Object
+        Weighted NetworkX graph with a significance score (alpha) assigned to each edge. The resulting
+        graph contains only edges that survived from the filtering with the alpha_t threshold.
+
+    References
+    ----------
+    .. [1] M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks.
+       PNAS, 106:16, pp. 6483-6488.
+    """
 
     if nx.is_directed(G):  # Directed case:
         B = nx.DiGraph()
@@ -278,7 +474,21 @@ def disparity_filter_alpha_cut(G, weight='weight', alpha_t=0.4, cut_mode='or'):
 
 def weight_to_distance(G):
     """
-    inverts all the edge weights so they become equivalent to distance measure.
+    Inverts all the edge weights so they become equivalent to distance measure.
+    With a weight, the higher the value the stronger the connection. With a distance,
+    the higher the value the "weaker" the connection. In this case there is no
+    measurement unit for the distance, as it is just a conversion from the weights.
+    The distances can be accessed in each node's property with constants.
+
+    Parameters
+    ----------
+    G : Object
+        Weighted NetworkX graph.
+
+    Returns
+    -------
+    G : Object
+        Inverted NetworkX graph equivalent to the distance measure.
     """
     edge_list = [v[2]['weight'] for v in G.edges(data=True)]
     # maximum edge value
@@ -291,7 +501,19 @@ def weight_to_distance(G):
 
 def knn(conn_matrix, k):
     """
-    Creating a k-nearest neighbour graph
+    Creates a k-nearest neighbour graph.
+
+    Parameters
+    ----------
+    conn_matrix : array
+        Weighted NxN matrix.
+    k : int
+        Number of nearest neighbours to include in the knn estimation.
+
+    Returns
+    -------
+    gra : Obj
+        KNN Weighted NetworkX graph.
     """
     gra = nx.Graph()
     nodes = list(range(len(conn_matrix[0])))
@@ -311,17 +533,23 @@ def knn(conn_matrix, k):
 
 def local_thresholding_prop(conn_matrix, thr):
     """
+    Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
+    successive N-nearest neighbour degree graphs to achieve target proportional threshold.
 
-    :param conn_matrix:
-    :param thr:
-    :return:
+    Parameters
+    ----------
+    conn_matrix : array
+        Weighted NxN matrix.
+    thr : float
+        A proportional threshold, between 0 and 1, to achieve through local thresholding.
+
+    Returns
+    -------
+    conn_matrix_thr : array
+        Weighted, MST local-thresholded, NxN matrix.
     """
     from pynets import thresholding
     from pynets.stats import netstats
-    # '''
-    # Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
-    # successive N-nearest neighbour degree graphs to achieve target proportional threshold.
-    # '''
 
     fail_tol = 10
     conn_matrix = np.nan_to_num(conn_matrix)
@@ -346,8 +574,7 @@ def local_thresholding_prop(conn_matrix, thr):
 
     k = 1
     len_edge_list = []
-    while len_edges < edgenum and k <= np.shape(conn_matrix)[0] and (len(len_edge_list[-fail_tol:]) -
-                                                                     len(set(len_edge_list[-fail_tol:]))) < (fail_tol-1):
+    while len_edges < edgenum and k <= np.shape(conn_matrix)[0] and (len(len_edge_list[-fail_tol:]) - len(set(len_edge_list[-fail_tol:]))) < (fail_tol-1):
         print(k)
         print(len_edges)
         len_edge_list.append(len_edges)
@@ -391,17 +618,24 @@ def local_thresholding_prop(conn_matrix, thr):
 
 def local_thresholding_dens(conn_matrix, thr):
     """
+    Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
+    successive N-nearest neighbour degree graphs to achieve target density threshold.
 
-    :param conn_matrix:
-    :param thr:
-    :return:
+    Parameters
+    ----------
+    conn_matrix : array
+        Weighted NxN matrix.
+    thr : float
+        A density threshold, between 0 and 1, to achieve through local thresholding.
+
+    Returns
+    -------
+    conn_matrix_thr : array
+        Weighted, MST local-thresholded, NxN matrix.
     """
     from pynets import thresholding
     from pynets.stats import netstats
-    # '''
-    # Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
-    # successive N-nearest neighbour degree graphs to achieve target density.
-    # '''
+
     fail_tol = 10
     conn_matrix = np.nan_to_num(conn_matrix)
     G = nx.from_numpy_matrix(conn_matrix)
@@ -466,30 +700,112 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
                 smooth, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary,
                 hpass):
     """
+    Threshold a functional connectivity matrix using any of a variety of methods.
 
-    :param dens_thresh:
-    :param thr:
-    :param conn_matrix:
-    :param conn_model:
-    :param network:
-    :param ID:
-    :param dir_path:
-    :param roi:
-    :param node_size:
-    :param min_span_tree:
-    :param smooth:
-    :param disp_filt:
-    :param parc:
-    :param prune:
-    :param atlas_select:
-    :param uatlas_select:
-    :param label_names:
-    :param coords:
-    :param c_boot:
-    :param norm:
-    :param binary:
-    :param hpass:
-    :return:
+    Parameters
+    ----------
+    dens_thresh : bool
+        Indicates whether a target graph density is to be used as the basis for
+        thresholding.
+    thr : float
+        A value, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    conn_matrix : array
+        Adjacency matrix stored as an m x n array of nodes and edges.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    ID : str
+        A subject id or other unique identifier.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    min_span_tree : bool
+        Indicates whether local thresholding from the Minimum Spanning Tree
+        should be used.
+    smooth : int
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    disp_filt : bool
+        Indicates whether local thresholding using a disparity filter and
+        'backbone network' should be used.
+    parc : bool
+        Indicates whether to use parcels instead of coordinates as ROI nodes.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
+    atlas_select : str
+        Name of atlas parcellation used.
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    label_names : list
+        List of string labels corresponding to ROI nodes.
+    coords : list
+        List of (x, y, z) tuples corresponding to a coordinate atlas used or
+        which represent the center-of-mass of each parcellation node.
+    c_boot : int
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    norm : int
+        Indicates method of normalizing resulting graph.
+    binary : bool
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted graph.
+    hpass : bool
+        High-pass filter values (Hz) to apply to node-extracted time-series.
+
+    Returns
+    -------
+    conn_matrix_thr : array
+        Weighted, thresholded, NxN matrix.
+    edge_threshold : str
+        The string percentage representation of thr.
+    est_path : str
+        File path to the thresholded graph, conn_matrix_thr, saved as a numpy array in .npy format.
+    thr : float
+        The value, between 0 and 1, used to threshold the graph using any variety of methods
+        triggered through other options.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    smooth : int
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
+    ID : str
+        A subject id or other unique identifier.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    atlas_select : str
+        Name of atlas parcellation used.
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    label_names : list
+        List of string labels corresponding to ROI nodes.
+    coords : list
+        List of (x, y, z) tuples corresponding to a coordinate atlas used or
+        which represent the center-of-mass of each parcellation node.
+    c_boot : int
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    norm : int
+        Indicates method of normalizing resulting graph.
+    binary : bool
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted graph.
+    hpass : bool
+        High-pass filter values (Hz) to apply to node-extracted time-series.
     """
     from pynets import utils, thresholding
 
@@ -544,35 +860,120 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary, hpass
 
 
-def thresh_diff(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
+def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
                 disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, target_samples,
                 track_type, atlas_mni, streams):
     """
+    Threshold a structural connectivity matrix using any of a variety of methods.
 
-    :param dens_thresh:
-    :param thr:
-    :param conn_matrix:
-    :param conn_model:
-    :param network:
-    :param ID:
-    :param dir_path:
-    :param roi:
-    :param node_size:
-    :param min_span_tree:
-    :param disp_filt:
-    :param parc:
-    :param prune:
-    :param atlas_select:
-    :param uatlas_select:
-    :param label_names:
-    :param coords:
-    :param norm:
-    :param binary:
-    :param target_samples:
-    :param track_type:
-    :param atlas_mni:
-    :param streams:
-    :return:
+    Parameters
+    ----------
+    dens_thresh : bool
+        Indicates whether a target graph density is to be used as the basis for
+        thresholding.
+    thr : float
+        A value, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    conn_matrix : array
+        Adjacency matrix stored as an m x n array of nodes and edges.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    ID : str
+        A subject id or other unique identifier.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    min_span_tree : bool
+        Indicates whether local thresholding from the Minimum Spanning Tree
+        should be used.
+    disp_filt : bool
+        Indicates whether local thresholding using a disparity filter and
+        'backbone network' should be used.
+    parc : bool
+        Indicates whether to use parcels instead of coordinates as ROI nodes.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
+    atlas_select : str
+        Name of atlas parcellation used.
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    label_names : list
+        List of string labels corresponding to ROI nodes.
+    coords : list
+        List of (x, y, z) tuples corresponding to a coordinate atlas used or
+        which represent the center-of-mass of each parcellation node.
+    norm : int
+        Indicates method of normalizing resulting graph.
+    binary : bool
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted graph.
+    target_samples : int
+        Total number of streamline samples specified to generate streams.
+    track_type : str
+        Tracking algorithm used (e.g. 'local' or 'particle').
+    atlas_mni : str
+        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    streams : str
+        File path to save streamline array sequence in .trk format.
+
+    Returns
+    -------
+    conn_matrix_thr : array
+        Weighted, thresholded, NxN matrix.
+    edge_threshold : str
+        The string percentage representation of thr.
+    est_path : str
+        File path to the thresholded graph, conn_matrix_thr, saved as a numpy array in .npy format.
+    thr : float
+        The value, between 0 and 1, used to threshold the graph using any variety of methods
+        triggered through other options.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
+    ID : str
+        A subject id or other unique identifier.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    atlas_select : str
+        Name of atlas parcellation used.
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    label_names : list
+        List of string labels corresponding to ROI nodes.
+    coords : list
+        List of (x, y, z) tuples corresponding to a coordinate atlas used or
+        which represent the center-of-mass of each parcellation node.
+    norm : int
+        Indicates method of normalizing resulting graph.
+    binary : bool
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted graph.
+    target_samples : int
+        Total number of streamline samples specified to generate streams.
+    track_type : str
+        Tracking algorithm used (e.g. 'local' or 'particle').
+    atlas_mni : str
+        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    streams : str
+        File path to save streamline array sequence in .trk format.
     """
     from pynets import utils, thresholding
 
