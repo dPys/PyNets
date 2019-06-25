@@ -9,7 +9,18 @@
     <bookmark url="file://$PROJECT_DIR$/pynets/registration/register.py" description="        # Create linear transform/ initializer T1w..." line="660" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="" />
+    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/docs/conf.py" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conf.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/index.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/index.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/source/modules.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/source/modules.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/stats/netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/stats/netstats.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/thresholding.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/Default_parcels.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/Default_parcels.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/pDMN_3_bin_kmeans_k3/pDMN_3_bin_kmeans_k3.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/pDMN_3_bin_kmeans_k3/pDMN_3_bin_kmeans_k3.nii.gz" afterDir="false" />
+    </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -31,17 +42,17 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state>
-              <caret column="22" selection-start-column="22" selection-end-column="22" />
+            <state relative-caret-position="734">
+              <caret line="1330" column="22" selection-start-line="1330" selection-start-column="22" selection-end-line="1330" selection-end-column="22" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="13005">
-              <caret line="867" column="113" selection-start-line="867" selection-start-column="113" selection-end-line="867" selection-end-column="113" />
+            <state relative-caret-position="-1309">
+              <caret line="836" lean-forward="true" selection-start-line="836" selection-end-line="836" />
               <folding>
                 <element signature="e#109#140#0" expanded="true" />
               </folding>
@@ -49,11 +60,20 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="25425">
-              <caret line="1695" column="37" selection-start-line="1695" selection-start-column="37" selection-end-line="1695" selection-end-column="37" />
+            <state relative-caret-position="74">
+              <caret line="1696" selection-start-line="1696" selection-end-line="1696" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pynets/thresholding.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="617">
+              <caret line="270" column="25" selection-start-line="270" selection-start-column="25" selection-end-line="270" selection-end-column="25" />
             </state>
           </provider>
         </entry>
@@ -114,7 +134,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>parcel_list_exp</find>
       <find>net_parcel</find>
       <find>error</find>
       <find>network</find>
@@ -144,6 +163,7 @@
       <find>node_gen_masking</find>
       <find>4 x 4</find>
       <find>4</find>
+      <find>global_efficiency</find>
     </findStrings>
     <replaceStrings>
       <replace>self.reg_path_warp</replace>
@@ -212,7 +232,6 @@
         <option value="$PROJECT_DIR$/tests/test_netstats.py" />
         <option value="$PROJECT_DIR$/tests/test_clustools.py" />
         <option value="$PROJECT_DIR$/tests/test_utils.py" />
-        <option value="$PROJECT_DIR$/pynets/utils.py" />
         <option value="$PROJECT_DIR$/pynets/stats/nodal_graph_measures.yaml" />
         <option value="$PROJECT_DIR$/pynets/dmri/estimation.py" />
         <option value="$PROJECT_DIR$/pynets/dmri/track.py" />
@@ -220,17 +239,18 @@
         <option value="$PROJECT_DIR$/pynets/registration/reg_utils.py" />
         <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
         <option value="$PROJECT_DIR$/pynets/workflows.py" />
-        <option value="$PROJECT_DIR$/pynets/thresholding.py" />
-        <option value="$PROJECT_DIR$/pynets/stats/netstats.py" />
         <option value="$PROJECT_DIR$/pynets/nodemaker.py" />
         <option value="$PROJECT_DIR$/tests/test_nodemaker.py" />
         <option value="$PROJECT_DIR$/tests/test_estimation.py" />
+        <option value="$PROJECT_DIR$/pynets/thresholding.py" />
+        <option value="$PROJECT_DIR$/pynets/utils.py" />
+        <option value="$PROJECT_DIR$/pynets/stats/netstats.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="72" />
-    <option name="y" value="23" />
+    <option name="x" value="81" />
+    <option name="y" value="44" />
     <option name="width" value="1506" />
     <option name="height" value="978" />
   </component>
@@ -249,6 +269,17 @@
             <path>
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="pynets" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="pynets" type="462c0819:PsiDirectoryNode" />
+              <item name="stats" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -496,15 +527,15 @@
       <workItem from="1560024174324" duration="49236000" />
       <workItem from="1561116224032" duration="8349000" />
       <workItem from="1561144081292" duration="359000" />
-      <workItem from="1561157188043" duration="24228000" />
+      <workItem from="1561157188043" duration="25518000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="429849000" />
+    <option name="totallyTimeSpent" value="431139000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="72" y="23" width="1506" height="978" extended-state="0" />
+    <frame x="81" y="44" width="1506" height="978" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.496614" visible="true" weight="0.13729508" />
@@ -772,30 +803,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/thresholding.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-8071">
-          <caret line="39" column="43" selection-start-line="39" selection-start-column="43" selection-end-line="39" selection-end-column="43" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="13005">
-          <caret line="867" column="113" selection-start-line="867" selection-start-column="113" selection-end-line="867" selection-end-column="113" />
-          <folding>
-            <element signature="e#109#140#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="22" selection-start-column="22" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2228">
@@ -853,8 +860,32 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="25425">
-          <caret line="1695" column="37" selection-start-line="1695" selection-start-column="37" selection-end-line="1695" selection-end-column="37" />
+        <state relative-caret-position="74">
+          <caret line="1696" selection-start-line="1696" selection-end-line="1696" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/thresholding.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="617">
+          <caret line="270" column="25" selection-start-line="270" selection-start-column="25" selection-end-line="270" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="734">
+          <caret line="1330" column="22" selection-start-line="1330" selection-start-column="22" selection-end-line="1330" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1309">
+          <caret line="836" lean-forward="true" selection-start-line="836" selection-end-line="836" />
+          <folding>
+            <element signature="e#109#140#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

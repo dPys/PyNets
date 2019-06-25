@@ -10,6 +10,18 @@ Welcome to PyNets's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   source/modules.rst
+   source/pynets.atlases.rst
+   source/pynets.dmri.rst
+   source/pynets.fmri.rst
+   source/pynets.labelcharts.rst
+   source/pynets.plotting.rst
+   source/pynets.registration.rst
+   source/pynets.rsnrefs.rst
+   source/pynets.rst
+   source/pynets.stats.rst
+   source/pynets.templates.rst 
+
 Indices and tables
 ==================
 

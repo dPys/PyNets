@@ -43,64 +43,64 @@ def timeout(seconds):
 
 @timeout(20)
 def average_shortest_path_length_for_all(G):
-    """Return the global efficiency of the graph G
-
-    Parameters
-    ----------
-    G : NetworkX graph
-
-    Returns
-    -------
-    average_shortest_path_length : float
-
-    Notes
-    -----
-    A helper function for calculating average shortest path length in the case that a graph is disconnected.
-    Calculation occurs across all subgraphs detected in G.
-
-
-    """
+    # """Return the global efficiency of the graph G
+    #
+    # Parameters
+    # ----------
+    # G : NetworkX graph
+    #
+    # Returns
+    # -------
+    # average_shortest_path_length : float
+    #
+    # Notes
+    # -----
+    # A helper function for calculating average shortest path length in the case that a graph is disconnected.
+    # Calculation occurs across all subgraphs detected in G.
+    #
+    #
+    # """
     import math
     subgraphs = [sbg for sbg in nx.connected_component_subgraphs(G) if len(sbg) > 1]
     return math.fsum(nx.average_shortest_path_length(sg) for sg in subgraphs) / len(subgraphs)
 
 
 def global_efficiency(G, weight=None):
-    """Return the global efficiency of the graph G
-
-    Parameters
-    ----------
-    G : NetworkX graph
-
-    Returns
-    -------
-    global_efficiency : float
-
-    Notes
-    -----
-    The published definition includes a scale factor based on a completely
-    connected graph. In the case of an unweighted network, the scaling factor
-    is 1 and can be ignored. In the case of a weighted graph, calculating the
-    scaling factor requires somehow knowing the weights of the edges required
-    to make a completely connected graph. Since that knowlege may not exist,
-    the scaling factor is not included. If that knowlege exists, construct the
-    corresponding weighted graph and calculate its global_efficiency to scale
-    the weighted graph.
-
-    Distance between nodes is calculated as the sum of weights. If the graph is
-    defined such that a higher weight represents a stronger connection,
-    distance should be represented by 1/weight. In this case, use the invert_
-    weights function to generate a graph where the weights are set to 1/weight
-    and then calculate efficiency
-
-    References
-    ----------
-    .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
-       small-world networks. Physical Review Letters 87.
-    .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
-       in weighted networks. Eur Phys J B 32, 249-263.
-
-    """
+    # """Return the global efficiency of the graph G
+    #
+    # Parameters
+    # ----------
+    # G : NetworkX graph
+    #
+    # Returns
+    # -------
+    # global_efficiency : float
+    #
+    # Notes
+    # -----
+    # The published definition includes a scale factor based on a completely
+    # connected graph. In the case of an unweighted network, the scaling factor
+    # is 1 and can be ignored. In the case of a weighted graph, calculating the
+    # scaling factor requires somehow knowing the weights of the edges required
+    # to make a completely connected graph. Since that knowlege may not exist,
+    # the scaling factor is not included. If that knowlege exists, construct the
+    # corresponding weighted graph and calculate its global_efficiency to scale
+    # the weighted graph.
+    #
+    # Distance between nodes is calculated as the sum of weights. If the graph is
+    # defined such that a higher weight represents a stronger connection,
+    # distance should be represented by 1/weight. In this case, use the invert_
+    # weights function to generate a graph where the weights are set to 1/weight
+    # and then calculate efficiency
+    #
+    # References
+    # ----------
+    # .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
+    #    small-world networks. Physical Review Letters 87.
+    # .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
+    #    in weighted networks. Eur Phys J B 32, 249-263.
+    #
+    # """
     N = len(G)
     if N < 2:
         return 0
@@ -119,37 +119,37 @@ def global_efficiency(G, weight=None):
 
 
 def local_efficiency(G, weight=None):
-    """Return the local efficiency of each node in the graph G
-
-    Parameters
-    ----------
-    G : NetworkX graph
-
-    Returns
-    -------
-    local_efficiency : dict
-       the keys of the dict are the nodes in the graph G and the corresponding
-       values are local efficiencies of each node
-
-    Notes
-    -----
-    The published definition includes a scale factor based on a completely
-    connected graph. In the case of an unweighted network, the scaling factor
-    is 1 and can be ignored. In the case of a weighted graph, calculating the
-    scaling factor requires somehow knowing the weights of the edges required
-    to make a completely connected graph. Since that knowlege may not exist,
-    the scaling factor is not included. If that knowlege exists, construct the
-    corresponding weighted graph and calculate its local_efficiency to scale
-    the weighted graph.
-
-    References
-    ----------
-    .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
-       small-world networks. Physical Review Letters 87.
-    .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
-       in weighted networks. Eur Phys J B 32, 249-263.
-
-    """
+    # """Return the local efficiency of each node in the graph G
+    #
+    # Parameters
+    # ----------
+    # G : NetworkX graph
+    #
+    # Returns
+    # -------
+    # local_efficiency : dict
+    #    the keys of the dict are the nodes in the graph G and the corresponding
+    #    values are local efficiencies of each node
+    #
+    # Notes
+    # -----
+    # The published definition includes a scale factor based on a completely
+    # connected graph. In the case of an unweighted network, the scaling factor
+    # is 1 and can be ignored. In the case of a weighted graph, calculating the
+    # scaling factor requires somehow knowing the weights of the edges required
+    # to make a completely connected graph. Since that knowlege may not exist,
+    # the scaling factor is not included. If that knowlege exists, construct the
+    # corresponding weighted graph and calculate its local_efficiency to scale
+    # the weighted graph.
+    #
+    # References
+    # ----------
+    # .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
+    #    small-world networks. Physical Review Letters 87.
+    # .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
+    #    in weighted networks. Eur Phys J B 32, 249-263.
+    #
+    # """
     if G.is_directed():
         new_graph = nx.DiGraph
     else:
@@ -174,34 +174,34 @@ def local_efficiency(G, weight=None):
 
 
 def average_local_efficiency(G, weight=None):
-    """Return the average local efficiency of all of the nodes in the graph G
-
-    Parameters
-    ----------
-    G : NetworkX graph
-
-    Returns
-    -------
-    average_local_efficiency : float
-
-    Notes
-    -----
-    The published definition includes a scale factor based on a completely
-    connected graph. In the case of an unweighted network, the scaling factor
-    is 1 and can be ignored. In the case of a weighted graph, calculating the
-    scaling factor requires somehow knowing the weights of the edges required
-    to make a completely connected graph. Since that knowlege may not exist,
-    the scaling factor is not included. If that knowlege existed, a revised
-    version of this function would be required.
-
-    References
-    ----------
-    .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
-       small-world networks. Physical Review Letters 87.
-    .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
-       in weighted networks. Eur Phys J B 32, 249-263.
-
-    """
+    # """Return the average local efficiency of all of the nodes in the graph G
+    #
+    # Parameters
+    # ----------
+    # G : NetworkX graph
+    #
+    # Returns
+    # -------
+    # average_local_efficiency : float
+    #
+    # Notes
+    # -----
+    # The published definition includes a scale factor based on a completely
+    # connected graph. In the case of an unweighted network, the scaling factor
+    # is 1 and can be ignored. In the case of a weighted graph, calculating the
+    # scaling factor requires somehow knowing the weights of the edges required
+    # to make a completely connected graph. Since that knowlege may not exist,
+    # the scaling factor is not included. If that knowlege existed, a revised
+    # version of this function would be required.
+    #
+    # References
+    # ----------
+    # .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
+    #    small-world networks. Physical Review Letters 87.
+    # .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
+    #    in weighted networks. Eur Phys J B 32, 249-263.
+    #
+    # """
     eff = local_efficiency(G, weight)
     total = sum(eff.values())
     N = len(eff)
@@ -253,24 +253,24 @@ def _compute_rc(G):
 @timeout(20)
 def participation_coef(W, ci, degree='undirected'):
     ## ADAPTED FROM BCTPY ##
-    '''
-    Participation coefficient is a measure of diversity of intermodular
-    connections of individual nodes.
-    Parameters
-    ----------
-    W : NxN np.ndarray
-        binary/weighted directed/undirected connection matrix
-    ci : Nx1 np.ndarray
-        community affiliation vector
-    degree : str
-        Flag to describe nature of graph 'undirected': For undirected graphs
-                                         'in': Uses the in-degree
-                                         'out': Uses the out-degree
-    Returns
-    -------
-    P : Nx1 np.ndarray
-        participation coefficient
-    '''
+    # '''
+    # Participation coefficient is a measure of diversity of intermodular
+    # connections of individual nodes.
+    # Parameters
+    # ----------
+    # W : NxN np.ndarray
+    #     binary/weighted directed/undirected connection matrix
+    # ci : Nx1 np.ndarray
+    #     community affiliation vector
+    # degree : str
+    #     Flag to describe nature of graph 'undirected': For undirected graphs
+    #                                      'in': Uses the in-degree
+    #                                      'out': Uses the out-degree
+    # Returns
+    # -------
+    # P : Nx1 np.ndarray
+    #     participation coefficient
+    # '''
     if degree == 'in':
         W = W.T
 
@@ -399,22 +399,22 @@ def modularity(W, qtype='sta', seed=42):
 
 def diversity_coef_sign(W, ci):
     ## ADAPTED FROM BCTPY ##
-    '''
-    The Shannon-entropy based diversity coefficient measures the diversity
-    of intermodular connections of individual nodes and ranges from 0 to 1.
-    Parameters
-    ----------
-    W : NxN np.ndarray
-        undirected connection matrix with positive and negative weights
-    ci : Nx1 np.ndarray
-        community affiliation vector
-    Returns
-    -------
-    Hpos : Nx1 np.ndarray
-        diversity coefficient based on positive connections
-    Hneg : Nx1 np.ndarray
-        diversity coefficient based on negative connections
-    '''
+    # '''
+    # The Shannon-entropy based diversity coefficient measures the diversity
+    # of intermodular connections of individual nodes and ranges from 0 to 1.
+    # Parameters
+    # ----------
+    # W : NxN np.ndarray
+    #     undirected connection matrix with positive and negative weights
+    # ci : Nx1 np.ndarray
+    #     community affiliation vector
+    # Returns
+    # -------
+    # Hpos : Nx1 np.ndarray
+    #     diversity coefficient based on positive connections
+    # Hneg : Nx1 np.ndarray
+    #     diversity coefficient based on negative connections
+    # '''
     # Number of nodes
     n = len(W)
     _, ci = np.unique(ci, return_inverse=True)
@@ -455,25 +455,25 @@ def link_communities(W, type_clustering='single'):
     """
     from pynets.thresholding import normalize
     ## ADAPTED FROM BCTPY ##
-    '''
-    The optimal community structure is a subdivision of the network into
-    nonoverlapping groups of nodes which maximizes the number of within-group
-    edges and minimizes the number of between-group edges.
-    This algorithm uncovers overlapping community structure via hierarchical
-    clustering of network links. This algorithm is generalized for
-    weighted/directed/fully-connected networks
-    Parameters
-    ----------
-    W : NxN np.array
-        directed weighted/binary adjacency matrix
-    type_clustering : str
-        type of hierarchical clustering. 'single' for single-linkage,
-        'complete' for complete-linkage. Default value='single'
-    Returns
-    -------
-    M : CxN np.ndarray
-        nodal community affiliation matrix.
-    '''
+    # '''
+    # The optimal community structure is a subdivision of the network into
+    # nonoverlapping groups of nodes which maximizes the number of within-group
+    # edges and minimizes the number of between-group edges.
+    # This algorithm uncovers overlapping community structure via hierarchical
+    # clustering of network links. This algorithm is generalized for
+    # weighted/directed/fully-connected networks
+    # Parameters
+    # ----------
+    # W : NxN np.array
+    #     directed weighted/binary adjacency matrix
+    # type_clustering : str
+    #     type of hierarchical clustering. 'single' for single-linkage,
+    #     'complete' for complete-linkage. Default value='single'
+    # Returns
+    # -------
+    # M : CxN np.ndarray
+    #     nodal community affiliation matrix.
+    # '''
     n = len(W)
     W = normalize(W)
 
@@ -640,42 +640,42 @@ def link_communities(W, type_clustering='single'):
 
 def modularity_louvain_und_sign(W, gamma=1, qtype='sta', seed=42):
     ## ADAPTED FROM BCTPY ##
-    '''
-    The optimal community structure is a subdivision of the network into
-    nonoverlapping groups of nodes in a way that maximizes the number of
-    within-group edges, and minimizes the number of between-group edges.
-    The modularity is a statistic that quantifies the degree to which the
-    network may be subdivided into such clearly delineated groups.
-    The Louvain algorithm is a fast and accurate community detection
-    algorithm (at the time of writing).
-    Use this function as opposed to modularity_louvain_und() only if the
-    network contains a mix of positive and negative weights.  If the network
-    contains all positive weights, the output will be equivalent to that of
-    modularity_louvain_und().
-    Parameters
-    ----------
-    W : NxN np.ndarray
-        undirected weighted/binary connection matrix with positive and
-        negative weights
-    qtype : str
-        modularity type. Can be 'sta' (default), 'pos', 'smp', 'gja', 'neg'.
-        See Rubinov and Sporns (2011) for a description.
-    gamma : float
-        resolution parameter. default value=1. Values 0 <= gamma < 1 detect
-        larger modules while gamma > 1 detects smaller modules.
-    seed : int | None
-        random seed. default value=None. if None, seeds from /dev/urandom.
-    Returns
-    -------
-    ci : Nx1 np.ndarray
-        refined community affiliation vector
-    Q : float
-        optimized modularity metric
-    Notes
-    -----
-    Ci and Q may vary from run to run, due to heuristics in the
-    algorithm. Consequently, it may be worth to compare multiple runs.
-    '''
+    # '''
+    # The optimal community structure is a subdivision of the network into
+    # nonoverlapping groups of nodes in a way that maximizes the number of
+    # within-group edges, and minimizes the number of between-group edges.
+    # The modularity is a statistic that quantifies the degree to which the
+    # network may be subdivided into such clearly delineated groups.
+    # The Louvain algorithm is a fast and accurate community detection
+    # algorithm (at the time of writing).
+    # Use this function as opposed to modularity_louvain_und() only if the
+    # network contains a mix of positive and negative weights.  If the network
+    # contains all positive weights, the output will be equivalent to that of
+    # modularity_louvain_und().
+    # Parameters
+    # ----------
+    # W : NxN np.ndarray
+    #     undirected weighted/binary connection matrix with positive and
+    #     negative weights
+    # qtype : str
+    #     modularity type. Can be 'sta' (default), 'pos', 'smp', 'gja', 'neg'.
+    #     See Rubinov and Sporns (2011) for a description.
+    # gamma : float
+    #     resolution parameter. default value=1. Values 0 <= gamma < 1 detect
+    #     larger modules while gamma > 1 detects smaller modules.
+    # seed : int | None
+    #     random seed. default value=None. if None, seeds from /dev/urandom.
+    # Returns
+    # -------
+    # ci : Nx1 np.ndarray
+    #     refined community affiliation vector
+    # Q : float
+    #     optimized modularity metric
+    # Notes
+    # -----
+    # Ci and Q may vary from run to run, due to heuristics in the
+    # algorithm. Consequently, it may be worth to compare multiple runs.
+    # '''
     np.random.seed(seed)
 
     n = len(W)  # number of nodes
@@ -796,8 +796,8 @@ def modularity_louvain_und_sign(W, gamma=1, qtype='sta', seed=42):
 
 
 def prune_disconnected(G):
-    """ returns a copy of G with
-        isolates pruned """
+    # """ returns a copy of G with
+    #     isolates pruned """
     print('Pruning fully disconnected...')
 
     # List because it returns a generator
@@ -818,8 +818,8 @@ def prune_disconnected(G):
 
 
 def most_important(G):
-     """ returns a copy of G with
-         isolates and low-importance nodes pruned """
+     # """ returns a copy of G with
+     #     isolates and low-importance nodes pruned """
      print('Pruning fully disconnected and low importance nodes (3 SD < M)...')
      ranking = nx.betweenness_centrality(G).items()
      #print(ranking)
