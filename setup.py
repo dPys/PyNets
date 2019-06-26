@@ -17,6 +17,7 @@ requirements = [
     'Sphinx>=1.4.8',
     'sphinx-argparse>=0.2.5',
     'sphinx-rtd-theme>=0.4.3',
+    'numpydoc>=0.8.0',
     'scipy>=0.19.0',
     'nipype>=1.1.0',
     'numpy>=1.12.1',

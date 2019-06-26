@@ -8,5 +8,6 @@ coverage>=4.1
 Sphinx>=1.4.8
 sphinx-argparse>=0.2.5
 sphinx-rtd-theme>=0.4.3
+numpydoc>=0.8.0
 pytest>=2.9.2
 pytest-runner>=2.11.1
