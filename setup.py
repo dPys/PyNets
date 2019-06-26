@@ -14,6 +14,9 @@ with open('README.rst') as readme_file:
 
 requirements = [
     'Click>=6.0',
+    'Sphinx>=1.4.8',
+    'sphinx-argparse>=0.2.5',
+    'sphinx-rtd-theme>=0.4.3',
     'scipy>=0.19.0',
     'nipype>=1.1.0',
     'numpy>=1.12.1',

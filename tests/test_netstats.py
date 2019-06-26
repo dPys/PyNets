@@ -25,41 +25,13 @@ def test_average_shortest_path_length_for_all():
     assert avg_shortest_path_len is not None
 
 
-def test_global_efficiency():
-    base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(base_dir + '/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz.npy')
-    G = nx.from_numpy_array(in_mat)
-
-    start_time = time.time()
-    global_eff = netstats.global_efficiency(G)
-    print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
-                      np.round(time.time() - start_time, 1), 's'))
-    assert global_eff is not None
-
-
-def test_local_efficiency():
-    base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(base_dir + '/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz.npy')
-    G = nx.from_numpy_array(in_mat)
-    efficiencies = netstats.local_efficiency(G, weight=None)
-
-    start_time = time.time()
-    netstats.local_efficiency(G, weight=None)
-    print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
-                      np.round(time.time() - start_time, 1), 's'))
-
-    # for i in efficiencies:
-    #     assert i is not None
-    assert efficiencies is not None
-
-
 def test_average_local_efficiency():
     base_dir = str(Path(__file__).parent/"examples")
     in_mat = np.load(base_dir + '/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz.npy')
     G = nx.from_numpy_array(in_mat)
 
     start_time = time.time()
-    average_local_efficiency = netstats.average_local_efficiency(G, weight=None)
+    average_local_efficiency = netstats.average_local_efficiency(G)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       np.round(time.time() - start_time, 1), 's'))
     assert average_local_efficiency is not None
@@ -78,18 +50,6 @@ def test_create_communities():
     assert com_assign is not None
 
 
-def test_compute_rc():
-    base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(base_dir + '/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz.npy')
-    G = nx.from_numpy_array(in_mat)
-
-    start_time = time.time()
-    rc = netstats._compute_rc(G)
-    print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
-                      np.round(time.time() - start_time, 1), 's'))
-    assert rc is not None
-
-
 def test_participation_coef():
     base_dir = str(Path(__file__).parent/"examples")
     in_mat = np.load(base_dir + '/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz.npy')
@@ -105,11 +65,13 @@ def test_participation_coef():
 
 
 def test_modularity():
+    import community
     base_dir = str(Path(__file__).parent/"examples")
     in_mat = np.load(base_dir + '/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz.npy')
-
+    G = nx.from_numpy_matrix(in_mat)
     start_time = time.time()
-    [ci, mod] = netstats.modularity(in_mat, qtype='sta', seed=42)
+    ci = community.best_partition(G)
+    mod = community.community_louvain.modularity(ci, G)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
     assert ci is not None
@@ -140,18 +102,6 @@ def test_link_communities():
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
     assert M is not None
-
-
-def test_modularity_louvain_und_sign():
-    base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(base_dir + '/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz.npy')
-
-    start_time = time.time()
-    [ci, mod] = netstats.modularity_louvain_und_sign(in_mat, gamma=1, qtype='sta', seed=42)
-    print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
-                      str(np.round(time.time() - start_time, 1)), 's'))
-    assert ci is not None
-    assert mod is not None
 
 
 def test_prune_disconnected():

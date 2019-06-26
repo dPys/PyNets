@@ -72,25 +72,156 @@ def average_shortest_path_length_for_all(G):
     return math.fsum(nx.average_shortest_path_length(sg) for sg in subgraphs) / len(subgraphs)
 
 
-def average_local_efficiency(G, weight=None):
+def global_efficiency(G, weight=None):
     """
-    Return the average local efficiency of all of the nodes in the graph G.
+    ## ADAPTED FROM NETWORKX TO INCORPORATE WEIGHT PARAMETER ##
+
+    Return the global efficiency of the graph G
+
+    Parameters
+    ----------
+    G : NetworkX graph
+
+    Returns
+    -------
+    global_efficiency : float
+
+    Notes
+    -----
+    The published definition includes a scale factor based on a completely
+    connected graph. In the case of an unweighted network, the scaling factor
+    is 1 and can be ignored. In the case of a weighted graph, calculating the
+    scaling factor requires somehow knowing the weights of the edges required
+    to make a completely connected graph. Since that knowlege may not exist,
+    the scaling factor is not included. If that knowlege exists, construct the
+    corresponding weighted graph and calculate its global_efficiency to scale
+    the weighted graph.
+
+    Distance between nodes is calculated as the sum of weights. If the graph is
+    defined such that a higher weight represents a stronger connection,
+    distance should be represented by 1/weight. In this case, use the invert_
+    weights function to generate a graph where the weights are set to 1/weight
+    and then calculate efficiency
+
+    References
+    ----------
+    .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
+       small-world networks. Physical Review Letters 87.
+    .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
+       in weighted networks. Eur Phys J B 32, 249-263.
+
+    """
+    N = len(G)
+    if N < 2:
+        return 0
+
+    inv_lengths = []
+    for node in G:
+        if weight is None:
+            lengths = nx.single_source_shortest_path_length(G, node)
+        else:
+            lengths = nx.single_source_dijkstra_path_length(G, node, weight=weight)
+
+        inv = [1/x for x in lengths.values() if x is not 0]
+        inv_lengths.extend(inv)
+
+    return sum(inv_lengths)/(N*(N-1))
+
+
+def local_efficiency(G, weight=None):
+    """
+    ## ADAPTED FROM NETWORKX TO INCORPORATE WEIGHT PARAMETER ##
+
+    Return the local efficiency of each node in the graph G
 
     Parameters
     ----------
     G : Obj
         NetworkX graph.
 
-    weight : float
-        The edge attribute that holds the numerical value used as a weight.
-        If None, then each edge has weight 1. Default is None.
+    Returns
+    -------
+    local_efficiency : dict
+       The keys of the dict are the nodes in the graph G and the corresponding
+       values are local efficiencies of each node
+
+    Notes
+    -----
+    The published definition includes a scale factor based on a completely
+    connected graph. In the case of an unweighted network, the scaling factor
+    is 1 and can be ignored. In the case of a weighted graph, calculating the
+    scaling factor requires somehow knowing the weights of the edges required
+    to make a completely connected graph. Since that knowlege may not exist,
+    the scaling factor is not included. If that knowlege exists, construct the
+    corresponding weighted graph and calculate its local_efficiency to scale
+    the weighted graph.
+
+    References
+    ----------
+    .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
+       small-world networks. Physical Review Letters 87.
+    .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
+       in weighted networks. Eur Phys J B 32, 249-263.
+
+    """
+    if G.is_directed():
+        new_graph = nx.DiGraph
+    else:
+        new_graph = nx.Graph
+
+    efficiencies = dict()
+    for node in G:
+        temp_G = new_graph()
+        temp_G.add_nodes_from(G.neighbors(node))
+        for neighbor in G.neighbors(node):
+            for (n1, n2) in G.edges(neighbor):
+                if (n1 in temp_G) and (n2 in temp_G):
+                    temp_G.add_edge(n1, n2)
+
+        if weight is not None:
+            for (n1, n2) in temp_G.edges():
+                temp_G[n1][n2][weight] = G[n1][n2][weight]
+
+        efficiencies[node] = global_efficiency(temp_G, weight)
+
+    return efficiencies
+
+
+def average_local_efficiency(G, weight=None):
+    """
+    ## ADAPTED FROM NETWORKX TO INCORPORATE WEIGHT PARAMETER ##
+
+    Return the average local efficiency of all of the nodes in the graph G
+
+    Parameters
+    ----------
+    G : Obj
+        NetworkX graph.
 
     Returns
     -------
     average_local_efficiency : float
-        The average of local efficiencies across all nodes of graph G.
+        Average local efficiency of graph G.
+
+    Notes
+    -----
+    The published definition includes a scale factor based on a completely
+    connected graph. In the case of an unweighted network, the scaling factor
+    is 1 and can be ignored. In the case of a weighted graph, calculating the
+    scaling factor requires somehow knowing the weights of the edges required
+    to make a completely connected graph. Since that knowlege may not exist,
+    the scaling factor is not included. If that knowlege existed, a revised
+    version of this function would be required.
+
+    References
+    ----------
+    .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
+       small-world networks. Physical Review Letters 87.
+    .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
+       in weighted networks. Eur Phys J B 32, 249-263.
+
     """
-    eff = nx.algorithms.local_efficiency(G, weight)
+    eff = local_efficiency(G, weight)
     total = sum(eff.values())
     N = len(eff)
     return total/N
@@ -254,6 +385,196 @@ def diversity_coef_sign(W, ci):
         Hneg = entropy(-W * (W < 0))
 
     return Hpos, Hneg
+
+
+def link_communities(W, type_clustering='single'):
+    '''
+    ## ADAPTED FROM BCTPY ##
+
+    The optimal community structure is a subdivision of the network into
+    nonoverlapping groups of nodes which maximizes the number of within-group
+    edges and minimizes the number of between-group edges.
+    This algorithm uncovers overlapping community structure via hierarchical
+    clustering of network links. This algorithm is generalized for
+    weighted/directed/fully-connected networks
+
+    Parameters
+    ----------
+    W : NxN np.array
+        directed weighted/binary adjacency matrix
+    type_clustering : str
+        type of hierarchical clustering. 'single' for single-linkage,
+        'complete' for complete-linkage. Default value='single'
+
+    Returns
+    -------
+    M : CxN np.ndarray
+        nodal community affiliation matrix.
+    '''
+    from pynets.thresholding import normalize
+
+    n = len(W)
+    W = normalize(W)
+
+    if type_clustering not in ('single', 'complete'):
+        print('Error: Unrecognized clustering type')
+
+    # Set diagonal to mean weights
+    np.fill_diagonal(W, 0)
+    W[range(n), range(n)] = (np.sum(W, axis=0) / np.sum(np.logical_not(W), axis=0) + np.sum(W.T, axis=0) /
+                             np.sum(np.logical_not(W.T), axis=0)) / 2
+
+    # Out/in norm squared
+    No = np.sum(W**2, axis=1)
+    Ni = np.sum(W**2, axis=0)
+
+    # Weighted in/out jaccard
+    Jo = np.zeros((n, n))
+    Ji = np.zeros((n, n))
+
+    for b in range(n):
+        for c in range(n):
+            Do = np.dot(W[b, :], W[c, :].T)
+            Jo[b, c] = Do / (No[b] + No[c] - Do)
+
+            Di = np.dot(W[:, b].T, W[:, c])
+            Ji[b, c] = Di / (Ni[b] + Ni[c] - Di)
+
+    # Get link similarity
+    A, B = np.where(np.logical_and(np.logical_or(W, W.T), np.triu(np.ones((n, n)), 1)))
+    m = len(A)
+    # Link nodes
+    Ln = np.zeros((m, 2), dtype=np.int32)
+    # Link weights
+    Lw = np.zeros((m,))
+
+    for i in range(m):
+        Ln[i, :] = (A[i], B[i])
+        Lw[i] = (W[A[i], B[i]] + W[B[i], A[i]]) / 2
+
+    # Link similarity
+    ES = np.zeros((m, m), dtype=np.float32)
+    for i in range(m):
+        for j in range(m):
+            if Ln[i, 0] == Ln[j, 0]:
+                a = Ln[i, 0]
+                b = Ln[i, 1]
+                c = Ln[j, 1]
+            elif Ln[i, 0] == Ln[j, 1]:
+                a = Ln[i, 0]
+                b = Ln[i, 1]
+                c = Ln[j, 0]
+            elif Ln[i, 1] == Ln[j, 0]:
+                a = Ln[i, 1]
+                b = Ln[i, 0]
+                c = Ln[j, 1]
+            elif Ln[i, 1] == Ln[j, 1]:
+                a = Ln[i, 1]
+                b = Ln[i, 0]
+                c = Ln[j, 0]
+            else:
+                continue
+
+            ES[i, j] = (W[a, b] * W[a, c] * Ji[b, c] + W[b, a] * W[c, a] * Jo[b, c]) / 2
+
+    np.fill_diagonal(ES, 0)
+    # Perform hierarchical clustering
+    # Community affiliation matrix
+    C = np.zeros((m, m), dtype=np.int32)
+    Nc = C.copy()
+    Mc = np.zeros((m, m), dtype=np.float32)
+    # Community nodes, links, density
+    Dc = Mc.copy()
+    # Initial community assignments
+    U = np.arange(m)
+    C[0, :] = np.arange(m)
+
+    for i in range(m - 1):
+        print('Hierarchy %i' % i)
+        #time1 = time.time()
+        # Loop over communities
+        for j in range(len(U)):
+            # Get link indices
+            ixes = C[i, :] == U[j]
+            links = np.sort(Lw[ixes])
+            #nodes = np.sort(Ln[ixes,:].flat)
+            nodes = np.sort(np.reshape(
+                Ln[ixes, :], 2 * np.size(np.where(ixes))))
+            # Get unique nodes
+            nodulo = np.append(nodes[0], (nodes[1:])[nodes[1:] != nodes[:-1]])
+            #nodulo = ((nodes[1:])[nodes[1:] != nodes[:-1]])
+            nc = len(nodulo)
+            #nc = len(nodulo)+1
+            mc = np.sum(links)
+            # Minimal weight
+            min_mc = np.sum(links[:nc - 1])
+            # Community density
+            dc = (mc - min_mc) / (nc * (nc - 1) / 2 - min_mc)
+            if np.array(dc).shape is not ():
+                print(dc)
+                print(dc.shape)
+            Nc[i, j] = nc
+            Mc[i, j] = mc
+            Dc[i, j] = dc if not np.isnan(dc) else 0
+        #time2 = time.time()
+        #print('compute densities time', time2-time1)
+        # Copy current partition
+        C[i + 1, :] = C[i, :]
+        #if i in (2693,):
+        #    import pdb
+        #    pdb.set_trace()
+        u1, u2 = np.where(ES[np.ix_(U, U)] == np.max(ES[np.ix_(U, U)]))
+        if np.size(u1) > 2:
+            wehr, = np.where((u1 == u2[0]))
+            uc = np.squeeze((u1[0], u2[0]))
+            ud = np.squeeze((u1[wehr], u2[wehr]))
+            u1 = uc
+            u2 = ud
+
+        #time25 = time.time()
+        #print('copy and max time', time25-time2)
+        #ugl = np.array((u1,u2))
+        ugl = np.sort((u1, u2), axis=1)
+        ug_rows = ugl[np.argsort(ugl, axis=0)[:, 0]]
+        # implementation of matlab unique(A, 'rows')
+        unq_rows = np.vstack({tuple(row) for row in ug_rows})
+        V = U[unq_rows]
+        #time3 = time.time()
+        #print('sortrows time', time3-time25)
+
+        for j in range(len(V)):
+            if type_clustering == 'single':
+                x = np.max(ES[V[j, :], :], axis=0)
+            elif type_clustering == 'complete':
+                x = np.min(ES[V[j, :], :], axis=0)
+            # Assign distances to whole clusters
+#            import pdb
+#            pdb.set_trace()
+            ES[V[j, :], :] = np.array((x, x))
+            ES[:, V[j, :]] = np.transpose((x, x))
+            # clear diagonal
+            ES[V[j, 0], V[j, 0]] = 0
+            ES[V[j, 1], V[j, 1]] = 0
+            # merge communities
+            C[i + 1, C[i + 1, :] == V[j, 1]] = V[j, 0]
+            V[V == V[j, 1]] = V[j, 0]
+
+        #time4 = time.time()
+        #print('get linkages time', time4-time3)
+        U = np.unique(C[i + 1, :])
+        if len(U) == 1:
+            break
+        #time5 = time.time()
+        #print('get unique communities time', time5-time4)
+    #Dc[ np.where(np.isnan(Dc)) ]=0
+    i = np.argmax(np.sum(Dc * Mc, axis=1))
+    U = np.unique(C[i, :])
+    M = np.zeros((len(U), n))
+    for j in range(len(U)):
+        M[j, np.unique(Ln[C[i, :] == U[j], :])] = 1
+
+    M = M[np.sum(M, axis=1) > 2, :]
+    return M
 
 
 def prune_disconnected(G):
@@ -507,8 +828,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     # # # # Calculate global and local metrics from graph G # # # #
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     import community
-    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, eigenvector_centrality, communicability_betweenness_centrality, clustering, degree_centrality, rich_club_coefficient, omega, global_efficiency, local_efficiency
-    from pynets.stats.netstats import average_local_efficiency, participation_coef, participation_coef_sign, diversity_coef_sign
+    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, eigenvector_centrality, communicability_betweenness_centrality, clustering, degree_centrality, rich_club_coefficient, omega
+    from pynets.stats.netstats import average_local_efficiency, global_efficiency, participation_coef, participation_coef_sign, diversity_coef_sign
     # For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the
     # function (with a G-only input) to the netstats module.
     metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
