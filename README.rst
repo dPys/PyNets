@@ -1,6 +1,6 @@
 PyNets™
 =======
-[![Build Status](https://travis-ci.org/dPys/PyNets.svg?branch=master)](https://travis-ci.org/dPys/PyNets)
+.. image:: https://travis-ci.org/dPys/PyNets.svg?branch=master
 
 About
 -----
@@ -17,8 +17,7 @@ Citing
 A manuscript is in preparation, but for now, please cite all uses with reference
 to the github repository: https://github.com/dPys/PyNets
 
-![](docs/_static/graph.png)
-![](tests/examples/002/fmri/002_whole_brain_cluster_labels_PCA200_sps_connectome_viz.png)
-![](docs/_static/structural_adj_mat.png)
-![](docs/_static/pynets_diffusion.png)
-![](docs/_static/link_communities.png)
+.. image:: /_static/graph.png
+.. image:: /_static/structural_adj_mat.png
+.. image:: /_static/pynets_diffusion.png
+.. image:: /_static/link_communities.png
