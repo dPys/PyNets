@@ -10,23 +10,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/plotting/plot_gen.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting/plot_gen.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/plotting/plot_graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting/plot_graphs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/stats/netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/stats/netstats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements_dev.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements_dev.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/setup.cfg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz.npy" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_unthresholded_mat.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_unthresholded_mat.npy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_net_metrics_cov_0.95_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_net_metrics_cov_0.95_parc.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_net_metrics_cov_0.95_parc_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_net_metrics_cov_0.95_parc_neat.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels.nii.gz" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_wb_ts_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_wb_ts_plot.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/Default_parcels.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/Default_parcels.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/net_metric_list_Default" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/net_metric_list_Default" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_clustools.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_clustools.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_netstats.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -301,7 +289,7 @@
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
               <item name="pynets" type="462c0819:PsiDirectoryNode" />
-              <item name="plotting" type="462c0819:PsiDirectoryNode" />
+              <item name="dmri" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -549,16 +537,15 @@
       <workItem from="1560024174324" duration="49236000" />
       <workItem from="1561116224032" duration="8349000" />
       <workItem from="1561144081292" duration="359000" />
-      <workItem from="1561157188043" duration="43618000" />
+      <workItem from="1561157188043" duration="43969000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="449239000" />
+    <option name="totallyTimeSpent" value="449590000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="133" y="134" width="1506" height="978" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.496614" visible="true" weight="0.13729508" />
       <window_info id="Structure" order="1" sideWeight="0.50369006" side_tool="true" weight="0.1166419" />
