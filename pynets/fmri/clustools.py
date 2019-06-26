@@ -736,7 +736,7 @@ def individual_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
     uatlas_select = "%s%s%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
 
     if clust_type in nilearn_clust_list:
-        clustools.nil_parcellate(func_file, clust_mask, k, clust_type, atlas_select)
+        clustools.nil_parcellate(func_file, clust_mask, k, clust_type, uatlas_select)
     elif (clust_type == 'ncut_tcorr') or (clust_type == 'ncut_scorr'):
         working_dir = "%s%s%s" % (os.path.dirname(func_file), '/', atlas_select)
         if clust_type == 'ncut_tcorr':

@@ -18,7 +18,7 @@ def test_individual_clustering():
     dir_path = base_dir + '/002/fmri'
     func_file = dir_path + '/002.nii.gz'
     clust_mask = base_dir + '/pDMN_3_bin.nii.gz'
-    ID='002'
+    ID = '002'
     k = 3
     clust_type = 'kmeans'
 
