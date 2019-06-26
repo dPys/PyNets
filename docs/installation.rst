@@ -15,8 +15,7 @@ Docker Container
 
 In order to run pynets in a Docker container, Docker must be `installed
 <https://docs.docker.com/engine/installation/>`_.
-Once Docker is installed, there are two ways of creating a pynets container:
-1)
+Once Docker is installed, you can build a container as follows:
 BUILDIR=$(pwd)
 mkdir -p ${BUILDIR}/pynets_images
 docker build -t pynets_docker .
@@ -25,47 +24,6 @@ docker run -ti --rm --privileged \
     -v /tmp:/tmp \
     -v /var/tmp:/var/tmp \
     pynets_docker
-
-2) use the
-pynets-docker_ wrapper, which requires Python and an Internet connection.
-``pynets-docker`` is a command that allows you to write your command line
-as if you were running ``pynets`` directly, and converts it into a ``docker``
-command.
-
-To install::
-
-    $ pip install --user --upgrade pynets-docker
-
-When you run ``pynets-docker``, it will generate a Docker command line for you,
-print it out for reporting purposes, and then execute it without further action
-needed, e.g.::
-
-    $ pynets-docker /path/to/data/dir /path/to/output/dir participant
-    RUNNING: docker run --rm -it -v /path/to/data/dir:/data:ro \
-        -v /path/to_output/dir:/out dpys/pynets:latest \
-        /data /out participant
-    ...
-
-``pynets-docker`` accepts all of the typical options for ``pynets``,
-automatically translating directories into Docker mount points.
-
-You may also invoke ``docker`` directly::
-
-    $ docker run -ti --rm \
-        -v filepath/to/data/dir:/data:ro \
-        -v filepath/to/output/dir:/out \
-        poldracklab/pynets:latest \
-        data/bids_derivative_root \
-        participant
-
-For example: ::
-
-    $ docker run -ti --rm \
-        -v $HOME/fullds005:/data:ro \
-        -v $HOME/dockerout:/out \
-        dpys/pynets:latest \
-        data/bids_derivative_root \
-        participant
 
 See `External Dependencies`_ for more information (e.g., specific versions) on
 what is included in the latest Docker images.
@@ -118,6 +76,7 @@ Transfer the resulting Singularity image to the HPC, for example, using ``scp``.
 
     $ scp pynets*.img user@hcpserver.edu:/my_images
 
+
 Running a Singularity Image
 ---------------------------
 
@@ -164,6 +123,7 @@ If the data to be preprocessed is also on the HPC, you are ready to run fmriprep
         participant \
         --participant-label 387 -pm '4,8'
 
+
 Manually Prepared Environment (Python 3.5+)
 ===========================================
 
@@ -183,6 +143,7 @@ PyNets can be installed using the habitual command ::
 
     $ pip install pynets
 
+
 External Dependencies
 ---------------------
 
@@ -194,4 +155,4 @@ not handled by the Python's packaging system (Pypi) used to deploy
 the ``pynets`` package:
 
 - FSL_ (version 5.0.9)
-- ANTs_ (version 2.2.0 - NeuroDocker build) *only needed for dMRI connectomics
+- ANTs_ (version 2.2.0 - NeuroDocker build)

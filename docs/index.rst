@@ -17,5 +17,6 @@ Contents
 
    installation
    usage
-   contributors
+   authors
+   contributing
    api/index.rst
