@@ -5,26 +5,18 @@
 
 Welcome to PyNets's documentation!
 ==================================
+.. include:: links.rst
+.. include:: ../README.rst
+
+
+Contents
+--------
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 3
 
-   source/modules.rst
-   source/pynets.atlases.rst
-   source/pynets.dmri.rst
-   source/pynets.fmri.rst
-   source/pynets.labelcharts.rst
-   source/pynets.plotting.rst
-   source/pynets.registration.rst
-   source/pynets.rsnrefs.rst
-   source/pynets.rst
-   source/pynets.stats.rst
-   source/pynets.templates.rst 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   installation
+   usage
+   authors
+   contributing
+   api/index.rst

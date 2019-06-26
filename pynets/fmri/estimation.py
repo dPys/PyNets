@@ -28,7 +28,7 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         Path to directory containing subject derivative data for given run.
     node_size : int
         Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for tracking.
+        are used as ROI's.
     smooth : int
         Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
     dens_thresh : bool

@@ -1,41 +1,52 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Dec 21 18:07:34 2017
+Craddock, R. C.; James, G. A.; Holtzheimer, P. E.; Hu, X. P. & Mayberg, H. S.
+A whole brain fMRI atlas generated via spatially constrained spectral
+clustering Human Brain Mapping, 2012, 33, 1914-1928 doi: 10.1002/hbm.21333.
 
-@author: dPys
-Adapted from Cameron Craddock's PyClusterROI and soon to be replaced with a pypi dependency
+ARTICLE{Craddock2012,
+  author = {Craddock, R C and James, G A and Holtzheimer, P E and Hu, X P and
+  Mayberg, H S},
+  title = {{A whole brain fMRI atlas generated via spatially constrained
+  spectral clustering}},
+  journal = {Human Brain Mapping},
+  year = {2012},
+  volume = {33},
+  pages = {1914--1928},
+  number = {8},
+  address = {Department of Neuroscience, Baylor College of Medicine, Houston,
+      TX, United States},
+  pmid = {21769991},
+}
+
+@Recompiled, annotated, and updated to Python 3 by @dPys
 """
 import nibabel as nib
 import numpy as np
 
-# Craddock, R. C.; James, G. A.; Holtzheimer, P. E.; Hu, X. P. & Mayberg, H. S.
-# A whole brain fMRI atlas generated via spatially constrained spectral
-# clustering Human Brain Mapping, 2012, 33, 1914-1928 doi: 10.1002/hbm.21333.
-#
-# ARTICLE{Craddock2012,
-#   author = {Craddock, R C and James, G A and Holtzheimer, P E and Hu, X P and
-#   Mayberg, H S},
-#   title = {{A whole brain fMRI atlas generated via spatially constrained
-#   spectral clustering}},
-#   journal = {Human Brain Mapping},
-#   year = {2012},
-#   volume = {33},
-#   pages = {1914--1928},
-#   number = {8},
-#   address = {Department of Neuroscience, Baylor College of Medicine, Houston,
-#       TX, United States},
-#   pmid = {21769991},
-# }
 
-
-# Translate 1D vector coordinates to 3D matrix coordinates for a 3D matrix of size sz
 def indx_1dto3d(idx, sz):
     """
+    ## ADAPTED FROM PyClusterROI ##
 
-    :param idx:
-    :param sz:
-    :return:
+    Translate 1D vector coordinates to 3D matrix coordinates for a 3D matrix of size sz.
+
+    Parameters
+    ----------
+    idx : array
+        A 1D numpy coordinate vector.
+    sz : array
+        Shape of 3D matrix idx.
+
+    Returns
+    -------
+    x : int
+        x-coordinate of 3D matrix coordinates.
+    y : int
+        y-coordinate of 3D matrix coordinates.
+    z : int
+        z-coordinate of 3D matrix coordinates.
     """
     from scipy import divide, prod
     x = divide(idx, prod(sz[1:3]))
@@ -44,13 +55,23 @@ def indx_1dto3d(idx, sz):
     return x, y, z
 
 
-# Translate 3D matrix coordinates to 1D vector coordinates for a 3D matrix of size sz
 def indx_3dto1d(idx, sz):
     """
+    ## ADAPTED FROM PyClusterROI ##
 
-    :param idx:
-    :param sz:
-    :return:
+    Translate 3D matrix coordinates to 1D vector coordinates for a 3D matrix of size sz.
+
+    Parameters
+    ----------
+    idx : array
+        A 3D numpy array of matrix coordinates.
+    sz : array
+        Shape of 3D matrix idx.
+
+    Returns
+    -------
+    idx1 : array
+        A 1D numpy coordinate vector.
     """
     from scipy import prod, rank
     if rank(idx) == 1:
@@ -62,11 +83,30 @@ def indx_3dto1d(idx, sz):
 
 def make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh):
     """
+    ## ADAPTED FROM PyClusterROI ##
 
-    :param func_file:
-    :param clust_mask:
-    :param outfile:
-    :param thresh:
+    Constructs a spatially constrained connectivity matrix from a fMRI dataset.
+    The weights w_ij of the connectivity matrix W correspond to the
+    spatial correlation between the whole brain FC maps generated from the
+    time series from voxel i and voxel j. Connectivity is only calculated
+    between a voxel and the 27 voxels in its 3D neighborhood
+    (face touching and edge touching).
+
+    Parameters
+    ----------
+    func_file : str
+        File path to a 4D Nifti1Image containing fMRI data.
+    clust_mask : str
+        File path to a 3D NIFTI file containing a mask, which restricts the
+        voxels used in the analysis.
+    outfile : str
+        Output file path, in .npy format, containing a single 3*N vector.
+        The first N values are the i index, the second N values are the j index,
+        and the last N values are the w_ij, connectivity weights between voxel i
+        and voxel j.
+    thresh : str
+        Threshold value, correlation coefficients lower than this value
+        will be removed from the matrix (set to zero).
     """
     from scipy.sparse import csc_matrix
     from scipy import prod, rank
@@ -196,11 +236,30 @@ def make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh):
 
 def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
     """
+    ## ADAPTED FROM PyClusterROI ##
 
-    :param func_file:
-    :param clust_mask:
-    :param outfile:
-    :param thresh:
+    Constructs a spatially constrained connectivity matrix from a fMRI dataset.
+    The weights w_ij of the connectivity matrix W correspond to the
+    temporal correlation between the time series from voxel i and voxel j.
+    Connectivity is only calculated between a voxel and the 27 voxels in its 3D
+    neighborhood (face touching and edge touching). The resulting datafiles are
+    suitable as inputs to the function binfile_parcellate.
+
+    Parameters
+    ----------
+    func_file : str
+        File path to a 4D Nifti1Image containing fMRI data.
+    clust_mask : str
+        File path to a 3D NIFTI file containing a mask, which restricts the
+        voxels used in the analysis.
+    outfile : str
+        Output file path, in .npy format, containing a single 3*N vector.
+        The first N values are the i index, the second N values are the j index,
+        and the last N values are the w_ij, connectivity weights between voxel i
+        and voxel j.
+    thresh : str
+        Threshold value, correlation coefficients lower than this value
+        will be removed from the matrix (set to zero).
     """
     from scipy.sparse import csc_matrix
     from scipy import prod, rank
@@ -297,14 +356,46 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
     np.save(outfile, outlist)
 
     print("%s%s" % ('Finished ', outfile))
+    return
 
 
 def ncut(W, nbEigenValues):
     """
+    ## ADAPTED FROM PyClusterROI ##
 
-    :param W:
-    :param nbEigenValues:
-    :return:
+    This function performs the first step of normalized cut spectral clustering.
+    The normalized LaPlacian is calculated on the similarity matrix W, and top
+    nbEigenValues eigenvectors are calculated. The number of eigenvectors
+    corresponds to the maximum number of classes (K) that will be produced by the
+    clustering algorithm.
+
+    Parameters
+    ----------
+    W : array
+        Numpy array containing a symmetric #feature x #feature sparse matrix representing the
+        similarity between voxels, traditionally this matrix should be positive semidefinite,
+        but regularization is employed to allow negative matrix entries (Yu 2001).
+    nbEigenValues : int
+        Number of eigenvectors that should be calculated, this determines the maximum number
+        of clusters (K) that can be derived from the result.
+
+    Returns
+    -------
+    eigen_val :  array
+        Eigenvalues from the eigen decomposition of the LaPlacian of W.
+    eigen_vec :  array
+        Eigenvectors from the eigen decomposition of the LaPlacian of W.
+
+    References
+    ----------
+    .. [1] Stella Yu and Jianbo Shi, "Understanding Popout through Repulsion," Computer
+       Vision and Pattern Recognition, December, 2001.
+    .. [2] Shi, J., & Malik, J. (2000).  Normalized cuts and image segmentation. IEEE
+       Transactions on Pattern Analysis and Machine Intelligence, 22(8), 888-905.
+       doi: 10.1109/34.868688.
+    .. [3] Yu, S. X., & Shi, J. (2003). Multiclass spectral clustering. Proceedings Ninth
+       IEEE International Conference on Computer Vision, (1), 313-319 vol.1. Ieee.
+       doi: 10.1109/ICCV.2003.1238361
     """
     from scipy.sparse.linalg import eigsh
     from scipy.sparse import spdiags
@@ -318,14 +409,6 @@ def ncut(W, nbEigenValues):
 
     m = np.shape(W)[1]
 
-    # make sure that W is symmetric, this is a computationally expensive operation, only use for debugging
-    # if (W-W.transpose()).sum() != 0:
-    #    print "W should be symmetric!"
-    #    exit(0)
-
-    # Degrees and regularization
-    # S Yu Understanding Popout through Repulsion CVPR 2001
-    # Allows negative values as well as improves invertability of d for small numbers i bet that this is what improves the stability of the eigen
     d = abs(W).sum(0)
     dr = 0.5*(d-W.sum(0))
     d = d+offset*2
@@ -345,7 +428,7 @@ def ncut(W, nbEigenValues):
     eigen_vec = eigen_vec[:, i]
 
     # Normalize the returned eigenvectors
-    eigen_vec = Dinvsqrt*np.matrix(eigen_vec)
+    eigen_vec = Dinvsqrt*np.array(eigen_vec)
     norm_ones = norm(np.ones((m, 1)))
     for i in range(0, np.shape(eigen_vec)[1]):
         eigen_vec[:, i] = (eigen_vec[:, i] / norm(eigen_vec[:, i]))*norm_ones
@@ -357,9 +440,50 @@ def ncut(W, nbEigenValues):
 
 def discretisation(eigen_vec):
     """
+    ## ADAPTED FROM PyClusterROI ##
 
-    :param eigen_vec:
-    :return:
+    This function performs the second step of normalized cut clustering which
+    assigns features to clusters based on the eigen vectors from the LaPlacian of
+    a similarity matrix. There are a few different ways to perform this task. Shi
+    and Malik (2000) iteratively bisect the features based on the positive and
+    negative loadings of the eigenvectors. Ng, Jordan and Weiss (2001) proposed to
+    perform K-means clustering on the rows of the eigenvectors. The method
+    implemented here was proposed by Yu and Shi (2003) and it finds a discrete
+    solution by iteratively rotating a binarised set of vectors until they are
+    maximally similar to the the eigenvectors. An advantage of this method over K-means
+    is that it is _more_ deterministic, i.e. you should get very similar results
+    every time you run the algorithm on the same data.
+
+    The number of clusters that the features are clustered into is determined by
+    the number of eignevectors (number of columns) in the input array eigen_vec. A
+    caveat of this method, is that number of resulting clusters is bound by the
+    number of eignevectors, but it may contain less.
+
+    Parameters
+    ----------
+    eigen_vec : array
+        Eigenvectors of the normalized LaPlacian calculated from the
+        similarity matrix for the corresponding clustering problem.
+
+    Returns
+    -------
+    eigen_vec_discrete : array
+        Discretised eigenvector outputs, i.e. vectors of 0
+        and 1 which indicate whether or not a feature belongs
+        to the cluster defined by the eigen vector. e.g. a one
+        in the 10th row of the 4th eigenvector (column) means
+        that feature 10 belongs to cluster #4.
+
+    References
+    ----------
+    .. [1] Stella Yu and Jianbo Shi, "Understanding Popout through Repulsion," Computer
+       Vision and Pattern Recognition, December, 2001.
+    .. [2] Shi, J., & Malik, J. (2000).  Normalized cuts and image segmentation. IEEE
+       Transactions on Pattern Analysis and Machine Intelligence, 22(8), 888-905.
+       doi: 10.1109/34.868688.
+    .. [3] Yu, S. X., & Shi, J. (2003). Multiclass spectral clustering. Proceedings Ninth
+       IEEE International Conference on Computer Vision, (1), 313-319 vol.1. Ieee.
+       doi: 10.1109/ICCV.2003.1238361
     """
     import scipy as sp
     from scipy.sparse import csc_matrix
@@ -390,7 +514,9 @@ def discretisation(eigen_vec):
         nbIterationsDiscretisation = 0
         nbIterationsDiscretisationMax = 20
 
-        # Iteratively rotate the discretised eigenvectors until they are maximally similar to the input eignevectors, this converges when the differences between the current solution and the previous solution differs by less than eps or we have reached the maximum number of itarations
+        # Iteratively rotate the discretised eigenvectors until they are maximally similar to the input eignevectors,
+        # this converges when the differences between the current solution and the previous solution differs by less
+        # than eps or we have reached the maximum number of itarations
         while exitLoop == 0:
             nbIterationsDiscretisation = nbIterationsDiscretisation + 1
 
@@ -429,10 +555,23 @@ def discretisation(eigen_vec):
 
 def binfile_parcellate(infile, outfile, k):
     """
+    ## ADAPTED FROM PyClusterROI ##
 
-    :param infile:
-    :param outfile:
-    :param k:
+    This function performs normalized cut clustering on the connectivity matrix
+    specified by infile into sets of K clusters.
+
+    Parameters
+    ----------
+    infile : str
+        Path to file in .npy or .bin format containing a representation of the connectivity
+        matrix to be clustered. This file contains a single vector of length 3*N, in which
+        the first N values correspond to the i indices, the second N values correspond to
+        the j indices and the last N values correspond to the weights w_ij of the similarity
+        matrix W.
+    outfile : str
+        Path to the output file.
+    k : int
+        Numbers of clusters that will be generated.
     """
     from scipy.sparse import csc_matrix
 
@@ -474,14 +613,26 @@ def binfile_parcellate(infile, outfile, k):
     # Apply the suffix to the output filename and write out results as a .npy file
     outname = "%s%s%s%s" % (outfile, '_', str(k), '.npy')
     np.save(outname, group_img.todense())
+    return
 
 
 def make_image_from_bin_renum(image, binfile, mask):
     """
+    Converts a .npy file generated by binfile_parcellation.py into a
+    nifti file where each voxels intensity corresponds to the number of the
+    cluster to which it belongs. Clusters are renumberd to be contiguous.
 
-    :param image:
-    :param binfile:
-    :param mask:
+    Parameters
+    ----------
+    image : str
+        File path to the Nifti1Image file to be written.
+    binfile : str
+        The binfile to be converted. The file contains a n_voxel x 1 vector that
+        is ultimately converted to a nifti file.
+    mask : str
+        Mask describing the space of the nifti file. This should
+        correspond to the mask originally used to create the
+        connectivity matrices used for parcellation.
     """
     # Read in the mask
     nim = nib.load(mask)
@@ -511,19 +662,26 @@ def make_image_from_bin_renum(image, binfile, mask):
     nim_out = nib.Nifti1Image(imdat, nim.get_affine(), nim.get_header())
     #nim_out.set_data_dtype('int16')
     nim_out.to_filename(image)
+    return
 
 
-def nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_select):
+def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas_select):
     """
+    API for performing any of a variety of clustering routines available through NiLearn.
 
-    :param func_file:
-    :param clust_mask:
-    :param k:
-    :param clust_type:
-    :param ID:
-    :param dir_path:
-    :param uatlas_select:
-    :return:
+    Parameters
+    ----------
+    func_file : str
+        File path to a 4D Nifti1Image containing fMRI data.
+    clust_mask : str
+        File path to a 3D NIFTI file containing a mask, which restricts the
+        voxels used in the analysis.
+    k : int
+        Numbers of clusters that will be generated.
+    clust_type : str
+        Type of clustering to be performed (e.g. 'ward', 'kmeans', 'complete', 'average').
+    uatlas_select : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
     """
     import time
     import nibabel as nib
@@ -543,16 +701,26 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_se
     return
 
 
-def individual_tcorr_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
+def individual_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
     """
+    Meta-API for performing any of several types of fMRI clustering based on NiLearn or NCUT.
 
-    :param func_file:
-    :param clust_mask:
-    :param ID:
-    :param k:
-    :param clust_type:
-    :param thresh:
-    :return:
+    Parameters
+    ----------
+    func_file : str
+        File path to a 4D Nifti1Image containing fMRI data.
+    clust_mask : str
+        File path to a 3D NIFTI file containing a mask, which restricts the
+        voxels used in the analysis.
+    ID : str
+        A subject id or other unique identifier.
+    k : int
+        Numbers of clusters that will be generated.
+    clust_type : str
+        Type of clustering to be performed (e.g. 'ward', 'kmeans', 'complete', 'average').
+    thresh : str
+        Threshold value to be used for NCUT tcorr and scorr. Correlation coefficients
+        lower than this value will be removed from the matrix (set to zero).
     """
     import os
     from pynets import utils
@@ -568,13 +736,19 @@ def individual_tcorr_clustering(func_file, clust_mask, ID, k, clust_type, thresh
     uatlas_select = "%s%s%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
 
     if clust_type in nilearn_clust_list:
-        clustools.nil_parcellate(func_file, clust_mask, k, clust_type, ID, dir_path, uatlas_select)
-    elif clust_type == 'ncut':
+        clustools.nil_parcellate(func_file, clust_mask, k, clust_type, atlas_select)
+    elif (clust_type == 'ncut_tcorr') or (clust_type == 'ncut_scorr'):
         working_dir = "%s%s%s" % (os.path.dirname(func_file), '/', atlas_select)
-        outfile = "%s%s%s%s" % (working_dir, '/rm_tcorr_conn_', str(ID), '.npy')
-        outfile_parc = "%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID))
-        binfile = "%s%s%s%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID), '_', str(k), '.npy')
-        clustools.make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh)
+        if clust_type == 'ncut_tcorr':
+            outfile = "%s%s%s%s" % (working_dir, '/rm_tcorr_conn_', str(ID), '.npy')
+            outfile_parc = "%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID))
+            binfile = "%s%s%s%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID), '_', str(k), '.npy')
+            clustools.make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh)
+        elif clust_type == 'ncut_scorr':
+            outfile = "%s%s%s%s" % (working_dir, '/rm_scorr_conn_', str(ID), '.npy')
+            outfile_parc = "%s%s%s" % (working_dir, '/rm_scorr_indiv_cluster_', str(ID))
+            binfile = "%s%s%s%s%s%s" % (working_dir, '/rm_scorr_indiv_cluster_', str(ID), '_', str(k), '.npy')
+            clustools.make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh)
         clustools.binfile_parcellate(outfile, outfile_parc, int(k))
         clustools.make_image_from_bin_renum(uatlas_select, binfile, clust_mask)
 
