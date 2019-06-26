@@ -76,15 +76,11 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
         return label_arr, clust_levels_tmp
 
     if comm == 'nodes' and len(conn_matrix) > 40:
-        from pynets.stats.netstats import modularity_louvain_und_sign
-
-        gamma = nx.density(nx.from_numpy_array(conn_matrix))
+        import community
+        G = nx.from_numpy_matrix(conn_matrix)
         try:
-            if network or len(conn_matrix) < 100:
-                [node_comm_aff_mat, q] = modularity_louvain_und_sign(conn_matrix, gamma=float(gamma * 0.001))
-            else:
-                [node_comm_aff_mat, q] = modularity_louvain_und_sign(conn_matrix, gamma=float(gamma * 0.01))
-            print("%s%s%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities using γ=', str(gamma), '...'))
+            node_comm_aff_mat = community.best_partition(G)
+            print("%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities...'))
         except:
             print('\nWARNING: Louvain community detection failed. Proceeding with single community affiliation vector...')
             node_comm_aff_mat = np.ones(conn_matrix.shape[0]).astype('int')
@@ -238,8 +234,6 @@ def plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path, ID, netwo
     save_json(out_file, data)
 
     # Copy index.html and json to dir_path
-    #conn_js_path = '/Users/PSYC-dap3463/Applications/PyNets/pynets/plotting/connectogram.js'
-    #index_html_path = '/Users/PSYC-dap3463/Applications/PyNets/pynets/plotting/index.html'
     conn_js_path = str(Path(__file__).parent/"connectogram.js")
     index_html_path = str(Path(__file__).parent/"index.html")
     fdg_replacements_js = {"FD_graph.json": str(json_fdg_file_name)}

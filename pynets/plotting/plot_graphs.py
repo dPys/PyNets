@@ -122,8 +122,8 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, netw
     """
     import networkx as nx
     import os.path as op
+    import community
     from pynets.plotting import plot_graphs
-    from pynets.stats.netstats import modularity_louvain_und_sign
     if roi:
         out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(op.basename(roi).split('.')[0]), '_func_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''), "%s" % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
         out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(op.basename(roi).split('.')[0]), '_func_adj_mat_communities_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''), "%s" % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
@@ -132,14 +132,12 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, netw
         out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), 'func_adj_mat_communities_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''), "%s" % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
 
     plot_graphs.plot_conn_mat(conn_matrix, label_names, out_path_fig)
+
     # Plot community adj. matrix
-    gamma = nx.density(nx.from_numpy_array(conn_matrix))
+    G = nx.from_numpy_matrix(conn_matrix)
     try:
-        if network or len(conn_matrix) < 100:
-            [node_comm_aff_mat, q] = modularity_louvain_und_sign(conn_matrix, gamma=float(gamma*0.001))
-        else:
-            [node_comm_aff_mat, q] = modularity_louvain_und_sign(conn_matrix, gamma=float(gamma*0.01))
-        print("%s%s%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities using γ=', str(gamma), '...'))
+        node_comm_aff_mat = community.best_partition(G)
+        print("%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities...'))
         plot_graphs.plot_community_conn_mat(conn_matrix, label_names, out_path_fig_comm, node_comm_aff_mat)
     except:
         print('\nWARNING: Louvain community detection failed. Cannot plot community matrix...')
