@@ -2,39 +2,12 @@
 API
 ===
 
-Workflows
----------
-.. automodule:: pynets.workflows
+.. toctree::
+   :maxdepth: 2
 
-dMRI
-----
-.. automodule:: pynets.dmri
-    :members:
-
-fMRI
-----
-.. automodule:: pynets.fmri
-    :members:
-
-Registration
-------------
-.. automodule:: pynets.registration
-    :members:
-
-Graph Theory
-------------
-.. automodule:: pynets.stats
-    :members: 
-
-Plotting
---------
-.. automodule:: pynets.plotting
-    :members: 
-
-Thresholding
-------------
-.. automodule:: pynets.thresholding
-
-Nodemaker
----------
-.. automodule:: pynets.nodemaker
+   ../_modules/pynets.dmri.rst
+   ../_modules/pynets.fmri.rst
+   ../_modules/pynets.plotting.rst
+   ../_modules/pynets.registration.rst
+   ../_modules/pynets.rst
+   ../_modules/pynets.stats.rst
