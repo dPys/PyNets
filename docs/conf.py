@@ -44,6 +44,7 @@ extensions = [
     'sphinxarg.ext',  # argparse extension
     'nipype.sphinxext.plot_workflow',
 #    'nbsphinx',
+    'numpydoc'
 ]
 
 # Mock modules in autodoc:
