@@ -5,10 +5,11 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.filterwarnings("ignore")
 import numpy as np
-np.warnings.filterwarnings('ignore')
 import nibabel as nib
+warnings.filterwarnings("ignore")
+np.warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def reconstruction(conn_model, gtab, dwi_file, wm_in_dwi):
@@ -50,13 +51,13 @@ def reconstruction(conn_model, gtab, dwi_file, wm_in_dwi):
     return mod
 
 
-def prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc_step_size=0.2):
+def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc_step_size=0.2):
     '''
     Estimate a tissue classifier for tractography.
 
     Parameters
     ----------
-    nodif_B0_mask : str
+    B0_mask : str
         File path to B0 brain mask.
     gm_in_dwi : str
         File path to grey-matter tissue segmentation Nifti1Image.
@@ -81,7 +82,7 @@ def prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_clas
         import _pickle as pickle
     from dipy.tracking.local import ActTissueClassifier, CmcTissueClassifier, BinaryTissueClassifier
     # Loads mask and ensures it's a true binary mask
-    mask_img = nib.load(nodif_B0_mask)
+    mask_img = nib.load(B0_mask)
     # Load tissue maps and prepare tissue classifier
     gm_mask = nib.load(gm_in_dwi)
     gm_mask_data = gm_mask.get_fdata()
@@ -106,8 +107,8 @@ def prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_clas
         tiss_classifier = CmcTissueClassifier.from_pve(wm_mask_data, gm_mask_data, vent_csf_in_dwi_data,
                                                        step_size=cmc_step_size, average_voxel_size=voxel_size)
     else:
-        nodif_B0_mask_data = nib.load(nodif_B0_mask).get_fdata().astype('bool')
-        tiss_classifier = BinaryTissueClassifier(nodif_B0_mask_data)
+        B0_mask_data = nib.load(B0_mask).get_fdata().astype('bool')
+        tiss_classifier = BinaryTissueClassifier(B0_mask_data)
 
     return tiss_classifier
 
@@ -191,7 +192,7 @@ def save_streams(dwi_img, streamlines, streams):
 
 
 def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_length, conn_model, target_samples,
-                       node_size, curv_thr_list, step_list):
+                       node_size, curv_thr_list, step_list, network, roi):
     '''
     Perform various routines for reducing false-positive streamlines from tractography.
 
@@ -220,6 +221,11 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
         List of integer curvature thresholds used to perform ensemble tracking.
     step_list : list
         List of float step-sizes used to perform ensemble tracking.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+        used to filter nodes in the study of brain subgraphs.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
 
     Returns
     -------
@@ -230,7 +236,7 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
     dm_path : str
         File path to fiber density map Nifti1Image.
     '''
-
+    import os.path as op
     from dipy.tracking import utils
     from pynets.dmri.track import save_streams, run_LIFE_all
 
@@ -248,7 +254,7 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
         [streamlines, rmse] = run_LIFE_all(data, gtab, streamlines)
         mean_rmse = np.mean(rmse)
         print("%s%s" % ('Mean RMSE: ', mean_rmse))
-        if mean_rmse > 5:
+        if mean_rmse > 50:
             print('WARNING: LiFE revealed high model error. Check streamlines output and review tracking parameters '
                   'used.')
 
@@ -257,15 +263,25 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
 
     # Save density map
     dm_img = nib.Nifti1Image(dm.astype('int16'), dwi_img.affine)
-    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/density_map_', conn_model, '_', target_samples, '_',
-                                            node_size, 'mm_curv', str(curv_thr_list).replace(', ', '_'),
-                                            '_step', str(step_list).replace(', ', '_'), '.nii.gz')
+    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/density_map_',
+                                                '%s' % (network + '_' if network is not None else ''),
+                                                '%s' % (
+                                                    op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                conn_model, '_', target_samples, '_',
+                                                '%s' % ("%s%s" % (node_size, 'mm_') if node_size != 'parc' else ''),
+                                                'curv', str(curv_thr_list).replace(', ', '_'),
+                                                '_step', str(step_list).replace(', ', '_'), '.nii.gz')
     dm_img.to_filename(dm_path)
 
     # Save streamlines to trk
-    streams = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_', conn_model, '_', target_samples, '_',
-                                            node_size, 'mm_curv', str(curv_thr_list).replace(', ', '_'),
-                                            '_step', str(step_list).replace(', ', '_'), '.trk')
+    streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_',
+                                                '%s' % (network + '_' if network is not None else ''),
+                                                '%s' % (
+                                                    op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                conn_model, '_', target_samples, '_',
+                                                '%s' % ("%s%s" % (node_size, 'mm_') if node_size != 'parc' else ''),
+                                                'curv', str(curv_thr_list).replace(', ', '_'),
+                                                '_step', str(step_list).replace(', ', '_'), '.trk')
     streams = save_streams(dwi_img, streamlines, streams)
 
     return streams, dir_path, dm_path
@@ -389,12 +405,13 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
                     raise ValueError('ERROR: No valid tracking method(s) specified.')
 
                 # Filter resulting streamlines by roi-intersection characteristics
-                streamlines_more = Streamlines(select_by_rois(streamline_generator, parcels, parcel_vec,
-                                                              mode='any', affine=np.eye(4), tol=roi_neighborhood_tol))
+                roi_proximal_streamlines = Streamlines(select_by_rois(streamline_generator, parcels, parcel_vec,
+                                                                      mode='any', affine=np.eye(4),
+                                                                      tol=roi_neighborhood_tol))
 
                 # Repeat process until target samples condition is met
                 ix = ix + 1
-                for s in streamlines_more:
+                for s in roi_proximal_streamlines:
                     stream_counter = stream_counter + len(s)
                     streamlines.append(s)
                     if int(stream_counter) >= int(target_samples):
@@ -411,17 +428,17 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
     return streamlines
 
 
-def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels_im_file_wm_gm_int,
+def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels_im_file_wm_gm_int,
               labels_im_file, target_samples, curv_thr_list, step_list, track_type, max_length, maxcrossing, directget,
               conn_model, gtab_file, dwi_file, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
-              prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, life_run, min_length,
+              prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, life_run, min_length,
               fa_path):
     '''
     Run all ensemble tractography and filtering routines.
 
     Parameters
     ----------
-    nodif_B0_mask : str
+    B0_mask : str
         File path to B0 brain mask.
     gm_in_dwi : str
         File path to grey-matter tissue segmentation Nifti1Image.
@@ -479,11 +496,11 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
-    atlas_select : str
+    atlas : str
         Name of atlas parcellation used.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
-    label_names : list
+    labels : list
         List of string labels corresponding to graph nodes.
     coords : list
         List of (x, y, z) tuples corresponding to a coordinate atlas used or
@@ -537,11 +554,11 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
-    atlas_select : str
+    atlas : str
         Name of atlas parcellation used.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
-    label_names : list
+    labels : list
         List of string labels corresponding to graph nodes.
     coords : list
         List of (x, y, z) tuples corresponding to a coordinate atlas used or
@@ -596,7 +613,7 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     sphere = get_sphere('repulsion724')
 
     # Instantiate tissue classifier
-    tiss_classifier = prep_tissues(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class)
+    tiss_classifier = prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class)
 
     if np.sum(atlas_data) == 0:
         raise ValueError('ERROR: No non-zero voxels found in atlas. Check any roi masks and/or wm-gm interface images '
@@ -627,8 +644,9 @@ def run_track(nodif_B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, 
     print('Tracking Complete')
 
     # Perform streamline filtering routines
-    dir_path = utils.do_dir_path(atlas_select, dwi_file)
+    dir_path = utils.do_dir_path(atlas, dwi_file)
     [streams, dir_path, dm_path] = filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_length,
-                                                      conn_model, target_samples, node_size, curv_thr_list, step_list)
+                                                      conn_model, target_samples, node_size, curv_thr_list, step_list,
+                                                      network, roi)
 
-    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path
+    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path

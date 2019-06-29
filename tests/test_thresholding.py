@@ -36,11 +36,11 @@ def test_thresh_func():
     prune = 1
     norm = 1
     binary = False
-    atlas_select = 'whole_brain_cluster_labels_PCA200'
-    uatlas_select = None
+    atlas = 'whole_brain_cluster_labels_PCA200'
+    uatlas = None
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path, 'rb')
-    label_names = pickle.load(labels_file)
+    labels = pickle.load(labels_file)
     coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     coord_file = open(coord_file_path, 'rb')
     coords = pickle.load(coord_file)
@@ -49,7 +49,7 @@ def test_thresh_func():
     [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _, _, _, _, _, _,
     _, _, _, _, _, _, _] = thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model,
     network, ID, dir_path, roi, node_size, min_span_tree, smooth, disp_filt,
-    parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary, hpass)
+    parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
     np.round(time.time() - start_time, 1), 's'))
 
@@ -74,19 +74,19 @@ def test_thresh_func():
 #     node_size = 'parc'
 #     parc = True
 #     disp_filt = False
-#     atlas_select = 'whole_brain_cluster_labels_PCA200'
-#     uatlas_select = None
+#     atlas = 'whole_brain_cluster_labels_PCA200'
+#     uatlas = None
 #     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
 #     labels_file = open(labels_file_path, 'rb')
-#     label_names = pickle.load(labels_file)
+#     labels = pickle.load(labels_file)
 #     coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
 #     coord_file = open(coord_file_path, 'rb')
 #     coords = pickle.load(coord_file)
 #
 #     start_time = time.time()
 #     [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _, _, _, _, _] = thresholding.thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path,
-#     roi, node_size, conn_matrix, parc, min_span_tree, disp_filt, atlas_select,
-#     uatlas_select, label_names, coords)
+#     roi, node_size, conn_matrix, parc, min_span_tree, disp_filt, atlas,
+#     uatlas, labels, coords)
 #     print("%s%s%s" %
 #     ('thresh_and_fit (Functional, density thresholding) --> finished: ',
 #     str(np.round(time.time() - start_time, 1)), 's'))

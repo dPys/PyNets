@@ -18,7 +18,7 @@ def get_parser():
                         help='An subject identifier OR list of subject identifiers, separated by comma and of '
                              'equivalent length to the list of input files indicated with the -func flag. This parameter '
                              'must be an alphanumeric string and can be arbitrarily chosen. If functional '
-                             'and structural connectomes are being generated simultaneously, then comma-separated id\'s '
+                             'and dmri connectomes are being generated simultaneously, then comma-separated id\'s '
                              'need to be repeated to match the total input file count.\n')
     parser.add_argument('-mod',
                         metavar='Connectivity estimation/reconstruction method',
@@ -42,10 +42,10 @@ def get_parser():
                         metavar='Path to input functional file (required for functional connectomes)',
                         default=None,
                         help='Specify either a path to a preprocessed functional Nifti1Image in '
-                              'standard space OR multiple paths to multiple preprocessed functional '
-                              'Nifti1Image files in standard space and in .nii or .nii.gz format, '
-                              'separated by commas OR the path to a text file containing a list of paths '
-                              'to subject files.\n')
+                             'standard space OR multiple paths to multiple preprocessed functional '
+                             'Nifti1Image files in standard space and in .nii or .nii.gz format, '
+                             'separated by commas OR the path to a text file containing a list of paths '
+                             'to subject files.\n')
     parser.add_argument('-conf',
                         metavar='Confound regressor file (.tsv/.csv format)',
                         default=None,
@@ -54,29 +54,29 @@ def get_parser():
                              'subjects, which requires separated by comma and of equivalent length to the list of input '
                              'files indicated with the -func flag.\n')
     parser.add_argument('-dwi',
-                        metavar='Path to diffusion-weighted imaging data file (required for structural connectomes)',
+                        metavar='Path to diffusion-weighted imaging data file (required for dmri connectomes)',
                         default=None,
-                        help='Specify either a path to a preprocessed structural diffusion Nifti1Image in native diffusion '
-                             'space and in .nii or .nii.gz format OR multiple paths to multiple preprocessed structural '
+                        help='Specify either a path to a preprocessed dmri diffusion Nifti1Image in native diffusion '
+                             'space and in .nii or .nii.gz format OR multiple paths to multiple preprocessed dmri '
                              'diffusion Nifti1Image files in native diffusion space and in .nii or .nii.gz format.\n')
     parser.add_argument('-bval',
-                        metavar='Path to b-values file (required for structural connectomes)',
+                        metavar='Path to b-values file (required for dmri connectomes)',
                         default=None,
                         help='Specify either a path to a b-values text file containing gradient shell values per '
                              'diffusion direction OR multiple paths to multiple b-values text files in the order of '
                              'accompanying b-vectors and dwi files.\n')
     parser.add_argument('-bvec',
-                        metavar='Path to b-vectors file (required for structural connectomes)',
+                        metavar='Path to b-vectors file (required for dmri connectomes)',
                         default=None,
                         help='Specify either a path to a b-vectors text file containing gradient directions (x,y,z) '
                              'per diffusion direction OR multiple paths to multiple b-vectors text files in the order '
                              'of accompanying b-values and dwi files.\n')
     parser.add_argument('-anat',
-                        metavar='Path to preprocessed anatomical Nifti1Image',
+                        metavar='Path to a skull-stripped anatomical Nifti1Image',
                         default=None,
-                        help='Required for structural and/or functional connectomes. Multiple paths to multiple '
-                             'anatomical files text in the order of accompanying functional and/or structural files. '
-                             'If functional and structural connectomes are being generated simultaneously, then '
+                        help='Required for dmri and/or functional connectomes. Multiple paths to multiple '
+                             'anatomical files text in the order of accompanying functional and/or dmri files. '
+                             'If functional and dmri connectomes are being generated simultaneously, then '
                              'comma-separated anatomical Nifti1Image file paths need to be repeated.\n')
     parser.add_argument('-m',
                         metavar='Path to binarized mask Nifti1Image to apply to regions before extracting signals',
@@ -90,7 +90,7 @@ def get_parser():
                         default=None,
                         help='Optionally specify a thresholded binarized ROI mask and retain only those nodes contained '
                              'within that mask for functional connectome estimation, or constrain the tractography '
-                             'in the case of structural connectome estimation.\n')
+                             'in the case of dmri connectome estimation.\n')
     parser.add_argument('-cm',
                         metavar='Cluster mask',
                         default=None,
@@ -201,10 +201,9 @@ def get_parser():
                              'resampling of the node-extracted time-series.\n')
     parser.add_argument('-p',
                         metavar='Pruning strategy',
-                        default=1,
+                        default=2,
                         help='Include this flag to prune the resulting graph of any isolated (1) or isolated + fully '
-                             'disconnected (2) nodes. Default pruning=1 and removes isolated nodes. Include -p 0 to '
-                             'disable pruning.\n')
+                             'disconnected (2) nodes. Default pruning=2. Include -p 0 to disable pruning.\n')
     parser.add_argument('-bin',
                         default=False,
                         action='store_true',
@@ -218,21 +217,21 @@ def get_parser():
     parser.add_argument('-ml',
                         metavar='Maximum fiber length for tracking',
                         default=200,
-                        help='Include this flag to manually specify a maximum tract length (mm) for structural '
+                        help='Include this flag to manually specify a maximum tract length (mm) for dmri '
                              'connectome tracking. Default is 200.\n')
     parser.add_argument('-tt',
                         metavar='Tracking algorithm',
                         default='local',
                         nargs=1,
                         choices=['local', 'particle'],
-                        help='Include this flag to manually specify a tracking algorithm for structural connectome '
+                        help='Include this flag to manually specify a tracking algorithm for dmri connectome '
                              'estimation. Options are: local and particle. Default is local.\n')
     parser.add_argument('-dg',
                         metavar='Direction getter',
                         default='det',
                         nargs='+',
                         choices=['det', 'prob', 'clos', 'boot'],
-                        help='Include this flag to manually specify the statistical approach to tracking for structural '
+                        help='Include this flag to manually specify the statistical approach to tracking for dmri '
                              'connectome estimation. Options are: det (deterministic), closest (clos), '
                              'boot (bootstrapped), and prob (probabilistic). '
                              'Default is det.\n')
@@ -241,7 +240,7 @@ def get_parser():
                         default='wb',
                         nargs=1,
                         choices=['wb', 'cmc', 'act', 'bin'],
-                        help='Include this flag to manually specify a tissue classification method for structural '
+                        help='Include this flag to manually specify a tissue classification method for dmri '
                              'connectome estimation. Options are: cmc (continuous), act (anatomically-constrained), '
                              'wb (whole-brain mask), and bin (binary to white-matter only). Default is wb.\n')
     parser.add_argument('-thr',
@@ -327,6 +326,7 @@ def build_workflow(args, retval):
     warnings.filterwarnings("ignore")
     warnings.simplefilter("ignore")
     np.warnings.filterwarnings('ignore')
+    warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
     import yaml
     try:
         import pynets
@@ -364,7 +364,7 @@ def build_workflow(args, retval):
     else:
         from multiprocessing import cpu_count
         nthreads = cpu_count()
-        procmem = [int(nthreads), int(float(nthreads)*2)]
+        procmem = [int(nthreads), int(float(nthreads) * 2)]
     thr = float(args.thr)
     node_size_pre = args.ns
     node_size = node_size_pre
@@ -517,31 +517,31 @@ def build_workflow(args, retval):
             multi_nets = None
     else:
         multi_nets = None
-    uatlas_select_pre = args.ua
-    atlas_select_pre = args.a
-    uatlas_select = list(str(uatlas_select_pre).split(','))
-    if len(uatlas_select) > 1:
-        user_atlas_list = uatlas_select
-        uatlas_select = None
-    elif uatlas_select == ['None']:
-        uatlas_select = None
+    uatlas_pre = args.ua
+    atlas_pre = args.a
+    uatlas = list(str(uatlas_pre).split(','))
+    if len(uatlas) > 1:
+        user_atlas_list = uatlas
+        uatlas = None
+    elif uatlas == ['None']:
+        uatlas = None
         user_atlas_list = None
     else:
-        uatlas_select = uatlas_select[0]
+        uatlas = uatlas[0]
         user_atlas_list = None
-    atlas_select = atlas_select_pre
-    if atlas_select:
-        if (type(atlas_select) is list) and (len(atlas_select) > 1):
-            multi_atlas = atlas_select
-            atlas_select = None
-        elif atlas_select == ['None']:
+    atlas = atlas_pre
+    if atlas:
+        if (type(atlas) is list) and (len(atlas) > 1):
+            multi_atlas = atlas
+            atlas = None
+        elif atlas == ['None']:
             multi_atlas = None
-            atlas_select = None
-        elif type(atlas_select) is list:
-            atlas_select = atlas_select[0]
+            atlas = None
+        elif type(atlas) is list:
+            atlas = atlas[0]
             multi_atlas = None
         else:
-            atlas_select = None
+            atlas = None
             multi_atlas = None
     else:
         multi_atlas = None
@@ -612,7 +612,7 @@ def build_workflow(args, retval):
 
     if dwi_file and (not anat_file and not fbval and not fbvec):
         raise ValueError('ERROR: Anatomical image(s) (-anat), b-values file(s) (-fbval), and b-vectors file(s) '
-                         '(-fbvec) must be specified for structural connectometry.')
+                         '(-fbvec) must be specified for dmri_connectometry.')
 
     if dwi_file:
         if dwi_file.endswith('.txt'):
@@ -706,259 +706,17 @@ def build_workflow(args, retval):
         k_clustering = 0
 
     if func_subjects_list or struct_subjects_list:
-        print('\nRunning workflow of workflows across multiple subjects:')
+        print('Running workflow of workflows across multiple subjects:')
     elif func_subjects_list is None and struct_subjects_list is None:
-        print('\nRunning workflow across single subject:')
+        print('Running workflow across single subject:')
     print(str(ID))
-
-    if func_file:
-        if (uatlas_select is not None) and (k_clustering == 0) and (user_atlas_list is None):
-            atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
-            print("%s%s" % ("\nUser atlas: ", atlas_select_par))
-            if func_subjects_list:
-                for func_file in func_subjects_list:
-                    do_dir_path(atlas_select_par, func_file)
-            else:
-                do_dir_path(atlas_select_par, func_file)
-        elif (uatlas_select is not None) and (user_atlas_list is None) and (k_clustering == 0):
-            atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
-            print("%s%s" % ("\nUser atlas: ", atlas_select_par))
-            if func_subjects_list:
-                for func_file in func_subjects_list:
-                    do_dir_path(atlas_select_par, func_file)
-            else:
-                do_dir_path(atlas_select_par, func_file)
-        elif user_atlas_list is not None:
-            print('\nIterating across multiple user atlases...')
-            if func_subjects_list:
-                for uatlas_select in user_atlas_list:
-                    atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
-                    print(atlas_select_par)
-                    for func_file in func_subjects_list:
-                        do_dir_path(atlas_select_par, func_file)
-            else:
-                for uatlas_select in user_atlas_list:
-                    atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
-                    print(atlas_select_par)
-                    do_dir_path(atlas_select_par, func_file)
-        if k_clustering == 1:
-            cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
-            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-            print("%s%s" % ("\nCluster atlas: ", atlas_select_clust))
-            print("\nClustering within mask at a single resolution...")
-            if func_subjects_list:
-                for func_file in func_subjects_list:
-                    do_dir_path(atlas_select_clust, func_file)
-            else:
-                do_dir_path(atlas_select_clust, func_file)
-        elif k_clustering == 2:
-            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
-            print("\nClustering within mask at multiple resolutions...")
-            if func_subjects_list:
-                for k in k_list:
-                    cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
-                    atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                    print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
-                    for func_file in func_subjects_list:
-                        do_dir_path(atlas_select_clust, func_file)
-            else:
-                for k in k_list:
-                    cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
-                    atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                    print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
-                    do_dir_path(atlas_select_clust, func_file)
-        elif k_clustering == 3:
-            print("\nClustering within multiple masks at a single resolution...")
-            if func_subjects_list:
-                for clust_mask in clust_mask_list:
-                    cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
-                    atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                    for func_file in func_subjects_list:
-                        do_dir_path(atlas_select_clust, func_file)
-            else:
-                for clust_mask in clust_mask_list:
-                    cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
-                    atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                    do_dir_path(atlas_select_clust, func_file)
-            clust_mask = None
-        elif k_clustering == 4:
-            print("\nClustering within multiple masks at multiple resolutions...")
-            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
-            if func_subjects_list:
-                for clust_mask in clust_mask_list:
-                    for k in k_list:
-                        cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
-                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                        for func_file in func_subjects_list:
-                            do_dir_path(atlas_select_clust, func_file)
-            else:
-                for clust_mask in clust_mask_list:
-                    for k in k_list:
-                        cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
-                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                        do_dir_path(atlas_select_clust, func_file)
-            clust_mask = None
-        elif k_clustering == 5:
-            for clust_type in clust_type_list:
-                cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
-                atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                print("%s%s" % ("\nCluster atlas: ", atlas_select_clust))
-                print("\nClustering within mask at a single resolution using multiple clustering methods...")
-                if func_subjects_list:
-                    for func_file in func_subjects_list:
-                        do_dir_path(atlas_select_clust, func_file)
-                else:
-                    do_dir_path(atlas_select_clust, func_file)
-            clust_type = None
-        elif k_clustering == 6:
-            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
-            print("\nClustering within mask at multiple resolutions using multiple clustering methods...")
-            if func_subjects_list:
-                for clust_type in clust_type_list:
-                    for k in k_list:
-                        cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
-                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                        print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
-                        for func_file in func_subjects_list:
-                            do_dir_path(atlas_select_clust, func_file)
-            else:
-                for clust_type in clust_type_list:
-                    for k in k_list:
-                        cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
-                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                        print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
-                        do_dir_path(atlas_select_clust, func_file)
-            clust_type = None
-        elif k_clustering == 7:
-            print("\nClustering within multiple masks at a single resolution using multiple clustering methods...")
-            if func_subjects_list:
-                for clust_type in clust_type_list:
-                    for clust_mask in clust_mask_list:
-                        cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
-                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                        print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
-                        for func_file in func_subjects_list:
-                            do_dir_path(atlas_select_clust, func_file)
-            else:
-                for clust_type in clust_type_list:
-                    for clust_mask in clust_mask_list:
-                        cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
-                        atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                        do_dir_path(atlas_select_clust, func_file)
-            clust_mask = None
-            clust_type = None
-        elif k_clustering == 8:
-            print("\nClustering within multiple masks at multiple resolutions using multiple clustering methods...")
-            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
-            if func_subjects_list:
-                for clust_type in clust_type_list:
-                    for clust_mask in clust_mask_list:
-                        for k in k_list:
-                            cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
-                            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                            print("%s%s" % ("Cluster atlas: ", atlas_select_clust))
-                            for func_file in func_subjects_list:
-                                do_dir_path(atlas_select_clust, func_file)
-            else:
-                for clust_type in clust_type_list:
-                    for clust_mask in clust_mask_list:
-                        for k in k_list:
-                            cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
-                            atlas_select_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                            do_dir_path(atlas_select_clust, func_file)
-            clust_mask = None
-            clust_type = None
-        elif (user_atlas_list is not None or uatlas_select is not None) and (k_clustering == 4 or k_clustering == 3 or
-                                                                             k_clustering == 2 or
-                                                                             k_clustering == 1) and atlas_select is None:
-            print('Error: the -ua flag cannot be used alone with the clustering option. Use the -cm flag instead.')
-            sys.exit(0)
-
-        if multi_atlas is not None:
-            print('\nIterating across multiple predefined atlases...')
-            if func_subjects_list:
-                for func_file in func_subjects_list:
-                    for atlas_select in multi_atlas:
-                        if (parc is True) and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
-                            raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
-                                                         ' is a coordinate atlas and cannot be combined with the -parc '
-                                                         'flag.'))
-                        else:
-                            print(atlas_select)
-                            do_dir_path(atlas_select, func_file)
-            else:
-                for atlas_select in multi_atlas:
-                    if (parc is True) and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
-                        raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
-                                                     ' is a coordinate atlas and cannot be combined with the -parc '
-                                                     'flag.'))
-                    else:
-                        print(atlas_select)
-                        do_dir_path(atlas_select, func_file)
-        elif atlas_select is not None:
-            if (parc is True) and (atlas_select in nilearn_coord_atlases or atlas_select in nilearn_prob_atlases):
-                raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
-                                             ' is a coordinate atlas and cannot be combined with the -parc flag.'))
-            else:
-                print("%s%s" % ("\nPredefined atlas: ", atlas_select))
-                if func_subjects_list:
-                    for func_file in func_subjects_list:
-                        do_dir_path(atlas_select, func_file)
-                else:
-                    do_dir_path(atlas_select, func_file)
-        else:
-            if (uatlas_select is None) and (k == 0):
-                raise KeyError('\nERROR: No atlas specified!')
-            else:
-                pass
-
-    elif graph or multi_graph:
-        network = 'custom_graph'
-        thr = 0
-        roi = 'None'
-        k_clustering = 0
-        node_size = 'None'
-        smooth = 'None'
-        hpass = 'None'
-        conn_model = 'None'
-        c_boot = 'None'
-        if multi_graph:
-            print('\nUsing multiple custom input graphs...')
-            conn_model = None
-            conn_model_list = []
-            i = 1
-            for graph in multi_graph:
-                conn_model_list.append(str(i))
-                if '.txt' in graph:
-                    graph_name = op.basename(graph).split('.txt')[0]
-                elif '.npy' in graph:
-                    graph_name = op.basename(graph).split('.npy')[0]
-                else:
-                    print('Error: input graph file format not recognized. See -help for supported formats.')
-                    sys.exit(0)
-                print(graph_name)
-                atlas_select = "%s%s%s" % (graph_name, '_', ID)
-                do_dir_path(atlas_select, graph)
-                i = i + 1
-        else:
-            if '.txt' in graph:
-                graph_name = op.basename(graph).split('.txt')[0]
-            elif '.npy' in graph:
-                graph_name = op.basename(graph).split('.npy')[0]
-            else:
-                print('Error: input graph file format not recognized. See -help for supported formats.')
-                sys.exit(0)
-            print('\nUsing single custom graph input...')
-            print(graph_name)
-            atlas_select = "%s%s%s" % (graph_name, '_', ID)
-            do_dir_path(atlas_select, graph)
 
     if graph is None and multi_graph is None:
         if network is not None:
-            print("%s%s" % ('\nUsing resting-state network pipeline for: ', network))
+            print("%s%s" % ("\nUsing RSN pipeline for: ", network))
         elif multi_nets is not None:
             network = multi_nets[0]
-            print("%s%d%s%s%s" % ('\nIterating workflow across ', len(multi_nets), ' networks: ',
+            print("%s%d%s%s%s" % ('\nIterating RSN pipeline across ', len(multi_nets), ' networks: ',
                                   str(', '.join(str(n) for n in multi_nets)), '...'))
         else:
             print("\nUsing whole-brain pipeline...")
@@ -973,23 +731,23 @@ def build_workflow(args, retval):
                 node_size = 4
             print("%s%s%s" % ("\nUsing node size of: ", node_size, 'mm...'))
 
-        if smooth_list:
-            print("%s%s%s" % ('\nApplying smoothing to node signal at multiple FWHM mm values: ',
-                              str(', '.join(str(n) for n in smooth_list)), '...'))
-        elif float(smooth) > 0:
-            print("%s%s%s" % ("\nApplying smoothing to node signal at: ", smooth, 'FWHM mm...'))
-        else:
-            smooth = 0
-
-        if hpass_list:
-            print("%s%s%s" % ('\nApplying high-pass filter to node signal at multiple Hz values: ',
-                              str(', '.join(str(n) for n in hpass_list)), '...'))
-        elif hpass is not None:
-            print("%s%s%s" % ("\nApplying high-pass filter to node signal at: ", hpass, 'Hz...'))
-        else:
-            hpass = None
-
         if func_file:
+            if smooth_list:
+                print("%s%s%s" % ('\nApplying smoothing to node signal at multiple FWHM mm values: ',
+                                  str(', '.join(str(n) for n in smooth_list)), '...'))
+            elif float(smooth) > 0:
+                print("%s%s%s" % ("\nApplying smoothing to node signal at: ", smooth, 'FWHM mm...'))
+            else:
+                smooth = 0
+
+            if hpass_list:
+                print("%s%s%s" % ('\nApplying high-pass filter to node signal at multiple Hz values: ',
+                                  str(', '.join(str(n) for n in hpass_list)), '...'))
+            elif hpass is not None:
+                print("%s%s%s" % ("\nApplying high-pass filter to node signal at: ", hpass, 'Hz...'))
+            else:
+                hpass = None
+
             if float(c_boot) > 0:
                 try:
                     c_boot = int(c_boot)
@@ -1006,70 +764,7 @@ def build_workflow(args, retval):
             print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ',
                               str(', '.join(str(n) for n in conn_model_list)), '...'))
         else:
-            print("%s%s%s" % ("\nUsing connectivity model:\n", conn_model, '\n'))
-
-    if dwi_file:
-        if network is not None:
-            print("%s%s" % ('\nRSN: ', network))
-        if user_atlas_list is not None:
-            print('\nIterating across multiple user atlases...')
-            if struct_subjects_list:
-                for dwi_file in struct_subjects_list:
-                    for uatlas_select in user_atlas_list:
-                        atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
-                        print(atlas_select_par)
-                        do_dir_path(atlas_select_par, dwi_file)
-            else:
-                for uatlas_select in user_atlas_list:
-                    atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
-                    print(atlas_select_par)
-                    do_dir_path(atlas_select_par, dwi_file)
-        elif (uatlas_select is not None) and (user_atlas_list is None):
-            atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
-            ref_txt = "%s%s" % (uatlas_select.split('/')[-1:][0].split('.')[0], '.txt')
-            if struct_subjects_list:
-                for dwi_file in struct_subjects_list:
-                    do_dir_path(atlas_select_par, dwi_file)
-            else:
-                do_dir_path(atlas_select_par, dwi_file)
-        if multi_atlas is not None:
-            print('\nIterating across multiple predefined atlases...')
-            if struct_subjects_list:
-                for dwi_file in struct_subjects_list:
-                    for atlas_select in multi_atlas:
-                        if (parc is True) and (atlas_select in nilearn_coord_atlases):
-                            raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
-                                                         ' is a coordinate atlas and cannot be combined with the -parc '
-                                                         'flag.'))
-                        else:
-                            print(atlas_select)
-                            do_dir_path(atlas_select, dwi_file)
-            else:
-                for atlas_select in multi_atlas:
-                    if (parc is True) and (atlas_select in nilearn_coord_atlases):
-                        raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
-                                                     ' is a coordinate atlas and cannot be combined with the -parc '
-                                                     'flag.'))
-                    else:
-                        print(atlas_select)
-                        do_dir_path(atlas_select, dwi_file)
-        elif atlas_select is not None:
-            if (parc is True) and (atlas_select in nilearn_coord_atlases):
-                raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
-                                             ' is a coordinate atlas and cannot be combined with the -parc flag.'))
-            else:
-                print("%s%s" % ("\nNilearn atlas: ", atlas_select))
-                if struct_subjects_list:
-                    for dwi_file in struct_subjects_list:
-                        do_dir_path(atlas_select, dwi_file)
-                else:
-                    do_dir_path(atlas_select, dwi_file)
-        else:
-            if uatlas_select is None:
-                raise KeyError('\nERROR: No atlas specified!')
-            else:
-                pass
-
+            print("%s%s" % ("\nUsing connectivity model: ", conn_model))
     elif graph or multi_graph:
         network = 'custom_graph'
         thr = 0
@@ -1094,8 +789,8 @@ def build_workflow(args, retval):
                     print('Error: input graph file format not recognized. See -help for supported formats.')
                     sys.exit(0)
                 print(graph_name)
-                atlas_select = "%s%s%s" % (graph_name, '_', ID)
-                do_dir_path(atlas_select, graph)
+                atlas = "%s%s%s" % (graph_name, '_', ID)
+                do_dir_path(atlas, graph)
                 i = i + 1
         else:
             if '.txt' in graph:
@@ -1107,67 +802,269 @@ def build_workflow(args, retval):
                 sys.exit(0)
             print('\nUsing single custom graph input...')
             print(graph_name)
-            atlas_select = "%s%s%s" % (graph_name, '_', ID)
-            do_dir_path(atlas_select, graph)
+            atlas = "%s%s%s" % (graph_name, '_', ID)
+            do_dir_path(atlas, graph)
+
+    if func_file:
+        if (uatlas is not None) and (k_clustering == 0) and (user_atlas_list is None):
+            atlas_par = uatlas.split('/')[-1].split('.')[0]
+            print("%s%s" % ("\nUser atlas: ", atlas_par))
+            if func_subjects_list:
+                for func_file in func_subjects_list:
+                    do_dir_path(atlas_par, func_file)
+            else:
+                do_dir_path(atlas_par, func_file)
+        elif (uatlas is not None) and (user_atlas_list is None) and (k_clustering == 0):
+            atlas_par = uatlas.split('/')[-1].split('.')[0]
+            print("%s%s" % ("\nUser atlas: ", atlas_par))
+            if func_subjects_list:
+                for func_file in func_subjects_list:
+                    do_dir_path(atlas_par, func_file)
+            else:
+                do_dir_path(atlas_par, func_file)
+        elif user_atlas_list is not None:
+            print('\nIterating across multiple user atlases...')
+            if func_subjects_list:
+                for uatlas in user_atlas_list:
+                    atlas_par = uatlas.split('/')[-1].split('.')[0]
+                    print(atlas_par)
+                    for func_file in func_subjects_list:
+                        do_dir_path(atlas_par, func_file)
+            else:
+                for uatlas in user_atlas_list:
+                    atlas_par = uatlas.split('/')[-1].split('.')[0]
+                    print(atlas_par)
+                    do_dir_path(atlas_par, func_file)
+        if k_clustering == 1:
+            cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+            atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+            print("%s%s" % ("\nCluster atlas: ", atlas_clust))
+            print("\nClustering within mask at a single resolution...")
+            if func_subjects_list:
+                for func_file in func_subjects_list:
+                    do_dir_path(atlas_clust, func_file)
+            else:
+                do_dir_path(atlas_clust, func_file)
+        elif k_clustering == 2:
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
+            print("\nClustering within mask at multiple resolutions...")
+            if func_subjects_list:
+                for k in k_list:
+                    cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                    atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                    print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                    for func_file in func_subjects_list:
+                        do_dir_path(atlas_clust, func_file)
+            else:
+                for k in k_list:
+                    cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                    atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                    print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                    do_dir_path(atlas_clust, func_file)
+        elif k_clustering == 3:
+            print("\nClustering within multiple masks at a single resolution...")
+            if func_subjects_list:
+                for clust_mask in clust_mask_list:
+                    cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                    atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                    for func_file in func_subjects_list:
+                        do_dir_path(atlas_clust, func_file)
+            else:
+                for clust_mask in clust_mask_list:
+                    cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                    atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                    do_dir_path(atlas_clust, func_file)
+            clust_mask = None
+        elif k_clustering == 4:
+            print("\nClustering within multiple masks at multiple resolutions...")
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
+            if func_subjects_list:
+                for clust_mask in clust_mask_list:
+                    for k in k_list:
+                        cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                        atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                        for func_file in func_subjects_list:
+                            do_dir_path(atlas_clust, func_file)
+            else:
+                for clust_mask in clust_mask_list:
+                    for k in k_list:
+                        cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                        atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                        do_dir_path(atlas_clust, func_file)
+            clust_mask = None
+        elif k_clustering == 5:
+            for clust_type in clust_type_list:
+                cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                print("%s%s" % ("\nCluster atlas: ", atlas_clust))
+                print("\nClustering within mask at a single resolution using multiple clustering methods...")
+                if func_subjects_list:
+                    for func_file in func_subjects_list:
+                        do_dir_path(atlas_clust, func_file)
+                else:
+                    do_dir_path(atlas_clust, func_file)
+            clust_type = None
+        elif k_clustering == 6:
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
+            print("\nClustering within mask at multiple resolutions using multiple clustering methods...")
+            if func_subjects_list:
+                for clust_type in clust_type_list:
+                    for k in k_list:
+                        cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                        atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                        print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                        for func_file in func_subjects_list:
+                            do_dir_path(atlas_clust, func_file)
+            else:
+                for clust_type in clust_type_list:
+                    for k in k_list:
+                        cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                        atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                        print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                        do_dir_path(atlas_clust, func_file)
+            clust_type = None
+        elif k_clustering == 7:
+            print("\nClustering within multiple masks at a single resolution using multiple clustering methods...")
+            if func_subjects_list:
+                for clust_type in clust_type_list:
+                    for clust_mask in clust_mask_list:
+                        cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                        atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                        print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                        for func_file in func_subjects_list:
+                            do_dir_path(atlas_clust, func_file)
+            else:
+                for clust_type in clust_type_list:
+                    for clust_mask in clust_mask_list:
+                        cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                        atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                        do_dir_path(atlas_clust, func_file)
+            clust_mask = None
+            clust_type = None
+        elif k_clustering == 8:
+            print("\nClustering within multiple masks at multiple resolutions using multiple clustering methods...")
+            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
+            if func_subjects_list:
+                for clust_type in clust_type_list:
+                    for clust_mask in clust_mask_list:
+                        for k in k_list:
+                            cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                            atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                            print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                            for func_file in func_subjects_list:
+                                do_dir_path(atlas_clust, func_file)
+            else:
+                for clust_type in clust_type_list:
+                    for clust_mask in clust_mask_list:
+                        for k in k_list:
+                            cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                            atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
+                            do_dir_path(atlas_clust, func_file)
+            clust_mask = None
+            clust_type = None
+        elif (user_atlas_list is not None or uatlas is not None) and (k_clustering == 4 or
+                                                                      k_clustering == 3 or
+                                                                      k_clustering == 2 or
+                                                                      k_clustering == 1) and (atlas is None):
+            print('Error: the -ua flag cannot be used alone with the clustering option. Use the -cm flag instead.')
+            sys.exit(0)
+
+        if multi_atlas is not None:
+            print('\nIterating across multiple predefined atlases...')
+            if func_subjects_list:
+                for func_file in func_subjects_list:
+                    for atlas in multi_atlas:
+                        if (parc is True) and (atlas in nilearn_coord_atlases or atlas in
+                                               nilearn_prob_atlases):
+                            raise ValueError("%s%s%s" % ('\nERROR: ', atlas,
+                                                         ' is a coordinate atlas and cannot be combined with the -parc '
+                                                         'flag.'))
+                        else:
+                            print(atlas)
+                            do_dir_path(atlas, func_file)
+            else:
+                for atlas in multi_atlas:
+                    if (parc is True) and (atlas in nilearn_coord_atlases or atlas in
+                                           nilearn_prob_atlases):
+                        raise ValueError("%s%s%s" % ('\nERROR: ', atlas,
+                                                     ' is a coordinate atlas and cannot be combined with the -parc '
+                                                     'flag.'))
+                    else:
+                        print(atlas)
+                        do_dir_path(atlas, func_file)
+        elif atlas is not None:
+            if (parc is True) and (atlas in nilearn_coord_atlases or atlas in nilearn_prob_atlases):
+                raise ValueError("%s%s%s" % ('\nERROR: ', atlas,
+                                             ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+            else:
+                print("%s%s" % ("\nPredefined atlas: ", atlas))
+                if func_subjects_list:
+                    for func_file in func_subjects_list:
+                        do_dir_path(atlas, func_file)
+                else:
+                    do_dir_path(atlas, func_file)
+        else:
+            if (uatlas is None) and (k == 0):
+                raise KeyError('\nERROR: No atlas specified!')
+            else:
+                pass
 
     if dwi_file:
-        if network:
-            print("%s%s" % ('\nRSN: ', network))
         if user_atlas_list:
             print('\nIterating across multiple user atlases...')
             if struct_subjects_list:
                 for dwi_file in struct_subjects_list:
-                    for uatlas_select in user_atlas_list:
-                        atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
-                        print(atlas_select_par)
-                        do_dir_path(atlas_select_par, dwi_file)
+                    for uatlas in user_atlas_list:
+                        atlas_par = uatlas.split('/')[-1].split('.')[0]
+                        print(atlas_par)
+                        do_dir_path(atlas_par, dwi_file)
             else:
-                for uatlas_select in user_atlas_list:
-                    atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
-                    print(atlas_select_par)
-                    do_dir_path(atlas_select_par, dwi_file)
-        elif (uatlas_select is not None) and (user_atlas_list is None):
-            atlas_select_par = uatlas_select.split('/')[-1].split('.')[0]
-            ref_txt = "%s%s" % (uatlas_select.split('/')[-1:][0].split('.')[0], '.txt')
+                for uatlas in user_atlas_list:
+                    atlas_par = uatlas.split('/')[-1].split('.')[0]
+                    print(atlas_par)
+                    do_dir_path(atlas_par, dwi_file)
+        elif (uatlas is not None) and (user_atlas_list is None):
+            atlas_par = uatlas.split('/')[-1].split('.')[0]
+            ref_txt = "%s%s" % (uatlas.split('/')[-1:][0].split('.')[0], '.txt')
             if struct_subjects_list:
                 for dwi_file in struct_subjects_list:
-                    do_dir_path(atlas_select_par, dwi_file)
+                    do_dir_path(atlas_par, dwi_file)
             else:
-                do_dir_path(atlas_select_par, dwi_file)
+                do_dir_path(atlas_par, dwi_file)
         if multi_atlas:
             print('\nIterating across multiple predefined atlases...')
             if struct_subjects_list:
                 for dwi_file in struct_subjects_list:
-                    for atlas_select in multi_atlas:
-                        if (parc is True) and (atlas_select in nilearn_coord_atlases):
-                            raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
+                    for atlas in multi_atlas:
+                        if (parc is True) and (atlas in nilearn_coord_atlases):
+                            raise ValueError("%s%s%s" % ('\nERROR: ', atlas,
                                                          ' is a coordinate atlas and cannot be combined with the -parc '
                                                          'flag.'))
                         else:
-                            print(atlas_select)
-                            do_dir_path(atlas_select, dwi_file)
+                            print(atlas)
+                            do_dir_path(atlas, dwi_file)
             else:
-                for atlas_select in multi_atlas:
-                    if (parc is True) and (atlas_select in nilearn_coord_atlases):
-                        raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
+                for atlas in multi_atlas:
+                    if (parc is True) and (atlas in nilearn_coord_atlases):
+                        raise ValueError("%s%s%s" % ('\nERROR: ', atlas,
                                                      ' is a coordinate atlas and cannot be combined with the -parc '
                                                      'flag.'))
                     else:
-                        print(atlas_select)
-                        do_dir_path(atlas_select, dwi_file)
-        elif atlas_select:
-            if (parc is True) and (atlas_select in nilearn_coord_atlases):
-                raise ValueError("%s%s%s" % ('\nERROR: ', atlas_select,
+                        print(atlas)
+                        do_dir_path(atlas, dwi_file)
+        elif atlas:
+            if (parc is True) and (atlas in nilearn_coord_atlases):
+                raise ValueError("%s%s%s" % ('\nERROR: ', atlas,
                                              ' is a coordinate atlas and cannot be combined with the -parc flag.'))
             else:
-                print("%s%s" % ("\nNilearn atlas: ", atlas_select))
+                print("%s%s" % ("\nNilearn atlas: ", atlas))
                 if struct_subjects_list:
                     for dwi_file in struct_subjects_list:
-                        do_dir_path(atlas_select, dwi_file)
+                        do_dir_path(atlas, dwi_file)
                 else:
-                    do_dir_path(atlas_select, dwi_file)
+                    do_dir_path(atlas, dwi_file)
         else:
-            if uatlas_select is None:
+            if uatlas is None:
                 raise KeyError('\nERROR: No atlas specified!')
             else:
                 pass
@@ -1177,18 +1074,18 @@ def build_workflow(args, retval):
             print("%s%s%s" % ('Using ', max_length, ' maximum length of streamlines...'))
 
     if dwi_file and not func_file:
-        print('\nRunning structural connectometry only...')
+        print('\nRunning dmri connectometry only...')
         if struct_subjects_list:
             for (dwi_file, fbval, fbvec, anat_file) in struct_subjects_list:
                 print("%s%s" % ('Diffusion-Weighted Image:\n', dwi_file))
                 print("%s%s" % ('B-Values:\n', fbval))
                 print("%s%s" % ('B-Vectors:\n', fbvec))
-                print("%s%s" % ('Anatomical Image:\n', anat_file))
+                print("%s%s" % ('T1-weighted Image:\n', anat_file))
         else:
             print("%s%s" % ('Diffusion-Weighted Image:\n', dwi_file))
             print("%s%s" % ('B-Values:\n', fbval))
             print("%s%s" % ('B-Vectors:\n', fbvec))
-            print("%s%s" % ('Anatomical Image:\n', anat_file))
+            print("%s%s" % ('T1-weighted Image:\n', anat_file))
         conf = None
         k = None
         clust_mask = None
@@ -1202,26 +1099,30 @@ def build_workflow(args, retval):
         clust_type_list = None
         c_boot = None
         block_size = None
+        multimodal = False
     elif func_file and dwi_file is None:
-        print('\nRunning functional connectometry only...')
+        print('\nRunning dmri connectometry only...')
         if func_subjects_list:
             for func_file in func_subjects_list:
-                print("%s%s" % ('Functional file: ', func_file))
+                print("%s%s" % ('BOLD Image: ', func_file))
         else:
-            print("%s%s" % ('Functional file: ', func_file))
+            print("%s%s" % ('BOLD Image: ', func_file))
+        multimodal = False
     elif func_file and dwi_file:
         multimodal = True
-        print('\nRunning joint structural-functional connectometry...')
-        print("%s%s" % ('Functional file:\n', func_file))
+        print('\nRunning joint fMRI-dMRI connectometry...')
+        print("%s%s" % ('BOLD Image:\n', func_file))
         print("%s%s" % ('Diffusion-Weighted Image:\n', dwi_file))
         print("%s%s" % ('B-Values:\n', fbval))
         print("%s%s" % ('B-Vectors:\n', fbvec))
-        print("%s%s" % ('Anatomical Image:\n', anat_file))
+        print("%s%s" % ('T1-Weighted Image:\n', anat_file))
+    else:
+        multimodal = False
     print('\n-------------------------------------------------------------------------\n\n')
 
     # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
-    # print("%s%s" % ('atlas_select: ', atlas_select))
+    # print("%s%s" % ('atlas: ', atlas))
     # print("%s%s" % ('network: ', network))
     # print("%s%s" % ('node_size: ', node_size))
     # print("%s%s" % ('smooth: ', smooth))
@@ -1229,7 +1130,7 @@ def build_workflow(args, retval):
     # print("%s%s" % ('hpass_list: ', hpass_list))
     # print("%s%s" % ('roi: ', roi))
     # print("%s%s" % ('thr: ', thr))
-    # print("%s%s" % ('uatlas_select: ', uatlas_select))
+    # print("%s%s" % ('uatlas: ', uatlas))
     # print("%s%s" % ('conn_model: ', conn_model))
     # print("%s%s" % ('dens_thresh: ', dens_thresh))
     # print("%s%s" % ('conf: ', conf))
@@ -1276,7 +1177,7 @@ def build_workflow(args, retval):
     from nipype.interfaces import utility as niu
     from pynets.workflows import workflow_selector
 
-    def init_wf_single_subject(ID, func_file, atlas_select, network, node_size, roi, thr, uatlas_select,
+    def init_wf_single_subject(ID, func_file, atlas, network, node_size, roi, thr, uatlas,
                                multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
                                multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_file, parc, ref_txt, procmem, k,
                                clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
@@ -1288,11 +1189,11 @@ def build_workflow(args, retval):
                                multi_directget, multimodal, hpass, hpass_list):
         """A function interface for generating a single-subject workflow"""
         if (func_file is not None) and (dwi_file is None):
-            wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_fmri_', random.randint(1, 1000)))
+            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_fmri_', random.randint(1, 1000)))
         elif (dwi_file is not None) and (func_file is None):
-            wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_dmri_', random.randint(1, 1000)))
+            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_dmri_', random.randint(1, 1000)))
         else:
-            wf = pe.Workflow(name="%s%s%s%s" % ('Wf_single_sub_', ID, '_', random.randint(1, 1000)))
+            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_', random.randint(1, 1000)))
         import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx",
                        "import nibabel as nib", "import warnings", "warnings.filterwarnings(\"ignore\")",
                        "np.warnings.filterwarnings(\"ignore\")", "warnings.simplefilter(\"ignore\")"]
@@ -1332,7 +1233,7 @@ def build_workflow(args, retval):
         inputnode.inputs.binary = binary
         inputnode.inputs.multimodal = multimodal
 
-        meta_wf = workflow_selector(func_file, ID, atlas_select, network, node_size, roi, thr, uatlas_select,
+        meta_wf = workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas,
                                     multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
                                     anat_file, parc, ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr,
                                     step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
@@ -1346,7 +1247,7 @@ def build_workflow(args, retval):
 
         # Set resource restrictions at level of the meta-meta wf
         if func_file:
-            wf_selected = "%s%s" % ('functional_connectometry_', ID)
+            wf_selected = "%s%s" % ('fmri_connectometry_', ID)
             for node_name in wf.get_node(meta_wf.name).get_node(wf_selected).list_node_names():
                 if node_name in runtime_dict:
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
@@ -1356,7 +1257,7 @@ def build_workflow(args, retval):
                 wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 4
 
         if dwi_file:
-            wf_selected = "%s%s" % ('structural_connectometry_', ID)
+            wf_selected = "%s%s" % ('dmri_connectometry_', ID)
             for node_name in wf.get_node(meta_wf.name).get_node(wf_selected).list_node_names():
                 if node_name in runtime_dict:
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
@@ -1466,8 +1367,8 @@ def build_workflow(args, retval):
         return wf
 
     # Multi-subject pipeline
-    def wf_multi_subject(ID, func_subjects_list, struct_subjects_list, atlas_select, network, node_size, roi, thr,
-                         uatlas_select, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
+    def wf_multi_subject(ID, func_subjects_list, struct_subjects_list, atlas, network, node_size, roi, thr,
+                         uatlas, multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
                          multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_file, parc, ref_txt, procmem, k,
                          clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
                          node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type,
@@ -1476,7 +1377,7 @@ def build_workflow(args, retval):
                          overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
                          directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
-        wf_multi = pe.Workflow(name="%s%s" % ('Wf_multisub_', random.randint(1001, 9000)))
+        wf_multi = pe.Workflow(name="%s%s" % ('wf_multisub_', random.randint(1001, 9000)))
 
         if func_subjects_list and not struct_subjects_list:
             struct_subjects_list = len(func_subjects_list) * [None]
@@ -1504,8 +1405,8 @@ def build_workflow(args, retval):
             else:
                 mask_sub = None
             wf_single_subject = init_wf_single_subject(
-                ID=ID[i], func_file=func_file, atlas_select=atlas_select,
-                network=network, node_size=node_size, roi=roi, thr=thr, uatlas_select=uatlas_select,
+                ID=ID[i], func_file=func_file, atlas=atlas,
+                network=network, node_size=node_size, roi=roi, thr=thr, uatlas=uatlas,
                 multi_nets=multi_nets, conn_model=conn_model, dens_thresh=dens_thresh, conf=conf_sub,
                 adapt_thresh=adapt_thresh, plot_switch=plot_switch, dwi_file=dwi_file, multi_thr=multi_thr,
                 multi_atlas=multi_atlas, min_thr=min_thr, max_thr=max_thr, step_thr=step_thr, anat_file=anat_file,
@@ -1516,18 +1417,19 @@ def build_workflow(args, retval):
                 min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type, use_AAL_naming=use_AAL_naming,
                 multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
                 clust_type=clust_type, clust_type_list=clust_type_list, c_boot=c_boot, block_size=block_size,
-                mask=mask_sub, norm=norm, binary=binary, fbval=fbval_sub, fbvec=fbvec_sub, target_samples=target_samples,
-                curv_thr_list=curv_thr_list, step_list=step_list, overlap_thr=overlap_thr,
-                overlap_thr_list=overlap_thr_list, track_type=track_type, max_length=max_length, maxcrossing=maxcrossing,
-                life_run=life_run, min_length=min_length, directget=directget, tiss_class=tiss_class,
-                runtime_dict=runtime_dict, embed=embed, multi_directget=multi_directget, multimodal=multimodal,
-                hpass=hpass, hpass_list=hpass_list)
+                mask=mask_sub, norm=norm, binary=binary, fbval=fbval_sub, fbvec=fbvec_sub,
+                target_samples=target_samples, curv_thr_list=curv_thr_list, step_list=step_list,
+                overlap_thr=overlap_thr, overlap_thr_list=overlap_thr_list, track_type=track_type,
+                max_length=max_length, maxcrossing=maxcrossing, life_run=life_run, min_length=min_length,
+                directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, embed=embed,
+                multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list)
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
-                wf_selected = "%s%s" % ('functional_connectometry_', ID[i])
+                wf_selected = "%s%s" % ('fmri_connectometry_', ID[i])
                 meta_wf_name = "%s%s" % ('Meta_wf_', ID[i])
-                for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
+                for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(
+                    wf_selected).list_node_names():
                     if node_name in runtime_dict:
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
@@ -1536,7 +1438,7 @@ def build_workflow(args, retval):
                     wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 4
 
             if dwi_file:
-                wf_selected = "%s%s" % ('structural_connectometry_', ID)
+                wf_selected = "%s%s" % ('dmri_connectometry_', ID)
                 meta_wf_name = "%s%s" % ('Meta_wf_', ID[i])
                 for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
@@ -1551,7 +1453,7 @@ def build_workflow(args, retval):
     # Multi-subject workflow generator
     if (func_subjects_list or struct_subjects_list) or (func_subjects_list and struct_subjects_list):
         wf_multi = wf_multi_subject(ID, func_subjects_list, struct_subjects_list, network, node_size, roi,
-                                    thr, uatlas_select, multi_nets, conn_model, dens_thresh,
+                                    thr, uatlas, multi_nets, conn_model, dens_thresh,
                                     conf, adapt_thresh, plot_switch, dwi_file, multi_thr,
                                     multi_atlas, min_thr, max_thr, step_thr, anat_file, parc,
                                     ref_txt, procmem, k, clust_mask, k_min, k_max, k_step,
@@ -1565,7 +1467,7 @@ def build_workflow(args, retval):
                                     multimodal, hpass, hpass_list)
 
         import shutil
-        wf_multi.base_dir = '/tmp/Wf_multi_subject'
+        wf_multi.base_dir = '/tmp/wf_multi_subject'
         if op.exists(wf_multi.base_dir):
             shutil.rmtree(wf_multi.base_dir)
         os.mkdir(wf_multi.base_dir)
@@ -1603,7 +1505,8 @@ def build_workflow(args, retval):
         if procmem != 'auto':
             if verbose is True:
                 from nipype.utils.profiler import log_nodes_cb
-                plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'status_callback': log_nodes_cb}
+                plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]),
+                               'status_callback': log_nodes_cb}
             else:
                 plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
             print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
@@ -1613,12 +1516,12 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
             print('Plotting resource profile from run...')
-            generate_gantt_chart('/tmp/Wf_multi_subject/multi_sub_run_stats.log', cores=int(procmem[0]))
+            generate_gantt_chart('/tmp/wf_multi_subject/multi_sub_run_stats.log', cores=int(procmem[0]))
 
     # Single-subject workflow generator
     else:
         # Single-subject pipeline
-        wf = init_wf_single_subject(ID, func_file, atlas_select, network, node_size, roi, thr, uatlas_select,
+        wf = init_wf_single_subject(ID, func_file, atlas, network, node_size, roi, thr, uatlas,
                                     multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
                                     multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_file, parc, ref_txt,
                                     procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
@@ -1633,11 +1536,11 @@ def build_workflow(args, retval):
         import shutil
         import os
         if (func_file is not None) and (dwi_file is None):
-            base_dirname = "%s%s" % ('Wf_single_subject_fmri_', str(ID))
+            base_dirname = "%s%s" % ('wf_single_subject_fmri_', str(ID))
         elif (dwi_file is not None) and (func_file is None):
-            base_dirname = "%s%s" % ('Wf_single_subject_dmri_', str(ID))
+            base_dirname = "%s%s" % ('wf_single_subject_dmri_', str(ID))
         else:
-            base_dirname = "%s%s" % ('Wf_single_subject_', str(ID))
+            base_dirname = "%s%s" % ('wf_single_subject_', str(ID))
 
         if func_file:
             func_dir = os.path.dirname(func_file)
@@ -1744,6 +1647,7 @@ def main():
 
 if __name__ == '__main__':
     import warnings
+
     warnings.filterwarnings("ignore")
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     main()

@@ -35,10 +35,10 @@ def test_save_RSN_coords_and_labels_to_pickle():
     coords = pickle.load(coord_file)
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path,'rb')
-    label_names = pickle.load(labels_file)
+    labels = pickle.load(labels_file)
     network = None
 
-    [coord_path, labels_path] = utils.save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network)
+    [coord_path, labels_path] = utils.save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network)
     assert os.path.isfile(coord_path) is True
     assert os.path.isfile(labels_path) is True
 

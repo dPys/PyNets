@@ -6,15 +6,15 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.filterwarnings("ignore")
 import os
 import os.path as op
 import nibabel as nib
 import numpy as np
-np.warnings.filterwarnings('ignore')
-import shutil
 from pynets.stats.netstats import extractnetstats
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface
+warnings.filterwarnings("ignore")
+np.warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def get_file():
@@ -44,16 +44,16 @@ def export_to_pandas(csv_loc, ID, network, roi):
 
     if roi is not None:
         if network is not None:
-            met_list_picke_path = "%s%s%s%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_metric_list_', network, '_',
+            met_list_picke_path = "%s%s%s%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_met_list_', network, '_',
                                                   str(op.basename(roi).split('.')[0]))
         else:
-            met_list_picke_path = "%s%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_metric_list_',
+            met_list_picke_path = "%s%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_met_list_',
                                               str(op.basename(roi).split('.')[0]))
     else:
         if network is not None:
-            met_list_picke_path = "%s%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_metric_list_', network)
+            met_list_picke_path = "%s%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_met_list_', network)
         else:
-            met_list_picke_path = "%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_metric_list')
+            met_list_picke_path = "%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_met_list')
 
     metric_list_names = pickle.load(open(met_list_picke_path, 'rb'))
     df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
@@ -63,7 +63,7 @@ def export_to_pandas(csv_loc, ID, network, roi):
     df['id'] = range(1, len(df) + 1)
     cols = df.columns.tolist()
     ix = cols.index('id')
-    cols_ID = cols[ix:ix+1]+cols[:ix]+cols[ix+1:]
+    cols_ID = cols[ix:ix + 1] + cols[:ix] + cols[ix + 1:]
     df = df[cols_ID]
     df['id'] = df['id'].astype('object')
     df.id = df.id.replace(1, ID)
@@ -72,22 +72,22 @@ def export_to_pandas(csv_loc, ID, network, roi):
     return net_pickle_mt
 
 
-def do_dir_path(atlas_select, in_file):
+def do_dir_path(atlas, in_file):
     """
 
-    :param atlas_select:
+    :param atlas:
     :param in_file:
     :return:
     """
-    dir_path = "%s%s%s" % (op.dirname(op.realpath(in_file)), '/', atlas_select)
-    if not op.exists(dir_path) and atlas_select is not None:
+    dir_path = "%s%s%s" % (op.dirname(op.realpath(in_file)), '/', atlas)
+    if not op.exists(dir_path) and atlas is not None:
         os.makedirs(dir_path)
-    elif atlas_select is None:
+    elif atlas is None:
         raise ValueError("Error: cannot create directory for a null atlas!")
     return dir_path
 
 
-def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type, hpass):
+def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type, hpass, parc):
     """
 
     :param ID:
@@ -103,60 +103,24 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
     :param hpass:
     :return:
     """
-    if node_size is None:
+    if (node_size is None) and (parc is True):
         node_size = 'parc'
-    if roi is not None:
-        if network is not None:
-            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_',
-                                                                 str(conn_model), '_', str(thr), thr_type, '_',
-                                                                 str(op.basename(roi).split('.')[0]), '_', str(node_size),
-                                                                 '%s' % ("mm_" if node_size != 'parc' else ''),
-                                                                 "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                         else ''),
-                                                                 "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0
-                                                                         else ''),
-                                                                 "%s" % ("%s%s" % (hpass, 'Hz') if hpass is not None
-                                                                         else ''),
-                                                                 '.npy')
-        else:
-            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_',
-                                                             str(thr), thr_type, '_', str(op.basename(roi).split('.')[0]),
-                                                             '_', str(node_size), '%s' % ("mm_" if node_size != 'parc'
-                                                                                          else ''),
-                                                             "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                     else ''),
-                                                             "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0
-                                                                     else ''),
-                                                             "%s" % ("%s%s" % (hpass, 'Hz') if hpass is not None
-                                                                     else ''),
-                                                             '.npy')
-    else:
-        if network is not None:
-            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model),
-                                                             '_', str(thr), thr_type, '_', str(node_size),
-                                                             '%s' % ("mm_" if node_size != 'parc' else ''),
-                                                             "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                     else ''),
-                                                             "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0
-                                                                     else ''),
-                                                             "%s" % ("%s%s" % (hpass, 'Hz') if hpass is not None
-                                                                     else ''),
-                                                             '.npy')
-        else:
-            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_', str(thr),
-                                                         thr_type, '_', str(node_size),
-                                                         '%s' % ("mm_" if node_size != 'parc' else ''),
-                                                         "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                 else ''),
-                                                         "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0
-                                                                 else ''),
-                                                         "%s" % ("%s%s" % (hpass, 'Hz') if hpass is not None
-                                                                 else ''),
-                                                         '.npy')
+
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_',
+                                                       '%s' % (network + '_' if network is not None else ''),
+                                                       '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                       'est_', conn_model, '_', thr, thr_type, '_',
+                                                       '%s' % ("%s%s" % (node_size, 'mm_') if node_size != 'parc' else ''),
+                                                       "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
+                                                       "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''),
+                                                       "%s" % ("%s%s" % (hpass, 'Hz') if hpass is not None else ''),
+                                                       '.npy')
+
     return est_path
 
 
-def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples, track_type, thr_type):
+def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples, track_type, thr_type,
+                         parc):
     """
 
     :param ID:
@@ -171,40 +135,16 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
     :param thr_type:
     :return:
     """
-    if node_size is None:
+    if (node_size is None) and (parc is True):
         node_size = 'parc'
-    if roi is not None:
-        if network is not None:
-            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_',
-                                                                 str(conn_model), '_', str(thr), thr_type, '_',
-                                                                 str(op.basename(roi).split('.')[0]), '_', str(node_size),
-                                                                 '%s' % ("mm_" if node_size != 'parc' else ''),
-                                                                 "%s" % ("%s%s" % (int(target_samples), 'samples_') if
-                                                                         float(target_samples) > 0 else ''),
-                                                                 "%s%s" % (track_type, '_track'), '.npy')
-        else:
-            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_',
-                                                             str(thr), thr_type, '_', str(op.basename(roi).split('.')[0]),
-                                                             '_', str(node_size), '%s' % ("mm_" if node_size != 'parc'
-                                                                                          else ''),
-                                                             "%s" % ("%s%s" % (int(target_samples), 'samples_') if
-                                                                     float(target_samples) > 0 else ''),
-                                                             "%s%s" % (track_type, '_track'), '.npy')
-    else:
-        if network is not None:
-            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model),
-                                                             '_', str(thr), thr_type, '_', str(node_size),
-                                                             '%s' % ("mm_" if node_size != 'parc' else ''),
-                                                             "%s" % ("%s%s" % (int(target_samples), 'samples_') if
-                                                                     float(target_samples) > 0 else ''),
-                                                             "%s%s" % (track_type, '_track'), '.npy')
-        else:
-            est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_', str(thr),
-                                                         thr_type, '_', str(node_size),
-                                                         '%s' % ("mm_" if node_size != 'parc' else ''),
-                                                         "%s" % ("%s%s" % (int(target_samples), 'samples_') if
-                                                                 float(target_samples) > 0 else ''),
-                                                         "%s%s" % (track_type, '_track'), '.npy')
+
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_',
+                                                     '%s' % (network + '_' if network is not None else ''),
+                                                     '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                     'est_', conn_model, '_', thr, thr_type, '_',
+                                                     '%s' % ("%s%s" % (node_size, 'mm_') if node_size != 'parc' else ''),
+                                                     "%s" % ("%s%s" % (int(target_samples), 'samples_') if float(target_samples) > 0 else ''),
+                                                     "%s%s" % (track_type, '_track'), '.npy')
     return est_path
 
 
@@ -218,19 +158,9 @@ def create_unthr_path(ID, network, conn_model, roi, dir_path):
     :param dir_path:
     :return:
     """
-    if roi is not None:
-        if network is not None:
-            unthr_path = "%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model), '_',
-                                                   str(op.basename(roi).split('.')[0]), '_unthresh_mat.npy')
-        else:
-            unthr_path = "%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_',
-                                               str(op.basename(roi).split('.')[0]), '_unthresh_mat.npy')
-    else:
-        if network is not None:
-            unthr_path = "%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_est_', str(conn_model),
-                                               '_unthresholded_mat.npy')
-        else:
-            unthr_path = "%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_est_', str(conn_model), '_unthresh_mat.npy')
+    unthr_path = "%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
+                                         '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                         'est_', conn_model, '_raw_mat.npy')
     return unthr_path
 
 
@@ -248,25 +178,12 @@ def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size):
     """
     if node_size is None:
         node_size = 'parc'
-    if roi is not None:
-        if network is not None:
-            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_net_metrics_',
-                                                           conn_model, '_', str(thr), '_',
-                                                           str(op.basename(roi).split('.')[0]), '_', str(node_size),
-                                                           '%s' % ("mm" if node_size != 'parc' else ''), '.csv')
-        else:
-            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_net_metrics_', conn_model, '_', str(thr),
-                                                       '_', str(op.basename(roi).split('.')[0]), '_', str(node_size),
-                                                       '%s' % ("mm" if node_size != 'parc' else ''), '.csv')
-    else:
-        if network is not None:
-            out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_net_metrics_', conn_model,
-                                                       '_', str(thr), '_', str(node_size),
-                                                       '%s' % ("mm" if node_size != 'parc' else ''), '.csv')
-        else:
-            out_path = "%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_net_metrics_', conn_model, '_', str(thr),
-                                                   '_', str(node_size), '%s' % ("mm" if node_size != 'parc' else ''),
-                                                   '.csv')
+
+    out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_net_mets_',
+                                               '%s' % (network + '_' if network is not None else ''),
+                                               '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                               conn_model, '_', thr, '_', node_size,
+                                               '%s' % ("mm" if node_size != 'parc' else ''), '.csv')
     return out_path
 
 
@@ -301,7 +218,7 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
 
 
 def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist,
-                  prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=True,
+                   prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=True,
                    multimodal=False):
     from pynets.utils import build_omnetome, flatten
     """
@@ -367,7 +284,6 @@ def pass_meta_ins(conn_model, est_path, network, node_size, thr, prune, ID, roi,
 def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, node_size_func, thr_func, prune_func, ID_func,
                         roi_func, norm_func, binary_func, conn_model_struct, est_path_struct, network_struct,
                         node_size_struct, thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct):
-
     est_path_iterlist = [est_path_func, est_path_struct]
     conn_model_iterlist = [conn_model_func, conn_model_struct]
     network_iterlist = [network_func, network_struct]
@@ -431,7 +347,7 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
     def omni_embed(pop_array):
         variance_threshold = VarianceThreshold(threshold=0.05)
         diags = np.array([np.triu(pop_array[i]) for i in range(len(pop_array))])
-        diags_red = diags.reshape(diags.shape[0], diags.shape[1]*diags.shape[2])
+        diags_red = diags.reshape(diags.shape[0], diags.shape[1] * diags.shape[2])
         var_thr = variance_threshold.fit(diags_red.T)
         graphs_ix_keep = var_thr.get_support(indices=True)
         pop_array_red = [pop_array[i] for i in graphs_ix_keep]
@@ -530,7 +446,8 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
     if len(net_pickle_mt_list) > 1:
         print("%s%s%s" % ('\n\nList of result files to concatenate:\n', str(net_pickle_mt_list), '\n\n'))
         subject_path = op.dirname(op.dirname(net_pickle_mt_list[0]))
-        name_of_network_pickle = "%s%s" % ('net_metrics_', net_pickle_mt_list[0].split('_0.')[0].split('net_metrics_')[1])
+        name_of_network_pickle = "%s%s" % ('net_mets_',
+                                           net_pickle_mt_list[0].split('_0.')[0].split('net_mets_')[1])
         net_pickle_mt_list.sort()
 
         list_ = []
@@ -548,15 +465,14 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
         try:
             # Concatenate and find mean across dataframes
             list_of_dicts = [cur_df.T.to_dict().values() for cur_df in list_]
-            #df_concat = pd.concat(list_, axis=1)
             df_concat = pd.DataFrame(list(chain(*list_of_dicts)))
-            df_concat["Model"] = np.array([i.replace('_net_metrics', '') for i in models])
+            df_concat["Model"] = np.array([i.replace('_net_mets', '') for i in models])
             measures = list(df_concat.columns)
             measures.remove('id')
             measures.remove('Model')
             if plot_switch is True:
-                from pynets import plotting
-                plotting.plot_graph_measure_hists(df_concat, measures, file_)
+                from pynets.plotting import plot_gen
+                plot_gen.plot_graph_measure_hists(df_concat, measures, file_)
             df_concatted = df_concat.loc[:, measures].mean().to_frame().transpose()
             df_concatted_std = df_concat.loc[:, measures].std().to_frame().transpose()
             df_concatted.columns = [str(col) + '_mean' for col in df_concatted.columns]
@@ -570,16 +486,16 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
             else:
                 net_pick_out_path = "%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle, '_mean')
             df_concatted_final.to_pickle(net_pick_out_path)
-            df_concatted_final.to_csv(net_pick_out_path + '.csv', index=False)
+            df_concatted_final.to_csv("%s%s" % (net_pick_out_path, '.csv'), index=False)
 
         except RuntimeWarning:
             print("%s%s%s" % ('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ', str(ID), '!\n'))
             pass
     else:
         if network is not None:
-            print("%s%s%s" % ('\nSingle dataframe for the ' + network + ' network for: ', str(ID), '\n'))
+            print("%s%s%s%s%s" % ('\nSingle dataframe for the ', network, ' network for: ', ID, '\n'))
         else:
-            print("%s%s%s" % ('\nSingle dataframe for: ', str(ID), '\n'))
+            print("%s%s%s" % ('\nSingle dataframe for: ', ID, '\n'))
         pass
 
     return
@@ -609,17 +525,21 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, 
         for network in multi_nets:
             net_pickle_mt_list = list(set([i for i in net_pickle_mt_list_nets if network in i]))
             if multimodal is True:
-                net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in struct_models]))
+                net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0]
+                                                   in struct_models]))
                 collect_pandas_df_make(net_pickle_mt_list_dwi, ID, network, plot_switch)
-                net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in func_models]))
+                net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if
+                                                    i.split('metrics_')[1].split('_')[0] in func_models]))
                 collect_pandas_df_make(net_pickle_mt_list_func, ID, network, plot_switch)
             else:
                 collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
     else:
         if multimodal is True:
-            net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in struct_models]))
+            net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in
+                                               struct_models]))
             collect_pandas_df_make(net_pickle_mt_list_dwi, ID, network, plot_switch)
-            net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in func_models]))
+            net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0]
+                                                in func_models]))
             collect_pandas_df_make(net_pickle_mt_list_func, ID, network, plot_switch)
         else:
             collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
@@ -679,11 +599,11 @@ def check_est_path_existence(est_path_list):
     return est_path_list_ex, bad_ixs
 
 
-def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network):
+def save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network):
     """
 
     :param coords:
-    :param label_names:
+    :param labels:
     :param dir_path:
     :param network:
     :return:
@@ -693,13 +613,13 @@ def save_RSN_coords_and_labels_to_pickle(coords, label_names, dir_path, network)
     except ImportError:
         import _pickle as pickle
     # Save coords to pickle
-    coord_path = "%s%s%s%s" % (dir_path, '/', network, '_func_coords_rsn.pkl')
+    coord_path = "%s%s%s%s" % (dir_path, '/', network, '_coords_rsn.pkl')
     with open(coord_path, 'wb') as f:
         pickle.dump(coords, f, protocol=2)
     # Save labels to pickle
-    labels_path = "%s%s%s%s" % (dir_path, '/', network, '_func_labelnames_rsn.pkl')
+    labels_path = "%s%s%s%s" % (dir_path, '/', network, '_labels_rsn.pkl')
     with open(labels_path, 'wb') as f:
-        pickle.dump(label_names, f, protocol=2)
+        pickle.dump(labels, f, protocol=2)
     return coord_path, labels_path
 
 
@@ -714,18 +634,11 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
     :param net_parcels_map_nifti:
     :return:
     """
-    if roi:
-        if network:
-            net_parcels_nii_path = "%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_parcels_masked_', network, '_',
-                                                         str(op.basename(roi).split('.')[0]), '.nii.gz')
-        else:
-            net_parcels_nii_path = "%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_parcels_masked_',
-                                                     str(op.basename(roi).split('.')[0]), '.nii.gz')
-    else:
-        if network:
-            net_parcels_nii_path = "%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_parcels_', network, '.nii.gz')
-        else:
-            net_parcels_nii_path = "%s%s%s%s" % (dir_path, '/', str(ID), '_parcels.nii.gz')
+
+    net_parcels_nii_path = "%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_parcels_masked_',
+                                               '%s' % (network + '_' if network is not None else ''),
+                                               '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                               '.nii.gz')
 
     nib.save(net_parcels_map_nifti, net_parcels_nii_path)
     return net_parcels_nii_path
@@ -737,7 +650,7 @@ def cuberoot(x):
     :param x:
     :return:
     """
-    return np.sign(x) * np.abs(x)**(1 / 3)
+    return np.sign(x) * np.abs(x) ** (1 / 3)
 
 
 def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
@@ -752,23 +665,11 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
     :return:
     """
     # Save time series as txt file
-    if roi is None:
-        if network is not None:
-            out_path_ts = "%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, "%s" % ("%s%s" % (int(c_boot), 'nb_') if
-                                                                                       float(c_boot) > 0 else ''),
-                                              '_rsn_net_ts.npy')
-        else:
-            out_path_ts = "%s%s%s%s%s" % (dir_path, '/', ID, "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0
-                                                                     else ''), '_wb_net_ts.npy')
-    else:
-        if network is not None:
-            out_path_ts = "%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', op.basename(roi).split('.')[0], '_', network,
-                                                  "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
-                                                  '_rsn_net_ts.npy')
-        else:
-            out_path_ts = "%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', op.basename(roi).split('.')[0],
-                                              "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
-                                              '_wb_net_ts.npy')
+    out_path_ts = "%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
+                                        '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                        '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
+                                        'rsn_net_ts.npy')
+
     np.save(out_path_ts, ts_within_nodes)
     return out_path_ts
 
@@ -827,7 +728,7 @@ def rescale_bvec(bvec, bvec_rescaled):
     bv1 = bv1.T if bv1.shape[0] == 3 else bv1
 
     # Normalize values not close to norm 1
-    bv2 = [b/np.linalg.norm(b) if not np.isclose(np.linalg.norm(b), 0)
+    bv2 = [b / np.linalg.norm(b) if not np.isclose(np.linalg.norm(b), 0)
            else b for b in bv1]
     np.savetxt(bvec_rescaled, bv2)
     return bvec_rescaled
@@ -865,7 +766,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file):
     bvals, bvecs = read_bvals_bvecs(fbval, fbvec)
     bvecs[np.where(np.any(abs(bvecs) >= 10, axis=1) == True)] = [1, 0, 0]
     bvecs[np.where(bvals == 0)] = 0
-    if len(bvecs[np.where(np.logical_and(bvals > 50, np.all(abs(bvecs)==np.array([0, 0, 0]), axis=1)))]) > 0:
+    if len(bvecs[np.where(np.logical_and(bvals > 50, np.all(abs(bvecs) == np.array([0, 0, 0]), axis=1)))]) > 0:
         raise ValueError('WARNING: Encountered potentially corrupted bval/bvecs. Check to ensure volumes with a '
                          'diffusion weighting are not being treated as B0\'s along the bvecs')
     np.savetxt(fbval, bvals)
@@ -899,8 +800,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file):
     for b0 in b0s:
         print(b0)
         b0_bbr = "{}/{}_b0.nii.gz".format(outdir, str(b0))
-        cmd = 'fslroi ' + dwi_file + ' ' + b0_bbr + ' ' + str(b0) + ' 1'
-        cmds.append(cmd)
+        cmds.append('fslroi {} {} {} 1'.format(dwi_file, b0_bbr, str(b0), ' 1'))
         b0s_bbr.append(b0_bbr)
 
     for cmd in cmds:
@@ -911,309 +811,8 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file):
     nib.save(mean_b0, nodif_b0)
 
     # Get mean b0 brain mask
-    cmd = 'bet ' + nodif_b0 + ' ' + nodif_b0_bet + ' -m -f 0.2'
-    os.system(cmd)
+    os.system("bet {} {} -m -f 0.2".format(nodif_b0, nodif_b0_bet))
     return gtab_file, nodif_b0_bet, nodif_b0_mask, dwi_file
-
-
-def check_orient_and_dims(infile, vox_size, bvecs=None):
-    """
-
-    :param infile:
-    :param vox_size:
-    :param bvecs:
-    :return:
-    """
-    import os
-    import os.path as op
-    from pynets.utils import reorient_dwi, reorient_img, match_target_vox_res
-
-    outdir = op.dirname(infile)
-    img = nib.load(infile)
-    vols = img.shape[-1]
-
-    reoriented = "{}/{}_pre_reor.nii.gz".format(outdir, infile.split('/')[-1].split('.nii.gz')[0])
-    resampled = "{}/{}_pre_res.nii.gz".format(outdir, os.path.basename(infile).split('.nii.gz')[0])
-
-    # Check orientation
-    if (vols > 1) and (bvecs is not None):
-        # dwi case
-        outdir = "%s%s" % (outdir, '/std_dmri')
-        if not os.path.isdir(outdir):
-            os.mkdir(outdir)
-        # Check orientation
-        if not os.path.isfile(reoriented):
-            [infile, bvecs] = reorient_dwi(infile, bvecs, outdir)
-        # Check dimensions
-        if not os.path.isfile(resampled):
-            outfile = match_target_vox_res(infile, vox_size, outdir, sens='dwi')
-    elif (vols > 1) and (bvecs is None):
-        # func case
-        outdir = "%s%s" % (outdir, '/std_fmri')
-        if not os.path.isdir(outdir):
-            os.mkdir(outdir)
-        # Check orientation
-        if not os.path.isfile(reoriented):
-            infile = reorient_img(infile, outdir)
-        # Check dimensions
-        if not os.path.isfile(resampled):
-            outfile = match_target_vox_res(infile, vox_size, outdir, sens='func')
-    else:
-        # t1w case
-        outdir = "%s%s" % (outdir, '/std_anat_')
-        if not os.path.isdir(outdir):
-            os.mkdir(outdir)
-        # Check orientation
-        if not os.path.isfile(reoriented):
-            infile = reorient_img(infile, outdir)
-        if not os.path.isfile(resampled):
-            # Check dimensions
-            outfile = match_target_vox_res(infile, vox_size, outdir, sens='t1w')
-
-    print(outfile)
-
-    if bvecs is None:
-        return outfile
-    else:
-        return outfile, bvecs
-
-
-def reorient_dwi(dwi_prep, bvecs, out_dir):
-    """
-
-    :param dwi_prep:
-    :param bvecs:
-    :param out_dir:
-    :return:
-    """
-    import shutil
-    # Check orientation (dwi_prep)
-    cmd = 'fslorient -getorient ' + dwi_prep
-    cmd_run = os.popen(cmd)
-    orient = cmd_run.read().strip('\n')
-    cmd_run.close()
-    dwi_orig = dwi_prep
-    dwi_prep = "{}/{}_pre_reor.nii.gz".format(out_dir, dwi_prep.split('/')[-1].split('.nii.gz')[0])
-    shutil.copyfile(dwi_orig, dwi_prep)
-    bvecs_orig = bvecs
-    bvecs = "{}/bvecs.bvec".format(out_dir)
-    shutil.copyfile(bvecs_orig, bvecs)
-    bvecs_mat = np.genfromtxt(bvecs)
-    cmd = 'fslorient -getqform ' + dwi_prep
-    cmd_run = os.popen(cmd)
-    qform = cmd_run.read().strip('\n')
-    cmd_run.close()
-    reoriented = False
-    if orient == 'NEUROLOGICAL':
-        reoriented = True
-        print('Neurological (dwi), reorienting to radiological...')
-        # Orient dwi to RADIOLOGICAL
-        # Posterior-Anterior Reorientation
-        if float(qform.split(' ')[:-1][5]) <= 0:
-            dwi_prep_PA = "{}/dwi_reor_PA.nii.gz".format(out_dir)
-            print('Reorienting P-A flip (dwi)...')
-            cmd = 'fslswapdim ' + dwi_prep + ' -x -y z ' + dwi_prep_PA
-            os.system(cmd)
-            bvecs_mat[:,1] = -bvecs_mat[:,1]
-            cmd = 'fslorient -getqform ' + dwi_prep_PA
-            cmd_run = os.popen(cmd)
-            qform = cmd_run.read().strip('\n')
-            cmd_run.close()
-            dwi_prep = dwi_prep_PA
-        # Inferior-Superior Reorientation
-        if float(qform.split(' ')[:-1][10]) <= 0:
-            dwi_prep_IS = "{}/dwi_reor_IS.nii.gz".format(out_dir)
-            print('Reorienting I-S flip (dwi)...')
-            cmd = 'fslswapdim ' + dwi_prep + ' -x y -z ' + dwi_prep_IS
-            os.system(cmd)
-            bvecs_mat[:,2] = -bvecs_mat[:,2]
-            dwi_prep = dwi_prep_IS
-        bvecs_mat[:, 0] = -bvecs_mat[:, 0]
-        cmd = 'fslorient -forceradiological ' + dwi_prep
-        os.system(cmd)
-        np.savetxt(bvecs, bvecs_mat)
-    else:
-        print('Radiological (dwi)...')
-        # Posterior-Anterior Reorientation
-        if float(qform.split(' ')[:-1][5]) <= 0:
-            dwi_prep_PA = "{}/dwi_reor_PA.nii.gz".format(out_dir)
-            print('Reorienting P-A flip (dwi)...')
-            cmd = 'fslswapdim ' + dwi_prep + ' -x -y z ' + dwi_prep_PA
-            os.system(cmd)
-            bvecs_mat[:,1] = -bvecs_mat[:,1]
-            cmd = 'fslorient -getqform ' + dwi_prep_PA
-            cmd_run = os.popen(cmd)
-            qform = cmd_run.read().strip('\n')
-            cmd_run.close()
-            dwi_prep = dwi_prep_PA
-            reoriented = True
-        # Inferior-Superior Reorientation
-        if float(qform.split(' ')[:-1][10]) <= 0:
-            dwi_prep_IS = "{}/dwi_reor_IS.nii.gz".format(out_dir)
-            print('Reorienting I-S flip (dwi)...')
-            cmd = 'fslswapdim ' + dwi_prep + ' -x y -z ' + dwi_prep_IS
-            os.system(cmd)
-            bvecs_mat[:,2] = -bvecs_mat[:,2]
-            dwi_prep = dwi_prep_IS
-            reoriented = True
-        np.savetxt(bvecs, bvecs_mat)
-
-    if reoriented is True:
-        imgg = nib.load(dwi_prep)
-        data = imgg.get_fdata()
-        affine = imgg.affine
-        hdr = imgg.header
-        imgg = nib.Nifti1Image(data, affine=affine, header=hdr)
-        imgg.set_sform(affine)
-        imgg.set_qform(affine)
-        imgg.update_header()
-        nib.save(imgg, dwi_prep)
-
-        print('Reoriented affine: ')
-        print(affine)
-    else:
-        dwi_prep = dwi_orig
-        print('Image already in RAS+')
-
-    return dwi_prep, bvecs
-
-
-def reorient_img(img, out_dir):
-    """
-
-    :param img:
-    :param out_dir:
-    :return:
-    """
-    import shutil
-    import random
-    cmd = 'fslorient -getorient ' + img
-    cmd_run = os.popen(cmd)
-    orient = cmd_run.read().strip('\n')
-    cmd_run.close()
-    img_orig = img
-    hash = str(random.randint(1, 10000))
-    img = "{}/{}_pre_reor_{}.nii.gz".format(out_dir, img.split('/')[-1].split('.nii.gz')[0], hash)
-    shutil.copyfile(img_orig, img)
-    cmd = 'fslorient -getqform ' + img
-    cmd_run = os.popen(cmd)
-    qform = cmd_run.read().strip('\n')
-    cmd_run.close()
-    reoriented = False
-    if orient == 'NEUROLOGICAL':
-        reoriented = True
-        print('Neurological (img), reorienting to radiological...')
-        # Orient img to std
-        # Posterior-Anterior Reorientation
-        if float(qform.split(' ')[:-1][5]) <= 0:
-            img_PA = "{}/img_reor_PA.nii.gz".format(out_dir)
-            print('Reorienting P-A flip (img)...')
-            cmd = 'fslswapdim ' + img + ' -x -y z ' + img_PA
-            os.system(cmd)
-            cmd = 'fslorient -getqform ' + img_PA
-            cmd_run = os.popen(cmd)
-            qform = cmd_run.read().strip('\n')
-            cmd_run.close()
-            img = img_PA
-        # Inferior-Superior Reorientation
-        if float(qform.split(' ')[:-1][10]) <= 0:
-            img_IS = "{}/img_reor_IS.nii.gz".format(out_dir)
-            print('Reorienting I-S flip (img)...')
-            cmd = 'fslswapdim ' + img + ' -x y -z ' + img_IS
-            os.system(cmd)
-            img = img_IS
-        cmd = 'fslorient -forceradiological ' + img
-        os.system(cmd)
-    else:
-        print('Radiological (img)...')
-        # Posterior-Anterior Reorientation
-        if float(qform.split(' ')[:-1][5]) <= 0:
-            img_PA = "{}/img_reor_PA.nii.gz".format(out_dir)
-            print('Reorienting P-A flip (img)...')
-            cmd = 'fslswapdim ' + img + ' -x -y z ' + img_PA
-            os.system(cmd)
-            cmd = 'fslorient -getqform ' + img_PA
-            cmd_run = os.popen(cmd)
-            qform = cmd_run.read().strip('\n')
-            cmd_run.close()
-            img = img_PA
-            reoriented = True
-        # Inferior-Superior Reorientation
-        if float(qform.split(' ')[:-1][10]) <= 0:
-            img_IS = "{}/img_reor_IS.nii.gz".format(out_dir)
-            print('Reorienting I-S flip (img)...')
-            cmd = 'fslswapdim ' + img + ' -x y -z ' + img_IS
-            os.system(cmd)
-            img = img_IS
-            reoriented = True
-
-    if reoriented is True:
-        imgg = nib.load(img)
-        data = imgg.get_fdata()
-        affine = imgg.affine
-        hdr = imgg.header
-        imgg = nib.Nifti1Image(data, affine=affine, header=hdr)
-        imgg.set_sform(affine)
-        imgg.set_qform(affine)
-        imgg.update_header()
-        nib.save(imgg, img)
-
-        print('Reoriented affine: ')
-        print(affine)
-    else:
-        img = img_orig
-        print('Image already in RAS+')
-
-    return img
-
-
-def match_target_vox_res(img_file, vox_size, out_dir, sens):
-    """
-
-    :param img_file:
-    :param vox_size:
-    :param out_dir:
-    :param sens:
-    :return:
-    """
-    from dipy.align.reslice import reslice
-    # Check dimensions
-    img = nib.load(img_file)
-    data = img.get_fdata()
-    affine = img.affine
-    hdr = img.header
-    zooms = hdr.get_zooms()[:3]
-    if vox_size == '1mm':
-        new_zooms = (1., 1., 1.)
-    elif vox_size == '2mm':
-        new_zooms = (2., 2., 2.)
-
-    if (abs(zooms[0]), abs(zooms[1]), abs(zooms[2])) != new_zooms:
-        print('Reslicing image ' + img_file + ' to ' + vox_size + '...')
-        img_file_pre = "{}/{}_pre_res.nii.gz".format(out_dir, os.path.basename(img_file).split('.nii.gz')[0])
-        shutil.copyfile(img_file, img_file_pre)
-
-        data2, affine2 = reslice(data, affine, zooms, new_zooms)
-        if sens == 'dwi':
-            affine2[0:3, 3] = np.zeros(3)
-            affine2[0:3, 0:3] = np.eye(3) * np.array(new_zooms) * np.sign(affine2[0:3, 0:3])
-        img2 = nib.Nifti1Image(data2, affine=affine2, header=hdr)
-        img2.set_qform(affine2)
-        img2.set_sform(affine2)
-        img2.update_header()
-        nib.save(img2, img_file)
-        print('Resliced affine: ')
-        print(nib.load(img_file).affine)
-    else:
-        if sens == 'dwi':
-            affine[0:3,3] = np.zeros(3)
-        img = nib.Nifti1Image(data, affine=affine, header=hdr)
-        img.set_sform(affine)
-        img.set_qform(affine)
-        img.update_header()
-        nib.save(img, img_file)
-
-    return img_file
 
 
 def as_list(x):
@@ -1239,6 +838,9 @@ def merge_dicts(x, y):
 
 
 class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
+    """
+    Input interface wrapper for ExtractNetStats
+    """
     ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=False)
     thr = traits.Any(mandatory=True)
@@ -1252,10 +854,16 @@ class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
 
 
 class ExtractNetStatsOutputSpec(TraitedSpec):
+    """
+    Output interface wrapper for ExtractNetStats
+    """
     out_file = File()
 
 
 class ExtractNetStats(BaseInterface):
+    """
+    Interface wrapper for ExtractNetStats
+    """
     input_spec = ExtractNetStatsInputSpec
     output_spec = ExtractNetStatsOutputSpec
 
@@ -1280,6 +888,9 @@ class ExtractNetStats(BaseInterface):
 
 
 class Export2PandasInputSpec(BaseInterfaceInputSpec):
+    """
+    Input interface wrapper for Export2Pandas
+    """
     csv_loc = File(exists=True, mandatory=True, desc="")
     ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=False)
@@ -1287,10 +898,16 @@ class Export2PandasInputSpec(BaseInterfaceInputSpec):
 
 
 class Export2PandasOutputSpec(TraitedSpec):
+    """
+    Output interface wrapper for Export2Pandas
+    """
     net_pickle_mt = traits.Any(mandatory=True)
 
 
 class Export2Pandas(BaseInterface):
+    """
+    Interface wrapper for Export2Pandas
+    """
     input_spec = Export2PandasInputSpec
     output_spec = Export2PandasOutputSpec
 
@@ -1309,6 +926,9 @@ class Export2Pandas(BaseInterface):
 
 
 class CollectPandasDfsInputSpec(BaseInterfaceInputSpec):
+    """
+    Input interface wrapper for CollectPandasDfs
+    """
     ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=True)
     net_pickle_mt_list = traits.List(mandatory=True)
@@ -1318,6 +938,9 @@ class CollectPandasDfsInputSpec(BaseInterfaceInputSpec):
 
 
 class CollectPandasDfs(SimpleInterface):
+    """
+    Interface wrapper for CollectPandasDfs
+    """
     input_spec = CollectPandasDfsInputSpec
 
     def _run_interface(self, runtime):
