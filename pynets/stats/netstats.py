@@ -7,10 +7,11 @@ Copyright (C) 2018
 from __future__ import division
 import os
 import numpy as np
-np.warnings.filterwarnings('ignore')
 import networkx as nx
 import warnings
+np.warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def timeout(seconds):
@@ -44,7 +45,7 @@ def timeout(seconds):
     return decorator
 
 
-@timeout(20)
+@timeout(240)
 def average_shortest_path_length_for_all(G):
     """
     Helper function, in the case of graph disconnectedness,
@@ -72,9 +73,10 @@ def average_shortest_path_length_for_all(G):
     return math.fsum(nx.average_shortest_path_length(sg) for sg in subgraphs) / len(subgraphs)
 
 
+@timeout(120)
 def global_efficiency(G, weight=None):
     """
-    ## ADAPTED FROM NETWORKX TO INCORPORATE WEIGHT PARAMETER ##
+    ## Adapted from NetworkX to incorporate weight parameter ##
 
     Return the global efficiency of the graph G
 
@@ -122,15 +124,16 @@ def global_efficiency(G, weight=None):
         else:
             lengths = nx.single_source_dijkstra_path_length(G, node, weight=weight)
 
-        inv = [1/x for x in lengths.values() if x is not 0]
+        inv = [1 / x for x in lengths.values() if x is not 0]
         inv_lengths.extend(inv)
 
-    return sum(inv_lengths)/(N*(N-1))
+    return sum(inv_lengths) / (N * (N - 1))
 
 
+@timeout(120)
 def local_efficiency(G, weight=None):
     """
-    ## ADAPTED FROM NETWORKX TO INCORPORATE WEIGHT PARAMETER ##
+    ## Adapted from NetworkX to incorporate weight parameter ##
 
     Return the local efficiency of each node in the graph G
 
@@ -187,9 +190,10 @@ def local_efficiency(G, weight=None):
     return efficiencies
 
 
+@timeout(120)
 def average_local_efficiency(G, weight=None):
     """
-    ## ADAPTED FROM NETWORKX TO INCORPORATE WEIGHT PARAMETER ##
+    ## Adapted from NetworkX to incorporate weight parameter ##
 
     Return the average local efficiency of all of the nodes in the graph G
 
@@ -224,7 +228,7 @@ def average_local_efficiency(G, weight=None):
     eff = local_efficiency(G, weight)
     total = sum(eff.values())
     N = len(eff)
-    return total/N
+    return total / N
 
 
 def create_communities(node_comm_aff_mat, node_num):
@@ -244,19 +248,19 @@ def create_communities(node_comm_aff_mat, node_num):
     com_assign : array
         1D numpy vector of community assignments.
     """
-    com_assign = np.zeros((node_num,1))
+    com_assign = np.zeros((node_num, 1))
     for i in range(len(node_comm_aff_mat)):
-        community = node_comm_aff_mat[i,:]
+        community = node_comm_aff_mat[i, :]
         for j in range(len(community)):
             if community[j] == 1:
-                com_assign[j,0] = i
+                com_assign[j, 0] = i
     return com_assign
 
 
-@timeout(20)
+@timeout(120)
 def participation_coef(W, ci, degree='undirected'):
     '''
-    ## ADAPTED FROM BCTPY ##
+    ## Adapted from bctpy ##
 
     Participation coefficient is a measure of diversity of intermodular
     connections of individual nodes.
@@ -296,7 +300,7 @@ def participation_coef(W, ci, degree='undirected'):
 
 def participation_coef_sign(W, ci):
     '''
-    ## ADAPTED FROM BCTPY ##
+    ## Adapted from bctpy ##
 
     Participation coefficient is a measure of diversity of intermodular
     connections of individual nodes.
@@ -332,7 +336,7 @@ def participation_coef_sign(W, ci):
         P[np.where(np.logical_not(P))] = 0  # p_ind=0 if no (out)neighbors
         return P
 
-    #explicitly ignore compiler warning for division by zero
+    # explicitly ignore compiler warning for division by zero
     with np.errstate(invalid='ignore'):
         Ppos = pcoef(W * (W > 0))
         Pneg = pcoef(-W * (W < 0))
@@ -342,7 +346,7 @@ def participation_coef_sign(W, ci):
 
 def diversity_coef_sign(W, ci):
     '''
-    ## ADAPTED FROM BCTPY ##
+    ## Adapted from bctpy ##
 
     The Shannon-entropy based diversity coefficient measures the diversity
     of intermodular connections of individual nodes and ranges from 0 to 1.
@@ -378,7 +382,6 @@ def diversity_coef_sign(W, ci):
     # Number of modules
     m = np.max(ci)
 
-
     # Explicitly ignore compiler warning for division by zero
     with np.errstate(invalid='ignore'):
         Hpos = entropy(W * (W > 0))
@@ -389,7 +392,7 @@ def diversity_coef_sign(W, ci):
 
 def link_communities(W, type_clustering='single'):
     '''
-    ## ADAPTED FROM BCTPY ##
+    ## Adapted from bctpy ##
 
     The optimal community structure is a subdivision of the network into
     nonoverlapping groups of nodes which maximizes the number of within-group
@@ -425,8 +428,8 @@ def link_communities(W, type_clustering='single'):
                              np.sum(np.logical_not(W.T), axis=0)) / 2
 
     # Out/in norm squared
-    No = np.sum(W**2, axis=1)
-    Ni = np.sum(W**2, axis=0)
+    No = np.sum(W ** 2, axis=1)
+    Ni = np.sum(W ** 2, axis=0)
 
     # Weighted in/out jaccard
     Jo = np.zeros((n, n))
@@ -491,20 +494,20 @@ def link_communities(W, type_clustering='single'):
 
     for i in range(m - 1):
         print('Hierarchy %i' % i)
-        #time1 = time.time()
+        # time1 = time.time()
         # Loop over communities
         for j in range(len(U)):
             # Get link indices
             ixes = C[i, :] == U[j]
             links = np.sort(Lw[ixes])
-            #nodes = np.sort(Ln[ixes,:].flat)
+            # nodes = np.sort(Ln[ixes,:].flat)
             nodes = np.sort(np.reshape(
                 Ln[ixes, :], 2 * np.size(np.where(ixes))))
             # Get unique nodes
             nodulo = np.append(nodes[0], (nodes[1:])[nodes[1:] != nodes[:-1]])
-            #nodulo = ((nodes[1:])[nodes[1:] != nodes[:-1]])
+            # nodulo = ((nodes[1:])[nodes[1:] != nodes[:-1]])
             nc = len(nodulo)
-            #nc = len(nodulo)+1
+            # nc = len(nodulo)+1
             mc = np.sum(links)
             # Minimal weight
             min_mc = np.sum(links[:nc - 1])
@@ -516,11 +519,11 @@ def link_communities(W, type_clustering='single'):
             Nc[i, j] = nc
             Mc[i, j] = mc
             Dc[i, j] = dc if not np.isnan(dc) else 0
-        #time2 = time.time()
-        #print('compute densities time', time2-time1)
+        # time2 = time.time()
+        # print('compute densities time', time2-time1)
         # Copy current partition
         C[i + 1, :] = C[i, :]
-        #if i in (2693,):
+        # if i in (2693,):
         #    import pdb
         #    pdb.set_trace()
         u1, u2 = np.where(ES[np.ix_(U, U)] == np.max(ES[np.ix_(U, U)]))
@@ -531,16 +534,16 @@ def link_communities(W, type_clustering='single'):
             u1 = uc
             u2 = ud
 
-        #time25 = time.time()
-        #print('copy and max time', time25-time2)
-        #ugl = np.array((u1,u2))
+        # time25 = time.time()
+        # print('copy and max time', time25-time2)
+        # ugl = np.array((u1,u2))
         ugl = np.sort((u1, u2), axis=1)
         ug_rows = ugl[np.argsort(ugl, axis=0)[:, 0]]
         # implementation of matlab unique(A, 'rows')
         unq_rows = np.vstack({tuple(row) for row in ug_rows})
         V = U[unq_rows]
-        #time3 = time.time()
-        #print('sortrows time', time3-time25)
+        # time3 = time.time()
+        # print('sortrows time', time3-time25)
 
         for j in range(len(V)):
             if type_clustering == 'single':
@@ -548,8 +551,8 @@ def link_communities(W, type_clustering='single'):
             elif type_clustering == 'complete':
                 x = np.min(ES[V[j, :], :], axis=0)
             # Assign distances to whole clusters
-#            import pdb
-#            pdb.set_trace()
+            #            import pdb
+            #            pdb.set_trace()
             ES[V[j, :], :] = np.array((x, x))
             ES[:, V[j, :]] = np.transpose((x, x))
             # clear diagonal
@@ -559,14 +562,14 @@ def link_communities(W, type_clustering='single'):
             C[i + 1, C[i + 1, :] == V[j, 1]] = V[j, 0]
             V[V == V[j, 1]] = V[j, 0]
 
-        #time4 = time.time()
-        #print('get linkages time', time4-time3)
+        # time4 = time.time()
+        # print('get linkages time', time4-time3)
         U = np.unique(C[i + 1, :])
         if len(U) == 1:
             break
-        #time5 = time.time()
-        #print('get unique communities time', time5-time4)
-    #Dc[ np.where(np.isnan(Dc)) ]=0
+        # time5 = time.time()
+        # print('get unique communities time', time5-time4)
+    # Dc[ np.where(np.isnan(Dc)) ]=0
     i = np.argmax(np.sum(Dc * Mc, axis=1))
     U = np.unique(C[i, :])
     M = np.zeros((len(U), n))
@@ -613,53 +616,52 @@ def prune_disconnected(G):
 
 
 def most_important(G):
-     """
-     Returns a copy of G with isolates and low-importance nodes pruned
+    """
+    Returns a copy of G with isolates and low-importance nodes pruned
 
-     Parameters
-     ----------
-     G : Obj
-         NetworkX graph.
+    Parameters
+    ----------
+    G : Obj
+        NetworkX graph.
 
-     Returns
-     -------
-     G : Obj
-         NetworkX graph with isolated and low-importance nodes pruned.
-     pruned_nodes : list
-        List of indices of nodes that were pruned from G.
-     """
-     print('Pruning fully disconnected and low importance nodes (3 SD < M)...')
-     ranking = nx.betweenness_centrality(G).items()
-     #print(ranking)
-     r = [x[1] for x in ranking]
-     m = sum(r)/len(r) - 3*np.std(r)
-     Gt = G.copy()
-     pruned_nodes = []
-     i = 0
-     # Remove near-zero isolates
-     for k, v in ranking:
+    Returns
+    -------
+    G : Obj
+        NetworkX graph with isolated and low-importance nodes pruned.
+    pruned_nodes : list
+       List of indices of nodes that were pruned from G.
+    """
+    print('Pruning fully disconnected and low importance nodes (3 SD < M)...')
+    ranking = nx.betweenness_centrality(G).items()
+    # print(ranking)
+    r = [x[1] for x in ranking]
+    m = sum(r) / len(r) - 3 * np.std(r)
+    Gt = G.copy()
+    pruned_nodes = []
+    i = 0
+    # Remove near-zero isolates
+    for k, v in ranking:
         if v < m:
             Gt.remove_node(k)
             pruned_nodes.append(i)
         i = i + 1
 
-     # List because it returns a generator
-     components = list(nx.connected_components(Gt))
-     components.sort(key=len, reverse=True)
-     components_isolated = list(components[0])
+    # List because it returns a generator
+    components = list(nx.connected_components(Gt))
+    components.sort(key=len, reverse=True)
+    components_isolated = list(components[0])
 
-     # Remove disconnected nodes
-     s = 0
-     for node in list(Gt.nodes()):
-         if node not in components_isolated:
-             Gt.remove_node(node)
-             pruned_nodes.append(s)
-         s = s + 1
+    # Remove disconnected nodes
+    s = 0
+    for node in list(Gt.nodes()):
+        if node not in components_isolated:
+            Gt.remove_node(node)
+            pruned_nodes.append(s)
+        s = s + 1
 
-     return Gt, pruned_nodes
+    return Gt, pruned_nodes
 
 
-@timeout(60)
 def raw_mets(G, i, custom_weight):
     """
     API that iterates across NetworkX algorithms for a graph G.
@@ -679,20 +681,24 @@ def raw_mets(G, i, custom_weight):
     net_met_val : float
         Value of the graph metric i that was calculated from G.
     """
-    if i is 'average_shortest_path_length':
+    if str(i) is 'average_shortest_path_length':
         if nx.is_connected(G) is True:
-            net_met_val = float(i(G))
+            try:
+                net_met_val = float(i(G))
+            except:
+                net_met_val = float(average_shortest_path_length_for_all(G))
         else:
             # Case where G is not fully connected
             print('WARNING: Calculating average shortest path length for a disconnected graph. '
                   'This might take awhile...')
             net_met_val = float(average_shortest_path_length_for_all(G))
     else:
-        if custom_weight is not None and i is 'degree_assortativity_coefficient' or i is 'global_efficiency' or i is 'average_local_efficiency' or i is 'average_clustering':
+        if (custom_weight is not None) and (str(i) is 'degree_assortativity_coefficient' or str(i) is 'global_efficiency' or str(i) is 'average_local_efficiency' or str(i) is 'average_clustering'):
             custom_weight_param = 'weight = ' + str(custom_weight)
             net_met_val = float(i(G, custom_weight_param))
         else:
             net_met_val = float(i(G))
+
     return net_met_val
 
 
@@ -800,12 +806,12 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     in_mat = np.array(nx.to_numpy_matrix(G))
 
     # Saved pruned
-    if prune > 0:
+    if (prune != 0) and (prune is not None):
         final_mat_path = "%s%s%s" % (est_path.split(est_path_fmt)[0], '_pruned_mat', est_path_fmt)
         utils.save_mat(in_mat, final_mat_path, fmt)
 
     # Print graph summary
-    print("%s%.2f%s" % ('\n\nThreshold: ', 100*float(thr), '%'))
+    print("%s%.2f%s" % ('\n\nThreshold: ', 100 * float(thr), '%'))
     print("%s%s" % ('Source File: ', est_path))
     info_list = list(nx.info(G).split('\n'))[2:]
     for i in info_list:
@@ -828,13 +834,13 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     # # # # Calculate global and local metrics from graph G # # # #
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     import community
-    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, eigenvector_centrality, communicability_betweenness_centrality, clustering, degree_centrality, rich_club_coefficient, omega
+    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, eigenvector_centrality, communicability_betweenness_centrality, clustering, degree_centrality, rich_club_coefficient, sigma
     from pynets.stats.netstats import average_local_efficiency, global_efficiency, participation_coef, participation_coef_sign, diversity_coef_sign
     # For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the
     # function (with a G-only input) to the netstats module.
     metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
                         average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient,
-                        graph_number_of_cliques, transitivity, omega]
+                        graph_number_of_cliques, transitivity, sigma]
     metric_list_comm = ['louvain_modularity']
     # with open("%s%s" % (str(Path(__file__).parent), '/global_graph_measures.yaml'), 'r') as stream:
     #     try:
@@ -867,9 +873,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
             try:
                 net_met_val = raw_mets(G, i, custom_weight)
             except:
-                print("%s%s%s" % ('WARNING: ', net_met, ' timeout for graph G. Most likely this is because the graph '
-                                                        'is either disconnected or because it is fully saturated. See '
-                                                        'thresholding and pruning options in pynets_run.py -h.'))
+                print("%s%s%s" % ('WARNING: ', net_met, ' failed for graph G.'))
                 net_met_val = np.nan
         except:
             print("%s%s%s" % ('WARNING: ', str(i), ' is undefined for graph G'))
@@ -1174,14 +1178,14 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
             pass
 
     if roi:
-        met_list_picke_path = "%s%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list', "%s" %
+        met_list_picke_path = "%s%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_met_list', "%s" %
                                             ("%s%s%s" % ('_', network, '_') if network else "_"),
                                             os.path.basename(roi).split('.')[0])
     else:
         if network:
-            met_list_picke_path = "%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list_', network)
+            met_list_picke_path = "%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_met_list_', network)
         else:
-            met_list_picke_path = "%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_metric_list')
+            met_list_picke_path = "%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_met_list')
     pickle.dump(metric_list_names, open(met_list_picke_path, 'wb'), protocol=2)
 
     # And save results to csv

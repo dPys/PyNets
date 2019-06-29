@@ -5,14 +5,16 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.filterwarnings("ignore")
 import numpy as np
 import networkx as nx
+warnings.filterwarnings("ignore")
+np.warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def threshold_absolute(W, thr, copy=True):
     '''
-    ## ADAPTED FROM BCTPY ##
+    ## Adapted from bctpy ##
 
     This function thresholds the connectivity matrix by absolute weight
     magnitude. All weights below the given threshold, and all weights
@@ -43,7 +45,7 @@ def threshold_absolute(W, thr, copy=True):
 
 def threshold_proportional(W, p, copy=True):
     '''
-    ## ADAPTED FROM BCTPY ##
+    ## Adapted from bctpy ##
 
     This function "thresholds" the connectivity matrix by preserving a
     proportion p (0<p<1) of the strongest weights. All other weights, and
@@ -106,7 +108,7 @@ def threshold_proportional(W, p, copy=True):
 
 def normalize(W, copy=True):
     '''
-    ## ADAPTED FROM BCTPY ##
+    ## Adapted from bctpy ##
 
     Normalizes an input weighted connection matrix.  If copy is not set, this
     function will *modify W in place.*
@@ -192,7 +194,7 @@ def thr2prob(W, copy=True):
 
 def binarize(W, copy=True):
     '''
-    ## ADAPTED FROM BCTPY ##
+    ## Adapted from bctpy ##
 
     Binarizes an input weighted connection matrix.  If copy is not set, this
     function will *modify W in place.*
@@ -218,7 +220,7 @@ def binarize(W, copy=True):
 
 def invert(W, copy=False):
     '''
-    ## ADAPTED FROM BCTPY ##
+    ## Adapted from bctpy ##
 
     Inverts elementwise the weights in an input connection matrix.
     In other words, change the from the matrix of internode strengths to the
@@ -247,7 +249,7 @@ def invert(W, copy=False):
 
 def weight_conversion(W, wcm, copy=True):
     '''
-    ## ADAPTED FROM BCTPY ##
+    ## Adapted from bctpy ##
 
     W_bin = weight_conversion(W, 'binarize');
     W_nrm = weight_conversion(W, 'normalize');
@@ -299,6 +301,8 @@ def weight_conversion(W, wcm, copy=True):
 
 def autofix(W, copy=True):
     '''
+    ## Adapted from bctpy ##
+    
     Fix a bunch of common problems. More specifically, remove Inf and NaN,
     ensure exact binariness and symmetry (i.e. remove floating point
     instability), and zero diagonal.
@@ -574,7 +578,7 @@ def local_thresholding_prop(conn_matrix, thr):
 
     k = 1
     len_edge_list = []
-    while len_edges < edgenum and k <= np.shape(conn_matrix)[0] and (len(len_edge_list[-fail_tol:]) - len(set(len_edge_list[-fail_tol:]))) < (fail_tol-1):
+    while len_edges < edgenum and k <= np.shape(conn_matrix)[0] and (len(len_edge_list[-fail_tol:]) - len(set(len_edge_list[-fail_tol:]))) < (fail_tol - 1):
         print(k)
         print(len_edges)
         len_edge_list.append(len_edges)
@@ -594,15 +598,15 @@ def local_thresholding_prop(conn_matrix, thr):
         edge_list = sorted(nng.edges(data=True), key=lambda t: t[2]['weight'], reverse=True)
         # Add edges in order of connectivity strength
         for edge in edge_list:
-            #print("%s%s" % ('Adding edge to mst: ', edge))
+            # print("%s%s" % ('Adding edge to mst: ', edge))
             min_t.add_edges_from([edge])
             min_t_mx = nx.to_numpy_array(min_t)
             len_edges = nx.from_numpy_matrix(min_t_mx).number_of_edges()
             if len_edges >= edgenum:
-                #print(len_edges)
+                # print(len_edges)
                 break
 
-        if (len(len_edge_list[-fail_tol:]) - len(set(len_edge_list[-fail_tol:]))) >= (fail_tol-1):
+        if (len(len_edge_list[-fail_tol:]) - len(set(len_edge_list[-fail_tol:]))) >= (fail_tol - 1):
             print("%s%s%s" % ('Cannot apply local thresholding to achieve threshold of: ', thr,
                               '. Using maximally saturated connected matrix instead...'))
 
@@ -677,9 +681,9 @@ def local_thresholding_dens(conn_matrix, thr):
         for edge in edge_list:
             min_t.add_edges_from([edge])
             mst_density = thresholding.est_density((nx.to_numpy_array(min_t)))
-            #print("%s%s" % ('Adding edge to mst: ', edge))
+            # print("%s%s" % ('Adding edge to mst: ', edge))
             if mst_density >= G_density or mst_density >= float(thr):
-                #print(mst_density)
+                # print(mst_density)
                 break
 
         if (len(dense_list[-fail_tol:]) - len(set(dense_list[-fail_tol:]))) >= (fail_tol - 1):
@@ -697,7 +701,7 @@ def local_thresholding_dens(conn_matrix, thr):
 
 
 def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
-                smooth, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary,
+                smooth, disp_filt, parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary,
                 hpass):
     """
     Threshold a functional connectivity matrix using any of a variety of methods.
@@ -739,11 +743,11 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
-    atlas_select : str
+    atlas : str
         Name of atlas parcellation used.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
     coords : list
         List of (x, y, z) tuples corresponding to a coordinate atlas used or
@@ -788,11 +792,11 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         A subject id or other unique identifier.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    atlas_select : str
+    atlas : str
         Name of atlas parcellation used.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
     coords : list
         List of (x, y, z) tuples corresponding to a coordinate atlas used or
@@ -836,11 +840,11 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         print('Computing edge disparity significance with alpha = %s' % thr)
         print('Filtered graph: nodes = %s, edges = %s' % (G1.number_of_nodes(), G1.number_of_edges()))
         # print('Backbone graph: nodes = %s, edges = %s' % (G2.number_of_nodes(), G2.number_of_edges()))
-        #print(G2.edges(data=True))
+        # print(G2.edges(data=True))
         conn_matrix_thr = nx.to_numpy_array(G1)
     else:
         if dens_thresh is False:
-            thr_type='prop'
+            thr_type = 'prop'
             print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         else:
@@ -853,16 +857,16 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
 
     # Save thresholded mat
     est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot,
-                                          thr_type, hpass)
+                                          thr_type, hpass, parc)
 
     utils.save_mat(conn_matrix_thr, est_path)
 
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary, hpass
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID, dir_path, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass
 
 
 def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
-                disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, norm, binary, target_samples,
-                track_type, atlas_mni, streams):
+                  disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
+                  target_samples, track_type, atlas_mni, streams):
     """
     Threshold a structural connectivity matrix using any of a variety of methods.
 
@@ -901,11 +905,11 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
-    atlas_select : str
+    atlas : str
         Name of atlas parcellation used.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
     coords : list
         List of (x, y, z) tuples corresponding to a coordinate atlas used or
@@ -952,11 +956,11 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
         A subject id or other unique identifier.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    atlas_select : str
+    atlas : str
         Name of atlas parcellation used.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
     coords : list
         List of (x, y, z) tuples corresponding to a coordinate atlas used or
@@ -1004,11 +1008,11 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
         print('Computing edge disparity significance with alpha = %s' % thr)
         print('Filtered graph: nodes = %s, edges = %s' % (G1.number_of_nodes(), G1.number_of_edges()))
         # print('Backbone graph: nodes = %s, edges = %s' % (G2.number_of_nodes(), G2.number_of_edges()))
-        #print(G2.edges(data=True))
+        # print(G2.edges(data=True))
         conn_matrix_thr = nx.to_numpy_array(G1)
     else:
         if dens_thresh is False:
-            thr_type='prop'
+            thr_type = 'prop'
             print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         else:
@@ -1021,8 +1025,8 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
 
     # Save thresholded mat
     est_path = utils.create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples,
-                                          track_type, thr_type)
+                                          track_type, thr_type, parc)
 
     utils.save_mat(conn_matrix_thr, est_path)
 
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path, atlas_select, uatlas_select, label_names, coords, norm, binary, target_samples, track_type, atlas_mni, streams
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, atlas_mni, streams

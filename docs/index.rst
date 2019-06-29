@@ -8,15 +8,14 @@ Welcome to PyNets's documentation!
 .. include:: links.rst
 .. include:: ../README.rst
 
-
 Contents
 --------
 
 .. toctree::
    :maxdepth: 3
 
-   installation
-   usage
-   authors
-   contributing
+   installation.rst
+   usage.rst
+   authors.rst
+   contributing.rst
    api/index.rst

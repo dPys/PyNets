@@ -28,16 +28,16 @@ def test_plot_conn_mat_nonet_no_mask():
     c_boot = 2
     hpass = 0.1
     conn_model = 'sps'
-    atlas_select = 'whole_brain_cluster_labels_PCA200'
+    atlas = 'whole_brain_cluster_labels_PCA200'
     roi = None
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.94.txt')
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path, 'rb')
-    label_names = pickle.load(labels_file)
+    labels = pickle.load(labels_file)
 
     start_time = time.time()
-    plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path,
-    ID, network, label_names, roi, thr, node_size, smooth, c_boot, hpass)
+    plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path,
+    ID, network, labels, roi, thr, node_size, smooth, c_boot, hpass)
     print("%s%s%s" % ('plot_conn_mat_func --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -54,16 +54,16 @@ def test_plot_conn_mat_nonet_mask():
     c_boot = 3
     hpass = 0.1
     conn_model = 'sps'
-    atlas_select = 'whole_brain_cluster_labels_PCA200'
+    atlas = 'whole_brain_cluster_labels_PCA200'
     roi = None
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.94.txt')
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path,'rb')
-    label_names = pickle.load(labels_file)
+    labels = pickle.load(labels_file)
 
     start_time = time.time()
-    plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path,
-    ID, network, label_names, roi, thr, node_size, smooth, c_boot, hpass)
+    plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path,
+    ID, network, labels, roi, thr, node_size, smooth, c_boot, hpass)
     print("%s%s%s" % ('plot_conn_mat_func (Masking version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -80,7 +80,7 @@ def test_plot_all_nonet_no_mask():
     c_boot = 3
     conn_model = 'sps'
     parlistfile = None
-    atlas_select = 'whole_brain_cluster_labels_PCA200'
+    atlas = 'whole_brain_cluster_labels_PCA200'
     roi = None
     prune = 1
     norm = 1
@@ -90,15 +90,15 @@ def test_plot_all_nonet_no_mask():
     edge_threshold = '99%'
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path, 'rb')
-    label_names = pickle.load(labels_file)
+    labels = pickle.load(labels_file)
     coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     coord_file = open(coord_file_path, 'rb')
     coords = pickle.load(coord_file)
 
     start_time = time.time()
     #coords already a list
-    plot_gen.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID,
-    network, label_names, roi, coords, edge_threshold, thr, node_size, smooth,
+    plot_gen.plot_all(conn_matrix, conn_model, atlas, dir_path, ID,
+    network, labels, roi, coords, edge_threshold, thr, node_size, smooth,
     prune, parlistfile, c_boot, norm, binary, hpass)
     print("%s%s%s" % ('plot_all --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
@@ -119,22 +119,22 @@ def test_plot_all_nonet_with_mask():
     hpass = 0.1
     binary = False
     conn_model = 'sps'
-    atlas_select = 'whole_brain_cluster_labels_PCA200'
+    atlas = 'whole_brain_cluster_labels_PCA200'
     parlistfile = None
     roi = None
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.94.txt')
     edge_threshold = '99%'
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path, 'rb')
-    label_names = pickle.load(labels_file)
+    labels = pickle.load(labels_file)
     coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     coord_file = open(coord_file_path, 'rb')
     coords = pickle.load(coord_file)
 
     start_time = time.time()
     #coords already a list
-    plot_gen.plot_all(conn_matrix, conn_model, atlas_select, dir_path, ID,
-    network, label_names, roi, coords, edge_threshold, thr, node_size, smooth,
+    plot_gen.plot_all(conn_matrix, conn_model, atlas, dir_path, ID,
+    network, labels, roi, coords, edge_threshold, thr, node_size, smooth,
     prune, parlistfile, c_boot, norm, binary, hpass)
     print("%s%s%s" % ('plot_all (Masking version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
@@ -147,15 +147,15 @@ def test_plot_connectogram():
     network = None
     ID = '002'
     conn_model = 'sps'
-    atlas_select = 'whole_brain_cluster_labels_PCA200'
+    atlas = 'whole_brain_cluster_labels_PCA200'
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.94.txt')
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path,'rb')
-    label_names = pickle.load(labels_file)
+    labels = pickle.load(labels_file)
 
     start_time = time.time()
-    plot_gen.plot_connectogram(conn_matrix, conn_model, atlas_select, dir_path,
-    ID, network, label_names)
+    plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, dir_path,
+    ID, network, labels)
     print("%s%s%s" % ('plot_connectogram --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -166,14 +166,14 @@ def test_plot_timeseries():
     dir_path = base_dir + '/002/fmri'
     network = None
     ID = '002'
-    atlas_select = 'whole_brain_cluster_labels_PCA200'
+    atlas = 'whole_brain_cluster_labels_PCA200'
     time_series = np.load(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_rsn_net_ts.npy')
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path,'rb')
     labels = pickle.load(labels_file)
 
     start_time = time.time()
-    plot_gen.plot_timeseries(time_series, network, ID, dir_path, atlas_select, labels)
+    plot_gen.plot_timeseries(time_series, network, ID, dir_path, atlas, labels)
     print("%s%s%s" % ('plot_timeseries --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 
@@ -183,11 +183,11 @@ def test_plot_conn_mat_rois_gt_100():
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.95.txt')
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path,'rb')
-    label_names = pickle.load(labels_file)
+    labels = pickle.load(labels_file)
     out_path_fig = '/tmp/fig'
 
     start_time = time.time()
-    plot_graphs.plot_conn_mat(conn_matrix, label_names, out_path_fig)
+    plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig)
     print("%s%s%s" % ('plot_timeseries --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 
@@ -197,11 +197,11 @@ def test_plot_conn_mat_rois_gt_100():
 #     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.95.txt')
 #     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
 #     labels_file = open(labels_file_path,'rb')
-#     label_names = pickle.load(labels_file)
+#     labels = pickle.load(labels_file)
 #     out_path_fig = '/tmp/'
 #
 #     start_time = time.time()
-#     plotting.plot_conn_mat(conn_matrix, label_names, out_path_fig)
+#     plotting.plot_conn_mat(conn_matrix, labels, out_path_fig)
 #     print("%s%s%s" % ('plot_timeseries --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 
@@ -210,18 +210,18 @@ def test_plot_conn_mat_rois_gt_100():
 #     dir_path = base_dir + '/997'
 #     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.95.txt')
 #     conn_model = 'sps'
-#     atlas_select = 'whole_brain_cluster_labels_PCA200'
+#     atlas = 'whole_brain_cluster_labels_PCA200'
 #     ID = '997'
 #     network = None
 #     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
 #     labels_file = open(labels_file_path,'rb')
-#     label_names = pickle.load(labels_file)
+#     labels = pickle.load(labels_file)
 #     roi = None
 #     thr = 0.95
 #     node_size = 2
 #     smooth = 2
 #
-#     plotting.plot_conn_mat_struct(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, roi, thr,
+#     plotting.plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr,
 #                                   node_size, smooth)
 
 # def test_structural_plotting():
@@ -230,8 +230,8 @@ def test_plot_conn_mat_rois_gt_100():
 #     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.95.txt')
 #     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
 #     labels_file = open(labels_file_path,'rb')
-#     label_names = pickle.load(labels_file)
-#     atlas_select = 'whole_brain_cluster_labels_PCA200'
+#     labels = pickle.load(labels_file)
+#     atlas = 'whole_brain_cluster_labels_PCA200'
 #     ID = '002'
 #     bedpostx_dir = base_dir + 'bedpostx_s002.bedpostX'
 #     network = None
@@ -245,7 +245,7 @@ def test_plot_conn_mat_rois_gt_100():
 #     node_size = 2
 #     smooth = 2
 #
-#     plotting.structural_plotting(conn_matrix, label_names, atlas_select, ID, bedpostx_dir, network, parc, roi, coords,
+#     plotting.structural_plotting(conn_matrix, labels, atlas, ID, bedpostx_dir, network, parc, roi, coords,
 #                                  dir_path, conn_model, thr, node_size, smooth)
 
 

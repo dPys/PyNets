@@ -5,12 +5,14 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.filterwarnings("ignore")
 import numpy as np
+warnings.filterwarnings("ignore")
+np.warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-                    disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary,
+                    disp_filt, parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary,
                     hpass):
     """
     Computes a functional connectivity matrix based on a node-extracted time-series array.
@@ -51,11 +53,11 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
-    atlas_select : str
+    atlas : str
         Name of atlas parcellation used.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
     coords : list
         List of (x, y, z) tuples corresponding to a coordinate atlas used or
@@ -104,11 +106,11 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
-    atlas_select : str
+    atlas : str
         Name of atlas parcellation used.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
-    label_names : list
+    labels : list
         List of string labels corresponding to graph nodes.
     coords : list
         List of (x, y, z) tuples corresponding to a coordinate atlas used or
@@ -235,11 +237,11 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         # AdaptiveGraphLasso + QuicGraphLassoEBIC + method='binary'
         # credit: skggm
         model = AdaptiveQuicGraphicalLasso(
-                estimator=QuicGraphicalLassoEBIC(
-                    init_method='cov',
-                ),
-                method='binary',
-            )
+            estimator=QuicGraphicalLassoEBIC(
+                init_method='cov',
+            ),
+            method='binary',
+        )
         print('\nCalculating AdaptiveQuicGraphLasso precision matrix using skggm...\n')
         model.fit(time_series)
         conn_matrix = -model.estimator_.precision_
@@ -252,12 +254,12 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
                            'Check time-series for errors or try using a different atlas')
 
     coords = np.array(coords)
-    label_names = np.array(label_names)
-    return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree, disp_filt, parc, prune, atlas_select, uatlas_select, label_names, coords, c_boot, norm, binary, hpass
+    labels = np.array(labels)
+    return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass
 
 
-def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas_select,
-                    uatlas_select, label_names, c_boot, block_size, hpass, detrending=True):
+def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas,
+                    uatlas, labels, c_boot, block_size, hpass, detrending=True):
     """
     API for employing Nilearn's NiftiLabelsMasker to extract fMRI time-series data from spherical ROI's based on a
     given 3D atlas image of integer-based voxel intensities. The resulting time-series can then optionally be resampled
@@ -285,11 +287,11 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
         used to filter nodes in the study of brain subgraphs.
     smooth : int
         Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
-    atlas_select : str
+    atlas : str
         Name of atlas parcellation used.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
-    label_names : list
+    labels : list
         List of string labels corresponding to graph nodes.
     c_boot : int
         Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
@@ -309,11 +311,11 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
         Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    atlas_select : str
+    atlas : str
         Name of atlas parcellation used.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
     coords : list
         List of (x, y, z) tuples corresponding to the center-of-mass of each parcellation node.
@@ -353,11 +355,11 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     # Save time series as txt file
     utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
     node_size = None
-    return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot, hpass
+    return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass
 
 
-def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, network, smooth, atlas_select,
-                      uatlas_select, label_names, c_boot, block_size, hpass, detrending=True):
+def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, network, smooth, atlas,
+                      uatlas, labels, c_boot, block_size, hpass, detrending=True):
     """
     API for employing Nilearn's NiftiSpheresMasker to extract fMRI time-series data from spherical ROI's based on a
     given list of seed coordinates. The resulting time-series can then optionally be resampled using circular-block
@@ -385,11 +387,11 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         used to filter nodes in the study of brain subgraphs.
     smooth : int
         Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
-    atlas_select : str
+    atlas : str
         Name of atlas parcellation used.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
-    label_names : list
+    labels : list
         List of string labels corresponding to graph nodes.
     c_boot : int
         Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
@@ -412,11 +414,11 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    atlas_select : str
+    atlas : str
         Name of atlas parcellation used.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
     coords : list
         List of (x, y, z) tuples corresponding to a coordinate atlas used or
@@ -450,9 +452,10 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         if ts_within_nodes is None:
             raise RuntimeError('\nERROR: Time-series extraction failed!')
     else:
-        raise RuntimeError('\nERROR: Cannot extract time-series from an empty list of coordinates. \nThis usually means '
-                           'that no nodes were generated based on the specified conditions at runtime (e.g. atlas was '
-                           'overly restricted by an RSN or some user-defined mask.')
+        raise RuntimeError(
+            '\nERROR: Cannot extract time-series from an empty list of coordinates. \nThis usually means '
+            'that no nodes were generated based on the specified conditions at runtime (e.g. atlas was '
+            'overly restricted by an RSN or some user-defined mask.')
 
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
                         len(coords), ' coordinate ROI\'s'))
@@ -462,4 +465,4 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
 
     # Save time series as txt file
     utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
-    return ts_within_nodes, node_size, smooth, dir_path, atlas_select, uatlas_select, label_names, coords, c_boot, hpass
+    return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass

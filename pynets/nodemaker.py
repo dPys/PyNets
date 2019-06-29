@@ -5,10 +5,11 @@ Copyright (C) 2018
 @author: Derek Pisner
 """
 import numpy as np
-np.warnings.filterwarnings('ignore')
 import nibabel as nib
 import warnings
 warnings.filterwarnings("ignore")
+np.warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def get_sphere(coords, r, vox_dims, dims):
@@ -71,14 +72,14 @@ def create_parcel_atlas(parcel_list):
     return net_parcels_map_nifti, parcel_list_exp
 
 
-def fetch_nilearn_atlas_coords(atlas_select):
+def fetch_nilearn_atlas_coords(atlas):
     """
     Meta-API for nilearn's coordinate atlas fetching API to retrieve any publically-available coordinate
     atlas by string name.
 
     Parameters
     ----------
-    atlas_select : str
+    atlas : str
         Name of a Nilearn-hosted coordinate atlas supported for fetching. See Nilearn's datasets.atlas module for
         more detailed reference.
 
@@ -90,14 +91,14 @@ def fetch_nilearn_atlas_coords(atlas_select):
         Name of atlas parcellation (can differ slightly from fetch API string).
     networks_list : list
         List of RSN's and their associated cooordinates, if predefined uniquely for a given atlas.
-    label_names : list
+    labels : list
         List of string labels corresponding to atlas nodes.
     """
     from nilearn import datasets
-    atlas = getattr(datasets, 'fetch_%s' % atlas_select)()
+    atlas = getattr(datasets, 'fetch_%s' % atlas)()
     atlas_name = atlas['description'].splitlines()[0]
     if atlas_name is None:
-        atlas_name = atlas_select
+        atlas_name = atlas
     if "b'" in str(atlas_name):
         atlas_name = atlas_name.decode('utf-8')
     print("%s%s%s%s" % ('\n', atlas_name, ' comes with {0}'.format(atlas.keys()), '\n'))
@@ -108,24 +109,24 @@ def fetch_nilearn_atlas_coords(atlas_select):
     except:
         networks_list = None
     try:
-        label_names = np.array([s.strip('b\'') for s in atlas.labels.astype('U')]).tolist()
+        labels = np.array([s.strip('b\'') for s in atlas.labels.astype('U')]).tolist()
     except:
-        label_names = None
+        labels = None
 
     if len(coords) <= 1:
         raise ValueError('\nERROR: No coords returned for specified atlas! Ensure an active internet connection.')
 
-    return coords, atlas_name, networks_list, label_names
+    return coords, atlas_name, networks_list, labels
 
 
-def nilearn_atlas_helper(atlas_select, parc):
+def nilearn_atlas_helper(atlas, parc):
     """
     Meta-API for nilearn's parcellation-based atlas fetching API to retrieve any publically-available parcellation-based
     atlas by string name.
 
     Parameters
     ----------
-    atlas_select : str
+    atlas : str
         Name of a Nilearn-hosted parcellation/label-based atlas supported for fetching.
         See Nilearn's datasets.atlas module for more detailed references.
     parc : bool
@@ -133,48 +134,48 @@ def nilearn_atlas_helper(atlas_select, parc):
 
     Returns
     -------
-    label_names : list
+    labels : list
         List of string labels corresponding to atlas nodes.
     networks_list : list
         List of RSN's and their associated cooordinates, if predefined uniquely for a given atlas.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     """
     from nilearn import datasets
-    if atlas_select == 'atlas_harvard_oxford':
-        atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'atlas_name')('cort-maxprob-thr0-1mm')
-    elif atlas_select == 'atlas_pauli_2017':
+    if atlas == 'atlas_harvard_oxford':
+        atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas, 'atlas_name')('cort-maxprob-thr0-1mm')
+    elif atlas == 'atlas_pauli_2017':
         if parc is False:
-            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'version')('prob')
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas, 'version')('prob')
         else:
-            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'version')('det')
-    elif 'atlas_talairach' in atlas_select:
-        if atlas_select == 'atlas_talairach_lobe':
-            atlas_select = 'atlas_talairach'
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas, 'version')('det')
+    elif 'atlas_talairach' in atlas:
+        if atlas == 'atlas_talairach_lobe':
+            atlas = 'atlas_talairach'
             print('Fetching level: lobe...')
-            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('lobe')
-        elif atlas_select == 'atlas_talairach_gyrus':
-            atlas_select = 'atlas_talairach'
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas, 'level')('lobe')
+        elif atlas == 'atlas_talairach_gyrus':
+            atlas = 'atlas_talairach'
             print('Fetching level: gyrus...')
-            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('gyrus')
-        elif atlas_select == 'atlas_talairach_ba':
-            atlas_select = 'atlas_talairach'
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas, 'level')('gyrus')
+        elif atlas == 'atlas_talairach_ba':
+            atlas = 'atlas_talairach'
             print('Fetching level: ba...')
-            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select, 'level')('ba')
+            atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas, 'level')('ba')
     else:
-        atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas_select)()
+        atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas)()
     if len(list(atlas_fetch_obj.keys())) > 0:
         if 'maps' in list(atlas_fetch_obj.keys()):
-            uatlas_select = atlas_fetch_obj.maps
+            uatlas = atlas_fetch_obj.maps
         else:
-            uatlas_select = None
+            uatlas = None
         if 'labels' in list(atlas_fetch_obj.keys()):
             try:
-                label_names = [i.decode("utf-8") for i in atlas_fetch_obj.labels]
+                labels = [i.decode("utf-8") for i in atlas_fetch_obj.labels]
             except:
-                label_names = [i for i in atlas_fetch_obj.labels]
+                labels = [i for i in atlas_fetch_obj.labels]
         else:
-            label_names = None
+            labels = None
         if 'networks' in list(atlas_fetch_obj.keys()):
             try:
                 networks_list = [i.decode("utf-8") for i in atlas_fetch_obj.networks]
@@ -185,7 +186,7 @@ def nilearn_atlas_helper(atlas_select, parc):
     else:
         raise RuntimeWarning('Extraction from nilearn datasets failed!')
 
-    return label_names, networks_list, uatlas_select
+    return labels, networks_list, uatlas
 
 
 def mmToVox(img_affine, mmcoords):
@@ -216,7 +217,7 @@ def VoxTomm(img_affine, voxcoords):
     return nib.affines.apply_affine(img_affine, voxcoords)
 
 
-def get_node_membership(network, infile, coords, label_names, parc, parcel_list, perc_overlap=0.75, error=4):
+def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc_overlap=0.75, error=4):
     """
     Evaluate the affinity of any arbitrary list of coordinate or parcel nodes for a user-specified RSN based on
     Yeo-7 or Yeo-17 definitions.
@@ -231,7 +232,7 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
     coords : list
         List of (x, y, z) tuples in mm-space corresponding to a coordinate atlas used or
         which represent the center-of-mass of each parcellation node.
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
@@ -251,7 +252,7 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
     RSN_parcels : list
         Filtered list of 3D boolean numpy arrays or binarized Nifti1Images corresponding to ROI masks with a spatial
         affinity for the specified RSN.
-    net_label_names : list
+    net_labels : list
         Filtered list of string labels corresponding to ROI nodes with a spatial affinity for the specified RSN.
     network : str
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
@@ -270,9 +271,9 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
 
     # Load subject func data
     bna_img = nib.load(infile)
-    x_vox = np.diagonal(bna_img.affine[:3,0:3])[0]
-    y_vox = np.diagonal(bna_img.affine[:3,0:3])[1]
-    z_vox = np.diagonal(bna_img.affine[:3,0:3])[2]
+    x_vox = np.diagonal(bna_img.affine[:3, 0:3])[0]
+    y_vox = np.diagonal(bna_img.affine[:3, 0:3])[1]
+    z_vox = np.diagonal(bna_img.affine[:3, 0:3])[2]
 
     if network in seventeen_nets:
         if x_vox <= 1 and y_vox <= 1 and z_vox <= 1:
@@ -315,7 +316,7 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
         i = -1
         RSN_parcels = None
         RSN_coords_vox = []
-        net_label_names = []
+        net_labels = []
         for coords in coords_vox:
             sphere_vol = np.zeros(RSNmask.shape, dtype=bool)
             sphere_vol[tuple(coords)] = 1
@@ -323,7 +324,7 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
             if (RSNmask.astype('bool') & sphere_vol).any():
                 print("%s%s%s%s" % (coords, ' coords falls within ', network, '...'))
                 RSN_coords_vox.append(coords)
-                net_label_names.append(label_names[i])
+                net_labels.append(labels[i])
                 continue
             else:
                 inds = get_sphere(coords, error, (np.abs(x_vox), y_vox, z_vox), RSNmask.shape)
@@ -333,7 +334,7 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
                                               ' mm neighborhood of ',
                                               network, '...'))
                     RSN_coords_vox.append(coords)
-                    net_label_names.append(label_names[i])
+                    net_labels.append(labels[i])
 
         coords_mm = []
         for i in RSN_coords_vox:
@@ -343,7 +344,7 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
         i = 0
         RSN_parcels = []
         coords_with_parc = []
-        net_label_names = []
+        net_labels = []
         for parcel in parcel_list:
             parcel_vol = np.zeros(RSNmask.shape, dtype=bool)
             parcel_data_reshaped = resample_img(parcel, target_affine=par_img.affine,
@@ -358,17 +359,17 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
 
             # Calculate % overlap
             try:
-                overlap = float(overlap_count/total_count)
+                overlap = float(overlap_count / total_count)
             except RuntimeWarning:
                 print('\nWarning: No overlap with roi mask!\n')
                 overlap = float(0)
 
             if overlap >= perc_overlap:
-                print("%.2f%s%s%s%s%s" % (100*overlap, '% of parcel ', label_names[i], ' falls within ', str(network),
+                print("%.2f%s%s%s%s%s" % (100 * overlap, '% of parcel ', labels[i], ' falls within ', str(network),
                                           ' mask...'))
                 RSN_parcels.append(parcel)
                 coords_with_parc.append(coords[i])
-                net_label_names.append(label_names[i])
+                net_labels.append(labels[i])
             i = i + 1
         coords_mm = list(set(list(tuple(x) for x in coords_with_parc)))
 
@@ -376,10 +377,10 @@ def get_node_membership(network, infile, coords, label_names, parc, parcel_list,
     if len(coords_mm) <= 1:
         raise ValueError("%s%s%s" % ('\nERROR: No coords from the specified atlas found within ', network, ' network.'))
 
-    return coords_mm, RSN_parcels, net_label_names, network
+    return coords_mm, RSN_parcels, net_labels, network
 
 
-def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_overlap):
+def parcel_masker(roi, coords, parcel_list, labels, dir_path, ID, perc_overlap):
     """
     Evaluate the affinity of any arbitrary list of parcel nodes for a user-specified ROI mask.
 
@@ -392,7 +393,7 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_over
         which represent the center-of-mass of each parcellation node.
     parcel_list : list
         List of 3D boolean numpy arrays or binarized Nifti1Images corresponding to ROI masks.
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
     dir_path : str
         Path to directory containing subject derivative data for given run.
@@ -406,7 +407,7 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_over
     -------
     coords_adj : list
         Filtered list of (x, y, z) tuples in mm-space with a spatial affinity for the specified ROI mask.
-    label_names_adj : list
+    labels_adj : list
         Filtered list of string labels corresponding to ROI nodes with a spatial affinity for the specified ROI mask.
     parcel_list_adj : list
         Filtered list of 3D boolean numpy arrays or binarized Nifti1Images corresponding to ROI masks with a spatial
@@ -438,24 +439,24 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_over
 
         # Calculate % overlap
         try:
-            overlap = float(overlap_count/total_count)
+            overlap = float(overlap_count / total_count)
         except:
-            print("%s%s%s" % ('\nWarning: No overlap of parcel', label_names[i],  'with roi mask!\n'))
+            print("%s%s%s" % ('\nWarning: No overlap of parcel', labels[i], 'with roi mask!\n'))
             overlap = float(0)
 
         if overlap >= perc_overlap:
-            print("%.2f%s%s%s" % (100*overlap, '% of parcel ', label_names[i], ' falls within mask...'))
+            print("%.2f%s%s%s" % (100 * overlap, '% of parcel ', labels[i], ' falls within mask...'))
         else:
             indices.append(i)
         i = i + 1
 
-    label_names_adj = list(label_names)
+    labels_adj = list(labels)
     coords_adj = list(tuple(x) for x in coords)
     parcel_list_adj = parcel_list
     try:
         for ix in sorted(indices, reverse=True):
-            print("%s%s%s%s" % ('Removing: ', label_names_adj[ix], ' at ', coords_adj[ix]))
-            label_names_adj.pop(ix)
+            print("%s%s%s%s" % ('Removing: ', labels_adj[ix], ' at ', coords_adj[ix]))
+            labels_adj.pop(ix)
             coords_adj.pop(ix)
             parcel_list_adj.pop(ix)
     except RuntimeError:
@@ -473,10 +474,10 @@ def parcel_masker(roi, coords, parcel_list, label_names, dir_path, ID, perc_over
     if not coords_adj:
         raise ValueError('\nERROR: ROI mask was likely too restrictive and yielded < 2 remaining parcels')
 
-    return coords_adj, label_names_adj, parcel_list_adj
+    return coords_adj, labels_adj, parcel_list_adj
 
 
-def coords_masker(roi, coords, label_names, error):
+def coords_masker(roi, coords, labels, error):
     """
     Evaluate the affinity of any arbitrary list of coordinate nodes for a user-specified ROI mask.
 
@@ -487,7 +488,7 @@ def coords_masker(roi, coords, label_names, error):
     coords : list
         List of (x, y, z) tuples in mm-space corresponding to a coordinate atlas used or
         which represent the center-of-mass of each parcellation node.
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
     error : int
         Rounded euclidean distance, in units of voxel number, to use as a spatial error cushion in the case of
@@ -497,18 +498,18 @@ def coords_masker(roi, coords, label_names, error):
     -------
     coords : list
         Filtered list of (x, y, z) tuples in mm-space with a spatial affinity for the specified ROI mask.
-    label_names : list
+    labels : list
         Filtered list of string labels corresponding to ROI nodes with a spatial affinity for the specified ROI mask.
     """
     from nilearn import masking
     from pynets.nodemaker import mmToVox
 
     mask_data, mask_aff = masking._load_mask_img(roi)
-    x_vox = np.diagonal(mask_aff[:3,0:3])[0]
-    y_vox = np.diagonal(mask_aff[:3,0:3])[1]
-    z_vox = np.diagonal(mask_aff[:3,0:3])[2]
+    x_vox = np.diagonal(mask_aff[:3, 0:3])[0]
+    y_vox = np.diagonal(mask_aff[:3, 0:3])[1]
+    z_vox = np.diagonal(mask_aff[:3, 0:3])[2]
 
-#    mask_coords = list(zip(*np.where(mask_data == True)))
+    #    mask_coords = list(zip(*np.where(mask_data == True)))
     coords_vox = []
     for i in coords:
         coords_vox.append(mmToVox(mask_aff, i))
@@ -532,12 +533,12 @@ def coords_masker(roi, coords, label_names, error):
     for bad_coords in bad_coords:
         indices.append(coords_vox.index(bad_coords))
 
-    label_names = list(label_names)
+    labels = list(labels)
     coords = list(tuple(x) for x in coords_vox)
     try:
         for ix in sorted(indices, reverse=True):
-            print("%s%s%s%s" % ('Removing: ', label_names[ix], ' at ', coords[ix]))
-            label_names.pop(ix)
+            print("%s%s%s%s" % ('Removing: ', labels[ix], ' at ', coords[ix]))
+            labels.pop(ix)
             coords.pop(ix)
     except RuntimeError:
         print('ERROR: Restrictive masking. No coords remain after masking with brain mask/roi...')
@@ -545,49 +546,49 @@ def coords_masker(roi, coords, label_names, error):
     if len(coords) <= 1:
         raise ValueError('\nERROR: ROI mask was likely too restrictive and yielded < 2 remaining coords')
 
-    return coords, label_names
+    return coords, labels
 
 
-def get_names_and_coords_of_parcels(uatlas_select):
+def get_names_and_coords_of_parcels(uatlas):
     """
     Return list of coordinates and max label intensity for a 3D atlas parcellation image.
 
     Parameters
     ----------
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
 
     Returns
     -------
     coords : list
         List of (x, y, z) tuples corresponding to the center-of-mass of each parcellation node.
-    atlas_select : str
+    atlas : str
         An arbitrary identified for the atlas based on the filename.
     par_max : int
         The maximum label intensity in the parcellation image.
     """
     import os.path as op
     from nilearn.plotting import find_parcellation_cut_coords
-    if not op.isfile(uatlas_select):
+    if not op.isfile(uatlas):
         raise ValueError('\nERROR: User-specified atlas input not found! Check that the file(s) specified with the -ua '
                          'flag exist(s)')
 
-    atlas_select = uatlas_select.split('/')[-1].split('.')[0]
-    [coords, label_intensities] = find_parcellation_cut_coords(uatlas_select, return_label_names=True)
+    atlas = uatlas.split('/')[-1].split('.')[0]
+    [coords, label_intensities] = find_parcellation_cut_coords(uatlas, return_label_names=True)
     print("%s%s" % ('Region intensities:\n', label_intensities))
     par_max = len(coords)
 
-    return coords, atlas_select, par_max
+    return coords, atlas, par_max
 
 
-def gen_img_list(uatlas_select):
+def gen_img_list(uatlas):
     """
     Return list of boolean nifti masks where each masks corresponds to a unique atlas label for the provided atlas
     parcellation.
 
     Parameters
     ----------
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
 
     Returns
@@ -597,11 +598,11 @@ def gen_img_list(uatlas_select):
     """
     import os.path as op
     from nilearn.image import new_img_like
-    if not op.isfile(uatlas_select):
+    if not op.isfile(uatlas):
         raise ValueError('\nERROR: User-specified atlas input not found! Check that the file(s) specified with the -ua '
                          'flag exist(s)')
 
-    bna_img = nib.load(uatlas_select)
+    bna_img = nib.load(uatlas)
     bna_data = np.round(bna_img.get_fdata(), 1)
 
     # Get an array of unique parcels
@@ -611,7 +612,7 @@ def gen_img_list(uatlas_select):
     par_max = len(bna_data_for_coords_uniq) - 1
     bna_data = bna_data.astype('int16')
     img_stack = []
-    for idx in range(1, par_max+1):
+    for idx in range(1, par_max + 1):
         roi_img = bna_data == bna_data_for_coords_uniq[idx].astype('int16')
         roi_img = roi_img.astype('int16')
         img_stack.append(roi_img)
@@ -626,14 +627,14 @@ def gen_img_list(uatlas_select):
     return img_list
 
 
-def gen_network_parcels(uatlas_select, network, labels, dir_path):
+def gen_network_parcels(uatlas, network, labels, dir_path):
     """
     Return a modified verion of an atlas parcellation label, where labels have been filtered baseed on their spatial
     affinity for a specified RSN definition.
 
     Parameters
     ----------
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     network : str
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
@@ -652,11 +653,11 @@ def gen_network_parcels(uatlas_select, network, labels, dir_path):
     from pynets import nodemaker
     import os.path as op
 
-    if not op.isfile(uatlas_select):
+    if not op.isfile(uatlas):
         raise ValueError('\nERROR: User-specified atlas input not found! Check that the file(s) specified with the -ua '
                          'flag exist(s)')
 
-    img_list = nodemaker.gen_img_list(uatlas_select)
+    img_list = nodemaker.gen_img_list(uatlas)
     print("%s%s%s" % ('\nExtracting parcels associated with ', network, ' network locations...\n'))
     net_parcels = [i for j, i in enumerate(img_list) if j in labels]
     bna_4D = concat_imgs(net_parcels).get_fdata()
@@ -682,7 +683,7 @@ def AAL_naming(coords):
 
     Returns
     -------
-    label_names : list
+    labels : list
         List of string labels corresponding to each coordinates closest anatomical label based on AAL.
     """
     import pandas as pd
@@ -699,40 +700,40 @@ def AAL_naming(coords):
     except FileNotFoundError:
         print('Loading AAL references failed!')
 
-    label_names_ix = []
+    labels_ix = []
     print('Building region index using AAL MNI coords...')
     for coords in coords:
         reg_lab = aal_coords_ix.loc[aal_coords_ix['coords_tuple'] == str(tuple(np.round(coords).astype('int'))),
                                     'Region_index']
         if len(reg_lab) > 0:
-            label_names_ix.append(reg_lab.values[0])
+            labels_ix.append(reg_lab.values[0])
         else:
-            label_names_ix.append(np.nan)
+            labels_ix.append(np.nan)
 
     print('Building list of label names using AAL dictionary...')
-    label_names = []
-    for region_ix in label_names_ix:
+    labels = []
+    for region_ix in labels_ix:
         if region_ix is np.nan:
-            label_names.append('Unknown')
+            labels.append('Unknown')
         else:
-            label_names.append(aal_labs_dict[str(region_ix)])
+            labels.append(aal_labs_dict[str(region_ix)])
 
-    return label_names
+    return labels
 
 
-def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, in_file, use_AAL_naming, clustering=False):
+def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming, clustering=False):
     """
     General API for fetching, identifying, and defining atlas nodes based on coordinates and/or labels.
 
     Parameters
     ----------
-    atlas_select : str
+    atlas : str
         Name of a Nilearn-hosted coordinate or parcellation/label-based atlas supported for fetching.
         See Nilearn's datasets.atlas module for more detailed reference.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     ref_txt : str
-        Path to an atlas reference .txt file that maps labels to intensities corresponding to uatlas_select.
+        Path to an atlas reference .txt file that maps labels to intensities corresponding to uatlas.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     in_file : str
@@ -745,7 +746,7 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, in_file, 
 
     Returns
     -------
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
     coords : list
         List of (x, y, z) tuples in mm-space corresponding to a coordinate atlas used or
@@ -758,7 +759,7 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, in_file, 
         List of 3D boolean numpy arrays or binarized Nifti1Images corresponding to ROI masks.
     par_max : int
         The maximum label intensity in the parcellation image.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     dir_path : str
         Path to directory containing subject derivative data for given run.
@@ -770,140 +771,140 @@ def fetch_nodes_and_labels(atlas_select, uatlas_select, ref_txt, parc, in_file, 
     import os.path as op
 
     base_path = utils.get_file()
-    # Test if atlas_select is a nilearn atlas. If so, fetch coords, labels, and/or networks.
+    # Test if atlas is a nilearn atlas. If so, fetch coords, labels, and/or networks.
     nilearn_parc_atlases = ['atlas_harvard_oxford', 'atlas_aal', 'atlas_destrieux_2009', 'atlas_talairach_gyrus',
                             'atlas_talairach_ba', 'atlas_talairach_lobe']
     nilearn_coords_atlases = ['coords_power_2011', 'coords_dosenbach_2010']
     nilearn_prob_atlases = ['atlas_msdl', 'atlas_pauli_2017']
-    if uatlas_select is None and atlas_select in nilearn_parc_atlases:
-        [label_names, networks_list, uatlas_select] = nodemaker.nilearn_atlas_helper(atlas_select, parc)
-        if uatlas_select:
-            if not isinstance(uatlas_select, str):
-                nib.save(uatlas_select, "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz'))
-                uatlas_select = "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz')
-            [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas_select)
+    if uatlas is None and atlas in nilearn_parc_atlases:
+        [labels, networks_list, uatlas] = nodemaker.nilearn_atlas_helper(atlas, parc)
+        if uatlas:
+            if not isinstance(uatlas, str):
+                nib.save(uatlas, "%s%s%s" % ('/tmp/', atlas, '.nii.gz'))
+                uatlas = "%s%s%s" % ('/tmp/', atlas, '.nii.gz')
+            [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
             if parc is True:
-                parcel_list = nodemaker.gen_img_list(uatlas_select)
+                parcel_list = nodemaker.gen_img_list(uatlas)
             else:
                 parcel_list = None
         else:
-            raise ValueError("%s%s%s" % ('\nERROR: Atlas file for ', atlas_select, ' not found!'))
-    elif uatlas_select is None and parc is False and atlas_select in nilearn_coords_atlases:
+            raise ValueError("%s%s%s" % ('\nERROR: Atlas file for ', atlas, ' not found!'))
+    elif uatlas is None and parc is False and atlas in nilearn_coords_atlases:
         print('Fetching coords and labels from nilearn coordinate-based atlas library...')
         # Fetch nilearn atlas coords
-        [coords, _, networks_list, label_names] = nodemaker.fetch_nilearn_atlas_coords(atlas_select)
+        [coords, _, networks_list, labels] = nodemaker.fetch_nilearn_atlas_coords(atlas)
         parcel_list = None
         par_max = None
-    elif uatlas_select is None and parc is False and atlas_select in nilearn_prob_atlases:
+    elif uatlas is None and parc is False and atlas in nilearn_prob_atlases:
         from nilearn.plotting import find_probabilistic_atlas_cut_coords
         print('Fetching coords and labels from nilearn probabilistic atlas library...')
         # Fetch nilearn atlas coords
-        [label_names, networks_list, uatlas_select] = nodemaker.nilearn_atlas_helper(atlas_select, parc)
-        coords = find_probabilistic_atlas_cut_coords(maps_img=uatlas_select)
-        if uatlas_select:
-            if not isinstance(uatlas_select, str):
-                nib.save(uatlas_select, "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz'))
-                uatlas_select = "%s%s%s" % ('/tmp/', atlas_select, '.nii.gz')
+        [labels, networks_list, uatlas] = nodemaker.nilearn_atlas_helper(atlas, parc)
+        coords = find_probabilistic_atlas_cut_coords(maps_img=uatlas)
+        if uatlas:
+            if not isinstance(uatlas, str):
+                nib.save(uatlas, "%s%s%s" % ('/tmp/', atlas, '.nii.gz'))
+                uatlas = "%s%s%s" % ('/tmp/', atlas, '.nii.gz')
             if parc is True:
-                parcel_list = nodemaker.gen_img_list(uatlas_select)
+                parcel_list = nodemaker.gen_img_list(uatlas)
             else:
                 parcel_list = None
         else:
-            raise ValueError("%s%s%s" % ('\nERROR: Atlas file for ', atlas_select, ' not found!'))
+            raise ValueError("%s%s%s" % ('\nERROR: Atlas file for ', atlas, ' not found!'))
         par_max = None
-    elif uatlas_select:
+    elif uatlas:
         if clustering is True:
             while True:
-                if op.isfile(uatlas_select):
+                if op.isfile(uatlas):
                     break
                 else:
                     print('Waiting for atlas file...')
                     time.sleep(15)
-        atlas_select = uatlas_select.split('/')[-1].split('.')[0]
+        atlas = uatlas.split('/')[-1].split('.')[0]
         try:
             # Fetch user-specified atlas coords
-            [coords, atlas_select, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas_select)
+            [coords, atlas, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
             if parc is True:
-                parcel_list = nodemaker.gen_img_list(uatlas_select)
+                parcel_list = nodemaker.gen_img_list(uatlas)
             else:
                 parcel_list = None
             # Describe user atlas coords
-            print("%s%s%s%s" % ('\n', atlas_select, ' comes with {0} '.format(par_max), 'parcels\n'))
+            print("%s%s%s%s" % ('\n', atlas, ' comes with {0} '.format(par_max), 'parcels\n'))
         except ValueError:
             print('\n\nError: Either you have specified the name of a nilearn atlas that does not exist or '
                   'you have not supplied a 3d atlas parcellation image!\n\n')
             parcel_list = None
             par_max = None
             coords = None
-        label_names = None
+        labels = None
         networks_list = None
     else:
         networks_list = None
-        label_names = None
+        labels = None
         parcel_list = None
         par_max = None
         coords = None
 
     # Labels prep
-    if atlas_select:
-        if label_names:
+    if atlas:
+        if labels:
             pass
         else:
             if ref_txt is not None and op.exists(ref_txt):
                 dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
-                label_names = dict_df['Region'].tolist()
+                labels = dict_df['Region'].tolist()
             else:
                 try:
-                    ref_txt = "%s%s%s%s" % (str(Path(base_path).parent), '/labelcharts/', atlas_select, '.txt')
+                    ref_txt = "%s%s%s%s" % (str(Path(base_path).parent), '/labelcharts/', atlas, '.txt')
                     if op.exists(ref_txt):
                         try:
                             dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
-                            label_names = dict_df['Region'].tolist()
+                            labels = dict_df['Region'].tolist()
                         except:
                             print("WARNING: label names from label reference file failed to populate or are invalid. "
                                   "Attempting AAL naming...")
                             try:
-                                label_names = nodemaker.AAL_naming(coords)
+                                labels = nodemaker.AAL_naming(coords)
                             except:
                                 print('AAL reference labeling failed!')
-                                label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                                labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                     else:
                         if use_AAL_naming is True:
                             try:
-                                label_names = nodemaker.AAL_naming(coords)
+                                labels = nodemaker.AAL_naming(coords)
                             except:
                                 print('AAL reference labeling failed!')
-                                label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                                labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                         else:
                             print('Using generic numbering labels...')
-                            label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                            labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                 except:
                     print("Label reference file not found. Attempting AAL naming...")
                     if use_AAL_naming is True:
                         try:
-                            label_names = nodemaker.AAL_naming(coords)
+                            labels = nodemaker.AAL_naming(coords)
                         except:
                             print('AAL reference labeling failed!')
-                            label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                            labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                     else:
                         print('Using generic numbering labels...')
-                        label_names = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                        labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
     else:
         print('WARNING: No labels available since atlas name is not specified!')
 
-    print("%s%s" % ('Labels:\n', label_names))
-    atlas_name = atlas_select
-    dir_path = utils.do_dir_path(atlas_select, in_file)
+    print("%s%s" % ('Labels:\n', labels))
+    atlas_name = atlas
+    dir_path = utils.do_dir_path(atlas, in_file)
 
-    if len(coords) != len(label_names):
-        label_names = len(coords) * [np.nan]
-        if len(coords) != len(label_names):
+    if len(coords) != len(labels):
+        labels = len(coords) * [np.nan]
+        if len(coords) != len(labels):
             raise ValueError('ERROR: length of coordinates is not equal to length of label names')
 
-    return label_names, coords, atlas_name, networks_list, parcel_list, par_max, uatlas_select, dir_path
+    return labels, coords, atlas_name, networks_list, parcel_list, par_max, uatlas, dir_path
 
 
-def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select,
+def node_gen_masking(roi, coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas,
                      perc_overlap=0.75, error=4):
     """
     In the case that masking was applied, this function generate nodes based on atlas definitions established by
@@ -918,7 +919,7 @@ def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, 
         which represent the center-of-mass of each parcellation node.
     parcel_list : list
         List of 3D boolean numpy arrays or binarized Nifti1Images corresponding to ROI masks.
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
     dir_path : str
         Path to directory containing subject derivative data for given run.
@@ -926,10 +927,10 @@ def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, 
         A subject id or other unique identifier.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
-    atlas_select : str
+    atlas : str
         Name of a Nilearn-hosted coordinate or parcellation/label-based atlas supported for fetching.
         See Nilearn's datasets.atlas module for more detailed reference.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     perc_overlap : float
         Value 0-1 indicating a threshold of spatial overlap to use as a spatial error cushion in the case of
@@ -946,12 +947,12 @@ def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, 
     coords : list
         List of (x, y, z) tuples in mm-space corresponding to a coordinate atlas used or
         which represent the center-of-mass of each parcellation node.
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
-    atlas_select : str
+    atlas : str
         Name of a Nilearn-hosted coordinate or parcellation/label-based atlas supported for fetching.
         See Nilearn's datasets.atlas module for more detailed reference.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     """
     from pynets import nodemaker
@@ -964,12 +965,12 @@ def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, 
     # Mask Parcels
     if parc is True:
         # For parcel masking, specify overlap thresh and error cushion in mm voxels
-        [coords, label_names, parcel_list_masked] = nodemaker.parcel_masker(roi, coords, parcel_list, label_names,
-                                                                            dir_path, ID, perc_overlap)
+        [coords, labels, parcel_list_masked] = nodemaker.parcel_masker(roi, coords, parcel_list, labels,
+                                                                       dir_path, ID, perc_overlap)
         [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list_masked)
     # Mask Coordinates
     else:
-        [coords, label_names] = nodemaker.coords_masker(roi, coords, label_names, error)
+        [coords, labels] = nodemaker.coords_masker(roi, coords, labels, error)
         # Save coords to pickle
         coords_path = "%s%s%s%s" % (dir_path, '/atlas_coords_', op.basename(roi).split('.')[0], '.pkl')
         with open(coords_path, 'wb') as f:
@@ -978,12 +979,12 @@ def node_gen_masking(roi, coords, parcel_list, label_names, dir_path, ID, parc, 
     # Save labels to pickle
     labels_path = "%s%s%s%s" % (dir_path, '/atlas_labelnames_', op.basename(roi).split('.')[0], '.pkl')
     with open(labels_path, 'wb') as f:
-        pickle.dump(label_names, f, protocol=2)
+        pickle.dump(labels, f, protocol=2)
 
-    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select
+    return net_parcels_map_nifti, coords, labels, atlas, uatlas
 
 
-def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select, uatlas_select):
+def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
     """
     In the case that masking was not applied, this function generate nodes based on atlas definitions established by
     fetch_nodes_and_labels.
@@ -995,7 +996,7 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select,
         which represent the center-of-mass of each parcellation node.
     parcel_list : list
         List of 3D boolean numpy arrays or binarized Nifti1Images corresponding to ROI masks.
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
     dir_path : str
         Path to directory containing subject derivative data for given run.
@@ -1003,10 +1004,10 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select,
         A subject id or other unique identifier.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
-    atlas_select : str
+    atlas : str
         Name of a Nilearn-hosted coordinate or parcellation/label-based atlas supported for fetching.
         See Nilearn's datasets.atlas module for more detailed reference.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
 
     Returns
@@ -1017,12 +1018,12 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select,
     coords : list
         List of (x, y, z) tuples in mm-space corresponding to a coordinate atlas used or
         which represent the center-of-mass of each parcellation node.
-    label_names : list
+    labels : list
         List of string labels corresponding to ROI nodes.
-    atlas_select : str
+    atlas : str
         Name of a Nilearn-hosted coordinate or parcellation/label-based atlas supported for fetching.
         See Nilearn's datasets.atlas module for more detailed reference.
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     """
     try:
@@ -1047,9 +1048,9 @@ def node_gen(coords, parcel_list, label_names, dir_path, ID, parc, atlas_select,
         # Save labels to pickle
         labels_path = "%s%s" % (dir_path, '/atlas_labelnames_wb.pkl')
         with open(labels_path, 'wb') as f:
-            pickle.dump(label_names, f, protocol=2)
+            pickle.dump(labels, f, protocol=2)
 
-    return net_parcels_map_nifti, coords, label_names, atlas_select, uatlas_select
+    return net_parcels_map_nifti, coords, labels, atlas, uatlas
 
 
 def mask_roi(dir_path, roi, mask, img_file):
@@ -1084,8 +1085,7 @@ def mask_roi(dir_path, roi, mask, img_file):
     if roi and mask:
         print('Refining ROI...')
         roi_red_path = "%s%s%s%s" % (dir_path, '/', op.basename(roi).split('.')[0], '_mask.nii.gz')
-        cmd = 'fslmaths ' + roi + ' -mas ' + mask + ' -mas ' + img_mask_path + ' -bin ' + roi_red_path
-        os.system(cmd)
+        os.system("fslmaths {} -mas {} -mas {} -bin {}".format(roi, mask, img_mask_path, roi_red_path))
         roi = roi_red_path
     return roi
 
@@ -1128,15 +1128,15 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
         coords_vox.append(mmToVox(mask_aff, i))
     coords_vox = list(set(list(tuple(x) for x in coords_vox)))
 
-    x_vox = np.diagonal(mask_img.affine[:3,0:3])[0]
-    y_vox = np.diagonal(mask_img.affine[:3,0:3])[1]
-    z_vox = np.diagonal(mask_img.affine[:3,0:3])[2]
+    x_vox = np.diagonal(mask_img.affine[:3, 0:3])[0]
+    y_vox = np.diagonal(mask_img.affine[:3, 0:3])[1]
+    z_vox = np.diagonal(mask_img.affine[:3, 0:3])[2]
     sphere_vol = np.zeros(mask_img.shape, dtype=bool)
     parcel_list = []
     i = 0
     for coord in coords_vox:
         inds = get_sphere(coord, node_size, (np.abs(x_vox), y_vox, z_vox), mask_img.shape)
-        sphere_vol[tuple(inds.T)] = i*1
+        sphere_vol[tuple(inds.T)] = i * 1
         parcel_list.append(nib.Nifti1Image(sphere_vol.astype('int'), affine=mask_aff))
         i = i + 1
 

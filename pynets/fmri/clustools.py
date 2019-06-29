@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+@Recompiled, annotated, and updated to Python 3 by @dPys
+
+Reference:
 Craddock, R. C.; James, G. A.; Holtzheimer, P. E.; Hu, X. P. & Mayberg, H. S.
 A whole brain fMRI atlas generated via spatially constrained spectral
 clustering Human Brain Mapping, 2012, 33, 1914-1928 doi: 10.1002/hbm.21333.
@@ -19,16 +22,18 @@ ARTICLE{Craddock2012,
       TX, United States},
   pmid = {21769991},
 }
-
-@Recompiled, annotated, and updated to Python 3 by @dPys
 """
 import nibabel as nib
 import numpy as np
+import warnings
+warnings.filterwarnings("ignore")
+np.warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def indx_1dto3d(idx, sz):
     """
-    ## ADAPTED FROM PyClusterROI ##
+    ## Adapted from PyClusterROI ##
 
     Translate 1D vector coordinates to 3D matrix coordinates for a 3D matrix of size sz.
 
@@ -50,14 +55,14 @@ def indx_1dto3d(idx, sz):
     """
     from scipy import divide, prod
     x = divide(idx, prod(sz[1:3]))
-    y = divide(idx-x*prod(sz[1:3]), sz[2])
-    z = idx-x*prod(sz[1:3])-y*sz[2]
+    y = divide(idx - x * prod(sz[1:3]), sz[2])
+    z = idx - x * prod(sz[1:3]) - y * sz[2]
     return x, y, z
 
 
 def indx_3dto1d(idx, sz):
     """
-    ## ADAPTED FROM PyClusterROI ##
+    ## Adapted from PyClusterROI ##
 
     Translate 3D matrix coordinates to 1D vector coordinates for a 3D matrix of size sz.
 
@@ -75,15 +80,15 @@ def indx_3dto1d(idx, sz):
     """
     from scipy import prod, rank
     if rank(idx) == 1:
-        idx1 = idx[0]*prod(sz[1:3])+idx[1]*sz[2]+idx[2]
+        idx1 = idx[0] * prod(sz[1:3]) + idx[1] * sz[2] + idx[2]
     else:
-        idx1 = idx[:, 0]*prod(sz[1:3])+idx[:, 1]*sz[2]+idx[:, 2]
+        idx1 = idx[:, 0] * prod(sz[1:3]) + idx[:, 1] * sz[2] + idx[:, 2]
     return idx1
 
 
 def make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh):
     """
-    ## ADAPTED FROM PyClusterROI ##
+    ## Adapted from PyClusterROI ##
 
     Constructs a spatially constrained connectivity matrix from a fMRI dataset.
     The weights w_ij of the connectivity matrix W correspond to the
@@ -111,14 +116,14 @@ def make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh):
     from scipy.sparse import csc_matrix
     from scipy import prod, rank
     neighbors = np.array([[-1, -1, -1], [0, -1, -1], [1, -1, -1],
-                           [-1, 0, -1], [0, 0, -1], [1, 0, -1],
-                           [-1, 1, -1], [0, 1, -1], [1, 1, -1],
-                           [-1, -1, 0], [0, -1, 0], [1, -1, 0],
-                           [-1, 0, 0], [0, 0, 0], [1, 0, 0],
-                           [-1, 1, 0], [0, 1, 0], [1, 1, 0],
-                           [-1, -1, 1], [0, -1, 1], [1, -1, 1],
-                           [-1, 0, 1], [0, 0, 1], [1, 0, 1],
-                           [-1, 1, 1], [0, 1, 1], [1, 1, 1]])
+                          [-1, 0, -1], [0, 0, -1], [1, 0, -1],
+                          [-1, 1, -1], [0, 1, -1], [1, 1, -1],
+                          [-1, -1, 0], [0, -1, 0], [1, -1, 0],
+                          [-1, 0, 0], [0, 0, 0], [1, 0, 0],
+                          [-1, 1, 0], [0, 1, 0], [1, 1, 0],
+                          [-1, -1, 1], [0, -1, 1], [1, -1, 1],
+                          [-1, 0, 1], [0, 0, 1], [1, 0, 1],
+                          [-1, 1, 1], [0, 1, 1], [1, 1, 1]])
 
     # Read in the mask
     msk = nib.load(clust_mask)
@@ -236,7 +241,7 @@ def make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh):
 
 def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
     """
-    ## ADAPTED FROM PyClusterROI ##
+    ## Adapted from PyClusterROI ##
 
     Constructs a spatially constrained connectivity matrix from a fMRI dataset.
     The weights w_ij of the connectivity matrix W correspond to the
@@ -292,7 +297,7 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
     imdat = np.reshape(data, (prod(sz[:3]), sz[3]))
 
     # Construct a sparse matrix from the mask
-    msk = csc_matrix((list(range(1, m+1)), (iv, np.zeros(m))), shape=(prod(sz[:-1]), 1))
+    msk = csc_matrix((list(range(1, m + 1)), (iv, np.zeros(m))), shape=(prod(sz[:-1]), 1))
     sparse_i = []
     sparse_j = []
     sparse_w = []
@@ -305,7 +310,7 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
         if i % 1000 == 0:
             print(str(i))
         # Calculate the voxels that are in the 3D neighborhood of the center voxel
-        ndx3d = indx_1dto3d(iv[i], sz[:-1])+neighbors
+        ndx3d = indx_1dto3d(iv[i], sz[:-1]) + neighbors
         ndx1d = indx_3dto1d(ndx3d, sz[:-1])
 
         # Restrict the neigborhood using the mask
@@ -335,7 +340,7 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
 
         # Set NaN values to 0
         R[np.isnan(R)] = 0
-        negcount = negcount+sum(R < 0)
+        negcount = negcount + sum(R < 0)
 
         # Set values below thresh to 0
         R[R < thresh] = 0
@@ -343,8 +348,8 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
         # Determine the non-zero correlations (matrix weights) and add their indices and values to the list
         nzndx = np.nonzero(R)[0]
         if len(nzndx) > 0:
-            sparse_i = np.append(sparse_i, ondx1d[nzndx]-1, 0)
-            sparse_j = np.append(sparse_j, (ondx1d[nndx]-1)*np.ones(len(nzndx)))
+            sparse_i = np.append(sparse_i, ondx1d[nzndx] - 1, 0)
+            sparse_j = np.append(sparse_j, (ondx1d[nndx] - 1) * np.ones(len(nzndx)))
             sparse_w = np.append(sparse_w, R[nzndx], 0)
 
     # Concatenate the i, j and w_ij into a single vector
@@ -361,7 +366,7 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
 
 def ncut(W, nbEigenValues):
     """
-    ## ADAPTED FROM PyClusterROI ##
+    ## Adapted from PyClusterROI ##
 
     This function performs the first step of normalized cut spectral clustering.
     The normalized LaPlacian is calculated on the similarity matrix W, and top
@@ -410,14 +415,14 @@ def ncut(W, nbEigenValues):
     m = np.shape(W)[1]
 
     d = abs(W).sum(0)
-    dr = 0.5*(d-W.sum(0))
-    d = d+offset*2
-    dr = dr+offset
+    dr = 0.5 * (d - W.sum(0))
+    d = d + offset * 2
+    dr = dr + offset
 
     # Calculation of the normalized LaPlacian
-    W = W+spdiags(dr, [0], m, m, "csc")
-    Dinvsqrt = spdiags((1.0/np.sqrt(d+eps)), [0], m, m, "csc")
-    P = Dinvsqrt*(W*Dinvsqrt)
+    W = W + spdiags(dr, [0], m, m, "csc")
+    Dinvsqrt = spdiags((1.0 / np.sqrt(d + eps)), [0], m, m, "csc")
+    P = Dinvsqrt * (W * Dinvsqrt)
 
     # Perform the eigen decomposition
     eigen_val, eigen_vec = eigsh(P, nbEigenValues, maxiter=maxiterations, tol=eigsErrorTolerence, which='LA')
@@ -428,10 +433,10 @@ def ncut(W, nbEigenValues):
     eigen_vec = eigen_vec[:, i]
 
     # Normalize the returned eigenvectors
-    eigen_vec = Dinvsqrt*np.array(eigen_vec)
+    eigen_vec = Dinvsqrt * np.array(eigen_vec)
     norm_ones = norm(np.ones((m, 1)))
     for i in range(0, np.shape(eigen_vec)[1]):
-        eigen_vec[:, i] = (eigen_vec[:, i] / norm(eigen_vec[:, i]))*norm_ones
+        eigen_vec[:, i] = (eigen_vec[:, i] / norm(eigen_vec[:, i])) * norm_ones
         if eigen_vec[0, i] != 0:
             eigen_vec[:, i] = -1 * eigen_vec[:, i] * np.sign(eigen_vec[0, i])
 
@@ -440,7 +445,7 @@ def ncut(W, nbEigenValues):
 
 def discretisation(eigen_vec):
     """
-    ## ADAPTED FROM PyClusterROI ##
+    ## Adapted from PyClusterROI ##
 
     This function performs the second step of normalized cut clustering which
     assigns features to clusters based on the eigen vectors from the LaPlacian of
@@ -504,10 +509,10 @@ def discretisation(eigen_vec):
         # initialize algorithm with a random ordering of eigenvectors
         c = np.zeros((n, 1))
         R = np.matrix(np.zeros((k, k)))
-        R[:, 0] = eigen_vec[int(sp.rand(1)*(n-1)), :].transpose()
+        R[:, 0] = eigen_vec[int(sp.rand(1) * (n - 1)), :].transpose()
 
         for j in range(1, k):
-            c = c+abs(eigen_vec*R[:, j-1])
+            c = c + abs(eigen_vec * R[:, j - 1])
             R[:, j] = eigen_vec[c.argmin(), :].transpose()
 
         lastObjectiveValue = 0
@@ -521,14 +526,14 @@ def discretisation(eigen_vec):
             nbIterationsDiscretisation = nbIterationsDiscretisation + 1
 
             # Rotate the original eigen_vectors
-            tDiscrete = eigen_vec*R
+            tDiscrete = eigen_vec * R
 
             # Discretise the result by setting the max of each row=1 and other values to 0
             j = np.reshape(np.asarray(tDiscrete.argmax(1)), n)
             eigenvec_discrete = csc_matrix((np.ones(len(j)), (list(range(0, n)), np.array(j))), shape=(n, k))
 
             # Calculate a rotation to bring the discrete eigenvectors cluster to the original eigenvectors
-            tSVD = eigenvec_discrete.transpose()*eigen_vec
+            tSVD = eigenvec_discrete.transpose() * eigen_vec
 
             # Catch a SVD convergence error and restart
             try:
@@ -539,13 +544,14 @@ def discretisation(eigen_vec):
                 break
 
             # Test for convergence
-            NcutValue = 2*(n-S.sum())
-            if (abs(NcutValue-lastObjectiveValue) < eps) or (nbIterationsDiscretisation > nbIterationsDiscretisationMax):
+            NcutValue = 2 * (n - S.sum())
+            if (abs(NcutValue - lastObjectiveValue) < eps) or (
+                nbIterationsDiscretisation > nbIterationsDiscretisationMax):
                 exitLoop = 1
             else:
                 # Otherwise calculate rotation and continue
                 lastObjectiveValue = NcutValue
-                R = np.matrix(Vh).transpose()*np.matrix(U).transpose()
+                R = np.matrix(Vh).transpose() * np.matrix(U).transpose()
 
     if exitLoop == 0:
         raise ValueError("SVD did not converge after 30 retries")
@@ -555,7 +561,7 @@ def discretisation(eigen_vec):
 
 def binfile_parcellate(infile, outfile, k):
     """
-    ## ADAPTED FROM PyClusterROI ##
+    ## Adapted from PyClusterROI ##
 
     This function performs normalized cut clustering on the connectivity matrix
     specified by infile into sets of K clusters.
@@ -586,11 +592,11 @@ def binfile_parcellate(infile, outfile, k):
         fileobj.close()
 
     # Calculate the number of non-zero weights in the connectivity matrix
-    n = len(a)/3
+    n = len(a) / 3
 
     # Reshape the 1D vector read in from infile in to a 3xN array
     a = np.reshape(a, (3, int(n)))
-    m = max(max(a[0, :]), max(a[1, :]))+1
+    m = max(max(a[0, :]), max(a[1, :])) + 1
 
     # Make the sparse matrix, CSC format is supposedly efficient for matrix arithmetic
     W = csc_matrix((a[2, :], (a[0, :], a[1, :])), shape=(int(m), int(m)))
@@ -608,7 +614,7 @@ def binfile_parcellate(infile, outfile, k):
     group_img = eigenvec_discrete[:, 0]
 
     for i in range(1, k):
-        group_img = group_img+(i+1)*eigenvec_discrete[:, i]
+        group_img = group_img + (i + 1) * eigenvec_discrete[:, i]
 
     # Apply the suffix to the output filename and write out results as a .npy file
     outname = "%s%s%s%s" % (outfile, '_', str(k), '.npy')
@@ -651,7 +657,7 @@ def make_image_from_bin_renum(image, binfile, mask):
     # Renumber clusters to make the contiguous
     b = np.zeros((len(a), 1))
     for i in range(0, len(unique_a)):
-        b[a == unique_a[i]] = i+1
+        b[a == unique_a[i]] = i + 1
 
     imdat = nim.get_data()
     # Map the binary data to mask
@@ -660,12 +666,12 @@ def make_image_from_bin_renum(image, binfile, mask):
 
     # Write out the image as nifti
     nim_out = nib.Nifti1Image(imdat, nim.get_affine(), nim.get_header())
-    #nim_out.set_data_dtype('int16')
+    # nim_out.set_data_dtype('int16')
     nim_out.to_filename(image)
     return
 
 
-def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas_select):
+def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas):
     """
     API for performing any of a variety of clustering routines available through NiLearn.
 
@@ -680,7 +686,7 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas_select):
         Numbers of clusters that will be generated.
     clust_type : str
         Type of clustering to be performed (e.g. 'ward', 'kmeans', 'complete', 'average').
-    uatlas_select : str
+    uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     """
     import time
@@ -696,7 +702,7 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas_select):
                               mask=mask_img)
     clust_est.fit(func_img)
     region_labels = connected_label_regions(clust_est.labels_img_)
-    nib.save(region_labels, uatlas_select)
+    nib.save(region_labels, uatlas)
     print("%s%s%s" % (clust_type, k, " clusters: %.2fs" % (time.time() - start)))
     return
 
@@ -729,16 +735,16 @@ def individual_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
     nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
     mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-    atlas_select = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
+    atlas = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
     print("%s%s%s%s%s%s%s" % ('\nCreating atlas using ', clust_type, ' at cluster level ', str(k),
-                              ' for ', str(atlas_select), '...\n'))
-    dir_path = utils.do_dir_path(atlas_select, func_file)
-    uatlas_select = "%s%s%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
+                              ' for ', str(atlas), '...\n'))
+    dir_path = utils.do_dir_path(atlas, func_file)
+    uatlas = "%s%s%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
 
     if clust_type in nilearn_clust_list:
-        clustools.nil_parcellate(func_file, clust_mask, k, clust_type, uatlas_select)
+        clustools.nil_parcellate(func_file, clust_mask, k, clust_type, uatlas)
     elif (clust_type == 'ncut_tcorr') or (clust_type == 'ncut_scorr'):
-        working_dir = "%s%s%s" % (os.path.dirname(func_file), '/', atlas_select)
+        working_dir = "%s%s%s" % (os.path.dirname(func_file), '/', atlas)
         if clust_type == 'ncut_tcorr':
             outfile = "%s%s%s%s" % (working_dir, '/rm_tcorr_conn_', str(ID), '.npy')
             outfile_parc = "%s%s%s" % (working_dir, '/rm_tcorr_indiv_cluster_', str(ID))
@@ -750,7 +756,7 @@ def individual_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
             binfile = "%s%s%s%s%s%s" % (working_dir, '/rm_scorr_indiv_cluster_', str(ID), '_', str(k), '.npy')
             clustools.make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh)
         clustools.binfile_parcellate(outfile, outfile_parc, int(k))
-        clustools.make_image_from_bin_renum(uatlas_select, binfile, clust_mask)
+        clustools.make_image_from_bin_renum(uatlas, binfile, clust_mask)
 
     clustering = True
-    return uatlas_select, atlas_select, clustering, clust_mask, k, clust_type
+    return uatlas, atlas, clustering, clust_mask, k, clust_type

@@ -9,11 +9,11 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def plot_conn_mat(conn_matrix, label_names, out_path_fig):
+def plot_conn_mat(conn_matrix, labels, out_path_fig):
     """
 
     :param conn_matrix:
-    :param label_names:
+    :param labels:
     :param out_path_fig:
     :return:
     """
@@ -30,7 +30,7 @@ def plot_conn_mat(conn_matrix, label_names, out_path_fig):
     rois_num = conn_matrix.shape[0]
     if rois_num < 100:
         try:
-            plot_matrix(conn_matrix, figure=(10, 10), labels=label_names, vmax=z_max*0.5, vmin=z_min*0.5, reorder=True,
+            plot_matrix(conn_matrix, figure=(10, 10), labels=labels, vmax=z_max*0.5, vmin=z_min*0.5, reorder=True,
                         auto_fit=True, grid=False, colorbar=False)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')
@@ -45,11 +45,11 @@ def plot_conn_mat(conn_matrix, label_names, out_path_fig):
     return
 
 
-def plot_community_conn_mat(conn_matrix, label_names, out_path_fig_comm, community_aff):
+def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_aff):
     """
 
     :param conn_matrix:
-    :param label_names:
+    :param labels:
     :param out_path_fig_comm:
     :param community_aff:
     :return:
@@ -71,7 +71,7 @@ def plot_community_conn_mat(conn_matrix, label_names, out_path_fig_comm, communi
     rois_num = sorted_conn_matrix.shape[0]
     if rois_num < 100:
         try:
-            plot_matrix(conn_matrix, figure=(10, 10), labels=label_names, vmax=z_max, vmin=z_min,
+            plot_matrix(conn_matrix, figure=(10, 10), labels=labels, vmax=z_max, vmin=z_min,
                         reorder=False, auto_fit=True, grid=False, colorbar=False)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')
@@ -102,16 +102,16 @@ def plot_community_conn_mat(conn_matrix, label_names, out_path_fig_comm, communi
     return
 
 
-def plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, roi, thr, node_size, smooth, c_boot, hpass):
+def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size, smooth, c_boot, hpass):
     """
 
     :param conn_matrix:
     :param conn_model:
-    :param atlas_select:
+    :param atlas:
     :param dir_path:
     :param ID:
     :param network:
-    :param label_names:
+    :param labels:
     :param roi:
     :param thr:
     :param node_size:
@@ -124,37 +124,48 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas_select, dir_path, ID, netw
     import os.path as op
     import community
     from pynets.plotting import plot_graphs
-    if roi:
-        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(op.basename(roi).split('.')[0]), '_func_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''), "%s" % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
-        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(op.basename(roi).split('.')[0]), '_func_adj_mat_communities_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''), "%s" % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
-    else:
-        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), 'func_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''), "%s" % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
-        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), 'func_adj_mat_communities_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''), "%s" % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
 
-    plot_graphs.plot_conn_mat(conn_matrix, label_names, out_path_fig)
+    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
+                                                           '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
+                                                           '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                           'func_adj_mat_', conn_model, '_', thr, '_', node_size,
+                                                           '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                           '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
+                                                           '%s' % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''),
+                                                           '%s' % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
+
+    plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig)
 
     # Plot community adj. matrix
     G = nx.from_numpy_matrix(conn_matrix)
     try:
         node_comm_aff_mat = community.best_partition(G)
         print("%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities...'))
-        plot_graphs.plot_community_conn_mat(conn_matrix, label_names, out_path_fig_comm, node_comm_aff_mat)
+        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
+                                                                    '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
+                                                                    '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                                    'func_adj_mat_comm_', conn_model, '_', thr, '_',
+                                                                    node_size, '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                                    '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
+                                                                    '%s' % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''),
+                                                                    '%s' % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
+        plot_graphs.plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, node_comm_aff_mat)
     except:
         print('\nWARNING: Louvain community detection failed. Cannot plot community matrix...')
 
     return
 
 
-def plot_conn_mat_struct(conn_matrix, conn_model, atlas_select, dir_path, ID, network, label_names, roi, thr, node_size, smooth, c_boot, hpass):
+def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size, smooth, c_boot, hpass):
     """
 
     :param conn_matrix:
     :param conn_model:
-    :param atlas_select:
+    :param atlas:
     :param dir_path:
     :param ID:
     :param network:
-    :param label_names:
+    :param labels:
     :param roi:
     :param thr:
     :param node_size:
@@ -164,10 +175,35 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas_select, dir_path, ID, ne
     :return:
     """
     from pynets.plotting import plot_graphs
+    import networkx as nx
+    import community
     import os.path as op
-    if roi:
-        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), str(op.basename(roi).split('.')[0]), '_struct_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''), "%s" % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
-    else:
-        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', str(atlas_select), "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), 'struct_adj_mat_', str(conn_model), '_', str(thr), '_', str(node_size), '%s' % ("mm_" if node_size != 'parc' else "_"), "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'), "%s" % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''), "%s" % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
-    plot_graphs.plot_conn_mat(conn_matrix, label_names, out_path_fig)
+    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
+                                                           '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
+                                                           '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                           'struct_adj_mat_',
+                                                           conn_model, '_', thr, '_', node_size,
+                                                           '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                           '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
+                                                           '%s' % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''),
+                                                           '%s' % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
+    plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig)
+
+    # Plot community adj. matrix
+    G = nx.from_numpy_matrix(conn_matrix)
+    try:
+        node_comm_aff_mat = community.best_partition(G)
+        print("%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities...'))
+        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
+                                                                    '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
+                                                                    '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                                    'struct_adj_mat_comm_', conn_model, '_', thr, '_', node_size,
+                                                                    '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                                    '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
+                                                                    '%s' % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''),
+                                                                    '%s' % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
+        plot_graphs.plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, node_comm_aff_mat)
+    except:
+        print('\nWARNING: Louvain community detection failed. Cannot plot community matrix...')
+
     return
