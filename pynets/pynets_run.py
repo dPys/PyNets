@@ -290,8 +290,8 @@ def get_parser():
     parser.add_argument('-embed',
                         default=False,
                         action='store_true',
-                        help='Optionally use this flag if you wish to embed the ensemble produced into a set of omnibus '
-                             'feature vectors.\n')
+                        help='Optionally use this flag if you wish to embed the ensemble(s) produced into omnibus '
+                             'feature vector(s).\n')
     parser.add_argument('-plt',
                         default=False,
                         action='store_true',

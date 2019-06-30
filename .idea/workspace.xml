@@ -11,68 +11,427 @@
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/usage.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/usage.rst" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/dmri/estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/estimation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/dmri/track.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/track.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/fmri/clustools.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/fmri/clustools.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/fmri/estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/fmri/estimation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/nodemaker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/plotting/plot_gen.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting/plot_gen.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/plotting/plot_graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting/plot_graphs.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/registration/reg_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/reg_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/registration/register.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/register.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/stats/netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/stats/netstats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/thresholding.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/s002_anat_brain.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/anat/s002_anat_brain.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/bval.bval" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/bval.bval" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/0021001_net_mets_Default_csd_Default_mean" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/0021001_net_mets_Default_csd_Default_mean" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/0021001_net_mets_Default_csd_Default_mean.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/0021001_net_mets_Default_csd_Default_mean.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.05dens_100000samples_particle_track_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.05dens_100000samples_particle_track_pruned_mat.ssv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.06dens_100000samples_particle_track_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.06dens_100000samples_particle_track_pruned_mat.ssv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.07dens_100000samples_particle_track_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.07dens_100000samples_particle_track_pruned_mat.ssv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.08dens_100000samples_particle_track_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.08dens_100000samples_particle_track_pruned_mat.ssv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track_pruned_mat.ssv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.1dens_100000samples_particle_track_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.1dens_100000samples_particle_track_pruned_mat.ssv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.05_parc" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.05_parc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.05_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.05_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.05_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.05_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.06_parc" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.06_parc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.06_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.06_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.06_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.06_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.07_parc" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.07_parc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.07_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.07_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.07_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.07_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.08_parc" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.08_parc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.08_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.08_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.08_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.08_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.09_parc" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.09_parc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.09_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.09_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.09_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.09_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.05_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.05_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.05_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.05_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.06_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.06_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.06_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.06_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.07_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.07_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.07_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.07_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.08_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.08_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.08_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.08_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.09_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.09_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.09_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.09_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.1_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.1_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.1_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_tensor_0.1_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/net_met_list_Default" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/net_met_list_Default" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/iso_eddy_corrected_data_denoised.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/iso_eddy_corrected_data_denoised.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz.npy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz_pruned_mat.ssv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_connectogram_sps.json" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_connectogram_sps.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/Default_parcels.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/Default_parcels.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/pDMN_3_bin_kmeans_k3/pDMN_3_bin_kmeans_k3.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/pDMN_3_bin_kmeans_k3/pDMN_3_bin_kmeans_k3.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_est_sps_unthresholded_mat.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.9" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.9.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.91" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.91.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.92" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.92.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.93" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.93.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.94" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.94.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.95" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.95.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_est_sps_unthresholded_mat.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.9" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.9.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.91" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.91.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.92" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.92.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.93" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.93.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.94" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.94.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.95" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.95.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_pDMN_3_bin_unthresh_mat.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_unthresh_mat.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/net_metric_list" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/net_metric_list_Default" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/net_metric_list_SomMotA" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/net_metric_list_pDMN_3_bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_clustools.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_clustools.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_estimation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_nodemaker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_plotting.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_thresholding.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_brain.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_brain.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_brain_mask.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_brain_mask.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_pve_0.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_pve_0.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_pve_1.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_pve_1.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_pve_2.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_pve_2.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_wm_thr.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_wm_thr.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/DesikanKlein2012_dwi_track.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/DesikanKlein2012_dwi_track.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_wm_gm_int_in_dwi_bin.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_wm_gm_int_in_dwi_bin.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/std_dmri/iso_eddy_corrected_data_denoised_pre_reor.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/std_dmri/iso_eddy_corrected_data_denoised_pre_reor.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/tensor_fa.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/tensor_fa.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_csd/ExtractNetStats/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats0/_0xf2aeb3fb4fe9a172545133411e389afd.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats0/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats0/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats0/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats0/result__ExtractNetStats0.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats1/_0x4c786fe018c6da325029723714327fed.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats1/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats1/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats1/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats1/result__ExtractNetStats1.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats2/_0xe8ed21eef42e8b1818ddc2f8d842d4cd.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats2/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats2/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats2/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats2/result__ExtractNetStats2.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats3/_0x34cdfdddb59eb91f572825ebaa419edf.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats3/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats3/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats3/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats3/result__ExtractNetStats3.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats4/_0x252a2da5e6eb3ddb11f12b6c67481bd5.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats4/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats4/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats4/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats4/result__ExtractNetStats4.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats5/_0xe3af60abb59d7e01188430d2707490ea.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats5/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats5/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats5/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats5/result__ExtractNetStats5.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats6/_0xf2aeb3fb4fe9a172545133411e389afd_unfinished.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats6/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats6/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats6/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats7/_0x4c786fe018c6da325029723714327fed_unfinished.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats7/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats7/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/_conn_model_tensor/ExtractNetStats/mapflow/_ExtractNetStats7/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/d3.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/graph.dot" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/graph.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/graph.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/graph1.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_csd/pass_meta_ins_struct_node/_0x086e7cca8442f5cf64b5d77b8b4159c8.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_csd/pass_meta_ins_struct_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_csd/pass_meta_ins_struct_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_csd/pass_meta_ins_struct_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_csd/pass_meta_ins_struct_node/result_pass_meta_ins_struct_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_csd/pass_meta_outs_node/_0xd2d0ccbbb32062d9637faf0e1ebb4137.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_csd/pass_meta_outs_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_csd/pass_meta_outs_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_csd/pass_meta_outs_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_csd/pass_meta_outs_node/result_pass_meta_outs_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_tensor/pass_meta_ins_struct_node/_0xfb22cdc35b14f73a4fb235122206df16.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_tensor/pass_meta_ins_struct_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_tensor/pass_meta_ins_struct_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_tensor/pass_meta_ins_struct_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_tensor/pass_meta_ins_struct_node/result_pass_meta_ins_struct_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_tensor/pass_meta_outs_node/_0x79b3641deb0ba3e8f0c5b2b2bba62fe6.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_tensor/pass_meta_outs_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_tensor/pass_meta_outs_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_tensor/pass_meta_outs_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/_conn_model_tensor/pass_meta_outs_node/result_pass_meta_outs_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_conn_model_csd/join_iters_node_nets/_0x1d5790f053efb8232f7ee9638ec94495.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_conn_model_csd/join_iters_node_nets/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_conn_model_csd/join_iters_node_nets/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_conn_model_csd/join_iters_node_nets/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_conn_model_csd/join_iters_node_nets/result_join_iters_node_nets.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_conn_model_tensor/join_iters_node_nets/_0xbfda3990d2e2800fcc4ca06a0c0a3674.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_conn_model_tensor/join_iters_node_nets/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_conn_model_tensor/join_iters_node_nets/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_conn_model_tensor/join_iters_node_nets/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_conn_model_tensor/join_iters_node_nets/result_join_iters_node_nets.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/dsn_node/_0x770e07c57953b1294303150ea7051a3b.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/dsn_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/dsn_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/dsn_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/dsn_node/result_dsn_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/join_iters_node_thr/_0xa51e002e7a7b6b48bb7125c626e0e66e.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/join_iters_node_thr/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/join_iters_node_thr/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/join_iters_node_thr/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/join_iters_node_thr/result_join_iters_node_thr.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/run_tracking_node/_0x00f62dc202bb3322dbe49d4ce98871d5.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/run_tracking_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/run_tracking_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/run_tracking_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/run_tracking_node/result_run_tracking_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/streams2graph_node/_0x4f050ce47c77876d9940fe0eb253e1b1.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/streams2graph_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/streams2graph_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/streams2graph_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/streams2graph_node/result_streams2graph_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/_0x1a958fe485702444a9ce7ee0ed0825f4.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node0/_0xf424d49243c392a05467e39a5a9f6d54.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node0/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node0/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node0/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node0/result__thresh_diff_node0.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node1/_0x44fc049b0cdb53408f4574944e4b72dd.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node1/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node1/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node1/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node1/result__thresh_diff_node1.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node2/_0xdddd9ea4296001a6f96918ab4fbbfd2e.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node2/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node2/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node2/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node2/result__thresh_diff_node2.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node3/_0x9bcdcaac655908e8cde519e30358d721.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node3/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node3/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node3/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node3/result__thresh_diff_node3.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node4/_0x39435f87a553236def8b255f85332cc0.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node4/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node4/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node4/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node4/result__thresh_diff_node4.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node5/_0x998f9b66da94c1119d3ce17565006134.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node5/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node5/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node5/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node5/result__thresh_diff_node5.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_csd/thresh_diff_node/result_thresh_diff_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/dsn_node/_0x73c514fb96fcc877ab093e4d80dd430f.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/dsn_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/dsn_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/dsn_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/dsn_node/result_dsn_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/join_iters_node_thr/_0x21e0e88d4ad3302106c32744d3de3969.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/join_iters_node_thr/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/join_iters_node_thr/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/join_iters_node_thr/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/join_iters_node_thr/result_join_iters_node_thr.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/run_tracking_node/_0x6e3dfb41e7c0a190eb2bc2a903f01214.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/run_tracking_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/run_tracking_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/run_tracking_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/run_tracking_node/result_run_tracking_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/streams2graph_node/_0x821f10a649132883f43b5ec5bb310f44.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/streams2graph_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/streams2graph_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/streams2graph_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/streams2graph_node/result_streams2graph_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/_0x571be06f71582a04061e5a60ee7944b6.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node0/_0xe94f9e02dfe796d917f541bd45979710.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node0/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node0/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node0/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node0/result__thresh_diff_node0.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node1/_0xfac8e4c362c719071d2ed883774f1fc1.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node1/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node1/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node1/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node1/result__thresh_diff_node1.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node2/_0x0a4caaa65c41ee705346304b0dcffd27.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node2/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node2/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node2/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node2/result__thresh_diff_node2.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node3/_0xf107250f7750fedd36f17ad52ba32e83.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node3/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node3/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node3/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node3/result__thresh_diff_node3.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node4/_0x55587f984f82801b57ff8c426c271f3d.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node4/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node4/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node4/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node4/result__thresh_diff_node4.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node5/_0x09225f41c56091f3d3173657c9b74bed.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node5/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node5/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node5/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node5/result__thresh_diff_node5.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/_conn_model_tensor/thresh_diff_node/result_thresh_diff_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/get_node_membership_node/_0xbafca07239d2639aa075efcaae6edb18.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/get_node_membership_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/get_node_membership_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/get_node_membership_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/get_node_membership_node/result_get_node_membership_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/node_gen_node/_0xde29d2146d708e7ede260e67c8ce0892.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/node_gen_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/node_gen_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/node_gen_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/node_gen_node/result_node_gen_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/register_atlas_node/_0x6a377c91bfd1f3b9856853e44004f79e.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/register_atlas_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/register_atlas_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/register_atlas_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/register_atlas_node/result_register_atlas_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/save_coords_and_labels_node/_0x38d3cd43f73188132aac36ef008528fe.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/save_coords_and_labels_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/save_coords_and_labels_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/save_coords_and_labels_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_Default/save_coords_and_labels_node/result_save_coords_and_labels_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/dsn_node/_0x78bd3e8d2a5da80a1ba565459c7514b1.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/dsn_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/dsn_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/dsn_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/dsn_node/result_dsn_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/join_iters_node_thr/_0xdf313853de207c4bcaefe51564773c2a.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/join_iters_node_thr/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/join_iters_node_thr/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/join_iters_node_thr/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/join_iters_node_thr/result_join_iters_node_thr.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/run_tracking_node/_0x8e7a257d61ed88f4426b21cb82a77af1.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/run_tracking_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/run_tracking_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/run_tracking_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/run_tracking_node/result_run_tracking_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/streams2graph_node/_0x6e4729c50ef9633959cb8c1660f46bef.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/streams2graph_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/streams2graph_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/streams2graph_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/streams2graph_node/result_streams2graph_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/_0xaedd1146315e0fb408eb01a2a4c54899.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node0/_0xaa63739d01d1957f71fa04b262dafb33.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node0/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node0/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node0/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node0/result__thresh_diff_node0.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node1/_0x38765d0ab1789c7d264d398e7892a410.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node1/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node1/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node1/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node1/result__thresh_diff_node1.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node2/_0x971d88ae9602273d35ef60070d3e41f5.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node2/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node2/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node2/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node2/result__thresh_diff_node2.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node3/_0xe0498d5822999b65b09db135a65ec17d.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node3/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node3/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node3/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node3/result__thresh_diff_node3.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node4/_0x98bf6af90330bb05341c6f002a76de7c.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node4/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node4/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node4/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node4/result__thresh_diff_node4.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node5/_0x38311148387e73821442bb59b9661bdd.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node5/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node5/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node5/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/mapflow/_thresh_diff_node5/result__thresh_diff_node5.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_csd/thresh_diff_node/result_thresh_diff_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/dsn_node/_0x6cb66c2861b2c6e8edb36f8a398be5a6.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/dsn_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/dsn_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/dsn_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/dsn_node/result_dsn_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/join_iters_node_thr/_0xa00af0c44d98637d262e6fb9ba74ad87.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/join_iters_node_thr/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/join_iters_node_thr/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/join_iters_node_thr/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/join_iters_node_thr/result_join_iters_node_thr.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/run_tracking_node/_0x85dac32a2a22f53855855c24b400c6b0.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/run_tracking_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/run_tracking_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/run_tracking_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/run_tracking_node/result_run_tracking_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/streams2graph_node/_0x9362a980baea653ee21cbaa76fef79de.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/streams2graph_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/streams2graph_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/streams2graph_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/streams2graph_node/result_streams2graph_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/_0x604d5c9127b9de2bc053617af1291ffb.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node0/_0x385440a544ea0ecc6f90d65d605c03bc.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node0/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node0/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node0/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node0/result__thresh_diff_node0.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node1/_0x273493a583575c7500a1cfc3a17b8ed4.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node1/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node1/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node1/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node1/result__thresh_diff_node1.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node2/_0x15c6c48ea29f453c94676d32be052690.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node2/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node2/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node2/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node2/result__thresh_diff_node2.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node3/_0x38cbc4bba7f7c4144fdcbe6e3a3a1aa5.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node3/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node3/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node3/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node3/result__thresh_diff_node3.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node4/_0x7aa2fd0b7284d54c5b66f9bcc8d43ed0.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node4/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node4/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node4/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node4/result__thresh_diff_node4.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node5/_0x1a6ea9e444b7fd306a417c8db4e1651a.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node5/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node5/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node5/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/mapflow/_thresh_diff_node5/result__thresh_diff_node5.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/_conn_model_tensor/thresh_diff_node/result_thresh_diff_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/get_node_membership_node/_0xceaffc2fbb50e6af59868ea6a3ca5bd8.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/get_node_membership_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/get_node_membership_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/get_node_membership_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/get_node_membership_node/result_get_node_membership_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/node_gen_node/_0xe8e4510fd60a5ed3ac7941c06848b2bc.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/node_gen_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/node_gen_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/node_gen_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/node_gen_node/result_node_gen_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/register_atlas_node/_0x6f79f8b799273f39d9e8682637d3de42.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/register_atlas_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/register_atlas_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/register_atlas_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/register_atlas_node/result_register_atlas_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/save_coords_and_labels_node/_0x85221bc46ad4b7e6c176f758bf0558f8.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/save_coords_and_labels_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/save_coords_and_labels_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/save_coords_and_labels_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/save_coords_and_labels_node/result_save_coords_and_labels_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_anat_node/_0xd8aa0b0ae5e0cdf68fc66eaea991fe9d.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_anat_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_anat_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_anat_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_anat_node/result_check_orient_and_dims_anat_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_dwi_node/_0x60d3fe28ed556da456c679a9aee746e5.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_dwi_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_dwi_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_dwi_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_dwi_node/result_check_orient_and_dims_dwi_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/fetch_nodes_and_labels_node/_0x837ae4f963c4274e078182fe34d7527e.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/fetch_nodes_and_labels_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/fetch_nodes_and_labels_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/fetch_nodes_and_labels_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/fetch_nodes_and_labels_node/result_fetch_nodes_and_labels_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/get_fa_node/_0x4655965709089eecaab338af81e7a970.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/get_fa_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/get_fa_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/get_fa_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/get_fa_node/result_get_fa_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/gtab_node/_0x5f71933e73efdb7161b21db37f2a61be.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/gtab_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/gtab_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/gtab_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/gtab_node/result_gtab_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/register_node/_0xb91ca33e8730850a1ce5d735702d073e.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/register_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/register_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/register_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_271/meta_wf_0021001/dmri_connectometry_0021001/register_node/result_register_node.pklz" beforeDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -95,8 +454,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="10590">
-              <caret line="706" column="38" selection-start-line="706" selection-start-column="38" selection-end-line="706" selection-end-column="38" />
+            <state relative-caret-position="260">
+              <caret line="1229" column="17" selection-start-line="1229" selection-start-column="15" selection-end-line="1229" selection-end-column="17" />
               <folding>
                 <element signature="e#139#154#0" expanded="true" />
               </folding>
@@ -104,13 +463,13 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pynets/dmri/estimation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="582">
-              <caret line="1193" lean-forward="true" selection-start-line="1193" selection-end-line="1193" />
+            <state relative-caret-position="150">
+              <caret line="10" column="36" selection-start-line="10" selection-start-column="36" selection-end-line="10" selection-end-column="36" />
               <folding>
-                <element signature="e#109#140#0" expanded="true" />
+                <element signature="e#116#131#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -119,10 +478,22 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="491">
-              <caret line="301" column="33" selection-start-line="301" selection-start-column="33" selection-end-line="301" selection-end-column="33" />
+            <state relative-caret-position="170">
+              <caret line="10" selection-start-line="10" selection-end-line="11" selection-end-column="69" />
               <folding>
                 <element signature="e#116#131#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="552">
+              <caret line="1191" column="36" selection-start-line="1191" selection-start-column="36" selection-end-line="1191" selection-end-column="36" />
+              <folding>
+                <element signature="e#109#140#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -131,8 +502,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="36120">
-              <caret line="2408" column="69" selection-start-line="2408" selection-start-column="69" selection-end-line="2408" selection-end-column="69" />
+            <state relative-caret-position="329">
+              <caret line="2224" column="71" selection-start-line="2224" selection-start-column="71" selection-end-line="2224" selection-end-column="71" />
               <folding>
                 <element signature="e#116#131#0" expanded="true" />
               </folding>
@@ -140,11 +511,20 @@
           </provider>
         </entry>
       </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="348">
+              <caret line="293" column="52" selection-start-line="293" selection-start-column="52" selection-end-line="293" selection-end-column="52" />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-16293">
-              <caret line="11" selection-start-line="11" selection-end-line="11" />
+            <state relative-caret-position="362">
+              <caret line="929" selection-start-line="929" selection-end-line="931" selection-end-column="72" />
               <folding>
                 <element signature="e#109#127#0" expanded="true" />
               </folding>
@@ -155,8 +535,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/thresholding.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="15390">
-              <caret line="1026" column="28" selection-start-line="1026" selection-start-column="28" selection-end-line="1026" selection-end-column="28" />
+            <state relative-caret-position="505">
+              <caret line="798" selection-start-line="798" selection-end-line="799" selection-end-column="57" />
               <folding>
                 <element signature="e#116#131#0" expanded="true" />
               </folding>
@@ -167,7 +547,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-9378">
+            <state relative-caret-position="4860">
               <caret line="324" column="27" selection-start-line="324" selection-start-column="27" selection-end-line="324" selection-end-column="27" />
               <folding>
                 <element signature="e#109#124#0" expanded="true" />
@@ -179,34 +559,10 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="293">
-              <caret line="276" selection-start-line="276" selection-end-line="294" selection-end-column="59" />
+            <state relative-caret-position="259">
+              <caret line="306" selection-start-line="306" selection-end-line="308" selection-end-column="60" />
               <folding>
                 <element signature="e#116#131#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/plotting/plot_gen.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2403">
-              <caret line="410" column="35" selection-start-line="410" selection-start-column="35" selection-end-line="410" selection-end-column="35" />
-              <folding>
-                <element signature="e#116#134#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/plotting/plot_graphs.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="462">
-              <caret line="192" column="41" selection-start-line="192" selection-start-column="41" selection-end-line="192" selection-end-column="41" />
-              <folding>
-                <element signature="e#116#134#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -223,27 +579,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>node_size + &quot;mm_&quot;</find>
-      <find>## ADAPTED FROM NETWORKX TO INCORPORATE WEIGHT PARAMETER ##</find>
-      <find>## ADAPTED FROM BCTPY ##</find>
-      <find>regutils.antssyn(template_path, fa_flip_path, dsn_dir)</find>
-      <find>streamlines_more</find>
-      <find>s</find>
-      <find>fsl</find>
-      <find>Using resting-state network pipeline for:</find>
-      <find>\</find>
-      <find>-get</find>
-      <find>ADAPTED FROM</find>
-      <find>hash</find>
-      <find>Using RSN pipeline for:</find>
-      <find>import_list</find>
-      <find>Wf_</find>
-      <find>Meta_wf_</find>
-      <find>Most likely this is because the graph is either disconnected or because it is fully saturated</find>
-      <find>See thresholding and pruning options in pynets_run.py -h.</find>
-      <find>vox_size</find>
-      <find>-anat</find>
-      <find>anat_file</find>
       <find>net_metrics_</find>
       <find>net_metrics</find>
       <find>net_metric_list</find>
@@ -253,9 +588,29 @@
       <find>warnings.filterwarnings(&quot;ignore&quot;, message=&quot;numpy.ufunc size changed&quot;)</find>
       <find>fa_path</find>
       <find>wm_gm_int</find>
+      <find>conn_matrix</find>
+      <find>ts_within_nodes</find>
+      <find>multimodal</find>
+      <find>nodif_b0</find>
+      <find>fbval</find>
+      <find>create_csv_path</find>
+      <find>nodif_B0_b</find>
+      <find>nodif_B0</find>
+      <find>B0_mask</find>
+      <find>B0</find>
+      <find>multi_nets</find>
+      <find>conn_model</find>
+      <find>network</find>
+      <find>node_gen_node</find>
+      <find>atlas_select</find>
+      <find>net_parcels_map_nifti</find>
+      <find>prep_spherical_nodes_node</find>
+      <find>gtab_node</find>
+      <find>em</find>
+      <find>embed</find>
+      <find>emb</find>
     </findStrings>
     <replaceStrings>
-      <replace>nargs='+'</replace>
       <replace>multi_directget</replace>
       <replace>'/002/fmri</replace>
       <replace>'/002/func/whole</replace>
@@ -285,6 +640,7 @@
       <replace>wf_</replace>
       <replace>meta_wf_</replace>
       <replace>net_met_list</replace>
+      <replace>B0_bet</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -319,26 +675,26 @@
         <option value="$PROJECT_DIR$/tests/test_plotting.py" />
         <option value="$PROJECT_DIR$/tests/test_thresholding.py" />
         <option value="$PROJECT_DIR$/tests/test_utils.py" />
-        <option value="$PROJECT_DIR$/pynets/dmri/estimation.py" />
         <option value="$PROJECT_DIR$/pynets/plotting/plot_gen.py" />
         <option value="$PROJECT_DIR$/pynets/registration/reg_utils.py" />
         <option value="$PROJECT_DIR$/pynets/fmri/clustools.py" />
         <option value="$PROJECT_DIR$/pynets/thresholding.py" />
-        <option value="$PROJECT_DIR$/pynets/nodemaker.py" />
         <option value="$PROJECT_DIR$/pynets/dmri/track.py" />
         <option value="$PROJECT_DIR$/pynets/fmri/estimation.py" />
         <option value="$PROJECT_DIR$/tests/test_netstats.py" />
-        <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
-        <option value="$PROJECT_DIR$/pynets/workflows.py" />
         <option value="$PROJECT_DIR$/pynets/plotting/plot_graphs.py" />
         <option value="$PROJECT_DIR$/pynets/registration/register.py" />
-        <option value="$PROJECT_DIR$/pynets/utils.py" />
         <option value="$PROJECT_DIR$/pynets/stats/netstats.py" />
+        <option value="$PROJECT_DIR$/pynets/nodemaker.py" />
+        <option value="$PROJECT_DIR$/pynets/dmri/estimation.py" />
+        <option value="$PROJECT_DIR$/pynets/utils.py" />
+        <option value="$PROJECT_DIR$/pynets/workflows.py" />
+        <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="42" />
+    <option name="x" value="338" />
     <option name="y" value="23" />
     <option name="width" value="1600" />
     <option name="height" value="978" />
@@ -461,7 +817,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.utils">
+  <component name="RunManager" selected="Python.workflows">
     <configuration name="scratch.sh" type="BashConfigurationType" factoryName="Bash" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="bash" />
       <option name="INTERPRETER_PATH" value="/usr/bin/env" />
@@ -565,9 +921,6 @@
       <module name="PyNets" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/pynets" />
       <option name="IS_MODULE_SDK" value="true" />
@@ -619,11 +972,11 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.workflows" />
         <item itemvalue="Python.utils" />
         <item itemvalue="Bash.scratch.sh" />
         <item itemvalue="Python.track" />
         <item itemvalue="Python.pynets_run" />
-        <item itemvalue="Docker.Docker Image" />
       </list>
     </recent_temporary>
   </component>
@@ -646,15 +999,15 @@
       <workItem from="1560024174324" duration="49236000" />
       <workItem from="1561116224032" duration="8349000" />
       <workItem from="1561144081292" duration="359000" />
-      <workItem from="1561157188043" duration="95475000" />
+      <workItem from="1561157188043" duration="106411000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="501096000" />
+    <option name="totallyTimeSpent" value="512032000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="42" y="23" width="1600" height="978" extended-state="0" />
+    <frame x="338" y="23" width="1600" height="978" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49531615" weight="0.09242619" />
@@ -662,7 +1015,7 @@
       <window_info active="true" id="Favorites" order="2" sideWeight="0.50468385" side_tool="true" visible="true" weight="0.09242619" />
       <window_info id="aws.explorer" order="3" sideWeight="0.503386" side_tool="true" weight="0.13689937" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.4984326" visible="true" weight="0.036117382" />
+      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.4984326" weight="0.036117382" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.32731378" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.4996421" weight="0.3277027" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
@@ -671,7 +1024,7 @@
       <window_info anchor="bottom" id="Docker" order="7" sideWeight="0.4992378" weight="0.25282168" />
       <window_info anchor="bottom" id="Version Control" order="8" weight="0.033783782" />
       <window_info anchor="bottom" id="Database Changes" order="9" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Python Console" order="10" sideWeight="0.49955475" weight="0.033860046" />
+      <window_info anchor="bottom" id="Python Console" order="10" sideWeight="0.49955475" visible="true" weight="0.033860046" />
       <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.4960815" weight="0.24943566" />
       <window_info anchor="bottom" id="Event Log" order="12" sideWeight="0.5003579" side_tool="true" weight="0.32731378" />
       <window_info anchor="bottom" id="Concurrent Activities Diagram" order="13" sideWeight="0.49955475" weight="0.32844242" />
@@ -888,13 +1241,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/dmri/estimation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4500">
-          <caret line="300" column="22" lean-forward="true" selection-start-line="300" selection-start-column="22" selection-end-line="300" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/fmri/clustools.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-10278">
@@ -925,13 +1271,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3255">
-          <caret line="217" column="68" selection-start-line="217" selection-start-column="68" selection-end-line="217" selection-end-column="68" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/plotting/plot_graphs.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="462">
@@ -944,7 +1283,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/plotting/plot_gen.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2403">
+        <state relative-caret-position="6150">
           <caret line="410" column="35" selection-start-line="410" selection-start-column="35" selection-end-line="410" selection-end-column="35" />
           <folding>
             <element signature="e#116#134#0" expanded="true" />
@@ -952,30 +1291,20 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4860">
+          <caret line="324" column="27" selection-start-line="324" selection-start-column="27" selection-end-line="324" selection-end-column="27" />
+          <folding>
+            <element signature="e#109#124#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/thresholding.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15390">
-          <caret line="1026" column="28" selection-start-line="1026" selection-start-column="28" selection-end-line="1026" selection-end-column="28" />
-          <folding>
-            <element signature="e#116#131#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-16293">
-          <caret line="11" selection-start-line="11" selection-end-line="11" />
-          <folding>
-            <element signature="e#109#127#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="36120">
-          <caret line="2408" column="69" selection-start-line="2408" selection-start-column="69" selection-end-line="2408" selection-end-column="69" />
+        <state relative-caret-position="505">
+          <caret line="798" selection-start-line="798" selection-end-line="799" selection-end-column="57" />
           <folding>
             <element signature="e#116#131#0" expanded="true" />
           </folding>
@@ -984,28 +1313,58 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="293">
-          <caret line="276" selection-start-line="276" selection-end-line="294" selection-end-column="59" />
+        <state relative-caret-position="259">
+          <caret line="306" selection-start-line="306" selection-end-line="308" selection-end-column="60" />
           <folding>
             <element signature="e#116#131#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
+    <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-9378">
-          <caret line="324" column="27" selection-start-line="324" selection-start-column="27" selection-end-line="324" selection-end-column="27" />
+        <state relative-caret-position="170">
+          <caret line="10" selection-start-line="10" selection-end-line="11" selection-end-column="69" />
           <folding>
-            <element signature="e#109#124#0" expanded="true" />
+            <element signature="e#116#131#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
+    <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="491">
-          <caret line="301" column="33" selection-start-line="301" selection-start-column="33" selection-end-line="301" selection-end-column="33" />
+        <state relative-caret-position="552">
+          <caret line="1191" column="36" selection-start-line="1191" selection-start-column="36" selection-end-line="1191" selection-end-column="36" />
+          <folding>
+            <element signature="e#109#140#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="362">
+          <caret line="929" selection-start-line="929" selection-end-line="931" selection-end-column="72" />
+          <folding>
+            <element signature="e#109#127#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/dmri/estimation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="150">
+          <caret line="10" column="36" selection-start-line="10" selection-start-column="36" selection-end-line="10" selection-end-column="36" />
+          <folding>
+            <element signature="e#116#131#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="329">
+          <caret line="2224" column="71" selection-start-line="2224" selection-start-column="71" selection-end-line="2224" selection-end-column="71" />
           <folding>
             <element signature="e#116#131#0" expanded="true" />
           </folding>
@@ -1014,21 +1373,18 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="10590">
-          <caret line="706" column="38" selection-start-line="706" selection-start-column="38" selection-end-line="706" selection-end-column="38" />
+        <state relative-caret-position="260">
+          <caret line="1229" column="17" selection-start-line="1229" selection-start-column="15" selection-end-line="1229" selection-end-column="17" />
           <folding>
             <element signature="e#139#154#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
+    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="582">
-          <caret line="1193" lean-forward="true" selection-start-line="1193" selection-end-line="1193" />
-          <folding>
-            <element signature="e#109#140#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="348">
+          <caret line="293" column="52" selection-start-line="293" selection-start-column="52" selection-end-line="293" selection-end-column="52" />
         </state>
       </provider>
     </entry>

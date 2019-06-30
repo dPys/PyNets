@@ -1789,8 +1789,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             get_node_membership_node_iterables.append(network_iterables)
             get_node_membership_node.iterables = get_node_membership_node_iterables
 
-    gtab_node = pe.Node(niu.Function(input_names=['fbval', 'fbvec', 'dwi_file'],
-                                     output_names=['gtab_file', 'nodif_B0', 'B0_mask', 'dwi_file'],
+    gtab_node = pe.Node(niu.Function(input_names=['fbval', 'fbvec', 'dwi_file', 'network', 'node_size', 'atlas'],
+                                     output_names=['gtab_file', 'B0_bet', 'B0_mask', 'dwi_file'],
                                      function=utils.make_gtab_and_bmask, imports=import_list), name="gtab_node")
 
     get_fa_node = pe.Node(niu.Function(input_names=['gtab_file', 'dwi_file', 'B0_mask'],
@@ -2181,6 +2181,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         (check_orient_and_dims_dwi_node, gtab_node, [('bvecs', 'fbvec'),
                                                      ('outfile', 'dwi_file')]),
         (inputnode, gtab_node, [('fbval', 'fbval')]),
+        (fetch_nodes_and_labels_node, gtab_node, [('atlas', 'atlas')]),
         (inputnode, register_node, [('basedir_path', 'basedir_path')]),
         (inputnode, check_orient_and_dims_anat_node, [('anat_file', 'infile'), ('vox_size', 'vox_size')]),
         (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_file')]),
@@ -2325,6 +2326,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                            (prep_spherical_nodes_node, node_gen_node,
                                             [('parc', 'parc'),
                                              ('parcel_list', 'parcel_list')]),
+                                           (get_node_membership_node, gtab_node, [('network', 'network')]),
+                                           (prep_spherical_nodes_node, gtab_node, [('node_size', 'node_size')]),
                                            (get_node_membership_node, node_gen_node,
                                             [('net_coords', 'coords'), ('net_labels', 'labels')]),
                                            ])
@@ -2341,6 +2344,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                            (fetch_nodes_and_labels_node, node_gen_node,
                                             [('coords', 'coords'),
                                              ('labels', 'labels')]),
+                                           (inputnode, gtab_node, [('network', 'network')]),
+                                           (prep_spherical_nodes_node, gtab_node, [('node_size', 'node_size')]),
                                            (inputnode, run_tracking_node,
                                             [('network', 'network')])
                                            ])
@@ -2387,6 +2392,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                              ('net_parcel_list', 'parcel_list')]),
                                            (fetch_nodes_and_labels_node, save_coords_and_labels_node,
                                             [('dir_path', 'dir_path')]),
+                                           (get_node_membership_node, gtab_node, [('network', 'network')]),
+                                           (inputnode, gtab_node, [('node_size', 'node_size')]),
                                            (get_node_membership_node, save_coords_and_labels_node,
                                             [('net_coords', 'coords'), ('net_labels', 'labels'),
                                              ('network', 'network')]),
@@ -2394,7 +2401,9 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         else:
             dmri_connectometry_wf.connect([(fetch_nodes_and_labels_node, node_gen_node,
                                             [('coords', 'coords'), ('labels', 'labels'),
-                                             ('parcel_list', 'parcel_list')])
+                                             ('parcel_list', 'parcel_list')]),
+                                           (inputnode, gtab_node, [('network', 'network')]),
+                                           (inputnode, gtab_node, [('node_size', 'node_size')]),
                                            ])
 
         dmri_connectometry_wf.connect([(inputnode, run_tracking_node,

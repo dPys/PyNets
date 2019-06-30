@@ -1101,7 +1101,7 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
         are used as ROI's for tracking.
     coords : list
         List of (x, y, z) tuples in mm-space corresponding to a coordinate atlas used or
-        which represent the center-of-mass of each parcellation node..
+        which represent the center-of-mass of each parcellation node.
     template_mask : str
         Path to binarized version of standard (MNI)-space template Nifti1Image file.
 

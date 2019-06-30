@@ -5,10 +5,11 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.filterwarnings("ignore")
 import numpy as np
-np.warnings.filterwarnings('ignore')
 import nibabel as nib
+warnings.filterwarnings("ignore")
+np.warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
