@@ -97,21 +97,23 @@ def test_check_est_path_existence():
 
 
 def test_collect_pandas_df():
+    base_dir = str(Path(__file__).parent/"examples")
+    dir_path = base_dir + '/002/dmri'
     multi_nets = ['Default', 'SalVentAttn']
     network = 'Default'
     ID = '002'
     plot_switch = True
     multimodal = False
-    net_pickle_mt_list = ['/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.15_parc',
-                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.16_parc',
-                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.17_parc',
-                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.18_parc',
-                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.19_parc',
-                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.2_parc',
-                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_sps_0.15_parc',
-                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_sps_0.16_parc',
-                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_sps_0.17_parc',
-                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_sps_0.18_parc',
-                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_sps_0.19_parc',
-                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_sps_0.2_parc']
+    net_pickle_mt_list = [dir_path + '/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.15_parc',
+                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.16_parc',
+                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.17_parc',
+                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.18_parc',
+                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.19_parc',
+                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.2_parc',
+                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_sps_0.15_parc',
+                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_sps_0.16_parc',
+                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_sps_0.17_parc',
+                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_sps_0.18_parc',
+                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_sps_0.19_parc',
+                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_sps_0.2_parc']
     utils.collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, multimodal)

@@ -341,6 +341,7 @@ class DmriReg(object):
     A Class for Registering an atlas to a subject's MNI-aligned T1w image in native diffusion space.
     """
     def __init__(self, basedir_path, fa_path, B0_mask, anat_file, vox_size, simple):
+        import pkg_resources
         self.simple = simple
         self.fa_path = fa_path
         self.B0_mask = B0_mask
@@ -394,14 +395,15 @@ class DmriReg(object):
         self.vent_csf_in_dwi = "%s%s%s%s" % (self.reg_path_img, '/', self.t1w_name, "_vent_csf_in_dwi.nii.gz")
         self.vent_mask_mni = "%s%s" % (self.reg_path_img, "/vent_mask_mni.nii.gz")
         self.vent_mask_t1w = "%s%s" % (self.reg_path_img, "/vent_mask_t1w.nii.gz")
-        self.mni_atlas = "%s%s%s%s" % (FSLDIR, '/data/atlases/HarvardOxford/HarvardOxford-sub-prob-', vox_size,
-                                       '.nii.gz')
-        self.input_mni = "%s%s%s%s" % (FSLDIR, '/data/standard/MNI152_T1_', vox_size, '.nii.gz')
-        self.input_mni_brain = "%s%s%s%s" % (FSLDIR, '/data/standard/MNI152_T1_', vox_size, '_brain.nii.gz')
-        self.input_mni_mask = "%s%s%s%s" % (FSLDIR, '/data/standard/MNI152_T1_', vox_size, '_brain_mask.nii.gz')
+        self.mni_atlas = pkg_resources.resource_filename("pynets", "atlases/HarvardOxford-sub-prob-" + vox_size +
+                                                         ".nii.gz")
+        self.input_mni = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size + ".nii.gz")
+        self.input_mni_brain = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size +
+                                                               "_brain.nii.gz")
+        self.input_mni_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size +
+                                                              "_brain_mask.nii.gz")
         self.wm_gm_int_in_dwi = "%s%s%s%s" % (self.reg_path_img, '/', self.t1w_name, "_wm_gm_int_in_dwi.nii.gz")
         self.wm_gm_int_in_dwi_bin = "%s%s%s%s" % (self.reg_path_img, '/', self.t1w_name, "_wm_gm_int_in_dwi_bin.nii.gz")
-        self.input_mni_sched = "%s%s" % (FSLDIR, '/etc/flirtsch/T1_2_MNI152_2mm.cnf')
 
         # Create empty tmp directories that do not yet exist
         reg_dirs = [self.tmp_path, self.reg_path, self.anat_path, self.reg_path_mat, self.reg_path_warp,
@@ -461,8 +463,7 @@ class DmriReg(object):
                 print('Running non-linear registration: T1w-->MNI ...')
                 # Use FNIRT to nonlinearly align T1 to MNI template
                 regutils.align_nonlinear(self.t1w_brain, self.input_mni, xfm=self.t12mni_xfm_init,
-                                         out=self.t1_aligned_mni, warp=self.warp_t1w2mni, ref_mask=self.input_mni_mask,
-                                         config=self.input_mni_sched)
+                                         out=self.t1_aligned_mni, warp=self.warp_t1w2mni, ref_mask=self.input_mni_mask)
 
                 # Get warp from MNI -> T1
                 regutils.inverse_warp(self.t1w_brain, self.mni2t1w_warp, self.warp_t1w2mni)
@@ -655,6 +656,7 @@ class FmriReg(object):
     """
 
     def __init__(self, basedir_path, anat_file, vox_size):
+        import pkg_resources
         self.t1w = anat_file
         self.vox_size = vox_size
         self.t1w_name = 't1w'
@@ -677,10 +679,11 @@ class FmriReg(object):
         self.map_path = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_seg")
         self.gm_mask = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_gm.nii.gz")
         self.gm_mask_thr = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_gm_thr.nii.gz")
-        self.input_mni = "%s%s%s%s" % (FSLDIR, '/data/standard/MNI152_T1_', vox_size, '.nii.gz')
-        self.input_mni_brain = "%s%s%s%s" % (FSLDIR, '/data/standard/MNI152_T1_', vox_size, '_brain.nii.gz')
-        self.input_mni_mask = "%s%s%s%s" % (FSLDIR, '/data/standard/MNI152_T1_', vox_size, '_brain_mask.nii.gz')
-        self.input_mni_sched = "%s%s" % (FSLDIR, '/etc/flirtsch/T1_2_MNI152_2mm.cnf')
+        self.input_mni = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size + ".nii.gz")
+        self.input_mni_brain = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size +
+                                                               "_brain.nii.gz")
+        self.input_mni_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size +
+                                                              "_brain_mask.nii.gz")
 
         # Create empty tmp directories that do not yet exist
         reg_dirs = [self.tmp_path, self.reg_path, self.anat_path, self.reg_path_mat, self.reg_path_warp,
@@ -704,9 +707,9 @@ class FmriReg(object):
         self.t1w_brain = regutils.check_orient_and_dims(self.t1w_brain, self.vox_size)
         self.gm_mask = regutils.check_orient_and_dims(self.gm_mask, self.vox_size)
 
-        # Threshold WM to binary in dwi space
+        # Threshold GM to binary in dwi space
         t_img = load_img(self.gm_mask)
-        mask = math_img('img > 0.1', img=t_img)
+        mask = math_img('img > 0.05', img=t_img)
         mask.to_filename(self.gm_mask_thr)
 
         # Threshold T1w brain to binary in anat space
@@ -730,7 +733,7 @@ class FmriReg(object):
             print('Running non-linear registration: T1w-->MNI ...')
             # Use FNIRT to nonlinearly align T1 to MNI template
             regutils.align_nonlinear(self.t1w_brain, self.input_mni, xfm=self.t12mni_xfm_init, out=self.t1_aligned_mni,
-                                     warp=self.warp_t1w2mni, ref_mask=self.input_mni_mask, config=self.input_mni_sched)
+                                     warp=self.warp_t1w2mni, ref_mask=self.input_mni_mask)
 
             # Get warp from MNI -> T1
             regutils.inverse_warp(self.t1w_brain, self.mni2t1w_warp, self.warp_t1w2mni)
@@ -772,7 +775,7 @@ class FmriReg(object):
         return aligned_atlas_t1mni_gm
 
 
-def register_all_dwi(basedir_path, fa_path, B0_mask, anat_file, gtab_file, dwi_file, vox_size='2mm', simple=False,
+def register_all_dwi(basedir_path, fa_path, B0_mask, anat_file, gtab_file, dwi_file, vox_size, simple=False,
                      overwrite=True):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
@@ -938,7 +941,7 @@ def register_atlas_dwi(uatlas, atlas, node_size, basedir_path, fa_path, B0_mask,
     return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni, uatlas, atlas, coords, labels, node_size, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, fa_path, gtab_file, B0_mask, dwi_file
 
 
-def register_all_fmri(basedir_path, anat_file, vox_size='2mm', overwrite=True):
+def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=True):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 
@@ -970,7 +973,7 @@ def register_all_fmri(basedir_path, anat_file, vox_size='2mm', overwrite=True):
     return
 
 
-def register_atlas_fmri(uatlas, atlas, node_size, basedir_path, anat_file, vox_size='2mm'):
+def register_atlas_fmri(uatlas, atlas, node_size, basedir_path, anat_file, vox_size):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 

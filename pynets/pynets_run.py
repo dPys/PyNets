@@ -304,6 +304,12 @@ def get_parser():
                         action='store_true',
                         help='Optionally use this flag if you wish to embed the ensemble(s) produced into omnibus '
                              'feature vector(s).\n')
+    parser.add_argument('-vox',
+                        default='2mm',
+                        nargs=1,
+                        choices=['1mm', '2mm'],
+                        help='Optionally use this flag if you wish to change the resolution of the images in the '
+                             'workflow. Default is 2mm.\n')
     parser.add_argument('-plt',
                         default=False,
                         action='store_true',
@@ -578,6 +584,7 @@ def build_workflow(args, retval):
     else:
         multi_directget = None
     embed = args.embed
+    vox_size = args.vox
 
     print('\n\n\n------------------------------------------------------------------------\n')
 
@@ -1203,7 +1210,7 @@ def build_workflow(args, retval):
                                clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples,
                                curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
                                maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict, embed,
-                               multi_directget, multimodal, hpass, hpass_list, template, template_mask):
+                               multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size):
         """A function interface for generating a single-subject workflow"""
         if (func_file is not None) and (dwi_file is None):
             wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_fmri_', random.randint(1, 1000)))
@@ -1259,7 +1266,8 @@ def build_workflow(args, retval):
                                     clust_type, clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec,
                                     target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
                                     max_length, maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict,
-                                    embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask)
+                                    embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
+                                    vox_size)
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
@@ -1393,7 +1401,7 @@ def build_workflow(args, retval):
                          c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
                          overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
                          directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list,
-                         template, template_mask):
+                         template, template_mask, vox_size):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         wf_multi = pe.Workflow(name="%s%s" % ('wf_multisub_', random.randint(1001, 9000)))
 
@@ -1441,7 +1449,7 @@ def build_workflow(args, retval):
                 max_length=max_length, maxcrossing=maxcrossing, life_run=life_run, min_length=min_length,
                 directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, embed=embed,
                 multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
-                template=template, template_mask=template_mask)
+                template=template, template_mask=template_mask, vox_size=vox_size)
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
@@ -1483,7 +1491,7 @@ def build_workflow(args, retval):
                                     block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list,
                                     step_list, overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing,
                                     life_run, min_length, directget, tiss_class, runtime_dict, embed, multi_directget,
-                                    multimodal, hpass, hpass_list, template, template_mask)
+                                    multimodal, hpass, hpass_list, template, template_mask, vox_size)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1551,7 +1559,7 @@ def build_workflow(args, retval):
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
                                     directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass,
-                                    hpass_list, template, template_mask)
+                                    hpass_list, template, template_mask, vox_size)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1641,7 +1649,7 @@ def main():
     try:
         from pynets.utils import do_dir_path
     except ImportError:
-        print('PyNets not installed! Ensure that you are using the correct python version.')
+        print('PyNets not installed! Ensure that you are referencing the correct site-packages and using Python3.5+')
 
     if len(sys.argv) < 1:
         print("\nMissing command-line inputs! See help options with the -h flag.\n")
@@ -1661,7 +1669,7 @@ def main():
             if p.exitcode != 0:
                 sys.exit(p.exitcode)
     except:
-        print('\nWARNING: Upgrade to python3 for forkserver functionality...')
+        print('\nWARNING: Forkserver failed to initialize. Are you using Python3.5+ ?')
         retval = dict()
         build_workflow(args, retval)
 

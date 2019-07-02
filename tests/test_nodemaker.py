@@ -6,7 +6,6 @@ Created on Wed Dec 27 16:19:14 2017
 @authors: Derek Pisner & Ryan Hammonds
 
 """
-import os
 import numpy as np
 import time
 import nibabel as nib
@@ -430,15 +429,13 @@ def test_RSN_fetch_nodes_and_labels2():
 
 
 def test_create_spherical_roi_volumes():
-    try:
-        FSLDIR = os.environ['FSLDIR']
-    except KeyError:
-        print('FSLDIR environment variable not set!')
+    import pkg_resources
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
     node_size = 2
     vox_size = '2mm'
-    template_mask = "%s%s%s%s" % (FSLDIR, '/data/standard/MNI152_T1_', vox_size, '_brain_mask.nii.gz')
+    template_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size +
+                                                    "_brain_mask.nii.gz")
     coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     file_ = open(coords_file, 'rb')
     coords = pickle.load(file_)
@@ -464,12 +461,9 @@ def test_get_sphere():
 
 
 def test_mask_roi():
-    try:
-        FSLDIR = os.environ['FSLDIR']
-    except KeyError:
-        print('FSLDIR environment variable not set!')
+    import pkg_resources
     vox_size = '2mm'
-    mask = "%s%s%s%s" % (FSLDIR, '/data/standard/MNI152_T1_', vox_size, '_brain_mask.nii.gz')
+    mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size + "_brain_mask.nii.gz")
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
     img_file = dir_path + '/002.nii.gz'

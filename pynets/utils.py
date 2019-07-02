@@ -44,6 +44,8 @@ def export_to_pandas(csv_loc, ID, network, roi):
     import warnings
     warnings.filterwarnings("ignore")
     import pandas as pd
+    import os
+    from pathlib import Path
     try:
         import cPickle as pickle
     except ImportError:
@@ -53,18 +55,14 @@ def export_to_pandas(csv_loc, ID, network, roi):
     if op.isfile(csv_loc) is False:
         raise FileNotFoundError('\nERROR: Missing netmetrics csv file output. Cannot export to pandas df!')
 
-    if roi is not None:
-        if network is not None:
-            met_list_picke_path = "%s%s%s%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_met_list_', network, '_',
-                                                  str(op.basename(roi).split('.')[0]))
-        else:
-            met_list_picke_path = "%s%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_met_list_',
-                                              str(op.basename(roi).split('.')[0]))
-    else:
-        if network is not None:
-            met_list_picke_path = "%s%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_met_list_', network)
-        else:
-            met_list_picke_path = "%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_met_list')
+    namer_dir = str(Path(op.dirname(op.abspath(csv_loc))).parent) + '/metrickl'
+
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    met_list_picke_path = "%s%s%s%s" % (namer_dir, '/net_met_list',
+                                        '%s' % ('_' + network if network is not None else ''),
+                                        '%s' % ('_' + op.basename(roi).split('.')[0] if roi is not None else ''))
 
     metric_list_names = pickle.load(open(met_list_picke_path, 'rb'))
     df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
@@ -147,18 +145,23 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
     est_path : str
         File path to .npy file containing graph with all specified combinations of hyperparameter characteristics.
     """
+    import os
     if (node_size is None) and (parc is True):
         node_size = '_parc'
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_',
-                                                       '%s' % (network + '_' if network is not None else ''),
-                                                       '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                       'est_', conn_model, '_', thr, thr_type,
-                                                       '%s' % ("%s%s" % (node_size, '_mm') if node_size != '_parc' else ''),
-                                                       "%s" % ("%s%s" % (int(c_boot), '_nb') if float(c_boot) > 0 else ''),
-                                                       "%s" % ("%s%s" % (smooth, '_fwhm') if float(smooth) > 0 else ''),
-                                                       "%s" % ("%s%s" % (hpass, '_Hz') if hpass is not None else ''),
-                                                       '.npy')
+    namer_dir = dir_path + '/graphs'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
+                                                     '%s' % (network + '_' if network is not None else ''),
+                                                     '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                     'est_', conn_model, '_', thr, thr_type,
+                                                     '%s' % ("%s%s" % (node_size, '_mm') if node_size != '_parc' else ''),
+                                                     "%s" % ("%s%s" % (int(c_boot), '_nb') if float(c_boot) > 0 else ''),
+                                                     "%s" % ("%s%s" % (smooth, '_fwhm') if float(smooth) > 0 else ''),
+                                                     "%s" % ("%s%s" % (hpass, '_Hz') if hpass is not None else ''),
+                                                     '.npy')
 
     return est_path
 
@@ -202,16 +205,21 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
     est_path : str
         File path to .npy file containing graph with thresholding applied.
     """
+    import os
     if (node_size is None) and (parc is True):
         node_size = '_parc'
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_',
-                                                     '%s' % (network + '_' if network is not None else ''),
-                                                     '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                     'est_', conn_model, '_', thr, thr_type,
-                                                     '%s' % ("%s%s" % (node_size, '_mm') if node_size != '_parc' else ''),
-                                                     "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
-                                                     "%s%s" % (track_type, '_track'), '.npy')
+    namer_dir = dir_path + '/graphs'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
+                                                   '%s' % (network + '_' if network is not None else ''),
+                                                   '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                   'est_', conn_model, '_', thr, thr_type,
+                                                   '%s' % ("%s%s" % (node_size, '_mm') if node_size != '_parc' else ''),
+                                                   "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
+                                                   "%s%s" % (track_type, '_track'), '.npy')
     return est_path
 
 
@@ -239,7 +247,13 @@ def create_unthr_path(ID, network, conn_model, roi, dir_path):
     unthr_path : str
         File path to .npy file containing raw graph preceding threshoolding.
     """
-    unthr_path = "%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
+    import os
+
+    namer_dir = dir_path + '/graphs'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    unthr_path = "%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
                                          '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                          'est_', conn_model, '_raw_mat.npy')
     return unthr_path
@@ -276,10 +290,17 @@ def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size):
     out_path : str
         File path to .csv with graph metrics.
     """
+    import os
+    from pathlib import Path
+
+    namer_dir = str(Path(dir_path).parent) + '/netmetrics'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
     if node_size is None:
         node_size = 'parc'
 
-    out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_net_mets_',
+    out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_net_mets_',
                                                '%s' % (network + '_' if network is not None else ''),
                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                conn_model, '_', thr, '_', node_size,
@@ -582,18 +603,18 @@ def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, node_size_
     roi_iterlist = [roi_func, roi_struct]
     norm_iterlist = [norm_func, norm_struct]
     binary_iterlist = [binary_func, binary_struct]
-    print('\n\nParam-iters:\n')
-    print(conn_model_iterlist)
-    print(est_path_iterlist)
-    print(network_iterlist)
-    print(node_size_iterlist)
-    print(thr_iterlist)
-    print(prune_iterlist)
-    print(ID_iterlist)
-    print(roi_iterlist)
-    print(norm_iterlist)
-    print(binary_iterlist)
-    print('\n\n')
+    # print('\n\nParam-iters:\n')
+    # print(conn_model_iterlist)
+    # print(est_path_iterlist)
+    # print(network_iterlist)
+    # print(node_size_iterlist)
+    # print(thr_iterlist)
+    # print(prune_iterlist)
+    # print(ID_iterlist)
+    # print(roi_iterlist)
+    # print(norm_iterlist)
+    # print(binary_iterlist)
+    # print('\n\n')
     return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 
 
@@ -632,6 +653,8 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
     import warnings
     warnings.filterwarnings("ignore")
     import os
+    import yaml
+    from pathlib import Path
     from pynets.utils import flatten
     from sklearn.feature_selection import VarianceThreshold
     from graspy.embed import OmnibusEmbed, ClassicalMDS
@@ -669,8 +692,13 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
             mds_fit = mds.fit_transform(omni_fit)
 
         # Transform omnibus tensor into dissimilarity feature
-        dir_path = os.path.dirname(graph_path)
-        out_path = "%s%s%s%s%s%s" % (dir_path, '/', list(flatten(ID))[0], '_omnetome_', atlas, '.npy')
+        dir_path = str(Path(os.path.dirname(graph_path)).parent)
+
+        namer_dir = dir_path + '/embeddings'
+        if not os.path.isdir(namer_dir):
+            os.mkdir(namer_dir)
+
+        out_path = "%s%s%s%s%s%s" % (namer_dir, '/', list(flatten(ID))[0], '_omnetome_', atlas, '.npy')
         print('Saving...')
         np.save(out_path, mds_fit)
         del mds, mds_fit, omni, omni_fit
@@ -681,10 +709,17 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
     for key in parcel_dict:
         parcel_dict[key] = []
 
-    func_models = ['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
-                   'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso']
-
-    struct_models = ['csa', 'tensor', 'csd']
+    # Available functional and structural connectivity models
+    with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            func_models = hardcoded_params['available_models']['func_models']
+        except KeyError:
+            print('ERROR: available functional models not sucessfully extracted from runconfig.yaml')
+        try:
+            struct_models = hardcoded_params['available_models']['struct_models']
+        except KeyError:
+            print('ERROR: available structural models not sucessfully extracted from runconfig.yaml')
 
     if multimodal is True:
         est_path_iterlist_dwi = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in
@@ -792,14 +827,10 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
             result = pd.concat([df_concatted, df_concatted_std], axis=1)
             df_concatted_final = result.reindex(sorted(result.columns), axis=1)
             print('\nConcatenating dataframes for ' + str(ID) + '...\n')
-            if network:
-                net_pick_out_path = "%s%s%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle, '_',
-                                                          network, '_mean')
-            else:
-                net_pick_out_path = "%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle, '_mean')
+            net_pick_out_path = "%s%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle,
+                                                    '%s' % ('_' + network if network is not None else ''), '_mean')
             df_concatted_final.to_pickle(net_pick_out_path)
             df_concatted_final.to_csv("%s%s" % (net_pick_out_path, '.csv'), index=False)
-
         except RuntimeWarning:
             print("%s%s%s" % ('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ', str(ID), '!\n'))
             pass
@@ -835,13 +866,21 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, 
     """
     import warnings
     warnings.filterwarnings("ignore")
+    from pathlib import Path
+    import yaml
     from pynets.utils import collect_pandas_df_make, flatten
 
-    func_models = ['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
-                   'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso']
-
-    struct_models = ['csa', 'tensor', 'csd']
-
+    # Available functional and structural connectivity models
+    with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            func_models = hardcoded_params['available_models']['func_models']
+        except KeyError:
+            print('ERROR: available functional models not sucessfully extracted from runconfig.yaml')
+        try:
+            struct_models = hardcoded_params['available_models']['struct_models']
+        except KeyError:
+            print('ERROR: available structural models not sucessfully extracted from runconfig.yaml')
     net_pickle_mt_list = list(flatten(net_pickle_mt_list))
 
     if multi_nets is not None:
@@ -849,20 +888,20 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, 
         for network in multi_nets:
             net_pickle_mt_list = list(set([i for i in net_pickle_mt_list_nets if network in i]))
             if multimodal is True:
-                net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0]
+                net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('mets_')[1].split('_')[0]
                                                    in struct_models]))
                 collect_pandas_df_make(net_pickle_mt_list_dwi, ID, network, plot_switch)
                 net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if
-                                                    i.split('metrics_')[1].split('_')[0] in func_models]))
+                                                    i.split('mets_')[1].split('_')[0] in func_models]))
                 collect_pandas_df_make(net_pickle_mt_list_func, ID, network, plot_switch)
             else:
                 collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
     else:
         if multimodal is True:
-            net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in
+            net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('mets_')[1].split('_')[0] in
                                                struct_models]))
             collect_pandas_df_make(net_pickle_mt_list_dwi, ID, network, plot_switch)
-            net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0]
+            net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if i.split('mets_')[1].split('_')[0]
                                                 in func_models]))
             collect_pandas_df_make(net_pickle_mt_list_func, ID, network, plot_switch)
         else:
@@ -924,16 +963,16 @@ def list_first_mems(est_path, network, thr, dir_path, node_size, smooth, c_boot,
     thr = thr[0]
     dir_path = dir_path[0]
     node_size = node_size[0]
-    print('\n\n\n\n')
-    print(est_path)
-    print(network)
-    print(thr)
-    print(dir_path)
-    print(node_size)
-    print(smooth)
-    print(c_boot)
-    print(hpass)
-    print('\n\n\n\n')
+    # print('\n\n\n\n')
+    # print(est_path)
+    # print(network)
+    # print(thr)
+    # print(dir_path)
+    # print(node_size)
+    # print(smooth)
+    # print(c_boot)
+    # print(hpass)
+    # print('\n\n\n\n')
     return est_path, network, thr, dir_path, node_size, smooth, c_boot, hpass
 
 
@@ -997,12 +1036,18 @@ def save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network):
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
+    import os
+
+    namer_dir = dir_path + '/nodes'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
     # Save coords to pickle
-    coord_path = "%s%s%s%s" % (dir_path, '/', network, '_coords_rsn.pkl')
+    coord_path = "%s%s%s%s" % (namer_dir, '/', network, '_coords_rsn.pkl')
     with open(coord_path, 'wb') as f:
         pickle.dump(coords, f, protocol=2)
     # Save labels to pickle
-    labels_path = "%s%s%s%s" % (dir_path, '/', network, '_labels_rsn.pkl')
+    labels_path = "%s%s%s%s" % (namer_dir, '/', network, '_labels_rsn.pkl')
     with open(labels_path, 'wb') as f:
         pickle.dump(labels, f, protocol=2)
     return coord_path, labels_path
@@ -1033,11 +1078,17 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
         File path to Nifti1Image consisting of a 3D array with integer voxel intensities corresponding to ROI
         membership.
     """
+    import os
     import warnings
     warnings.filterwarnings("ignore")
-    net_parcels_nii_path = "%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_parcels_masked_',
-                                               '%s' % (network + '_' if network is not None else ''),
-                                               '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+
+    namer_dir = dir_path + '/parcellations'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    net_parcels_nii_path = "%s%s%s%s%s%s%s" % (namer_dir, '/', str(ID), '_parcels_masked',
+                                               '%s' % ('_' + network if network is not None else ''),
+                                               '%s' % ('_' + op.basename(roi).split('.')[0] if roi is not None else ''),
                                                '.nii.gz')
 
     nib.save(net_parcels_map_nifti, net_parcels_nii_path)
@@ -1046,7 +1097,7 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
 
 def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
     """
-    This function takes a Nifti1Image parcellation object resulting from some form of masking and saves it to disk.
+    This function saves the time-series 4D numpy array to disk as a .npy file.
 
     Parameters
     ----------
@@ -1070,8 +1121,13 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
     out_path_ts : str
         Path to .npy file containing array of fMRI time-series extracted from nodes.
     """
-    # Save time series as txt file
-    out_path_ts = "%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
+    import os
+    namer_dir = dir_path + '/timeseries'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    # Save time series as npy file
+    out_path_ts = "%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
                                         '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                         '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
                                         'rsn_net_ts.npy')
@@ -1193,11 +1249,15 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
 
     outdir = op.dirname(dwi_file)
 
-    B0 = "%s%s" % (outdir, "/b0.nii.gz")
-    B0_bet = "%s%s" % (outdir, "/b0_bet.nii.gz")
-    B0_mask = "%s%s" % (outdir, "/B0_bet_mask.nii.gz")
-    bvec_rescaled = "%s%s" % (outdir, "/bvec_scaled.bvec")
-    gtab_file = "%s%s" % (outdir, "/gtab.pkl")
+    namer_dir = outdir + '/dmri_tmp'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    B0 = "%s%s" % (namer_dir, "/b0.nii.gz")
+    B0_bet = "%s%s" % (namer_dir, "/b0_bet.nii.gz")
+    B0_mask = "%s%s" % (namer_dir, "/B0_bet_mask.nii.gz")
+    bvec_rescaled = "%s%s" % (namer_dir, "/bvec_scaled.bvec")
+    gtab_file = "%s%s" % (namer_dir, "/gtab.pkl")
 
     # loading bvecs/bvals
     bvals, bvecs = read_bvals_bvecs(fbval, fbvec)
@@ -1236,7 +1296,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
     b0s_bbr = []
     for b0 in b0s:
         print(b0)
-        b0_bbr = "{}/{}_b0.nii.gz".format(outdir, str(b0))
+        b0_bbr = "{}/{}_b0.nii.gz".format(namer_dir, str(b0))
         cmds.append('fslroi {} {} {} 1'.format(dwi_file, b0_bbr, str(b0), ' 1'))
         b0s_bbr.append(b0_bbr)
 

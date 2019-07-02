@@ -30,3 +30,17 @@ nilearn_coord_atlases:
 nilearn_prob_atlases:
     - 'atlas_msdl'
     - 'atlas_pauli_2017'
+available_models:
+    func_models:
+      - 'corr'
+      - 'sps'
+      - 'cov'
+      - 'partcorr'
+      - 'QuicGraphicalLasso'
+      - 'QuicGraphicalLassoCV'
+      - 'QuicGraphicalLassoEBIC'
+      - 'AdaptiveQuicGraphicalLasso'
+    struct_models:
+      - 'csa'
+      - 'tensor'
+      - 'csd'

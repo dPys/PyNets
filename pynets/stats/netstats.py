@@ -5,7 +5,6 @@ Copyright (C) 2018
 @author: Derek Pisner
 """
 from __future__ import division
-import os
 import numpy as np
 import networkx as nx
 import warnings
@@ -757,6 +756,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     warnings.filterwarnings("ignore")
     import pandas as pd
     import yaml
+    import os
+    import os.path as op
     try:
         import cPickle as pickle
     except ImportError:
@@ -1191,15 +1192,14 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
             print('Rich club coefficient cannot be calculated for graph G')
             pass
 
-    if roi:
-        met_list_picke_path = "%s%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_met_list', "%s" %
-                                            ("%s%s%s" % ('_', network, '_') if network else "_"),
-                                            os.path.basename(roi).split('.')[0])
-    else:
-        if network:
-            met_list_picke_path = "%s%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_met_list_', network)
-        else:
-            met_list_picke_path = "%s%s" % (os.path.dirname(os.path.abspath(est_path)), '/net_met_list')
+    namer_dir = str(Path(op.dirname(op.abspath(est_path))).parent) + '/metrickl'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    met_list_picke_path = "%s%s%s%s" % (namer_dir, '/net_met_list',
+                                        '%s' % ('_' + network if network is not None else ''),
+                                        '%s' % ('_' + op.basename(roi).split('.')[0] if roi is not None else ''))
+
     pickle.dump(metric_list_names, open(met_list_picke_path, 'wb'), protocol=2)
 
     # And save results to csv

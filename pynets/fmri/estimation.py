@@ -353,7 +353,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
     print("%s%s%s" % ('Applying high-pass filter: ', hpass, ' Hz\n'))
 
-    # Save time series as txt file
+    # Save time series as file
     utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
     node_size = None
     return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass
@@ -466,6 +466,6 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
     print("%s%s%s" % ('Applying high-pass filter: ', hpass, ' Hz\n'))
 
-    # Save time series as txt file
+    # Save time series as file
     utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
     return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass

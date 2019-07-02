@@ -7,8 +7,6 @@ Copyright (C) 2018
 import warnings
 import numpy as np
 warnings.filterwarnings("ignore")
-np.warnings.filterwarnings('ignore')
-warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas, multi_nets,
@@ -20,26 +18,30 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                       overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length, directget,
                       tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
-                      template_mask, vox_size='2mm'):
+                      template_mask, vox_size):
     """A Meta-Interface for selecting nested workflows to link into a given single-subject workflow"""
     import warnings
     warnings.filterwarnings("ignore")
-    import os
+    import yaml
+    from pathlib import Path
+    import pkg_resources
     from pynets import workflows
     from nipype import Workflow
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.utils import pass_meta_ins, pass_meta_outs, pass_meta_ins_multi
-    try:
-        FSLDIR = os.environ['FSLDIR']
-    except KeyError:
-        print('FSLDIR environment variable not set!')
 
     # Available functional and structural connectivity models
-    func_models = ['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
-                   'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso']
-
-    struct_models = ['csa', 'tensor', 'csd']
+    with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            func_models = hardcoded_params['available_models']['func_models']
+        except KeyError:
+            print('ERROR: available functional models not sucessfully extracted from runconfig.yaml')
+        try:
+            struct_models = hardcoded_params['available_models']['struct_models']
+        except KeyError:
+            print('ERROR: available structural models not sucessfully extracted from runconfig.yaml')
 
     # Handle modality logic
     if func_file and dwi_file:
@@ -75,10 +77,11 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
 
     # Set paths to templates
     if template is None:
-        template = "%s%s%s%s" % (FSLDIR, '/data/standard/MNI152_T1_', vox_size, '_brain.nii.gz')
+        template = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size + "_brain.nii.gz")
 
     if template_mask is None:
-        template_mask = "%s%s%s%s" % (FSLDIR, '/data/standard/MNI152_T1_', vox_size, '_brain_mask.nii.gz')
+        template_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size +
+                                                        "_brain_mask.nii.gz")
 
     # Workflow 1: Structural connectome
     if dwi_file is not None:
@@ -792,9 +795,11 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                                       'network'],
                                                         function=nodemaker.get_node_membership, imports=import_list),
                                            name="get_node_membership_node")
+
         save_coords_and_labels_node = pe.Node(niu.Function(input_names=['coords', 'labels', 'dir_path', 'network'],
                                                            function=utils.save_RSN_coords_and_labels_to_pickle,
                                                            imports=import_list), name="save_coords_and_labels_node")
+
         if multi_nets:
             get_node_membership_node_iterables = []
             network_iterables = ("network", multi_nets)
@@ -810,7 +815,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                        function=estimation.tens_mod_fa_est, imports=import_list), name="get_fa_node")
 
     register_node = pe.Node(niu.Function(input_names=['basedir_path', 'fa_path', 'B0_mask', 'anat_file',
-                                                      'gtab_file', 'dwi_file'],
+                                                      'gtab_file', 'dwi_file', 'vox_size'],
                                          output_names=['wm_gm_int_in_dwi', 'wm_in_dwi', 'gm_in_dwi', 'vent_csf_in_dwi',
                                                        'csf_mask_dwi', 'anat_file', 'B0_mask', 'fa_path',
                                                        'gtab_file', 'dwi_file'],
@@ -821,7 +826,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                             'basedir_path', 'fa_path', 'B0_mask', 'anat_file',
                                                             'wm_gm_int_in_dwi', 'coords', 'labels',
                                                             'gm_in_dwi', 'vent_csf_in_dwi', 'wm_in_dwi', 'gtab_file',
-                                                            'dwi_file'],
+                                                            'dwi_file', 'vox_size'],
                                                output_names=['dwi_aligned_atlas_wmgm_int', 'dwi_aligned_atlas',
                                                              'aligned_atlas_t1mni', 'uatlas', 'atlas',
                                                              'coords', 'labels', 'node_size', 'gm_in_dwi',
@@ -862,6 +867,9 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         else:
             dmri_connectometry_wf.connect([(inputnode, run_tracking_node, [('directget', 'directget')])])
         run_tracking_node.iterables = run_tracking_node_iterables
+    else:
+        dmri_connectometry_wf.connect([(inputnode, run_tracking_node, [('conn_model', 'conn_model'),
+                                                                       ('directget', 'directget')])])
 
     dsn_node = pe.Node(niu.Function(input_names=['streams', 'fa_path', 'dir_path', 'track_type', 'target_samples',
                                                  'conn_model', 'network', 'node_size', 'dens_thresh', 'ID', 'roi',
@@ -1200,10 +1208,10 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                      ('outfile', 'dwi_file')]),
         (inputnode, gtab_node, [('fbval', 'fbval')]),
         (fetch_nodes_and_labels_node, gtab_node, [('atlas', 'atlas')]),
-        (inputnode, register_node, [('basedir_path', 'basedir_path')]),
+        (inputnode, register_node, [('basedir_path', 'basedir_path'), ('vox_size', 'vox_size')]),
         (inputnode, check_orient_and_dims_anat_node, [('anat_file', 'infile'), ('vox_size', 'vox_size')]),
         (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_file')]),
-        (inputnode, register_atlas_node, [('basedir_path', 'basedir_path')]),
+        (inputnode, register_atlas_node, [('basedir_path', 'basedir_path'), ('vox_size', 'vox_size')]),
         (register_node, register_atlas_node, [('anat_file', 'anat_file'),
                                               ('gm_in_dwi', 'gm_in_dwi'),
                                               ('vent_csf_in_dwi', 'vent_csf_in_dwi'),
@@ -1513,7 +1521,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     from pynets.fmri import estimation, clustools
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
-
     try:
         FSLDIR = os.environ['FSLDIR']
     except KeyError:
@@ -1655,12 +1662,12 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                            imports=import_list),
                                               name="check_orient_and_dims_anat_node")
 
-    register_node = pe.Node(niu.Function(input_names=['basedir_path', 'anat_file'],
+    register_node = pe.Node(niu.Function(input_names=['basedir_path', 'anat_file', 'vox_size'],
                                          function=register.register_all_fmri, imports=import_list),
                             name="register_node")
 
     register_atlas_node = pe.Node(niu.Function(input_names=['uatlas', 'atlas', 'node_size',
-                                                            'basedir_path', 'anat_file'],
+                                                            'basedir_path', 'anat_file', 'vox_size'],
                                                output_names=['aligned_atlas_t1mni_gm'],
                                                function=register.register_atlas_fmri, imports=import_list),
                                   name="register_atlas_node")
@@ -2481,8 +2488,9 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             (inputnode, check_orient_and_dims_anat_node, [('anat_file', 'infile'), ('vox_size', 'vox_size')]),
             (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_file')]),
             (check_orient_and_dims_anat_node, register_atlas_node, [('outfile', 'anat_file')]),
-            (inputnode, register_node, [('basedir_path', 'basedir_path')]),
-            (inputnode, register_atlas_node, [('basedir_path', 'basedir_path'), ('node_size', 'node_size')]),
+            (inputnode, register_node, [('basedir_path', 'basedir_path'), ('vox_size', 'vox_size')]),
+            (inputnode, register_atlas_node, [('basedir_path', 'basedir_path'), ('node_size', 'node_size'),
+                                              ('vox_size', 'vox_size')]),
             (node_gen_node, register_atlas_node, [('atlas', 'atlas'), ('uatlas', 'uatlas')]),
             (register_atlas_node, extract_ts_node, [('aligned_atlas_t1mni_gm', 'uatlas')]),
         ])

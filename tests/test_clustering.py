@@ -18,7 +18,6 @@ def test_make_local_connectivity_tcorr():
     """
     Test_get_neighbors_1d functionality
     """
-
     print("testing make_local_connectivity_tcorr")
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
@@ -36,9 +35,7 @@ def test_make_local_connectivity_scorr():
     """
     Test for make_local_connectivity_scorr functionality
     """
-
     print("testing make_local_connectivity_scorr")
-
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
     mask_file = base_dir + '/triple_net_ICA_overlap_3_sig_bin.nii.gz'
