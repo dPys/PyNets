@@ -5,16 +5,14 @@ Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
-import warnings
 import os
 import os.path as op
 import nibabel as nib
 import numpy as np
 from pynets.stats.netstats import extractnetstats
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface
+import warnings
 warnings.filterwarnings("ignore")
-np.warnings.filterwarnings('ignore')
-warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def get_file():
@@ -22,17 +20,32 @@ def get_file():
     return base_path
 
 
-# Save net metric files to pandas dataframes interface
 def export_to_pandas(csv_loc, ID, network, roi):
     """
+    Saves network metric files to formatted pandas dataframes.
 
-    :param csv_loc:
-    :param ID:
-    :param network:
-    :param roi:
-    :return:
+    Parameters
+    ----------
+    csv_loc : str
+        File path to .csv containing graph metrics.
+    ID : str
+        A subject id or other unique identifier.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+
+    Returns
+    -------
+    net_pickle_mt : pkl
+        File path to pickled pandas dataframe.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import pandas as pd
+    import os
+    from pathlib import Path
     try:
         import cPickle as pickle
     except ImportError:
@@ -42,18 +55,14 @@ def export_to_pandas(csv_loc, ID, network, roi):
     if op.isfile(csv_loc) is False:
         raise FileNotFoundError('\nERROR: Missing netmetrics csv file output. Cannot export to pandas df!')
 
-    if roi is not None:
-        if network is not None:
-            met_list_picke_path = "%s%s%s%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_met_list_', network, '_',
-                                                  str(op.basename(roi).split('.')[0]))
-        else:
-            met_list_picke_path = "%s%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_met_list_',
-                                              str(op.basename(roi).split('.')[0]))
-    else:
-        if network is not None:
-            met_list_picke_path = "%s%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_met_list_', network)
-        else:
-            met_list_picke_path = "%s%s" % (op.dirname(op.abspath(csv_loc)), '/net_met_list')
+    namer_dir = str(Path(op.dirname(op.abspath(csv_loc))).parent) + '/metrickl'
+
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    met_list_picke_path = "%s%s%s%s" % (namer_dir, '/net_met_list',
+                                        '%s' % ('_' + network if network is not None else ''),
+                                        '%s' % ('_' + op.basename(roi).split('.')[0] if roi is not None else ''))
 
     metric_list_names = pickle.load(open(met_list_picke_path, 'rb'))
     df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
@@ -74,10 +83,19 @@ def export_to_pandas(csv_loc, ID, network, roi):
 
 def do_dir_path(atlas, in_file):
     """
+    Creates an atlas subdirectory from the base directory of the given subject's input file.
 
-    :param atlas:
-    :param in_file:
-    :return:
+    Parameters
+    ----------
+    atlas : str
+        Name of atlas parcellation used.
+    in_file : str
+        File path to -dwi or -func Nifti1Image object input.
+
+    Returns
+    -------
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
     """
     dir_path = "%s%s%s" % (op.dirname(op.realpath(in_file)), '/', atlas)
     if not op.exists(dir_path) and atlas is not None:
@@ -89,32 +107,61 @@ def do_dir_path(atlas, in_file):
 
 def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type, hpass, parc):
     """
+    Threshold a functional connectivity matrix using any of a variety of methods.
 
-    :param ID:
-    :param network:
-    :param conn_model:
-    :param thr:
-    :param roi:
-    :param dir_path:
-    :param node_size:
-    :param smooth:
-    :param c_boot:
-    :param thr_type:
-    :param hpass:
-    :return:
+    Parameters
+    ----------
+    ID : str
+        A subject id or other unique identifier.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    thr : float
+        A value, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    smooth : int
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    c_boot : int
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    thr_type : str
+        Type of thresholding performed (e.g. prop, abs, dens, mst, disp)
+    hpass : bool
+        High-pass filter values (Hz) to apply to node-extracted time-series.
+    parc : bool
+        Indicates whether to use parcels instead of coordinates as ROI nodes.
+
+    Returns
+    -------
+    est_path : str
+        File path to .npy file containing graph with all specified combinations of hyperparameter characteristics.
     """
+    import os
     if (node_size is None) and (parc is True):
-        node_size = 'parc'
+        node_size = '_parc'
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_',
-                                                       '%s' % (network + '_' if network is not None else ''),
-                                                       '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                       'est_', conn_model, '_', thr, thr_type, '_',
-                                                       '%s' % ("%s%s" % (node_size, 'mm_') if node_size != 'parc' else ''),
-                                                       "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
-                                                       "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''),
-                                                       "%s" % ("%s%s" % (hpass, 'Hz') if hpass is not None else ''),
-                                                       '.npy')
+    namer_dir = dir_path + '/graphs'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
+                                                     '%s' % (network + '_' if network is not None else ''),
+                                                     '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                     'est_', conn_model, '_', thr, thr_type,
+                                                     '%s' % ("%s%s" % (node_size, '_mm') if node_size != '_parc' else ''),
+                                                     "%s" % ("%s%s" % (int(c_boot), '_nb') if float(c_boot) > 0 else ''),
+                                                     "%s" % ("%s%s" % (smooth, '_fwhm') if float(smooth) > 0 else ''),
+                                                     "%s" % ("%s%s" % (hpass, '_Hz') if hpass is not None else ''),
+                                                     '.npy')
 
     return est_path
 
@@ -122,43 +169,91 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
 def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples, track_type, thr_type,
                          parc):
     """
+    Threshold a diffusion structural connectivity matrix using any of a variety of methods.
 
-    :param ID:
-    :param network:
-    :param conn_model:
-    :param thr:
-    :param roi:
-    :param dir_path:
-    :param node_size:
-    :param target_samples:
-    :param track_type:
-    :param thr_type:
-    :return:
+    Parameters
+    ----------
+    ID : str
+        A subject id or other unique identifier.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    thr : float
+        A value, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    target_samples : int
+        Total number of streamline samples specified to generate streams.
+    track_type : str
+        Tracking algorithm used (e.g. 'local' or 'particle').
+    thr_type : str
+        Type of thresholding performed (e.g. prop, abs, dens, mst, disp)
+    parc : bool
+        Indicates whether to use parcels instead of coordinates as ROI nodes.
+
+    Returns
+    -------
+    est_path : str
+        File path to .npy file containing graph with thresholding applied.
     """
+    import os
     if (node_size is None) and (parc is True):
-        node_size = 'parc'
+        node_size = '_parc'
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_',
-                                                     '%s' % (network + '_' if network is not None else ''),
-                                                     '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                     'est_', conn_model, '_', thr, thr_type, '_',
-                                                     '%s' % ("%s%s" % (node_size, 'mm_') if node_size != 'parc' else ''),
-                                                     "%s" % ("%s%s" % (int(target_samples), 'samples_') if float(target_samples) > 0 else ''),
-                                                     "%s%s" % (track_type, '_track'), '.npy')
+    namer_dir = dir_path + '/graphs'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
+                                                   '%s' % (network + '_' if network is not None else ''),
+                                                   '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                   'est_', conn_model, '_', thr, thr_type,
+                                                   '%s' % ("%s%s" % (node_size, '_mm') if node_size != '_parc' else ''),
+                                                   "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
+                                                   "%s%s" % (track_type, '_track'), '.npy')
     return est_path
 
 
 def create_unthr_path(ID, network, conn_model, roi, dir_path):
     """
+    Threshold a diffusion structural connectivity matrix using any of a variety of methods.
 
-    :param ID:
-    :param network:
-    :param conn_model:
-    :param roi:
-    :param dir_path:
-    :return:
+    Parameters
+    ----------
+    ID : str
+        A subject id or other unique identifier.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+
+    Returns
+    -------
+    unthr_path : str
+        File path to .npy file containing raw graph preceding threshoolding.
     """
-    unthr_path = "%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
+    import os
+
+    namer_dir = dir_path + '/graphs'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    unthr_path = "%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
                                          '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                          'est_', conn_model, '_raw_mat.npy')
     return unthr_path
@@ -167,19 +262,45 @@ def create_unthr_path(ID, network, conn_model, roi, dir_path):
 def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size):
     """
 
-    :param ID:
-    :param network:
-    :param conn_model:
-    :param thr:
-    :param roi:
-    :param dir_path:
-    :param node_size:
-    :return:
+    Create a csv path to save graph metrics.
+
+    Parameters
+    ----------
+    ID : str
+        A subject id or other unique identifier.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    thr : float
+        A value, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+
+    Returns
+    -------
+    out_path : str
+        File path to .csv with graph metrics.
     """
+    import os
+    from pathlib import Path
+
+    namer_dir = str(Path(dir_path).parent) + '/netmetrics'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
     if node_size is None:
         node_size = 'parc'
 
-    out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_net_mets_',
+    out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_net_mets_',
                                                '%s' % (network + '_' if network is not None else ''),
                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                conn_model, '_', thr, '_', node_size,
@@ -189,12 +310,19 @@ def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size):
 
 def save_mat(conn_matrix, est_path, fmt='npy'):
     """
+    Threshold a diffusion structural connectivity matrix using any of a variety of methods.
 
-    :param conn_matrix:
-    :param est_path:
-    :param fmt:
-    :return:
+    Parameters
+    ----------
+    conn_matrix : array
+        Adjacency matrix stored as an m x n array of nodes and edges.
+    est_path : str
+        File path to .npy file containing graph with thresholding applied.
+    fmt : str
+        Format to save connectivity matrix/graph (e.g. .npy, .pkl, .graphml, .txt, .ssv, .csv). Default is .npy.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import networkx as nx
     G = nx.from_numpy_array(conn_matrix)
     G.graph['ecount'] = nx.number_of_edges(G)
@@ -220,21 +348,72 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
 def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist,
                    prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=True,
                    multimodal=False):
-    from pynets.utils import build_omnetome, flatten
     """
+    Passes lists of iterable parameters as metadata.
 
-    :param conn_model_iterlist:
-    :param est_path_iterlist:
-    :param network_iterlist:
-    :param node_size_iterlist:
-    :param thr_iterlist:
-    :param prune_iterlist:
-    :param ID_iterlist:
-    :param roi_iterlist:
-    :param norm_iterlist:
-    :param binary_iterlist:
-    :return:
+    Parameters
+    ----------
+    conn_model_iterlist : list
+       List of connectivity estimation model parameters (e.g. corr for correlation, cov for covariance,
+       sps for precision covariance, partcorr for partial correlation). sps type is used by default.
+    est_path_iterlist : list
+        List of file paths to .npy file containing graph with thresholding applied.
+    network_iterlist : list
+        List of resting-state networks based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
+        study of brain subgraphs.
+    node_size_iterlist : list
+        List of spherical centroid node sizes in the case that coordinate-based centroids are used as ROI's.
+    thr_iterlist : list
+        List of values, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    prune_iterlist : list
+        List of booleans indicating whether final graphs were pruned of disconnected nodes/isolates.
+    ID_iterlist : list
+        List of repeated subject id strings.
+    roi_iterlist : list
+        List of file paths to binarized/boolean region-of-interest Nifti1Image files.
+    norm_iterlist : list
+        Indicates method of normalizing resulting graph.
+    binary_iterlist : list
+        List of booleans indicating whether resulting graph edges to form an unweighted graph were binarized.
+    embed_iterlist : list
+        List of booleans indicating whether omnibus embedding of graph population was performed.
+    multimodal_iterlist : list
+        List of booleans indicating whether multiple modalities of input data have been specified.
+
+    Returns
+    -------
+    conn_model_iterlist : list
+       List of connectivity estimation model parameters (e.g. corr for correlation, cov for covariance,
+       sps for precision covariance, partcorr for partial correlation). sps type is used by default.
+    est_path_iterlist : list
+        List of file paths to .npy file containing graph with thresholding applied.
+    network_iterlist : list
+        List of resting-state networks based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
+        study of brain subgraphs.
+    node_size_iterlist : list
+        List of spherical centroid node sizes in the case that coordinate-based centroids are used as ROI's.
+    thr_iterlist : list
+        List of values, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    prune_iterlist : list
+        List of booleans indicating whether final graphs were pruned of disconnected nodes/isolates.
+    ID_iterlist : list
+        List of repeated subject id strings.
+    roi_iterlist : list
+        List of file paths to binarized/boolean region-of-interest Nifti1Image files.
+    norm_iterlist : list
+        Indicates method of normalizing resulting graph.
+    binary_iterlist : list
+        List of booleans indicating whether resulting graph edges to form an unweighted graph were binarized.
+    embed_iterlist : list
+        List of booleans indicating whether omnibus embedding of graph population was performed.
+    multimodal_iterlist : list
+        List of booleans indicating whether multiple modalities of input data have been specified.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
+    from pynets.utils import build_omnetome, flatten
     if embed is True:
         build_omnetome(list(flatten(est_path_iterlist)), list(flatten(ID_iterlist))[0], multimodal)
 
@@ -243,18 +422,63 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, nod
 
 def pass_meta_ins(conn_model, est_path, network, node_size, thr, prune, ID, roi, norm, binary):
     """
+    Passes parameters as metadata.
 
-    :param conn_model:
-    :param est_path:
-    :param network:
-    :param node_size:
-    :param thr:
-    :param prune:
-    :param ID:
-    :param roi:
-    :param norm:
-    :param binary:
-    :return:
+    Parameters
+    ----------
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    est_path : str
+        File path to .npy file containing graph with thresholding applied.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    thr : float
+        A value, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
+    ID : str
+        A subject id or other unique identifier.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    norm : int
+        Indicates method of normalizing resulting graph.
+    binary : bool
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted graph.
+
+    Returns
+    -------
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    est_path : str
+        File path to .npy file containing graph with thresholding applied.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    thr : float
+        A value, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
+    ID : str
+        A subject id or other unique identifier.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    norm : int
+        Indicates method of normalizing resulting graph.
+    binary : bool
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted graph.
     """
     est_path_iterlist = est_path
     conn_model_iterlist = conn_model
@@ -284,6 +508,91 @@ def pass_meta_ins(conn_model, est_path, network, node_size, thr, prune, ID, roi,
 def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, node_size_func, thr_func, prune_func, ID_func,
                         roi_func, norm_func, binary_func, conn_model_struct, est_path_struct, network_struct,
                         node_size_struct, thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct):
+    """
+    Passes multimodal iterable parameters as metadata.
+
+    Parameters
+    ----------
+    conn_model_func : str
+       Functional connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision
+       covariance, partcorr for partial correlation). sps type is used by default.
+    est_path_func : str
+        File path to .npy file containing functional graph with thresholding applied.
+    network_func : str
+        Functional resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
+        study of brain subgraphs.
+    node_size_func : int
+        Ffunctional spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    thr_func : float
+        A value, between 0 and 1, to threshold the functional graph using any variety of methods
+        triggered through other options.
+    prune_func : bool
+        Indicates whether to prune final functional graph of disconnected nodes/isolates.
+    ID_func : str
+        A subject id or other unique identifier for the functional workflow.
+    roi_func : str
+        File path to binarized/boolean region-of-interest Nifti1Image file applied to the functional data.
+    norm_func : int
+        Indicates method of normalizing resulting functional graph.
+    binary_func : bool
+        Indicates whether to binarize resulting graph edges to form an unweighted functional graph.
+    conn_model_struct : str
+       Diffusion structural connectivity estimation model (e.g. corr for correlation, cov for covariance,
+       sps for precision covariance, partcorr for partial correlation). sps type is used by default.
+    est_path_struct : str
+        File path to .npy file containing diffusion structural graph with thresholding applied.
+    network_struct : str
+        Diffusion structural resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter
+        nodes in the study of brain subgraphs.
+    node_size_struct : int
+        Diffusion structural spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    thr_struct : float
+        A value, between 0 and 1, to threshold the diffusion structural graph using any variety of methods
+        triggered through other options.
+    prune_struct : bool
+        Indicates whether to prune final diffusion structural graph of disconnected nodes/isolates.
+    ID_struct : str
+        A subject id or other unique identifier for the diffusion structural workflow.
+    roi_struct : str
+        File path to binarized/boolean region-of-interest Nifti1Image file applied too the dwi data.
+    norm_struct : int
+        Indicates method of normalizing resulting diffusion structural graph.
+    binary_struct : bool
+        Indicates whether to binarize resulting diffusion structural graph edges to form an unweighted graph.
+
+
+    Returns
+    -------
+    conn_model_iterlist : list
+       List of connectivity estimation model parameters (e.g. corr for correlation, cov for covariance,
+       sps for precision covariance, partcorr for partial correlation). sps type is used by default.
+    est_path_iterlist : list
+        List of file paths to .npy file containing graph with thresholding applied.
+    network_iterlist : list
+        List of resting-state networks based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
+        study of brain subgraphs.
+    node_size_iterlist : list
+        List of spherical centroid node sizes in the case that coordinate-based centroids are used as ROI's.
+    thr_iterlist : list
+        List of values, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    prune_iterlist : list
+        List of booleans indicating whether final graphs were pruned of disconnected nodes/isolates.
+    ID_iterlist : list
+        List of repeated subject id strings.
+    roi_iterlist : list
+        List of file paths to binarized/boolean region-of-interest Nifti1Image files.
+    norm_iterlist : list
+        Indicates method of normalizing resulting graph.
+    binary_iterlist : list
+        List of booleans indicating whether resulting graph edges to form an unweighted graph were binarized.
+    embed_iterlist : list
+        List of booleans indicating whether omnibus embedding of graph population was performed.
+    multimodal_iterlist : list
+        List of booleans indicating whether multiple modalities of input data have been specified.
+    """
     est_path_iterlist = [est_path_func, est_path_struct]
     conn_model_iterlist = [conn_model_func, conn_model_struct]
     network_iterlist = [network_func, network_struct]
@@ -311,9 +620,17 @@ def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, node_size_
 
 def CollectPandasJoin(net_pickle_mt):
     """
+    Passes pickled pandas dataframe as metadata.
 
-    :param net_pickle_mt:
-    :return:
+    Parameters
+    ----------
+    net_pickle_mt : pkl
+        File path to pickled pandas dataframe.
+
+    Returns
+    -------
+    net_pickle_mt_out : pkl
+        File path to pickled pandas dataframe as itself.
     """
     net_pickle_mt_out = net_pickle_mt
     return net_pickle_mt_out
@@ -321,8 +638,7 @@ def CollectPandasJoin(net_pickle_mt):
 
 def flatten(l):
     """
-
-    :param l:
+    Flatten list of lists.
     """
     import collections
     for el in l:
@@ -334,14 +650,25 @@ def flatten(l):
 
 
 def build_omnetome(est_path_iterlist, ID, multimodal):
+    import warnings
+    warnings.filterwarnings("ignore")
     import os
+    import yaml
+    from pathlib import Path
     from pynets.utils import flatten
     from sklearn.feature_selection import VarianceThreshold
     from graspy.embed import OmnibusEmbed, ClassicalMDS
     """
+    Embeds ensemble population of graphs into omnetome feature vector.
 
-    :param net_pickle_mt_lis:
-    :return:
+    Parameters
+    ----------
+    est_path_iterlist : list
+        List of file paths to .npy file containing graph with thresholding applied.
+    ID : str
+        A subject id or other unique identifier.
+    multimodal_iterlist : list
+        List of booleans indicating whether multiple modalities of input data have been specified.
     """
 
     def omni_embed(pop_array):
@@ -365,22 +692,34 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
             mds_fit = mds.fit_transform(omni_fit)
 
         # Transform omnibus tensor into dissimilarity feature
-        dir_path = os.path.dirname(graph_path)
-        out_path = "%s%s%s%s%s%s" % (dir_path, '/', list(flatten(ID))[0], '_omnetome_', atlas, '.npy')
+        dir_path = str(Path(os.path.dirname(graph_path)).parent)
+
+        namer_dir = dir_path + '/embeddings'
+        if not os.path.isdir(namer_dir):
+            os.mkdir(namer_dir)
+
+        out_path = "%s%s%s%s%s%s" % (namer_dir, '/', list(flatten(ID))[0], '_omnetome_', atlas, '.npy')
         print('Saving...')
         np.save(out_path, mds_fit)
         del mds, mds_fit, omni, omni_fit
-        return
+        return out_path
 
     atlases = list(set([x.split('/')[-2].split('/')[0] for x in est_path_iterlist]))
     parcel_dict = dict.fromkeys(atlases)
     for key in parcel_dict:
         parcel_dict[key] = []
 
-    func_models = ['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
-                   'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso']
-
-    struct_models = ['csa', 'tensor', 'csd']
+    # Available functional and structural connectivity models
+    with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            func_models = hardcoded_params['available_models']['func_models']
+        except KeyError:
+            print('ERROR: available functional models not sucessfully extracted from runconfig.yaml')
+        try:
+            struct_models = hardcoded_params['available_models']['struct_models']
+        except KeyError:
+            print('ERROR: available structural models not sucessfully extracted from runconfig.yaml')
 
     if multimodal is True:
         est_path_iterlist_dwi = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in
@@ -399,7 +738,7 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
             for graph in parcel_dict[atlas]:
                 pop_array.append(np.load(graph))
             if len(pop_array) > 1:
-                omni_embed(pop_array)
+                out_path = omni_embed(pop_array)
             else:
                 print('WARNING: Only one graph sampled, omnibus embedding not appropriate.')
                 pass
@@ -411,21 +750,30 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
             pop_array = []
             for graph in parcel_dict[atlas]:
                 pop_array.append(np.load(graph))
-            omni_embed(pop_array)
+            out_path = omni_embed(pop_array)
     else:
         raise RuntimeError('ERROR: Only one graph sampled, omnibus embedding not appropriate.')
-    return
+    return out_path
 
 
 def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
     """
+    Summarize list of pickled pandas dataframes of graph metrics unique to eacho unique combination of hyperparameters.
 
-    :param net_pickle_mt_list:
-    :param ID:
-    :param network:
-    :param plot_switch:
-    :return:
+    Parameters
+    ----------
+    net_pickle_mt_list : list
+        List of file paths to pickled pandas dataframes as themselves.
+    ID : str
+        A subject id or other unique identifier.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
+        study of brain subgraphs.
+    plot_switch : bool
+        Activate summary plotting (histograms, ROC curves, etc.)
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import pandas as pd
     import numpy as np
     import matplotlib
@@ -446,8 +794,7 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
     if len(net_pickle_mt_list) > 1:
         print("%s%s%s" % ('\n\nList of result files to concatenate:\n', str(net_pickle_mt_list), '\n\n'))
         subject_path = op.dirname(op.dirname(net_pickle_mt_list[0]))
-        name_of_network_pickle = "%s%s" % ('net_mets_',
-                                           net_pickle_mt_list[0].split('_0.')[0].split('net_mets_')[1])
+        name_of_network_pickle = "%s%s" % ('net_mets_', net_pickle_mt_list[0].split('_0.')[0].split('net_mets_')[1])
         net_pickle_mt_list.sort()
 
         list_ = []
@@ -480,14 +827,10 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
             result = pd.concat([df_concatted, df_concatted_std], axis=1)
             df_concatted_final = result.reindex(sorted(result.columns), axis=1)
             print('\nConcatenating dataframes for ' + str(ID) + '...\n')
-            if network:
-                net_pick_out_path = "%s%s%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle, '_',
-                                                          network, '_mean')
-            else:
-                net_pick_out_path = "%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle, '_mean')
+            net_pick_out_path = "%s%s%s%s%s%s%s" % (subject_path, '/', str(ID), '_', name_of_network_pickle,
+                                                    '%s' % ('_' + network if network is not None else ''), '_mean')
             df_concatted_final.to_pickle(net_pick_out_path)
             df_concatted_final.to_csv("%s%s" % (net_pick_out_path, '.csv'), index=False)
-
         except RuntimeWarning:
             print("%s%s%s" % ('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ', str(ID), '!\n'))
             pass
@@ -503,21 +846,41 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
 
 def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, multimodal):
     """
+    API for summarizing independent lists of pickled pandas dataframes of graph metrics for each modality, RSN, and roi.
 
-    :param network:
-    :param ID:
-    :param net_pickle_mt_list:
-    :param plot_switch:
-    :param multi_nets:
-    :return:
+    Parameters
+    ----------
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
+        study of brain subgraphs.
+    ID : str
+        A subject id or other unique identifier.
+    net_pickle_mt_list : list
+        List of file paths to pickled pandas dataframes as themselves.
+    plot_switch : bool
+        Activate summary plotting (histograms, ROC curves, etc.)
+    multi_nets : list
+        List of Yeo RSN's specified in workflow(s).
+    multimodal : bool
+        Indicates whether multiple modalities of input data have been specified.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
+    from pathlib import Path
+    import yaml
     from pynets.utils import collect_pandas_df_make, flatten
 
-    func_models = ['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
-                   'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso']
-
-    struct_models = ['csa', 'tensor', 'csd']
-
+    # Available functional and structural connectivity models
+    with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            func_models = hardcoded_params['available_models']['func_models']
+        except KeyError:
+            print('ERROR: available functional models not sucessfully extracted from runconfig.yaml')
+        try:
+            struct_models = hardcoded_params['available_models']['struct_models']
+        except KeyError:
+            print('ERROR: available structural models not sucessfully extracted from runconfig.yaml')
     net_pickle_mt_list = list(flatten(net_pickle_mt_list))
 
     if multi_nets is not None:
@@ -525,20 +888,20 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, 
         for network in multi_nets:
             net_pickle_mt_list = list(set([i for i in net_pickle_mt_list_nets if network in i]))
             if multimodal is True:
-                net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0]
+                net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('mets_')[1].split('_')[0]
                                                    in struct_models]))
                 collect_pandas_df_make(net_pickle_mt_list_dwi, ID, network, plot_switch)
                 net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if
-                                                    i.split('metrics_')[1].split('_')[0] in func_models]))
+                                                    i.split('mets_')[1].split('_')[0] in func_models]))
                 collect_pandas_df_make(net_pickle_mt_list_func, ID, network, plot_switch)
             else:
                 collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
     else:
         if multimodal is True:
-            net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0] in
+            net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('mets_')[1].split('_')[0] in
                                                struct_models]))
             collect_pandas_df_make(net_pickle_mt_list_dwi, ID, network, plot_switch)
-            net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if i.split('metrics_')[1].split('_')[0]
+            net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if i.split('mets_')[1].split('_')[0]
                                                 in func_models]))
             collect_pandas_df_make(net_pickle_mt_list_func, ID, network, plot_switch)
         else:
@@ -549,40 +912,84 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, 
 
 def list_first_mems(est_path, network, thr, dir_path, node_size, smooth, c_boot, hpass):
     """
+    Convert parameters as lists to parameters as strings.
 
-    :param est_path:
-    :param network:
-    :param thr:
-    :param dir_path:
-    :param node_size:
-    :param smooth:
-    :param c_boot:
-    :param hpass:
-    :return:
+    Parameters
+    ----------
+    est_path : list
+        File paths to .npy file containing graph with thresholding applied.
+    network : list
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    thr : list
+        A value, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    dir_path : list
+        Path to directory containing subject derivative data for given run.
+    node_size : list
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    smooth : list
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    c_boot : list
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    hpass : list
+        High-pass filter values (Hz) to apply to node-extracted time-series.
+
+    Returns
+    -------
+    est_path : str
+        File paths to .npy file containing graph with thresholding applied.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    thr : float
+        A value, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    smooth : int
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    c_boot : int
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    hpass : float
+        High-pass filter values (Hz) to apply to node-extracted time-series.
     """
     est_path = est_path[0]
     network = network[0]
     thr = thr[0]
     dir_path = dir_path[0]
     node_size = node_size[0]
-    print('\n\n\n\n')
-    print(est_path)
-    print(network)
-    print(thr)
-    print(dir_path)
-    print(node_size)
-    print(smooth)
-    print(c_boot)
-    print(hpass)
-    print('\n\n\n\n')
+    # print('\n\n\n\n')
+    # print(est_path)
+    # print(network)
+    # print(thr)
+    # print(dir_path)
+    # print(node_size)
+    # print(smooth)
+    # print(c_boot)
+    # print(hpass)
+    # print('\n\n\n\n')
     return est_path, network, thr, dir_path, node_size, smooth, c_boot, hpass
 
 
 def check_est_path_existence(est_path_list):
     """
+    Checks for the existence of each graph estimated and saved to disk.
 
-    :param est_path_list:
-    :return:
+    Parameters
+    ----------
+    est_path_list : list
+        List of file paths to .npy file containing graph with thresholding applied.
+    Returns
+    -------
+    est_path_list_ex : list
+        List of existing file paths to .npy file containing graph with thresholding applied.
+    bad_ixs : int
+        List of indices in est_path_list with non-existent and/or corrupt files.
     """
     est_path_list_ex = []
     bad_ixs = []
@@ -601,71 +1008,126 @@ def check_est_path_existence(est_path_list):
 
 def save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network):
     """
+    Save RSN coordinates and labels to pickle files.
 
-    :param coords:
-    :param labels:
-    :param dir_path:
-    :param network:
-    :return:
+    Parameters
+    ----------
+    coords : list
+        List of (x, y, z) tuples corresponding to a coordinate atlas used or
+        which represent the center-of-mass of each parcellation node.
+    labels : list
+        List of string labels corresponding to ROI nodes.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+
+    Returns
+    -------
+    coord_path : str
+        Path to pickled coordinates list.
+    labels_path : str
+        Path to pickled labels list.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     try:
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
+    import os
+
+    namer_dir = dir_path + '/nodes'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
     # Save coords to pickle
-    coord_path = "%s%s%s%s" % (dir_path, '/', network, '_coords_rsn.pkl')
+    coord_path = "%s%s%s%s" % (namer_dir, '/', network, '_coords_rsn.pkl')
     with open(coord_path, 'wb') as f:
         pickle.dump(coords, f, protocol=2)
     # Save labels to pickle
-    labels_path = "%s%s%s%s" % (dir_path, '/', network, '_labels_rsn.pkl')
+    labels_path = "%s%s%s%s" % (namer_dir, '/', network, '_labels_rsn.pkl')
     with open(labels_path, 'wb') as f:
         pickle.dump(labels, f, protocol=2)
     return coord_path, labels_path
 
 
 def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
-    import os.path as op
     """
+    This function takes a Nifti1Image parcellation object resulting from some form of masking and saves it to disk.
 
-    :param ID:
-    :param dir_path:
-    :param roi:
-    :param network:
-    :param net_parcels_map_nifti:
-    :return:
+    Parameters
+    ----------
+    ID : str
+        A subject id or other unique identifier.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    net_parcels_map_nifti : Nifti1Image
+        A nibabel-based nifti image consisting of a 3D array with integer voxel intensities corresponding to ROI
+        membership.
+
+    Returns
+    -------
+    net_parcels_nii_path : str
+        File path to Nifti1Image consisting of a 3D array with integer voxel intensities corresponding to ROI
+        membership.
     """
+    import os
+    import warnings
+    warnings.filterwarnings("ignore")
 
-    net_parcels_nii_path = "%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_parcels_masked_',
-                                               '%s' % (network + '_' if network is not None else ''),
-                                               '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+    namer_dir = dir_path + '/parcellations'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    net_parcels_nii_path = "%s%s%s%s%s%s%s" % (namer_dir, '/', str(ID), '_parcels_masked',
+                                               '%s' % ('_' + network if network is not None else ''),
+                                               '%s' % ('_' + op.basename(roi).split('.')[0] if roi is not None else ''),
                                                '.nii.gz')
 
     nib.save(net_parcels_map_nifti, net_parcels_nii_path)
     return net_parcels_nii_path
 
 
-def cuberoot(x):
-    """
-
-    :param x:
-    :return:
-    """
-    return np.sign(x) * np.abs(x) ** (1 / 3)
-
-
 def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
     """
+    This function saves the time-series 4D numpy array to disk as a .npy file.
 
-    :param roi:
-    :param network:
-    :param ID:
-    :param dir_path:
-    :param ts_within_nodes:
-    :param c_boot:
-    :return:
+    Parameters
+    ----------
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    ID : str
+        A subject id or other unique identifier.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    ts_within_nodes : array
+        2D m x n array consisting of the time-series signal for each ROI node where m = number of scans and
+        n = number of ROI's, where ROI's are parcel volumes.
+    c_boot : int
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+
+    Returns
+    -------
+    out_path_ts : str
+        Path to .npy file containing array of fMRI time-series extracted from nodes.
     """
-    # Save time series as txt file
-    out_path_ts = "%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
+    import os
+    namer_dir = dir_path + '/timeseries'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    # Save time series as npy file
+    out_path_ts = "%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
                                         '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                         '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
                                         'rsn_net_ts.npy')
@@ -675,26 +1137,29 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
 
 
 def timeseries_bootstrap(tseries, block_size):
-    # """
-    # Generates a bootstrap sample derived from the input time-series.
-    # Utilizes Circular-block-bootstrap method described in [1]_.
-    # Parameters
-    # ----------
-    # tseries : array_like
-    #     A matrix of shapes (`M`, `N`) with `M` timepoints and `N` variables
-    # block_size : integer
-    #     Size of the bootstrapped blocks
-    # Returns
-    # -------
-    # bseries : array_like
-    #     Bootstrap sample of the input timeseries
-    # References
-    # ----------
-    # .. [1] P. Bellec; G. Marrelec; H. Benali, A bootstrap test to investigate
-    #    changes in brain connectivity for functional MRI. Statistica Sinica,
-    #    special issue on Statistical Challenges and Advances in Brain Science,
-    #    2008, 18: 1253-1268.
-    # """
+    """
+    Generates a bootstrap sample derived from the input time-series.
+    Utilizes Circular-block-bootstrap method described in [1]_.
+
+    Parameters
+    ----------
+    tseries : array_like
+        A matrix of shapes (`M`, `N`) with `M` timepoints and `N` variables
+    block_size : integer
+        Size of the bootstrapped blocks
+
+    Returns
+    -------
+    bseries : array_like
+        Bootstrap sample of the input timeseries
+
+    References
+    ----------
+    .. [1] P. Bellec; G. Marrelec; H. Benali, A bootstrap test to investigate
+       changes in brain connectivity for functional MRI. Statistica Sinica,
+       special issue on Statistical Challenges and Advances in Brain Science,
+       2008, 18: 1253-1268.
+    """
     np.random.seed(int(42))
 
     # calculate number of blocks
@@ -712,17 +1177,22 @@ def timeseries_bootstrap(tseries, block_size):
 
 
 def rescale_bvec(bvec, bvec_rescaled):
-    # """
-    # Normalizes b-vectors to be of unit length for the non-zero b-values. If the
-    # b-value is 0, the vector is untouched.
-    #
-    # Positional Arguments:
-    #         - bvec:
-    #                 File name of the original b-vectors file
-    #         - bvec_new:
-    #                 File name of the new (normalized) b-vectors file. Must have
-    #                 extension `.bvec`
-    # """
+    """
+    Normalizes b-vectors to be of unit length for the non-zero b-values. If the
+    b-value is 0, the vector is untouched.
+
+    Parameters
+    ----------
+    bvec : str
+        File name of the original b-vectors file.
+    bvec_rescaled : str
+        File name of the new (normalized) b-vectors file. Must have extension `.bvec`.
+
+    Returns
+    -------
+    bvec_rescaled : str
+        File name of the new (normalized) b-vectors file. Must have extension `.bvec`.
+    """
     bv1 = np.array(np.loadtxt(bvec))
     # Enforce proper dimensions
     bv1 = bv1.T if bv1.shape[0] == 3 else bv1
@@ -734,14 +1204,41 @@ def rescale_bvec(bvec, bvec_rescaled):
     return bvec_rescaled
 
 
-def make_gtab_and_bmask(fbval, fbvec, dwi_file):
+def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
     """
+    Create gradient table from bval/bvec, and a mean B0 brain mask.
 
-    :param fbval:
-    :param fbvec:
-    :param dwi_file:
-    :return:
+    Parameters
+    ----------
+    fbval : str
+        File name of the b-values file.
+    fbvec : str
+        File name of the b-vectors file.
+    dwi_file : str
+        File path to diffusion weighted image.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    atlas : str
+        Name of a Nilearn-hosted coordinate or parcellation/label-based atlas supported for fetching.
+        See Nilearn's datasets.atlas module for more detailed reference.
+
+    Returns
+    -------
+    gtab_file : str
+        File path to pickled DiPy gradient table object.
+    nodif_b0_bet : str
+        File path to mean brain-extracted B0 image.
+    B0_mask : str
+        File path to mean B0 brain mask.
+    dwi_file : str
+        File path to diffusion weighted image.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import os
     from dipy.io import save_pickle
     import os.path as op
@@ -749,18 +1246,18 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file):
     from dipy.core.gradients import gradient_table
     from nilearn.image import mean_img
     from pynets.utils import rescale_bvec
-    # """
-    # Takes bval and bvec files and produces a structure in dipy format
-    # **Positional Arguments:**
-    # """
-    # Use b0's from the DWI to create a more stable DWI image for registration
+
     outdir = op.dirname(dwi_file)
 
-    nodif_b0 = "{}/nodif_b0.nii.gz".format(outdir)
-    nodif_b0_bet = "{}/nodif_b0_bet.nii.gz".format(outdir)
-    nodif_b0_mask = "{}/nodif_b0_bet_mask.nii.gz".format(outdir)
-    bvec_rescaled = "{}/bvec_scaled.bvec".format(outdir)
-    gtab_file = "{}/gtab.pkl".format(outdir)
+    namer_dir = outdir + '/dmri_tmp'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    B0 = "%s%s" % (namer_dir, "/b0.nii.gz")
+    B0_bet = "%s%s" % (namer_dir, "/b0_bet.nii.gz")
+    B0_mask = "%s%s" % (namer_dir, "/B0_bet_mask.nii.gz")
+    bvec_rescaled = "%s%s" % (namer_dir, "/bvec_scaled.bvec")
+    gtab_file = "%s%s" % (namer_dir, "/gtab.pkl")
 
     # loading bvecs/bvals
     bvals, bvecs = read_bvals_bvecs(fbval, fbvec)
@@ -799,7 +1296,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file):
     b0s_bbr = []
     for b0 in b0s:
         print(b0)
-        b0_bbr = "{}/{}_b0.nii.gz".format(outdir, str(b0))
+        b0_bbr = "{}/{}_b0.nii.gz".format(namer_dir, str(b0))
         cmds.append('fslroi {} {} {} 1'.format(dwi_file, b0_bbr, str(b0), ' 1'))
         b0s_bbr.append(b0_bbr)
 
@@ -808,11 +1305,11 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file):
 
     # Get mean b0
     mean_b0 = mean_img(b0s_bbr)
-    nib.save(mean_b0, nodif_b0)
+    nib.save(mean_b0, B0)
 
     # Get mean b0 brain mask
-    os.system("bet {} {} -m -f 0.2".format(nodif_b0, nodif_b0_bet))
-    return gtab_file, nodif_b0_bet, nodif_b0_mask, dwi_file
+    os.system("bet {} {} -m -f 0.2".format(B0, B0_bet))
+    return gtab_file, B0_bet, B0_mask, dwi_file
 
 
 def as_list(x):

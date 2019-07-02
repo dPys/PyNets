@@ -4,11 +4,10 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
+import numpy as np
+import nibabel as nib
 import warnings
 warnings.filterwarnings("ignore")
-import numpy as np
-np.warnings.filterwarnings('ignore')
-import nibabel as nib
 
 
 def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
@@ -35,6 +34,8 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
     dwi_file : str
         File path to diffusion weighted Nifti1Image.
     '''
+    import warnings
+    warnings.filterwarnings("ignore")
     import os
     from dipy.io import load_pickle
     from dipy.reconst.dti import TensorModel
@@ -75,6 +76,8 @@ def tens_mod_est(gtab, data, wm_in_dwi):
     tensor_odf : obj
         Tensor-estimated orientation distribution function.
     '''
+    import warnings
+    warnings.filterwarnings("ignore")
     from dipy.reconst.dti import TensorModel
     from dipy.data import get_sphere
     print('Fitting tensor model...')
@@ -104,6 +107,8 @@ def csa_mod_est(gtab, data, wm_in_dwi):
     csa_mod : obj
         Spherical harmonics coefficients of the CSA-estimated reconstruction model.
     '''
+    import warnings
+    warnings.filterwarnings("ignore")
     from dipy.reconst.shm import CsaOdfModel
     print('Fitting CSA model...')
     wm_in_dwi_mask = nib.load(wm_in_dwi).get_fdata().astype('bool')
@@ -130,6 +135,8 @@ def csd_mod_est(gtab, data, wm_in_dwi):
     csd_mod : obj
         Spherical harmonics coefficients of the CSD-estimated reconstruction model.
     '''
+    import warnings
+    warnings.filterwarnings("ignore")
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     print('Fitting CSD model...')
     wm_in_dwi_mask = nib.load(wm_in_dwi).get_fdata().astype('bool')
@@ -263,6 +270,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
     '''
+    import warnings
+    warnings.filterwarnings("ignore")
     from dipy.tracking.streamline import Streamlines
     from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
     import networkx as nx

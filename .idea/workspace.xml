@@ -6,71 +6,236 @@
   </component>
   <component name="BookmarkManager">
     <bookmark url="file://$PROJECT_DIR$/../ndmg/ndmg/scripts/ndmg_cloud.py" description="    print(&quot;Generating job for each subject...&quot;)&#10;  ..." line="67" />
-    <bookmark url="file://$PROJECT_DIR$/pynets/registration/register.py" description="        # Create linear transform/ initializer T1w..." line="705" />
+    <bookmark url="file://$PROJECT_DIR$/pynets/registration/register.py" description="        # Create linear transform/ initializer T1w..." line="709" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/authors.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/authors.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/installation.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/installation.rst" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/usage.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/usage.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/dmri/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/dmri/estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/estimation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/dmri/track.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/track.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/fmri/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/fmri/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/fmri/clustools.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/fmri/clustools.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/fmri/estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/fmri/estimation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/nodemaker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/plotting/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/plotting/plot_gen.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting/plot_gen.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/plotting/plot_graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting/plot_graphs.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/registration/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/registration/reg_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/reg_utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/registration/register.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/register.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/stats/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/stats/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/stats/netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/stats/netstats.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/thresholding.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/s002_anat_brain.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/anat/s002_anat_brain.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/bval.bval" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/bval.bval" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/0021001_net_mets_Default_csd_Default_mean" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/0021001_net_mets_Default_csd_Default_mean" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/0021001_net_mets_Default_csd_Default_mean.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/0021001_net_mets_Default_csd_Default_mean.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.05dens_100000samples_particle_track.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.05dens_100000samples_particle_track.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.05dens_100000samples_particle_track_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.05dens_100000samples_particle_track_pruned_mat.ssv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.06dens_100000samples_particle_track.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.06dens_100000samples_particle_track.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.06dens_100000samples_particle_track_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.06dens_100000samples_particle_track_pruned_mat.ssv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.07dens_100000samples_particle_track.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.07dens_100000samples_particle_track.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.07dens_100000samples_particle_track_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.07dens_100000samples_particle_track_pruned_mat.ssv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.08dens_100000samples_particle_track.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.08dens_100000samples_particle_track.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.08dens_100000samples_particle_track_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.08dens_100000samples_particle_track_pruned_mat.ssv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track_pruned_mat.ssv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.1dens_100000samples_particle_track.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.1dens_100000samples_particle_track.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.1dens_100000samples_particle_track_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_0.1dens_100000samples_particle_track_pruned_mat.ssv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_raw_mat.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_Default_est_csd_raw_mat.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.05_parc" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.05_parc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.05_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.05_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.05_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.05_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.06_parc" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.06_parc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.06_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.06_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.06_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.06_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.07_parc" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.07_parc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.07_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.07_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.07_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.07_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.08_parc" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.08_parc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.08_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.08_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.08_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.08_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.09_parc" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.09_parc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.09_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.09_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.09_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.09_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc_frag_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc_frag_neat.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/density_map_Default_csd_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5].nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/density_map_Default_csd_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5].nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/density_map_csd_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5].nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/density_map_csd_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5].nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/net_met_list_Default" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/net_met_list_Default" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/streamlines_Default_csd_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5].trk" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/streamlines_Default_csd_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5].trk" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/streamlines_csd_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5].trk" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/streamlines_csd_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5].trk" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/streamlines_mni_csd_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5].trk" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/streamlines_mni_csd_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5].trk" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/streamlines_mni_csd_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5]_warped.trk" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/streamlines_mni_csd_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5]_warped.trk" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/streamlines_mni_tensor_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5].trk" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/streamlines_mni_tensor_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5].trk" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/streamlines_mni_tensor_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5]_warped.trk" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/streamlines_mni_tensor_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5]_warped.trk" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/b0.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/b0.nii.gz" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/iso_eddy_corrected_data_denoised.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/iso_eddy_corrected_data_denoised.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz.npy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz_pruned_mat.ssv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_connectogram_sps.json" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_connectogram_sps.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/DesikanKlein2012_t1w_mni.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/DesikanKlein2012_t1w_mni.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/DesikanKlein2012_t1w_skull.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/DesikanKlein2012_t1w_skull.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor.nii.gz9189" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_1457.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_1674.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_1947.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_2540.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_2541.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_263.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_2736.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_4299.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_4313.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_4644.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_4705.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_5039.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_5463.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_6726.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_7166.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_8198.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_9591.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_brain_pre_reor_9643.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor.nii.gz9476" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_1839.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_2089.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_2171.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_2350.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_2382.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_326.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_4292.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_543.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_6359.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_7203.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_7253.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_7790.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_7815.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_8386.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_8397.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_843.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_9609.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_0_pre_reor_9612.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor.nii.gz4167" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_1238.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_1600.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_181.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_1815.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_2345.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_3061.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_4.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_4388.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_4770.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_4962.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_5441.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_5871.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_6696.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_7093.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_7104.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_8587.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_9108.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_1_pre_reor_9813.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor.nii.gz2046" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_1157.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_1276.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_2643.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_3045.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_3634.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_3841.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_4089.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_4176.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_5487.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_6773.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_7219.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_7617.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_7854.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_8657.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_8742.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_8821.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_9434.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/std_fmri/t1w_seg_pve_2_pre_reor_9635.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_aligned_mni.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_aligned_mni.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_brain.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_brain.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_brain_mask.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_brain_mask.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_mixeltype.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_mixeltype.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_pve_0.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_pve_0.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_pve_1.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_pve_1.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_pve_2.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_pve_2.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_pveseg.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_pveseg.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_seg.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_seg_seg.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_wm_edge.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_wm_edge.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_wm_thr.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/anat_reg/t1w_wm_thr.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/DSN/0GenericAffine.mat" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/DSN/0GenericAffine.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/DSN/1InverseWarp.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/DSN/1InverseWarp.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/DSN/1Warp.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/DSN/1Warp.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/DSN/InverseWarped.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/DSN/InverseWarped.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/DSN/Warped.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/DSN/Warped.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/DSN/aattp_120.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/DSN/aattp_537.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/DSN/warped_output.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/DSN/warped_output.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/DesikanKlein2012_dwi_track.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/DesikanKlein2012_dwi_track.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/DesikanKlein2012_dwi_track_wmgm_int.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/DesikanKlein2012_dwi_track_wmgm_int.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_csf_mask_dwi.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_csf_mask_dwi.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_csf_mask_dwi_bin.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_csf_mask_dwi_bin.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_gm_in_dwi.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_gm_in_dwi.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_gm_in_dwi_bin.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_gm_in_dwi_bin.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_in_dwi.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_in_dwi.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_vent_csf_in_dwi.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_vent_csf_in_dwi.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_vent_mask_dwi.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_vent_mask_dwi.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_wm_gm_int_in_dwi.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_wm_gm_int_in_dwi.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_wm_gm_int_in_dwi_bin.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_wm_gm_int_in_dwi_bin.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_wm_in_dwi.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_wm_in_dwi.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_wm_in_dwi_bin.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/t1w_wm_in_dwi_bin.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/vent_mask_t1w.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/imgs/vent_mask_t1w.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/mats/dwi2t1w_bbr_xfm.mat" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/mats/dwi2t1w_bbr_xfm.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/mats/dwi2t1w_xfm.mat" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/mats/dwi2t1w_xfm.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/mats/t1w2dwi_bbr_xfm.mat" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/mats/t1w2dwi_bbr_xfm.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/mats/t1w2dwi_xfm.mat" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/mats/t1w2dwi_xfm.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/mats/t1wtissue2dwi_xfm.mat" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/mats/t1wtissue2dwi_xfm.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/mats/xfm_mni2t1w_init.mat" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/mats/xfm_mni2t1w_init.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/mats/xfm_t1w2mni_init.mat" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/mats/xfm_t1w2mni_init.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/warps/mni2t1w_warp.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/warps/mni2t1w_warp.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/warps/t1w2mni_warp.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/reg_dmri/dmri_tmp/reg/warps/t1w2mni_warp.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/std_dmri/bvecs.bvec" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/std_dmri/bvecs.bvec" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/std_dmri/iso_eddy_corrected_data_denoised_pre_reor.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/std_dmri/iso_eddy_corrected_data_denoised_pre_reor.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/tensor_fa.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/tensor_fa.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/tensor_fa_flip.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/tensor_fa_flip.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/pypeline.lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/d3.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/graph.dot" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/graph.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/graph.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/graph1.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/get_node_membership_node/_0x8eb4a62356c7f13b61d5932df213c007_unfinished.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/get_node_membership_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/get_node_membership_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/_network_SalVentAttn/get_node_membership_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_anat_node/_0xd8aa0b0ae5e0cdf68fc66eaea991fe9d.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_anat_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_anat_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_anat_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_anat_node/result_check_orient_and_dims_anat_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_dwi_node/_0xb878613198b77aefecd551d45b4e3c83.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_dwi_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_dwi_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_dwi_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/check_orient_and_dims_dwi_node/result_check_orient_and_dims_dwi_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/fetch_nodes_and_labels_node/_0x5f6708c1b279d18e87b96d9fffe0f648.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/fetch_nodes_and_labels_node/_inputs.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/fetch_nodes_and_labels_node/_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/fetch_nodes_and_labels_node/_report/report.rst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/wf_single_subject_dmri_0021001/wf_single_sub_0021001_dmri_790/meta_wf_0021001/dmri_connectometry_0021001/fetch_nodes_and_labels_node/result_fetch_nodes_and_labels_node.pklz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_raw_mat.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_raw_mat.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_Default_est_cov_unthresholded_mat.npy" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels_masked_.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels_masked_.nii.gz" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/Default_parcels.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/Default_parcels.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/pDMN_3_bin_kmeans_k3/pDMN_3_bin_kmeans_k3.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/pDMN_3_bin_kmeans_k3/pDMN_3_bin_kmeans_k3.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_est_sps_unthresholded_mat.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.9" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.9.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.91" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.91.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.92" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.92.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.93" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.93.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.94" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.94.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.95" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_net_metrics_sps_0.95.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_est_sps_unthresholded_mat.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.9" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.9.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.91" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.91.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.92" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.92.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.93" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.93.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.94" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.94.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.95" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_net_metrics_sps_0.95.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_pDMN_3_bin_unthresh_mat.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_unthresh_mat.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/net_metric_list" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/net_metric_list_Default" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/net_metric_list_SomMotA" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/net_metric_list_pDMN_3_bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_clustools.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_clustools.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/test_estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_estimation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_netstats.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/test_nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_nodemaker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_plotting.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/test_thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_thresholding.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/test_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_utils.py" afterDir="false" />
     </list>
@@ -87,78 +252,27 @@
     <SUITE FILE_PATH="coverage/PyNets$.coverage" NAME=" Coverage Results" MODIFIED="1527035565053" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
     <SUITE FILE_PATH="coverage/PyNets$pynets_run.coverage" NAME="pynets_run Coverage Results" MODIFIED="1531882453710" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pynets" />
   </component>
-  <component name="FavoritesManager">
-    <favorites_list name="PyNets" />
-  </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="10590">
-              <caret line="706" column="38" selection-start-line="706" selection-start-column="38" selection-end-line="706" selection-end-column="38" />
+            <state relative-caret-position="20145">
+              <caret line="1343" column="35" selection-start-line="1343" selection-start-column="35" selection-end-line="1343" selection-end-column="35" />
               <folding>
-                <element signature="e#139#154#0" expanded="true" />
+                <element signature="e#139#148#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
+        <entry file="file://$PROJECT_DIR$/tests/test_clustering.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="582">
-              <caret line="1193" lean-forward="true" selection-start-line="1193" selection-end-line="1193" />
+            <state relative-caret-position="509">
+              <caret line="104" column="5" selection-start-line="104" selection-start-column="5" selection-end-line="104" selection-end-column="5" />
               <folding>
-                <element signature="e#109#140#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="491">
-              <caret line="301" column="33" selection-start-line="301" selection-start-column="33" selection-end-line="301" selection-end-column="33" />
-              <folding>
-                <element signature="e#116#131#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="36120">
-              <caret line="2408" column="69" selection-start-line="2408" selection-start-column="69" selection-end-line="2408" selection-end-column="69" />
-              <folding>
-                <element signature="e#116#131#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-16293">
-              <caret line="11" selection-start-line="11" selection-end-line="11" />
-              <folding>
-                <element signature="e#109#127#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/thresholding.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="15390">
-              <caret line="1026" column="28" selection-start-line="1026" selection-start-column="28" selection-end-line="1026" selection-end-column="28" />
-              <folding>
-                <element signature="e#116#131#0" expanded="true" />
+                <element signature="e#107#116#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -167,22 +281,35 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-9378">
-              <caret line="324" column="27" selection-start-line="324" selection-start-column="27" selection-end-line="324" selection-end-column="27" />
+            <state relative-caret-position="14">
+              <caret line="960" selection-start-line="960" selection-end-line="960" />
               <folding>
-                <element signature="e#109#124#0" expanded="true" />
+                <element signature="e#109#118#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
+        <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="293">
-              <caret line="276" selection-start-line="276" selection-end-line="294" selection-end-column="59" />
+            <state relative-caret-position="7920">
+              <caret line="528" column="99" selection-start-line="528" selection-start-column="99" selection-end-line="528" selection-end-column="99" />
               <folding>
                 <element signature="e#116#131#0" expanded="true" />
+                <marker date="1562021917245" expanded="true" signature="80259:80303" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="3437">
+              <caret line="1096" column="37" selection-start-line="1096" selection-start-column="37" selection-end-line="1096" selection-end-column="37" />
+              <folding>
+                <element signature="e#109#127#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -191,8 +318,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/plotting/plot_gen.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2403">
-              <caret line="410" column="35" selection-start-line="410" selection-start-column="35" selection-end-line="410" selection-end-column="35" />
+            <state relative-caret-position="6930">
+              <caret line="462" column="37" selection-start-line="462" selection-start-column="37" selection-end-line="462" selection-end-column="37" />
               <folding>
                 <element signature="e#116#134#0" expanded="true" />
               </folding>
@@ -201,13 +328,34 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/plotting/plot_graphs.py">
+        <entry file="file://$PROJECT_DIR$/pynets/fmri/clustools.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="462">
-              <caret line="192" column="41" selection-start-line="192" selection-start-column="41" selection-end-line="192" selection-end-column="41" />
+            <state relative-caret-position="132">
+              <caret line="577" column="22" selection-start-line="577" selection-start-column="4" selection-end-line="577" selection-end-column="22" />
               <folding>
-                <element signature="e#116#134#0" expanded="true" />
+                <element signature="e#800#821#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="345">
+              <caret line="23" column="20" selection-start-line="23" selection-start-column="20" selection-end-line="23" selection-end-column="20" />
+              <folding>
+                <element signature="e#116#131#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="543">
+              <caret line="1636" column="59" selection-start-line="1636" selection-start-column="59" selection-end-line="1636" selection-end-column="59" />
             </state>
           </provider>
         </entry>
@@ -218,46 +366,44 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
+        <option value="Python Unit Test" />
       </list>
     </option>
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>node_size + &quot;mm_&quot;</find>
-      <find>## ADAPTED FROM NETWORKX TO INCORPORATE WEIGHT PARAMETER ##</find>
-      <find>## ADAPTED FROM BCTPY ##</find>
-      <find>regutils.antssyn(template_path, fa_flip_path, dsn_dir)</find>
-      <find>streamlines_more</find>
-      <find>s</find>
-      <find>fsl</find>
-      <find>Using resting-state network pipeline for:</find>
-      <find>\</find>
-      <find>-get</find>
-      <find>ADAPTED FROM</find>
-      <find>hash</find>
-      <find>Using RSN pipeline for:</find>
-      <find>import_list</find>
-      <find>Wf_</find>
-      <find>Meta_wf_</find>
-      <find>Most likely this is because the graph is either disconnected or because it is fully saturated</find>
-      <find>See thresholding and pruning options in pynets_run.py -h.</find>
-      <find>vox_size</find>
-      <find>-anat</find>
-      <find>anat_file</find>
-      <find>net_metrics_</find>
-      <find>net_metrics</find>
-      <find>net_metric_list</find>
-      <find>prune</find>
-      <find>omega</find>
       <find>get_node_membership_node</find>
-      <find>warnings.filterwarnings(&quot;ignore&quot;, message=&quot;numpy.ufunc size changed&quot;)</find>
-      <find>fa_path</find>
-      <find>wm_gm_int</find>
+      <find>template</find>
+      <find>Iterating RSN pipeline across</find>
+      <find>vox_size</find>
+      <find>if float(qform.split(' ')[:-1][5]) &lt;= 0:</find>
+      <find>fetch_nodes_and_labels</find>
+      <find>dens</find>
+      <find>parc</find>
+      <find>'variant-scorr' + k + '_roi'</find>
+      <find>create_est_path_func</find>
+      <find>create_est</find>
+      <find>-norm</find>
+      <find>-n</find>
+      <find>network</find>
+      <find>conn_model</find>
+      <find>join_iters_node</find>
+      <find>Connectivity model iterables only...</find>
+      <find>thr_info_node</find>
+      <find>get_conn_matrix_node</find>
+      <find>(join_iters_node, thresh_func_node, map_connects)</find>
+      <find>conn_model_list</find>
+      <find>pathlib</find>
+      <find>importlib</find>
+      <find>import_list</find>
+      <find>import_list`````</find>
+      <find>pDMN_3_bin</find>
+      <find>k = 5</find>
+      <find>make_local_connectivity_scorr</find>
+      <find>make_local_connectivity_tcorr</find>
+      <find>binfile_parcellate</find>
     </findStrings>
     <replaceStrings>
-      <replace>nargs='+'</replace>
-      <replace>multi_directget</replace>
-      <replace>'/002/fmri</replace>
       <replace>'/002/func/whole</replace>
       <replace>/002_</replace>
       <replace>base_dir + '/002/fmrii'</replace>
@@ -285,6 +431,9 @@
       <replace>wf_</replace>
       <replace>meta_wf_</replace>
       <replace>net_met_list</replace>
+      <replace>triple_net_ICA_overlap_3_sig_bin</replace>
+      <replace>B0_bet</replace>
+      <replace>k = 20</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -314,33 +463,36 @@
         <option value="$PROJECT_DIR$/tests/test_refs.py" />
         <option value="$PROJECT_DIR$/pynets/stats/nodal_graph_measures.yaml" />
         <option value="$PROJECT_DIR$/tests/test_clustools.py" />
-        <option value="$PROJECT_DIR$/tests/test_estimation.py" />
-        <option value="$PROJECT_DIR$/tests/test_nodemaker.py" />
         <option value="$PROJECT_DIR$/tests/test_plotting.py" />
-        <option value="$PROJECT_DIR$/tests/test_thresholding.py" />
+        <option value="$PROJECT_DIR$/pynets/plotting/plot_graphs.py" />
+        <option value="$PROJECT_DIR$/tests/test_estimation.py" />
+        <option value="$PROJECT_DIR$/docs/installation.rst" />
+        <option value="$PROJECT_DIR$/docs/usage.rst" />
         <option value="$PROJECT_DIR$/tests/test_utils.py" />
-        <option value="$PROJECT_DIR$/pynets/dmri/estimation.py" />
-        <option value="$PROJECT_DIR$/pynets/plotting/plot_gen.py" />
-        <option value="$PROJECT_DIR$/pynets/registration/reg_utils.py" />
-        <option value="$PROJECT_DIR$/pynets/fmri/clustools.py" />
-        <option value="$PROJECT_DIR$/pynets/thresholding.py" />
-        <option value="$PROJECT_DIR$/pynets/nodemaker.py" />
-        <option value="$PROJECT_DIR$/pynets/dmri/track.py" />
-        <option value="$PROJECT_DIR$/pynets/fmri/estimation.py" />
+        <option value="$PROJECT_DIR$/tests/test_thresholding.py" />
+        <option value="$PROJECT_DIR$/tests/test_nodemaker.py" />
         <option value="$PROJECT_DIR$/tests/test_netstats.py" />
+        <option value="$PROJECT_DIR$/pynets/dmri/track.py" />
+        <option value="$PROJECT_DIR$/pynets/dmri/estimation.py" />
+        <option value="$PROJECT_DIR$/pynets/registration/register.py" />
+        <option value="$PROJECT_DIR$/pynets/thresholding.py" />
+        <option value="$PROJECT_DIR$/pynets/stats/netstats.py" />
+        <option value="$PROJECT_DIR$/pynets/nodemaker.py" />
+        <option value="$PROJECT_DIR$/pynets/registration/reg_utils.py" />
+        <option value="$PROJECT_DIR$/pynets/plotting/plot_gen.py" />
+        <option value="$PROJECT_DIR$/pynets/fmri/estimation.py" />
         <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
         <option value="$PROJECT_DIR$/pynets/workflows.py" />
-        <option value="$PROJECT_DIR$/pynets/plotting/plot_graphs.py" />
-        <option value="$PROJECT_DIR$/pynets/registration/register.py" />
         <option value="$PROJECT_DIR$/pynets/utils.py" />
-        <option value="$PROJECT_DIR$/pynets/stats/netstats.py" />
+        <option value="$PROJECT_DIR$/pynets/fmri/clustools.py" />
+        <option value="$PROJECT_DIR$/tests/test_clustering.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="42" />
+    <option name="x" value="319" />
     <option name="y" value="23" />
-    <option name="width" value="1600" />
+    <option name="width" value="1304" />
     <option name="height" value="978" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
@@ -418,11 +570,12 @@
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="Bash&#10;Python" />
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$2/Languages" value="Python&#10;Cython" />
     <property name="editor.config.ad.shown" value="true" />
+    <property name="editorconfig.notification" value="size 292&#10;" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="Errors" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
@@ -461,7 +614,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.utils">
+  <component name="RunManager" selected="Python.test_clustering">
     <configuration name="scratch.sh" type="BashConfigurationType" factoryName="Bash" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="bash" />
       <option name="INTERPRETER_PATH" value="/usr/bin/env" />
@@ -495,7 +648,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="pynets_run" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="test_clustering" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="PyNets" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -503,12 +656,12 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/pynets" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pynets/pynets_run.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tests/test_clustering.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="true" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -612,18 +765,18 @@
       <item itemvalue="Bash.scratch.sh" />
       <item itemvalue="Docker.Docker Image" />
       <item itemvalue="Docker.pynets_docker_pycharm" />
-      <item itemvalue="Python.pynets_run" />
       <item itemvalue="Python.workflows" />
       <item itemvalue="Python.track" />
       <item itemvalue="Python.utils" />
+      <item itemvalue="Python.test_clustering" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.test_clustering" />
+        <item itemvalue="Python.workflows" />
         <item itemvalue="Python.utils" />
         <item itemvalue="Bash.scratch.sh" />
         <item itemvalue="Python.track" />
-        <item itemvalue="Python.pynets_run" />
-        <item itemvalue="Docker.Docker Image" />
       </list>
     </recent_temporary>
   </component>
@@ -646,23 +799,23 @@
       <workItem from="1560024174324" duration="49236000" />
       <workItem from="1561116224032" duration="8349000" />
       <workItem from="1561144081292" duration="359000" />
-      <workItem from="1561157188043" duration="95475000" />
+      <workItem from="1561157188043" duration="153972000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="501096000" />
+    <option name="totallyTimeSpent" value="559593000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="42" y="23" width="1600" height="978" extended-state="0" />
+    <frame x="319" y="23" width="1304" height="978" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49531615" weight="0.09242619" />
-      <window_info id="Structure" order="1" sideWeight="0.50369006" side_tool="true" weight="0.1166419" />
-      <window_info active="true" id="Favorites" order="2" sideWeight="0.50468385" side_tool="true" visible="true" weight="0.09242619" />
+      <window_info id="Structure" order="1" sideWeight="0.50369006" side_tool="true" weight="0.116174586" />
+      <window_info id="Favorites" order="2" sideWeight="0.50468385" side_tool="true" weight="0.09242619" />
       <window_info id="aws.explorer" order="3" sideWeight="0.503386" side_tool="true" weight="0.13689937" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.4984326" visible="true" weight="0.036117382" />
+      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.4984326" weight="0.036117382" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.32731378" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.4996421" weight="0.3277027" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
@@ -671,7 +824,7 @@
       <window_info anchor="bottom" id="Docker" order="7" sideWeight="0.4992378" weight="0.25282168" />
       <window_info anchor="bottom" id="Version Control" order="8" weight="0.033783782" />
       <window_info anchor="bottom" id="Database Changes" order="9" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Python Console" order="10" sideWeight="0.49955475" weight="0.033860046" />
+      <window_info anchor="bottom" id="Python Console" order="10" sideWeight="0.49955475" visible="true" weight="0.033860046" />
       <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.4960815" weight="0.24943566" />
       <window_info anchor="bottom" id="Event Log" order="12" sideWeight="0.5003579" side_tool="true" weight="0.32731378" />
       <window_info anchor="bottom" id="Concurrent Activities Diagram" order="13" sideWeight="0.49955475" weight="0.32844242" />
@@ -736,9 +889,6 @@
     <SUITE FILE_PATH="coverage/PyNets$pynets_run.coverage" NAME="pynets_run Coverage Results" MODIFIED="1556139571553" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pynets" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/pynets/testing.py" />
-    <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch.pyx" />
-    <entry file="file://$PROJECT_DIR$/pynets/clustools_bak.py" />
     <entry file="file://$PROJECT_DIR$/pynets/connectogram.js" />
     <entry file="file://$PROJECT_DIR$/pynets/fdg.js" />
     <entry file="file://$USER_HOME$/PycharmProjects/untitled/venv/lib/python3.6/site-packages/nipype/interfaces/base/core.py">
@@ -834,101 +984,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_estimation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="417">
-          <caret line="140" column="76" selection-start-line="140" selection-start-column="76" selection-end-line="140" selection-end-column="76" />
-          <folding>
-            <element signature="e#131#149#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_nodemaker.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="702">
-          <caret line="423" column="26" selection-start-line="423" selection-start-column="26" selection-end-line="423" selection-end-column="26" />
-          <folding>
-            <element signature="e#131#149#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_plotting.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="84">
-          <caret line="50" column="14" lean-forward="true" selection-start-line="50" selection-start-column="14" selection-end-line="50" selection-end-column="14" />
-          <folding>
-            <element signature="e#131#149#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_thresholding.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="219">
-          <caret line="40" column="65" selection-start-line="40" selection-start-column="65" selection-end-line="40" selection-end-column="65" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="294">
-          <caret line="40" column="94" selection-start-line="40" selection-start-column="94" selection-end-line="40" selection-end-column="94" />
-          <folding>
-            <element signature="e#107#125#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/pynets_bids.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-2298">
           <caret line="3" column="11" selection-start-line="3" selection-start-column="11" selection-end-line="3" selection-end-column="11" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/dmri/estimation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4500">
-          <caret line="300" column="22" lean-forward="true" selection-start-line="300" selection-start-column="22" selection-end-line="300" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/fmri/clustools.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-10278">
-          <caret line="29" selection-start-line="29" selection-end-line="29" selection-end-column="36" />
-          <folding>
-            <element signature="e#789#810#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="287">
-          <caret line="598" selection-start-line="598" selection-end-line="599" selection-end-column="37" />
-          <folding>
-            <element signature="e#109#124#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="478">
-          <caret line="130" column="35" selection-start-line="130" selection-start-column="35" selection-end-line="130" selection-end-column="35" />
-          <folding>
-            <element signature="e#131#149#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3255">
-          <caret line="217" column="68" selection-start-line="217" selection-start-column="68" selection-end-line="217" selection-end-column="68" />
         </state>
       </provider>
     </entry>
@@ -942,30 +1001,137 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/plotting/plot_gen.py">
+    <entry file="file://$PROJECT_DIR$/tests/test_estimation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2403">
-          <caret line="410" column="35" selection-start-line="410" selection-start-column="35" selection-end-line="410" selection-end-column="35" />
+        <state relative-caret-position="89">
+          <caret line="106" column="36" lean-forward="true" selection-start-line="106" selection-start-column="36" selection-end-line="106" selection-end-column="36" />
           <folding>
-            <element signature="e#116#134#0" expanded="true" />
+            <element signature="e#131#149#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/installation.rst">
+      <provider selected="true" editor-type-id="restructured-text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/usage.rst">
+      <provider selected="true" editor-type-id="restructured-text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/index.rst">
+      <provider selected="true" editor-type-id="restructured-text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_nodemaker.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1">
+          <caret line="426" column="33" selection-start-line="426" selection-start-column="33" selection-end-line="426" selection-end-column="33" />
+          <folding>
+            <element signature="e#131#140#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_thresholding.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="405">
+          <caret line="27" column="38" selection-start-line="27" selection-start-column="38" selection-end-line="27" selection-end-column="69" />
+          <folding>
+            <element signature="e#131#149#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="494">
+          <caret line="151" selection-start-line="151" selection-end-line="151" />
+          <folding>
+            <element signature="e#131#149#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1365">
+          <caret line="91" column="8" selection-start-line="91" selection-start-column="8" selection-end-line="91" selection-end-column="8" />
+          <folding>
+            <element signature="e#107#125#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/dmri/estimation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="120">
+          <caret line="8" selection-start-line="8" selection-end-line="9" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-9046">
+          <caret line="8" selection-start-line="8" selection-end-line="9" selection-end-column="33" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/thresholding.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15390">
-          <caret line="1026" column="28" selection-start-line="1026" selection-start-column="28" selection-end-line="1026" selection-end-column="28" />
+        <state relative-caret-position="120">
+          <caret line="8" selection-start-line="8" selection-end-line="9" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1">
+          <caret line="1166" column="65" selection-start-line="1166" selection-start-column="65" selection-end-line="1166" selection-end-column="65" />
           <folding>
-            <element signature="e#116#131#0" expanded="true" />
+            <element signature="e#109#140#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="179">
+          <caret line="617" column="37" selection-start-line="617" selection-start-column="37" selection-end-line="617" selection-end-column="37" />
+          <folding>
+            <element signature="e#109#118#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="20145">
+          <caret line="1343" column="35" selection-start-line="1343" selection-start-column="35" selection-end-line="1343" selection-end-column="35" />
+          <folding>
+            <element signature="e#139#148#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_plotting.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="28">
+          <caret line="50" column="14" lean-forward="true" selection-start-line="50" selection-start-column="14" selection-end-line="50" selection-end-column="14" />
+          <folding>
+            <element signature="e#131#149#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="543">
+          <caret line="1636" column="59" selection-start-line="1636" selection-start-column="59" selection-end-line="1636" selection-end-column="59" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-16293">
-          <caret line="11" selection-start-line="11" selection-end-line="11" />
+        <state relative-caret-position="3437">
+          <caret line="1096" column="37" selection-start-line="1096" selection-start-column="37" selection-end-line="1096" selection-end-column="37" />
           <folding>
             <element signature="e#109#127#0" expanded="true" />
           </folding>
@@ -974,60 +1140,61 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/workflows.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="36120">
-          <caret line="2408" column="69" selection-start-line="2408" selection-start-column="69" selection-end-line="2408" selection-end-column="69" />
+        <state relative-caret-position="7920">
+          <caret line="528" column="99" selection-start-line="528" selection-start-column="99" selection-end-line="528" selection-end-column="99" />
           <folding>
             <element signature="e#116#131#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="293">
-          <caret line="276" selection-start-line="276" selection-end-line="294" selection-end-column="59" />
-          <folding>
-            <element signature="e#116#131#0" expanded="true" />
+            <marker date="1562021917245" expanded="true" signature="80259:80303" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-9378">
-          <caret line="324" column="27" selection-start-line="324" selection-start-column="27" selection-end-line="324" selection-end-column="27" />
+        <state relative-caret-position="14">
+          <caret line="960" selection-start-line="960" selection-end-line="960" />
           <folding>
-            <element signature="e#109#124#0" expanded="true" />
+            <element signature="e#109#118#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
+    <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="491">
-          <caret line="301" column="33" selection-start-line="301" selection-start-column="33" selection-end-line="301" selection-end-column="33" />
+        <state relative-caret-position="345">
+          <caret line="23" column="20" selection-start-line="23" selection-start-column="20" selection-end-line="23" selection-end-column="20" />
           <folding>
             <element signature="e#116#131#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/utils.py">
+    <entry file="file://$PROJECT_DIR$/pynets/fmri/clustools.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="10590">
-          <caret line="706" column="38" selection-start-line="706" selection-start-column="38" selection-end-line="706" selection-end-column="38" />
+        <state relative-caret-position="132">
+          <caret line="577" column="22" selection-start-line="577" selection-start-column="4" selection-end-line="577" selection-end-column="22" />
           <folding>
-            <element signature="e#139#154#0" expanded="true" />
+            <element signature="e#800#821#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
+    <entry file="file://$PROJECT_DIR$/pynets/plotting/plot_gen.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="582">
-          <caret line="1193" lean-forward="true" selection-start-line="1193" selection-end-line="1193" />
+        <state relative-caret-position="6930">
+          <caret line="462" column="37" selection-start-line="462" selection-start-column="37" selection-end-line="462" selection-end-column="37" />
           <folding>
-            <element signature="e#109#140#0" expanded="true" />
+            <element signature="e#116#134#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_clustering.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="509">
+          <caret line="104" column="5" selection-start-line="104" selection-start-column="5" selection-end-line="104" selection-end-column="5" />
+          <folding>
+            <element signature="e#107#116#0" expanded="true" />
           </folding>
         </state>
       </provider>

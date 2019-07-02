@@ -4,18 +4,14 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
-import warnings
 import numpy as np
 import networkx as nx
+import warnings
 warnings.filterwarnings("ignore")
-np.warnings.filterwarnings('ignore')
-warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def threshold_absolute(W, thr, copy=True):
     '''
-    ## Adapted from bctpy ##
-
     This function thresholds the connectivity matrix by absolute weight
     magnitude. All weights below the given threshold, and all weights
     on the main diagonal (self-self connections) are set to 0.
@@ -35,6 +31,10 @@ def threshold_absolute(W, thr, copy=True):
     -------
     W : np.ndarray
         thresholded connectivity matrix
+
+    References
+    ----------
+    .. Adapted from Adapted from bctpy
     '''
     if copy:
         W = W.copy()
@@ -45,8 +45,6 @@ def threshold_absolute(W, thr, copy=True):
 
 def threshold_proportional(W, p, copy=True):
     '''
-    ## Adapted from bctpy ##
-
     This function "thresholds" the connectivity matrix by preserving a
     proportion p (0<p<1) of the strongest weights. All other weights, and
     all weights on the main diagonal (self-self connections) are set to 0.
@@ -66,6 +64,10 @@ def threshold_proportional(W, p, copy=True):
     -------
     W : np.ndarray
         thresholded connectivity matrix
+
+    References
+    ----------
+    .. Adapted from Adapted from bctpy
 
     Notes
     -----
@@ -108,10 +110,9 @@ def threshold_proportional(W, p, copy=True):
 
 def normalize(W, copy=True):
     '''
-    ## Adapted from bctpy ##
-
     Normalizes an input weighted connection matrix.  If copy is not set, this
     function will *modify W in place.*
+
     Parameters
     ----------
     W : np.ndarray
@@ -119,10 +120,15 @@ def normalize(W, copy=True):
     copy : bool
         if True, returns a copy of the matrix. Otherwise, modifies the matrix
         in place. Default value=True.
+
     Returns
     -------
     W : np.ndarray
         normalized connectivity matrix
+
+    References
+    ----------
+    .. Adapted from Adapted from bctpy
     '''
     if copy:
         W = W.copy()
@@ -130,36 +136,62 @@ def normalize(W, copy=True):
     return W
 
 
-def density_thresholding(conn_matrix, thr, thr_max=1000):
+def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
     """
+    Iteratively apply an absolute threshold to achieve a target density.
 
-    :param conn_matrix:
-    :param thr:
-    :param thr_max:
-    :return:
+    Parameters
+    ----------
+    conn_matrix : np.ndarray
+        Weighted connectivity matrix
+    thr : float
+        Density value between 0-1.
+    max_iters : int
+        Maximum number of iterations for performing absolute thresholding. Default is 1000.
+    interval : float
+        Interval for increasing the absolute threshold for each iteration. Default is 0.01.
+
+    Returns
+    -------
+    conn_matrix : np.ndarray
+        Thresholded connectivity matrix
+
+    References
+    ----------
+    .. Adapted from Adapted from bctpy
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from pynets import thresholding
-    work_thr = 0
     np.fill_diagonal(conn_matrix, 0)
+
+    work_thr = 0
     i = 1
     density = nx.density(nx.from_numpy_matrix(conn_matrix))
-    while float(work_thr) < thr_max and float(thr) < float(density):
-        work_thr = float(work_thr) + float(1)
-        density = nx.density(nx.from_numpy_matrix(thresholding.threshold_absolute(conn_matrix, work_thr)))
-        print("%s%d%s%.2f%s%.2f%s" % ('Iteration ', i, ' -- with Thresh: ', float(work_thr), ' and Density: ',
-                                      float(density), '...'))
-        i = i + 1
+    if float(thr) < float(density):
+        while float(i) < max_iters and float(work_thr) < float(1):
+            work_thr = float(work_thr) + float(interval)
+            density = nx.density(nx.from_numpy_matrix(thresholding.threshold_absolute(conn_matrix, work_thr)))
+            print("%s%d%s%.2f%s%.2f%s" % ('Iteration ', i, ' -- with Thresh: ', float(work_thr), ' and Density: ',
+                                          float(density), '...'))
+            if float(thr) > float(density):
+                conn_matrix = thresholding.threshold_absolute(conn_matrix, work_thr)
+                break
+            i = i + 1
+    else:
+        print('Density of raw matrix is already greater than or equal to the target density requested')
+
     return conn_matrix
 
 
 # Calculate density
-def est_density(func_mat):
+def est_density(in_mat):
     """
     Calculates the density of a given graph.
 
     Parameters
     ----------
-    func_mat : NxN np.ndarray
+    in_mat : NxN np.ndarray
         weighted connectivity matrix.
 
     Returns
@@ -167,7 +199,7 @@ def est_density(func_mat):
     density : float
         Density of the graph.
     """
-    fG = nx.from_numpy_matrix(func_mat)
+    fG = nx.from_numpy_matrix(in_mat)
     density = nx.density(fG)
     return density
 
@@ -185,6 +217,10 @@ def thr2prob(W, copy=True):
     -------
     W : NxN np.ndarray
         Weighted connectivity matrix of ranks with no near-zero entries.
+
+    References
+    ----------
+    .. Adapted from Adapted from bctpy
     """
     if copy:
         W = W.copy()
@@ -194,8 +230,6 @@ def thr2prob(W, copy=True):
 
 def binarize(W, copy=True):
     '''
-    ## Adapted from bctpy ##
-
     Binarizes an input weighted connection matrix.  If copy is not set, this
     function will *modify W in place.*
 
@@ -211,6 +245,10 @@ def binarize(W, copy=True):
     -------
     W : NxN np.ndarray
         binary connectivity matrix
+
+    References
+    ----------
+    .. Adapted from Adapted from bctpy
     '''
     if copy:
         W = W.copy()
@@ -220,8 +258,6 @@ def binarize(W, copy=True):
 
 def invert(W, copy=False):
     '''
-    ## Adapted from bctpy ##
-
     Inverts elementwise the weights in an input connection matrix.
     In other words, change the from the matrix of internode strengths to the
     matrix of internode distances.
@@ -239,18 +275,21 @@ def invert(W, copy=False):
     -------
     W : np.ndarray
         inverted connectivity matrix
+
+    References
+    ----------
+    .. Adapted from Adapted from bctpy
     '''
     if copy:
         W = W.copy()
     E = np.where(W)
     W[E] = 1. / W[E]
+
     return W
 
 
 def weight_conversion(W, wcm, copy=True):
     '''
-    ## Adapted from bctpy ##
-
     W_bin = weight_conversion(W, 'binarize');
     W_nrm = weight_conversion(W, 'normalize');
     L = weight_conversion(W, 'lengths');
@@ -287,6 +326,10 @@ def weight_conversion(W, wcm, copy=True):
     W : NxN np.ndarray
         connectivity matrix with specified changes
 
+    References
+    ----------
+    .. Adapted from Adapted from bctpy
+
     Notes
     -----
     This function is included for compatibility with BCT. But there are
@@ -301,8 +344,6 @@ def weight_conversion(W, wcm, copy=True):
 
 def autofix(W, copy=True):
     '''
-    ## Adapted from bctpy ##
-    
     Fix a bunch of common problems. More specifically, remove Inf and NaN,
     ensure exact binariness and symmetry (i.e. remove floating point
     instability), and zero diagonal.
@@ -318,16 +359,19 @@ def autofix(W, copy=True):
     -------
     W : np.ndarray
         connectivity matrix with fixes applied.
+
+    References
+    ----------
+    .. Adapted from Adapted from bctpy
     '''
     if copy:
         W = W.copy()
     # zero diagonal
     np.fill_diagonal(W, 0)
     # remove np.inf and np.nan
-    try:
-        W[np.logical_or(np.where(np.isinf(W)), np.where(np.isnan(W)))] = 0
-    except:
-        pass
+    W[np.where(np.isinf(W))] = 0
+    W[np.where(np.isnan(W))] = 0
+
     # ensure exact binarity
     u = np.unique(W)
     if np.all(np.logical_or(np.abs(u) < 1e-8, np.abs(u - 1) < 1e-8)):
@@ -361,6 +405,8 @@ def disparity_filter(G, weight='weight'):
     .. [1] M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks.
        PNAS, 106:16, pp. 6483-6488.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from scipy import integrate
 
     if nx.is_directed(G):  # directed case
@@ -552,6 +598,8 @@ def local_thresholding_prop(conn_matrix, thr):
     conn_matrix_thr : array
         Weighted, MST local-thresholded, NxN matrix.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from pynets import thresholding
     from pynets.stats import netstats
 
@@ -637,6 +685,8 @@ def local_thresholding_dens(conn_matrix, thr):
     conn_matrix_thr : array
         Weighted, MST local-thresholded, NxN matrix.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from pynets import thresholding
     from pynets.stats import netstats
 
@@ -811,6 +861,8 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -979,6 +1031,8 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     streams : str
         File path to save streamline array sequence in .trk format.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from pynets import utils, thresholding
 
     thr_perc = 100 * float(thr)

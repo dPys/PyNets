@@ -1,0 +1,27 @@
+[
+    [
+        "B0_mask",
+        [
+            "/Users/derekpisner/Applications/PyNets/tests/examples/002/dmri/B0_bet_mask.nii.gz",
+            "f867beeaa014c5d4d5c0690b0d45d81a"
+        ]
+    ],
+    [
+        "dwi_file",
+        [
+            "/Users/derekpisner/Applications/PyNets/tests/examples/002/dmri/iso_eddy_corrected_data_denoised.nii.gz",
+            "a9e120f4e5bdf26be21d106086b49267"
+        ]
+    ],
+    [
+        "function_str",
+        "def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):\n    '''\n    Estimate a tensor FA image to use for registrations.\n\n    Parameters\n    ----------\n    gtab_file : str\n        File path to pickled DiPy gradient table object.\n    dwi_file : str\n        File path to diffusion weighted image.\n    B0_mask : str\n        File path to B0 brain mask.\n\n    Returns\n    -------\n    fa_path : str\n        File path to FA Nifti1Image.\n    B0_mask : str\n        File path to B0 brain mask Nifti1Image.\n    gtab_file : str\n        File path to pickled DiPy gradient table object.\n    dwi_file : str\n        File path to diffusion weighted Nifti1Image.\n    '''\n    import warnings\n    warnings.filterwarnings(\"ignore\")\n    import os\n    from dipy.io import load_pickle\n    from dipy.reconst.dti import TensorModel\n    from dipy.reconst.dti import fractional_anisotropy\n\n    data = nib.load(dwi_file).get_fdata()\n    gtab = load_pickle(gtab_file)\n\n    print('Generating simple tensor FA image to use for registrations...')\n    nodif_B0_img = nib.load(B0_mask)\n    B0_mask_data = nodif_B0_img.get_fdata().astype('bool')\n    nodif_B0_affine = nodif_B0_img.affine\n    model = TensorModel(gtab)\n    mod = model.fit(data, B0_mask_data)\n    FA = fractional_anisotropy(mod.evals)\n    FA[np.isnan(FA)] = 0\n    fa_img = nib.Nifti1Image(FA.astype(np.float32), nodif_B0_affine)\n    fa_path = \"%s%s\" % (os.path.dirname(B0_mask), '/tensor_fa.nii.gz')\n    nib.save(fa_img, fa_path)\n    return fa_path, B0_mask, gtab_file, dwi_file\n"
+    ],
+    [
+        "gtab_file",
+        [
+            "/Users/derekpisner/Applications/PyNets/tests/examples/002/dmri/gtab.pkl",
+            "23c36e11bbef4cdf2dff566adf707186"
+        ]
+    ]
+]

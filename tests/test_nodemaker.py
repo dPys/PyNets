@@ -8,9 +8,13 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import numpy as np
 import time
+import nibabel as nib
 from pathlib import Path
 from pynets import nodemaker
-
+try:
+    import cPickle as pickle
+except ImportError:
+    import _pickle as pickle
 
 # def test_nilearn_atlas_helper():
 #     parc=False
@@ -422,3 +426,49 @@ def test_RSN_fetch_nodes_and_labels2():
     assert atlas_name is not None
     assert RSN_coords is not None
     assert RSN_labels is not None
+
+
+def test_create_spherical_roi_volumes():
+    import pkg_resources
+    base_dir = str(Path(__file__).parent/"examples")
+    dir_path = base_dir + '/002/fmri'
+    node_size = 2
+    vox_size = '2mm'
+    template_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size +
+                                                    "_brain_mask.nii.gz")
+    coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
+    file_ = open(coords_file, 'rb')
+    coords = pickle.load(file_)
+    [parcel_list, par_max, node_size, parc] = nodemaker.create_spherical_roi_volumes(node_size, coords, template_mask)
+    assert len(parcel_list) > 0
+
+
+def test_get_sphere():
+    base_dir = str(Path(__file__).parent/"examples")
+    dir_path = base_dir + '/002/fmri'
+    func_file = dir_path + '/002.nii.gz'
+    func_img = nib.load(func_file)
+    r = 4
+    vox_dims = (2.0, 2.0, 2.0)
+    coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
+    file_ = open(coords_file, 'rb')
+    coords = pickle.load(file_)
+    neighbors = []
+    for coord in coords:
+        neighbors.append(nodemaker.get_sphere(coord, r, vox_dims, func_img.shape[0:3]))
+    neighbors = [i for i in neighbors if len(i)>0]
+    assert len(neighbors) == 8
+
+
+def test_mask_roi():
+    import pkg_resources
+    vox_size = '2mm'
+    mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size + "_brain_mask.nii.gz")
+    base_dir = str(Path(__file__).parent/"examples")
+    dir_path = base_dir + '/002/fmri'
+    img_file = dir_path + '/002.nii.gz'
+    roi = base_dir + '/pDMN_3_bin.nii.gz'
+    roi_masked = nodemaker.mask_roi(dir_path, roi, mask, img_file)
+    assert roi_masked is not None
+
+

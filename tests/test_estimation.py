@@ -136,9 +136,9 @@ def test_extract_ts_rsn_coords():
     hpass = None
     start_time = time.time()
     [ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas,
-     labels, coords, c_boot, hpass] = fmri_estimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi,
-                                                                 network, smooth, atlas, uatlas,
-                                                                 labels, c_boot, boot_size, hpass)
+     labels, coords, c_boot, hpass] = fmri_estimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path,
+                                                                        ID, roi, network, smooth, atlas, uatlas,
+                                                                        labels, c_boot, boot_size, hpass)
     print("%s%s%s" % ('extract_ts_coords --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     assert ts_within_nodes is not None
@@ -146,15 +146,3 @@ def test_extract_ts_rsn_coords():
     assert smooth is not None
     assert dir_path is not None
     assert c_boot is not None
-
-
-def generate_mask_from_voxels():
-    # Set example inputs
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    func_file = dir_path + '/002.nii.gz'
-    volume_dims = nib.load(func_file).shape
-    voxel_coords = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
-    mask = fmri_estimation.generate_mask_from_voxels(voxel_coords, volume_dims)
-    assert mask is not None
-

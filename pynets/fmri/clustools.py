@@ -27,14 +27,10 @@ import nibabel as nib
 import numpy as np
 import warnings
 warnings.filterwarnings("ignore")
-np.warnings.filterwarnings('ignore')
-warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def indx_1dto3d(idx, sz):
     """
-    ## Adapted from PyClusterROI ##
-
     Translate 1D vector coordinates to 3D matrix coordinates for a 3D matrix of size sz.
 
     Parameters
@@ -52,7 +48,13 @@ def indx_1dto3d(idx, sz):
         y-coordinate of 3D matrix coordinates.
     z : int
         z-coordinate of 3D matrix coordinates.
+
+    References
+    ----------
+    .. Adapted from PyClusterROI
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from scipy import divide, prod
     x = divide(idx, prod(sz[1:3]))
     y = divide(idx - x * prod(sz[1:3]), sz[2])
@@ -62,8 +64,6 @@ def indx_1dto3d(idx, sz):
 
 def indx_3dto1d(idx, sz):
     """
-    ## Adapted from PyClusterROI ##
-
     Translate 3D matrix coordinates to 1D vector coordinates for a 3D matrix of size sz.
 
     Parameters
@@ -77,7 +77,13 @@ def indx_3dto1d(idx, sz):
     -------
     idx1 : array
         A 1D numpy coordinate vector.
+
+    References
+    ----------
+    .. Adapted from PyClusterROI
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from scipy import prod, rank
     if rank(idx) == 1:
         idx1 = idx[0] * prod(sz[1:3]) + idx[1] * sz[2] + idx[2]
@@ -88,8 +94,6 @@ def indx_3dto1d(idx, sz):
 
 def make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh):
     """
-    ## Adapted from PyClusterROI ##
-
     Constructs a spatially constrained connectivity matrix from a fMRI dataset.
     The weights w_ij of the connectivity matrix W correspond to the
     spatial correlation between the whole brain FC maps generated from the
@@ -112,7 +116,13 @@ def make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh):
     thresh : str
         Threshold value, correlation coefficients lower than this value
         will be removed from the matrix (set to zero).
+
+    References
+    ----------
+    .. Adapted from PyClusterROI
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from scipy.sparse import csc_matrix
     from scipy import prod, rank
     neighbors = np.array([[-1, -1, -1], [0, -1, -1], [1, -1, -1],
@@ -141,7 +151,6 @@ def make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh):
     # nb.load('x.nii.gz').shape -> (x,y,z,t)
     nim = nib.load(func_file)
     sz = nim.shape
-    print(sz, ' dimensions of the 4D fMRI data')
 
     # Reshape fmri data to a num_voxels x num_timepoints array
     imdat = np.reshape(nim.get_data(), (prod(sz[:3]), sz[3]))
@@ -237,18 +246,21 @@ def make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh):
     np.save(outfile, outlist)
 
     print('finished ', func_file, ' len ', len(outlist))
+    return outfile
 
 
 def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
     """
-    ## Adapted from PyClusterROI ##
-
     Constructs a spatially constrained connectivity matrix from a fMRI dataset.
     The weights w_ij of the connectivity matrix W correspond to the
     temporal correlation between the time series from voxel i and voxel j.
     Connectivity is only calculated between a voxel and the 27 voxels in its 3D
     neighborhood (face touching and edge touching). The resulting datafiles are
     suitable as inputs to the function binfile_parcellate.
+
+    References
+    ----------
+    .. Adapted from PyClusterROI
 
     Parameters
     ----------
@@ -266,6 +278,8 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
         Threshold value, correlation coefficients lower than this value
         will be removed from the matrix (set to zero).
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from scipy.sparse import csc_matrix
     from scipy import prod, rank
     from itertools import product
@@ -361,13 +375,11 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
     np.save(outfile, outlist)
 
     print("%s%s" % ('Finished ', outfile))
-    return
+    return outfile
 
 
 def ncut(W, nbEigenValues):
     """
-    ## Adapted from PyClusterROI ##
-
     This function performs the first step of normalized cut spectral clustering.
     The normalized LaPlacian is calculated on the similarity matrix W, and top
     nbEigenValues eigenvectors are calculated. The number of eigenvectors
@@ -393,6 +405,7 @@ def ncut(W, nbEigenValues):
 
     References
     ----------
+    .. Adapted from PyClusterROI
     .. [1] Stella Yu and Jianbo Shi, "Understanding Popout through Repulsion," Computer
        Vision and Pattern Recognition, December, 2001.
     .. [2] Shi, J., & Malik, J. (2000).  Normalized cuts and image segmentation. IEEE
@@ -402,6 +415,8 @@ def ncut(W, nbEigenValues):
        IEEE International Conference on Computer Vision, (1), 313-319 vol.1. Ieee.
        doi: 10.1109/ICCV.2003.1238361
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from scipy.sparse.linalg import eigsh
     from scipy.sparse import spdiags
     from numpy.linalg import norm
@@ -445,8 +460,6 @@ def ncut(W, nbEigenValues):
 
 def discretisation(eigen_vec):
     """
-    ## Adapted from PyClusterROI ##
-
     This function performs the second step of normalized cut clustering which
     assigns features to clusters based on the eigen vectors from the LaPlacian of
     a similarity matrix. There are a few different ways to perform this task. Shi
@@ -481,6 +494,7 @@ def discretisation(eigen_vec):
 
     References
     ----------
+    .. Adapted from PyClusterROI
     .. [1] Stella Yu and Jianbo Shi, "Understanding Popout through Repulsion," Computer
        Vision and Pattern Recognition, December, 2001.
     .. [2] Shi, J., & Malik, J. (2000).  Normalized cuts and image segmentation. IEEE
@@ -490,6 +504,8 @@ def discretisation(eigen_vec):
        IEEE International Conference on Computer Vision, (1), 313-319 vol.1. Ieee.
        doi: 10.1109/ICCV.2003.1238361
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import scipy as sp
     from scipy.sparse import csc_matrix
     from scipy.linalg import LinAlgError, svd
@@ -561,8 +577,6 @@ def discretisation(eigen_vec):
 
 def binfile_parcellate(infile, outfile, k):
     """
-    ## Adapted from PyClusterROI ##
-
     This function performs normalized cut clustering on the connectivity matrix
     specified by infile into sets of K clusters.
 
@@ -578,7 +592,13 @@ def binfile_parcellate(infile, outfile, k):
         Path to the output file.
     k : int
         Numbers of clusters that will be generated.
+
+    References
+    ----------
+    .. Adapted from PyClusterROI
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from scipy.sparse import csc_matrix
 
     # Read in the file
@@ -619,13 +639,13 @@ def binfile_parcellate(infile, outfile, k):
     # Apply the suffix to the output filename and write out results as a .npy file
     outname = "%s%s%s%s" % (outfile, '_', str(k), '.npy')
     np.save(outname, group_img.todense())
-    return
+    return outname
 
 
 def make_image_from_bin_renum(image, binfile, mask):
     """
     Converts a .npy file generated by binfile_parcellation.py into a
-    nifti file where each voxels intensity corresponds to the number of the
+    nifti file where each voxel intensity corresponds to the number of the
     cluster to which it belongs. Clusters are renumberd to be contiguous.
 
     Parameters
@@ -639,6 +659,10 @@ def make_image_from_bin_renum(image, binfile, mask):
         Mask describing the space of the nifti file. This should
         correspond to the mask originally used to create the
         connectivity matrices used for parcellation.
+
+    References
+    ----------
+    .. Adapted from PyClusterROI
     """
     # Read in the mask
     nim = nib.load(mask)
@@ -668,7 +692,7 @@ def make_image_from_bin_renum(image, binfile, mask):
     nim_out = nib.Nifti1Image(imdat, nim.get_affine(), nim.get_header())
     # nim_out.set_data_dtype('int16')
     nim_out.to_filename(image)
-    return
+    return image
 
 
 def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas):
@@ -688,7 +712,13 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas):
         Type of clustering to be performed (e.g. 'ward', 'kmeans', 'complete', 'average').
     uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
+
+    References
+    ----------
+    .. Adapted from PyClusterROI
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import time
     import nibabel as nib
     from nilearn.regions import Parcellations
@@ -704,7 +734,7 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas):
     region_labels = connected_label_regions(clust_est.labels_img_)
     nib.save(region_labels, uatlas)
     print("%s%s%s" % (clust_type, k, " clusters: %.2fs" % (time.time() - start)))
-    return
+    return region_labels
 
 
 def individual_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
@@ -728,6 +758,8 @@ def individual_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
         Threshold value to be used for NCUT tcorr and scorr. Correlation coefficients
         lower than this value will be removed from the matrix (set to zero).
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import os
     from pynets import utils
     from pynets.fmri import clustools

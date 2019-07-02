@@ -16,6 +16,69 @@ from pathlib import Path
 from pynets import thresholding
 
 
+def test_binarize():
+    base_dir = str(Path(__file__).parent/"examples")
+    x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
+    s = thresholding.binarize(thresholding.threshold_proportional(x, .41))
+    assert np.sum(s) == 2.0
+
+
+def test_normalize():
+    base_dir = str(Path(__file__).parent/"examples")
+    x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
+    s = thresholding.normalize(thresholding.threshold_proportional(x, .79))
+    assert np.max(s) <= 1
+    assert np.min(s) >= 0
+
+
+def test_threshold_absolute():
+    base_dir = str(Path(__file__).parent/"examples")
+    x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
+    s = thresholding.threshold_absolute(x, 0.1)
+    assert np.round(np.sum(s), 1) <= np.sum(x)
+
+
+def test_invert():
+    base_dir = str(Path(__file__).parent/"examples")
+    x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
+    s = thresholding.invert(thresholding.threshold_proportional(x, .9))
+    assert np.round(np.sum(s), 1) >= np.sum(x)
+
+
+def test_autofix():
+    base_dir = str(Path(__file__).parent/"examples")
+    x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
+    x[1][1] = np.inf
+    x[2][1] = np.nan
+    s = thresholding.autofix(x)
+    assert (np.nan not in s) and (np.inf not in s)
+
+
+def test_density_thresholding():
+    base_dir = str(Path(__file__).parent/"examples")
+    x = np.genfromtxt(base_dir + '/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_raw_mat.txt')
+    l = thresholding.est_density((thresholding.density_thresholding(x, 0.01)))
+    h = thresholding.est_density((thresholding.density_thresholding(x, 0.04)))
+    assert np.equal(l, 0.009748743718592965)
+    assert np.equal(h, 0.037487437185929645)
+
+
+def test_est_density():
+    base_dir = str(Path(__file__).parent/"examples")
+    x = np.genfromtxt(base_dir + '/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_raw_mat.txt')
+    d = thresholding.est_density(x)
+    assert np.round(d, 1) == 0.1
+
+
+def test_thr2prob():
+    base_dir = str(Path(__file__).parent/"examples")
+    x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
+    s = thresholding.normalize(x)
+    s[0][0] = 0.0000001
+    t = thresholding.thr2prob(s)
+    assert float(len(t[np.logical_and(t < 0.001, t>0)])) == float(0.0)
+
+
 def test_thresh_func():
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
