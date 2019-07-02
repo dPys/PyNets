@@ -149,3 +149,20 @@ def test_extractnetstats():
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
     assert out_path is not None
+
+
+def test_raw_mets():
+    from pynets.stats.netstats import global_efficiency, average_local_efficiency
+    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, sigma
+    base_dir = str(Path(__file__).parent/"examples")
+    in_mat = np.genfromtxt(base_dir + '/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_raw_mat.txt')
+    G = nx.from_numpy_array(in_mat)
+    [G, _] = netstats.prune_disconnected(G)
+    custom_weight = None
+    metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
+                        average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient,
+                        graph_number_of_cliques, transitivity]
+    for i in metric_list_glob:
+        net_met_val = netstats.raw_mets(G, i, custom_weight)
+        print(net_met_val)
+        assert net_met_val is not np.nan

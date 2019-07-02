@@ -9,9 +9,7 @@ import os
 import numpy as np
 import networkx as nx
 import warnings
-np.warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
-warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def timeout(seconds):
@@ -68,6 +66,8 @@ def average_shortest_path_length_for_all(G):
     in the case that a graph is disconnected. Calculation occurs
     across all subgraphs detected in G.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import math
     subgraphs = [sbg for sbg in nx.connected_component_subgraphs(G) if len(sbg) > 1]
     return math.fsum(nx.average_shortest_path_length(sg) for sg in subgraphs) / len(subgraphs)
@@ -76,8 +76,6 @@ def average_shortest_path_length_for_all(G):
 @timeout(120)
 def global_efficiency(G, weight=None):
     """
-    ## Adapted from NetworkX to incorporate weight parameter ##
-
     Return the global efficiency of the graph G
 
     Parameters
@@ -107,6 +105,7 @@ def global_efficiency(G, weight=None):
 
     References
     ----------
+    .. Adapted from NetworkX to incorporate weight parameter
     .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
        small-world networks. Physical Review Letters 87.
     .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
@@ -133,8 +132,6 @@ def global_efficiency(G, weight=None):
 @timeout(120)
 def local_efficiency(G, weight=None):
     """
-    ## Adapted from NetworkX to incorporate weight parameter ##
-
     Return the local efficiency of each node in the graph G
 
     Parameters
@@ -161,6 +158,7 @@ def local_efficiency(G, weight=None):
 
     References
     ----------
+    .. Adapted from NetworkX to incorporate weight parameter
     .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
        small-world networks. Physical Review Letters 87.
     .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
@@ -193,8 +191,6 @@ def local_efficiency(G, weight=None):
 @timeout(120)
 def average_local_efficiency(G, weight=None):
     """
-    ## Adapted from NetworkX to incorporate weight parameter ##
-
     Return the average local efficiency of all of the nodes in the graph G
 
     Parameters
@@ -219,6 +215,7 @@ def average_local_efficiency(G, weight=None):
 
     References
     ----------
+    .. Adapted from NetworkX to incorporate weight parameter
     .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
        small-world networks. Physical Review Letters 87.
     .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
@@ -260,8 +257,6 @@ def create_communities(node_comm_aff_mat, node_num):
 @timeout(120)
 def participation_coef(W, ci, degree='undirected'):
     '''
-    ## Adapted from bctpy ##
-
     Participation coefficient is a measure of diversity of intermodular
     connections of individual nodes.
     Parameters
@@ -277,7 +272,11 @@ def participation_coef(W, ci, degree='undirected'):
     Returns
     -------
     P : Nx1 np.ndarray
-        participation coefficient
+        Participation coefficient
+
+    References
+    ----------
+    .. Adapted from Adapted from bctpy
     '''
     if degree == 'in':
         W = W.T
@@ -300,22 +299,26 @@ def participation_coef(W, ci, degree='undirected'):
 
 def participation_coef_sign(W, ci):
     '''
-    ## Adapted from bctpy ##
-
     Participation coefficient is a measure of diversity of intermodular
     connections of individual nodes.
+
     Parameters
     ----------
     W : NxN np.ndarray
         undirected connection matrix with positive and negative weights
     ci : Nx1 np.ndarray
         community affiliation vector
+
     Returns
     -------
     Ppos : Nx1 np.ndarray
         participation coefficient from positive weights
     Pneg : Nx1 np.ndarray
         participation coefficient from negative weights
+
+    References
+    ----------
+    .. Adapted from Adapted from bctpy
     '''
     _, ci = np.unique(ci, return_inverse=True)
     ci += 1
@@ -346,8 +349,6 @@ def participation_coef_sign(W, ci):
 
 def diversity_coef_sign(W, ci):
     '''
-    ## Adapted from bctpy ##
-
     The Shannon-entropy based diversity coefficient measures the diversity
     of intermodular connections of individual nodes and ranges from 0 to 1.
     Parameters
@@ -362,6 +363,10 @@ def diversity_coef_sign(W, ci):
         diversity coefficient based on positive connections
     Hneg : Nx1 np.ndarray
         diversity coefficient based on negative connections
+
+    References
+    ----------
+    Adapted from bctpy
     '''
 
     def entropy(w_):
@@ -392,8 +397,6 @@ def diversity_coef_sign(W, ci):
 
 def link_communities(W, type_clustering='single'):
     '''
-    ## Adapted from bctpy ##
-
     The optimal community structure is a subdivision of the network into
     nonoverlapping groups of nodes which maximizes the number of within-group
     edges and minimizes the number of between-group edges.
@@ -413,7 +416,13 @@ def link_communities(W, type_clustering='single'):
     -------
     M : CxN np.ndarray
         nodal community affiliation matrix.
+
+    References
+    ----------
+    Adapted from bctpy
     '''
+    import warnings
+    warnings.filterwarnings("ignore")
     from pynets.thresholding import normalize
 
     n = len(W)
@@ -662,6 +671,7 @@ def most_important(G):
     return Gt, pruned_nodes
 
 
+@timeout(300)
 def raw_mets(G, i, custom_weight):
     """
     API that iterates across NetworkX algorithms for a graph G.
@@ -743,6 +753,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     out_path : str
         Path to .csv file where graph analysis results are saved.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import pandas as pd
     import yaml
     try:
@@ -762,7 +774,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     else:
         in_mat_raw = np.array(np.load(est_path))
 
-    # De-diagnal
+    # De-diagnal and remove nan's and inf's
     in_mat = np.array(np.array(thresholding.autofix(in_mat_raw)))
 
     # Normalize connectivity matrix
@@ -774,10 +786,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
         in_mat = np.log10(in_mat)
     else:
         pass
-
-    # Correct nan's and inf's
-    in_mat[np.isnan(in_mat)] = 0
-    in_mat[np.isinf(in_mat)] = 1
 
     # Get hyperbolic tangent (i.e. fischer r-to-z transform) of matrix if non-covariance
     if (conn_model == 'corr') or (conn_model == 'partcorr'):
@@ -796,10 +804,13 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     # Prune irrelevant nodes (i.e. nodes who are fully disconnected from the graph and/or those whose betweenness
     # centrality are > 3 standard deviations below the mean)
     if prune == 1:
+        print('Pruning disconnected nodes...')
         [G, _] = prune_disconnected(G_pre)
     elif prune == 2:
+        print('Pruning to retain only most important nodes...')
         [G, _] = most_important(G_pre)
     else:
+        print('No node pruning applied...')
         G = G_pre
 
     # Get corresponding matrix
@@ -809,10 +820,13 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     if (prune != 0) and (prune is not None):
         final_mat_path = "%s%s%s" % (est_path.split(est_path_fmt)[0], '_pruned_mat', est_path_fmt)
         utils.save_mat(in_mat, final_mat_path, fmt)
+        print("%s%s" % ('Source File: ', final_mat_path))
+    else:
+        print("%s%s" % ('Source File: ', est_path))
 
     # Print graph summary
     print("%s%.2f%s" % ('\n\nThreshold: ', 100 * float(thr), '%'))
-    print("%s%s" % ('Source File: ', est_path))
+
     info_list = list(nx.info(G).split('\n'))[2:]
     for i in info_list:
         print(i)

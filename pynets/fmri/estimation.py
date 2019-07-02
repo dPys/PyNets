@@ -7,8 +7,6 @@ Copyright (C) 2018
 import warnings
 import numpy as np
 warnings.filterwarnings("ignore")
-np.warnings.filterwarnings('ignore')
-warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
@@ -125,6 +123,8 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from nilearn.connectome import ConnectivityMeasure
     from sklearn.covariance import GraphicalLassoCV
 
@@ -324,7 +324,8 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
-
+    import warnings
+    warnings.filterwarnings("ignore")
     import os.path as op
     from nilearn import input_data
     from pynets import utils
@@ -428,6 +429,8 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import os.path as op
     from nilearn import input_data
     from pynets import utils

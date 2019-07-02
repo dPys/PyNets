@@ -5,16 +5,14 @@ Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
-import warnings
 import os
 import os.path as op
 import nibabel as nib
 import numpy as np
 from pynets.stats.netstats import extractnetstats
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface
+import warnings
 warnings.filterwarnings("ignore")
-np.warnings.filterwarnings('ignore')
-warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def get_file():
@@ -43,6 +41,8 @@ def export_to_pandas(csv_loc, ID, network, roi):
     net_pickle_mt : pkl
         File path to pickled pandas dataframe.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import pandas as pd
     try:
         import cPickle as pickle
@@ -148,16 +148,16 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
         File path to .npy file containing graph with all specified combinations of hyperparameter characteristics.
     """
     if (node_size is None) and (parc is True):
-        node_size = 'parc'
+        node_size = '_parc'
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_',
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_',
                                                        '%s' % (network + '_' if network is not None else ''),
                                                        '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                       'est_', conn_model, '_', thr, thr_type, '_',
-                                                       '%s' % ("%s%s" % (node_size, 'mm_') if node_size != 'parc' else ''),
-                                                       "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
-                                                       "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''),
-                                                       "%s" % ("%s%s" % (hpass, 'Hz') if hpass is not None else ''),
+                                                       'est_', conn_model, '_', thr, thr_type,
+                                                       '%s' % ("%s%s" % (node_size, '_mm') if node_size != '_parc' else ''),
+                                                       "%s" % ("%s%s" % (int(c_boot), '_nb') if float(c_boot) > 0 else ''),
+                                                       "%s" % ("%s%s" % (smooth, '_fwhm') if float(smooth) > 0 else ''),
+                                                       "%s" % ("%s%s" % (hpass, '_Hz') if hpass is not None else ''),
                                                        '.npy')
 
     return est_path
@@ -203,14 +203,14 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
         File path to .npy file containing graph with thresholding applied.
     """
     if (node_size is None) and (parc is True):
-        node_size = 'parc'
+        node_size = '_parc'
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_',
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_',
                                                      '%s' % (network + '_' if network is not None else ''),
                                                      '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                     'est_', conn_model, '_', thr, thr_type, '_',
-                                                     '%s' % ("%s%s" % (node_size, 'mm_') if node_size != 'parc' else ''),
-                                                     "%s" % ("%s%s" % (int(target_samples), 'samples_') if float(target_samples) > 0 else ''),
+                                                     'est_', conn_model, '_', thr, thr_type,
+                                                     '%s' % ("%s%s" % (node_size, '_mm') if node_size != '_parc' else ''),
+                                                     "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
                                                      "%s%s" % (track_type, '_track'), '.npy')
     return est_path
 
@@ -300,6 +300,8 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
     fmt : str
         Format to save connectivity matrix/graph (e.g. .npy, .pkl, .graphml, .txt, .ssv, .csv). Default is .npy.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import networkx as nx
     G = nx.from_numpy_array(conn_matrix)
     G.graph['ecount'] = nx.number_of_edges(G)
@@ -325,29 +327,28 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
 def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist,
                    prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=True,
                    multimodal=False):
-    from pynets.utils import build_omnetome, flatten
     """
     Passes lists of iterable parameters as metadata.
 
     Parameters
     ----------
     conn_model_iterlist : list
-       List of connectivity estimation model parameters (e.g. corr for correlation, cov for covariance, 
+       List of connectivity estimation model parameters (e.g. corr for correlation, cov for covariance,
        sps for precision covariance, partcorr for partial correlation). sps type is used by default.
     est_path_iterlist : list
         List of file paths to .npy file containing graph with thresholding applied.
     network_iterlist : list
-        List of resting-state networks based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the 
-        study of brain subgraphs.        
+        List of resting-state networks based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
+        study of brain subgraphs.
     node_size_iterlist : list
         List of spherical centroid node sizes in the case that coordinate-based centroids are used as ROI's.
     thr_iterlist : list
         List of values, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.        
+        triggered through other options.
     prune_iterlist : list
         List of booleans indicating whether final graphs were pruned of disconnected nodes/isolates.
     ID_iterlist : list
-        List of repeated subject id strings.   
+        List of repeated subject id strings.
     roi_iterlist : list
         List of file paths to binarized/boolean region-of-interest Nifti1Image files.
     norm_iterlist : list
@@ -357,27 +358,27 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, nod
     embed_iterlist : list
         List of booleans indicating whether omnibus embedding of graph population was performed.
     multimodal_iterlist : list
-        List of booleans indicating whether multiple modalities of input data have been specified.  
-                                        
+        List of booleans indicating whether multiple modalities of input data have been specified.
+
     Returns
-    -------        
+    -------
     conn_model_iterlist : list
-       List of connectivity estimation model parameters (e.g. corr for correlation, cov for covariance, 
+       List of connectivity estimation model parameters (e.g. corr for correlation, cov for covariance,
        sps for precision covariance, partcorr for partial correlation). sps type is used by default.
     est_path_iterlist : list
         List of file paths to .npy file containing graph with thresholding applied.
     network_iterlist : list
-        List of resting-state networks based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the 
-        study of brain subgraphs.        
+        List of resting-state networks based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
+        study of brain subgraphs.
     node_size_iterlist : list
         List of spherical centroid node sizes in the case that coordinate-based centroids are used as ROI's.
     thr_iterlist : list
         List of values, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.        
+        triggered through other options.
     prune_iterlist : list
         List of booleans indicating whether final graphs were pruned of disconnected nodes/isolates.
     ID_iterlist : list
-        List of repeated subject id strings.   
+        List of repeated subject id strings.
     roi_iterlist : list
         List of file paths to binarized/boolean region-of-interest Nifti1Image files.
     norm_iterlist : list
@@ -387,8 +388,11 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, nod
     embed_iterlist : list
         List of booleans indicating whether omnibus embedding of graph population was performed.
     multimodal_iterlist : list
-        List of booleans indicating whether multiple modalities of input data have been specified.  
+        List of booleans indicating whether multiple modalities of input data have been specified.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
+    from pynets.utils import build_omnetome, flatten
     if embed is True:
         build_omnetome(list(flatten(est_path_iterlist)), list(flatten(ID_iterlist))[0], multimodal)
 
@@ -578,18 +582,18 @@ def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, node_size_
     roi_iterlist = [roi_func, roi_struct]
     norm_iterlist = [norm_func, norm_struct]
     binary_iterlist = [binary_func, binary_struct]
-    # print('\n\nParam-iters:\n')
-    # print(conn_model_iterlist)
-    # print(est_path_iterlist)
-    # print(network_iterlist)
-    # print(node_size_iterlist)
-    # print(thr_iterlist)
-    # print(prune_iterlist)
-    # print(ID_iterlist)
-    # print(roi_iterlist)
-    # print(norm_iterlist)
-    # print(binary_iterlist)
-    # print('\n\n')
+    print('\n\nParam-iters:\n')
+    print(conn_model_iterlist)
+    print(est_path_iterlist)
+    print(network_iterlist)
+    print(node_size_iterlist)
+    print(thr_iterlist)
+    print(prune_iterlist)
+    print(ID_iterlist)
+    print(roi_iterlist)
+    print(norm_iterlist)
+    print(binary_iterlist)
+    print('\n\n')
     return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 
 
@@ -625,13 +629,15 @@ def flatten(l):
 
 
 def build_omnetome(est_path_iterlist, ID, multimodal):
+    import warnings
+    warnings.filterwarnings("ignore")
     import os
     from pynets.utils import flatten
     from sklearn.feature_selection import VarianceThreshold
     from graspy.embed import OmnibusEmbed, ClassicalMDS
     """
     Embeds ensemble population of graphs into omnetome feature vector.
-    
+
     Parameters
     ----------
     est_path_iterlist : list
@@ -668,7 +674,7 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
         print('Saving...')
         np.save(out_path, mds_fit)
         del mds, mds_fit, omni, omni_fit
-        return
+        return out_path
 
     atlases = list(set([x.split('/')[-2].split('/')[0] for x in est_path_iterlist]))
     parcel_dict = dict.fromkeys(atlases)
@@ -697,7 +703,7 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
             for graph in parcel_dict[atlas]:
                 pop_array.append(np.load(graph))
             if len(pop_array) > 1:
-                omni_embed(pop_array)
+                out_path = omni_embed(pop_array)
             else:
                 print('WARNING: Only one graph sampled, omnibus embedding not appropriate.')
                 pass
@@ -709,10 +715,10 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
             pop_array = []
             for graph in parcel_dict[atlas]:
                 pop_array.append(np.load(graph))
-            omni_embed(pop_array)
+            out_path = omni_embed(pop_array)
     else:
         raise RuntimeError('ERROR: Only one graph sampled, omnibus embedding not appropriate.')
-    return
+    return out_path
 
 
 def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
@@ -731,6 +737,8 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
     plot_switch : bool
         Activate summary plotting (histograms, ROC curves, etc.)
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import pandas as pd
     import numpy as np
     import matplotlib
@@ -825,6 +833,8 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, 
     multimodal : bool
         Indicates whether multiple modalities of input data have been specified.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from pynets.utils import collect_pandas_df_make, flatten
 
     func_models = ['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
@@ -981,6 +991,8 @@ def save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network):
     labels_path : str
         Path to pickled labels list.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     try:
         import cPickle as pickle
     except ImportError:
@@ -997,7 +1009,6 @@ def save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network):
 
 
 def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
-    import os.path as op
     """
     This function takes a Nifti1Image parcellation object resulting from some form of masking and saves it to disk.
 
@@ -1011,18 +1022,19 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
         File path to binarized/boolean region-of-interest Nifti1Image file.
     network : str
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.        
+        brain subgraphs.
     net_parcels_map_nifti : Nifti1Image
         A nibabel-based nifti image consisting of a 3D array with integer voxel intensities corresponding to ROI
         membership.
-                        
+
     Returns
     -------
     net_parcels_nii_path : str
         File path to Nifti1Image consisting of a 3D array with integer voxel intensities corresponding to ROI
         membership.
     """
-
+    import warnings
+    warnings.filterwarnings("ignore")
     net_parcels_nii_path = "%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_parcels_masked_',
                                                '%s' % (network + '_' if network is not None else ''),
                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
@@ -1169,6 +1181,8 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
     dwi_file : str
         File path to diffusion weighted image.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import os
     from dipy.io import save_pickle
     import os.path as op

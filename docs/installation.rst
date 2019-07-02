@@ -15,15 +15,16 @@ Docker Container
 
 In order to run pynets in a Docker container, Docker must be `installed
 <https://docs.docker.com/engine/installation/>`_.
-Once Docker is installed, you can build a container as follows:
-BUILDIR=$(pwd)
-mkdir -p ${BUILDIR}/pynets_images
-docker build -t pynets_docker .
+Once Docker is installed, you can build a container as follows: ::
 
-docker run -ti --rm --privileged \
-    -v /tmp:/tmp \
-    -v /var/tmp:/var/tmp \
-    pynets_docker
+    BUILDIR=$(pwd)
+    mkdir -p ${BUILDIR}/pynets_images
+    docker build -t pynets_docker .
+
+    docker run -ti --rm --privileged \
+        -v /tmp:/tmp \
+        -v /var/tmp:/var/tmp \
+        pynets_docker
 
 See `External Dependencies`_ for more information (e.g., specific versions) on
 what is included in the latest Docker images.
@@ -80,7 +81,7 @@ Transfer the resulting Singularity image to the HPC, for example, using ``scp``.
 Running a Singularity Image
 ---------------------------
 
-If the data to be preprocessed is also on the HPC, you are ready to run fmriprep. ::
+If the data to be preprocessed is also on the HPC, you are ready to run pynets. ::
 
     $ singularity run --cleanenv /my_images/pynets-0.7.4.simg \
         path/to/data/dir/bids_derivative_root \

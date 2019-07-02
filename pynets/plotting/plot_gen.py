@@ -23,6 +23,8 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
     :param labels:
     :return:
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import json
     from pathlib import Path
     from networkx.readwrite import json_graph
@@ -272,6 +274,8 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas, labels):
     :param atlas:
     :param labels:
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
@@ -317,6 +321,8 @@ def plot_all(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi,
     :param hpass:
     :return:
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
@@ -453,6 +459,8 @@ def structural_plotting(conn_matrix, uatlas, streamlines_mni, template_mask, int
     :param interactive:
     :return:
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import nibabel as nib
     import numpy as np
     import networkx as nx

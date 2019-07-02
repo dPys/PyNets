@@ -1,0 +1,21 @@
+[
+    [
+        "ID",
+        "0021001"
+    ],
+    [
+        "csv_loc",
+        [
+            "/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_SalVentAttn_sps_0.2_4mm.csv",
+            "8c148089f838884381218da7dcd4a524"
+        ]
+    ],
+    [
+        "network",
+        "SalVentAttn"
+    ],
+    [
+        "roi",
+        null
+    ]
+]

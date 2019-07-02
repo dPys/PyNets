@@ -1,0 +1,21 @@
+[
+    [
+        "ID",
+        "0021001"
+    ],
+    [
+        "csv_loc",
+        [
+            "/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.19_4mm.csv",
+            "29de58ac0bcb8f57a2ac7090ec340e7d"
+        ]
+    ],
+    [
+        "network",
+        "Default"
+    ],
+    [
+        "roi",
+        null
+    ]
+]

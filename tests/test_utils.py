@@ -57,6 +57,7 @@ def test_save_nifti_parcels_map():
     net_parcels_nii_path = utils.save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti)
     assert os.path.isfile(net_parcels_nii_path) is True
 
+
 def test_save_ts_to_file():
     base_dir = str(Path(__file__).parent/"examples")
     roi = None
@@ -67,3 +68,50 @@ def test_save_ts_to_file():
     ts_within_nodes = '/tmp/'
     out_path_ts = utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
     assert os.path.isfile(out_path_ts) is True
+
+
+def test_build_omnetome():
+    base_dir = str(Path(__file__).parent/"examples")
+    dir_path = base_dir + '/002/dmri'
+    ID = '002'
+    multimodal = False
+    est_path_iterlist = [dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track.npy',
+                         dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.08dens_100000samples_particle_track.npy',
+                         dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.07dens_100000samples_particle_track.npy',
+                         dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.06dens_100000samples_particle_track.npy',
+                         dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.05dens_100000samples_particle_track.npy']
+    out_path = utils.build_omnetome(est_path_iterlist, ID, multimodal)
+    assert out_path is not None
+
+
+def test_check_est_path_existence():
+    base_dir = str(Path(__file__).parent/"examples")
+    dir_path = base_dir + '/002/dmri'
+    est_path_list = [dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track.npy',
+                     dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.08dens_100000samples_particle_track.npy',
+                     dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.07dens_100000samples_particle_track.npy',
+                     dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.06dens_100000samples_particle_track.npy',
+                     dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.05dens_100000samples_particle_track.npy']
+    [est_path_list_ex, _] = utils.check_est_path_existence(est_path_list)
+    assert est_path_list_ex is not None
+
+
+def test_collect_pandas_df():
+    multi_nets = ['Default', 'SalVentAttn']
+    network = 'Default'
+    ID = '002'
+    plot_switch = True
+    multimodal = False
+    net_pickle_mt_list = ['/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.15_parc',
+                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.16_parc',
+                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.17_parc',
+                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.18_parc',
+                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.19_parc',
+                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_partcorr_0.2_parc',
+                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_sps_0.15_parc',
+                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_sps_0.16_parc',
+                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_sps_0.17_parc',
+                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_sps_0.18_parc',
+                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_sps_0.19_parc',
+                          '/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/DesikanKlein2012/0021001_net_mets_Default_sps_0.2_parc']
+    utils.collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, multimodal)

@@ -4,12 +4,10 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
-import warnings
 import numpy as np
 import nibabel as nib
+import warnings
 warnings.filterwarnings("ignore")
-np.warnings.filterwarnings('ignore')
-warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 def reconstruction(conn_model, gtab, dwi_file, wm_in_dwi):
@@ -32,6 +30,8 @@ def reconstruction(conn_model, gtab, dwi_file, wm_in_dwi):
     mod : obj
         Connectivity reconstruction model.
     '''
+    import warnings
+    warnings.filterwarnings("ignore")
     try:
         import cPickle as pickle
     except ImportError:
@@ -75,7 +75,8 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     tiss_classifier : obj
         Tissue classifier object.
     '''
-
+    import warnings
+    warnings.filterwarnings("ignore")
     try:
         import cPickle as pickle
     except ImportError:
@@ -134,6 +135,8 @@ def run_LIFE_all(data, gtab, streamlines):
     mean_rmse : float
         Root Mean-Squared Error (RMSE) when using LiFE-filtered fibers to predict diffusion data.
     '''
+    import warnings
+    warnings.filterwarnings("ignore")
     import dipy.tracking.life as life
     import dipy.core.optimize as opt
     fiber_model = life.FiberModel(gtab)
@@ -169,7 +172,8 @@ def save_streams(dwi_img, streamlines, streams):
     streams : str
         File path to saved streamline array sequence in DTK-compatible trackvis (.trk) format.
     '''
-
+    import warnings
+    warnings.filterwarnings("ignore")
     hdr = dwi_img.header
 
     # Save streamlines
@@ -236,6 +240,8 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
     dm_path : str
         File path to fiber density map Nifti1Image.
     '''
+    import warnings
+    warnings.filterwarnings("ignore")
     import os.path as op
     from dipy.tracking import utils
     from pynets.dmri.track import save_streams, run_LIFE_all
@@ -347,6 +353,8 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from colorama import Fore, Style
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
@@ -579,7 +587,8 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     dm_path : str
         File path to fiber density map Nifti1Image.
     '''
-
+    import warnings
+    warnings.filterwarnings("ignore")
     try:
         import cPickle as pickle
     except ImportError:

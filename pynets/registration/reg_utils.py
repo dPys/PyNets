@@ -4,14 +4,12 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner
 """
-import warnings
 import os
 import shutil
 import numpy as np
 import nibabel as nib
+import warnings
 warnings.filterwarnings("ignore")
-np.warnings.filterwarnings('ignore')
-warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 
 try:
@@ -313,6 +311,8 @@ def transform_to_affine(streams, header, affine):
     streams : str
         File path to transformed streamline array sequence in .trk format.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from dipy.tracking.utils import move_streamlines
     rotation, scale = np.linalg.qr(affine)
     streams = move_streamlines(streams, rotation)
@@ -342,6 +342,8 @@ def check_orient_and_dims(infile, vox_size, bvecs=None):
     bvecs : str
         File path to corresponding reoriented bvecs file if outfile is a dwi.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import os
     import os.path as op
     from pynets.registration.reg_utils import reorient_dwi, reorient_img, match_target_vox_res
@@ -416,6 +418,8 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
     bvecs : str
         File path to corresponding reoriented bvecs file.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import shutil
     # Check orientation (dwi_prep)
     cmd_run = os.popen('fslorient -getorient {}'.format(dwi_prep))
@@ -515,6 +519,8 @@ def reorient_img(img, out_dir):
     img : str
         File path to reoriented Nifti1Image.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import shutil
     import random
     cmd_run = os.popen('fslorient -getorient {}'.format(img))
@@ -608,6 +614,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, sens):
     img_file : str
         File path to resampled Nifti1Image.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from dipy.align.reslice import reslice
     # Check dimensions
     img = nib.load(img_file)

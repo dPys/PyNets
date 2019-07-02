@@ -7,6 +7,8 @@
 
 def get_parser():
     """Parse command-line inputs"""
+    import warnings
+    warnings.filterwarnings("ignore")
     import argparse
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
@@ -102,6 +104,16 @@ def get_parser():
                         default=None,
                         help='Optionally specify a path to a parcellation/atlas Nifti1Image file. If specifying a '
                              'list of paths to multiple user atlases, separate them by comma.\n')
+    parser.add_argument('-templ',
+                        metavar='Path to template file',
+                        default=None,
+                        help='Optionally specify a path to a template Nifti1Image file. If none is specified, then '
+                             'will use the FSL MNI152 template by default.\n')
+    parser.add_argument('-templm',
+                        metavar='Path to template mask file',
+                        default=None,
+                        help='Optionally specify a path to a template mask Nifti1Image file. If none is specified, '
+                             'then will use the FSL MNI152 template mask by default.\n')
     parser.add_argument('-ref',
                         metavar='Atlas reference file path',
                         default=None,
@@ -174,7 +186,7 @@ def get_parser():
                              'RSNs, separate them by space. (e.g. -n \'Default\' \'Cont\' \'SalVentAttn\')\'.\n')
     parser.add_argument('-sm',
                         metavar='Smoothing value (mm fwhm)',
-                        default=None,
+                        default=0,
                         nargs='+',
                         help='Optionally specify smoothing width(s). Default is 0 / no smoothing. '
                              'If you wish to iterate the pipeline across multiple smoothing '
@@ -316,17 +328,14 @@ def get_parser():
 
 
 def build_workflow(args, retval):
+    import warnings
+    warnings.filterwarnings("ignore")
     import os
     import os.path as op
     import sys
     import timeit
     import numpy as np
     from pathlib import Path
-    import warnings
-    warnings.filterwarnings("ignore")
-    warnings.simplefilter("ignore")
-    np.warnings.filterwarnings('ignore')
-    warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
     import yaml
     try:
         import pynets
@@ -420,6 +429,8 @@ def build_workflow(args, retval):
     c_boot = args.b
     block_size = args.bs
     roi = args.roi
+    template = args.templ
+    template_mask = args.templm
     conn_model_pre = args.mod
     conn_model = conn_model_pre
     if conn_model:
@@ -713,10 +724,10 @@ def build_workflow(args, retval):
 
     if graph is None and multi_graph is None:
         if network is not None:
-            print("%s%s" % ("\nUsing RSN pipeline for: ", network))
+            print("%s%s" % ("\nRunning pipeline for 1 RSN: ", network))
         elif multi_nets is not None:
-            network = multi_nets[0]
-            print("%s%d%s%s%s" % ('\nIterating RSN pipeline across ', len(multi_nets), ' networks: ',
+            network = None
+            print("%s%d%s%s%s" % ('\nIterating pipeline across ', len(multi_nets), ' RSN\'s: ',
                                   str(', '.join(str(n) for n in multi_nets)), '...'))
         else:
             print("\nUsing whole-brain pipeline...")
@@ -724,6 +735,7 @@ def build_workflow(args, retval):
         if node_size_list:
             print("%s%s%s" % ('\nGrowing spherical nodes across multiple radius sizes: ',
                               str(', '.join(str(n) for n in node_size_list)), '...'))
+            node_size = None
         elif parc is True:
             print("\nUsing parcels as nodes...")
         else:
@@ -763,6 +775,7 @@ def build_workflow(args, retval):
         if conn_model_list:
             print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ',
                               str(', '.join(str(n) for n in conn_model_list)), '...'))
+            conn_model = None
         else:
             print("%s%s" % ("\nUsing connectivity model: ", conn_model))
     elif graph or multi_graph:
@@ -1166,11 +1179,15 @@ def build_workflow(args, retval):
     # print("%s%s" % ('tiss_class: ', tiss_class))
     # print("%s%s" % ('directget: ', directget))
     # print("%s%s" % ('multi_directget: ', multi_directget))
+    # print("%s%s" % ('template: ', template))
+    # print("%s%s" % ('template_mask: ', template_mask))
     # print('\n\n\n\n\n')
     # import sys
     # sys.exit(0)
 
     # Import wf core and interfaces
+    import warnings
+    warnings.filterwarnings("ignore")
     import random
     from pynets.utils import CollectPandasDfs, Export2Pandas, ExtractNetStats, CollectPandasJoin
     from nipype.pipeline import engine as pe
@@ -1186,7 +1203,7 @@ def build_workflow(args, retval):
                                clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples,
                                curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
                                maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict, embed,
-                               multi_directget, multimodal, hpass, hpass_list):
+                               multi_directget, multimodal, hpass, hpass_list, template, template_mask):
         """A function interface for generating a single-subject workflow"""
         if (func_file is not None) and (dwi_file is None):
             wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_fmri_', random.randint(1, 1000)))
@@ -1242,7 +1259,7 @@ def build_workflow(args, retval):
                                     clust_type, clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec,
                                     target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
                                     max_length, maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict,
-                                    embed, multi_directget, multimodal, hpass, hpass_list)
+                                    embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask)
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
@@ -1375,7 +1392,8 @@ def build_workflow(args, retval):
                          use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list,
                          c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
                          overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
-                         directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list):
+                         directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list,
+                         template, template_mask):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         wf_multi = pe.Workflow(name="%s%s" % ('wf_multisub_', random.randint(1001, 9000)))
 
@@ -1422,7 +1440,8 @@ def build_workflow(args, retval):
                 overlap_thr=overlap_thr, overlap_thr_list=overlap_thr_list, track_type=track_type,
                 max_length=max_length, maxcrossing=maxcrossing, life_run=life_run, min_length=min_length,
                 directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, embed=embed,
-                multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list)
+                multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
+                template=template, template_mask=template_mask)
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
@@ -1464,8 +1483,9 @@ def build_workflow(args, retval):
                                     block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list,
                                     step_list, overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing,
                                     life_run, min_length, directget, tiss_class, runtime_dict, embed, multi_directget,
-                                    multimodal, hpass, hpass_list)
-
+                                    multimodal, hpass, hpass_list, template, template_mask)
+        import warnings
+        warnings.filterwarnings("ignore")
         import shutil
         wf_multi.base_dir = '/tmp/wf_multi_subject'
         if op.exists(wf_multi.base_dir):
@@ -1531,8 +1551,9 @@ def build_workflow(args, retval):
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
                                     directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass,
-                                    hpass_list)
-
+                                    hpass_list, template, template_mask)
+        import warnings
+        warnings.filterwarnings("ignore")
         import shutil
         import os
         if (func_file is not None) and (dwi_file is None):
@@ -1614,9 +1635,9 @@ def build_workflow(args, retval):
 
 def main():
     """Initializes main script from command-line call to generate single-subject or multi-subject workflow(s)"""
-    import sys
     import warnings
     warnings.filterwarnings("ignore")
+    import sys
     try:
         from pynets.utils import do_dir_path
     except ImportError:

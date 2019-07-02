@@ -4,16 +4,14 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner
 """
-import warnings
 import os
 import nibabel as nib
 import numpy as np
 from pynets.registration import reg_utils as regutils
 from nilearn.image import load_img, math_img
+import warnings
 warnings.filterwarnings("ignore")
-warnings.simplefilter("ignore", ResourceWarning)
-np.warnings.filterwarnings('ignore')
-warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
+
 try:
     FSLDIR = os.environ['FSLDIR']
 except KeyError:
@@ -44,6 +42,8 @@ def transform_pts(pts, t_aff, t_warp, ref_img_path, template_path, dsn_dir):
     lps_voxmm : array
         Numpy array of transformed streamline points.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from pynets.registration import reg_utils as regutils
     import random
 
@@ -111,6 +111,8 @@ class Warp(object):
         """
         A function for warping streamslines from native diffusion space to template space.
         """
+        import warnings
+        warnings.filterwarnings("ignore")
         from pynets.registration.register import transform_pts
         print("%s%s" % ("Warping streamline file ", self.file_in))
         template = nib.load(self.template_path)
@@ -284,6 +286,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different spatial normalization approaches on
            tractography and structural brain networks. Network Neuroscience, 1-19.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from dipy.tracking.streamline import Streamlines
     from pynets.registration import reg_utils as regutils
     from pynets.registration.register import Warp
@@ -769,7 +773,7 @@ class FmriReg(object):
 
 
 def register_all_dwi(basedir_path, fa_path, B0_mask, anat_file, gtab_file, dwi_file, vox_size='2mm', simple=False,
-                     overwrite=False):
+                     overwrite=True):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 
@@ -793,7 +797,7 @@ def register_all_dwi(basedir_path, fa_path, B0_mask, anat_file, gtab_file, dwi_f
         Indicates whether to use non-linear registration and BBR (True) or entirely linear methods (False).
         Default is True.
     overwrite : bool
-        Indicates whether to overwrite existing registration files. Default is False.
+        Indicates whether to overwrite existing registration files. Default is True.
 
     Returns
     -------
@@ -819,6 +823,8 @@ def register_all_dwi(basedir_path, fa_path, B0_mask, anat_file, gtab_file, dwi_f
         File path to diffusion weighted image.
 
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import os.path as op
     from pynets.registration import register
     reg = register.DmriReg(basedir_path, fa_path, B0_mask, anat_file, vox_size, simple)
@@ -918,6 +924,8 @@ def register_atlas_dwi(uatlas, atlas, node_size, basedir_path, fa_path, B0_mask,
     dwi_file : str
         File path to diffusion weighted image.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from pynets.registration import register
     reg = register.DmriReg(basedir_path, fa_path, B0_mask, anat_file, vox_size, simple)
 
@@ -930,7 +938,7 @@ def register_atlas_dwi(uatlas, atlas, node_size, basedir_path, fa_path, B0_mask,
     return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni, uatlas, atlas, coords, labels, node_size, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, fa_path, gtab_file, B0_mask, dwi_file
 
 
-def register_all_fmri(basedir_path, anat_file, vox_size='2mm', overwrite=False):
+def register_all_fmri(basedir_path, anat_file, vox_size='2mm', overwrite=True):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 
@@ -943,8 +951,10 @@ def register_all_fmri(basedir_path, anat_file, vox_size='2mm', overwrite=False):
     vox_size : str
         Voxel size in mm. (e.g. 2mm).
     overwrite : bool
-        Indicates whether to overwrite existing registration files. Default is False.
+        Indicates whether to overwrite existing registration files. Default is True.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import os.path as op
     from pynets.registration import register
     reg = register.FmriReg(basedir_path, anat_file, vox_size)
@@ -985,6 +995,8 @@ def register_atlas_fmri(uatlas, atlas, node_size, basedir_path, anat_file, vox_s
     aligned_atlas_t1mni_gm : str
         File path to atlas parcellation Nifti1Image in T1w-warped MNI space, restricted only to grey-matter.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from pynets.registration import register
     reg = register.FmriReg(basedir_path, anat_file, vox_size)
 
