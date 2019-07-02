@@ -1,0 +1,21 @@
+[
+    [
+        "ID",
+        "0021001"
+    ],
+    [
+        "csv_loc",
+        [
+            "/Users/derekpisner/Applications/PyNets/tests/examples/002/dmri/DesikanKlein2012/netmetrics/0021001_net_mets_csd_0.19_parc.csv",
+            "125f6af879557ddb5027b0c6951c73e7"
+        ]
+    ],
+    [
+        "network",
+        null
+    ],
+    [
+        "roi",
+        null
+    ]
+]
