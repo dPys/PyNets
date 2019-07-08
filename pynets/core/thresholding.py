@@ -162,7 +162,7 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
     """
     import warnings
     warnings.filterwarnings("ignore")
-    from pynets import thresholding
+    from pynets.core import thresholding
     np.fill_diagonal(conn_matrix, 0)
 
     work_thr = 0
@@ -600,7 +600,7 @@ def local_thresholding_prop(conn_matrix, thr):
     """
     import warnings
     warnings.filterwarnings("ignore")
-    from pynets import thresholding
+    from pynets.core import thresholding
     from pynets.stats import netstats
 
     fail_tol = 10
@@ -687,7 +687,7 @@ def local_thresholding_dens(conn_matrix, thr):
     """
     import warnings
     warnings.filterwarnings("ignore")
-    from pynets import thresholding
+    from pynets.core import thresholding
     from pynets.stats import netstats
 
     fail_tol = 10
@@ -863,7 +863,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     """
     import warnings
     warnings.filterwarnings("ignore")
-    from pynets import utils, thresholding
+    from pynets.core import utils, thresholding
 
     thr_perc = 100 * float(thr)
     edge_threshold = "%s%s" % (str(thr_perc), '%')
@@ -1033,7 +1033,7 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     """
     import warnings
     warnings.filterwarnings("ignore")
-    from pynets import utils, thresholding
+    from pynets.core import utils, thresholding
 
     thr_perc = 100 * float(thr)
     edge_threshold = "%s%s" % (str(thr_perc), '%')

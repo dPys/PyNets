@@ -270,7 +270,7 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
     import warnings
     warnings.filterwarnings("ignore")
     from nilearn.image import resample_img
-    from pynets.nodemaker import get_sphere, mmToVox, VoxTomm
+    from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm
     import pkg_resources
     import pandas as pd
 
@@ -426,7 +426,7 @@ def parcel_masker(roi, coords, parcel_list, labels, dir_path, ID, perc_overlap):
     """
     import warnings
     warnings.filterwarnings("ignore")
-    from pynets import nodemaker
+    from pynets.core import nodemaker
     from nilearn.image import resample_img
     from nilearn import masking
     import os.path as op
@@ -513,7 +513,7 @@ def coords_masker(roi, coords, labels, error):
         Filtered list of string labels corresponding to ROI nodes with a spatial affinity for the specified ROI mask.
     """
     from nilearn import masking
-    from pynets.nodemaker import mmToVox
+    from pynets.core.nodemaker import mmToVox
 
     mask_data, mask_aff = masking._load_mask_img(roi)
     x_vox = np.diagonal(mask_aff[:3, 0:3])[0]
@@ -661,7 +661,7 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
         File path to a new, RSN-filtered atlas parcellation Nifti1Image.
     """
     from nilearn.image import concat_imgs
-    from pynets import nodemaker
+    from pynets.core import nodemaker
     import os.path as op
 
     if not op.isfile(uatlas):
@@ -779,7 +779,7 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
     """
     import warnings
     warnings.filterwarnings("ignore")
-    from pynets import utils, nodemaker
+    from pynets.core import utils, nodemaker
     import pandas as pd
     import time
     from pathlib import Path
@@ -972,7 +972,7 @@ def node_gen_masking(roi, coords, parcel_list, labels, dir_path, ID, parc, atlas
     """
     import warnings
     warnings.filterwarnings("ignore")
-    from pynets import nodemaker
+    from pynets.core import nodemaker
     import os.path as op
     try:
         import cPickle as pickle
@@ -1049,7 +1049,7 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
-    from pynets import nodemaker
+    from pynets.core import nodemaker
     pick_dump = False
 
     if parc is True:
@@ -1140,7 +1140,7 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     """
     import warnings
     warnings.filterwarnings("ignore")
-    from pynets.nodemaker import get_sphere, mmToVox
+    from pynets.core.nodemaker import get_sphere, mmToVox
     mask_img = nib.load(template_mask)
     mask_aff = mask_img.affine
 

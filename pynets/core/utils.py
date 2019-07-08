@@ -413,7 +413,7 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, nod
     """
     import warnings
     warnings.filterwarnings("ignore")
-    from pynets.utils import build_omnetome, flatten
+    from pynets.core.utils import build_omnetome, flatten
     if embed is True:
         build_omnetome(list(flatten(est_path_iterlist)), list(flatten(ID_iterlist))[0], multimodal)
 
@@ -655,7 +655,7 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
     import os
     import yaml
     from pathlib import Path
-    from pynets.utils import flatten
+    from pynets.core.utils import flatten
     from sklearn.feature_selection import VarianceThreshold
     from graspy.embed import OmnibusEmbed, ClassicalMDS
     """
@@ -868,7 +868,7 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, 
     warnings.filterwarnings("ignore")
     from pathlib import Path
     import yaml
-    from pynets.utils import collect_pandas_df_make, flatten
+    from pynets.core.utils import collect_pandas_df_make, flatten
 
     # Available functional and structural connectivity models
     with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
@@ -1245,7 +1245,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
     from dipy.io import read_bvals_bvecs
     from dipy.core.gradients import gradient_table
     from nilearn.image import mean_img
-    from pynets.utils import rescale_bvec
+    from pynets.core.utils import rescale_bvec
 
     outdir = op.dirname(dwi_file)
 

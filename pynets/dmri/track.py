@@ -596,7 +596,7 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     from dipy.io import load_pickle
     from colorama import Fore, Style
     from dipy.data import get_sphere
-    from pynets import utils
+    from pynets.core import utils
     from pynets.dmri.track import prep_tissues, reconstruction, filter_streamlines, track_ensemble
 
     # Load gradient table

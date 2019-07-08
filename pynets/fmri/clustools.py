@@ -761,7 +761,7 @@ def individual_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
     import warnings
     warnings.filterwarnings("ignore")
     import os
-    from pynets import utils
+    from pynets.core import utils
     from pynets.fmri import clustools
 
     nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']

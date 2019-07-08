@@ -422,7 +422,7 @@ def link_communities(W, type_clustering='single'):
     '''
     import warnings
     warnings.filterwarnings("ignore")
-    from pynets.thresholding import normalize
+    from pynets.core.thresholding import normalize
 
     n = len(W)
     W = normalize(W)
@@ -763,7 +763,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     except ImportError:
         import _pickle as pickle
     from pathlib import Path
-    from pynets import thresholding, utils
+    from pynets.core import thresholding, utils
 
     # Advanced options
     fmt = 'edgelist_ssv'

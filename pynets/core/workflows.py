@@ -25,11 +25,11 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     import yaml
     from pathlib import Path
     import pkg_resources
-    from pynets import workflows
+    from pynets.core import workflows
     from nipype import Workflow
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
-    from pynets.utils import pass_meta_ins, pass_meta_outs, pass_meta_ins_multi
+    from pynets.core.utils import pass_meta_ins, pass_meta_outs, pass_meta_ins_multi
 
     # Available functional and structural connectivity models
     with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
@@ -611,7 +611,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     warnings.filterwarnings("ignore")
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
-    from pynets import nodemaker, thresholding, utils
+    from pynets.core import  nodemaker, thresholding, utils
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
     from pynets.dmri import estimation, track
@@ -1516,7 +1516,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     import os.path as op
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
-    from pynets import nodemaker, utils, thresholding
+    from pynets.core import  nodemaker, utils, thresholding
     from pynets.plotting import plot_gen
     from pynets.fmri import estimation, clustools
     from pynets.registration import register

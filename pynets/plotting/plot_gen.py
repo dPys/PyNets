@@ -28,7 +28,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
     import json
     from pathlib import Path
     from networkx.readwrite import json_graph
-    from pynets.thresholding import normalize
+    from pynets.core.thresholding import normalize
     from pynets.stats.netstats import most_important
     from scipy.cluster.hierarchy import linkage, fcluster
     from nipype.utils.filemanip import save_json
@@ -329,7 +329,7 @@ def plot_all(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi,
     from nilearn import plotting as niplot
     import pkg_resources
     import networkx as nx
-    from pynets import plotting, thresholding
+    from pynets.core import thresholding
     from pynets.plotting import plot_gen, plot_graphs
     from pynets.stats.netstats import most_important, prune_disconnected
     try:

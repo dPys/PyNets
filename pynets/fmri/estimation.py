@@ -328,7 +328,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     warnings.filterwarnings("ignore")
     import os.path as op
     from nilearn import input_data
-    from pynets import utils
+    from pynets.core import utils
 
     if not op.isfile(func_file):
         raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
@@ -433,7 +433,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     warnings.filterwarnings("ignore")
     import os.path as op
     from nilearn import input_data
-    from pynets import utils
+    from pynets.core import utils
 
     if not op.isfile(func_file):
         raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '

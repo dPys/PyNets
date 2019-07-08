@@ -20,7 +20,7 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig):
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
-    #from pynets import thresholding
+    #from pynets.core import thresholding
     from nilearn.plotting import plot_matrix
 
     dpi_resolution = 300
