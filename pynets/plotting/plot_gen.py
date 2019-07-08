@@ -471,8 +471,8 @@ def structural_plotting(conn_matrix, uatlas, streamlines_mni, template_mask, int
     from dipy.tracking.utils import streamline_near_roi
     from nilearn.plotting import find_parcellation_cut_coords
     from nilearn.image import resample_to_img
-    from pynets.thresholding import normalize
-    from pynets.nodemaker import mmToVox
+    from pynets.core.thresholding import normalize
+    from pynets.core.nodemaker import mmToVox
 
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
 
