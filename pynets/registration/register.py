@@ -97,7 +97,6 @@ class Warp(object):
     """
     A class for warping streamslines from native diffusion space to template space.
     """
-
     def __init__(self, file_in, file_out, template_path, t_aff, t_warp, ref_img_path, dsn_dir):
         self.file_in = file_in
         self.file_out = file_out

@@ -918,7 +918,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
 
 def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
                   disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
-                  target_samples, track_type, atlas_mni, streams):
+                  target_samples, track_type, atlas_mni, streams, directget):
     """
     Threshold a structural connectivity matrix using any of a variety of methods.
 
@@ -979,6 +979,9 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
         File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
     streams : str
         File path to save streamline array sequence in .trk format.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
 
     Returns
     -------
@@ -1030,6 +1033,9 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
         File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
     streams : str
         File path to save streamline array sequence in .trk format.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
     """
     import warnings
     warnings.filterwarnings("ignore")
@@ -1083,4 +1089,4 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
 
     utils.save_mat(conn_matrix_thr, est_path)
 
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, atlas_mni, streams
+    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, atlas_mni, streams, directget
