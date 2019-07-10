@@ -715,9 +715,8 @@ def AAL_naming(coords):
 
     labels_ix = []
     print('Building region index using AAL MNI coords...')
-    for coords in coords:
-        reg_lab = aal_coords_ix.loc[aal_coords_ix['coords_tuple'] == str(tuple(np.round(coords).astype('int'))),
-                                    'Region_index']
+    for coord in coords:
+        reg_lab = aal_coords_ix.loc[aal_coords_ix['coord_tuple'] == str(tuple(np.round(coord).astype('int'))), 'Region_index']
         if len(reg_lab) > 0:
             labels_ix.append(reg_lab.values[0])
         else:
@@ -865,24 +864,18 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
         if labels:
             pass
         else:
-            if ref_txt is not None and op.exists(ref_txt):
+            if (ref_txt is not None) and (op.exists(ref_txt)) and (use_AAL_naming is False):
                 dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
                 labels = dict_df['Region'].tolist()
             else:
                 try:
                     ref_txt = "%s%s%s%s" % (str(Path(base_path).parent), '/labelcharts/', atlas, '.txt')
-                    if op.exists(ref_txt):
+                    if op.exists(ref_txt) and (use_AAL_naming is False):
                         try:
                             dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
                             labels = dict_df['Region'].tolist()
                         except:
-                            print("WARNING: label names from label reference file failed to populate or are invalid. "
-                                  "Attempting AAL naming...")
-                            try:
-                                labels = nodemaker.AAL_naming(coords)
-                            except:
-                                print('AAL reference labeling failed!')
-                                labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                            labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                     else:
                         if use_AAL_naming is True:
                             try:

@@ -162,7 +162,7 @@ class Warp(object):
 
 def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_samples, conn_model, network, node_size,
                            dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas,
-                           labels, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list,
+                           labels, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list, directget,
                            overwrite=False):
     """
     A Function to perform normalization of streamlines tracked in native diffusion space to an
@@ -227,6 +227,11 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
         List of integer curvature thresholds used to perform ensemble tracking.
     step_list : list
         List of float step-sizes used to perform ensemble tracking.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
+    overwrite : bool
+        Indicates whether to overwrite existing registration files. Default is False.
 
     Returns
     -------
@@ -279,6 +284,9 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
         unweighted graph.
     atlas_mni : str
         File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
 
     References
     ----------
@@ -298,9 +306,10 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     if not os.path.isdir(dsn_dir):
         os.mkdir(dsn_dir)
 
-    streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_mni_', conn_model, '_', target_samples,
-                                                '_', node_size, 'mm_curv', str(curv_thr_list).replace(', ', '_'),
-                                                '_step', str(step_list).replace(', ', '_'), '.trk')
+    streams_mni = "%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_mni_', conn_model, '_', target_samples,
+                                              '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_'),
+                                              'curv', str(curv_thr_list).replace(', ', '_'),
+                                              'step', str(step_list).replace(', ', '_'), '.trk')
 
     # Run ANTs reg
     t_aff = "%s%s" % (dsn_dir, '/0GenericAffine.mat')
@@ -332,7 +341,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     nib.streamlines.save(trkfile, streams_warp)
     print(streams_warp)
 
-    return streams_warp, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni
+    return streams_warp, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget
 
 
 class DmriReg(object):
@@ -799,7 +808,7 @@ def register_all_dwi(basedir_path, fa_path, B0_mask, anat_file, gtab_file, dwi_f
         Indicates whether to use non-linear registration and BBR (True) or entirely linear methods (False).
         Default is True.
     overwrite : bool
-        Indicates whether to overwrite existing registration files. Default is True.
+        Indicates whether to overwrite existing registration files. Default is False.
 
     Returns
     -------
@@ -953,7 +962,7 @@ def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=False):
     vox_size : str
         Voxel size in mm. (e.g. 2mm).
     overwrite : bool
-        Indicates whether to overwrite existing registration files. Default is True.
+        Indicates whether to overwrite existing registration files. Default is False.
     """
     import warnings
     warnings.filterwarnings("ignore")

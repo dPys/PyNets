@@ -1360,6 +1360,7 @@ def build_workflow(args, retval):
                              ('roi_iterlist', 'roi')])
                            ])
             wf.remove_nodes([meta_wf])
+
             # Multiple raw graphs
             if multi_graph:
                 net_mets_node.inputs.est_path = multi_graph

@@ -1,0 +1,1108 @@
+# Generated from atlas label .xml files distributed with FSL
+# http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/
+0,*.*.*.*.*
+1,Left Cerebellum.Posterior Lobe.Inferior Semi-Lunar Lobule.Gray Matter.*
+2,Right Cerebellum.Posterior Lobe.Inferior Semi-Lunar Lobule.Gray Matter.*
+3,Left Cerebellum.Posterior Lobe.Cerebellar Tonsil.Gray Matter.*
+4,Right Cerebellum.Posterior Lobe.Cerebellar Tonsil.Gray Matter.*
+5,Left Brainstem.Medulla.*.*.*
+6,Right Brainstem.Medulla.*.*.*
+7,*.*.Inferior Temporal Gyrus.*.*
+8,Left Cerebrum.Temporal Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 20
+9,Left Cerebrum.Temporal Lobe.Inferior Temporal Gyrus.*.*
+10,Left Cerebrum.Temporal Lobe.*.*.*
+11,Right Cerebrum.Temporal Lobe.*.*.*
+12,Right Cerebrum.Temporal Lobe.Inferior Temporal Gyrus.*.*
+13,Right Cerebrum.Temporal Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 20
+14,Left Cerebrum.Temporal Lobe.Inferior Temporal Gyrus.White Matter.*
+15,Left Cerebrum.Limbic Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 20
+16,Left Cerebrum.Limbic Lobe.Uncus.Gray Matter.Brodmann area 20
+17,Left Cerebrum.Limbic Lobe.Uncus.*.*
+18,Right Cerebrum.Limbic Lobe.Uncus.Gray Matter.Brodmann area 20
+19,Right Cerebrum.Limbic Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 20
+20,Right Cerebrum.Temporal Lobe.Inferior Temporal Gyrus.White Matter.*
+21,Left Cerebrum.Limbic Lobe.*.*.*
+22,Right Cerebrum.Limbic Lobe.*.*.*
+23,Left Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 20
+24,Left Cerebrum.Temporal Lobe.Middle Temporal Gyrus.White Matter.*
+25,Left Cerebrum.Limbic Lobe.Uncus.White Matter.*
+26,Right Cerebrum.Limbic Lobe.*.Gray Matter.Brodmann area 20
+27,Right Cerebrum.Limbic Lobe.Uncus.White Matter.*
+28,Right Cerebrum.Temporal Lobe.Middle Temporal Gyrus.White Matter.*
+29,Right Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 20
+30,Right Cerebrum.Temporal Lobe.Middle Temporal Gyrus.*.*
+31,Right Cerebrum.Limbic Lobe.Uncus.*.*
+32,Left Cerebrum.Temporal Lobe.Middle Temporal Gyrus.*.*
+33,Left Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 38
+34,Left Cerebrum.Limbic Lobe.Uncus.Gray Matter.Brodmann area 38
+35,Right Cerebrum.Limbic Lobe.Uncus.Gray Matter.Brodmann area 38
+36,Right Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 38
+37,Left Cerebrum.Limbic Lobe.Middle Temporal Gyrus.White Matter.*
+38,Left Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 38
+39,Left Cerebrum.Temporal Lobe.Superior Temporal Gyrus.White Matter.*
+40,Left Cerebrum.Temporal Lobe.Superior Temporal Gyrus.*.*
+41,Right Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 38
+42,Right Cerebrum.Temporal Lobe.Superior Temporal Gyrus.White Matter.*
+43,Right Cerebrum.Temporal Lobe.Superior Temporal Gyrus.*.*
+44,Right Cerebrum.Temporal Lobe.*.Gray Matter.Brodmann area 38
+45,Left Cerebrum.Temporal Lobe.*.Gray Matter.Brodmann area 38
+46,Right Cerebrum.Frontal Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 20
+47,Right Cerebrum.*.Inferior Temporal Gyrus.*.*
+48,Right Cerebrum.*.*.*.*
+49,Left Cerebrum.Limbic Lobe.Inferior Temporal Gyrus.White Matter.*
+50,Right Cerebrum.Limbic Lobe.Inferior Temporal Gyrus.White Matter.*
+51,Left Cerebrum.Temporal Lobe.Sub-Gyral.White Matter.*
+52,Right Cerebrum.Temporal Lobe.Sub-Gyral.White Matter.*
+53,Left Cerebrum.Limbic Lobe.*.Gray Matter.Brodmann area 20
+54,*.*.Middle Temporal Gyrus.*.*
+55,Right Cerebrum.Limbic Lobe.Sub-Gyral.White Matter.*
+56,Left Cerebrum.Limbic Lobe.Superior Temporal Gyrus.White Matter.*
+57,Right Cerebrum.Limbic Lobe.Superior Temporal Gyrus.White Matter.*
+58,Right Cerebrum.*.Uncus.*.*
+59,Left Cerebrum.Limbic Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 38
+60,Right Cerebrum.Limbic Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 38
+61,Left Cerebellum.Posterior Lobe.Pyramis.Gray Matter.*
+62,Right Cerebellum.Posterior Lobe.Pyramis.Gray Matter.*
+63,Left Cerebellum.Posterior Lobe.Uvula.Gray Matter.*
+64,Right Cerebellum.Posterior Lobe.Uvula.Gray Matter.*
+65,Right Cerebellum.*.*.Gray Matter.*
+66,Left Cerebellum.*.*.Gray Matter.*
+67,Left Cerebellum.Posterior Lobe.Uvula of Vermis.Gray Matter.*
+68,Right Cerebellum.Posterior Lobe.Uvula of Vermis.Gray Matter.*
+69,Right Cerebellum.Sub-lobar.Fourth Ventricle.Cerebro-Spinal Fluid.*
+70,Left Cerebellum.Sub-lobar.Fourth Ventricle.Cerebro-Spinal Fluid.*
+71,Left Brainstem.Pons.*.*.*
+72,Right Brainstem.Pons.*.*.*
+73,*.Limbic Lobe.Uncus.*.*
+74,Left Cerebrum.*.*.*.*
+75,Left Cerebrum.Limbic Lobe.Uncus.Gray Matter.Brodmann area 36
+76,Right Cerebrum.Limbic Lobe.Uncus.Gray Matter.Brodmann area 36
+77,Right Cerebrum.Temporal Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 21
+78,Left Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 21
+79,Right Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 21
+80,Left Cerebellum.Posterior Lobe.Tuber.Gray Matter.*
+81,Right Cerebellum.Posterior Lobe.Tuber.Gray Matter.*
+82,Left Cerebellum.Posterior Lobe.Pyramis of Vermis.Gray Matter.*
+83,Right Cerebellum.Posterior Lobe.Pyramis of Vermis.Gray Matter.*
+84,Left Cerebellum.Anterior Lobe.Nodule.Gray Matter.*
+85,Left Cerebellum.Anterior Lobe.*.Gray Matter.*
+86,Right Cerebellum.Anterior Lobe.Nodule.Gray Matter.*
+87,Right Cerebellum.Anterior Lobe.*.Gray Matter.*
+88,Left Cerebellum.Anterior Lobe.Culmen.Gray Matter.*
+89,Right Cerebellum.Anterior Lobe.Culmen.Gray Matter.*
+90,*.Temporal Lobe.*.*.*
+91,*.Temporal Lobe.Inferior Temporal Gyrus.*.*
+92,Right Cerebrum.Limbic Lobe.Inferior Temporal Gyrus.*.*
+93,Left Cerebrum.Limbic Lobe.Inferior Temporal Gyrus.*.*
+94,Left Cerebrum.Limbic Lobe.Uncus.Gray Matter.Brodmann area 28
+95,Right Cerebrum.Limbic Lobe.Uncus.Gray Matter.Brodmann area 28
+96,Left Cerebrum.Limbic Lobe.Sub-Gyral.White Matter.*
+97,Left Cerebrum.Temporal Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 21
+98,Left Cerebrum.*.Inferior Temporal Gyrus.*.*
+99,Left Cerebrum.*.Middle Temporal Gyrus.*.*
+100,Left Cerebrum.*.Superior Temporal Gyrus.*.*
+101,Left Cerebrum.*.Superior Temporal Gyrus.Gray Matter.Brodmann area 38
+102,Left Cerebrum.Frontal Lobe.Orbital Gyrus.Gray Matter.Brodmann area 11
+103,Right Cerebrum.*.Orbital Gyrus.Gray Matter.Brodmann area 11
+104,*.Frontal Lobe.Orbital Gyrus.*.*
+105,Left Cerebrum.Frontal Lobe.Orbital Gyrus.*.*
+106,Left Cerebrum.Frontal Lobe.*.*.*
+107,Inter-Hemispheric.*.*.*.*
+108,Right Cerebrum.Frontal Lobe.*.*.*
+109,Right Cerebrum.Frontal Lobe.Orbital Gyrus.Gray Matter.Brodmann area 11
+110,Right Cerebrum.Frontal Lobe.Orbital Gyrus.*.*
+111,*.*.Orbital Gyrus.*.*
+112,Left Cerebrum.Frontal Lobe.Orbital Gyrus.White Matter.*
+113,Right Cerebrum.Frontal Lobe.Orbital Gyrus.White Matter.*
+114,Left Cerebellum.Posterior Lobe.Tuber of Vermis.Gray Matter.*
+115,Right Cerebellum.Posterior Lobe.Tuber of Vermis.Gray Matter.*
+116,Left Cerebellum.Anterior Lobe.Pyramis.Gray Matter.*
+117,Right Cerebellum.Anterior Lobe.Pyramis.Gray Matter.*
+118,Right Cerebellum.Anterior Lobe.*.Gray Matter.Dentate
+119,Left Cerebellum.Anterior Lobe.*.Gray Matter.Dentate
+120,Left Cerebellum.Posterior Lobe.Culmen.Gray Matter.*
+121,Left Cerebrum.Temporal Lobe.Fusiform Gyrus.*.*
+122,Right Cerebrum.Temporal Lobe.Fusiform Gyrus.*.*
+123,Left Cerebrum.Temporal Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 20
+124,Right Cerebrum.Temporal Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 20
+125,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.*.*
+126,*.Limbic Lobe.Parahippocampal Gyrus.*.*
+127,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.*.*
+128,Left Cerebrum.Temporal Lobe.Fusiform Gyrus.White Matter.*
+129,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 36
+130,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 36
+131,Right Cerebrum.Temporal Lobe.Fusiform Gyrus.White Matter.*
+132,Right Cerebrum.Limbic Lobe.Fusiform Gyrus.*.*
+133,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.White Matter.*
+134,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.White Matter.*
+135,Right Cerebrum.Limbic Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 20
+136,Left Cerebrum.Temporal Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 36
+137,Left Cerebrum.Limbic Lobe.Fusiform Gyrus.White Matter.*
+138,Right Cerebrum.Limbic Lobe.Fusiform Gyrus.White Matter.*
+139,*.*.Fusiform Gyrus.*.*
+140,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 35
+141,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 35
+142,Left Cerebrum.Frontal Lobe.Rectal Gyrus.Gray Matter.Brodmann area 11
+143,Left Cerebrum.Frontal Lobe.Rectal Gyrus.*.*
+144,Right Cerebrum.Frontal Lobe.Rectal Gyrus.*.*
+145,Right Cerebrum.Frontal Lobe.Rectal Gyrus.Gray Matter.Brodmann area 11
+146,Left Cerebrum.Frontal Lobe.Orbital Gyrus.Gray Matter.Brodmann area 47
+147,Right Cerebrum.Frontal Lobe.Orbital Gyrus.Gray Matter.Brodmann area 47
+148,Left Cerebrum.Frontal Lobe.Rectal Gyrus.White Matter.*
+149,Right Cerebrum.Frontal Lobe.Rectal Gyrus.White Matter.*
+150,Inter-Hemispheric.*.Rectal Gyrus.*.*
+151,Left Cerebrum.Frontal Lobe.Superior Frontal Gyrus.*.*
+152,Left Cerebrum.Frontal Lobe.Superior Frontal Gyrus.Gray Matter.Brodmann area 11
+153,Right Cerebrum.Frontal Lobe.Superior Frontal Gyrus.Gray Matter.Brodmann area 11
+154,Right Cerebrum.Frontal Lobe.Superior Frontal Gyrus.*.*
+155,Left Cerebrum.Frontal Lobe.Superior Frontal Gyrus.White Matter.*
+156,Right Cerebrum.Frontal Lobe.Superior Frontal Gyrus.White Matter.*
+157,Left Cerebellum.Posterior Lobe.Declive.Gray Matter.*
+158,Right Cerebellum.Posterior Lobe.Declive.Gray Matter.*
+159,Left Cerebellum.Posterior Lobe.Declive of Vermis.Gray Matter.*
+160,Right Cerebellum.Posterior Lobe.Declive of Vermis.Gray Matter.*
+161,Left Cerebellum.Posterior Lobe.*.Gray Matter.Dentate
+162,Left Cerebellum.Posterior Lobe.Fastigium.Gray Matter.*
+163,Right Cerebellum.Anterior Lobe.Fastigium.Gray Matter.*
+164,Right Cerebellum.Posterior Lobe.*.Gray Matter.Dentate
+165,Left Cerebellum.Anterior Lobe.Fastigium.Gray Matter.*
+166,Right Cerebrum.Temporal Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 36
+167,Right Cerebrum.*.Fusiform Gyrus.Gray Matter.Brodmann area 20
+168,*.Temporal Lobe.Fusiform Gyrus.*.*
+169,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 28
+170,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 28
+171,Left Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.Brodmann area 20
+172,Right Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.Brodmann area 20
+173,Left Cerebrum.Sub-lobar.Lateral Ventricle.Cerebro-Spinal Fluid.*
+174,Right Cerebrum.Sub-lobar.Lateral Ventricle.Cerebro-Spinal Fluid.*
+175,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Hippocampus
+176,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Hippocampus
+177,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 34
+178,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 34
+179,Left Cerebrum.Limbic Lobe.Uncus.Gray Matter.Brodmann area 34
+180,Right Cerebrum.Limbic Lobe.Uncus.Gray Matter.Brodmann area 34
+181,Left Cerebrum.Limbic Lobe.Uncus.Gray Matter.Amygdala
+182,Right Cerebrum.Limbic Lobe.Uncus.Gray Matter.Amygdala
+183,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Amygdala
+184,*.*.Inferior Frontal Gyrus.*.*
+185,Left Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 47
+186,Left Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.*.*
+187,Right Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.*.*
+188,Right Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 47
+189,Left Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.White Matter.*
+190,Right Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.White Matter.*
+191,Left Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 11
+192,Right Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 11
+193,Left Cerebrum.Frontal Lobe.Sub-Gyral.White Matter.*
+194,Right Cerebrum.Frontal Lobe.Sub-Gyral.White Matter.*
+195,Left Cerebrum.Frontal Lobe.Middle Frontal Gyrus.White Matter.*
+196,Right Cerebrum.Frontal Lobe.Middle Frontal Gyrus.White Matter.*
+197,Left Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.Brodmann area 11
+198,Right Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.Brodmann area 11
+199,Right Cerebrum.Frontal Lobe.Middle Frontal Gyrus.*.*
+200,Right Cerebrum.*.Orbital Gyrus.*.*
+201,Right Cerebrum.*.Superior Frontal Gyrus.*.*
+202,Left Cerebrum.Occipital Lobe.Fusiform Gyrus.*.*
+203,Left Cerebrum.Occipital Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 18
+204,Right Cerebrum.Occipital Lobe.Fusiform Gyrus.*.*
+205,Right Cerebrum.Occipital Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 18
+206,Left Cerebrum.Occipital Lobe.Fusiform Gyrus.White Matter.*
+207,Right Cerebrum.Occipital Lobe.Fusiform Gyrus.White Matter.*
+208,Left Cerebrum.Temporal Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 37
+209,Right Cerebrum.Temporal Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 37
+210,Right Cerebrum.*.Fusiform Gyrus.*.*
+211,Left Cerebellum.Anterior Lobe.Cerebellar Lingual.Gray Matter.*
+212,Right Cerebellum.Anterior Lobe.Cerebellar Lingual.Gray Matter.*
+213,Left Cerebrum.Temporal Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 37
+214,Right Cerebrum.Temporal Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 37
+215,Left Brainstem.Midbrain.*.*.*
+216,Right Brainstem.Midbrain.*.*.*
+217,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 20
+218,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 20
+219,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Amygdala
+220,*.*.*.White Matter.*
+221,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 38
+222,Right Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.Brodmann area 38
+223,Left Cerebrum.Frontal Lobe.Medial Frontal Gyrus.*.*
+224,Right Cerebrum.Frontal Lobe.Medial Frontal Gyrus.*.*
+225,Left Cerebrum.Frontal Lobe.Superior Temporal Gyrus.*.*
+226,Left Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 25
+227,Right Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 25
+228,Right Cerebrum.Frontal Lobe.Superior Temporal Gyrus.*.*
+229,Right Cerebrum.Temporal Lobe.Inferior Frontal Gyrus.*.*
+230,Left Cerebrum.Frontal Lobe.Medial Frontal Gyrus.White Matter.*
+231,Right Cerebrum.Frontal Lobe.Medial Frontal Gyrus.White Matter.*
+232,Left Cerebrum.Temporal Lobe.Inferior Frontal Gyrus.*.*
+233,Left Cerebrum.Frontal Lobe.Middle Frontal Gyrus.*.*
+234,Left Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 25
+235,Left Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 11
+236,Right Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 11
+237,Right Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 25
+238,Left Cerebrum.Occipital Lobe.Lingual Gyrus.*.*
+239,*.*.Lingual Gyrus.*.*
+240,*.Occipital Lobe.*.*.*
+241,*.Occipital Lobe.Lingual Gyrus.*.*
+242,Left Cerebrum.Occipital Lobe.Lingual Gyrus.Gray Matter.Brodmann area 17
+243,Inter-Hemispheric.Occipital Lobe.Lingual Gyrus.*.*
+244,Right Cerebrum.Occipital Lobe.Lingual Gyrus.*.*
+245,Right Cerebrum.Occipital Lobe.Lingual Gyrus.Gray Matter.Brodmann area 17
+246,Left Cerebrum.Occipital Lobe.*.*.*
+247,Left Cerebrum.Occipital Lobe.Lingual Gyrus.Gray Matter.Brodmann area 18
+248,Right Cerebrum.Occipital Lobe.*.*.*
+249,Right Cerebrum.Occipital Lobe.Lingual Gyrus.Gray Matter.Brodmann area 18
+250,Left Cerebrum.Occipital Lobe.Inferior Occipital Gyrus.Gray Matter.Brodmann area 18
+251,Left Cerebrum.Occipital Lobe.Inferior Occipital Gyrus.*.*
+252,Left Cerebrum.Occipital Lobe.Lingual Gyrus.White Matter.*
+253,Right Cerebrum.Occipital Lobe.Lingual Gyrus.White Matter.*
+254,Right Cerebrum.Occipital Lobe.Inferior Occipital Gyrus.Gray Matter.Brodmann area 18
+255,Left Cerebrum.Occipital Lobe.Inferior Occipital Gyrus.White Matter.*
+256,Right Cerebrum.Occipital Lobe.Inferior Occipital Gyrus.White Matter.*
+257,Right Cerebrum.Occipital Lobe.Inferior Occipital Gyrus.*.*
+258,Left Cerebrum.Occipital Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 19
+259,Right Cerebrum.Occipital Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 19
+260,*.*.Inferior Occipital Gyrus.*.*
+261,Left Cerebrum.*.Inferior Occipital Gyrus.*.*
+262,Right Cerebrum.*.Inferior Occipital Gyrus.*.*
+263,Right Cerebrum.Occipital Lobe.*.Gray Matter.Brodmann area 19
+264,Left Cerebrum.Occipital Lobe.*.Gray Matter.Brodmann area 19
+265,Left Cerebrum.Temporal Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 19
+266,Right Cerebrum.Temporal Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 19
+267,Left Cerebrum.Temporal Lobe.*.Gray Matter.Brodmann area 37
+268,Right Cerebrum.Temporal Lobe.*.Gray Matter.Brodmann area 37
+269,Left Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 37
+270,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 37
+271,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 37
+272,Right Cerebrum.Limbic Lobe.*.Gray Matter.Brodmann area 35
+273,*.*.*.White Matter.Optic Tract
+274,*.*.*.Gray Matter.Hypothalamus
+275,Right Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.Brodmann area 21
+276,Right Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 21
+277,Left Cerebrum.Frontal Lobe.Subcallosal Gyrus.*.*
+278,Right Cerebrum.Frontal Lobe.Subcallosal Gyrus.*.*
+279,Left Cerebrum.Limbic Lobe.Subcallosal Gyrus.Gray Matter.Brodmann area 34
+280,Left Cerebrum.Frontal Lobe.Subcallosal Gyrus.Gray Matter.Brodmann area 34
+281,Left Cerebrum.Frontal Lobe.Subcallosal Gyrus.Gray Matter.Brodmann area 25
+282,Right Cerebrum.Frontal Lobe.Subcallosal Gyrus.Gray Matter.Brodmann area 25
+283,Right Cerebrum.Frontal Lobe.Subcallosal Gyrus.Gray Matter.Brodmann area 34
+284,Right Cerebrum.Limbic Lobe.Subcallosal Gyrus.*.*
+285,Right Cerebrum.Limbic Lobe.Subcallosal Gyrus.Gray Matter.Brodmann area 34
+286,Left Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 21
+287,Left Cerebrum.Temporal Lobe.Subcallosal Gyrus.Gray Matter.Brodmann area 34
+288,Left Cerebrum.Temporal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 13
+289,Left Cerebrum.Temporal Lobe.Inferior Frontal Gyrus.White Matter.*
+290,Left Cerebrum.Frontal Lobe.Subcallosal Gyrus.White Matter.*
+291,Right Cerebrum.Frontal Lobe.Subcallosal Gyrus.White Matter.*
+292,Right Cerebrum.Temporal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 13
+293,Right Cerebrum.Temporal Lobe.Inferior Frontal Gyrus.White Matter.*
+294,Left Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 13
+295,Right Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 13
+296,Left Cerebrum.Frontal Lobe.Subcallosal Gyrus.Gray Matter.Brodmann area 13
+297,Right Cerebrum.Frontal Lobe.Subcallosal Gyrus.Gray Matter.Brodmann area 13
+298,Left Cerebrum.Frontal Lobe.Subcallosal Gyrus.Gray Matter.Brodmann area 47
+299,Right Cerebrum.Frontal Lobe.Subcallosal Gyrus.Gray Matter.Brodmann area 47
+300,Left Cerebrum.Frontal Lobe.Subcallosal Gyrus.Gray Matter.Brodmann area 11
+301,Right Cerebrum.Frontal Lobe.Subcallosal Gyrus.Gray Matter.Brodmann area 11
+302,Right Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.Brodmann area 47
+303,Left Cerebrum.Occipital Lobe.Inferior Occipital Gyrus.Gray Matter.Brodmann area 17
+304,Right Cerebrum.*.*.Gray Matter.Brodmann area 18
+305,Right Cerebrum.Occipital Lobe.Inferior Occipital Gyrus.Gray Matter.Brodmann area 17
+306,Left Cerebrum.Occipital Lobe.Middle Occipital Gyrus.Gray Matter.Brodmann area 18
+307,Right Cerebrum.Occipital Lobe.Middle Occipital Gyrus.Gray Matter.Brodmann area 18
+308,Left Cerebrum.Occipital Lobe.Middle Occipital Gyrus.White Matter.*
+309,Right Cerebrum.Occipital Lobe.Middle Occipital Gyrus.White Matter.*
+310,Left Cerebrum.Occipital Lobe.Middle Occipital Gyrus.*.*
+311,Right Cerebrum.Occipital Lobe.Middle Occipital Gyrus.*.*
+312,Left Cerebrum.Occipital Lobe.Sub-Gyral.*.*
+313,Right Cerebrum.*.Sub-Gyral.*.*
+314,Right Cerebrum.Occipital Lobe.Sub-Gyral.*.*
+315,Left Cerebrum.Occipital Lobe.Middle Occipital Gyrus.Gray Matter.Brodmann area 19
+316,Right Cerebrum.Occipital Lobe.Middle Occipital Gyrus.Gray Matter.Brodmann area 19
+317,*.*.Middle Occipital Gyrus.*.*
+318,Right Cerebrum.*.Lingual Gyrus.*.*
+319,Left Cerebrum.Occipital Lobe.Sub-Gyral.White Matter.*
+320,Right Cerebrum.Occipital Lobe.Sub-Gyral.White Matter.*
+321,Left Cerebellum.Anterior Lobe.Culmen of Vermis.Gray Matter.*
+322,Right Cerebellum.Anterior Lobe.Culmen of Vermis.Gray Matter.*
+323,Left Cerebrum.Occipital Lobe.Middle Occipital Gyrus.Gray Matter.Brodmann area 37
+324,Right Cerebrum.Occipital Lobe.Middle Occipital Gyrus.Gray Matter.Brodmann area 37
+325,Right Cerebrum.Occipital Lobe.Inferior Temporal Gyrus.*.*
+326,Left Cerebrum.Occipital Lobe.Inferior Temporal Gyrus.White Matter.*
+327,Right Cerebrum.Occipital Lobe.Inferior Temporal Gyrus.White Matter.*
+328,Right Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 37
+329,Left Cerebrum.Occipital Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 37
+330,Right Cerebrum.Occipital Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 37
+331,Right Cerebrum.Occipital Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 37
+332,Left Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.Brodmann area 37
+333,Right Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.Brodmann area 37
+334,Right Cerebrum.Limbic Lobe.Fusiform Gyrus.Gray Matter.Brodmann area 37
+335,Right Cerebrum.Limbic Lobe.Sub-Gyral.*.*
+336,Left Cerebrum.Limbic Lobe.Sub-Gyral.*.*
+337,Left Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.Hippocampus
+338,Right Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.Hippocampus
+339,Left Cerebrum.Limbic Lobe.Sub-Gyral.Gray Matter.Hippocampus
+340,Right Cerebrum.Limbic Lobe.Sub-Gyral.Gray Matter.Hippocampus
+341,Left Brainstem.Midbrain.*.Gray Matter.Substania Nigra
+342,Right Brainstem.Midbrain.*.Gray Matter.Substania Nigra
+343,Left Brainstem.Midbrain.*.Gray Matter.Red Nucleus
+344,Right Brainstem.Midbrain.*.Gray Matter.Red Nucleus
+345,Left Cerebrum.Limbic Lobe.Sub-Gyral.Gray Matter.Brodmann area 28
+346,Right Cerebrum.Limbic Lobe.*.White Matter.*
+347,Left Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.*
+348,Right Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.*
+349,Left Cerebrum.Temporal Lobe.*.Gray Matter.Caudate Tail
+350,Right Cerebrum.Temporal Lobe.Caudate.Gray Matter.Caudate Tail
+351,Left Cerebrum.Temporal Lobe.Caudate.Gray Matter.Caudate Tail
+352,Left Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.Brodmann area 21
+353,Left Cerebrum.Temporal Lobe.Extra-Nuclear.White Matter.*
+354,Left Brainstem.Midbrain.*.Gray Matter.Mammillary Body
+355,Right Brainstem.Midbrain.*.Gray Matter.Mammillary Body
+356,Left Cerebrum.Sub-lobar.*.Gray Matter.Amygdala
+357,Right Cerebrum.*.*.White Matter.*
+358,Right Cerebrum.Sub-lobar.*.Gray Matter.Amygdala
+359,Left Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Optic Tract
+360,Right Cerebrum.Sub-lobar.Third Ventricle.Cerebro-Spinal Fluid.*
+361,Right Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Optic Tract
+362,Left Cerebrum.Sub-lobar.Third Ventricle.Cerebro-Spinal Fluid.*
+363,Left Cerebrum.Sub-lobar.*.Gray Matter.Hypothalamus
+364,Right Cerebrum.Sub-lobar.*.Gray Matter.Hypothalamus
+365,Left Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 13
+366,Left Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.Brodmann area 13
+367,Right Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 13
+368,Right Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.Brodmann area 13
+369,Left Cerebrum.Sub-lobar.Extra-Nuclear.Gray Matter.Brodmann area 13
+370,Left Cerebrum.Limbic Lobe.Extra-Nuclear.White Matter.*
+371,Left Cerebrum.Limbic Lobe.Anterior Cingulate.White Matter.*
+372,Left Cerebrum.Limbic Lobe.Anterior Cingulate.*.*
+373,Right Cerebrum.Limbic Lobe.Anterior Cingulate.*.*
+374,Right Cerebrum.Limbic Lobe.Anterior Cingulate.White Matter.*
+375,Right Cerebrum.Limbic Lobe.Extra-Nuclear.White Matter.*
+376,Right Cerebrum.Sub-lobar.Extra-Nuclear.Gray Matter.Brodmann area 13
+377,Left Cerebrum.Temporal Lobe.Sub-Gyral.*.*
+378,Left Cerebrum.Sub-lobar.Extra-Nuclear.*.*
+379,Left Cerebrum.Sub-lobar.Lentiform Nucleus.Gray Matter.Putamen
+380,Left Cerebrum.Limbic Lobe.Anterior Cingulate.Gray Matter.Brodmann area 25
+381,Right Cerebrum.Limbic Lobe.Anterior Cingulate.Gray Matter.Brodmann area 25
+382,Right Cerebrum.Sub-lobar.Lentiform Nucleus.Gray Matter.Putamen
+383,Right Cerebrum.Sub-lobar.Extra-Nuclear.*.*
+384,Right Cerebrum.Temporal Lobe.Sub-Gyral.*.*
+385,Left Cerebrum.Sub-lobar.*.Gray Matter.*
+386,Right Cerebrum.Sub-lobar.*.Gray Matter.*
+387,*.Temporal Lobe.Superior Temporal Gyrus.*.*
+388,Left Cerebrum.Frontal Lobe.Sub-Gyral.*.*
+389,Right Cerebrum.Frontal Lobe.Sub-Gyral.*.*
+390,Left Cerebrum.Frontal Lobe.Extra-Nuclear.*.*
+391,Right Cerebrum.Frontal Lobe.Extra-Nuclear.*.*
+392,Left Cerebrum.Frontal Lobe.Extra-Nuclear.Gray Matter.Brodmann area 47
+393,Right Cerebrum.Frontal Lobe.Extra-Nuclear.Gray Matter.Brodmann area 47
+394,Left Cerebrum.Frontal-Temporal Space.*.*.*
+395,Left Cerebrum.Limbic Lobe.Anterior Cingulate.Gray Matter.Brodmann area 32
+396,Right Cerebrum.Limbic Lobe.Anterior Cingulate.Gray Matter.Brodmann area 32
+397,Right Cerebrum.Frontal-Temporal Space.*.*.*
+398,Left Cerebrum.Frontal-Temporal Space.Inferior Frontal Gyrus.*.*
+399,Left Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 47
+400,Left Cerebrum.Frontal Lobe.Extra-Nuclear.Gray Matter.Brodmann area 13
+401,Right Cerebrum.Sub-lobar.Extra-Nuclear.Gray Matter.Brodmann area 47
+402,Right Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 47
+403,Left Cerebrum.Frontal Lobe.Extra-Nuclear.White Matter.*
+404,Right Cerebrum.Frontal Lobe.Extra-Nuclear.White Matter.*
+405,Left Cerebrum.Limbic Lobe.Anterior Cingulate.Gray Matter.Brodmann area 10
+406,Left Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 10
+407,Right Cerebrum.Limbic Lobe.Anterior Cingulate.Gray Matter.Brodmann area 10
+408,Right Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 10
+409,Left Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.Brodmann area 47
+410,Left Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.Brodmann area 10
+411,Right Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.Brodmann area 10
+412,Right Cerebrum.Frontal Lobe.Superior Frontal Gyrus.Gray Matter.Brodmann area 10
+413,Left Cerebrum.Frontal Lobe.Superior Frontal Gyrus.Gray Matter.Brodmann area 10
+414,Left Cerebrum.Occipital Lobe.Inferior Occipital Gyrus.Gray Matter.Brodmann area 19
+415,Right Cerebrum.Occipital Lobe.Inferior Occipital Gyrus.Gray Matter.Brodmann area 19
+416,*.*.Sub-Gyral.*.*
+417,Left Cerebrum.Occipital Lobe.Lingual Gyrus.Gray Matter.Brodmann area 19
+418,Right Cerebrum.Occipital Lobe.Lingual Gyrus.Gray Matter.Brodmann area 19
+419,Left Cerebrum.Occipital Lobe.Inferior Temporal Gyrus.*.*
+420,Left Cerebrum.Occipital Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 37
+421,Left Cerebrum.Occipital Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 19
+422,Right Cerebrum.Occipital Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 37
+423,Right Cerebrum.Occipital Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 19
+424,Right Cerebrum.Limbic Lobe.Lingual Gyrus.White Matter.*
+425,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 19
+426,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 19
+427,Right Cerebrum.Limbic Lobe.Sub-Gyral.Gray Matter.Brodmann area 19
+428,Left Cerebrum.Limbic Lobe.Sub-Gyral.Gray Matter.Brodmann area 19
+429,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 30
+430,Right Cerebrum.Limbic Lobe.Sub-Gyral.Gray Matter.Brodmann area 30
+431,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 30
+432,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 27
+433,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 27
+434,Right Cerebrum.Temporal Lobe.*.White Matter.*
+435,Left Cerebrum.Sub-lobar.Caudate.Gray Matter.Caudate Tail
+436,Right Cerebrum.Sub-lobar.Caudate.Gray Matter.Caudate Tail
+437,Left Brainstem.Midbrain.Thalamus.Gray Matter.Medial Geniculum Body
+438,Right Brainstem.Midbrain.Thalamus.Gray Matter.Medial Geniculum Body
+439,Left Cerebrum.Sub-lobar.Insula.White Matter.*
+440,Right Cerebrum.Midbrain.*.*.*
+441,Right Cerebrum.Sub-lobar.Insula.White Matter.*
+442,Left Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 22
+443,Left Cerebrum.Sub-lobar.Insula.Gray Matter.Brodmann area 22
+444,Right Cerebrum.Sub-lobar.Insula.Gray Matter.Brodmann area 13
+445,Right Cerebrum.Sub-lobar.Insula.Gray Matter.Brodmann area 22
+446,Right Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 22
+447,Left Cerebrum.Sub-lobar.Insula.Gray Matter.Brodmann area 13
+448,Left Cerebrum.Sub-lobar.Insula.*.*
+449,Left Cerebrum.Sub-lobar.Claustrum.Gray Matter.*
+450,Right Cerebrum.Sub-lobar.Claustrum.Gray Matter.*
+451,Right Cerebrum.Sub-lobar.Insula.*.*
+452,Left Cerebrum.Sub-lobar.Lentiform Nucleus.Gray Matter.Lateral Globus Pallidus
+453,Left Brainstem.Midbrain.*.Gray Matter.Subthalamic Nucleus
+454,Right Brainstem.Midbrain.*.Gray Matter.Subthalamic Nucleus
+455,Right Cerebrum.Sub-lobar.Lentiform Nucleus.Gray Matter.Lateral Globus Pallidus
+456,Left Cerebrum.Sub-lobar.Lentiform Nucleus.Gray Matter.Medial Globus Pallidus
+457,Right Cerebrum.Sub-lobar.Lentiform Nucleus.Gray Matter.Medial Globus Pallidus
+458,Left Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 22
+459,Right Brainstem.Midbrain.Extra-Nuclear.White Matter.*
+460,Right Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 22
+461,Left Cerebrum.Sub-lobar.*.White Matter.*
+462,Right Cerebrum.Sub-lobar.*.White Matter.*
+463,Right Cerebrum.Temporal Lobe.Insula.*.*
+464,Left Cerebrum.Sub-lobar.Caudate.Gray Matter.Caudate Head
+465,Right Cerebrum.Sub-lobar.Caudate.Gray Matter.Caudate Head
+466,Right Cerebrum.Sub-lobar.Insula.Gray Matter.Brodmann area 47
+467,Right Cerebrum.Sub-lobar.Inferior Frontal Gyrus.Gray Matter.Brodmann area 47
+468,Left Cerebrum.Sub-lobar.Insula.Gray Matter.Brodmann area 47
+469,Left Cerebrum.Limbic Lobe.Anterior Cingulate.Gray Matter.Brodmann area 24
+470,Right Cerebrum.Limbic Lobe.Anterior Cingulate.Gray Matter.Brodmann area 24
+471,Right Cerebrum.Frontal Lobe.*.Gray Matter.Brodmann area 10
+472,Right Cerebrum.*.Medial Frontal Gyrus.*.*
+473,Left Cerebrum.Occipital Lobe.Cuneus.*.*
+474,Left Cerebrum.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 18
+475,Left Cerebrum.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 17
+476,Right Cerebrum.Occipital Lobe.Cuneus.*.*
+477,Right Cerebrum.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 17
+478,Right Cerebrum.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 18
+479,Left Cerebrum.Temporal Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 19
+480,Right Cerebrum.Temporal Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 19
+481,Left Cerebrum.Occipital Lobe.Lingual Gyrus.Gray Matter.Brodmann area 30
+482,Right Cerebrum.Occipital Lobe.Lingual Gyrus.Gray Matter.Brodmann area 30
+483,Left Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 10
+484,Right Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 10
+485,Left Cerebrum.Occipital Lobe.Cuneus.White Matter.*
+486,Right Cerebrum.Occipital Lobe.Cuneus.White Matter.*
+487,Left Cerebrum.Occipital Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 18
+488,Right Cerebrum.Occipital Lobe.Inferior Temporal Gyrus.Gray Matter.Brodmann area 18
+489,Left Cerebrum.Limbic Lobe.Lingual Gyrus.White Matter.*
+490,Left Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.*
+491,Right Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.*
+492,Left Cerebrum.Temporal Lobe.*.White Matter.Caudate Tail
+493,Left Cerebrum.Sub-lobar.Caudate.Gray Matter.*
+494,Left Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Caudate Tail
+495,Right Cerebrum.Sub-lobar.Caudate.Gray Matter.*
+496,Right Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Caudate Tail
+497,Left Cerebrum.Sub-lobar.*.Gray Matter.Lateral Geniculum Body
+498,Left Brainstem.Midbrain.*.Gray Matter.Medial Geniculum Body
+499,Right Brainstem.Midbrain.*.Gray Matter.Medial Geniculum Body
+500,Right Cerebrum.Sub-lobar.*.Gray Matter.Lateral Geniculum Body
+501,Left Cerebrum.Sub-lobar.Lentiform Nucleus.Gray Matter.*
+502,Right Cerebrum.Midbrain.Extra-Nuclear.White Matter.*
+503,Left Brainstem.Midbrain.*.White Matter.*
+504,Left Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Anterior Commissure
+505,Inter-Hemispheric.*.*.White Matter.Anterior Commissure
+506,Right Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Anterior Commissure
+507,Left Cerebrum.Frontal-Temporal Space.Superior Temporal Gyrus.*.*
+508,Left Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Corpus Callosum
+509,Inter-Hemispheric.*.*.White Matter.Corpus Callosum
+510,Right Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Corpus Callosum
+511,Left Cerebrum.Sub-lobar.Extra-Nuclear.Gray Matter.Brodmann area 47
+512,Left Cerebrum.Sub-lobar.Extra-Nuclear.Cerebro-Spinal Fluid.*
+513,Right Cerebrum.Sub-lobar.Claustrum.White Matter.*
+514,Left Cerebrum.Frontal Lobe.Sub-Gyral.White Matter.Corpus Callosum
+515,Right Cerebrum.Frontal Lobe.Sub-Gyral.White Matter.Corpus Callosum
+516,Left Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 10
+517,Right Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 10
+518,*.*.*.Gray Matter.*
+519,Left Cerebrum.Occipital Lobe.*.Gray Matter.*
+520,Left Cerebrum.Occipital Lobe.Middle Occipital Gyrus.Gray Matter.*
+521,Right Cerebrum.Occipital Lobe.Middle Occipital Gyrus.Gray Matter.*
+522,Right Cerebrum.*.*.Gray Matter.*
+523,*.*.Middle Occipital Gyrus.Gray Matter.*
+524,Inter-Hemispheric.*.Lingual Gyrus.*.*
+525,Right Cerebrum.Occipital Lobe.Lingual Gyrus.Gray Matter.*
+526,Left Cerebrum.Limbic Lobe.Lingual Gyrus.Gray Matter.*
+527,*.*.Middle Temporal Gyrus.Gray Matter.*
+528,Left Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.*
+529,Left Cerebrum.Sub-lobar.Thalamus.Gray Matter.*
+530,*.Sub-lobar.Extra-Nuclear.White Matter.*
+531,Right Cerebrum.Sub-lobar.Thalamus.Gray Matter.*
+532,Left Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.*
+533,Left Cerebrum.Occipital Lobe.Cuneus.Gray Matter.*
+534,Inter-Hemispheric.Occipital Lobe.*.Gray Matter.*
+535,Right Cerebrum.Occipital Lobe.Cuneus.Gray Matter.*
+536,Right Cerebrum.*.Cuneus.Gray Matter.*
+537,Inter-Hemispheric.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 18
+538,Inter-Hemispheric.*.Cuneus.*.*
+539,Right Cerebrum.Occipital Lobe.*.Gray Matter.*
+540,Inter-Hemispheric.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 17
+541,Left Cerebrum.Occipital Lobe.Lingual Gyrus.Gray Matter.*
+542,Right Cerebrum.*.Middle Occipital Gyrus.Gray Matter.*
+543,Inter-Hemispheric.Occipital Lobe.Cuneus.*.*
+544,Inter-Hemispheric.Occipital Lobe.Cuneus.Gray Matter.*
+545,Inter-Hemispheric.Occipital Lobe.Lingual Gyrus.Gray Matter.*
+546,Right Cerebrum.*.Middle Occipital Gyrus.*.*
+547,Inter-Hemispheric.Occipital Lobe.*.*.*
+548,Left Cerebrum.Occipital Lobe.Inferior Temporal Gyrus.Gray Matter.*
+549,Right Cerebrum.Occipital Lobe.Inferior Temporal Gyrus.Gray Matter.*
+550,*.*.Inferior Temporal Gyrus.Gray Matter.*
+551,Right Cerebrum.*.Inferior Temporal Gyrus.Gray Matter.*
+552,Left Cerebrum.Occipital Lobe.Sub-Gyral.Gray Matter.*
+553,Left Cerebrum.Temporal Lobe.Inferior Temporal Gyrus.Gray Matter.*
+554,Right Cerebrum.Temporal Lobe.Inferior Temporal Gyrus.Gray Matter.*
+555,Right Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.*
+556,Left Cerebrum.Occipital Lobe.Middle Temporal Gyrus.*.*
+557,Left Cerebrum.Occipital Lobe.Middle Temporal Gyrus.Gray Matter.*
+558,Left Cerebrum.Occipital Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 37
+559,*.*.Culmen of Vermis.*.*
+560,Right Cerebrum.Occipital Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 37
+561,Right Cerebrum.Occipital Lobe.Middle Temporal Gyrus.*.*
+562,Left Cerebrum.Occipital Lobe.Middle Temporal Gyrus.White Matter.*
+563,Right Cerebrum.*.Middle Temporal Gyrus.*.*
+564,Right Cerebellum.Anterior Lobe.Culmen.Gray Matter.Brodmann area 19
+565,Left Cerebrum.Temporal Lobe.Lingual Gyrus.White Matter.*
+566,Left Cerebrum.Temporal Lobe.Lingual Gyrus.Gray Matter.Brodmann area 19
+567,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.*
+568,Right Cerebrum.Temporal Lobe.Lingual Gyrus.Gray Matter.Brodmann area 19
+569,Right Cerebrum.Temporal Lobe.Lingual Gyrus.White Matter.*
+570,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.*
+571,Left Cerebrum.Temporal Lobe.*.Cerebro-Spinal Fluid.Caudate Tail
+572,Left Cerebrum.Temporal Lobe.*.White Matter.*
+573,Right Cerebrum.Temporal Lobe.Extra-Nuclear.White Matter.*
+574,Right Brainstem.*.*.*.*
+575,Right Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.*
+576,Left Brainstem.Midbrain.Extra-Nuclear.White Matter.*
+577,Right Cerebrum.*.Superior Temporal Gyrus.*.*
+578,Left Cerebrum.Temporal Lobe.Insula.Gray Matter.*
+579,Left Cerebrum.Sub-lobar.Thalamus.Gray Matter.Ventral Posterior Lateral Nucleus
+580,Left Cerebrum.Sub-lobar.Thalamus.Gray Matter.Ventral Posterior Medial Nucleus
+581,Left Cerebrum.Sub-lobar.Thalamus.Gray Matter.Mammillary Body
+582,Right Cerebrum.Sub-lobar.Thalamus.Gray Matter.Mammillary Body
+583,Right Cerebrum.Sub-lobar.Thalamus.Gray Matter.Ventral Posterior Medial Nucleus
+584,Right Cerebrum.Sub-lobar.Thalamus.Gray Matter.Ventral Posterior Lateral Nucleus
+585,Right Cerebrum.Sub-lobar.Insula.Gray Matter.*
+586,Right Cerebrum.Temporal Lobe.Insula.Gray Matter.*
+587,Left Cerebrum.Temporal Lobe.Insula.Gray Matter.Brodmann area 22
+588,Right Cerebrum.Temporal Lobe.Insula.Gray Matter.Brodmann area 22
+589,Left Cerebrum.Temporal Lobe.Insula.Gray Matter.Brodmann area 13
+590,Right Cerebrum.Temporal Lobe.Insula.Gray Matter.Brodmann area 13
+591,Left Cerebrum.Temporal Lobe.Insula.*.*
+592,Left Cerebrum.Sub-lobar.Insula.Gray Matter.*
+593,Right Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Medial Globus Pallidus
+594,Right Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Lateral Globus Pallidus
+595,Left Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Lateral Globus Pallidus
+596,Left Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Putamen
+597,Right Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Putamen
+598,Left Cerebrum.Sub-lobar.Caudate.Cerebro-Spinal Fluid.Caudate Head
+599,Left Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.*
+600,Right Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.*
+601,Right Cerebrum.Sub-lobar.Caudate.Cerebro-Spinal Fluid.Caudate Head
+602,Left Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 45
+603,Right Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 45
+604,Left Cerebrum.Sub-lobar.Inferior Frontal Gyrus.Gray Matter.Brodmann area 47
+605,Left Cerebrum.Limbic Lobe.Anterior Cingulate.Gray Matter.*
+606,Right Cerebrum.Limbic Lobe.Anterior Cingulate.Gray Matter.*
+607,Left Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 46
+608,Right Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 46
+609,Left Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.*
+610,Left Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 32
+611,Left Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.*
+612,Right Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 32
+613,Right Cerebrum.Frontal Lobe.Superior Frontal Gyrus.Gray Matter.*
+614,Right Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.*
+615,Left Cerebrum.Frontal Lobe.Superior Frontal Gyrus.Gray Matter.*
+616,Right Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.*
+617,Left Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.*
+618,Right Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.*
+619,Inter-Hemispheric.Frontal Lobe.*.*.*
+620,Right Cerebrum.Frontal Lobe.*.Gray Matter.*
+621,Inter-Hemispheric.Sub-lobar.Extra-Nuclear.White Matter.*
+622,Left Cerebrum.Sub-lobar.Thalamus.Gray Matter.Pulvinar
+623,Right Cerebrum.Sub-lobar.Thalamus.Gray Matter.Pulvinar
+624,Inter-Hemispheric.*.*.Cerebro-Spinal Fluid.Optic Tract
+625,Left Cerebrum.Temporal Lobe.Middle Occipital Gyrus.*.*
+626,Right Cerebrum.Temporal Lobe.Middle Occipital Gyrus.*.*
+627,Right Cerebrum.Temporal Lobe.Middle Occipital Gyrus.Gray Matter.Brodmann area 37
+628,Left Cerebrum.Temporal Lobe.Middle Occipital Gyrus.Gray Matter.Brodmann area 37
+629,Left Cerebrum.Temporal Lobe.Middle Occipital Gyrus.White Matter.*
+630,Right Cerebrum.Temporal Lobe.Middle Occipital Gyrus.White Matter.*
+631,Left Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 18
+632,Right Cerebrum.Limbic Lobe.Parahippocampal Gyrus.Gray Matter.Brodmann area 18
+633,Inter-Hemispheric.Sub-lobar.Extra-Nuclear.Cerebro-Spinal Fluid.Optic Tract
+634,Right Cerebrum.Sub-lobar.Superior Temporal Gyrus.Gray Matter.Brodmann area 22
+635,Left Cerebrum.Temporal Lobe.Insula.White Matter.*
+636,Left Cerebrum.Sub-lobar.Thalamus.Gray Matter.Medial Dorsal Nucleus
+637,Right Cerebrum.Sub-lobar.Thalamus.Gray Matter.Medial Dorsal Nucleus
+638,Left Cerebrum.Sub-lobar.Extra-Nuclear.Cerebro-Spinal Fluid.Optic Tract
+639,Right Cerebrum.*.*.Cerebro-Spinal Fluid.Optic Tract
+640,Right Cerebrum.Sub-lobar.Lentiform Nucleus.Gray Matter.*
+641,Right Cerebrum.Sub-lobar.Extra-Nuclear.Cerebro-Spinal Fluid.Optic Tract
+642,Right Cerebrum.Sub-lobar.Superior Temporal Gyrus.*.*
+643,Left Cerebrum.Sub-lobar.Thalamus.Gray Matter.Ventral Lateral Nucleus
+644,Right Cerebrum.Sub-lobar.Thalamus.Gray Matter.Ventral Lateral Nucleus
+645,Right Cerebrum.*.Thalamus.Gray Matter.*
+646,Left Cerebrum.Sub-lobar.Thalamus.Gray Matter.Ventral Anterior Nucleus
+647,Right Cerebrum.Sub-lobar.Thalamus.Gray Matter.Ventral Anterior Nucleus
+648,Left Cerebrum.Frontal-Temporal Space.Insula.*.*
+649,Left Cerebrum.Frontal Lobe.Insula.*.*
+650,Right Cerebrum.Sub-lobar.Inferior Frontal Gyrus.*.*
+651,Inter-Hemispheric.Sub-lobar.Extra-Nuclear.White Matter.Corpus Callosum
+652,Right Cerebrum.*.*.White Matter.Corpus Callosum
+653,Right Cerebrum.Sub-lobar.Inferior Frontal Gyrus.Gray Matter.Brodmann area 45
+654,Left Cerebrum.Sub-lobar.Inferior Frontal Gyrus.*.*
+655,Left Cerebrum.Sub-lobar.Insula.Gray Matter.Brodmann area 45
+656,Right Cerebrum.Sub-lobar.Insula.Gray Matter.Brodmann area 45
+657,Right Cerebrum.Sub-lobar.*.White Matter.Corpus Callosum
+658,Right Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.Brodmann area 46
+659,Inter-Hemispheric.Frontal Lobe.Medial Frontal Gyrus.*.*
+660,Left Cerebrum.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 30
+661,Right Cerebrum.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 30
+662,Left Cerebrum.Limbic Lobe.Posterior Cingulate.White Matter.*
+663,Left Cerebrum.Limbic Lobe.Posterior Cingulate.Gray Matter.Brodmann area 30
+664,Right Cerebrum.Limbic Lobe.Posterior Cingulate.White Matter.*
+665,Right Cerebrum.Limbic Lobe.Posterior Cingulate.Gray Matter.Brodmann area 30
+666,Left Cerebrum.Occipital Lobe.Posterior Cingulate.White Matter.*
+667,Left Cerebrum.Limbic Lobe.Posterior Cingulate.*.*
+668,Right Cerebrum.Limbic Lobe.Posterior Cingulate.*.*
+669,Right Cerebrum.Occipital Lobe.Posterior Cingulate.Gray Matter.Brodmann area 30
+670,Left Cerebrum.Limbic Lobe.Posterior Cingulate.Gray Matter.Brodmann area 29
+671,Right Cerebrum.Limbic Lobe.Posterior Cingulate.Gray Matter.Brodmann area 29
+672,Left Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 41
+673,Right Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 41
+674,Left Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 42
+675,Right Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 42
+676,Right Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Pulvinar
+677,Left Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Ventral Posterior Lateral Nucleus
+678,Left Cerebrum.Temporal Lobe.Precentral Gyrus.*.*
+679,Left Cerebrum.Frontal Lobe.Precentral Gyrus.*.*
+680,Right Cerebrum.Frontal Lobe.Precentral Gyrus.*.*
+681,Right Cerebrum.Temporal Lobe.Precentral Gyrus.*.*
+682,Left Cerebrum.Frontal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 6
+683,Right Cerebrum.Frontal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 6
+684,Right Cerebrum.Sub-lobar.Thalamus.Gray Matter.Anterior Nucleus
+685,Left Cerebrum.Frontal Lobe.Precentral Gyrus.White Matter.*
+686,Left Cerebrum.Sub-lobar.Thalamus.Gray Matter.Anterior Nucleus
+687,Right Cerebrum.Frontal Lobe.Precentral Gyrus.White Matter.*
+688,Inter-Hemispheric.*.*.White Matter.*
+689,Right Cerebrum.Frontal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 44
+690,Left Cerebrum.Frontal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 44
+691,Right Cerebrum.Sub-lobar.Insula.Gray Matter.Brodmann area 44
+692,Left Cerebrum.Sub-lobar.Caudate.Gray Matter.Caudate Body
+693,Right Cerebrum.Sub-lobar.Caudate.Gray Matter.Caudate Body
+694,Left Cerebrum.Limbic Lobe.Anterior Cingulate.White Matter.Corpus Callosum
+695,Right Cerebrum.Limbic Lobe.Anterior Cingulate.White Matter.Corpus Callosum
+696,Right Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 46
+697,Left Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.Brodmann area 46
+698,Left Cerebrum.*.Middle Occipital Gyrus.*.*
+699,Left Cerebrum.Occipital Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 19
+700,Right Cerebrum.Occipital Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 19
+701,Right Cerebrum.Occipital Lobe.Middle Temporal Gyrus.White Matter.*
+702,Left Cerebrum.Occipital Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 39
+703,Left Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 39
+704,Right Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 39
+705,Right Cerebrum.Occipital Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 39
+706,Left Cerebrum.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 23
+707,Right Cerebrum.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 23
+708,Left Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 39
+709,Right Cerebrum.Temporal Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 39
+710,Inter-Hemispheric.Limbic Lobe.Posterior Cingulate.*.*
+711,Left Cerebrum.Limbic Lobe.Extra-Nuclear.White Matter.Corpus Callosum
+712,Right Cerebrum.Limbic Lobe.Extra-Nuclear.White Matter.Corpus Callosum
+713,Left Cerebrum.Limbic Lobe.Sub-Gyral.White Matter.Corpus Callosum
+714,Inter-Hemispheric.Limbic Lobe.Extra-Nuclear.White Matter.Corpus Callosum
+715,Right Cerebrum.Limbic Lobe.Sub-Gyral.White Matter.Corpus Callosum
+716,*.*.Superior Temporal Gyrus.*.*
+717,Left Cerebrum.Temporal Lobe.Transverse Temporal Gyrus.White Matter.*
+718,Right Cerebrum.Temporal Lobe.Transverse Temporal Gyrus.White Matter.*
+719,Right Cerebrum.Temporal Lobe.Transverse Temporal Gyrus.Gray Matter.Brodmann area 41
+720,Left Cerebrum.Temporal Lobe.Transverse Temporal Gyrus.Gray Matter.Brodmann area 41
+721,Left Cerebrum.Sub-lobar.Insula.Gray Matter.Brodmann area 41
+722,Right Cerebrum.Sub-lobar.Insula.Gray Matter.Brodmann area 41
+723,Left Cerebrum.Sub-lobar.Transverse Temporal Gyrus.Gray Matter.Brodmann area 41
+724,Left Cerebrum.Sub-lobar.Transverse Temporal Gyrus.White Matter.*
+725,Left Cerebrum.Sub-lobar.Thalamus.Gray Matter.Lateral Posterior Nucleus
+726,Right Cerebrum.Sub-lobar.Thalamus.Gray Matter.Lateral Posterior Nucleus
+727,Right Cerebrum.Temporal Lobe.Transverse Temporal Gyrus.Gray Matter.Brodmann area 42
+728,Left Cerebrum.Temporal Lobe.Transverse Temporal Gyrus.*.*
+729,Left Cerebrum.Temporal Lobe.Transverse Temporal Gyrus.Gray Matter.Brodmann area 42
+730,Right Cerebrum.Temporal Lobe.Transverse Temporal Gyrus.*.*
+731,Right Cerebrum.Temporal Lobe.Precentral Gyrus.White Matter.*
+732,Left Cerebrum.Frontal Lobe.Transverse Temporal Gyrus.White Matter.*
+733,Left Cerebrum.Frontal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 13
+734,Left Cerebrum.Sub-lobar.Precentral Gyrus.Gray Matter.Brodmann area 13
+735,Right Cerebrum.Frontal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 13
+736,Left Cerebrum.*.Transverse Temporal Gyrus.*.*
+737,Left Cerebrum.Temporal Lobe.Precentral Gyrus.White Matter.*
+738,Left Cerebrum.Temporal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 43
+739,Left Cerebrum.Frontal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 43
+740,Right Cerebrum.Frontal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 43
+741,Right Cerebrum.Temporal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 42
+742,Left Cerebrum.Temporal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 42
+743,Left Cerebrum.*.Precentral Gyrus.*.*
+744,Inter-Hemispheric.Sub-lobar.Lateral Ventricle.Cerebro-Spinal Fluid.*
+745,Right Cerebrum.*.Precentral Gyrus.*.*
+746,Left Cerebrum.Frontal Lobe.Insula.White Matter.*
+747,Right Cerebrum.Frontal Lobe.Insula.White Matter.*
+748,Left Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 44
+749,Right Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 44
+750,Left Cerebrum.Limbic Lobe.Extra-Nuclear.*.*
+751,Right Cerebrum.Limbic Lobe.Extra-Nuclear.*.*
+752,Inter-Hemispheric.Limbic Lobe.Anterior Cingulate.*.*
+753,Left Cerebrum.*.Middle Frontal Gyrus.*.*
+754,Right Cerebrum.*.*.Gray Matter.Brodmann area 10
+755,Inter-Hemispheric.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 10
+756,Left Cerebrum.Limbic Lobe.Posterior Cingulate.Gray Matter.Brodmann area 31
+757,Right Cerebrum.Limbic Lobe.Posterior Cingulate.Gray Matter.Brodmann area 31
+758,Left Cerebrum.Limbic Lobe.Posterior Cingulate.Gray Matter.Brodmann area 18
+759,Left Cerebrum.Limbic Lobe.Posterior Cingulate.Gray Matter.*
+760,Right Cerebrum.Limbic Lobe.Posterior Cingulate.Gray Matter.Brodmann area 18
+761,Right Cerebrum.Limbic Lobe.Posterior Cingulate.Gray Matter.*
+762,Left Cerebrum.Limbic Lobe.Posterior Cingulate.Gray Matter.Brodmann area 23
+763,Right Cerebrum.Limbic Lobe.Posterior Cingulate.Gray Matter.Brodmann area 23
+764,Left Cerebrum.Occipital Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 22
+765,Left Cerebrum.*.Superior Temporal Gyrus.Gray Matter.Brodmann area 22
+766,Right Cerebrum.Occipital Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 22
+767,Left Cerebrum.Occipital Lobe.Superior Temporal Gyrus.Gray Matter.Brodmann area 22
+768,Right Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.Brodmann area 41
+769,Right Cerebrum.Temporal Lobe.Insula.White Matter.*
+770,Left Cerebrum.Temporal Lobe.Insula.Gray Matter.Brodmann area 41
+771,Right Cerebrum.Temporal Lobe.Insula.Gray Matter.Brodmann area 41
+772,Left Cerebrum.Temporal Lobe.Postcentral Gyrus.*.*
+773,Left Cerebrum.Parietal Lobe.Postcentral Gyrus.*.*
+774,Left Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 40
+775,Left Cerebrum.Parietal Lobe.Insula.White Matter.*
+776,Left Cerebrum.Sub-lobar.Extra-Nuclear.White Matter.Pulvinar
+777,Right Cerebrum.Parietal Lobe.Insula.White Matter.*
+778,Right Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 40
+779,Right Cerebrum.Temporal Lobe.Postcentral Gyrus.*.*
+780,Right Cerebrum.Parietal Lobe.Superior Temporal Gyrus.*.*
+781,Right Cerebrum.Sub-lobar.Insula.Gray Matter.Brodmann area 40
+782,Right Cerebrum.Parietal Lobe.Postcentral Gyrus.*.*
+783,Left Cerebrum.Parietal Lobe.Superior Temporal Gyrus.*.*
+784,Left Cerebrum.Parietal Lobe.Postcentral Gyrus.White Matter.*
+785,Left Cerebrum.Sub-lobar.Insula.Gray Matter.Brodmann area 40
+786,Right Cerebrum.Parietal Lobe.Postcentral Gyrus.White Matter.*
+787,Left Cerebrum.Sub-lobar.Thalamus.Gray Matter.Lateral Dorsal Nucleus
+788,Right Cerebrum.Sub-lobar.Thalamus.Gray Matter.Lateral Dorsal Nucleus
+789,Left Cerebrum.*.Postcentral Gyrus.*.*
+790,Left Cerebrum.Sub-lobar.Thalamus.Gray Matter.Midline Nucleus
+791,Right Cerebrum.Sub-lobar.Thalamus.Gray Matter.Midline Nucleus
+792,Left Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 43
+793,Right Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 43
+794,Left Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.*
+795,Right Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.*
+796,Left Cerebrum.Parietal Lobe.Sub-Gyral.White Matter.*
+797,Right Cerebrum.Parietal Lobe.Sub-Gyral.Gray Matter.Brodmann area 43
+798,Right Cerebrum.Parietal Lobe.Sub-Gyral.White Matter.*
+799,Left Cerebrum.Parietal Lobe.*.*.*
+800,Left Cerebrum.Parietal Lobe.Precentral Gyrus.White Matter.*
+801,Left Cerebrum.Parietal Lobe.Extra-Nuclear.White Matter.*
+802,Right Cerebrum.Parietal Lobe.Precentral Gyrus.White Matter.*
+803,Left Cerebrum.Parietal Lobe.Precentral Gyrus.*.*
+804,Left Cerebrum.Parietal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 4
+805,Right Cerebrum.Frontal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 4
+806,Right Cerebrum.Parietal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 4
+807,Right Cerebrum.Parietal Lobe.Precentral Gyrus.*.*
+808,Left Cerebrum.Frontal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 4
+809,Left Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 6
+810,Right Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 6
+811,Left Cerebrum.*.Inferior Frontal Gyrus.*.*
+812,*.*.Middle Frontal Gyrus.*.*
+813,Left Cerebrum.Limbic Lobe.Anterior Cingulate.Gray Matter.Brodmann area 9
+814,Left Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 9
+815,Right Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 9
+816,Right Cerebrum.Limbic Lobe.Anterior Cingulate.Gray Matter.Brodmann area 9
+817,Left Cerebrum.*.Superior Frontal Gyrus.*.*
+818,Left Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 19
+819,Right Cerebrum.Temporal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 19
+820,Left Cerebrum.Temporal Lobe.Middle Occipital Gyrus.Gray Matter.Brodmann area 19
+821,Left Cerebrum.Occipital Lobe.Precuneus.White Matter.*
+822,Right Cerebrum.Occipital Lobe.Precuneus.White Matter.*
+823,Left Cerebrum.Occipital Lobe.Precuneus.Gray Matter.Brodmann area 31
+824,Right Cerebrum.Occipital Lobe.Precuneus.Gray Matter.Brodmann area 31
+825,Left Cerebrum.Occipital Lobe.Precuneus.*.*
+826,Left Cerebrum.Occipital Lobe.Precuneus.Gray Matter.Brodmann area 18
+827,Right Cerebrum.Occipital Lobe.Precuneus.Gray Matter.Brodmann area 18
+828,Right Cerebrum.Occipital Lobe.Precuneus.*.*
+829,Left Cerebrum.Occipital Lobe.Precuneus.Gray Matter.Brodmann area 23
+830,Right Cerebrum.Occipital Lobe.Precuneus.Gray Matter.Brodmann area 23
+831,Left Cerebrum.Sub-lobar.Posterior Cingulate.White Matter.*
+832,Right Cerebrum.Sub-lobar.Posterior Cingulate.White Matter.*
+833,Left Cerebrum.Frontal Lobe.Postcentral Gyrus.White Matter.*
+834,Right Cerebrum.Frontal Lobe.Postcentral Gyrus.White Matter.*
+835,Left Cerebrum.Frontal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 4
+836,Right Cerebrum.Frontal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 4
+837,*.*.Precentral Gyrus.*.*
+838,Left Cerebrum.Limbic Lobe.Anterior Cingulate.Gray Matter.Brodmann area 33
+839,Right Cerebrum.Limbic Lobe.Anterior Cingulate.Gray Matter.Brodmann area 33
+840,Inter-Hemispheric.*.Anterior Cingulate.*.*
+841,Left Cerebrum.Frontal Lobe.Anterior Cingulate.Gray Matter.Brodmann area 9
+842,*.*.Cuneus.*.*
+843,Left Cerebrum.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 19
+844,Right Cerebrum.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 19
+845,*.*.Superior Occipital Gyrus.*.*
+846,Left Cerebrum.Occipital Lobe.Superior Occipital Gyrus.*.*
+847,Right Cerebrum.Occipital Lobe.Superior Occipital Gyrus.*.*
+848,Left Cerebrum.Occipital Lobe.Superior Occipital Gyrus.Gray Matter.Brodmann area 19
+849,Right Cerebrum.Occipital Lobe.Superior Occipital Gyrus.Gray Matter.Brodmann area 19
+850,Left Cerebrum.Occipital Lobe.Superior Occipital Gyrus.White Matter.*
+851,Right Cerebrum.Occipital Lobe.Superior Occipital Gyrus.White Matter.*
+852,Left Cerebrum.Temporal Lobe.Superior Occipital Gyrus.*.*
+853,Right Cerebrum.Temporal Lobe.Superior Occipital Gyrus.*.*
+854,Left Cerebrum.Temporal Lobe.Cuneus.White Matter.*
+855,Right Cerebrum.Temporal Lobe.Cuneus.White Matter.*
+856,Left Cerebrum.Parietal Lobe.Precuneus.Gray Matter.Brodmann area 31
+857,Left Cerebrum.Parietal Lobe.Precuneus.Gray Matter.Brodmann area 18
+858,Right Cerebrum.Parietal Lobe.Precuneus.Gray Matter.Brodmann area 18
+859,Right Cerebrum.Parietal Lobe.Precuneus.Gray Matter.Brodmann area 31
+860,Left Cerebrum.Parietal Lobe.Precuneus.White Matter.*
+861,Left Cerebrum.Parietal Lobe.Precuneus.*.*
+862,Right Cerebrum.Parietal Lobe.Precuneus.*.*
+863,Right Cerebrum.Temporal Lobe.Precuneus.Gray Matter.Brodmann area 31
+864,Right Cerebrum.Parietal Lobe.Precuneus.White Matter.*
+865,*.Frontal Lobe.Middle Temporal Gyrus.Gray Matter.Brodmann area 39
+866,Right Cerebrum.Temporal Lobe.Precuneus.White Matter.*
+867,Left Cerebrum.Temporal Lobe.Precuneus.White Matter.*
+868,Left Cerebrum.Temporal Lobe.Supramarginal Gyrus.*.*
+869,Left Cerebrum.Temporal Lobe.Supramarginal Gyrus.Gray Matter.Brodmann area 40
+870,Left Cerebrum.Temporal Lobe.Supramarginal Gyrus.White Matter.*
+871,Right Cerebrum.Temporal Lobe.Supramarginal Gyrus.White Matter.*
+872,Right Cerebrum.Temporal Lobe.Supramarginal Gyrus.Gray Matter.Brodmann area 40
+873,Right Cerebrum.Temporal Lobe.Supramarginal Gyrus.*.*
+874,Left Cerebrum.Temporal Lobe.Inferior Parietal Lobule.White Matter.*
+875,Right Cerebrum.Parietal Lobe.Extra-Nuclear.White Matter.*
+876,Right Cerebrum.Temporal Lobe.Inferior Parietal Lobule.White Matter.*
+877,Left Cerebrum.Temporal Lobe.Inferior Parietal Lobule.Gray Matter.Brodmann area 40
+878,Left Cerebrum.Parietal Lobe.Inferior Parietal Lobule.Gray Matter.Brodmann area 40
+879,Left Cerebrum.Parietal Lobe.Inferior Parietal Lobule.White Matter.*
+880,Right Cerebrum.Parietal Lobe.Inferior Parietal Lobule.White Matter.*
+881,Right Cerebrum.Parietal Lobe.Inferior Parietal Lobule.Gray Matter.Brodmann area 40
+882,Left Cerebrum.Parietal Lobe.Supramarginal Gyrus.*.*
+883,Right Cerebrum.Parietal Lobe.Supramarginal Gyrus.*.*
+884,Left Cerebrum.Temporal Lobe.Inferior Parietal Lobule.*.*
+885,Right Cerebrum.Temporal Lobe.Inferior Parietal Lobule.Gray Matter.Brodmann area 40
+886,Right Cerebrum.Temporal Lobe.Inferior Parietal Lobule.*.*
+887,Left Cerebrum.Parietal Lobe.Inferior Parietal Lobule.*.*
+888,Inter-Hemispheric.Limbic Lobe.*.*.*
+889,Right Cerebrum.Parietal Lobe.Inferior Parietal Lobule.*.*
+890,Left Cerebrum.Limbic Lobe.*.White Matter.*
+891,Left Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 2
+892,Right Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 2
+893,Left Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 1
+894,Right Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 1
+895,Left Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 3
+896,Right Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 3
+897,Left Cerebrum.Frontal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 3
+898,Right Cerebrum.Frontal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 3
+899,Left Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 9
+900,Right Cerebrum.Frontal Lobe.Inferior Frontal Gyrus.Gray Matter.Brodmann area 9
+901,Right Cerebrum.Frontal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 9
+902,Left Cerebrum.Frontal Lobe.Superior Frontal Gyrus.Gray Matter.Brodmann area 9
+903,Right Cerebrum.Frontal Lobe.Superior Frontal Gyrus.Gray Matter.Brodmann area 9
+904,Inter-Hemispheric.*.Superior Frontal Gyrus.*.*
+905,Right Cerebrum.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 31
+906,Left Cerebrum.Temporal Lobe.Superior Occipital Gyrus.Gray Matter.Brodmann area 39
+907,Right Cerebrum.Temporal Lobe.Superior Occipital Gyrus.Gray Matter.Brodmann area 39
+908,Left Cerebrum.Occipital Lobe.Superior Occipital Gyrus.Gray Matter.Brodmann area 39
+909,Left Cerebrum.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 31
+910,Right Cerebrum.Occipital Lobe.Superior Occipital Gyrus.Gray Matter.Brodmann area 39
+911,Left Cerebrum.Limbic Lobe.Precuneus.*.*
+912,Left Cerebrum.Limbic Lobe.Cingulate Gyrus.*.*
+913,Right Cerebrum.Limbic Lobe.Cingulate Gyrus.*.*
+914,Right Cerebrum.Limbic Lobe.Precuneus.*.*
+915,Left Cerebrum.Limbic Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 31
+916,Right Cerebrum.Limbic Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 31
+917,Left Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.Brodmann area 39
+918,Right Cerebrum.Temporal Lobe.Sub-Gyral.Gray Matter.Brodmann area 39
+919,Left Cerebrum.Limbic Lobe.Precuneus.White Matter.*
+920,Left Cerebrum.Limbic Lobe.Precuneus.Gray Matter.Brodmann area 31
+921,Left Cerebrum.Limbic Lobe.Cingulate Gyrus.White Matter.*
+922,Right Cerebrum.Limbic Lobe.Cingulate Gyrus.White Matter.*
+923,Right Cerebrum.Limbic Lobe.Precuneus.Gray Matter.Brodmann area 31
+924,Right Cerebrum.Limbic Lobe.Precuneus.White Matter.*
+925,Left Cerebrum.Occipital Lobe.Superior Temporal Gyrus.*.*
+926,Right Cerebrum.Occipital Lobe.Superior Temporal Gyrus.*.*
+927,Left Cerebrum.Parietal Lobe.Supramarginal Gyrus.Gray Matter.Brodmann area 40
+928,Right Cerebrum.Parietal Lobe.Supramarginal Gyrus.Gray Matter.Brodmann area 40
+929,Left Cerebrum.Parietal Lobe.Supramarginal Gyrus.White Matter.*
+930,Right Cerebrum.Parietal Lobe.Supramarginal Gyrus.White Matter.*
+931,*.*.Supramarginal Gyrus.*.*
+932,Right Cerebrum.Limbic Lobe.Sub-Gyral.Gray Matter.Brodmann area 31
+933,*.*.Inferior Parietal Lobule.*.*
+934,Left Cerebrum.Limbic Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 23
+935,Right Cerebrum.Limbic Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 23
+936,Left Cerebrum.Frontal Lobe.Inferior Parietal Lobule.White Matter.*
+937,Right Cerebrum.Frontal Lobe.Inferior Parietal Lobule.White Matter.*
+938,Left Cerebrum.Parietal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 3
+939,Left Cerebrum.Frontal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 3
+940,Right Cerebrum.Frontal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 3
+941,Left Cerebrum.Limbic Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 24
+942,Right Cerebrum.Limbic Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 24
+943,Left Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.Brodmann area 9
+944,Right Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.Brodmann area 9
+945,Left Cerebrum.Limbic Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 32
+946,Right Cerebrum.Limbic Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 32
+947,Left Cerebrum.Limbic Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 32
+948,Right Cerebrum.Limbic Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 32
+949,Left Cerebrum.Limbic Lobe.Medial Frontal Gyrus.*.*
+950,Right Cerebrum.Limbic Lobe.Medial Frontal Gyrus.*.*
+951,Right Cerebrum.*.Cuneus.*.*
+952,Left Cerebrum.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 7
+953,Right Cerebrum.Occipital Lobe.Cuneus.Gray Matter.Brodmann area 7
+954,*.*.Angular Gyrus.*.*
+955,Left Cerebrum.Occipital Lobe.Angular Gyrus.*.*
+956,Right Cerebrum.Occipital Lobe.Angular Gyrus.*.*
+957,Left Cerebrum.Temporal Lobe.Angular Gyrus.*.*
+958,Left Cerebrum.Temporal Lobe.Angular Gyrus.Gray Matter.Brodmann area 39
+959,Right Cerebrum.Temporal Lobe.Angular Gyrus.Gray Matter.Brodmann area 39
+960,Right Cerebrum.Temporal Lobe.Angular Gyrus.*.*
+961,Left Cerebrum.Temporal Lobe.Angular Gyrus.White Matter.*
+962,Right Cerebrum.Temporal Lobe.Angular Gyrus.White Matter.*
+963,Left Cerebrum.Parietal Lobe.Cuneus.White Matter.*
+964,Right Cerebrum.Parietal Lobe.Cuneus.White Matter.*
+965,Left Cerebrum.Parietal Lobe.Angular Gyrus.White Matter.*
+966,Right Cerebrum.Parietal Lobe.Angular Gyrus.White Matter.*
+967,Left Cerebrum.Parietal Lobe.Angular Gyrus.Gray Matter.Brodmann area 39
+968,Left Cerebrum.Parietal Lobe.Precuneus.Gray Matter.Brodmann area 7
+969,Right Cerebrum.Occipital Lobe.Precuneus.Gray Matter.Brodmann area 7
+970,Right Cerebrum.Parietal Lobe.Angular Gyrus.Gray Matter.Brodmann area 39
+971,Left Cerebrum.Occipital Lobe.Precuneus.Gray Matter.Brodmann area 7
+972,Right Cerebrum.Parietal Lobe.Precuneus.Gray Matter.Brodmann area 7
+973,*.Parietal Lobe.*.*.*
+974,Left Cerebrum.Parietal Lobe.Supramarginal Gyrus.Gray Matter.Brodmann area 39
+975,Right Cerebrum.Parietal Lobe.Supramarginal Gyrus.Gray Matter.Brodmann area 39
+976,Right Cerebrum.*.Precuneus.*.*
+977,Right Cerebrum.Parietal Lobe.*.*.*
+978,Left Cerebrum.Parietal Lobe.Inferior Parietal Lobule.Gray Matter.Brodmann area 2
+979,Left Cerebrum.Frontal Lobe.Postcentral Gyrus.*.*
+980,Right Cerebrum.Frontal Lobe.Postcentral Gyrus.*.*
+981,Left Cerebrum.Limbic Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 9
+982,Right Cerebrum.Limbic Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 9
+983,Left Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 9
+984,Right Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 9
+985,Left Cerebrum.Parietal Lobe.Cuneus.*.*
+986,Left Cerebrum.Parietal Lobe.Precuneus.Gray Matter.Brodmann area 19
+987,Right Cerebrum.Parietal Lobe.Precuneus.Gray Matter.Brodmann area 19
+988,Inter-Hemispheric.*.Precuneus.*.*
+989,Right Cerebrum.Parietal Lobe.Precuneus.Gray Matter.Brodmann area 39
+990,Left Cerebrum.Parietal Lobe.Precuneus.Gray Matter.Brodmann area 39
+991,Right Cerebrum.Parietal Lobe.Sub-Gyral.Gray Matter.Brodmann area 39
+992,Left Cerebrum.Parietal Lobe.Angular Gyrus.Gray Matter.Brodmann area 40
+993,Right Cerebrum.Parietal Lobe.Angular Gyrus.Gray Matter.Brodmann area 40
+994,Left Cerebrum.Limbic Lobe.Sub-Gyral.Gray Matter.Brodmann area 31
+995,Left Cerebrum.Parietal Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 31
+996,Left Cerebrum.Parietal Lobe.Cingulate Gyrus.*.*
+997,Right Cerebrum.Parietal Lobe.Cingulate Gyrus.*.*
+998,Right Cerebrum.Parietal Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 31
+999,Left Cerebrum.Parietal Lobe.Sub-Gyral.Gray Matter.Brodmann area 40
+1000,Right Cerebrum.Parietal Lobe.Sub-Gyral.Gray Matter.Brodmann area 40
+1001,Left Cerebrum.Frontal Lobe.Cingulate Gyrus.White Matter.*
+1002,Right Cerebrum.Frontal Lobe.Cingulate Gyrus.White Matter.*
+1003,Left Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 4
+1004,Left Cerebrum.Frontal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 9
+1005,Left Cerebrum.Frontal Lobe.Cingulate Gyrus.*.*
+1006,Left Cerebrum.Frontal Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 32
+1007,Right Cerebrum.Frontal Lobe.Cingulate Gyrus.*.*
+1008,Right Cerebrum.Frontal Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 32
+1009,Left Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 6
+1010,Left Cerebrum.Frontal Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 6
+1011,Right Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 6
+1012,Right Cerebrum.Frontal Lobe.Cingulate Gyrus.Gray Matter.Brodmann area 6
+1013,*.*.Precuneus.*.*
+1014,Left Cerebrum.Parietal Lobe.Inferior Parietal Lobule.Gray Matter.Brodmann area 39
+1015,Right Cerebrum.Parietal Lobe.Inferior Parietal Lobule.Gray Matter.Brodmann area 39
+1016,Left Cerebrum.Frontal Lobe.Precuneus.Gray Matter.Brodmann area 31
+1017,Right Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 31
+1018,Left Cerebrum.Parietal Lobe.Sub-Gyral.Gray Matter.Brodmann area 2
+1019,Right Cerebrum.Parietal Lobe.Precentral Gyrus.Gray Matter.Brodmann area 3
+1020,Left Cerebrum.Limbic Lobe.Sub-Gyral.Gray Matter.Brodmann area 24
+1021,Right Cerebrum.Limbic Lobe.Sub-Gyral.Gray Matter.Brodmann area 24
+1022,Left Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 6
+1023,Left Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.Brodmann area 6
+1024,Right Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.Brodmann area 6
+1025,Left Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.Brodmann area 8
+1026,Right Cerebrum.Frontal Lobe.Middle Frontal Gyrus.Gray Matter.Brodmann area 8
+1027,Left Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 8
+1028,Right Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 8
+1029,Left Cerebrum.Limbic Lobe.Sub-Gyral.Gray Matter.Brodmann area 32
+1030,Right Cerebrum.Limbic Lobe.Sub-Gyral.Gray Matter.Brodmann area 32
+1031,Left Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 32
+1032,Right Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 32
+1033,Left Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 8
+1034,Right Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 8
+1035,Left Cerebrum.Frontal Lobe.Superior Frontal Gyrus.Gray Matter.Brodmann area 8
+1036,Right Cerebrum.Frontal Lobe.Superior Frontal Gyrus.Gray Matter.Brodmann area 8
+1037,Left Cerebrum.Parietal Lobe.Superior Parietal Lobule.*.*
+1038,Right Cerebrum.Parietal Lobe.Superior Parietal Lobule.*.*
+1039,Left Cerebrum.Parietal Lobe.Superior Parietal Lobule.Gray Matter.Brodmann area 7
+1040,Right Cerebrum.Parietal Lobe.Superior Parietal Lobule.Gray Matter.Brodmann area 7
+1041,Left Cerebrum.Parietal Lobe.Superior Parietal Lobule.White Matter.*
+1042,Right Cerebrum.Parietal Lobe.Superior Parietal Lobule.White Matter.*
+1043,Left Cerebrum.Parietal Lobe.Inferior Parietal Lobule.Gray Matter.Brodmann area 7
+1044,Right Cerebrum.Parietal Lobe.Inferior Parietal Lobule.Gray Matter.Brodmann area 7
+1045,Left Cerebrum.Frontal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 31
+1046,Left Cerebrum.Frontal Lobe.Paracentral Lobule.*.*
+1047,Inter-Hemispheric.*.Paracentral Lobule.*.*
+1048,Right Cerebrum.Frontal Lobe.Paracentral Lobule.*.*
+1049,Right Cerebrum.Frontal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 31
+1050,Right Cerebrum.Parietal Lobe.Sub-Gyral.Gray Matter.Brodmann area 31
+1051,Left Cerebrum.Frontal Lobe.Paracentral Lobule.White Matter.*
+1052,Right Cerebrum.Frontal Lobe.Paracentral Lobule.White Matter.*
+1053,Left Cerebrum.Limbic Lobe.Paracentral Lobule.Gray Matter.Brodmann area 31
+1054,Left Cerebrum.Limbic Lobe.Paracentral Lobule.White Matter.*
+1055,Right Cerebrum.Limbic Lobe.Paracentral Lobule.White Matter.*
+1056,Left Cerebrum.Limbic Lobe.Paracentral Lobule.*.*
+1057,Right Cerebrum.Limbic Lobe.Paracentral Lobule.*.*
+1058,Inter-Hemispheric.*.Cingulate Gyrus.*.*
+1059,Inter-Hemispheric.*.Medial Frontal Gyrus.*.*
+1060,*.*.Superior Parietal Lobule.*.*
+1061,Left Cerebrum.Parietal Lobe.Superior Parietal Lobule.Gray Matter.Brodmann area 40
+1062,Right Cerebrum.Parietal Lobe.Superior Parietal Lobule.Gray Matter.Brodmann area 40
+1063,Left Cerebrum.Parietal Lobe.Paracentral Lobule.White Matter.*
+1064,Left Cerebrum.Parietal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 5
+1065,Left Cerebrum.Parietal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 7
+1066,Right Cerebrum.Parietal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 7
+1067,Right Cerebrum.Parietal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 5
+1068,Left Cerebrum.Frontal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 5
+1069,Right Cerebrum.Frontal Lobe.Precuneus.*.*
+1070,Right Cerebrum.Frontal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 5
+1071,Left Cerebrum.Parietal Lobe.Paracentral Lobule.*.*
+1072,Right Cerebrum.Parietal Lobe.Paracentral Lobule.*.*
+1073,Right Cerebrum.Parietal Lobe.Paracentral Lobule.White Matter.*
+1074,Right Cerebrum.Frontal Lobe.Precuneus.White Matter.*
+1075,Left Cerebrum.Frontal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 6
+1076,Right Cerebrum.Frontal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 6
+1077,Left Cerebrum.Frontal Lobe.Superior Frontal Gyrus.Gray Matter.Brodmann area 6
+1078,Right Cerebrum.Frontal Lobe.Superior Frontal Gyrus.Gray Matter.Brodmann area 6
+1079,Right Cerebrum.*.Superior Parietal Lobule.*.*
+1080,Left Cerebrum.Parietal Lobe.Sub-Gyral.Gray Matter.Brodmann area 7
+1081,Right Cerebrum.Parietal Lobe.Sub-Gyral.Gray Matter.Brodmann area 7
+1082,Right Cerebrum.Frontal Lobe.Inferior Parietal Lobule.Gray Matter.Brodmann area 40
+1083,Left Cerebrum.Frontal Lobe.Precuneus.Gray Matter.Brodmann area 5
+1084,Left Cerebrum.Frontal Lobe.Precuneus.White Matter.*
+1085,Left Cerebrum.Frontal Lobe.Precuneus.*.*
+1086,Right Cerebrum.Frontal Lobe.Precuneus.Gray Matter.Brodmann area 5
+1087,Right Cerebrum.Frontal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 7
+1088,Left Cerebrum.Frontal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 3
+1089,Left Cerebrum.Frontal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 4
+1090,Right Cerebrum.Frontal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 4
+1091,Right Cerebrum.Frontal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 3
+1092,Right Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 3
+1093,Right Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 4
+1094,Right Cerebrum.Frontal Lobe.Sub-Gyral.Gray Matter.Brodmann area 6
+1095,Left Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 5
+1096,Right Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 5
+1097,Left Cerebrum.Parietal Lobe.Superior Parietal Lobule.Gray Matter.Brodmann area 5
+1098,Right Cerebrum.Parietal Lobe.Superior Parietal Lobule.Gray Matter.Brodmann area 5
+1099,Right Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 4
+1100,Right Cerebrum.Frontal Lobe.Medial Frontal Gyrus.Gray Matter.Brodmann area 4
+1101,Left Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 7
+1102,Right Cerebrum.Parietal Lobe.Postcentral Gyrus.Gray Matter.Brodmann area 7
+1103,Inter-Hemispheric.*.Postcentral Gyrus.*.*
+1104,Left Cerebrum.Parietal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 4
+1105,Right Cerebrum.Parietal Lobe.Paracentral Lobule.Gray Matter.Brodmann area 4

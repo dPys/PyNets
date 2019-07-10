@@ -89,7 +89,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
         import community
         G = nx.from_numpy_matrix(conn_matrix)
         try:
-            node_comm_aff_mat = community.best_partition(G)
+            node_comm_aff_mat = list(community.best_partition(G).values())
             print("%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities...'))
         except:
             print('\nWARNING: Louvain community detection failed. Proceeding with single community affiliation '
@@ -614,7 +614,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
                                                                      "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), thr, '_', node_size,
                                                                      '%s' % ("mm_" if node_size != 'parc' else "_"),
                                                                      "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
-                                                                     "%s%s" % (track_type, '_track'),
+                                                                     "%s%s%s" % ('_', track_type, '_track'),
                                                                      "%s%s" % ('_', directget),
                                                                      'struct_glass_viz.png')
 
@@ -631,7 +631,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
                                                                  "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"),
                                                                  thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"),
                                                                  "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
-                                                                 "%s%s" % (track_type, '_track_'),
+                                                                 "%s%s%s" % ('_', track_type, '_track'),
                                                                  "%s%s" % ('_', directget),
                                                                  'struct_glass_viz.png')
             # Save coords to pickle

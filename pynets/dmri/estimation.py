@@ -155,7 +155,7 @@ def csd_mod_est(gtab, data, wm_in_dwi):
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
                   dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels,
-                  coords, norm, binary, voxel_size='2mm'):
+                  coords, norm, binary, directget, voxel_size='2mm'):
     '''
     Use tracked streamlines as a basis for estimating a structural connectome.
 
@@ -213,6 +213,9 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
     voxel_size : str
         Target isotropic voxel resolution of all input Nifti1Image files.
 
@@ -269,6 +272,9 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
     '''
     import warnings
     warnings.filterwarnings("ignore")
@@ -332,4 +338,4 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     # Remove background label
     conn_matrix = conn_matrix_symm[1:, 1:]
 
-    return atlas_mni, streams, conn_matrix, track_type, target_samples, dir_path, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary
+    return atlas_mni, streams, conn_matrix, track_type, target_samples, dir_path, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, directget

@@ -227,6 +227,88 @@ def average_local_efficiency(G, weight=None):
     return total / N
 
 
+def create_random_graph(G, n, p):
+    """
+    Creates a random Erdos Renyi Graph
+
+    Parameters
+    ----------
+    G : Obj
+        NetworkX graph.
+    n : int
+        The number of nodes.
+    p : float
+        Probability for edge creation.
+
+    Returns
+    -------
+    rG : Obj
+        Random networkX graph.
+    """
+    rG = nx.erdos_renyi_graph(n, p, seed=42)
+    return rG
+
+
+def smallworldness_measure(G, rG):
+    """
+    Calculates smallworldness measure
+
+    Parameters
+    ----------
+    G : Obj
+        NetworkX graph.
+    rG : Obj
+        Random networkX graph.
+
+    Returns
+    -------
+    swm : float
+        Smallworldness measure.
+    """
+    C_g = nx.algorithms.average_clustering(G)
+    C_r = nx.algorithms.average_clustering(rG)
+    try:
+        L_g = nx.average_shortest_path_length(G)
+        L_r = nx.average_shortest_path_length(rG)
+    except:
+        L_g = average_shortest_path_length_for_all(G)
+        L_r = average_shortest_path_length_for_all(rG)
+    gam = float(C_g) / float(C_r)
+    lam = float(L_g) / float(L_r)
+    swm = gam / lam
+    return swm
+
+
+def smallworldness(G, rep=1000):
+    """
+    Calculates smallworldness.
+
+    Parameters
+    ----------
+    G : Obj
+        NetworkX graph.
+    rep : int
+        Number of repetitions. Default is 1000.
+
+    Returns
+    -------
+    mean_s : float
+        Mean smallworldness measure across repetitions.
+    """
+    print("%s%s%s" % ('Estimating smallworldness using ', rep, ' random graphs...'))
+    #import multiprocessing
+    n = nx.number_of_nodes(G)
+    m = nx.number_of_edges(G)
+    p = float(m) * 2 /(n*(n-1))
+    ss = []
+    for bb in range(rep):
+        rG = create_random_graph(G, n, p)
+        swm = smallworldness_measure(G, rG)
+        ss.append(swm)
+    mean_s = np.mean(ss)
+    return mean_s
+
+
 def create_communities(node_comm_aff_mat, node_num):
     """
     Create a 1D vector of community assignments from a community affiliation matrix.
@@ -697,10 +779,15 @@ def raw_mets(G, i, custom_weight):
             except:
                 net_met_val = float(average_shortest_path_length_for_all(G))
         else:
-            # Case where G is not fully connected
-            print('WARNING: Calculating average shortest path length for a disconnected graph. '
-                  'This might take awhile...')
-            net_met_val = float(average_shortest_path_length_for_all(G))
+            [H, _] = prune_disconnected(G)
+            net_met_val = float(i(H))
+
+    elif str(i) is 'smallworldness':
+        try:
+            net_met_val = float(i(G))
+        except:
+            [H, _] = prune_disconnected(G)
+            net_met_val = float(i(H))
     else:
         if (custom_weight is not None) and (str(i) is 'degree_assortativity_coefficient' or str(i) is 'global_efficiency' or str(i) is 'average_local_efficiency' or str(i) is 'average_clustering'):
             custom_weight_param = 'weight = ' + str(custom_weight)
@@ -849,13 +936,13 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     # # # # Calculate global and local metrics from graph G # # # #
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     import community
-    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, eigenvector_centrality, communicability_betweenness_centrality, clustering, degree_centrality, rich_club_coefficient, sigma
-    from pynets.stats.netstats import average_local_efficiency, global_efficiency, participation_coef, participation_coef_sign, diversity_coef_sign
+    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, betweenness_centrality, eigenvector_centrality, communicability_betweenness_centrality, clustering, degree_centrality, rich_club_coefficient
+    from pynets.stats.netstats import average_local_efficiency, global_efficiency, participation_coef, participation_coef_sign, diversity_coef_sign, smallworldness_measure, smallworldness, create_random_graph
     # For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the
     # function (with a G-only input) to the netstats module.
     metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
                         average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient,
-                        graph_number_of_cliques, transitivity, sigma]
+                        graph_number_of_cliques, transitivity, smallworldness]
     metric_list_comm = ['louvain_modularity']
     # with open("%s%s" % (str(Path(__file__).parent), '/global_graph_measures.yaml'), 'r') as stream:
     #     try:
@@ -926,9 +1013,9 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
                 raise KeyError('Participation coefficient cannot be calculated for graph G in the absence of a '
                                'community affiliation vector')
             if len(in_mat[in_mat < 0.0]) > 0:
-                pc_vector = participation_coef_sign(in_mat, ci)
+                pc_vector = participation_coef_sign(in_mat, list(ci.values()))
             else:
-                pc_vector = participation_coef(in_mat, ci)
+                pc_vector = participation_coef(in_mat, list(ci.values()))
             print('\nExtracting Participation Coefficient vector for all network nodes...')
             pc_vals = list(pc_vector)
             pc_edges = list(range(len(pc_vector)))
@@ -961,7 +1048,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
             if ci is None:
                 raise KeyError('Diversity coefficient cannot be calculated for graph G in the absence of a community '
                                'affiliation vector')
-            [dc_vector, _] = diversity_coef_sign(in_mat, ci)
+            [dc_vector, _] = diversity_coef_sign(in_mat, list(ci.values()))
             print('\nExtracting Diversity Coefficient vector for all network nodes...')
             dc_vals = list(dc_vector)
             dc_edges = list(range(len(dc_vector)))

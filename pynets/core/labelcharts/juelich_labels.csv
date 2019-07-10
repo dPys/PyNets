@@ -1,0 +1,123 @@
+# Generated from atlas label .xml files distributed with FSL
+# http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/
+1,GM Anterior intra-parietal sulcus hIP1 L
+2,GM Anterior intra-parietal sulcus hIP1 R
+3,GM Anterior intra-parietal sulcus hIP2 L
+4,GM Anterior intra-parietal sulcus hIP2 R
+5,GM Anterior intra-parietal sulcus hIP3 L
+6,GM Anterior intra-parietal sulcus hIP3 R
+7,GM Amygdala_centromedial group L
+8,GM Amygdala_centromedial group R
+9,GM Amygdala_laterobasal group L
+10,GM Amygdala_laterobasal group R
+11,GM Amygdala_superficial group L
+12,GM Amygdala_superficial group R
+13,GM Broca's area BA44 L
+14,GM Broca's area BA44 R
+15,GM Broca's area BA45 L
+16,GM Broca's area BA45 R
+17,GM Hippocampus cornu ammonis L
+18,GM Hippocampus cornu ammonis R
+19,GM Hippocampus entorhinal cortex L
+20,GM Hippocampus entorhinal cortex R
+21,GM Hippocampus dentate gyrus L
+22,GM Hippocampus dentate gyrus R
+23,GM Hippocampus hippocampal-amygdaloid transition area L
+24,GM Hippocampus hippocampal-amygdaloid transition area R
+25,GM Hippocampus subiculum L
+26,GM Hippocampus subiculum R
+27,GM Inferior parietal lobule PF L
+28,GM Inferior parietal lobule PF R
+29,GM Inferior parietal lobule PFcm L
+30,GM Inferior parietal lobule PFcm R
+31,GM Inferior parietal lobule PFm L
+32,GM Inferior parietal lobule PFm R
+33,GM Inferior parietal lobule PFop L
+34,GM Inferior parietal lobule PFop R
+35,GM Inferior parietal lobule PFt L
+36,GM Inferior parietal lobule PFt R
+37,GM Inferior parietal lobule Pga L
+38,GM Inferior parietal lobule Pga R
+39,GM Inferior parietal lobule PGp L
+40,GM Inferior parietal lobule PGp R
+41,GM Primary auditory cortex TE1.0 L
+42,GM Primary auditory cortex TE1.0 R
+43,GM Primary auditory cortex TE1.1 L
+44,GM Primary auditory cortex TE1.1 R
+45,GM Primary auditory cortex TE1.2 L
+46,GM Primary auditory cortex TE1.2 R
+47,GM Primary motor cortex BA4a L
+48,GM Primary motor cortex BA4a R
+49,GM Primary motor cortex BA4p L
+50,GM Primary motor cortex BA4p R
+51,GM Primary somatosensory cortex BA1 L
+52,GM Primary somatosensory cortex BA1 R
+53,GM Primary somatosensory cortex BA2 L
+54,GM Primary somatosensory cortex BA2 R
+55,GM Primary somatosensory cortex BA3a L
+56,GM Primary somatosensory cortex BA3a R
+57,GM Primary somatosensory cortex BA3b L
+58,GM Primary somatosensory cortex BA3b R
+59,GM Secondary somatosensory cortex / Parietal operculum OP1 L
+60,GM Secondary somatosensory cortex / Parietal operculum OP1 R
+61,GM Secondary somatosensory cortex / Parietal operculum OP2 L
+62,GM Secondary somatosensory cortex / Parietal operculum OP2 R
+63,GM Secondary somatosensory cortex / Parietal operculum OP3 L
+64,GM Secondary somatosensory cortex / Parietal operculum OP3 R
+65,GM Secondary somatosensory cortex / Parietal operculum OP4 L
+66,GM Secondary somatosensory cortex / Parietal operculum OP4 R
+67,GM Superior parietal lobule 5Ci L
+68,GM Superior parietal lobule 5Ci R
+69,GM Superior parietal lobule 5L L
+70,GM Superior parietal lobule 5L R
+71,GM Superior parietal lobule 5M L
+72,GM Superior parietal lobule 5M R
+73,GM Superior parietal lobule 7A L
+74,GM Superior parietal lobule 7A R
+75,GM Superior parietal lobule 7M L
+76,GM Superior parietal lobule 7M R
+77,GM Superior parietal lobule 7PC L
+78,GM Superior parietal lobule 7PC R
+79,GM Superior parietal lobule 7P L
+80,GM Superior parietal lobule 7P R
+81,GM Visual cortex V1 BA17 L
+82,GM Visual cortex V1 BA17 R
+83,GM Visual cortex V2 BA18 L
+84,GM Visual cortex V2 BA18 R
+85,GM Visual cortex V3V L
+86,GM Visual cortex V3V R
+87,GM Visual cortex V4 L
+88,GM Visual cortex V4 R
+89,GM Visual cortex V5 L
+90,GM Visual cortex V5 R
+91,GM Premotor cortex BA6 L
+92,GM Premotor cortex BA6 R
+93,WM Acoustic radiation R
+94,WM Acoustic radiation L
+95,WM Callosal body
+96,WM Cingulum R
+97,WM Cingulum L
+98,WM Corticospinal tract R
+99,WM Corticospinal tract L
+100,WM Fornix
+101,WM Inferior occipito-frontal fascicle R
+102,WM Inferior occipito-frontal fascicle L
+103,GM Lateral geniculate body R
+104,GM Lateral geniculate body L
+105,GM Mamillary body
+106,GM Medial geniculate body R
+107,GM Medial geniculate body L
+108,WM Optic radiation R
+109,WM Optic radiation L
+110,WM Superior longitudinal fascicle R
+111,WM Superior longitudinal fascicle L
+112,WM Superior occipito-frontal fascicle R
+113,WM Superior occipito-frontal fascicle L
+114,WM Uncinate fascicle R
+115,WM Uncinate fascicle L
+116,GM Insula Id1 L
+117,GM Insula Id1 R
+118,GM Insula Ig1 L
+119,GM Insula Ig1 R
+120,GM Insula Ig2 L
+121,GM Insula Ig2 R

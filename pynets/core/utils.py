@@ -157,7 +157,7 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
                                                      '%s' % (network + '_' if network is not None else ''),
                                                      '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                      'est_', conn_model, '_', thr, thr_type,
-                                                     '%s' % ("%s%s" % (node_size, '_mm') if node_size != '_parc' else ''),
+                                                     '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_parc_'),
                                                      "%s" % ("%s%s" % (int(c_boot), '_nb') if float(c_boot) > 0 else ''),
                                                      "%s" % ("%s%s" % (smooth, '_fwhm') if float(smooth) > 0 else ''),
                                                      "%s" % ("%s%s" % (hpass, '_Hz') if hpass is not None else ''),
@@ -217,9 +217,9 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
                                                    '%s' % (network + '_' if network is not None else ''),
                                                    '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                    'est_', conn_model, '_', thr, thr_type,
-                                                   '%s' % ("%s%s" % (node_size, '_mm') if node_size != '_parc' else ''),
-                                                   "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
-                                                   "%s%s" % (track_type, '_track'), '.npy')
+                                                   '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_parc_'),
+                                                   "%s" % ("%s%s" % (int(target_samples), 'samples') if float(target_samples) > 0 else ''),
+                                                   "%s%s%s" % ('_', track_type, '_track'), '.npy')
     return est_path
 
 
@@ -304,7 +304,8 @@ def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size):
                                                '%s' % (network + '_' if network is not None else ''),
                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                conn_model, '_', thr, '_', node_size,
-                                               '%s' % ("mm" if node_size != 'parc' else ''), '.csv')
+                                               '%s' % ("mm" if ((node_size != 'parc') and (node_size is not None)) else ''),
+                                               '.csv')
     return out_path
 
 
