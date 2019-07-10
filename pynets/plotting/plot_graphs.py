@@ -242,7 +242,7 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, 
     # Plot community adj. matrix
     G = nx.from_numpy_matrix(conn_matrix)
     try:
-        node_comm_aff_mat = community.best_partition(G)
+        node_comm_aff_mat = np.array(list(community.best_partition(G).values()))
         print("%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities...'))
         out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
                                                                       '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),

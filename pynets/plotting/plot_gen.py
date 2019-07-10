@@ -89,7 +89,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
         import community
         G = nx.from_numpy_matrix(conn_matrix)
         try:
-            node_comm_aff_mat = list(community.best_partition(G).values())
+            node_comm_aff_mat = np.array(list(community.best_partition(G).values()))
             print("%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities...'))
         except:
             print('\nWARNING: Louvain community detection failed. Proceeding with single community affiliation '
@@ -467,9 +467,9 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
         [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
         if node_size == 'parc':
-            node_size_plot = int(2)
+            node_size_plot = int(6)
             if uatlas:
-                connectome.add_contours(uatlas, filled=True, alpha=0.20, cmap=plt.cm.gist_rainbow)
+                connectome.add_contours(uatlas, filled=False, alpha=0.20, cmap=plt.cm.gist_rainbow)
         else:
             node_size_plot = int(node_size)
         if len(coords) != conn_matrix.shape[0]:
@@ -650,9 +650,9 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
         [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
         if node_size == 'parc':
-            node_size_plot = int(2)
+            node_size_plot = int(6)
             if uatlas:
-                connectome.add_contours(uatlas, filled=True, alpha=0.20, cmap=plt.cm.gist_rainbow)
+                connectome.add_contours(uatlas, filled=False, alpha=0.10, cmap=plt.cm.gist_rainbow)
         else:
             node_size_plot = int(node_size)
         if len(coords) != conn_matrix.shape[0]:
