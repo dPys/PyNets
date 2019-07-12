@@ -67,23 +67,23 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
         for j in pruned_nodes:
             del labels[labels.index(labels[j])]
 
-    def _doClust(X, clust_levels):
-        """
-        Create Ward cluster linkages.
-        """
-        # get the linkage diagram
-        Z = linkage(X, 'ward')
-        # choose # cluster levels
-        cluster_levels = range(1, int(clust_levels))
-        # init array to store labels for each level
-        clust_levels_tmp = int(clust_levels) - 1
-        label_arr = np.zeros((int(clust_levels_tmp), int(X.shape[0])))
-        # iterate thru levels
-        for c in cluster_levels:
-            fl = fcluster(Z, c, criterion='maxclust')
-            #print(fl)
-            label_arr[c-1, :] = fl
-        return label_arr, clust_levels_tmp
+    # def _doClust(X, clust_levels):
+    #     """
+    #     Create Ward cluster linkages.
+    #     """
+    #     # get the linkage diagram
+    #     Z = linkage(X, 'ward')
+    #     # choose # cluster levels
+    #     cluster_levels = range(1, int(clust_levels))
+    #     # init array to store labels for each level
+    #     clust_levels_tmp = int(clust_levels) - 1
+    #     label_arr = np.zeros((int(clust_levels_tmp), int(X.shape[0])))
+    #     # iterate thru levels
+    #     for c in cluster_levels:
+    #         fl = fcluster(Z, c, criterion='maxclust')
+    #         #print(fl)
+    #         label_arr[c-1, :] = fl
+    #     return label_arr, clust_levels_tmp
 
     if comm == 'nodes' and len(conn_matrix) > 40:
         import community
@@ -108,21 +108,23 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
         clust_levels_tmp = int(clust_levels) - 1
         mask_mat = np.squeeze(np.array([link_comm_aff_mat == 0]).astype('int'))
         label_arr = link_comm_aff_mat * np.expand_dims(np.arange(1, clust_levels+1), axis=1) + mask_mat
-    elif len(conn_matrix) > 20:
-        print('Graph too small for reliable plotting of communities. Plotting by fcluster instead...')
-        if len(conn_matrix) >= 250:
-            clust_levels = 7
-        elif len(conn_matrix) >= 200:
-            clust_levels = 6
-        elif len(conn_matrix) >= 150:
-            clust_levels = 5
-        elif len(conn_matrix) >= 100:
-            clust_levels = 4
-        elif len(conn_matrix) >= 50:
-            clust_levels = 3
-        else:
-            clust_levels = 2
-        [label_arr, clust_levels_tmp] = _doClust(conn_matrix, clust_levels)
+    else:
+        return
+    # elif len(conn_matrix) > 20:
+    #     print('Graph too small for reliable plotting of communities. Plotting by fcluster instead...')
+    #     if len(conn_matrix) >= 250:
+    #         clust_levels = 7
+    #     elif len(conn_matrix) >= 200:
+    #         clust_levels = 6
+    #     elif len(conn_matrix) >= 150:
+    #         clust_levels = 5
+    #     elif len(conn_matrix) >= 100:
+    #         clust_levels = 4
+    #     elif len(conn_matrix) >= 50:
+    #         clust_levels = 3
+    #     else:
+    #         clust_levels = 2
+    #     [label_arr, clust_levels_tmp] = _doClust(conn_matrix, clust_levels)
 
     def _get_node_label(node_idx, labels, clust_levels_tmp):
         """
@@ -468,8 +470,6 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
         if node_size == 'parc':
             node_size_plot = int(6)
-            if uatlas:
-                connectome.add_contours(uatlas, filled=False, alpha=0.20, cmap=plt.cm.gist_rainbow)
         else:
             node_size_plot = int(node_size)
         if len(coords) != conn_matrix.shape[0]:
@@ -550,10 +550,13 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
     warnings.filterwarnings("ignore")
     import matplotlib
     matplotlib.use('agg')
+    import os
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
     import pkg_resources
     import networkx as nx
+    from matplotlib import colors
+    import seaborn as sns
     from pynets.core import thresholding
     from pynets.plotting import plot_gen, plot_graphs
     from pynets.stats.netstats import most_important, prune_disconnected
@@ -578,7 +581,6 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
                 G = G_pre
                 pruned_nodes = []
             pruned_nodes.sort(reverse=True)
-            print('(Display)')
             coords_pre = list(coords)
             labels_pre = list(labels)
             if len(pruned_nodes) > 0:
@@ -651,19 +653,22 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
         if node_size == 'parc':
             node_size_plot = int(6)
-            if uatlas:
-                connectome.add_contours(uatlas, filled=False, alpha=0.10, cmap=plt.cm.gist_rainbow)
         else:
             node_size_plot = int(node_size)
         if len(coords) != conn_matrix.shape[0]:
-            raise RuntimeWarning('\nWARNING: Number of coordinates does not match conn_matrix dimensions. If you are '
-                                 'using disparity filtering, try relaxing the α threshold.')
+            raise RuntimeWarning('\nWARNING: Number of coordinates does not match conn_matrix dimensions.')
         else:
-            color_theme = 'copper'
-            node_color = 'auto'
-            connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap=color_theme,
+            norm = colors.Normalize(vmin=-1, vmax=1)
+            clust_pal = sns.color_palette("Blues_r", conn_matrix.shape[0])
+            clust_colors = colors.to_rgba_array(clust_pal)
+            fa_path = dir_path + '/../reg_dmri/dmri_tmp/DSN/Warped.nii.gz'
+            if os.path.isfile(fa_path):
+                connectome.add_overlay(img=fa_path,
+                                       threshold=0.01, alpha=0.25, cmap=plt.cm.copper)
+
+            connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap=plt.cm.binary,
                                  edge_vmax=float(z_max), edge_vmin=float(z_min), node_size=node_size_plot,
-                                 node_color='auto')
+                                 node_color=clust_colors)
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
     else:
         raise RuntimeError('\nERROR: no coordinates to plot! Are you running plotting outside of pynets\'s internal '

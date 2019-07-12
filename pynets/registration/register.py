@@ -299,6 +299,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     from pynets.registration import reg_utils as regutils
     from pynets.registration.register import Warp
     import pkg_resources
+    import os.path as op
 
     template_path = pkg_resources.resource_filename("pynets", "templates/FSL_HCP1065_FA_2mm.nii.gz")
 
@@ -306,10 +307,17 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     if not os.path.isdir(dsn_dir):
         os.mkdir(dsn_dir)
 
-    streams_mni = "%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_mni_', conn_model, '_', target_samples,
-                                              '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_'),
-                                              'curv', str(curv_thr_list).replace(', ', '_'),
-                                              'step', str(step_list).replace(', ', '_'), '.trk')
+    namer_dir = dir_path + '/tractography'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_',
+                                                  '%s' % (network + '_' if network is not None else ''),
+                                                  '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                  conn_model, '_', target_samples,
+                                                  '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_'),
+                                                  'curv', str(curv_thr_list).replace(', ', '_'),
+                                                  'step', str(step_list).replace(', ', '_'), '.trk')
 
     # Run ANTs reg
     t_aff = "%s%s" % (dsn_dir, '/0GenericAffine.mat')
