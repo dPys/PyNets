@@ -340,6 +340,7 @@ def build_workflow(args, retval):
     import warnings
     warnings.filterwarnings("ignore")
     import os
+    import ast
     import os.path as op
     import sys
     import timeit
@@ -605,10 +606,10 @@ def build_workflow(args, retval):
             nilearn_parc_atlases = hardcoded_params['nilearn_parc_atlases']
             nilearn_coord_atlases = hardcoded_params['nilearn_coord_atlases']
             nilearn_prob_atlases = hardcoded_params['nilearn_prob_atlases']
-            runtime_dict = {'fetch_nodes_and_labels_node': (1, 1), 'extract_ts_node': (1, 4), 'node_gen_node': (1, 1),
-                            'clustering_node': (1, 4), 'get_conn_matrix_node': (1, 1), 'thresh_func_node': (1, 1),
-                            'register_node': (1, 2), 'get_fa_node': (1, 1), 'run_tracking_node': (1, 4),
-                            'thresh_diff_node': (1, 1), 'dsn_node': (1, 2), 'streams2graph_node': (1, 2)}
+            runtime_dict = {}
+            for i in range(len(hardcoded_params['resource_dict'])):
+                runtime_dict[list(hardcoded_params['resource_dict'][i].keys())[0]] = ast.literal_eval(list(
+                    hardcoded_params['resource_dict'][i].values())[0][0])
         except FileNotFoundError:
             print('Failed to parse runconfig.yaml')
 

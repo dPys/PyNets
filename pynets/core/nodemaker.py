@@ -978,9 +978,6 @@ def node_gen_masking(roi, coords, parcel_list, labels, dir_path, ID, parc, atlas
         [coords, labels, parcel_list_masked] = nodemaker.parcel_masker(roi, coords, parcel_list, labels,
                                                                        dir_path, ID, perc_overlap)
         [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list_masked)
-        if not isinstance(uatlas, str):
-            nib.save(uatlas, "%s%s%s" % ('/tmp/', atlas, '.nii.gz'))
-            uatlas = "%s%s%s" % ('/tmp/', atlas, '.nii.gz')
     # Mask Coordinates
     else:
         [coords, labels] = nodemaker.coords_masker(roi, coords, labels, error)
@@ -1050,9 +1047,6 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
 
     if parc is True:
         [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list)
-        if not isinstance(uatlas, str):
-            nib.save(uatlas, "%s%s%s" % ('/tmp/', atlas, '.nii.gz'))
-            uatlas = "%s%s%s" % ('/tmp/', atlas, '.nii.gz')
     else:
         net_parcels_map_nifti = None
         print('No additional roi masking...')

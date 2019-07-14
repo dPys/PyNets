@@ -581,7 +581,7 @@ def knn(conn_matrix, k):
     return gra
 
 
-def local_thresholding_prop(conn_matrix, thr):
+def local_thresholding_prop(conn_matrix, coords, labels, thr):
     """
     Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
     successive N-nearest neighbour degree graphs to achieve target proportional threshold.
@@ -607,7 +607,17 @@ def local_thresholding_prop(conn_matrix, thr):
     conn_matrix = np.nan_to_num(conn_matrix)
     G = nx.from_numpy_matrix(conn_matrix)
     if not nx.is_connected(G):
-        [G, _] = netstats.prune_disconnected(G)
+        [G, pruned_nodes] = netstats.prune_disconnected(G)
+        pruned_nodes.sort(reverse=True)
+        coords_pre = list(coords)
+        labels_pre = list(labels)
+        if len(pruned_nodes) > 0:
+            for j in pruned_nodes:
+                labels_pre.pop(j)
+                coords_pre.pop(j)
+            conn_matrix = nx.to_numpy_array(G)
+            labels = labels_pre
+            coords = coords_pre
 
     maximum_edges = G.number_of_edges()
     G = thresholding.weight_to_distance(G)
@@ -622,7 +632,7 @@ def local_thresholding_prop(conn_matrix, thr):
                           ' edges, select more edges. Local Threshold will be applied by just retaining the Minimum '
                           'Spanning Tree'))
         conn_matrix_thr = nx.to_numpy_array(G)
-        return conn_matrix_thr
+        return conn_matrix_thr, coords, labels
 
     k = 1
     len_edge_list = []
@@ -665,10 +675,10 @@ def local_thresholding_prop(conn_matrix, thr):
         raise RuntimeWarning("%s%s%s" % ('Cannot apply local thresholding to achieve threshold of: ', thr,
                                          '. Try a higher -thr or -min_thr'))
 
-    return conn_matrix_thr
+    return conn_matrix_thr, coords, labels
 
 
-def local_thresholding_dens(conn_matrix, thr):
+def local_thresholding_dens(conn_matrix, coords, labels, thr):
     """
     Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
     successive N-nearest neighbour degree graphs to achieve target density threshold.
@@ -694,7 +704,17 @@ def local_thresholding_dens(conn_matrix, thr):
     conn_matrix = np.nan_to_num(conn_matrix)
     G = nx.from_numpy_matrix(conn_matrix)
     if not nx.is_connected(G):
-        [G, _] = netstats.prune_disconnected(G)
+        [G, pruned_nodes] = netstats.prune_disconnected(G)
+        pruned_nodes.sort(reverse=True)
+        coords_pre = list(coords)
+        labels_pre = list(labels)
+        if len(pruned_nodes) > 0:
+            for j in pruned_nodes:
+                labels_pre.pop(j)
+                coords_pre.pop(j)
+            conn_matrix = nx.to_numpy_array(G)
+            labels = labels_pre
+            coords = coords_pre
 
     maximum_edges = G.number_of_edges()
     G = thresholding.weight_to_distance(G)
@@ -747,7 +767,7 @@ def local_thresholding_dens(conn_matrix, thr):
         raise RuntimeWarning("%s%s%s" % ('Cannot apply local thresholding to achieve density of: ', thr,
                                          '. Try a higher -thr or -min_thr'))
 
-    return conn_matrix_thr
+    return conn_matrix_thr, coords, labels
 
 
 def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
@@ -881,10 +901,10 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
             thr_type = 'MSTprop'
-            conn_matrix_thr = thresholding.local_thresholding_prop(conn_matrix, thr)
+            [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, thr, coords, labels)
         else:
             thr_type = 'MSTdens'
-            conn_matrix_thr = thresholding.local_thresholding_dens(conn_matrix, thr)
+            [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_dens(conn_matrix, thr, coords, labels)
     elif disp_filt is True:
         thr_type = 'DISP_alpha'
         G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
@@ -1057,10 +1077,10 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
             thr_type = 'MSTprop'
-            conn_matrix_thr = thresholding.local_thresholding_prop(conn_matrix, thr)
+            [conn_matrix_thr, coords, labels]= thresholding.local_thresholding_prop(conn_matrix, thr, coords, labels)
         else:
             thr_type = 'MSTdens'
-            conn_matrix_thr = thresholding.local_thresholding_dens(conn_matrix, thr)
+            [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_dens(conn_matrix, thr, coords, labels)
     elif disp_filt is True:
         thr_type = 'DISP_alpha'
         G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
