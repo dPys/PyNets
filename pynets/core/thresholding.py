@@ -108,18 +108,14 @@ def threshold_proportional(W, p, copy=True):
     return W
 
 
-def normalize(W, copy=True):
+def normalize(W):
     '''
-    Normalizes an input weighted connection matrix.  If copy is not set, this
-    function will *modify W in place.*
+    Normalizes an input weighted connection matrix.
 
     Parameters
     ----------
     W : np.ndarray
         weighted connectivity matrix
-    copy : bool
-        if True, returns a copy of the matrix. Otherwise, modifies the matrix
-        in place. Default value=True.
 
     Returns
     -------
@@ -130,9 +126,25 @@ def normalize(W, copy=True):
     ----------
     .. Adapted from Adapted from bctpy
     '''
-    if copy:
-        W = W.copy()
     W /= np.max(np.abs(W))
+    return W
+
+
+def standardize(W):
+    '''
+    Normalizes an input weighted connection matrix [0, 1]
+
+    Parameters
+    ----------
+    W : np.ndarray
+        weighted connectivity matrix
+
+    Returns
+    -------
+    W : np.ndarray
+        standardized connectivity matrix
+    '''
+    W = (W - np.min(W)) / np.ptp(W)
     return W
 
 

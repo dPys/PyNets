@@ -348,7 +348,7 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
 
 def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist,
                    prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=True,
-                   multimodal=False):
+                   multimodal=False, multiplex=False):
     """
     Passes lists of iterable parameters as metadata.
 
@@ -377,10 +377,12 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, nod
         Indicates method of normalizing resulting graph.
     binary_iterlist : list
         List of booleans indicating whether resulting graph edges to form an unweighted graph were binarized.
-    embed_iterlist : list
-        List of booleans indicating whether omnibus embedding of graph population was performed.
-    multimodal_iterlist : list
-        List of booleans indicating whether multiple modalities of input data have been specified.
+    embed : bool
+        Boolean indicating whether omnibus embedding of graph population was performed.
+    multimodal : bool
+        Boolean indicating whether multiple modalities of input data have been specified.
+    multiplex : int
+        Switch indicating approach to multiplex graph analysis if multimodal is also True.
 
     Returns
     -------
@@ -415,8 +417,13 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, nod
     import warnings
     warnings.filterwarnings("ignore")
     from pynets.core.utils import build_omnetome, flatten
+    from pynets.stats import netmotifs
+
     if embed is True:
         build_omnetome(list(flatten(est_path_iterlist)), list(flatten(ID_iterlist))[0], multimodal)
+
+    if (multiplex > 0) and (multimodal is True):
+        multigraph_list_all = netmotifs.build_multigraphs(est_path_iterlist, list(flatten(ID_iterlist))[0])
 
     return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 

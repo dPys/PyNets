@@ -279,9 +279,12 @@ def get_parser():
                         metavar='Normalization strategy for resulting graph(s)',
                         default=0,
                         nargs=1,
-                        choices=[0, 1, 2],
-                        help='Include this flag to normalize the resulting graph to (1) values between 0-1 or (2) '
-                             'using log10. Default is (0) no normalization.\n')
+                        choices=[0, 1, 2, 3, 4, 5, 6],
+                        help='Include this flag to normalize the resulting graph by (1) maximum edge weight; '
+                             '(2) using log10; (3) using pass-to-ranks for all non-zero edges; '
+                             '(4) using pass-to-ranks for all non-zero edges relative to the number of nodes; (5) '
+                             'using pass-to-ranks with zero-edge boost; and (6) which standardizes the matrix to '
+                             'values [0, 1]. Default is (0) which is no normalization.\n')
     parser.add_argument('-dt',
                         default=False,
                         action='store_true',
@@ -298,10 +301,17 @@ def get_parser():
                         action='store_true',
                         help='Optionally use this flag if you wish to apply local thresholding via the disparity '
                              'filter approach. -thr values in this case correspond to α.\n')
-    #    parser.add_argument('-at',
-    #        default=False,
-    #        action='store_true',
-    #        help='Optionally use this flag if you wish to activate adaptive thresholding')
+    parser.add_argument('-mplx',
+                        metavar='Perform various levels of multiplex graph analysis if structural and diffusion '
+                                'connectomes are provided.',
+                        default=0,
+                        nargs=1,
+                        choices=[0, 1, 2, 3],
+                        help='Include this flag to perform multiplex graph analysis across structural-functional '
+                             'connectome modalities. Options include level (1) Create and ensemble of multiplex graphs '
+                             'using motif-matched adaptive thresholding; (2) Additionally perform multiplex graph '
+                             'embedding and analysis; (3) Additionally perform plotting. '
+                             'Default is (0) which is no multiplex analysis.\n')
     parser.add_argument('-embed',
                         default=False,
                         action='store_true',
@@ -588,6 +598,7 @@ def build_workflow(args, retval):
     else:
         multi_directget = None
     embed = args.embed
+    multiplex = args.mplx
     vox_size = args.vox
 
     print('\n\n\n------------------------------------------------------------------------\n')
@@ -1186,6 +1197,7 @@ def build_workflow(args, retval):
     # print("%s%s" % ('norm: ', norm))
     # print("%s%s" % ('binary: ', binary))
     # print("%s%s" % ('embed: ', embed))
+    # print("%s%s" % ('multiplex: ', multiplex))
     # print("%s%s" % ('track_type: ', track_type))
     # print("%s%s" % ('tiss_class: ', tiss_class))
     # print("%s%s" % ('directget: ', directget))
@@ -1214,7 +1226,8 @@ def build_workflow(args, retval):
                                clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples,
                                curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
                                maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict, embed,
-                               multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size):
+                               multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
+                               multiplex):
         """A function interface for generating a single-subject workflow"""
         if (func_file is not None) and (dwi_file is None):
             wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_fmri_', random.randint(1, 1000)))
@@ -1271,7 +1284,7 @@ def build_workflow(args, retval):
                                     target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
                                     max_length, maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict,
                                     embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
-                                    vox_size)
+                                    vox_size, multiplex)
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
@@ -1406,7 +1419,7 @@ def build_workflow(args, retval):
                          c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
                          overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
                          directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list,
-                         template, template_mask, vox_size):
+                         template, template_mask, vox_size, multiplex):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         wf_multi = pe.Workflow(name="%s%s" % ('wf_multisub_', random.randint(1001, 9000)))
 
@@ -1454,7 +1467,7 @@ def build_workflow(args, retval):
                 max_length=max_length, maxcrossing=maxcrossing, life_run=life_run, min_length=min_length,
                 directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, embed=embed,
                 multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
-                template=template, template_mask=template_mask, vox_size=vox_size)
+                template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex)
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
@@ -1496,7 +1509,7 @@ def build_workflow(args, retval):
                                     block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list,
                                     step_list, overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing,
                                     life_run, min_length, directget, tiss_class, runtime_dict, embed, multi_directget,
-                                    multimodal, hpass, hpass_list, template, template_mask, vox_size)
+                                    multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1564,7 +1577,7 @@ def build_workflow(args, retval):
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
                                     directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass,
-                                    hpass_list, template, template_mask, vox_size)
+                                    hpass_list, template, template_mask, vox_size, multiplex)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil

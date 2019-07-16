@@ -18,7 +18,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                       overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length, directget,
                       tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
-                      template_mask, vox_size):
+                      template_mask, vox_size, multiplex):
     """A Meta-Interface for selecting nested workflows to link into a given single-subject workflow"""
     import warnings
     warnings.filterwarnings("ignore")
@@ -155,7 +155,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                            'maxcrossing', 'life_run', 'min_length', 'directget',
                                                            'tiss_class', 'embed', 'multi_directget', 'multimodal',
                                                            'hpass', 'hpass_list', 'template', 'template_mask',
-                                                           'vox_size']),
+                                                           'vox_size', 'multiplex']),
                              name='meta_inputnode')
     meta_inputnode.inputs.func_file = func_file
     meta_inputnode.inputs.ID = ID
@@ -231,6 +231,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     meta_inputnode.inputs.template = template
     meta_inputnode.inputs.template_mask = template_mask
     meta_inputnode.inputs.vox_size = vox_size
+    meta_inputnode.inputs.multiplex = multiplex
 
     if multimodal is True:
         # Create input/output nodes
@@ -524,7 +525,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                             'network_iterlist', 'node_size_iterlist',
                                                             'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
                                                             'roi_iterlist', 'norm_iterlist', 'binary_iterlist',
-                                                            'embed', 'multimodal'],
+                                                            'embed', 'multimodal', 'multiplex'],
                                                output_names=['conn_model_iterlist', 'est_path_iterlist',
                                                              'network_iterlist', 'node_size_iterlist',
                                                              'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
@@ -532,7 +533,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                function=pass_meta_outs), name='pass_meta_outs_node')
 
     meta_wf.connect([(meta_inputnode, pass_meta_outs_node, [('embed', 'embed'),
-                                                            ('multimodal', 'multimodal')])
+                                                            ('multimodal', 'multimodal'),
+                                                            ('multiplex', 'multiplex')])
                      ])
 
     if (func_file and not dwi_file) or (dwi_file and not func_file):
