@@ -366,6 +366,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
     """
     import warnings
     warnings.filterwarnings("ignore")
+    import os
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
@@ -410,10 +411,15 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
                 print('No nodes to prune for plot...')
 
         coords = list(tuple(x) for x in coords)
+
+        namer_dir = dir_path + '/figures'
+        if not os.path.isdir(namer_dir):
+            os.mkdir(namer_dir)
+
         # Plot connectogram
         if len(conn_matrix) > 20:
             try:
-                plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, labels)
+                plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
             except RuntimeWarning:
                 print('\n\n\nWarning: Connectogram plotting failed!')
         else:
@@ -422,12 +428,12 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         # Plot adj. matrix based on determined inputs
         if not node_size or node_size == 'None':
             node_size = 'parc'
-        plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr,
+        plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels, roi, thr,
                                        node_size, smooth, c_boot, hpass)
 
         # Plot connectome
         if roi:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas, '_', conn_model,
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
                                                                      '_', op.basename(roi).split('.')[0],
                                                                      "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"),
                                                                      thr, '_', node_size,
@@ -438,15 +444,15 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
                                                                      'func_glass_viz.png')
 
             # Save coords to pickle
-            coord_path = "%s%s%s%s" % (dir_path, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
+            coord_path = "%s%s%s%s" % (namer_dir, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
             with open(coord_path, 'wb') as f:
                 pickle.dump(coords, f, protocol=2)
             # Save labels to pickle
-            labels_path = "%s%s%s%s" % (dir_path, '/labelnames_', op.basename(roi).split('.')[0], '_plotting.pkl')
+            labels_path = "%s%s%s%s" % (namer_dir, '/labelnames_', op.basename(roi).split('.')[0], '_plotting.pkl')
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
         else:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas, '_', conn_model,
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
                                                                  "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"),
                                                                  thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"),
                                                                  "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
@@ -454,11 +460,11 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
                                                                  "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None else ''),
                                                                  'func_glass_viz.png')
             # Save coords to pickle
-            coord_path = "%s%s" % (dir_path, '/coords_plotting.pkl')
+            coord_path = "%s%s" % (namer_dir, '/coords_plotting.pkl')
             with open(coord_path, 'wb') as f:
                 pickle.dump(coords, f, protocol=2)
             # Save labels to pickle
-            labels_path = "%s%s" % (dir_path, '/labelnames_plotting.pkl')
+            labels_path = "%s%s" % (namer_dir, '/labelnames_plotting.pkl')
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
 
@@ -594,10 +600,15 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
                 print('No nodes to prune for plot...')
 
         coords = list(tuple(x) for x in coords)
+
+        namer_dir = dir_path + '/figures'
+        if not os.path.isdir(namer_dir):
+            os.mkdir(namer_dir)
+
         # Plot connectogram
         if len(conn_matrix) > 20:
             try:
-                plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, labels)
+                plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
             except RuntimeWarning:
                 print('\n\n\nWarning: Connectogram plotting failed!')
         else:
@@ -606,12 +617,12 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         # Plot adj. matrix based on determined inputs
         if not node_size or node_size == 'None':
             node_size = 'parc'
-        plot_graphs.plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr,
+        plot_graphs.plot_conn_mat_struct(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels, roi, thr,
                                          node_size, target_samples, track_type, directget)
 
         # Plot connectome
         if roi:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas, '_', conn_model,
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
                                                                      '_', op.basename(roi).split('.')[0],
                                                                      "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), thr, '_', node_size,
                                                                      '%s' % ("mm_" if node_size != 'parc' else "_"),
@@ -621,15 +632,15 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
                                                                      'struct_glass_viz.png')
 
             # Save coords to pickle
-            coord_path = "%s%s%s%s" % (dir_path, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
+            coord_path = "%s%s%s%s" % (namer_dir, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
             with open(coord_path, 'wb') as f:
                 pickle.dump(coords, f, protocol=2)
             # Save labels to pickle
-            labels_path = "%s%s%s%s" % (dir_path, '/labelnames_', op.basename(roi).split('.')[0], '_plotting.pkl')
+            labels_path = "%s%s%s%s" % (namer_dir, '/labelnames_', op.basename(roi).split('.')[0], '_plotting.pkl')
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
         else:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas, '_', conn_model,
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
                                                                  "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"),
                                                                  thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"),
                                                                  "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
@@ -637,11 +648,11 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
                                                                  "%s%s" % ('_', directget),
                                                                  'struct_glass_viz.png')
             # Save coords to pickle
-            coord_path = "%s%s" % (dir_path, '/coords_plotting.pkl')
+            coord_path = "%s%s" % (namer_dir, '/coords_plotting.pkl')
             with open(coord_path, 'wb') as f:
                 pickle.dump(coords, f, protocol=2)
             # Save labels to pickle
-            labels_path = "%s%s" % (dir_path, '/labelnames_plotting.pkl')
+            labels_path = "%s%s" % (namer_dir, '/labelnames_plotting.pkl')
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
 

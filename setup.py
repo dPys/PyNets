@@ -35,8 +35,9 @@ requirements = [
     'boto3>=1.9.111',
     'colorama>=0.3.9',
     'pybids>=0.6.4',
-    'graspy==0.0.2',
-    'python-louvain==0.13'
+    'graspy>=0.0.2',
+    'python-louvain>=0.13',
+    'py3plex>=0.67',
 ]
 
 setup_requirements = [

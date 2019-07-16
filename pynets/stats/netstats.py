@@ -1013,7 +1013,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
                 raise KeyError('Participation coefficient cannot be calculated for graph G in the absence of a '
                                'community affiliation vector')
             if len(in_mat[in_mat < 0.0]) > 0:
-                pc_vector = participation_coef_sign(in_mat, list(ci.values()))
+                pc_vector = participation_coef_sign(in_mat, list(ci.values()))[0]
             else:
                 pc_vector = participation_coef(in_mat, list(ci.values()))
             print('\nExtracting Participation Coefficient vector for all network nodes...')
@@ -1048,7 +1048,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
             if ci is None:
                 raise KeyError('Diversity coefficient cannot be calculated for graph G in the absence of a community '
                                'affiliation vector')
-            [dc_vector, _] = diversity_coef_sign(in_mat, list(ci.values()))
+            dc_vector = diversity_coef_sign(in_mat, list(ci.values()))[0]
             print('\nExtracting Diversity Coefficient vector for all network nodes...')
             dc_vals = list(dc_vector)
             dc_edges = list(range(len(dc_vector)))

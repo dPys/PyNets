@@ -157,11 +157,11 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
                                                      '%s' % (network + '_' if network is not None else ''),
                                                      '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                      'est_', conn_model, '_', thr, thr_type,
-                                                     '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_parc_'),
+                                                     '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_parc'),
                                                      "%s" % ("%s%s" % (int(c_boot), '_nb') if float(c_boot) > 0 else ''),
                                                      "%s" % ("%s%s" % (smooth, '_fwhm') if float(smooth) > 0 else ''),
                                                      "%s" % ("%s%s" % (hpass, '_Hz') if hpass is not None else ''),
-                                                     '.npy')
+                                                     '_func.npy')
 
     return est_path
 
@@ -217,9 +217,9 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
                                                    '%s' % (network + '_' if network is not None else ''),
                                                    '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                    'est_', conn_model, '_', thr, thr_type,
-                                                   '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_parc_'),
-                                                   "%s" % ("%s%s" % (int(target_samples), 'samples') if float(target_samples) > 0 else ''),
-                                                   "%s%s%s" % ('_', track_type, '_track'), '.npy')
+                                                   '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_parc'),
+                                                   "%s" % ("%s%s%s" % ('_', int(target_samples), 'samples') if float(target_samples) > 0 else ''),
+                                                   "%s%s" % ('_', track_type), '_dwi.npy')
     return est_path
 
 
@@ -964,9 +964,9 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
             pass
     else:
         if network is not None:
-            print("%s%s%s%s%s" % ('\nSingle dataframe for the ', network, ' network for: ', ID, '\n'))
+            print("%s%s%s%s%s" % ('\nSingle dataframe for the ', network, ' network for subject ', ID, '\n'))
         else:
-            print("%s%s%s" % ('\nSingle dataframe for: ', ID, '\n'))
+            print("%s%s%s" % ('\nSingle dataframe for subject ', ID, '\n'))
         pass
 
     return
