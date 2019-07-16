@@ -4,7 +4,7 @@ BIDS-functions to return inputs for the run.py functions.
 import bids
 from itertools import product
 from pynets.pynets_run import build_workflow
-from pynets.utils import as_list, merge_dicts
+from pynets.core.utils import as_list, merge_dicts
 
 
 def sweep_directory(bdir, subj=None, sesh=None, task=None, run=None, modality=None):

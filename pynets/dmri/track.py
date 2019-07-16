@@ -242,6 +242,7 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
     '''
     import warnings
     warnings.filterwarnings("ignore")
+    import os
     import os.path as op
     from dipy.tracking import utils
     from pynets.dmri.track import save_streams, run_LIFE_all
@@ -269,23 +270,26 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
 
     # Save density map
     dm_img = nib.Nifti1Image(dm.astype('int16'), dwi_img.affine)
-    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/density_map_',
+
+    namer_dir = dir_path + '/tractography'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/density_map_',
                                                 '%s' % (network + '_' if network is not None else ''),
-                                                '%s' % (
-                                                    op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                 conn_model, '_', target_samples, '_',
-                                                '%s' % ("%s%s" % (node_size, 'mm_') if node_size != 'parc' else ''),
+                                                '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
                                                 'curv', str(curv_thr_list).replace(', ', '_'),
                                                 '_step', str(step_list).replace(', ', '_'), '.nii.gz')
     dm_img.to_filename(dm_path)
 
     # Save streamlines to trk
-    streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/streamlines_',
+    streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_',
                                                 '%s' % (network + '_' if network is not None else ''),
-                                                '%s' % (
-                                                    op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                 conn_model, '_', target_samples, '_',
-                                                '%s' % ("%s%s" % (node_size, 'mm_') if node_size != 'parc' else ''),
+                                                '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
                                                 'curv', str(curv_thr_list).replace(', ', '_'),
                                                 '_step', str(step_list).replace(', ', '_'), '.trk')
     streams = save_streams(dwi_img, streamlines, streams)
@@ -586,6 +590,9 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
         File path to FA Nifti1Image.
     dm_path : str
         File path to fiber density map Nifti1Image.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
     '''
     import warnings
     warnings.filterwarnings("ignore")
@@ -596,7 +603,7 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     from dipy.io import load_pickle
     from colorama import Fore, Style
     from dipy.data import get_sphere
-    from pynets import utils
+    from pynets.core import utils
     from pynets.dmri.track import prep_tissues, reconstruction, filter_streamlines, track_ensemble
 
     # Load gradient table
@@ -658,4 +665,4 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
                                                       conn_model, target_samples, node_size, curv_thr_list, step_list,
                                                       network, roi)
 
-    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path
+    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path, directget

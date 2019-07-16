@@ -11,7 +11,6 @@ import nibabel as nib
 import warnings
 warnings.filterwarnings("ignore")
 
-
 try:
     FSLDIR = os.environ['FSLDIR']
 except KeyError:

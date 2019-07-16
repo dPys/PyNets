@@ -11,16 +11,21 @@ warnings.filterwarnings("ignore")
 
 def plot_conn_mat(conn_matrix, labels, out_path_fig):
     """
+    Plot a connectivity matrix.
 
-    :param conn_matrix:
-    :param labels:
-    :param out_path_fig:
-    :return:
+    Parameters
+    ----------
+    conn_matrix : array
+        NxN matrix.
+    labels : list
+        List of string labels corresponding to ROI nodes.
+    out_path_fig : str
+        File path to save the connectivity matrix image as a .png figure.
     """
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
-    #from pynets import thresholding
+    #from pynets.core import thresholding
     from nilearn.plotting import plot_matrix
 
     dpi_resolution = 300
@@ -47,12 +52,18 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig):
 
 def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_aff):
     """
+    Plot a community-parcellated connectivity matrix.
 
-    :param conn_matrix:
-    :param labels:
-    :param out_path_fig_comm:
-    :param community_aff:
-    :return:
+    Parameters
+    ----------
+    conn_matrix : array
+        NxN matrix.
+    labels : list
+        List of string labels corresponding to ROI nodes.
+    out_path_fig_comm : str
+        File path to save the community-parcellated connectivity matrix image as a .png figure.
+    community_aff : array
+        Community-affiliation vector.
     """
     import matplotlib
     import matplotlib.pyplot as plt
@@ -104,21 +115,40 @@ def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_af
 
 def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size, smooth, c_boot, hpass):
     """
+    API for selecting among various functional connectivity matrix plotting approaches.
 
-    :param conn_matrix:
-    :param conn_model:
-    :param atlas:
-    :param dir_path:
-    :param ID:
-    :param network:
-    :param labels:
-    :param roi:
-    :param thr:
-    :param node_size:
-    :param smooth:
-    :param c_boot:
-    :param hpass:
-    :return:
+    Parameters
+    ----------
+    conn_matrix : array
+        NxN matrix.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    atlas : str
+        Name of atlas parcellation used.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    ID : str
+        A subject id or other unique identifier.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    labels : list
+        List of string labels corresponding to ROI nodes.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    thr : float
+        A value, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    smooth : int
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    c_boot : int
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    hpass : bool
+        High-pass filter values (Hz) to apply to node-extracted time-series.
     """
     import networkx as nx
     import os.path as op
@@ -156,52 +186,73 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
     return
 
 
-def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size, smooth, c_boot, hpass):
+def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size, target_samples, track_type, directget):
     """
+    API for selecting among various structural connectivity matrix plotting approaches.
 
-    :param conn_matrix:
-    :param conn_model:
-    :param atlas:
-    :param dir_path:
-    :param ID:
-    :param network:
-    :param labels:
-    :param roi:
-    :param thr:
-    :param node_size:
-    :param smooth:
-    :param c_boot:
-    :param hpass:
-    :return:
+    Parameters
+    ----------
+    conn_matrix : array
+        NxN matrix.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    atlas : str
+        Name of atlas parcellation used.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    ID : str
+        A subject id or other unique identifier.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    labels : list
+        List of string labels corresponding to ROI nodes.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    thr : float
+        A value, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    target_samples : int
+        Total number of streamline samples specified to generate streams.
+    track_type : str
+        Tracking algorithm used (e.g. 'local' or 'particle').
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
     """
     from pynets.plotting import plot_graphs
     import networkx as nx
     import community
     import os.path as op
-    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
-                                                           '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
-                                                           '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                           'struct_adj_mat_',
-                                                           conn_model, '_', thr, '_', node_size,
-                                                           '%s' % ("mm_" if node_size != 'parc' else "_"),
-                                                           '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
-                                                           '%s' % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''),
-                                                           '%s' % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
+    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
+                                                             '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
+                                                             '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                             'struct_adj_mat_', conn_model, '_', thr, '_', node_size,
+                                                             '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                             "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
+                                                             "%s%s" % (track_type, '_track'),
+                                                             "%s%s" % ('_', directget),
+                                                             '.png')
     plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig)
 
     # Plot community adj. matrix
     G = nx.from_numpy_matrix(conn_matrix)
     try:
-        node_comm_aff_mat = community.best_partition(G)
+        node_comm_aff_mat = np.array(list(community.best_partition(G).values()))
         print("%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities...'))
-        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
-                                                                    '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
-                                                                    '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                                    'struct_adj_mat_comm_', conn_model, '_', thr, '_', node_size,
-                                                                    '%s' % ("mm_" if node_size != 'parc' else "_"),
-                                                                    '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
-                                                                    '%s' % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''),
-                                                                    '%s' % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
+        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
+                                                                      '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
+                                                                      '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                                      'struct_adj_mat_comm_', conn_model, '_', thr, '_', node_size,
+                                                                      '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                                      "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
+                                                                      "%s%s" % (track_type, '_track'),
+                                                                      "%s%s" % ('_', directget),
+                                                                      '.png')
         plot_graphs.plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, node_comm_aff_mat)
     except:
         print('\nWARNING: Louvain community detection failed. Cannot plot community matrix...')

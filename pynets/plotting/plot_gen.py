@@ -13,22 +13,33 @@ warnings.filterwarnings("ignore")
 
 def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, labels):
     """
+    Plot a connectogram for a given connectivity matrix.
 
-    :param conn_matrix:
-    :param conn_model:
-    :param atlas:
-    :param dir_path:
-    :param ID:
-    :param network:
-    :param labels:
-    :return:
+    Parameters
+    ----------
+    conn_matrix : array
+        NxN matrix.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    atlas : str
+        Name of atlas parcellation used.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    ID : str
+        A subject id or other unique identifier.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    labels : list
+        List of string labels corresponding to ROI nodes.
     """
     import warnings
     warnings.filterwarnings("ignore")
     import json
     from pathlib import Path
     from networkx.readwrite import json_graph
-    from pynets.thresholding import normalize
+    from pynets.core.thresholding import normalize
     from pynets.stats.netstats import most_important
     from scipy.cluster.hierarchy import linkage, fcluster
     from nipype.utils.filemanip import save_json
@@ -56,32 +67,29 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
         for j in pruned_nodes:
             del labels[labels.index(labels[j])]
 
-    def doClust(X, clust_levels):
-        """
-
-        :param X:
-        :param clust_levels:
-        :return:
-        """
-        # get the linkage diagram
-        Z = linkage(X, 'ward')
-        # choose # cluster levels
-        cluster_levels = range(1, int(clust_levels))
-        # init array to store labels for each level
-        clust_levels_tmp = int(clust_levels) - 1
-        label_arr = np.zeros((int(clust_levels_tmp), int(X.shape[0])))
-        # iterate thru levels
-        for c in cluster_levels:
-            fl = fcluster(Z, c, criterion='maxclust')
-            #print(fl)
-            label_arr[c-1, :] = fl
-        return label_arr, clust_levels_tmp
+    # def _doClust(X, clust_levels):
+    #     """
+    #     Create Ward cluster linkages.
+    #     """
+    #     # get the linkage diagram
+    #     Z = linkage(X, 'ward')
+    #     # choose # cluster levels
+    #     cluster_levels = range(1, int(clust_levels))
+    #     # init array to store labels for each level
+    #     clust_levels_tmp = int(clust_levels) - 1
+    #     label_arr = np.zeros((int(clust_levels_tmp), int(X.shape[0])))
+    #     # iterate thru levels
+    #     for c in cluster_levels:
+    #         fl = fcluster(Z, c, criterion='maxclust')
+    #         #print(fl)
+    #         label_arr[c-1, :] = fl
+    #     return label_arr, clust_levels_tmp
 
     if comm == 'nodes' and len(conn_matrix) > 40:
         import community
         G = nx.from_numpy_matrix(conn_matrix)
         try:
-            node_comm_aff_mat = community.best_partition(G)
+            node_comm_aff_mat = np.array(list(community.best_partition(G).values()))
             print("%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities...'))
         except:
             print('\nWARNING: Louvain community detection failed. Proceeding with single community affiliation '
@@ -100,37 +108,33 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
         clust_levels_tmp = int(clust_levels) - 1
         mask_mat = np.squeeze(np.array([link_comm_aff_mat == 0]).astype('int'))
         label_arr = link_comm_aff_mat * np.expand_dims(np.arange(1, clust_levels+1), axis=1) + mask_mat
-    elif len(conn_matrix) > 20:
-        print('Graph too small for reliable plotting of communities. Plotting by fcluster instead...')
-        if len(conn_matrix) >= 250:
-            clust_levels = 7
-        elif len(conn_matrix) >= 200:
-            clust_levels = 6
-        elif len(conn_matrix) >= 150:
-            clust_levels = 5
-        elif len(conn_matrix) >= 100:
-            clust_levels = 4
-        elif len(conn_matrix) >= 50:
-            clust_levels = 3
-        else:
-            clust_levels = 2
-        [label_arr, clust_levels_tmp] = doClust(conn_matrix, clust_levels)
+    else:
+        return
+    # elif len(conn_matrix) > 20:
+    #     print('Graph too small for reliable plotting of communities. Plotting by fcluster instead...')
+    #     if len(conn_matrix) >= 250:
+    #         clust_levels = 7
+    #     elif len(conn_matrix) >= 200:
+    #         clust_levels = 6
+    #     elif len(conn_matrix) >= 150:
+    #         clust_levels = 5
+    #     elif len(conn_matrix) >= 100:
+    #         clust_levels = 4
+    #     elif len(conn_matrix) >= 50:
+    #         clust_levels = 3
+    #     else:
+    #         clust_levels = 2
+    #     [label_arr, clust_levels_tmp] = _doClust(conn_matrix, clust_levels)
 
-    def get_node_label(node_idx, labels, clust_levels_tmp):
+    def _get_node_label(node_idx, labels, clust_levels_tmp):
         """
-
-        :param node_idx:
-        :param labels:
-        :param clust_levels_tmp:
-        :return:
+        Tag a label to a given node based on its community/cluster assignment
         """
         from collections import OrderedDict
 
-        def write_roman(num):
+        def _write_roman(num):
             """
-
-            :param num:
-            :return:
+            Create community/cluster assignments using a Roman-Numeral generator.
             """
             roman = OrderedDict()
             roman[1000] = "M"
@@ -165,7 +169,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
         node_idx = node_idx - 1
         node_labels = labels[:, node_idx]
         for k in [int(l) for i, l in enumerate(node_labels)]:
-            rn_list.append(json.dumps(write_roman(k)))
+            rn_list.append(json.dumps(_write_roman(k)))
         abet = rn_list
         node_lab_alph = ".".join(["{}{}".format(abet[i], int(l)) for i, l in enumerate(node_labels)]) + ".{}".format(
             labels[node_idx])
@@ -185,10 +189,10 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
             wei = G.get_edge_data(node_idx,int(i))['weight']
             weight_vec.append(wei)
         entry = {}
-        nodes_label = get_node_label(node_idx, label_arr, clust_levels_tmp)
+        nodes_label = _get_node_label(node_idx, label_arr, clust_levels_tmp)
         entry["name"] = nodes_label
         entry["size"] = len(connections)
-        entry["imports"] = [get_node_label(int(d)-1, label_arr, clust_levels_tmp) for d in connections]
+        entry["imports"] = [_get_node_label(int(d)-1, label_arr, clust_levels_tmp) for d in connections]
         entry["weights"] = weight_vec
         output.append(entry)
 
@@ -266,13 +270,24 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
 
 def plot_timeseries(time_series, network, ID, dir_path, atlas, labels):
     """
+    Plot time-series.
 
-    :param time_series:
-    :param network:
-    :param ID:
-    :param dir_path:
-    :param atlas:
-    :param labels:
+    Parameters
+    ----------
+    time-series : array
+        2D m x n array consisting of the time-series signal for each ROI node where m = number of scans and
+        n = number of ROI's.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    ID : str
+        A subject id or other unique identifier.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    atlas : str
+        Name of atlas parcellation used.
+    labels : list
+        List of string labels corresponding to ROI nodes.
     """
     import warnings
     warnings.filterwarnings("ignore")
@@ -293,43 +308,72 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas, labels):
         plt.title('Time Series')
         out_path_fig = "%s%s%s%s" % (dir_path, '/', ID, '_wb_ts_plot.png')
     plt.savefig(out_path_fig)
-    plt.close()
+    plt.close('all')
+    return
 
 
-def plot_all(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, coords, thr,
-             node_size, edge_threshold, smooth, prune, uatlas, c_boot, norm, binary, hpass):
+def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, coords, thr,
+                  node_size, edge_threshold, smooth, prune, uatlas, c_boot, norm, binary, hpass):
     """
+    Plot adjacency matrix, connectogram, and glass brain for functional connectome.
 
-    :param conn_matrix:
-    :param conn_model:
-    :param atlas:
-    :param dir_path:
-    :param ID:
-    :param network:
-    :param labels:
-    :param roi:
-    :param coords:
-    :param thr:
-    :param node_size:
-    :param edge_threshold:
-    :param smooth:
-    :param prune:
-    :param uatlas:
-    :param c_boot:
-    :param norm:
-    :param binary:
-    :param hpass:
-    :return:
+    Parameters
+    ----------
+    conn_matrix : array
+        NxN matrix.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    atlas : str
+        Name of atlas parcellation used.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    ID : str
+        A subject id or other unique identifier.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    labels : list
+        List of string labels corresponding to ROI nodes.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    coords : list
+        List of (x, y, z) tuples corresponding to an a-priori defined set (e.g. a coordinate atlas).
+    thr : float
+        A value, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    edge_threshold : float
+        The actual value, between 0 and 1, that the graph was thresholded (can differ from thr if target was not
+        successfully obtained.
+    smooth : int
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
+    uatlas : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    c_boot : int
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    norm : int
+        Indicates method of normalizing resulting graph.
+    binary : bool
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted graph.
+    hpass : bool
+        High-pass filter values (Hz) to apply to node-extracted time-series.
     """
     import warnings
     warnings.filterwarnings("ignore")
+    import os
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
     import pkg_resources
     import networkx as nx
-    from pynets import plotting, thresholding
+    from pynets.core import thresholding
     from pynets.plotting import plot_gen, plot_graphs
     from pynets.stats.netstats import most_important, prune_disconnected
     try:
@@ -367,10 +411,15 @@ def plot_all(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi,
                 print('No nodes to prune for plot...')
 
         coords = list(tuple(x) for x in coords)
+
+        namer_dir = dir_path + '/figures'
+        if not os.path.isdir(namer_dir):
+            os.mkdir(namer_dir)
+
         # Plot connectogram
         if len(conn_matrix) > 20:
             try:
-                plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, labels)
+                plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
             except RuntimeWarning:
                 print('\n\n\nWarning: Connectogram plotting failed!')
         else:
@@ -379,12 +428,12 @@ def plot_all(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi,
         # Plot adj. matrix based on determined inputs
         if not node_size or node_size == 'None':
             node_size = 'parc'
-        plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr,
+        plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels, roi, thr,
                                        node_size, smooth, c_boot, hpass)
 
         # Plot connectome
         if roi:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas, '_', conn_model,
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
                                                                      '_', op.basename(roi).split('.')[0],
                                                                      "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"),
                                                                      thr, '_', node_size,
@@ -395,15 +444,15 @@ def plot_all(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi,
                                                                      'func_glass_viz.png')
 
             # Save coords to pickle
-            coord_path = "%s%s%s%s" % (dir_path, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
+            coord_path = "%s%s%s%s" % (namer_dir, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
             with open(coord_path, 'wb') as f:
                 pickle.dump(coords, f, protocol=2)
             # Save labels to pickle
-            labels_path = "%s%s%s%s" % (dir_path, '/labelnames_', op.basename(roi).split('.')[0], '_plotting.pkl')
+            labels_path = "%s%s%s%s" % (namer_dir, '/labelnames_', op.basename(roi).split('.')[0], '_plotting.pkl')
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
         else:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas, '_', conn_model,
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
                                                                  "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"),
                                                                  thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"),
                                                                  "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
@@ -411,11 +460,11 @@ def plot_all(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi,
                                                                  "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None else ''),
                                                                  'func_glass_viz.png')
             # Save coords to pickle
-            coord_path = "%s%s" % (dir_path, '/coords_plotting.pkl')
+            coord_path = "%s%s" % (namer_dir, '/coords_plotting.pkl')
             with open(coord_path, 'wb') as f:
                 pickle.dump(coords, f, protocol=2)
             # Save labels to pickle
-            labels_path = "%s%s" % (dir_path, '/labelnames_plotting.pkl')
+            labels_path = "%s%s" % (namer_dir, '/labelnames_plotting.pkl')
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
 
@@ -426,9 +475,7 @@ def plot_all(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi,
         conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
         [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
         if node_size == 'parc':
-            node_size_plot = int(2)
-            if uatlas:
-                connectome.add_contours(uatlas, filled=True, alpha=0.20, cmap=plt.cm.gist_rainbow)
+            node_size_plot = int(6)
         else:
             node_size_plot = int(node_size)
         if len(coords) != conn_matrix.shape[0]:
@@ -446,18 +493,220 @@ def plot_all(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi,
     else:
         raise RuntimeError('\nERROR: no coordinates to plot! Are you running plotting outside of pynets\'s internal '
                            'estimation schemes?')
+
+    plt.close('all')
+
     return
 
 
-def structural_plotting(conn_matrix, uatlas, streamlines_mni, template_mask, interactive=False):
+def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, coords, thr,
+                    node_size, edge_threshold, prune, uatlas, target_samples, norm, binary, track_type, directget):
     """
+    Plot adjacency matrix, connectogram, and glass brain for functional connectome.
 
-    :param conn_matrix:
-    :param uatlas:
-    :param streamlines_mni:
-    :param template_mask:
-    :param interactive:
-    :return:
+    Parameters
+    ----------
+    conn_matrix : array
+        NxN matrix.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    atlas : str
+        Name of atlas parcellation used.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    ID : str
+        A subject id or other unique identifier.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    labels : list
+        List of string labels corresponding to ROI nodes.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    coords : list
+        List of (x, y, z) tuples corresponding to an a-priori defined set (e.g. a coordinate atlas).
+    thr : float
+        A value, between 0 and 1, to threshold the graph using any variety of methods
+        triggered through other options.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    edge_threshold : float
+        The actual value, between 0 and 1, that the graph was thresholded (can differ from thr if target was not
+        successfully obtained.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
+    uatlas : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    target_samples : int
+        Total number of streamline samples specified to generate streams.
+    norm : int
+        Indicates method of normalizing resulting graph.
+    binary : bool
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted graph.
+    track_type : str
+        Tracking algorithm used (e.g. 'local' or 'particle').
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
+    """
+    import warnings
+    warnings.filterwarnings("ignore")
+    import matplotlib
+    matplotlib.use('agg')
+    import os
+    from matplotlib import pyplot as plt
+    from nilearn import plotting as niplot
+    import pkg_resources
+    import networkx as nx
+    from matplotlib import colors
+    import seaborn as sns
+    from pynets.core import thresholding
+    from pynets.plotting import plot_gen, plot_graphs
+    from pynets.stats.netstats import most_important, prune_disconnected
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import _pickle as pickle
+
+    coords = list(coords)
+    labels = list(labels)
+    if len(coords) > 0:
+        dpi_resolution = 500
+        if '\'b' in atlas:
+            atlas = atlas.decode('utf-8')
+        if (prune == 1 or prune == 2) and len(coords) == conn_matrix.shape[0]:
+            G_pre = nx.from_numpy_matrix(conn_matrix)
+            if prune == 1:
+                [G, pruned_nodes] = prune_disconnected(G_pre)
+            elif prune == 2:
+                [G, pruned_nodes] = most_important(G_pre)
+            else:
+                G = G_pre
+                pruned_nodes = []
+            pruned_nodes.sort(reverse=True)
+            coords_pre = list(coords)
+            labels_pre = list(labels)
+            if len(pruned_nodes) > 0:
+                for j in pruned_nodes:
+                    labels_pre.pop(j)
+                    coords_pre.pop(j)
+                conn_matrix = nx.to_numpy_array(G)
+                labels = labels_pre
+                coords = coords_pre
+            else:
+                print('No nodes to prune for plot...')
+
+        coords = list(tuple(x) for x in coords)
+
+        namer_dir = dir_path + '/figures'
+        if not os.path.isdir(namer_dir):
+            os.mkdir(namer_dir)
+
+        # Plot connectogram
+        if len(conn_matrix) > 20:
+            try:
+                plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
+            except RuntimeWarning:
+                print('\n\n\nWarning: Connectogram plotting failed!')
+        else:
+            print('Warning: Cannot plot connectogram for graphs smaller than 20 x 20!')
+
+        # Plot adj. matrix based on determined inputs
+        if not node_size or node_size == 'None':
+            node_size = 'parc'
+        plot_graphs.plot_conn_mat_struct(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels, roi, thr,
+                                         node_size, target_samples, track_type, directget)
+
+        # Plot connectome
+        if roi:
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
+                                                                     '_', op.basename(roi).split('.')[0],
+                                                                     "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), thr, '_', node_size,
+                                                                     '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                                     "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
+                                                                     "%s%s%s" % ('_', track_type, '_track'),
+                                                                     "%s%s" % ('_', directget),
+                                                                     'struct_glass_viz.png')
+
+            # Save coords to pickle
+            coord_path = "%s%s%s%s" % (namer_dir, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
+            with open(coord_path, 'wb') as f:
+                pickle.dump(coords, f, protocol=2)
+            # Save labels to pickle
+            labels_path = "%s%s%s%s" % (namer_dir, '/labelnames_', op.basename(roi).split('.')[0], '_plotting.pkl')
+            with open(labels_path, 'wb') as f:
+                pickle.dump(labels, f, protocol=2)
+        else:
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
+                                                                 "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"),
+                                                                 thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"),
+                                                                 "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
+                                                                 "%s%s%s" % ('_', track_type, '_track'),
+                                                                 "%s%s" % ('_', directget),
+                                                                 'struct_glass_viz.png')
+            # Save coords to pickle
+            coord_path = "%s%s" % (namer_dir, '/coords_plotting.pkl')
+            with open(coord_path, 'wb') as f:
+                pickle.dump(coords, f, protocol=2)
+            # Save labels to pickle
+            labels_path = "%s%s" % (namer_dir, '/labelnames_plotting.pkl')
+            with open(labels_path, 'wb') as f:
+                pickle.dump(labels, f, protocol=2)
+
+        ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
+        connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
+        connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
+        #connectome.add_overlay(ch2better_loc, alpha=0.35, cmap=plt.cm.gray)
+        conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
+        [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
+        if node_size == 'parc':
+            node_size_plot = int(6)
+        else:
+            node_size_plot = int(node_size)
+        if len(coords) != conn_matrix.shape[0]:
+            raise RuntimeWarning('\nWARNING: Number of coordinates does not match conn_matrix dimensions.')
+        else:
+            norm = colors.Normalize(vmin=-1, vmax=1)
+            clust_pal = sns.color_palette("Blues_r", conn_matrix.shape[0])
+            clust_colors = colors.to_rgba_array(clust_pal)
+            fa_path = dir_path + '/../reg_dmri/dmri_tmp/DSN/Warped.nii.gz'
+            if os.path.isfile(fa_path):
+                connectome.add_overlay(img=fa_path,
+                                       threshold=0.01, alpha=0.25, cmap=plt.cm.copper)
+
+            connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap=plt.cm.binary,
+                                 edge_vmax=float(z_max), edge_vmin=float(z_min), node_size=node_size_plot,
+                                 node_color=clust_colors)
+            connectome.savefig(out_path_fig, dpi=dpi_resolution)
+    else:
+        raise RuntimeError('\nERROR: no coordinates to plot! Are you running plotting outside of pynets\'s internal '
+                           'estimation schemes?')
+
+    plt.close('all')
+
+    return
+
+
+def structural_glass_brain_plotting(conn_matrix, uatlas, streamlines_mni, template_mask, interactive=False):
+    """
+    Plot structural glass_brain in 3D.
+
+    Parameters
+    ----------
+    conn_matrix : array
+        NxN matrix.
+    uatlas : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    streamlines_mni : str
+        File path to save streamline array sequence, normalized to MNI-space, in .trk format.
+    template_mask : str
+        File path to binary template MNI image in Nifti1Image format.
+    interactive : bool
+        Switch indicating whether to make visualization interactive (versus take a snapshot saved as .png.
+        Default is False.
     """
     import warnings
     warnings.filterwarnings("ignore")
@@ -471,8 +720,8 @@ def structural_plotting(conn_matrix, uatlas, streamlines_mni, template_mask, int
     from dipy.tracking.utils import streamline_near_roi
     from nilearn.plotting import find_parcellation_cut_coords
     from nilearn.image import resample_to_img
-    from pynets.thresholding import normalize
-    from pynets.nodemaker import mmToVox
+    from pynets.core.thresholding import normalize
+    from pynets.core.nodemaker import mmToVox
 
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
 
@@ -581,11 +830,16 @@ def structural_plotting(conn_matrix, uatlas, streamlines_mni, template_mask, int
 
 def plot_graph_measure_hists(df_concat, measures, net_pick_file):
     """
+    Plot histograms for each graph theoretical measure.
 
-    :param df_concat:
-    :param measures:
-    :param net_pick_file:
-    :return:
+    Parameters
+    ----------
+    df_concat : DataFrame
+        Pandas dataframe of concatenated graph measures across ensemble.
+    measures : list
+        List of string names for graph measures whose order corresponds to headers/values in df_concat.
+    net_pick_file : st
+        File path to .pkl file of network measures used to generate df_concat.
     """
     import matplotlib
     matplotlib.use('Agg')

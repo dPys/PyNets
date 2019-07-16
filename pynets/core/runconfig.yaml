@@ -1,0 +1,71 @@
+maxcrossing:
+    - 2
+min_length:
+    - 20
+overlap_thr:
+    - 1
+overlap_thr_list:
+    - null
+step_list:
+    - 0.2
+    - 0.3
+    - 0.4
+    - 0.5
+curv_thr_list:
+    - 60
+    - 30
+    - 10
+life_run:
+    - False
+nilearn_parc_atlases:
+    - 'atlas_harvard_oxford'
+    - 'atlas_aal'
+    - 'atlas_destrieux_2009'
+    - 'atlas_talairach_gyrus'
+    - 'atlas_talairach_ba'
+    - 'atlas_talairach_lobe'
+nilearn_coord_atlases:
+    - 'coords_power_2011'
+    - 'coords_dosenbach_2010'
+nilearn_prob_atlases:
+    - 'atlas_msdl'
+    - 'atlas_pauli_2017'
+available_models:
+    func_models:
+      - 'corr'
+      - 'sps'
+      - 'cov'
+      - 'partcorr'
+      - 'QuicGraphicalLasso'
+      - 'QuicGraphicalLassoCV'
+      - 'QuicGraphicalLassoEBIC'
+      - 'AdaptiveQuicGraphicalLasso'
+    struct_models:
+      - 'csa'
+      - 'tensor'
+      - 'csd'
+resource_dict:
+      - 'fetch_nodes_and_labels_node':
+        - (1, 1)
+      - 'extract_ts_node':
+        - (1, 4)
+      - 'node_gen_node':
+        - (1, 1)
+      - 'clustering_node':
+        - (1, 4)
+      - 'get_conn_matrix_node':
+        - (1, 1)
+      - 'thresh_func_node':
+        - (1, 1)
+      - 'register_node':
+        - (1, 2)
+      - 'get_fa_node':
+        - (1, 1)
+      - 'run_tracking_node':
+        - (1, 4)
+      - 'thresh_diff_node':
+        - (1, 1)
+      - 'dsn_node':
+        - (1, 2)
+      - 'streams2graph_node':
+        - (1, 2)

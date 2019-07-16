@@ -11,4 +11,5 @@ from .stats import *
 from .registration import *
 from .dmri import *
 from .fmri import *
+from .core import *
 from .plotting import *

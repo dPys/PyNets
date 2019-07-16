@@ -18,8 +18,8 @@ def get_parser():
                         default=None,
                         required=True,
                         help='An subject identifier OR list of subject identifiers, separated by comma and of '
-                             'equivalent length to the list of input files indicated with the -func flag. This parameter '
-                             'must be an alphanumeric string and can be arbitrarily chosen. If functional '
+                             'equivalent length to the list of input files indicated with the -func flag. This '
+                             'parameter must be an alphanumeric string and can be arbitrarily chosen. If functional '
                              'and dmri connectomes are being generated simultaneously, then comma-separated id\'s '
                              'need to be repeated to match the total input file count.\n')
     parser.add_argument('-mod',
@@ -51,10 +51,10 @@ def get_parser():
     parser.add_argument('-conf',
                         metavar='Confound regressor file (.tsv/.csv format)',
                         default=None,
-                        help='Optionally specify a path to a confound regressor file to reduce noise in the time-series '
-                             'estimation for the graph. This can also be a list of paths in the case of running multiple '
-                             'subjects, which requires separated by comma and of equivalent length to the list of input '
-                             'files indicated with the -func flag.\n')
+                        help='Optionally specify a path to a confound regressor file to reduce noise in the '
+                             'time-series estimation for the graph. This can also be a list of paths in the case of '
+                             'running multiple subjects, which requires separated by comma and of equivalent length '
+                             'to the list of input files indicated with the -func flag.\n')
     parser.add_argument('-dwi',
                         metavar='Path to diffusion-weighted imaging data file (required for dmri connectomes)',
                         default=None,
@@ -90,9 +90,9 @@ def get_parser():
     parser.add_argument('-roi',
                         metavar='Path to binarized region-of-interest Nifti1Image',
                         default=None,
-                        help='Optionally specify a thresholded binarized ROI mask and retain only those nodes contained '
-                             'within that mask for functional connectome estimation, or constrain the tractography '
-                             'in the case of dmri connectome estimation.\n')
+                        help='Optionally specify a thresholded binarized ROI mask and retain only those nodes '
+                             'contained within that mask for functional connectome estimation, or constrain the '
+                             'tractography in the case of dmri connectome estimation.\n')
     parser.add_argument('-cm',
                         metavar='Cluster mask',
                         default=None,
@@ -139,14 +139,15 @@ def get_parser():
     parser.add_argument('-names',
                         default=False,
                         action='store_true',
-                        help='Optionally use this flag if you wish to perform automated anatomical labeling of nodes.\n')
+                        help='Optionally use this flag if you wish to perform automated anatomical labeling of '
+                             'nodes.\n')
     parser.add_argument('-ns',
                         metavar='Spherical centroid node size',
                         default=4,
                         nargs='+',
-                        help='Optionally specify coordinate-based node radius size(s). Default is 4 mm for fMRI and 8mm '
-                             'for dMRI. If you wish to iterate the pipeline across multiple node sizes, separate the '
-                             'list by space (e.g. 2 4 6).\n')
+                        help='Optionally specify coordinate-based node radius size(s). Default is 4 mm for fMRI and '
+                             '8mm for dMRI. If you wish to iterate the pipeline across multiple node sizes, separate '
+                             'the list by space (e.g. 2 4 6).\n')
     parser.add_argument('-k',
                         metavar='Number of k clusters',
                         default=None,
@@ -179,11 +180,12 @@ def get_parser():
                                  'VisPeri', 'SomMotA', 'SomMotB', 'DorsAttnA', 'DorsAttnB', 'SalVentAttnA',
                                  'SalVentAttnB', 'LimbicOFC', 'LimbicTempPole', 'ContA', 'ContB', 'ContC', 'DefaultA',
                                  'DefaultB', 'DefaultC', 'TempPar'],
-                        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or 17-network): '
-                             'Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, VisPeri, SomMotA, '
-                             'SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, LimbicTempPole, '
-                             'ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing multiple '
-                             'RSNs, separate them by space. (e.g. -n \'Default\' \'Cont\' \'SalVentAttn\')\'.\n')
+                        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or '
+                             '17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, '
+                             'VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, '
+                             'LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing '
+                             'multiple RSNs, separate them by space. (e.g. -n \'Default\' \'Cont\' \'SalVentAttn\')\'.'
+                             '\n')
     parser.add_argument('-sm',
                         metavar='Smoothing value (mm fwhm)',
                         default=0,
@@ -258,8 +260,9 @@ def get_parser():
     parser.add_argument('-thr',
                         metavar='Graph threshold',
                         default=1.00,
-                        help='Optionally specify a threshold indicating a proportion of weights to preserve in the graph. '
-                             'Default is proportional thresholding. If omitted, no thresholding will be applied.\n')
+                        help='Optionally specify a threshold indicating a proportion of weights to preserve in the '
+                             'graph. Default is proportional thresholding. If omitted, no thresholding will be applied.'
+                             '\n')
     parser.add_argument('-min_thr',
                         metavar='Multi-thresholding minimum threshold',
                         default=None,
@@ -277,24 +280,24 @@ def get_parser():
                         default=0,
                         nargs=1,
                         choices=[0, 1, 2],
-                        help='Include this flag to normalize the resulting graph to (1) values between 0-1 or (2) using '
-                             'log10. Default is (0) no normalization.\n')
+                        help='Include this flag to normalize the resulting graph to (1) values between 0-1 or (2) '
+                             'using log10. Default is (0) no normalization.\n')
     parser.add_argument('-dt',
                         default=False,
                         action='store_true',
-                        help='Optionally use this flag if you wish to threshold to achieve a given density or densities '
-                             'indicated by the -thr and -min_thr, -max_thr, -step_thr flags, respectively.\n')
+                        help='Optionally use this flag if you wish to threshold to achieve a given density or '
+                             'densities indicated by the -thr and -min_thr, -max_thr, -step_thr flags, respectively.\n')
     parser.add_argument('-mst',
                         default=False,
                         action='store_true',
-                        help='Optionally use this flag if you wish to apply local thresholding via the Minimum Spanning '
-                             'Tree approach. -thr values in this case correspond to a target density (if the -dt flag is '
-                             'also included), otherwise a target proportional threshold.\n')
+                        help='Optionally use this flag if you wish to apply local thresholding via the Minimum '
+                             'Spanning Tree approach. -thr values in this case correspond to a target density (if the '
+                             '-dt flag is also included), otherwise a target proportional threshold.\n')
     parser.add_argument('-df',
                         default=False,
                         action='store_true',
-                        help='Optionally use this flag if you wish to apply local thresholding via the disparity filter '
-                             'approach. -thr values in this case correspond to α.\n')
+                        help='Optionally use this flag if you wish to apply local thresholding via the disparity '
+                             'filter approach. -thr values in this case correspond to α.\n')
     #    parser.add_argument('-at',
     #        default=False,
     #        action='store_true',
@@ -337,6 +340,7 @@ def build_workflow(args, retval):
     import warnings
     warnings.filterwarnings("ignore")
     import os
+    import ast
     import os.path as op
     import sys
     import timeit
@@ -347,7 +351,7 @@ def build_workflow(args, retval):
         import pynets
     except ImportError:
         print('PyNets not installed! Ensure that you are using the correct python version.')
-    from pynets.utils import do_dir_path
+    from pynets.core.utils import do_dir_path
 
     # Start time clock
     start_time = timeit.default_timer()
@@ -602,10 +606,10 @@ def build_workflow(args, retval):
             nilearn_parc_atlases = hardcoded_params['nilearn_parc_atlases']
             nilearn_coord_atlases = hardcoded_params['nilearn_coord_atlases']
             nilearn_prob_atlases = hardcoded_params['nilearn_prob_atlases']
-            runtime_dict = {'fetch_nodes_and_labels_node': (1, 1), 'extract_ts_node': (1, 4), 'node_gen_node': (1, 1),
-                            'clustering_node': (1, 4), 'get_conn_matrix_node': (1, 1), 'thresh_func_node': (1, 1),
-                            'register_node': (1, 2), 'get_fa_node': (1, 1), 'run_tracking_node': (1, 4),
-                            'thresh_diff_node': (1, 1), 'dsn_node': (1, 2), 'streams2graph_node': (1, 2)}
+            runtime_dict = {}
+            for i in range(len(hardcoded_params['resource_dict'])):
+                runtime_dict[list(hardcoded_params['resource_dict'][i].keys())[0]] = ast.literal_eval(list(
+                    hardcoded_params['resource_dict'][i].values())[0][0])
         except FileNotFoundError:
             print('Failed to parse runconfig.yaml')
 
@@ -1196,10 +1200,10 @@ def build_workflow(args, retval):
     import warnings
     warnings.filterwarnings("ignore")
     import random
-    from pynets.utils import CollectPandasDfs, Export2Pandas, ExtractNetStats, CollectPandasJoin
+    from pynets.core.utils import CollectPandasDfs, Export2Pandas, ExtractNetStats, CollectPandasJoin
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
-    from pynets.workflows import workflow_selector
+    from pynets.core.workflows import workflow_selector
 
     def init_wf_single_subject(ID, func_file, atlas, network, node_size, roi, thr, uatlas,
                                multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
@@ -1235,7 +1239,7 @@ def build_workflow(args, retval):
             config.enable_debug_mode()
             config.enable_resource_monitor()
 
-        cfg = dict(execution={'stop_on_first_crash': False, 'crashfile_format': 'txt', 'parameterize_dirs': True,
+        cfg = dict(execution={'stop_on_first_crash': False, 'crashfile_format': 'txt', 'parameterize_dirs': False,
                               'display_variable': ':0', 'matplotlib_backend': 'Agg',
                               'plugin': str(plugin_type), 'use_relative_paths': True, 'keep_inputs': True,
                               'remove_unnecessary_outputs': True, 'remove_node_directories': False})
@@ -1357,6 +1361,7 @@ def build_workflow(args, retval):
                              ('roi_iterlist', 'roi')])
                            ])
             wf.remove_nodes([meta_wf])
+
             # Multiple raw graphs
             if multi_graph:
                 net_mets_node.inputs.est_path = multi_graph
@@ -1519,7 +1524,7 @@ def build_workflow(args, retval):
             logger.addHandler(handler)
 
         cfg = dict(execution={'stop_on_first_crash': False, 'crashdump_dir': str(wf_multi.base_dir),
-                              'crashfile_format': 'txt', 'parameterize_dirs': True, 'display_variable': ':0',
+                              'crashfile_format': 'txt', 'parameterize_dirs': False, 'display_variable': ':0',
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
                               'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
                               'remove_node_directories': False, 'raise_insufficient': True})
@@ -1603,7 +1608,7 @@ def build_workflow(args, retval):
             logger.addHandler(handler)
 
         cfg = dict(execution={'stop_on_first_crash': False, 'crashdump_dir': str(wf.base_dir),
-                              'parameterize_dirs': True, 'crashfile_format': 'txt', 'display_variable': ':0',
+                              'parameterize_dirs': False, 'crashfile_format': 'txt', 'display_variable': ':0',
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
                               'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
                               'remove_node_directories': False, 'raise_insufficient': True})
@@ -1647,7 +1652,7 @@ def main():
     warnings.filterwarnings("ignore")
     import sys
     try:
-        from pynets.utils import do_dir_path
+        from pynets.core.utils import do_dir_path
     except ImportError:
         print('PyNets not installed! Ensure that you are referencing the correct site-packages and using Python3.5+')
 
