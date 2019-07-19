@@ -183,8 +183,7 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
     if float(thr) < float(density):
         while float(i) < max_iters and float(work_thr) < float(1):
             work_thr = float(work_thr) + float(interval)
-            density = nx.density(nx.from_numpy_matrix(
-                thresholding.threshold_absolute(conn_matrix, work_thr)))
+            density = nx.density(nx.from_numpy_matrix(thresholding.threshold_absolute(conn_matrix, work_thr)))
             print("%s%d%s%.2f%s%.2f%s" % ('Iteration ', i, ' -- with Thresh: ', float(work_thr), ' and Density: ',
                                           float(density), '...'))
             if float(thr) > float(density):
@@ -434,8 +433,7 @@ def disparity_filter(G, weight='weight'):
                 for v in G.successors(u):
                     w = G[u][v][weight]
                     p_ij_out = float(np.absolute(w)) / sum_w_out
-                    alpha_ij_out = 1 - (k_out - 1) * integrate.quad(lambda x: (1 - x)
-                                                                    ** (k_out - 2), 0, p_ij_out)[0]
+                    alpha_ij_out = 1 - (k_out - 1) * integrate.quad(lambda x: (1 - x) ** (k_out - 2), 0, p_ij_out)[0]
                     N.add_edge(u, v, weight=w, alpha_out=float('%.4f' % alpha_ij_out))
 
             elif k_out == 1 and G.in_degree(G.successors(u)[0]) == 1:
@@ -450,8 +448,7 @@ def disparity_filter(G, weight='weight'):
                 for v in G.predecessors(u):
                     w = G[v][u][weight]
                     p_ij_in = float(np.absolute(w)) / sum_w_in
-                    alpha_ij_in = 1 - (k_in - 1) * integrate.quad(lambda x: (1 - x)
-                                                                  ** (k_in - 2), 0, p_ij_in)[0]
+                    alpha_ij_in = 1 - (k_in - 1) * integrate.quad(lambda x: (1 - x) ** (k_in - 2), 0, p_ij_in)[0]
                     N.add_edge(v, u, weight=w, alpha_in=float('%.4f' % alpha_ij_in))
         return N
 
@@ -464,8 +461,7 @@ def disparity_filter(G, weight='weight'):
                 for v in G[u]:
                     w = G[u][v][weight]
                     p_ij = float(np.absolute(w)) / sum_w
-                    alpha_ij = 1 - (k - 1) * integrate.quad(lambda x: (1 - x)
-                                                            ** (k - 2), 0, p_ij)[0]
+                    alpha_ij = 1 - (k - 1) * integrate.quad(lambda x: (1 - x) ** (k - 2), 0, p_ij)[0]
                     B.add_edge(u, v, weight=w, alpha=float('%.4f' % alpha_ij))
             else:
                 B.add_node(u)
@@ -917,19 +913,16 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
             thr_type = 'MSTprop'
-            [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(
-                conn_matrix, thr, coords, labels)
+            [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, thr, coords, labels)
         else:
             thr_type = 'MSTdens'
-            [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_dens(
-                conn_matrix, thr, coords, labels)
+            [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_dens(conn_matrix, thr, coords, labels)
     elif disp_filt is True:
         thr_type = 'DISP_alpha'
         G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
         # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
         print('Computing edge disparity significance with alpha = %s' % thr)
-        print('Filtered graph: nodes = %s, edges = %s' %
-              (G1.number_of_nodes(), G1.number_of_edges()))
+        print('Filtered graph: nodes = %s, edges = %s' % (G1.number_of_nodes(), G1.number_of_edges()))
         # print('Backbone graph: nodes = %s, edges = %s' % (G2.number_of_nodes(), G2.number_of_edges()))
         # print(G2.edges(data=True))
         conn_matrix_thr = nx.to_numpy_array(G1)
@@ -1096,19 +1089,16 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
             thr_type = 'MSTprop'
-            [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(
-                conn_matrix, thr, coords, labels)
+            [conn_matrix_thr, coords, labels]= thresholding.local_thresholding_prop(conn_matrix, thr, coords, labels)
         else:
             thr_type = 'MSTdens'
-            [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_dens(
-                conn_matrix, thr, coords, labels)
+            [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_dens(conn_matrix, thr, coords, labels)
     elif disp_filt is True:
         thr_type = 'DISP_alpha'
         G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
         # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
         print('Computing edge disparity significance with alpha = %s' % thr)
-        print('Filtered graph: nodes = %s, edges = %s' %
-              (G1.number_of_nodes(), G1.number_of_edges()))
+        print('Filtered graph: nodes = %s, edges = %s' % (G1.number_of_nodes(), G1.number_of_edges()))
         # print('Backbone graph: nodes = %s, edges = %s' % (G2.number_of_nodes(), G2.number_of_edges()))
         # print(G2.edges(data=True))
         conn_matrix_thr = nx.to_numpy_array(G1)
