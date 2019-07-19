@@ -53,7 +53,8 @@ def export_to_pandas(csv_loc, ID, network, roi):
 
     # Check for existence of csv_loc
     if op.isfile(csv_loc) is False:
-        raise FileNotFoundError('\nERROR: Missing netmetrics csv file output. Cannot export to pandas df!')
+        raise FileNotFoundError(
+            '\nERROR: Missing netmetrics csv file output. Cannot export to pandas df!')
 
     namer_dir = str(Path(op.dirname(op.abspath(csv_loc))).parent) + '/metrickl'
 
@@ -154,13 +155,19 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
         os.mkdir(namer_dir)
 
     est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
-                                                     '%s' % (network + '_' if network is not None else ''),
-                                                     '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                     '%s' % (
+                                                         network + '_' if network is not None else ''),
+                                                     '%s' % (op.basename(roi).split('.')[
+                                                             0] + '_' if roi is not None else ''),
                                                      'est_', conn_model, '_', thr, thr_type,
-                                                     '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_parc'),
-                                                     "%s" % ("%s%s" % (int(c_boot), '_nb') if float(c_boot) > 0 else ''),
-                                                     "%s" % ("%s%s" % (smooth, '_fwhm') if float(smooth) > 0 else ''),
-                                                     "%s" % ("%s%s" % (hpass, '_Hz') if hpass is not None else ''),
+                                                     '%s' % ("%s%s" % (node_size, 'mm_') if (
+                                                         (node_size != 'parc') and (node_size is not None)) else '_parc'),
+                                                     "%s" % ("%s%s" % (int(c_boot), '_nb')
+                                                             if float(c_boot) > 0 else ''),
+                                                     "%s" % ("%s%s" % (smooth, '_fwhm')
+                                                             if float(smooth) > 0 else ''),
+                                                     "%s" % ("%s%s" % (hpass, '_Hz')
+                                                             if hpass is not None else ''),
                                                      '_func.npy')
 
     return est_path
@@ -214,11 +221,15 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
         os.mkdir(namer_dir)
 
     est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
-                                                   '%s' % (network + '_' if network is not None else ''),
-                                                   '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                   '%s' % (
+                                                       network + '_' if network is not None else ''),
+                                                   '%s' % (op.basename(roi).split('.')[
+                                                           0] + '_' if roi is not None else ''),
                                                    'est_', conn_model, '_', thr, thr_type,
-                                                   '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_parc'),
-                                                   "%s" % ("%s%s%s" % ('_', int(target_samples), 'samples') if float(target_samples) > 0 else ''),
+                                                   '%s' % ("%s%s" % (node_size, 'mm_') if (
+                                                       (node_size != 'parc') and (node_size is not None)) else '_parc'),
+                                                   "%s" % ("%s%s%s" % ('_', int(target_samples), 'samples') if float(
+                                                       target_samples) > 0 else ''),
                                                    "%s%s" % ('_', track_type), '_dwi.npy')
     return est_path
 
@@ -254,7 +265,8 @@ def create_unthr_path(ID, network, conn_model, roi, dir_path):
         os.mkdir(namer_dir)
 
     unthr_path = "%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
-                                         '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                         '%s' % (op.basename(roi).split('.')[
+                                                 0] + '_' if roi is not None else ''),
                                          'est_', conn_model, '_raw_mat.npy')
     return unthr_path
 
@@ -302,9 +314,11 @@ def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size):
 
     out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_net_mets_',
                                                '%s' % (network + '_' if network is not None else ''),
-                                               '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                               '%s' % (op.basename(roi).split('.')[
+                                                       0] + '_' if roi is not None else ''),
                                                conn_model, '_', thr, '_', node_size,
-                                               '%s' % ("mm" if ((node_size != 'parc') and (node_size is not None)) else ''),
+                                               '%s' % ("mm" if ((node_size != 'parc') and (
+                                                   node_size is not None)) else ''),
                                                '.csv')
     return out_path
 
@@ -329,7 +343,8 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
     G.graph['ecount'] = nx.number_of_edges(G)
     G = nx.convert_node_labels_to_integers(G, first_label=1)
     if fmt == 'edgelist_csv':
-        nx.write_weighted_edgelist(G, "%s%s" % (est_path.split('.npy')[0], '.csv'), encoding='utf-8')
+        nx.write_weighted_edgelist(G, "%s%s" % (
+            est_path.split('.npy')[0], '.csv'), encoding='utf-8')
     elif fmt == 'gpickle':
         nx.write_gpickle(G, "%s%s" % (est_path.split('.npy')[0], '.pkl'))
     elif fmt == 'graphml':
@@ -339,7 +354,8 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
     elif fmt == 'npy':
         np.save(est_path, nx.to_numpy_matrix(G))
     elif fmt == 'edgelist_ssv':
-        nx.write_weighted_edgelist(G, "%s%s" % (est_path.split('.npy')[0], '.ssv'), delimiter=" ", encoding='utf-8')
+        nx.write_weighted_edgelist(G, "%s%s" % (est_path.split(
+            '.npy')[0], '.ssv'), delimiter=" ", encoding='utf-8')
     else:
         raise ValueError('\nERROR: File format not supported!')
 
@@ -423,7 +439,8 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, nod
         build_omnetome(list(flatten(est_path_iterlist)), list(flatten(ID_iterlist))[0], multimodal)
 
     if (multiplex > 0) and (multimodal is True):
-        multigraph_list_all = netmotifs.build_multigraphs(est_path_iterlist, list(flatten(ID_iterlist))[0])
+        multigraph_list_all = netmotifs.build_multigraphs(
+            est_path_iterlist, list(flatten(ID_iterlist))[0])
 
     return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 
@@ -736,7 +753,8 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
         est_path_iterlist_func = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in
                                            func_models]))
 
-        func_subnets = list(set([i.split('_est')[0].split('/')[-1] for i in est_path_iterlist_func]))
+        func_subnets = list(set([i.split('_est')[0].split('/')[-1]
+                                 for i in est_path_iterlist_func]))
 
         dwi_subnets = list(set([i.split('_est')[0].split('/')[-1] for i in est_path_iterlist_dwi]))
 
@@ -783,7 +801,7 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
                             pop_list.append(np.load(graph))
                         if len(pop_list) > 1:
                             if len(list(set([i.shape for i in pop_list]))) > 1:
-                                raise RuntimeWarning('ERROR: Inconsistent number of vertices in graph population that ' 
+                                raise RuntimeWarning('ERROR: Inconsistent number of vertices in graph population that '
                                                      'precludes embedding')
                             out_path = _omni_embed(pop_list, rsns[i])
                         else:
@@ -922,14 +940,16 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
             net_pickle_mt_list_exist.append(net_pickle_mt)
 
     if len(list(net_pickle_mt_list)) > len(net_pickle_mt_list_exist):
-        raise UserWarning('Warning! Number of actual models produced less than expected. Some graphs were excluded')
+        raise UserWarning(
+            'Warning! Number of actual models produced less than expected. Some graphs were excluded')
 
     net_pickle_mt_list = net_pickle_mt_list_exist
 
     if len(net_pickle_mt_list) > 1:
         print("%s%s%s" % ('\n\nList of result files to concatenate:\n', str(net_pickle_mt_list), '\n\n'))
         subject_path = op.dirname(op.dirname(net_pickle_mt_list[0]))
-        name_of_network_pickle = "%s%s" % ('net_mets_', net_pickle_mt_list[0].split('_0.')[0].split('net_mets_')[1])
+        name_of_network_pickle = "%s%s" % (
+            'net_mets_', net_pickle_mt_list[0].split('_0.')[0].split('net_mets_')[1])
         net_pickle_mt_list.sort()
 
         list_ = []
@@ -937,7 +957,8 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
         for file_ in net_pickle_mt_list:
             df = pd.read_pickle(file_)
             try:
-                node_cols = [s for s in list(df.columns) if isinstance(s, int) or any(c.isdigit() for c in s)]
+                node_cols = [s for s in list(df.columns) if isinstance(
+                    s, int) or any(c.isdigit() for c in s)]
                 df = df.drop(node_cols, axis=1)
                 models.append(op.basename(file_))
             except RuntimeError:
@@ -971,7 +992,8 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
             pass
     else:
         if network is not None:
-            print("%s%s%s%s%s" % ('\nSingle dataframe for the ', network, ' network for subject ', ID, '\n'))
+            print("%s%s%s%s%s" % ('\nSingle dataframe for the ',
+                                  network, ' network for subject ', ID, '\n'))
         else:
             print("%s%s%s" % ('\nSingle dataframe for subject ', ID, '\n'))
         pass
@@ -1098,6 +1120,8 @@ def list_first_mems(est_path, network, thr, dir_path, node_size, smooth, c_boot,
     thr = thr[0]
     dir_path = dir_path[0]
     node_size = node_size[0]
+    c_boot = c_boot[0]
+    hpass = hpass[0]
     # print('\n\n\n\n')
     # print(est_path)
     # print(network)
@@ -1223,7 +1247,8 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
 
     net_parcels_nii_path = "%s%s%s%s%s%s%s" % (namer_dir, '/', str(ID), '_parcels_masked',
                                                '%s' % ('_' + network if network is not None else ''),
-                                               '%s' % ('_' + op.basename(roi).split('.')[0] if roi is not None else ''),
+                                               '%s' % ('_' + op.basename(roi).split('.')
+                                                       [0] if roi is not None else ''),
                                                '.nii.gz')
 
     nib.save(net_parcels_map_nifti, net_parcels_nii_path)
@@ -1263,8 +1288,10 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
 
     # Save time series as npy file
     out_path_ts = "%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
-                                        '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                        '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
+                                        '%s' % (op.basename(roi).split('.')[
+                                                0] + '_' if roi is not None else ''),
+                                        '%s' % ("%s%s" % (int(c_boot), 'nb_')
+                                                if float(c_boot) > 0 else ''),
                                         'rsn_net_ts.npy')
 
     np.save(out_path_ts, ts_within_nodes)
