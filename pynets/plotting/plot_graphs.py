@@ -6,6 +6,9 @@ Copyright (C) 2018
 """
 import numpy as np
 import warnings
+import tkinter
+import matplotlib
+matplotlib.use('agg')
 warnings.filterwarnings("ignore")
 
 

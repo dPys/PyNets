@@ -183,8 +183,8 @@ def save_streams(dwi_img, streamlines, streams):
     trk_hdr['dimensions'] = hdr['dim'][1:4].astype('float32')
     trk_hdr['voxel_sizes'] = hdr['pixdim'][1:4]
     trk_hdr['voxel_to_rasmm'] = trk_affine
-    trk_hdr['voxel_order'] = 'LPS'
-    trk_hdr['pad2'] = 'LPS'
+    trk_hdr['voxel_order'] = 'RAS'
+    trk_hdr['pad2'] = 'RAS'
     trk_hdr['image_orientation_patient'] = np.array([1., 0., 0., 0., 1., 0.]).astype('float32')
     trk_hdr['endianness'] = '<'
     trk_hdr['_offset_data'] = 1000

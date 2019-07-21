@@ -11,159 +11,16 @@ from pynets.registration import reg_utils as regutils
 from nilearn.image import load_img, math_img
 import warnings
 warnings.filterwarnings("ignore")
-
 try:
     FSLDIR = os.environ['FSLDIR']
 except KeyError:
     print('FSLDIR environment variable not set!')
 
 
-def transform_pts(pts, t_aff, t_warp, ref_img_path, template_path, dsn_dir):
-    """
-    Apply transforms to array of points of which the streamlines are comprised.
-
-    Parameters
-    ----------
-    pts : array
-        Numpy array of points of which the streamlines are comprised.
-    t_aff : str
-        Path to affine transform.
-    t_warp : str
-        Path to deformation.
-    ref_img_path : str
-        Path to a native space reference volume.
-    template_path : str
-        Path to template file.
-    dsn_dir : str
-        Path to directory to output direct-streamline normalized temp files and outputs.
-
-    Returns
-    -------
-    lps_voxmm : array
-        Numpy array of transformed streamline points.
-    """
-    import warnings
-    warnings.filterwarnings("ignore")
-    from pynets.registration import reg_utils as regutils
-    import random
-
-    run_hash = random.randint(1, 1000)
-    warped_csv_out = "%s%s" % (dsn_dir, "/warped_output.csv")
-    aattp_out = "%s%s%s%s" % (dsn_dir, '/aattp_', str(run_hash), '.csv')
-    open(aattp_out, 'w').close()
-    transforms = "%s%s%s%s" % ("-t [", t_aff, ", 1] -t ", t_warp)
-
-    # Load the volume from .trk
-    ref_img = nib.load(ref_img_path)
-    voxel_size = np.array(ref_img.header.get_zooms())
-    extents = np.array(ref_img.shape)
-    extents[-1] = 0
-
-    # Convert the streamlines to voxel indices, then to ants points
-    voxel_coords = abs(extents - pts / voxel_size)
-    ants_mult = np.array([voxel_size[0], voxel_size[1], voxel_size[2]])
-    ants_coord = voxel_coords * ants_mult - voxel_size[0]
-    ants_coord[:, 0] = -ants_coord[:, 0]
-    ants_coord[:, 1] = -ants_coord[:, 1]
-
-    # Save the ants coordinates to a csv, then warp them
-    np.savetxt(warped_csv_out, np.hstack([ants_coord, np.zeros((ants_coord.shape[0], 1))]), header="x,y,z,t",
-               delimiter=",", fmt="%f")
-
-    # Apply the trandforms to
-    regutils.antsapplytranstopoints(warped_csv_out, aattp_out, transforms)
-
-    # Load template to get output space
-    template = nib.load(template_path)
-    warped_affine = template.affine
-
-    adjusted_affine = warped_affine.copy()
-    adjusted_affine[0] = -adjusted_affine[0]
-    adjusted_affine[1] = -adjusted_affine[1]
-
-    ants_warped_coords = np.loadtxt(aattp_out, skiprows=1, delimiter=",")[:, :3]
-    os.remove(aattp_out)
-    to_transform = np.hstack([ants_warped_coords, np.ones((ants_warped_coords.shape[0], 1))])
-    new_voxels = (np.dot(np.linalg.inv(adjusted_affine), to_transform.T) + warped_affine[0, 0])[:3]
-    template_extents = template.shape
-    lps_voxels = new_voxels.copy()
-    lps_voxels[0] = template_extents[0] + lps_voxels[0]
-    lps_voxels[1] = template_extents[1] - lps_voxels[1]
-    lps_voxmm = lps_voxels.T * np.array(template.header.get_zooms())[:3]
-    return lps_voxmm
-
-
-class Warp(object):
-    """
-    A class for warping streamslines from native diffusion space to template space.
-    """
-    def __init__(self, file_in, file_out, template_path, t_aff, t_warp, ref_img_path, dsn_dir):
-        self.file_in = file_in
-        self.file_out = file_out
-        self.template_path = template_path
-        self.t_aff = t_aff
-        self.t_warp = t_warp
-        self.ref_img_path = ref_img_path
-        self.dsn_dir = dsn_dir
-
-    def streamlines(self):
-        """
-        A function for warping streamslines from native diffusion space to template space.
-        """
-        import warnings
-        warnings.filterwarnings("ignore")
-        from pynets.registration.register import transform_pts
-        print("%s%s" % ("Warping streamline file ", self.file_in))
-        template = nib.load(self.template_path)
-        warped_affine = template.affine
-        dims = template.header.get_data_shape()
-        template_trk_header = np.array(('TRACK',
-                                        [dims[0], dims[1], dims[2]],
-                                        [warped_affine[0][0], warped_affine[1][1], warped_affine[2][2]],
-                                        [0.0, 0.0, 0.0], 0, ['', '', '', '', '', '', '', '', '', ''],
-                                        0, ['', '', '', '', '', '', '', '', '', ''],
-                                        [[1.0, 0.0, 0.0, 0.0],
-                                         [0.0, 1.0, 0.0, 0.0],
-                                         [0.0, 0.0, 1.0, 0.0],
-                                         [0.0, 0.0, 0.0, 1.0]], '', 'LPS', 'LPS',
-                                        [1.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-                                        '', '', '', '', '', '', '', 10000, 2, 1000),
-                                       dtype=[('id_string', 'S6'), ('dim', '<i2', (3,)),
-                                              ('voxel_size', '<f4', (3,)), ('origin', '<f4', (3,)),
-                                              ('n_scalars', '<i2'), ('scalar_name', 'S20', (10,)),
-                                              ('n_properties', '<i2'), ('property_name', 'S20', (10,)),
-                                              ('vox_to_ras', '<f4', (4, 4)), ('reserved', 'S444'),
-                                              ('voxel_order', 'S4'), ('pad2', 'S4'),
-                                              ('image_orientation_patient', '<f4', (6,)),
-                                              ('pad1', 'S2'), ('invert_x', 'S1'), ('invert_y', 'S1'),
-                                              ('invert_z', 'S1'), ('swap_xy', 'S1'), ('swap_yz', 'S1'),
-                                              ('swap_zx', 'S1'), ('n_count', '<i4'), ('version', '<i4'),
-                                              ('hdr_size', '<i4')]
-                                       )
-
-        streams, hdr = nib.trackvis.read(self.file_in)
-        offsets = []
-        _streams = []
-        for sl in streams:
-            _streams.append(sl[0])
-            offsets.append(_streams[-1].shape[0])
-        allpoints = np.vstack(_streams)
-        tx_points = transform_pts(allpoints, self.t_aff, self.t_warp, self.ref_img_path, self.template_path,
-                                  self.dsn_dir)
-        offsets = np.cumsum([0] + offsets)
-        starts = offsets[:-1]
-        stops = offsets[1:]
-        new_hdr = template_trk_header.copy()
-        new_hdr["n_count"] = len(_streams)
-        nib.trackvis.write(self.file_out, [(tx_points[a:b], None, None) for a, b in zip(starts, stops)],
-                           hdr_mapping=new_hdr)
-        print("%s%s" % ("Finished ", self.file_out))
-
-
 def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_samples, conn_model, network, node_size,
                            dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas,
                            labels, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list, directget,
-                           overwrite=False):
+                           overwrite=True):
     """
     A Function to perform normalization of streamlines tracked in native diffusion space to an
     FSL_HCP1065_FA_2mm.nii.gz template in MNI space.
@@ -295,9 +152,11 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     """
     import warnings
     warnings.filterwarnings("ignore")
-    from dipy.tracking.streamline import Streamlines
+    from dipy.tracking.streamline import deform_streamlines
+    from dipy.io.streamline import load_trk
     from pynets.registration import reg_utils as regutils
-    from pynets.registration.register import Warp
+    from pynets.dmri.track import save_streams
+    from pynets.plotting import plot_gen
     import pkg_resources
     import os.path as op
 
@@ -319,37 +178,49 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                                                   'curv', str(curv_thr_list).replace(', ', '_'),
                                                   'step', str(step_list).replace(', ', '_'), '.trk')
 
-    # Run ANTs reg
-    t_aff = "%s%s" % (dsn_dir, '/0GenericAffine.mat')
-    t_warp = "%s%s" % (dsn_dir, '/1Warp.nii.gz')
+    streams_warp = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_warp_',
+                                                   '%s' % (network + '_' if network is not None else ''),
+                                                   '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                   conn_model, '_', target_samples,
+                                                   '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_'),
+                                                   'curv', str(curv_thr_list).replace(', ', '_'),
+                                                   'step', str(step_list).replace(', ', '_'), '.trk')
 
-    fa_path_img = nib.load(fa_path)
-    fa_flip_path = "%s%s" % (fa_path.split('.nii.gz')[0], '_flip.nii.gz')
-    s_aff = fa_path_img.affine
-    s_aff[0][0] = -s_aff[0][0]
-    fa_path_img.set_sform(s_aff)
-    fa_path_img.set_qform(s_aff)
-    fa_path_img.update_header()
-    nib.save(fa_path_img, fa_flip_path)
+    streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
+                                                       '%s' % (network + '_' if network is not None else ''),
+                                                       '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                       conn_model, '_', target_samples,
+                                                       '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_'),
+                                                       'curv', str(curv_thr_list).replace(', ', '_'),
+                                                       'step', str(step_list).replace(', ', '_'), '.png')
+    # Run SyN and normalize streamlines
+    if (os.path.isfile(streams_warp) is False) or (overwrite is True):
+        fa_img = nib.load(fa_path)
+        template_img = nib.load(template_path)
 
-    if ((os.path.isfile(t_aff) is False) and (os.path.isfile(t_warp) is False)) or (overwrite is True):
-        regutils.antssyn(template_path, fa_flip_path, dsn_dir)
+        # SyN FA->Template
+        mapping = regutils.wm_syn(template_path, fa_path, dsn_dir)
+        [streamlines, _] = load_trk(streams)
 
-    # Warp streamlines
-    wS = Warp(streams, streams_mni, template_path, t_aff, t_warp, fa_path, dsn_dir)
-    wS.streamlines()
+        # Warp streamlines
+        vox_size = fa_img.get_header().get_zooms()[0]
+        target_isocenter = np.diag(np.array([-vox_size, vox_size, vox_size, 1]))
+        adjusted_affine = target_isocenter.copy()
+        adjusted_affine[0][3] = template_img.affine[0][3] - fa_img.affine[0][3]
+        adjusted_affine[1][3] = template_img.affine[1][3] - fa_img.affine[1][3]
+        adjusted_affine[2][3] = template_img.affine[2][3] - fa_img.affine[2][3]
+        #adjusted_affine[2][3] = template_img.affine[2][3] - fa_img.affine[2][3]*1.5
+        mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field(),
+                                             stream_to_current_grid=target_isocenter,
+                                             current_grid_to_world=target_isocenter,
+                                             stream_to_ref_grid=target_isocenter,
+                                             ref_grid_to_world=adjusted_affine)
+        save_streams(fa_img, mni_streamlines, streams_mni)
 
-    s_aff[:3, 3] = np.array([270, 0, 0])
-    streamlines_mni = nib.streamlines.load(streams_mni)
-    streamlines_mni_s = streamlines_mni.streamlines
-    streamlines_trans = Streamlines(regutils.transform_to_affine(streamlines_mni_s, streamlines_mni.header, s_aff))
-    streams_warp = "%s%s" % (streams_mni.split('.trk')[0], '_warped.trk')
-    tractogram = nib.streamlines.Tractogram(streamlines_trans, affine_to_rasmm=np.eye(4))
-    trkfile = nib.streamlines.trk.TrkFile(tractogram, header=streamlines_mni.header)
-    nib.streamlines.save(trkfile, streams_warp)
-    print(streams_warp)
+        # DSN QC plotting
+        plot_gen.show_template_bundles(mni_streamlines, template_path, streams_warp_png)
 
-    return streams_warp, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget
+    return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget
 
 
 class DmriReg(object):
@@ -411,7 +282,7 @@ class DmriReg(object):
         self.vent_csf_in_dwi = "%s%s%s%s" % (self.reg_path_img, '/', self.t1w_name, "_vent_csf_in_dwi.nii.gz")
         self.vent_mask_mni = "%s%s" % (self.reg_path_img, "/vent_mask_mni.nii.gz")
         self.vent_mask_t1w = "%s%s" % (self.reg_path_img, "/vent_mask_t1w.nii.gz")
-        self.mni_atlas = pkg_resources.resource_filename("pynets", "atlases/HarvardOxford-sub-prob-" + vox_size +
+        self.mni_atlas = pkg_resources.resource_filename("pynets", "core/atlases/HarvardOxford-sub-prob-" + vox_size +
                                                          ".nii.gz")
         self.input_mni = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size + ".nii.gz")
         self.input_mni_brain = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size +
@@ -601,6 +472,7 @@ class DmriReg(object):
         print('Creating MNI-space ventricle ROI...')
         if not os.path.isfile(self.mni_atlas):
             raise ValueError('FSL atlas for ventricle reference not found!')
+
         os.system("fslroi {} {} 2 1".format(self.mni_atlas, self.rvent_out_file))
         os.system("fslroi {} {} 13 1".format(self.mni_atlas, self.lvent_out_file))
         os.system("fslmaths {} -add {} -thr 0.1 -bin {}".format(self.lvent_out_file, self.rvent_out_file,
@@ -769,7 +641,6 @@ class FmriReg(object):
         aligned_atlas_skull = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_skull.nii.gz")
         gm_mask_mni = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_gm_mask_t1w_mni.nii.gz")
         aligned_atlas_t1mni_gm = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni_gm.nii.gz")
-
         regutils.align(uatlas, self.t1_aligned_mni, init=None, xfm=None, out=aligned_atlas_t1mni, dof=12,
                        searchrad=True, interp="nearestneighbour", cost='mutualinfo')
 
@@ -946,10 +817,15 @@ def register_atlas_dwi(uatlas, atlas, node_size, basedir_path, fa_path, B0_mask,
     import warnings
     warnings.filterwarnings("ignore")
     from pynets.registration import register
+    from pynets.registration import reg_utils as regutils
+
     reg = register.DmriReg(basedir_path, fa_path, B0_mask, anat_file, vox_size, simple)
 
     if node_size is not None:
         atlas = "%s%s%s" % (atlas, '_', node_size)
+
+    # Check orientation and resolution
+    uatlas = regutils.check_orient_and_dims(uatlas, vox_size)
 
     # Apply warps/coregister atlas to dwi
     [dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas, atlas)
@@ -976,6 +852,7 @@ def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=False):
     warnings.filterwarnings("ignore")
     import os.path as op
     from pynets.registration import register
+
     reg = register.FmriReg(basedir_path, anat_file, vox_size)
 
     if (overwrite is True) or (op.isfile(reg.map_path) is False):
@@ -1017,10 +894,15 @@ def register_atlas_fmri(uatlas, atlas, node_size, basedir_path, anat_file, vox_s
     import warnings
     warnings.filterwarnings("ignore")
     from pynets.registration import register
+    from pynets.registration import reg_utils as regutils
+
     reg = register.FmriReg(basedir_path, anat_file, vox_size)
 
     if node_size is not None:
         atlas = "%s%s%s" % (atlas, '_', node_size)
+
+    # Check orientation and resolution
+    uatlas = regutils.check_orient_and_dims(uatlas, vox_size)
 
     # Apply warps/coregister atlas to t1w_mni
     aligned_atlas_t1mni_gm = reg.atlas2t1wmni_align(uatlas, atlas)

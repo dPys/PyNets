@@ -18,7 +18,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                       overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length, directget,
                       tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
-                      template_mask, vox_size, multiplex):
+                      template_mask, vox_size, multiplex, clean=True):
     """A Meta-Interface for selecting nested workflows to link into a given single-subject workflow"""
     import warnings
     warnings.filterwarnings("ignore")
@@ -82,6 +82,17 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     if template_mask is None:
         template_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size +
                                                         "_brain_mask.nii.gz")
+
+    # for each file input, delete corresponding t1w anatomical copies.
+    if clean is True:
+        import os.path as op
+        import shutil
+        file_list = [dwi_file, func_file, anat_file]
+        for _file in file_list:
+            if _file is not None:
+                outdir = op.dirname(_file)
+                if op.isdir("%s%s" % (outdir, '/anat_tmp')):
+                    shutil.rmtree("%s%s" % (outdir, '/anat_tmp'))
 
     # Workflow 1: Structural connectome
     if dwi_file is not None:
@@ -878,7 +889,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                  'min_span_tree', 'disp_filt', 'parc', 'prune', 'atlas',
                                                  'uatlas', 'labels', 'coords', 'norm', 'binary', 'atlas_mni',
                                                  'basedir_path', 'curv_thr_list', 'step_list', 'directget'],
-                                    output_names=['streams_warp', 'dir_path', 'track_type', 'target_samples',
+                                    output_names=['streams_mni', 'dir_path', 'track_type', 'target_samples',
                                                   'conn_model', 'network', 'node_size', 'dens_thresh', 'ID', 'roi',
                                                   'min_span_tree', 'disp_filt', 'parc', 'prune', 'atlas',
                                                   'uatlas', 'labels', 'coords', 'norm', 'binary',
@@ -1299,7 +1310,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                        ('atlas_mni', 'atlas_mni'),
                                        ('fa_path', 'fa_path'),
                                        ('directget', 'directget')]),
-        (dsn_node, streams2graph_node, [('streams_warp', 'streams'),
+        (dsn_node, streams2graph_node, [('streams_mni', 'streams'),
                                         ('dir_path', 'dir_path'),
                                         ('track_type', 'track_type'),
                                         ('target_samples', 'target_samples'),

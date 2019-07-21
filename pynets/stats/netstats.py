@@ -9,6 +9,9 @@ import numpy as np
 import networkx as nx
 import warnings
 warnings.simplefilter("ignore")
+import tkinter
+import matplotlib
+matplotlib.use('agg')
 
 
 def timeout(seconds):
