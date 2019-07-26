@@ -196,25 +196,23 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     # Run SyN and normalize streamlines
     if (os.path.isfile(streams_warp) is False) or (overwrite is True):
         fa_img = nib.load(fa_path)
-        template_img = nib.load(template_path)
+        vox_size = fa_img.get_header().get_zooms()[0]
 
         # SyN FA->Template
-        mapping = regutils.wm_syn(template_path, fa_path, dsn_dir)
+        [mapping, affine_map] = regutils.wm_syn(template_path, fa_path, dsn_dir)
         [streamlines, _] = load_trk(streams)
 
         # Warp streamlines
-        vox_size = fa_img.get_header().get_zooms()[0]
         target_isocenter = np.diag(np.array([-vox_size, vox_size, vox_size, 1]))
-        adjusted_affine = target_isocenter.copy()
-        adjusted_affine[0][3] = template_img.affine[0][3] - fa_img.affine[0][3]
-        adjusted_affine[1][3] = template_img.affine[1][3] - fa_img.affine[1][3]
-        adjusted_affine[2][3] = template_img.affine[2][3] - fa_img.affine[2][3]
-        #adjusted_affine[2][3] = template_img.affine[2][3] - fa_img.affine[2][3]*1.5
+        adjusted_affine = affine_map.affine.copy()
+        adjusted_affine[0][3] = -adjusted_affine[0][3]
+        adjusted_affine[1][3] = -adjusted_affine[1][3]/vox_size/vox_size
+        adjusted_affine[2][3] = adjusted_affine[2][3]/vox_size
         mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field(),
                                              stream_to_current_grid=target_isocenter,
-                                             current_grid_to_world=target_isocenter,
+                                             current_grid_to_world=adjusted_affine,
                                              stream_to_ref_grid=target_isocenter,
-                                             ref_grid_to_world=adjusted_affine)
+                                             ref_grid_to_world=np.eye(4))
         save_streams(fa_img, mni_streamlines, streams_mni)
 
         # DSN QC plotting

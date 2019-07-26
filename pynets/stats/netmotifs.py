@@ -1,3 +1,8 @@
+"""
+Created on Tue Nov  7 10:40:07 2017
+Copyright (C) 2018
+@author: Derek Pisner & James Kunert-Graf
+"""
 import numpy as np
 from copy import copy
 from collections import Counter

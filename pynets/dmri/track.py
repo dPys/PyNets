@@ -377,22 +377,19 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
 
             # Instantiate DirectionGetter
             if directget == 'prob':
-                dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
-                                                               sphere=sphere)
+                dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere)
             elif directget == 'boot':
-                dg = BootDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
-                                                      sphere=sphere)
+                dg = BootDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere)
             elif directget == 'clos':
-                dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
-                                                             sphere=sphere)
+                dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere)
             elif directget == 'det':
-                dg = DeterministicMaximumDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
-                                                                      sphere=sphere)
+                dg = DeterministicMaximumDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere)
             else:
                 raise ValueError('ERROR: No valid direction getter(s) specified.')
 
             for step in step_list:
                 print("%s%s" % ('Step: ', step))
+
                 # Perform wm-gm interface seeding, using n_seeds at a time
                 seeds = utils.random_seeds_from_mask(atlas_data_wm_gm_int > 0, seeds_count=n_seeds_per_iter,
                                                      seed_count_per_voxel=False, affine=np.eye(4))
@@ -400,6 +397,7 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
                     raise RuntimeWarning('Warning: No valid seed points found in wm-gm interface...')
 
                 print(seeds)
+
                 # Perform tracking
                 if track_type == 'local':
                     streamline_generator = LocalTracking(dg, tiss_classifier, seeds, np.eye(4),

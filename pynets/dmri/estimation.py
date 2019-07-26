@@ -326,8 +326,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
         edge_list = [(k[0], k[1], v) for k, v in edge_dict.items()]
         g.add_weighted_edges_from(edge_list)
-    print("%s%s%s" % ('Graph construction runtime: ',
-    np.round(time.time() - start_time, 1), 's'))
+    print("%s%s%s" % ('Graph construction runtime: ', np.round(time.time() - start_time, 1), 's'))
 
     # Convert to numpy matrix
     conn_matrix_raw = nx.to_numpy_matrix(g)

@@ -256,10 +256,8 @@ def wm_syn(template_path, fa_path, working_dir):
         working_dir : str
             Path to the working directory to perform SyN and save outputs.
     """
-    from dipy.align.imaffine import (AffineMap, MutualInformationMetric,
-                                     AffineRegistration)
-    from dipy.align.transforms import (TranslationTransform3D, RigidTransform3D,
-                                       AffineTransform3D)
+    from dipy.align.imaffine import MutualInformationMetric, AffineRegistration, transform_origins
+    from dipy.align.transforms import TranslationTransform3D, RigidTransform3D, AffineTransform3D
     from dipy.align.imwarp import SymmetricDiffeomorphicRegistration
     from dipy.align.metrics import CCMetric
     from dipy.viz import regtools
@@ -272,10 +270,8 @@ def wm_syn(template_path, fa_path, working_dir):
     moving = fa_img.get_data().astype(np.float32)
     moving_affine = fa_img.affine
 
-    identity = np.eye(4)
-    affine_map = AffineMap(identity, static.shape, static_affine, moving.shape,
-                           moving_affine)
-    resampled = affine_map.transform(moving)
+    affine_map = transform_origins(static, static_affine, moving, moving_affine)
+    moving = affine_map.transform(moving)
 
     nbins = 32
     sampling_prop = None
@@ -300,10 +296,9 @@ def wm_syn(template_path, fa_path, working_dir):
 
     # We bump up the iterations to get a more exact fit:
     affine_reg.level_iters = [1000, 1000, 100]
-    affine_map = affine_reg.optimize(static, moving, transform, params0,
+    affine_opt = affine_reg.optimize(static, moving, transform, params0,
                                      static_affine, moving_affine,
                                      starting_affine=rigid_map.affine)
-    transformed = affine_map.transform(moving)
 
     # We now perform the non-rigid deformation using the Symmetric Diffeomorphic Registration(SyN) Algorithm:
     metric = CCMetric(3)
@@ -311,9 +306,8 @@ def wm_syn(template_path, fa_path, working_dir):
     sdr = SymmetricDiffeomorphicRegistration(metric, level_iters)
 
     mapping = sdr.optimize(static, moving, static_affine, moving_affine,
-                           affine_map.affine)
+                           affine_opt.affine)
     warped_moving = mapping.transform(moving)
-    warped_static = mapping.transform_inverse(moving)
 
     # We show the registration result with:
     regtools.overlay_slices(static, warped_moving, None, 0, "Static", "Moving",
@@ -323,7 +317,7 @@ def wm_syn(template_path, fa_path, working_dir):
     regtools.overlay_slices(static, warped_moving, None, 2, "Static", "Moving",
                             "%s%s" % (working_dir, "/transformed_axial.png"))
 
-    return mapping
+    return mapping, affine_map
 
 
 def transform_to_affine(streamlines, header, affine):
@@ -351,7 +345,7 @@ def transform_to_affine(streamlines, header, affine):
     rotation, scale = np.linalg.qr(affine)
     streams_rot = move_streamlines(streamlines, rotation)
     scale[0:3, 0:3] = np.dot(scale[0:3, 0:3], np.diag(1. / header['voxel_sizes']))
-    #scale[0:3, 3] = abs(scale[0:3, 3])
+    scale[0:3, 3] = abs(scale[0:3, 3])
     streams_warped = move_streamlines(streams_rot, scale)
     return Streamlines(streams_warped)
 
@@ -453,6 +447,7 @@ def normalize_xform(img):
     # Unconditionally set sform/qform
     new_img.set_sform(xform, xform_code)
     new_img.set_qform(xform, xform_code)
+
     return new_img
 
 
@@ -508,15 +503,15 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
     else:
         out_fname = fname
         out_bvec_fname = bvec_fname
+
     return out_fname, out_bvec_fname
 
 
 def reorient_img(img, out_dir):
-    from pynets.registration.reg_utils import normalize_xform
     """
     A function to reorient any non-dwi image to RAS+.
 
-    Parametersstd_fmri
+    Parameters
     ----------
     img : str
         File path to a Nifti1Image.
@@ -528,6 +523,7 @@ def reorient_img(img, out_dir):
     out_name : str
         File path to reoriented Nifti1Image.
     """
+    from pynets.registration.reg_utils import normalize_xform
     import warnings
     warnings.filterwarnings("ignore")
 
@@ -571,6 +567,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, sens):
     warnings.filterwarnings("ignore")
     from pynets.registration.reg_utils import normalize_xform
     from dipy.align.reslice import reslice
+    from scipy import stats
+
     # Check dimensions
     img = nib.load(img_file)
     data = img.get_fdata()
@@ -584,16 +582,18 @@ def match_target_vox_res(img_file, vox_size, out_dir, sens):
 
     if (abs(zooms[0]), abs(zooms[1]), abs(zooms[2])) != new_zooms:
         print('Reslicing image ' + img_file + ' to ' + vox_size + '...')
-        img_file_res = "%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii.gz')[0],
-                                     '_res.nii.gz')
+        img_file_res = "%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii.gz')[0], '_res.nii.gz')
         data2, affine2 = reslice(data, affine, zooms, new_zooms)
-        if abs(np.round(zooms[0],1)) != abs(np.round(zooms[1],1)) != abs(np.round(zooms[2],1)):
-            raise ValueError('ERROR: isotropic voxel resolutions not supported.')
-        img2 = nib.Nifti1Image(data2, affine=affine2, header=hdr)
+
+        # Resize FOV if voxels were non-isotropic
+        scale_factor = np.array(zooms) / np.array(new_zooms)
+        affine2[:3, 3] = affine2[:3, 3].dot(np.diag(scale_factor/stats.mode(scale_factor)[0][0]))
+        img2 = nib.Nifti1Image(data2, affine=affine2)
         img2 = normalize_xform(img2)
         nib.save(img2, img_file_res)
-        print('Resliced affine: ')
-        print(nib.load(img_file_res).affine)
+
+        print('Target affine: ')
+        print(affine2)
         img_file = img_file_res
 
     return img_file
