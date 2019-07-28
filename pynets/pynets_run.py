@@ -1295,8 +1295,8 @@ def build_workflow(args, retval):
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
             if k_clustering > 0:
-                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._n_procs = 1
-                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 4
+                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._n_procs = runtime_dict['clustering_node'][0]
+                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._mem_gb = runtime_dict['clustering_node'][1]
 
         if dwi_file:
             wf_selected = "%s%s" % ('dmri_connectometry_', ID)
@@ -1479,8 +1479,8 @@ def build_workflow(args, retval):
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
                 if k_clustering > 0:
-                    wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._n_procs = 1
-                    wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._mem_gb = 4
+                    wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._n_procs = runtime_dict['clustering_node'][0]
+                    wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._mem_gb = runtime_dict['clustering_node'][1]
 
             if dwi_file:
                 wf_selected = "%s%s" % ('dmri_connectometry_', ID)
@@ -1687,14 +1687,13 @@ def main():
             if p.exitcode != 0:
                 sys.exit(p.exitcode)
     except:
-        print('\nWARNING: Forkserver failed to initialize. Are you using Python3.5+ ?')
+        print('\nWARNING: Forkserver failed to initialize. Are you using Python3 ?')
         retval = dict()
         build_workflow(args, retval)
 
 
 if __name__ == '__main__':
     import warnings
-
     warnings.filterwarnings("ignore")
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     main()

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
@@ -2541,10 +2542,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             fmri_connectometry_wf.get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
     if k_clustering > 0:
-        clustering_node._mem_gb = 4
-        clustering_node.n_procs = 1
-        clustering_node.interface.mem_gb = 4
-        clustering_node.interface.n_procs = 1
+        clustering_node._mem_gb = runtime_dict['clustering_node'][1]
+        clustering_node.n_procs = runtime_dict['clustering_node'][0]
+        clustering_node.interface.mem_gb = runtime_dict['clustering_node'][1]
+        clustering_node.interface.n_procs = runtime_dict['clustering_node'][0]
 
     # Set runtime/logging configurations
     cfg = dict(execution={'stop_on_first_crash': True, 'hash_method': 'content', 'crashfile_format': 'txt',

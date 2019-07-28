@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
@@ -19,8 +20,7 @@ except KeyError:
 
 def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_samples, conn_model, network, node_size,
                            dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas,
-                           labels, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list, directget,
-                           overwrite=True):
+                           labels, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list, directget):
     """
     A Function to perform normalization of streamlines tracked in native diffusion space to an
     FSL_HCP1065_FA_2mm.nii.gz template in MNI space.
@@ -87,8 +87,6 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
-    overwrite : bool
-        Indicates whether to overwrite existing registration files. Default is False.
 
     Returns
     -------
@@ -157,6 +155,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     from pynets.registration import reg_utils as regutils
     from pynets.dmri.track import save_streams
     from pynets.plotting import plot_gen
+    from dipy.tracking import utils
     import pkg_resources
     import os.path as op
 
@@ -178,14 +177,6 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                                                   'curv', str(curv_thr_list).replace(', ', '_'),
                                                   'step', str(step_list).replace(', ', '_'), '.trk')
 
-    streams_warp = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_warp_',
-                                                   '%s' % (network + '_' if network is not None else ''),
-                                                   '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                   conn_model, '_', target_samples,
-                                                   '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_'),
-                                                   'curv', str(curv_thr_list).replace(', ', '_'),
-                                                   'step', str(step_list).replace(', ', '_'), '.trk')
-
     streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
                                                        '%s' % (network + '_' if network is not None else ''),
                                                        '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
@@ -194,29 +185,66 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                                                        'curv', str(curv_thr_list).replace(', ', '_'),
                                                        'step', str(step_list).replace(', ', '_'), '.png')
     # Run SyN and normalize streamlines
-    if (os.path.isfile(streams_warp) is False) or (overwrite is True):
-        fa_img = nib.load(fa_path)
-        vox_size = fa_img.get_header().get_zooms()[0]
+    fa_img = nib.load(fa_path)
+    vox_size = fa_img.get_header().get_zooms()[0]
+    template_img = nib.load(template_path)
+    template_data = template_img.get_data().astype('bool')
 
-        # SyN FA->Template
-        [mapping, affine_map] = regutils.wm_syn(template_path, fa_path, dsn_dir)
-        [streamlines, _] = load_trk(streams)
+    # SyN FA->Template
+    [mapping, affine_map] = regutils.wm_syn(template_path, fa_path, dsn_dir)
+    [streamlines, _] = load_trk(streams)
 
-        # Warp streamlines
-        target_isocenter = np.diag(np.array([-vox_size, vox_size, vox_size, 1]))
-        adjusted_affine = affine_map.affine.copy()
-        adjusted_affine[0][3] = -adjusted_affine[0][3]
-        adjusted_affine[1][3] = -adjusted_affine[1][3]/vox_size/vox_size
-        adjusted_affine[2][3] = adjusted_affine[2][3]/vox_size
+    # Warp streamlines
+    # Create an isocentered affine
+    target_isocenter = np.diag(np.array([-vox_size, vox_size, vox_size, 1]))
+
+    # Take the off-origin affine capturing the extent contrast between fa image and the template
+    adjusted_affine = affine_map.affine.copy()
+
+    # Now we flip the sign in the x and y planes so that we get the mirror image of the forward deformation field.
+    adjusted_affine[0][3] = -adjusted_affine[0][3]
+    adjusted_affine[1][3] = -adjusted_affine[1][3]
+
+    # Scale z by the voxel resolution
+    adjusted_affine[2][3] = adjusted_affine[2][3]/vox_size
+
+    # Scale y by just the square of the voxel resolution since we've already scaled along the z-plane.
+    adjusted_affine[1][3] = adjusted_affine[1][3]/vox_size**vox_size
+
+    # Apply the deformation and correct for the extents
+    mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field(),
+                                         stream_to_current_grid=target_isocenter,
+                                         current_grid_to_world=adjusted_affine,
+                                         stream_to_ref_grid=target_isocenter,
+                                         ref_grid_to_world=np.eye(4))
+
+    # Check DSN quality, attempt y-flip if DSN fails. Occasionally, orientation affine may be corrupted and this tweak
+    # should handle the inverse case.
+    dm = utils.density_map(mni_streamlines, template_img.shape, affine=np.eye(4)).astype('bool')
+    in_brain = len(np.unique(np.where((template_data.astype('uint8') == 1) & (dm.astype('uint8') == 1))))
+    out_brain = len(np.unique(np.where((template_data.astype('uint8') == 0) & (dm.astype('uint8') == 1))))
+    if in_brain < out_brain:
+        adjusted_affine[1][3] = -adjusted_affine[1][3]
         mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field(),
                                              stream_to_current_grid=target_isocenter,
                                              current_grid_to_world=adjusted_affine,
                                              stream_to_ref_grid=target_isocenter,
                                              ref_grid_to_world=np.eye(4))
-        save_streams(fa_img, mni_streamlines, streams_mni)
+        dm = utils.density_map(mni_streamlines, template_img.shape, affine=np.eye(4)).astype('bool')
+        in_brain = len(np.unique(np.where((template_data.astype('uint8') == 1) & (dm.astype('uint8') == 1))))
+        out_brain = len(np.unique(np.where((template_data.astype('uint8') == 0) & (dm.astype('uint8') == 1))))
+        if in_brain > out_brain:
+            print('Warning: Direct Streamline Normalization completed successfully only after inverting the y-plane '
+                  'voxel-to-world. This may not be correct, so manual check for corrupted header orientations is '
+                  'recommended.')
+        else:
+            raise ValueError('ERROR: Direct Streamline Normalization failed. Check for corrupted header/affine.')
 
-        # DSN QC plotting
-        plot_gen.show_template_bundles(mni_streamlines, template_path, streams_warp_png)
+    # Save streamlines
+    save_streams(fa_img, mni_streamlines, streams_mni)
+
+    # DSN QC plotting
+    plot_gen.show_template_bundles(mni_streamlines, template_path, streams_warp_png)
 
     return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget
 

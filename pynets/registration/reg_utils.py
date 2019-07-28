@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
@@ -271,7 +272,6 @@ def wm_syn(template_path, fa_path, working_dir):
     moving_affine = fa_img.affine
 
     affine_map = transform_origins(static, static_affine, moving, moving_affine)
-    moving = affine_map.transform(moving)
 
     nbins = 32
     sampling_prop = None
@@ -318,36 +318,6 @@ def wm_syn(template_path, fa_path, working_dir):
                             "%s%s" % (working_dir, "/transformed_axial.png"))
 
     return mapping, affine_map
-
-
-def transform_to_affine(streamlines, header, affine):
-    """
-    A function to transform tractography streamlines to a given affine.
-
-    Parameters
-    ----------
-    streamlines : ArraySequence
-        Dipy object consisting of streamline coordinates.
-    header : Dict
-        Nibabel trackvis header object to use for transformed streamlines file.
-    affine : array
-        4 x 4 2D numpy array representing the target affine for streamline transformation.
-
-    Returns
-    -------
-    streams_warped : ArraySequence
-        Dipy object delineating streamline data for the affine-transformed streamlines.
-    """
-    import warnings
-    warnings.filterwarnings("ignore")
-    from dipy.tracking.utils import move_streamlines
-    from dipy.tracking.streamline import Streamlines
-    rotation, scale = np.linalg.qr(affine)
-    streams_rot = move_streamlines(streamlines, rotation)
-    scale[0:3, 0:3] = np.dot(scale[0:3, 0:3], np.diag(1. / header['voxel_sizes']))
-    scale[0:3, 3] = abs(scale[0:3, 3])
-    streams_warped = move_streamlines(streams_rot, scale)
-    return Streamlines(streams_warped)
 
 
 def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
@@ -473,7 +443,6 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
     """
     from pynets.registration.reg_utils import normalize_xform
     fname = dwi_prep
-    out_fname = "%s%s%s%s" % (out_dir, '/', dwi_prep.split('/')[-1].split('.nii.gz')[0], '_reor.nii.gz')
     bvec_fname = bvecs
     out_bvec_fname = "%s%s" % (out_dir, '/bvecs_reor.bvec')
 
@@ -484,8 +453,8 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
     # Is the input image oriented how we want?
     new_axcodes = ('R', 'A', 'S')
     if normalized is not input_img:
+        out_fname = "%s%s%s%s" % (out_dir, '/', dwi_prep.split('/')[-1].split('.nii.gz')[0], '_reor_RAS.nii.gz')
         print("%s%s%s" % ('Reorienting ', dwi_prep, ' to RAS+...'))
-        normalized.to_filename(out_fname)
 
         # Flip the bvecs
         input_orientation = nib.orientations.axcodes2ornt(input_axcodes)
@@ -501,8 +470,10 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
             output_array[this_axnum] = bvec_array[int(axnum)] * float(flip)
         np.savetxt(out_bvec_fname, output_array, fmt="%.8f ")
     else:
-        out_fname = fname
+        out_fname = "%s%s%s%s" % (out_dir, '/', dwi_prep.split('/')[-1].split('.nii.gz')[0], '_RAS.nii.gz')
         out_bvec_fname = bvec_fname
+
+    normalized.to_filename(out_fname)
 
     return out_fname, out_bvec_fname
 
@@ -535,10 +506,11 @@ def reorient_img(img, out_dir):
     # Image may be reoriented
     if normalized is not orig_img:
         print("%s%s%s" % ('Reorienting ', img, ' to RAS+...'))
-        out_name = "%s%s%s%s" % (out_dir, '/', img.split('/')[-1].split('.nii.gz')[0], '_reor.nii.gz')
-        normalized.to_filename(out_name)
+        out_name = "%s%s%s%s" % (out_dir, '/', img.split('/')[-1].split('.nii.gz')[0], '_reor_RAS.nii.gz')
     else:
-        out_name = img
+        out_name = "%s%s%s%s" % (out_dir, '/', img.split('/')[-1].split('.nii.gz')[0], '_RAS.nii.gz')
+
+    normalized.to_filename(out_name)
 
     return out_name
 
@@ -563,11 +535,10 @@ def match_target_vox_res(img_file, vox_size, out_dir, sens):
     img_file : str
         File path to resampled Nifti1Image.
     """
+    from pynets.registration.reg_utils import normalize_xform
     import warnings
     warnings.filterwarnings("ignore")
-    from pynets.registration.reg_utils import normalize_xform
     from dipy.align.reslice import reslice
-    from scipy import stats
 
     # Check dimensions
     img = nib.load(img_file)
@@ -584,16 +555,14 @@ def match_target_vox_res(img_file, vox_size, out_dir, sens):
         print('Reslicing image ' + img_file + ' to ' + vox_size + '...')
         img_file_res = "%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii.gz')[0], '_res.nii.gz')
         data2, affine2 = reslice(data, affine, zooms, new_zooms)
-
-        # Resize FOV if voxels were non-isotropic
-        scale_factor = np.array(zooms) / np.array(new_zooms)
-        affine2[:3, 3] = affine2[:3, 3].dot(np.diag(scale_factor/stats.mode(scale_factor)[0][0]))
         img2 = nib.Nifti1Image(data2, affine=affine2)
         img2 = normalize_xform(img2)
         nib.save(img2, img_file_res)
-
-        print('Target affine: ')
-        print(affine2)
         img_file = img_file_res
+    else:
+        img_file_nores = "%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii.gz')[0], '_nores.nii.gz')
+        img2 = normalize_xform(img)
+        nib.save(img2, img_file_nores)
+        img_file = img_file_nores
 
     return img_file
