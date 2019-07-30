@@ -691,98 +691,6 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
     return conn_matrix_thr, coords, labels
 
 
-def local_thresholding_dens(conn_matrix, coords, labels, thr):
-    """
-    Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
-    successive N-nearest neighbour degree graphs to achieve target density threshold.
-
-    Parameters
-    ----------
-    conn_matrix : array
-        Weighted NxN matrix.
-    thr : float
-        A density threshold, between 0 and 1, to achieve through local thresholding.
-
-    Returns
-    -------
-    conn_matrix_thr : array
-        Weighted, MST local-thresholded, NxN matrix.
-    """
-    import warnings
-    warnings.filterwarnings("ignore")
-    from pynets.core import thresholding
-    from pynets.stats import netstats
-
-    fail_tol = 10
-    conn_matrix = np.nan_to_num(conn_matrix)
-    G = nx.from_numpy_matrix(conn_matrix)
-    if not nx.is_connected(G):
-        [G, pruned_nodes] = netstats.prune_disconnected(G)
-        pruned_nodes.sort(reverse=True)
-        coords_pre = list(coords)
-        labels_pre = list(labels)
-        if len(pruned_nodes) > 0:
-            for j in pruned_nodes:
-                labels_pre.pop(j)
-                coords_pre.pop(j)
-            conn_matrix = nx.to_numpy_array(G)
-            labels = labels_pre
-            coords = coords_pre
-
-    maximum_edges = G.number_of_edges()
-    G = thresholding.weight_to_distance(G)
-    min_t = nx.minimum_spanning_tree(G, weight="distance")
-    mst_density = nx.density(min_t)
-    G_density = nx.density(G)
-    if mst_density > G_density:
-        print("%s%s%s" % ('Warning: The minimum spanning tree already has: ', thr,
-                          ' density. Local Threshold will be applied by just retaining the Minimum Spanning Tree'))
-        conn_matrix_thr = nx.to_numpy_array(G)
-        return conn_matrix_thr
-
-    k = 1
-    dense_list = []
-    while mst_density < float(thr) and (len(dense_list[-fail_tol:]) - len(set(dense_list[-fail_tol:]))) < (fail_tol - 1):
-        print(k)
-        print(mst_density)
-        dense_list.append(mst_density)
-        # Create nearest neighbour graph
-        nng = thresholding.knn(conn_matrix, k)
-        number_before = nng.number_of_edges()
-        # Remove edges from the NNG that exist already in the new graph/MST
-        nng.remove_edges_from(min_t.edges())
-        if nng.number_of_edges() == 0 and number_before >= maximum_edges:
-            break
-
-        # Add weights to NNG
-        for e in nng.edges():
-            nng.edges[e[0], e[1]]['weight'] = float(conn_matrix[e[0], e[1]])
-
-        # Obtain list of edges from the NNG in order of weight
-        edge_list = sorted(nng.edges(data=True), key=lambda t: t[2]['weight'], reverse=True)
-        # Add edges in order of connectivity strength
-        for edge in edge_list:
-            min_t.add_edges_from([edge])
-            mst_density = thresholding.est_density((nx.to_numpy_array(min_t)))
-            # print("%s%s" % ('Adding edge to mst: ', edge))
-            if mst_density >= G_density or mst_density >= float(thr):
-                # print(mst_density)
-                break
-
-        if (len(dense_list[-fail_tol:]) - len(set(dense_list[-fail_tol:]))) >= (fail_tol - 1):
-            print("%s%s%s" % ('Cannot apply local thresholding to achieve density of: ', thr,
-                              '. Using maximally saturated connected matrix instead...'))
-
-        k += 1
-
-    conn_matrix_thr = nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64)
-    if len(min_t.nodes()) < conn_matrix.shape[0]:
-        raise RuntimeWarning("%s%s%s" % ('Cannot apply local thresholding to achieve density of: ', thr,
-                                         '. Try a higher -thr or -min_thr'))
-
-    return conn_matrix_thr, coords, labels
-
-
 def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
                 smooth, disp_filt, parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary,
                 hpass):
@@ -913,11 +821,9 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     if min_span_tree is True:
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
-            thr_type = 'MSTprop'
-            [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, thr, coords, labels)
-        else:
-            thr_type = 'MSTdens'
-            [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_dens(conn_matrix, thr, coords, labels)
+            print('Ignoring -dt flag since local density thresholding is not currently supporting.')
+        thr_type = 'MST_thr'
+        [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, thr, coords, labels)
     elif disp_filt is True:
         thr_type = 'DISP_alpha'
         G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
@@ -1089,11 +995,9 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     if min_span_tree is True:
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
-            thr_type = 'MSTprop'
-            [conn_matrix_thr, coords, labels]= thresholding.local_thresholding_prop(conn_matrix, thr, coords, labels)
-        else:
-            thr_type = 'MSTdens'
-            [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_dens(conn_matrix, thr, coords, labels)
+            print('Ignoring -dt flag since local density thresholding is not currently supporting.')
+        thr_type = 'MST_thr'
+        [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, thr, coords, labels)
     elif disp_filt is True:
         thr_type = 'DISP_alpha'
         G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))

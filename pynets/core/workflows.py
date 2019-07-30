@@ -894,7 +894,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                   'conn_model', 'network', 'node_size', 'dens_thresh', 'ID', 'roi',
                                                   'min_span_tree', 'disp_filt', 'parc', 'prune', 'atlas',
                                                   'uatlas', 'labels', 'coords', 'norm', 'binary',
-                                                  'atlas_mni', 'directget'],
+                                                  'atlas_mni', 'directget', 'warped_fa'],
                                     function=register.direct_streamline_norm,
                                     imports=import_list), name="dsn_node")
 
@@ -903,7 +903,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                            'network', 'node_size', 'dens_thresh', 'ID', 'roi',
                                                            'min_span_tree', 'disp_filt', 'parc', 'prune',
                                                            'atlas', 'uatlas', 'labels', 'coords',
-                                                           'norm', 'binary', 'directget'],
+                                                           'norm', 'binary', 'directget', 'warped_fa'],
                                               output_names=['atlas_mni', 'streams', 'conn_matrix', 'track_type',
                                                             'target_samples', 'dir_path', 'conn_model', 'network',
                                                             'node_size', 'dens_thresh', 'ID', 'roi', 'min_span_tree',
@@ -1331,7 +1331,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                         ('norm', 'norm'),
                                         ('binary', 'binary'),
                                         ('atlas_mni', 'atlas_mni'),
-                                        ('directget', 'directget')]),
+                                        ('directget', 'directget'),
+                                        ('warped_fa', 'warped_fa')]),
         (join_iters_node, thresh_diff_node, map_connects)
     ])
 

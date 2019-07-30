@@ -156,7 +156,7 @@ def csd_mod_est(gtab, data, wm_in_dwi):
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
                   dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels,
-                  coords, norm, binary, directget, voxel_size='2mm'):
+                  coords, norm, binary, directget, warped_fa, voxel_size='2mm', fa_wei=True):
     '''
     Use tracked streamlines as a basis for estimating a structural connectome.
 
@@ -217,8 +217,12 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
+    warped_fa : str
+        File path to MNI-space warped FA Nifti1Image.
     voxel_size : str
         Target isotropic voxel resolution of all input Nifti1Image files.
+    fa_wei :  bool
+        Scale streamline count edges by fractional anistropy (FA).
 
     Returns
     -------
@@ -279,7 +283,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     '''
     import warnings
     warnings.filterwarnings("ignore")
-    from dipy.tracking.streamline import Streamlines
+    from dipy.tracking.streamline import Streamlines, values_from_volume
     from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
     import networkx as nx
     from itertools import combinations
@@ -289,6 +293,9 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     # Read Streamlines
     streamlines_mni = nib.streamlines.load(streams)
     streamlines = Streamlines(streamlines_mni.streamlines)
+
+    fa_map = nib.load(warped_fa).get_data()
+    fa_weights = values_from_volume(fa_map, streamlines)
 
     # Load parcellation
     atlas_data = nib.load(atlas_mni).get_fdata()
@@ -307,6 +314,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Build graph
     start_time = time.time()
+
+    ix = 0
     for s in streamlines:
         # Map the streamlines coordinates to voxel coordinates
         points = _to_voxel_coordinates(s, lin_T, offset)
@@ -326,8 +335,32 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
             edge_dict[tuple(sorted(lst))] += 1
 
         edge_list = [(k[0], k[1], v) for k, v in edge_dict.items()]
-        g.add_weighted_edges_from(edge_list)
+
+        if fa_wei is True:
+            # Add edgelist to g, weighted by average fa of the streamline
+            g.add_weighted_edges_from(edge_list, weight=np.mean(fa_weights[ix]))
+        else:
+            g.add_weighted_edges_from(edge_list)
+        ix = ix + 1
+
     print("%s%s%s" % ('Graph construction runtime: ', np.round(time.time() - start_time, 1), 's'))
+
+    if fa_wei is True:
+        # Add average fa weights to streamline counts
+        for u, v in list(g.edges):
+            h = g.get_edge_data(u, v)
+            edge_att_dict = {}
+            for e, w in h.items():
+                if w not in edge_att_dict.keys():
+                    edge_att_dict[w] = []
+                else:
+                    edge_att_dict[w].append(e)
+            for key in edge_att_dict.keys():
+                edge_att_dict[key] = np.nanmean(edge_att_dict[key])
+            vals = []
+            for e2, w2 in edge_att_dict.items():
+                vals.append(float(e2) * float(w2))
+            g.edges[u, v].update({'weight': np.sum(vals)})
 
     # Convert to numpy matrix
     conn_matrix_raw = nx.to_numpy_matrix(g)

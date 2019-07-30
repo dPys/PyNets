@@ -142,6 +142,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
+    warped_fa : str
+        File path to MNI-space warped FA Nifti1Image.
 
     References
     ----------
@@ -191,7 +193,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     template_data = template_img.get_data().astype('bool')
 
     # SyN FA->Template
-    [mapping, affine_map] = regutils.wm_syn(template_path, fa_path, dsn_dir)
+    [mapping, affine_map, warped_fa] = regutils.wm_syn(template_path, fa_path, dsn_dir)
     [streamlines, _] = load_trk(streams)
 
     # Warp streamlines
@@ -205,10 +207,10 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     adjusted_affine[0][3] = -adjusted_affine[0][3]
     adjusted_affine[1][3] = -adjusted_affine[1][3]
 
-    # Scale z by the voxel resolution
+    # Scale z by the voxel size
     adjusted_affine[2][3] = adjusted_affine[2][3]/vox_size
 
-    # Scale y by just the square of the voxel resolution since we've already scaled along the z-plane.
+    # Scale y by the square of the voxel size since we've already scaled along the z-plane.
     adjusted_affine[1][3] = adjusted_affine[1][3]/vox_size**vox_size
 
     # Apply the deformation and correct for the extents
@@ -221,8 +223,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     # Check DSN quality, attempt y-flip if DSN fails. Occasionally, orientation affine may be corrupted and this tweak
     # should handle the inverse case.
     dm = utils.density_map(mni_streamlines, template_img.shape, affine=np.eye(4)).astype('bool')
-    in_brain = len(np.unique(np.where((template_data.astype('uint8') == 1) & (dm.astype('uint8') == 1))))
-    out_brain = len(np.unique(np.where((template_data.astype('uint8') == 0) & (dm.astype('uint8') == 1))))
+    in_brain = len(np.unique(np.where((template_data.astype('uint8') > 0) & (dm.astype('uint8') > 0))))
+    out_brain = len(np.unique(np.where((template_data.astype('uint8') == 0) & (dm.astype('uint8') > 0))))
     if in_brain < out_brain:
         adjusted_affine[1][3] = -adjusted_affine[1][3]
         mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field(),
@@ -231,8 +233,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                                              stream_to_ref_grid=target_isocenter,
                                              ref_grid_to_world=np.eye(4))
         dm = utils.density_map(mni_streamlines, template_img.shape, affine=np.eye(4)).astype('bool')
-        in_brain = len(np.unique(np.where((template_data.astype('uint8') == 1) & (dm.astype('uint8') == 1))))
-        out_brain = len(np.unique(np.where((template_data.astype('uint8') == 0) & (dm.astype('uint8') == 1))))
+        in_brain = len(np.unique(np.where((template_data.astype('uint8') > 0) & (dm.astype('uint8') > 0))))
+        out_brain = len(np.unique(np.where((template_data.astype('uint8') == 0) & (dm.astype('uint8') > 0))))
         if in_brain > out_brain:
             print('Warning: Direct Streamline Normalization completed successfully only after inverting the y-plane '
                   'voxel-to-world. This may not be correct, so manual check for corrupted header orientations is '
@@ -246,7 +248,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     # DSN QC plotting
     plot_gen.show_template_bundles(mni_streamlines, template_path, streams_warp_png)
 
-    return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget
+    return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget, warped_fa
 
 
 class DmriReg(object):
@@ -737,7 +739,6 @@ def register_all_dwi(basedir_path, fa_path, B0_mask, anat_file, gtab_file, dwi_f
         File path to pickled DiPy gradient table object.
     dwi_file : str
         File path to diffusion weighted image.
-
     """
     import warnings
     warnings.filterwarnings("ignore")

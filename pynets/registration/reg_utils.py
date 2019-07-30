@@ -309,6 +309,10 @@ def wm_syn(template_path, fa_path, working_dir):
                            affine_opt.affine)
     warped_moving = mapping.transform(moving)
 
+    # Save warped FA image
+    warped_fa = working_dir + '/warped_fa.nii.gz'
+    nib.save(nib.Nifti1Image(warped_moving, affine=static_affine), warped_fa)
+
     # We show the registration result with:
     regtools.overlay_slices(static, warped_moving, None, 0, "Static", "Moving",
                             "%s%s" % (working_dir, "/transformed_sagittal.png"))
@@ -317,7 +321,7 @@ def wm_syn(template_path, fa_path, working_dir):
     regtools.overlay_slices(static, warped_moving, None, 2, "Static", "Moving",
                             "%s%s" % (working_dir, "/transformed_axial.png"))
 
-    return mapping, affine_map
+    return mapping, affine_map, warped_fa
 
 
 def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
