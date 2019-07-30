@@ -156,7 +156,7 @@ def csd_mod_est(gtab, data, wm_in_dwi):
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
                   dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels,
-                  coords, norm, binary, directget, warped_fa, voxel_size='2mm', fa_wei=True):
+                  coords, norm, binary, directget, warped_fa, voxel_size='2mm', fa_wei=False):
     '''
     Use tracked streamlines as a basis for estimating a structural connectome.
 
@@ -222,7 +222,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     voxel_size : str
         Target isotropic voxel resolution of all input Nifti1Image files.
     fa_wei :  bool
-        Scale streamline count edges by fractional anistropy (FA).
+        Scale streamline count edges by fractional anistropy (FA). Default is False.
 
     Returns
     -------
