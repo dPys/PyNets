@@ -184,6 +184,14 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                                                   'curv', str(curv_thr_list).replace(', ', '_'),
                                                   'step', str(step_list).replace(', ', '_'), '.trk')
 
+    density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/density_map_mni_',
+                                                  '%s' % (network + '_' if network is not None else ''),
+                                                  '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                  conn_model, '_', target_samples,
+                                                  '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_'),
+                                                  'curv', str(curv_thr_list).replace(', ', '_'),
+                                                  'step', str(step_list).replace(', ', '_'), '.nii.gz')
+
     streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
                                                        '%s' % (network + '_' if network is not None else ''),
                                                        '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
@@ -222,9 +230,9 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     # Check DSN quality, attempt y-flip if DSN fails. Occasionally, orientation affine may be corrupted and this tweak
     # should handle the inverse case.
-    dm = utils.density_map(mni_streamlines, fa_img.shape, affine=target_isocenter).astype('bool')
-    in_brain = len(np.unique(np.where((template_data.astype('uint8') > 0) & (dm.astype('uint8') > 0))))
-    out_brain = len(np.unique(np.where((template_data.astype('uint8') == 0) & (dm.astype('uint8') > 0))))
+    dm = utils.density_map(mni_streamlines, template_img.shape, affine=np.eye(4)).astype('bool').astype('uint8')
+    in_brain = len(np.vstack(np.where((template_data.astype('uint8') == 1) & (dm.astype('uint8') == 1))).T)
+    out_brain = len(np.vstack(np.where((template_data.astype('uint8') == 0) & (dm.astype('uint8') == 1))).T)
     if in_brain < out_brain:
         adjusted_affine[1][3] = -adjusted_affine[1][3]
         mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field(),
@@ -232,9 +240,9 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                                              current_grid_to_world=adjusted_affine,
                                              stream_to_ref_grid=target_isocenter,
                                              ref_grid_to_world=np.eye(4))
-        dm = utils.density_map(mni_streamlines, fa_img.shape, affine=target_isocenter).astype('bool')
-        in_brain = len(np.unique(np.where((template_data.astype('uint8') > 0) & (dm.astype('uint8') > 0))))
-        out_brain = len(np.unique(np.where((template_data.astype('uint8') == 0) & (dm.astype('uint8') > 0))))
+        dm = utils.density_map(mni_streamlines, template_img.shape, affine=np.eye(4)).astype('bool').astype('uint8')
+        in_brain = len(np.vstack(np.where((template_data.astype('uint8') == 1) & (dm.astype('uint8') == 1))).T)
+        out_brain = len(np.vstack(np.where((template_data.astype('uint8') == 0) & (dm.astype('uint8') == 1))).T)
         if in_brain > out_brain:
             print('Warning: Direct Streamline Normalization completed successfully only after inverting the y-plane '
                   'voxel-to-world. This may not be correct, so manual check for corrupted header orientations is '
@@ -244,6 +252,10 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     # Save streamlines
     save_streams(fa_img, mni_streamlines, streams_mni)
+
+    # Create and save MNI density map
+    nib.save(nib.Nifti1Image(utils.density_map(mni_streamlines, template_img.shape, affine=np.eye(4)),
+                             template_img.affine), density_mni)
 
     # DSN QC plotting
     plot_gen.show_template_bundles(mni_streamlines, template_path, streams_warp_png)
