@@ -367,7 +367,7 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
             [infile, bvecs] = reorient_dwi(infile, bvecs, outdir)
         # Check dimensions
         if not os.path.isfile(resampled) or (overwrite is True):
-            outfile = match_target_vox_res(infile, vox_size, outdir, sens='dwi')
+            outfile = match_target_vox_res(infile, vox_size, outdir)
     elif (vols > 1) and (bvecs is None):
         # func case
         # Check orientation
@@ -375,7 +375,7 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
             infile = reorient_img(infile, outdir)
         # Check dimensions
         if not os.path.isfile(resampled) or (overwrite is True):
-            outfile = match_target_vox_res(infile, vox_size, outdir, sens='func')
+            outfile = match_target_vox_res(infile, vox_size, outdir)
     else:
         # t1w case
         # Check orientation
@@ -383,7 +383,7 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
             infile = reorient_img(infile, outdir)
         if not os.path.isfile(resampled) or (overwrite is True):
             # Check dimensions
-            outfile = match_target_vox_res(infile, vox_size, outdir, sens='t1w')
+            outfile = match_target_vox_res(infile, vox_size, outdir)
 
     print(outfile)
 
@@ -519,7 +519,7 @@ def reorient_img(img, out_dir):
     return out_name
 
 
-def match_target_vox_res(img_file, vox_size, out_dir, sens):
+def match_target_vox_res(img_file, vox_size, out_dir):
     """
     A function to resample an image to a given isotropic voxel resolution.
 
@@ -531,15 +531,12 @@ def match_target_vox_res(img_file, vox_size, out_dir, sens):
         Voxel size in mm. (e.g. 2mm).
     out_dir : str
         Path to output directory.
-    sens : str
-        Modality of Nifti1Image input (e.g. 'dwi').
 
     Returns
     -------
     img_file : str
         File path to resampled Nifti1Image.
     """
-    from pynets.registration.reg_utils import normalize_xform
     import warnings
     warnings.filterwarnings("ignore")
     from dipy.align.reslice import reslice
@@ -560,13 +557,11 @@ def match_target_vox_res(img_file, vox_size, out_dir, sens):
         img_file_res = "%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii.gz')[0], '_res.nii.gz')
         data2, affine2 = reslice(data, affine, zooms, new_zooms)
         img2 = nib.Nifti1Image(data2, affine=affine2)
-        img2 = normalize_xform(img2)
         nib.save(img2, img_file_res)
         img_file = img_file_res
     else:
         img_file_nores = "%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii.gz')[0], '_nores.nii.gz')
-        img2 = normalize_xform(img)
-        nib.save(img2, img_file_nores)
+        nib.save(img, img_file_nores)
         img_file = img_file_nores
 
     return img_file

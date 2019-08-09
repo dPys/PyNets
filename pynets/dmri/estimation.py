@@ -156,7 +156,7 @@ def csd_mod_est(gtab, data, wm_in_dwi):
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
                   dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels,
-                  coords, norm, binary, directget, warped_fa, voxel_size='2mm', fa_wei=False):
+                  coords, norm, binary, directget, warped_fa, error_margin, voxel_size='2mm', fa_wei=True):
     '''
     Use tracked streamlines as a basis for estimating a structural connectome.
 
@@ -219,6 +219,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         and prob (probabilistic).
     warped_fa : str
         File path to MNI-space warped FA Nifti1Image.
+    error_margin : int
+        Euclidean margin of error for classifying a streamline as a connection to an ROI.
     voxel_size : str
         Target isotropic voxel resolution of all input Nifti1Image files.
     fa_wei :  bool
@@ -288,6 +290,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     import networkx as nx
     from itertools import combinations
     from collections import defaultdict
+    from pynets.core import nodemaker, utils
     import time
 
     # Read Streamlines
@@ -296,20 +299,27 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     fa_map = nib.load(warped_fa).get_data()
     fa_weights = values_from_volume(fa_map, streamlines)
+    global_fa_weights = list(utils.flatten(fa_weights))
+    min_global_fa_wei = min(global_fa_weights)
+    max_global_fa_wei = max(global_fa_weights)
+    fa_weights_norm = []
+    for val_list in fa_weights:
+        fa_weights_norm.append((val_list - min_global_fa_wei) / (max_global_fa_wei - min_global_fa_wei))
 
     # Load parcellation
-    atlas_data = nib.load(atlas_mni).get_fdata()
+    roi_img = nib.load(atlas_mni)
+    atlas_data = roi_img.get_fdata()
 
     # Instantiate empty networkX graph object & dictionary
     # Create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4), voxel_size)
-    mx = len(np.unique(atlas_data.astype(np.int64)))
+    mx = len(np.unique(atlas_data.astype(np.int64))) - 1
     g = nx.Graph(ecount=0, vcount=mx)
     edge_dict = defaultdict(int)
-    node_dict = dict(zip(np.unique(atlas_data), np.arange(mx)))
+    node_dict = dict(zip(np.unique(atlas_data) + 1, np.arange(mx) + 1))
 
     # Add empty vertices
-    for node in range(mx):
+    for node in range(1, mx+1):
         g.add_node(node)
 
     # Build graph
@@ -317,11 +327,10 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     ix = 0
     for s in streamlines:
-        # Map the streamlines coordinates to voxel coordinates
-        points = _to_voxel_coordinates(s, lin_T, offset)
-
-        # get labels for label_volume
-        i, j, k = points.T
+        # Map the streamlines coordinates to voxel coordinates and get labels for label_volume
+        i, j, k = np.vstack(np.array([nodemaker.get_sphere(coord, error_margin, roi_img.header.get_zooms(),
+                                                           roi_img.shape) for coord in
+                                      _to_voxel_coordinates(s, lin_T, offset)])).T
         lab_arr = atlas_data[i, j, k]
         endlabels = []
         for lab in np.unique(lab_arr):
@@ -338,7 +347,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
         if fa_wei is True:
             # Add edgelist to g, weighted by average fa of the streamline
-            g.add_weighted_edges_from(edge_list, weight=np.mean(fa_weights[ix]))
+            g.add_weighted_edges_from(edge_list, weight=np.nanmean(fa_weights_norm[ix]))
         else:
             g.add_weighted_edges_from(edge_list)
         ix = ix + 1
@@ -360,15 +369,12 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
             vals = []
             for e2, w2 in edge_att_dict.items():
                 vals.append(float(e2) * float(w2))
-            g.edges[u, v].update({'weight': np.sum(vals)})
+            g.edges[u, v].update({'weight': np.nanmean(vals)})
 
     # Convert to numpy matrix
     conn_matrix_raw = nx.to_numpy_matrix(g)
 
     # Enforce symmetry
-    conn_matrix_symm = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
-
-    # Remove background label
-    conn_matrix = conn_matrix_symm[1:, 1:]
+    conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
 
     return atlas_mni, streams, conn_matrix, track_type, target_samples, dir_path, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, directget

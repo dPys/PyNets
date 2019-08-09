@@ -161,8 +161,6 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     import pkg_resources
     import os.path as op
 
-    template_path = pkg_resources.resource_filename("pynets", "templates/FSL_HCP1065_FA_2mm.nii.gz")
-
     dsn_dir = "%s%s" % (basedir_path, '/dmri_tmp/DSN')
     if not os.path.isdir(dsn_dir):
         os.mkdir(dsn_dir)
@@ -170,6 +168,13 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     namer_dir = dir_path + '/tractography'
     if not os.path.isdir(namer_dir):
         os.mkdir(namer_dir)
+
+    # Run SyN and normalize streamlines
+    fa_img = nib.load(fa_path)
+    vox_size = fa_img.get_header().get_zooms()[0]
+    template_path = pkg_resources.resource_filename("pynets", "%s%s%s" % ('templates/FA_', vox_size, 'mm.nii.gz'))
+    template_img = nib.load(template_path)
+    template_data = template_img.get_data().astype('bool')
 
     streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_',
                                                   '%s' % (network + '_' if network is not None else ''),
@@ -186,11 +191,6 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                                                        '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_'),
                                                        'curv', str(curv_thr_list).replace(', ', '_'),
                                                        'step', str(step_list).replace(', ', '_'), '.png')
-    # Run SyN and normalize streamlines
-    fa_img = nib.load(fa_path)
-    vox_size = fa_img.get_header().get_zooms()[0]
-    template_img = nib.load(template_path)
-    template_data = template_img.get_data().astype('bool')
 
     # SyN FA->Template
     [mapping, affine_map, warped_fa] = regutils.wm_syn(template_path, fa_path, dsn_dir)
@@ -211,7 +211,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     adjusted_affine[2][3] = adjusted_affine[2][3]/vox_size
 
     # Scale y by the square of the voxel size since we've already scaled along the z-plane.
-    adjusted_affine[1][3] = adjusted_affine[1][3]/vox_size**vox_size
+    adjusted_affine[1][3] = adjusted_affine[1][3]/vox_size**2
 
     # Apply the deformation and correct for the extents
     mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field(),
@@ -297,9 +297,8 @@ class DmriReg(object):
         self.csf_mask = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_csf.nii.gz")
         self.gm_mask = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_gm.nii.gz")
         self.xfm_roi2mni_init = "%s%s" % (self.reg_path_mat, "/roi_2_mni.mat")
-        self.lvent_out_file = "%s%s" % (self.reg_path_img, "/LVentricle.nii.gz")
-        self.rvent_out_file = "%s%s" % (self.reg_path_img, "/RVentricle.nii.gz")
-        self.mni_vent_loc = "%s%s" % (self.reg_path_img, "/VentricleMask.nii.gz")
+        self.mni_vent_loc = pkg_resources.resource_filename("pynets", "templates/LateralVentricles_" + vox_size +
+                                                            ".nii.gz")
         self.csf_mask_dwi = "%s%s%s%s" % (self.reg_path_img, '/', self.t1w_name, "_csf_mask_dwi.nii.gz")
         self.gm_in_dwi = "%s%s%s%s" % (self.reg_path_img, '/', self.t1w_name, "_gm_in_dwi.nii.gz")
         self.wm_in_dwi = "%s%s%s%s" % (self.reg_path_img, '/', self.t1w_name, "_wm_in_dwi.nii.gz")
@@ -310,15 +309,19 @@ class DmriReg(object):
         self.vent_csf_in_dwi = "%s%s%s%s" % (self.reg_path_img, '/', self.t1w_name, "_vent_csf_in_dwi.nii.gz")
         self.vent_mask_mni = "%s%s" % (self.reg_path_img, "/vent_mask_mni.nii.gz")
         self.vent_mask_t1w = "%s%s" % (self.reg_path_img, "/vent_mask_t1w.nii.gz")
-        self.mni_atlas = pkg_resources.resource_filename("pynets", "core/atlases/HarvardOxford-sub-prob-" + vox_size +
-                                                         ".nii.gz")
         self.input_mni = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size + ".nii.gz")
         self.input_mni_brain = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size +
                                                                "_brain.nii.gz")
         self.input_mni_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size +
                                                               "_brain_mask.nii.gz")
+        self.mni_atlas = pkg_resources.resource_filename("pynets", "core/atlases/HarvardOxford-sub-prob-" + vox_size +
+                                                         ".nii.gz")
         self.wm_gm_int_in_dwi = "%s%s%s%s" % (self.reg_path_img, '/', self.t1w_name, "_wm_gm_int_in_dwi.nii.gz")
         self.wm_gm_int_in_dwi_bin = "%s%s%s%s" % (self.reg_path_img, '/', self.t1w_name, "_wm_gm_int_in_dwi_bin.nii.gz")
+        self.corpuscallosum = pkg_resources.resource_filename("pynets", "templates/CorpusCallosum_" + vox_size +
+                                                              ".nii.gz")
+        self.corpuscallosum_mask_t1w = ("%s%s" % (self.reg_path_img, '/CorpusCallosum_t1wmask.nii.gz'))
+        self.corpuscallosum_dwi = ("%s%s" % (self.reg_path_img, '/CorpusCallosum_dwi.nii.gz'))
 
         # Create empty tmp directories that do not yet exist
         reg_dirs = [self.tmp_path, self.reg_path, self.anat_path, self.reg_path_mat, self.reg_path_warp,
@@ -393,6 +396,8 @@ class DmriReg(object):
             regutils.align(self.t1w_brain, self.input_mni_brain, xfm=self.t12mni_xfm, init=self.t12mni_xfm_init,
                            bins=None, dof=12, cost='mutualinfo', searchrad=True, interp="spline",
                            out=self.t1_aligned_mni, sch=None)
+            # Get mat from MNI -> T1
+            os.system("convert_xfm -omat {} -inverse {}".format(self.t12mni_xfm, self.mni2t1_xfm))
 
         # Align T1w-->DWI
         regutils.align(self.fa_path, self.t1w_brain, xfm=self.t1w2dwi_xfm, bins=None, interp="spline", dof=6,
@@ -501,11 +506,6 @@ class DmriReg(object):
         if not os.path.isfile(self.mni_atlas):
             raise ValueError('FSL atlas for ventricle reference not found!')
 
-        os.system("fslroi {} {} 2 1".format(self.mni_atlas, self.rvent_out_file))
-        os.system("fslroi {} {} 13 1".format(self.mni_atlas, self.lvent_out_file))
-        os.system("fslmaths {} -add {} -thr 0.1 -bin {}".format(self.lvent_out_file, self.rvent_out_file,
-                                                                self.mni_vent_loc))
-
         # Create transform to MNI atlas to T1w using flirt. This will be use to transform the ventricles to dwi space.
         regutils.align(self.mni_atlas, self.input_mni_brain, xfm=self.xfm_roi2mni_init, init=None, bins=None, dof=6,
                        cost='mutualinfo', searchrad=True, interp="spline", out=None)
@@ -518,11 +518,19 @@ class DmriReg(object):
             regutils.apply_warp(self.t1w_brain, self.vent_mask_mni, self.vent_mask_t1w, warp=self.mni2t1w_warp,
                                 interp='nn', sup=True)
 
+            regutils.apply_warp(self.t1w_brain, self.corpuscallosum, self.corpuscallosum_mask_t1w,
+                                warp=self.mni2t1w_warp, interp="nn", sup=True)
+
+        else:
+            regutils.applyxfm(self.vent_mask_mni, self.t1w_brain, self.mni2t1_xfm, self.vent_mask_t1w)
+            regutils.applyxfm(self.corpuscallosum, self.t1w_brain, self.mni2t1_xfm, self.corpuscallosum_mask_t1w)
+
         # Applyxfm tissue maps to dwi space
         regutils.applyxfm(self.fa_path, self.vent_mask_t1w, self.t1wtissue2dwi_xfm, self.vent_mask_dwi)
         regutils.applyxfm(self.fa_path, self.csf_mask, self.t1wtissue2dwi_xfm, self.csf_mask_dwi)
         regutils.applyxfm(self.fa_path, self.gm_mask, self.t1wtissue2dwi_xfm, self.gm_in_dwi)
         regutils.applyxfm(self.fa_path, self.wm_mask, self.t1wtissue2dwi_xfm, self.wm_in_dwi)
+        regutils.applyxfm(self.fa_path, self.corpuscallosum_mask_t1w, self.t1wtissue2dwi_xfm, self.corpuscallosum_dwi)
 
         # Threshold WM to binary in dwi space
         thr_img = nib.load(self.wm_in_dwi)
@@ -536,7 +544,7 @@ class DmriReg(object):
 
         # Threshold CSF to binary in dwi space
         thr_img = nib.load(self.csf_mask_dwi)
-        thr_img.get_fdata()[thr_img.get_fdata() < 0.9] = 0
+        thr_img.get_fdata()[thr_img.get_fdata() < 0.95] = 0
         nib.save(thr_img, self.csf_mask_dwi)
 
         # Threshold WM to binary in dwi space
@@ -559,9 +567,14 @@ class DmriReg(object):
         os.system("fslmaths {} -kernel sphere 10 -ero -bin {}".format(self.vent_mask_dwi, self.vent_mask_dwi))
         os.system("fslmaths {} -add {} -bin {} ".format(self.csf_mask_dwi, self.vent_mask_dwi, self.vent_csf_in_dwi))
 
+        print("Creating Corpus Callosum mask...")
+        os.system("fslmaths {} -mas {} -sub {} -bin {}".format(self.corpuscallosum_dwi, self.wm_in_dwi_bin,
+                                                               self.vent_csf_in_dwi, self.corpuscallosum_dwi))
+
         # Create gm-wm interface image
-        os.system("fslmaths {} -mul {} -mas {} -bin {}".format(self.gm_in_dwi_bin, self.wm_in_dwi_bin, self.B0_mask,
-                                                               self.wm_gm_int_in_dwi))
+        os.system("fslmaths {} -mul {} -add {} -mas {} -bin {}".format(self.gm_in_dwi_bin, self.wm_in_dwi_bin,
+                                                                       self.corpuscallosum_dwi, self.B0_mask,
+                                                                       self.wm_gm_int_in_dwi))
 
         return
 

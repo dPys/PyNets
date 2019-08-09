@@ -37,7 +37,7 @@ requirements = [
     'pybids>=0.6.4',
     'graspy>=0.0.2',
     'python-louvain>=0.13',
-    'py3plex>=0.67',
+    #'py3plex>=0.67',
 ]
 
 setup_requirements = [

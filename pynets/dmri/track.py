@@ -299,8 +299,8 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
 
 
 def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere, directget,
-                   curv_thr_list, step_list, track_type, maxcrossing, max_length, n_seeds_per_iter=200,
-                   pft_back_tracking_dist=2, pft_front_tracking_dist=1, particle_count=15, roi_neighborhood_tol=8):
+                   curv_thr_list, step_list, track_type, maxcrossing, max_length, roi_neighborhood_tol,
+                   n_seeds_per_iter=200, pft_back_tracking_dist=2, pft_front_tracking_dist=1, particle_count=15):
     """
     Perform native-space ensemble tractography, restricted to a vector of ROI masks.
 
@@ -331,6 +331,12 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
         Maximum number if diffusion directions that can be assumed per voxel while tracking.
     max_length : int
         Maximum fiber length threshold in mm to restrict tracking.
+    roi_neighborhood_tol : float
+        Distance (in the units of the streamlines, usually mm). If any
+        coordinate in the streamline is within this distance from the center
+        of any voxel in the ROI, the filtering criterion is set to True for
+        this streamline, otherwise False. Defaults to the distance between
+        the center of each voxel and the corner of the voxel.
     n_seeds_per_iter : int
         Number of seeds from which to initiate tracking for each unique ensemble combination.
         By default this is set to 200.
@@ -346,12 +352,6 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
         default this is set to 1 mm.
     particle_count : int
         Number of particles to use in the particle filter.
-    roi_neighborhood_tol : float
-        Distance (in the units of the streamlines, usually mm). If any
-        coordinate in the streamline is within this distance from the center
-        of any voxel in the ROI, the filtering criterion is set to True for
-        this streamline, otherwise False. Defaults to the distance between
-        the center of each voxel and the corner of the voxel.
 
     Returns
     -------
@@ -443,7 +443,7 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
               labels_im_file, target_samples, curv_thr_list, step_list, track_type, max_length, maxcrossing, directget,
               conn_model, gtab_file, dwi_file, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
               prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, life_run, min_length,
-              fa_path):
+              fa_path, roi_neighborhood_tol=2):
     '''
     Run all ensemble tractography and filtering routines.
 
@@ -529,6 +529,12 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
         Minimum fiber length threshold in mm.
     fa_path : str
         File path to FA Nifti1Image.
+    roi_neighborhood_tol : float
+        Distance (in the units of the streamlines, usually mm). If any
+        coordinate in the streamline is within this distance from the center
+        of any voxel in the ROI, the filtering criterion is set to True for
+        this streamline, otherwise False. Defaults to the distance between
+        the center of each voxel and the corner of the voxel.
 
     Returns
     -------
@@ -655,7 +661,8 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
 
     # Commence Ensemble Tractography
     streamlines = track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere,
-                                 directget, curv_thr_list, step_list, track_type, maxcrossing, max_length)
+                                 directget, curv_thr_list, step_list, track_type, maxcrossing, max_length,
+                                 roi_neighborhood_tol)
     print('Tracking Complete')
 
     # Perform streamline filtering routines
@@ -664,4 +671,4 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
                                                       conn_model, target_samples, node_size, curv_thr_list, step_list,
                                                       network, roi)
 
-    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path, directget
+    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path, directget, roi_neighborhood_tol

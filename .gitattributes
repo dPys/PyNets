@@ -16,8 +16,12 @@ pynets/templates/MNI152_T1_1mm_brain_mask.nii.gz filter=lfs diff=lfs merge=lfs -
 pynets/templates/MNI152_T1_2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
 pynets/templates/MNI152_T1_2mm_brain.nii.gz filter=lfs diff=lfs merge=lfs -text
 pynets/templates/MNI152_T1_2mm_brain_mask.nii.gz filter=lfs diff=lfs merge=lfs -text
-pynets/templates/FSL_HCP1065_FA_1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
-pynets/templates/FSL_HCP1065_FA_2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/FA_1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/FA_2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/LateralVentricles_1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/LateralVentricles_2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/CorpusCallosum_1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/CorpusCallosum_2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
 pynets/core/atlases/DesikanKlein2012.nii.gz filter=lfs diff=lfs merge=lfs -text
 pynets/core/atlases/Juelichgmthr252mmEickhoff2005.nii.gz filter=lfs diff=lfs merge=lfs -text
 pynets/core/atlases/MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics_4d.nii.gz filter=lfs diff=lfs merge=lfs -text

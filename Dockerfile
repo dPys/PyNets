@@ -124,9 +124,6 @@ RUN apt-get remove --purge -y \
     git \
     build-essential
 
-# Delete buggy line in dipy
-RUN sed -i -e '189d;190d' /opt/conda/lib/python3.6/site-packages/dipy/tracking/eudx.py
-
 # Create mountpoints
 RUN mkdir /data && \
     chmod -R 777 /data
