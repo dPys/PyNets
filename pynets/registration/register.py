@@ -222,7 +222,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     # Check DSN quality, attempt y-flip if DSN fails. Occasionally, orientation affine may be corrupted and this tweak
     # should handle the inverse case.
-    dm = utils.density_map(mni_streamlines, template_img.shape, affine=np.eye(4)).astype('bool')
+    dm = utils.density_map(mni_streamlines, fa_img.shape, affine=target_isocenter).astype('bool')
     in_brain = len(np.unique(np.where((template_data.astype('uint8') > 0) & (dm.astype('uint8') > 0))))
     out_brain = len(np.unique(np.where((template_data.astype('uint8') == 0) & (dm.astype('uint8') > 0))))
     if in_brain < out_brain:
@@ -232,7 +232,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                                              current_grid_to_world=adjusted_affine,
                                              stream_to_ref_grid=target_isocenter,
                                              ref_grid_to_world=np.eye(4))
-        dm = utils.density_map(mni_streamlines, template_img.shape, affine=np.eye(4)).astype('bool')
+        dm = utils.density_map(mni_streamlines, fa_img.shape, affine=target_isocenter).astype('bool')
         in_brain = len(np.unique(np.where((template_data.astype('uint8') > 0) & (dm.astype('uint8') > 0))))
         out_brain = len(np.unique(np.where((template_data.astype('uint8') == 0) & (dm.astype('uint8') > 0))))
         if in_brain > out_brain:
