@@ -336,7 +336,11 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         for lab in np.unique(lab_arr):
             if lab > 0:
                 if np.sum(lab_arr == lab) >= overlap_thr:
-                    endlabels.append(node_dict[lab])
+                    try:
+                        endlabels.append(node_dict[lab])
+                    except:
+                        print('WARNING: Missing node intensities detected in parcellation')
+                        continue
 
         edges = combinations(endlabels, 2)
         for edge in edges:

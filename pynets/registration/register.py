@@ -23,7 +23,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                            labels, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list, directget):
     """
     A Function to perform normalization of streamlines tracked in native diffusion space to an
-    FSL_HCP1065_FA_2mm.nii.gz template in MNI space.
+    FA template in MNI space.
 
     Parameters
     ----------
@@ -172,7 +172,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     # Run SyN and normalize streamlines
     fa_img = nib.load(fa_path)
     vox_size = fa_img.get_header().get_zooms()[0]
-    template_path = pkg_resources.resource_filename("pynets", "%s%s%s" % ('templates/FA_', vox_size, 'mm.nii.gz'))
+    template_path = pkg_resources.resource_filename("pynets", "%s%s%s" % ('templates/FA_', int(vox_size), 'mm.nii.gz'))
     template_img = nib.load(template_path)
     template_data = template_img.get_data().astype('bool')
 
@@ -488,8 +488,8 @@ class DmriReg(object):
         mask.to_filename(self.wm_gm_int_in_dwi_bin)
         nib.save(nib.Nifti1Image(atlas_data.astype(np.int32), affine=atlas_img.affine, header=atlas_img.header),
                  dwi_aligned_atlas)
-        os.system("fslmaths {} -mas {} -mas {} {}".format(dwi_aligned_atlas, self.B0_mask, self.wm_gm_int_in_dwi_bin,
-                                                          dwi_aligned_atlas_wmgm_int))
+        os.system("fslmaths {} -mas {} {}".format(dwi_aligned_atlas, self.wm_gm_int_in_dwi_bin,
+                                                  dwi_aligned_atlas_wmgm_int))
 
         return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni
 
@@ -501,8 +501,7 @@ class DmriReg(object):
         For this to succeed, must first have called both t1w2dwi_align and atlas2t1w2dwi_align.
         """
 
-        # Create MNI-space ventricle mask
-        print('Creating MNI-space ventricle ROI...')
+        # Register Lateral Ventricles and Corpus Callosum rois to t1w
         if not os.path.isfile(self.mni_atlas):
             raise ValueError('FSL atlas for ventricle reference not found!')
 

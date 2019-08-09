@@ -613,7 +613,6 @@ def build_workflow(args, retval):
             overlap_thr_list = hardcoded_params['overlap_thr_list'][0]
             step_list = hardcoded_params['step_list']
             curv_thr_list = hardcoded_params['curv_thr_list']
-            life_run = hardcoded_params['life_run'][0]
             nilearn_parc_atlases = hardcoded_params['nilearn_parc_atlases']
             nilearn_coord_atlases = hardcoded_params['nilearn_coord_atlases']
             nilearn_prob_atlases = hardcoded_params['nilearn_prob_atlases']
@@ -1225,7 +1224,7 @@ def build_workflow(args, retval):
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
                                clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples,
                                curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
-                               maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict, embed,
+                               maxcrossing, min_length, directget, tiss_class, runtime_dict, embed,
                                multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
                                multiplex):
         """A function interface for generating a single-subject workflow"""
@@ -1282,7 +1281,7 @@ def build_workflow(args, retval):
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list, disp_filt,
                                     clust_type, clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec,
                                     target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
-                                    max_length, maxcrossing, life_run, min_length, directget, tiss_class, runtime_dict,
+                                    max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict,
                                     embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
                                     vox_size, multiplex)
         wf.add_nodes([meta_wf])
@@ -1417,7 +1416,7 @@ def build_workflow(args, retval):
                          node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose, plugin_type,
                          use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type, clust_type_list,
                          c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
-                         overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
+                         overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing, min_length,
                          directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list,
                          template, template_mask, vox_size, multiplex):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
@@ -1464,7 +1463,7 @@ def build_workflow(args, retval):
                 mask=mask_sub, norm=norm, binary=binary, fbval=fbval_sub, fbvec=fbvec_sub,
                 target_samples=target_samples, curv_thr_list=curv_thr_list, step_list=step_list,
                 overlap_thr=overlap_thr, overlap_thr_list=overlap_thr_list, track_type=track_type,
-                max_length=max_length, maxcrossing=maxcrossing, life_run=life_run, min_length=min_length,
+                max_length=max_length, maxcrossing=maxcrossing, min_length=min_length,
                 directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, embed=embed,
                 multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
                 template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex)
@@ -1508,7 +1507,7 @@ def build_workflow(args, retval):
                                     smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot,
                                     block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list,
                                     step_list, overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing,
-                                    life_run, min_length, directget, tiss_class, runtime_dict, embed, multi_directget,
+                                    min_length, directget, tiss_class, runtime_dict, embed, multi_directget,
                                     multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex)
         import warnings
         warnings.filterwarnings("ignore")
@@ -1575,7 +1574,7 @@ def build_workflow(args, retval):
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
                                     smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask,
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
-                                    overlap_thr_list, track_type, max_length, maxcrossing, life_run, min_length,
+                                    overlap_thr_list, track_type, max_length, maxcrossing, min_length,
                                     directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass,
                                     hpass_list, template, template_mask, vox_size, multiplex)
         import warnings
