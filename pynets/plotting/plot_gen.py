@@ -239,8 +239,11 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
 
     # Add node labels
     for k in range(len(data['nodes'])):
-        data['nodes'][k]['name'] = str(labels[k])
-
+        try:
+            data['nodes'][k]['name'] = str(labels[k])
+        except:
+            pass
+        
     out_file = "%s%s%s" % (dir_path, '/', str(json_fdg_file_name))
     save_json(out_file, data)
 

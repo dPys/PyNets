@@ -205,50 +205,13 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     [streamlines, _] = load_trk(streams)
 
     # Warp streamlines
-    # Create an isocentered affine
-    target_isocenter = np.diag(np.array([-vox_size, vox_size, vox_size, 1]))
-
-    # Take the off-origin affine capturing the extent contrast between fa image and the template
     adjusted_affine = affine_map.affine.copy()
-
-    # Now we flip the sign in the x and y planes so that we get the mirror image of the forward deformation field.
-    adjusted_affine[0][3] = -adjusted_affine[0][3]
-    adjusted_affine[1][3] = -adjusted_affine[1][3]
-
-    # Scale z by the voxel size
-    adjusted_affine[2][3] = adjusted_affine[2][3]/vox_size
-
-    # Scale y by the square of the voxel size since we've already scaled along the z-plane.
-    adjusted_affine[1][3] = adjusted_affine[1][3]/vox_size**2
-
-    # Apply the deformation and correct for the extents
-    mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field(),
-                                         stream_to_current_grid=target_isocenter,
+    adjusted_affine[1][3] = -adjusted_affine[1][3]/vox_size**2
+    mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field()[-1:],
+                                         stream_to_current_grid=template_img.affine,
                                          current_grid_to_world=adjusted_affine,
-                                         stream_to_ref_grid=target_isocenter,
+                                         stream_to_ref_grid=template_img.affine,
                                          ref_grid_to_world=np.eye(4))
-
-    # Check DSN quality, attempt y-flip if DSN fails. Occasionally, orientation affine may be corrupted and this tweak
-    # should handle the inverse case.
-    dm = utils.density_map(mni_streamlines, template_img.shape, affine=np.eye(4)).astype('bool').astype('uint8')
-    in_brain = len(np.vstack(np.where((template_data.astype('uint8') == 1) & (dm.astype('uint8') == 1))).T)
-    out_brain = len(np.vstack(np.where((template_data.astype('uint8') == 0) & (dm.astype('uint8') == 1))).T)
-    if in_brain < out_brain:
-        adjusted_affine[1][3] = -adjusted_affine[1][3]
-        mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field(),
-                                             stream_to_current_grid=target_isocenter,
-                                             current_grid_to_world=adjusted_affine,
-                                             stream_to_ref_grid=target_isocenter,
-                                             ref_grid_to_world=np.eye(4))
-        dm = utils.density_map(mni_streamlines, template_img.shape, affine=np.eye(4)).astype('bool').astype('uint8')
-        in_brain = len(np.vstack(np.where((template_data.astype('uint8') == 1) & (dm.astype('uint8') == 1))).T)
-        out_brain = len(np.vstack(np.where((template_data.astype('uint8') == 0) & (dm.astype('uint8') == 1))).T)
-        if in_brain > out_brain:
-            print('Warning: Direct Streamline Normalization completed successfully only after inverting the y-plane '
-                  'voxel-to-world. This may not be correct, so manual check for corrupted header orientations is '
-                  'recommended.')
-        else:
-            raise ValueError('ERROR: Direct Streamline Normalization failed. Check for corrupted header/affine.')
 
     # Save streamlines
     save_streams(fa_img, mni_streamlines, streams_mni)
