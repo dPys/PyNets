@@ -310,8 +310,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     roi_img = nib.load(atlas_mni)
     atlas_data = roi_img.get_fdata()
 
-    # Instantiate empty networkX graph object & dictionary
-    # Create voxel-affine mapping
+    # Instantiate empty networkX graph object & dictionary and create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4), voxel_size)
     mx = len(np.unique(atlas_data.astype(np.int64))) - 1
     g = nx.Graph(ecount=0, vcount=mx)
@@ -334,13 +333,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         lab_arr = atlas_data[i, j, k]
         endlabels = []
         for lab in np.unique(lab_arr):
-            if lab > 0:
-                if np.sum(lab_arr == lab) >= overlap_thr:
-                    try:
-                        endlabels.append(node_dict[lab])
-                    except:
-                        print('WARNING: Missing node intensities detected in parcellation')
-                        continue
+            if (lab > 0) and (lab in node_dict.keys()) and (np.sum(lab_arr == lab) >= overlap_thr):
+                endlabels.append(node_dict[lab])
 
         edges = combinations(endlabels, 2)
         for edge in edges:
