@@ -308,17 +308,17 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Load parcellation
     roi_img = nib.load(atlas_mni)
-    atlas_data = roi_img.get_fdata()
+    atlas_data = np.around(roi_img.get_fdata())
 
     # Instantiate empty networkX graph object & dictionary and create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4), voxel_size)
-    mx = len(np.unique(atlas_data.astype(np.int64))) - 1
+    mx = len(np.unique(atlas_data.astype('int16'))) - 1
     g = nx.Graph(ecount=0, vcount=mx)
     edge_dict = defaultdict(int)
-    node_dict = dict(zip(np.unique(atlas_data) + 1, np.arange(mx) + 1))
+    node_dict = dict(zip(np.unique(atlas_data.astype('int16')) + 1, np.arange(mx) + 1))
 
     # Add empty vertices
-    for node in range(1, mx+1):
+    for node in range(1, mx + 1):
         g.add_node(node)
 
     # Build graph
@@ -332,8 +332,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
                                       _to_voxel_coordinates(s, lin_T, offset)])).T
         lab_arr = atlas_data[i, j, k]
         endlabels = []
-        for lab in np.unique(lab_arr):
-            if (lab > 0) and (lab in node_dict.keys()) and (np.sum(lab_arr == lab) >= overlap_thr):
+        for lab in np.unique(lab_arr).astype('int16'):
+            if (lab > 0) and (np.sum(lab_arr == lab) >= overlap_thr):
                 endlabels.append(node_dict[lab])
 
         edges = combinations(endlabels, 2)

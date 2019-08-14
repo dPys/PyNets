@@ -107,7 +107,7 @@ def do_dir_path(atlas, in_file):
 
 def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type, hpass, parc):
     """
-    Threshold a functional connectivity matrix using any of a variety of methods.
+    Name the thresholded functional connectivity matrix file based on relevant graph-generating parameters
 
     Parameters
     ----------
@@ -153,15 +153,15 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
     if not os.path.isdir(namer_dir):
         os.mkdir(namer_dir)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
-                                                     '%s' % (network + '_' if network is not None else ''),
-                                                     '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                     'est_', conn_model, '_', thr, thr_type,
-                                                     '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_parc'),
-                                                     "%s" % ("%s%s" % (int(c_boot), '_nb') if float(c_boot) > 0 else ''),
-                                                     "%s" % ("%s%s" % (smooth, '_fwhm') if float(smooth) > 0 else ''),
-                                                     "%s" % ("%s%s" % (hpass, '_Hz') if hpass is not None else ''),
-                                                     '_func.npy')
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
+                                                       '%s' % (network + '_' if network is not None else ''),
+                                                       '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                       'est_', conn_model, '_', thr, thr_type, '_',
+                                                       '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                                       "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
+                                                       "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''),
+                                                       "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None else ''),
+                                                       'func.npy')
 
     return est_path
 
@@ -169,7 +169,7 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
 def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples, track_type, thr_type,
                          parc):
     """
-    Threshold a diffusion structural connectivity matrix using any of a variety of methods.
+    Name the thresholded structural connectivity matrix file based on relevant graph-generating parameters
 
     Parameters
     ----------
@@ -213,19 +213,19 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
     if not os.path.isdir(namer_dir):
         os.mkdir(namer_dir)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
-                                                   '%s' % (network + '_' if network is not None else ''),
-                                                   '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                   'est_', conn_model, '_', thr, thr_type,
-                                                   '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_parc'),
-                                                   "%s" % ("%s%s%s" % ('_', int(target_samples), 'samples') if float(target_samples) > 0 else ''),
-                                                   "%s%s" % ('_', track_type), '_dwi.npy')
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
+                                                     '%s' % (network + '_' if network is not None else ''),
+                                                     '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                     'est_', conn_model, '_', thr, thr_type, '_',
+                                                     '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                                     "%s" % ("%s%s%s" % ('_', int(target_samples), 'samples') if float(target_samples) > 0 else ''),
+                                                     track_type, '_dwi.npy')
     return est_path
 
 
-def create_unthr_path(ID, network, conn_model, roi, dir_path):
+def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth, c_boot, hpass, parc):
     """
-    Threshold a diffusion structural connectivity matrix using any of a variety of methods.
+    Name the raw functional connectivity matrix file based on relevant graph-generating parameters
 
     Parameters
     ----------
@@ -241,22 +241,93 @@ def create_unthr_path(ID, network, conn_model, roi, dir_path):
         File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    smooth : int
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    c_boot : int
+        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    hpass : bool
+        High-pass filter values (Hz) to apply to node-extracted time-series.
+    parc : bool
+        Indicates whether to use parcels instead of coordinates as ROI nodes.
 
     Returns
     -------
-    unthr_path : str
-        File path to .npy file containing raw graph preceding threshoolding.
+    est_path : str
+        File path to .npy file containing graph with all specified combinations of hyperparameter characteristics.
     """
     import os
+    if (node_size is None) and (parc is True):
+        node_size = '_parc'
 
     namer_dir = dir_path + '/graphs'
     if not os.path.isdir(namer_dir):
         os.mkdir(namer_dir)
 
-    unthr_path = "%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
-                                         '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                         'est_', conn_model, '_raw_mat.npy')
-    return unthr_path
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
+                                                 '%s' % (network + '_' if network is not None else ''),
+                                                 '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                 'raw_', conn_model, '_',
+                                                 '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                                 "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
+                                                 "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''),
+                                                 "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None else ''),
+                                                 'func.npy')
+
+    return est_path
+
+
+def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, target_samples, track_type, parc):
+    """
+    Name the raw structural connectivity matrix file based on relevant graph-generating parameters
+
+    Parameters
+    ----------
+    ID : str
+        A subject id or other unique identifier.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        brain subgraphs.
+    conn_model : str
+       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's.
+    target_samples : int
+        Total number of streamline samples specified to generate streams.
+    track_type : str
+        Tracking algorithm used (e.g. 'local' or 'particle').
+    parc : bool
+        Indicates whether to use parcels instead of coordinates as ROI nodes.
+
+    Returns
+    -------
+    est_path : str
+        File path to .npy file containing graph with thresholding applied.
+    """
+    import os
+    if (node_size is None) and (parc is True):
+        node_size = '_parc'
+
+    namer_dir = dir_path + '/graphs'
+    if not os.path.isdir(namer_dir):
+        os.mkdir(namer_dir)
+
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
+                                               '%s' % (network + '_' if network is not None else ''),
+                                               '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                               'raw_', conn_model, '_',
+                                               '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                               "%s" % ("%s%s%s" % ('_', int(target_samples), 'samples') if float(target_samples) > 0 else ''),
+                                               track_type, '_dwi.npy')
+    return est_path
 
 
 def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size):

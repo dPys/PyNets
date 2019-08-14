@@ -457,11 +457,11 @@ class DmriReg(object):
 
         # Set intensities to int
         atlas_img = nib.load(dwi_aligned_atlas)
-        atlas_data = atlas_img.get_fdata().astype('int')
+        atlas_data = np.around(atlas_img.get_fdata()).astype('int16')
         t_img = load_img(self.wm_gm_int_in_dwi)
         mask = math_img('img > 0', img=t_img)
         mask.to_filename(self.wm_gm_int_in_dwi_bin)
-        nib.save(nib.Nifti1Image(atlas_data.astype(np.int32), affine=atlas_img.affine, header=atlas_img.header),
+        nib.save(nib.Nifti1Image(atlas_data.astype('int16'), affine=atlas_img.affine, header=atlas_img.header),
                  dwi_aligned_atlas)
         os.system("fslmaths {} -mas {} {}".format(dwi_aligned_atlas, self.wm_gm_int_in_dwi_bin,
                                                   dwi_aligned_atlas_wmgm_int))
@@ -669,8 +669,8 @@ class FmriReg(object):
 
         # Set intensities to int
         atlas_img = nib.load(aligned_atlas_t1mni)
-        atlas_data = atlas_img.get_fdata().astype('int')
-        nib.save(nib.Nifti1Image(atlas_data.astype(np.int32), affine=atlas_img.affine,
+        atlas_data = np.around(atlas_img.get_fdata()).astype('int16')
+        nib.save(nib.Nifti1Image(atlas_data.astype('int16'), affine=atlas_img.affine,
                                  header=atlas_img.header), aligned_atlas_t1mni)
         os.system("fslmaths {} -mas {} {}".format(aligned_atlas_t1mni, gm_mask_mni, aligned_atlas_t1mni_gm))
 

@@ -72,7 +72,7 @@ def create_parcel_atlas(parcel_list):
     parcel_background = new_img_like(parcel_list[0], np.zeros(parcel_list[0].shape, dtype=bool))
     parcel_list_exp = [parcel_background] + parcel_list
     parcellation = concat_imgs(parcel_list_exp).get_fdata()
-    index_vec = np.array(range(len(parcel_list_exp))) + 1
+    index_vec = np.array(range(len(parcel_list_exp)))
     net_parcels_sum = np.sum(index_vec * parcellation, axis=3)
     net_parcels_map_nifti = nib.Nifti1Image(net_parcels_sum, affine=parcel_list[0].affine)
     return net_parcels_map_nifti, parcel_list_exp
@@ -615,7 +615,7 @@ def gen_img_list(uatlas):
                          'flag exist(s)')
 
     bna_img = nib.load(uatlas)
-    bna_data = np.round(bna_img.get_fdata(), 1)
+    bna_data = np.around(bna_img.get_fdata())
 
     # Get an array of unique parcels
     bna_data_for_coords_uniq = np.unique(bna_data)
