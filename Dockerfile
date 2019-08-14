@@ -71,12 +71,6 @@ RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.d
     apt-get update && \
     apt-get install -y git-lfs
 
-# Installing ANTs 2.2.0 (NeuroDocker build)
-ENV ANTSPATH=/usr/lib/ants
-RUN mkdir -p $ANTSPATH && \
-    curl -sSL "https://dl.dropbox.com/s/2f4sui1z6lcgyek/ANTs-Linux-centos5_x86_64-v2.2.0-0740f91.tar.gz" \
-    | tar -xzC $ANTSPATH --strip-components 1
-
 USER neuro
 WORKDIR /home/neuro
 
@@ -129,9 +123,6 @@ RUN chown -R neuro /opt \
 RUN apt-get remove --purge -y \
     git \
     build-essential
-
-# Delete buggy line in dipy
-RUN sed -i -e '189d;190d' /opt/conda/lib/python3.6/site-packages/dipy/tracking/eudx.py
 
 # Create mountpoints
 RUN mkdir /data && \

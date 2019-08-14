@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
@@ -6,6 +7,9 @@ Copyright (C) 2018
 """
 import numpy as np
 import warnings
+import tkinter
+import matplotlib
+matplotlib.use('agg')
 warnings.filterwarnings("ignore")
 
 
@@ -25,7 +29,6 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig):
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
-    #from pynets.core import thresholding
     from nilearn.plotting import plot_matrix
 
     dpi_resolution = 300
@@ -82,13 +85,14 @@ def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_af
     rois_num = sorted_conn_matrix.shape[0]
     if rois_num < 100:
         try:
-            plot_matrix(conn_matrix, figure=(10, 10), labels=labels, vmax=z_max, vmin=z_min,
+            plot_matrix(conn_matrix, figure=(10, 10), labels=labels, vmax=z_max*0.5, vmin=z_min*0.5,
                         reorder=False, auto_fit=True, grid=False, colorbar=False)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')
     else:
         try:
-            plot_matrix(conn_matrix, figure=(10, 10), vmax=z_max, vmin=z_min, auto_fit=True, grid=False, colorbar=False)
+            plot_matrix(conn_matrix, figure=(10, 10), vmax=z_max*0.5, vmin=z_min*0.5, auto_fit=True, grid=False,
+                        colorbar=False)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')
 

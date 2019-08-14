@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
@@ -114,45 +115,6 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     return tiss_classifier
 
 
-def run_LIFE_all(data, gtab, streamlines):
-    '''
-    Filters tractography streamlines using Linear Fascicle Evaluation (LiFE).
-
-    Parameters
-    ----------
-    data : array
-        4D numpy array of diffusion image data.
-    gtab : Obj
-        DiPy object storing diffusion gradient information.
-    streamlines : ArraySequence
-        DiPy list/array-like object of streamline points from tractography.
-
-    Returns
-    -------
-    streamlines_filt : ArraySequence
-        DiPy list/array-like object of filtered streamline fibers with positive beta-coefficients
-        after fitting LiFE model.
-    mean_rmse : float
-        Root Mean-Squared Error (RMSE) when using LiFE-filtered fibers to predict diffusion data.
-    '''
-    import warnings
-    warnings.filterwarnings("ignore")
-    import dipy.tracking.life as life
-    import dipy.core.optimize as opt
-    fiber_model = life.FiberModel(gtab)
-    fiber_fit = fiber_model.fit(data, streamlines, affine=np.eye(4))
-    streamlines_filt = list(np.array(streamlines)[np.where(fiber_fit.beta > 0)[0]])
-    beta_baseline = np.zeros(fiber_fit.beta.shape[0])
-    pred_weighted = np.reshape(opt.spdot(fiber_fit.life_matrix, beta_baseline),
-                               (fiber_fit.vox_coords.shape[0], np.sum(~gtab.b0s_mask)))
-    mean_pred = np.empty((fiber_fit.vox_coords.shape[0], gtab.bvals.shape[0]))
-    S0 = fiber_fit.b0_signal
-    mean_pred[..., gtab.b0s_mask] = S0[:, None]
-    mean_pred[..., ~gtab.b0s_mask] = (pred_weighted + fiber_fit.mean_signal[:, None]) * S0[:, None]
-    mean_error = mean_pred - fiber_fit.data
-    mean_rmse = np.sqrt(np.mean(mean_error ** 2, -1))
-    return streamlines_filt, mean_rmse
-
 
 def save_streams(dwi_img, streamlines, streams):
     '''
@@ -183,8 +145,8 @@ def save_streams(dwi_img, streamlines, streams):
     trk_hdr['dimensions'] = hdr['dim'][1:4].astype('float32')
     trk_hdr['voxel_sizes'] = hdr['pixdim'][1:4]
     trk_hdr['voxel_to_rasmm'] = trk_affine
-    trk_hdr['voxel_order'] = 'LPS'
-    trk_hdr['pad2'] = 'LPS'
+    trk_hdr['voxel_order'] = 'RAS'
+    trk_hdr['pad2'] = 'RAS'
     trk_hdr['image_orientation_patient'] = np.array([1., 0., 0., 0., 1., 0.]).astype('float32')
     trk_hdr['endianness'] = '<'
     trk_hdr['_offset_data'] = 1000
@@ -195,7 +157,7 @@ def save_streams(dwi_img, streamlines, streams):
     return streams
 
 
-def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_length, conn_model, target_samples,
+def filter_streamlines(dwi_file, dir_path, gtab, streamlines, min_length, conn_model, target_samples,
                        node_size, curv_thr_list, step_list, network, roi):
     '''
     Perform various routines for reducing false-positive streamlines from tractography.
@@ -210,8 +172,6 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
         DiPy object storing diffusion gradient information.
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
-    life_run : bool
-        Indicates whether to perform Linear Fascicle Evaluation (LiFE).
     min_length : int
         Minimum fiber length threshold in mm.
     conn_model : str
@@ -245,7 +205,7 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
     import os
     import os.path as op
     from dipy.tracking import utils
-    from pynets.dmri.track import save_streams, run_LIFE_all
+    from pynets.dmri.track import save_streams
 
     dwi_img = nib.load(dwi_file)
     data = dwi_img.get_fdata()
@@ -253,17 +213,6 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
     # Flatten streamlines list, and apply min length filter
     print('Filtering streamlines...')
     streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in streamlines if len(s) > float(min_length)])
-
-    # Fit LiFE model
-    if life_run is True:
-        print('Fitting LiFE...')
-        # Fit Linear Fascicle Evaluation (LiFE)
-        [streamlines, rmse] = run_LIFE_all(data, gtab, streamlines)
-        mean_rmse = np.mean(rmse)
-        print("%s%s" % ('Mean RMSE: ', mean_rmse))
-        if mean_rmse > 50:
-            print('WARNING: LiFE revealed high model error. Check streamlines output and review tracking parameters '
-                  'used.')
 
     # Create density map
     dm = utils.density_map(streamlines, dwi_img.shape, affine=np.eye(4))
@@ -298,8 +247,8 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_leng
 
 
 def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere, directget,
-                   curv_thr_list, step_list, track_type, maxcrossing, max_length, n_seeds_per_iter=200,
-                   pft_back_tracking_dist=2, pft_front_tracking_dist=1, particle_count=15, roi_neighborhood_tol=8):
+                   curv_thr_list, step_list, track_type, maxcrossing, max_length, roi_neighborhood_tol,
+                   n_seeds_per_iter=200, pft_back_tracking_dist=2, pft_front_tracking_dist=1, particle_count=15):
     """
     Perform native-space ensemble tractography, restricted to a vector of ROI masks.
 
@@ -330,6 +279,12 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
         Maximum number if diffusion directions that can be assumed per voxel while tracking.
     max_length : int
         Maximum fiber length threshold in mm to restrict tracking.
+    roi_neighborhood_tol : float
+        Distance (in the units of the streamlines, usually mm). If any
+        coordinate in the streamline is within this distance from the center
+        of any voxel in the ROI, the filtering criterion is set to True for
+        this streamline, otherwise False. Defaults to the distance between
+        the center of each voxel and the corner of the voxel.
     n_seeds_per_iter : int
         Number of seeds from which to initiate tracking for each unique ensemble combination.
         By default this is set to 200.
@@ -345,12 +300,6 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
         default this is set to 1 mm.
     particle_count : int
         Number of particles to use in the particle filter.
-    roi_neighborhood_tol : float
-        Distance (in the units of the streamlines, usually mm). If any
-        coordinate in the streamline is within this distance from the center
-        of any voxel in the ROI, the filtering criterion is set to True for
-        this streamline, otherwise False. Defaults to the distance between
-        the center of each voxel and the corner of the voxel.
 
     Returns
     -------
@@ -377,22 +326,19 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
 
             # Instantiate DirectionGetter
             if directget == 'prob':
-                dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
-                                                               sphere=sphere)
+                dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere)
             elif directget == 'boot':
-                dg = BootDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
-                                                      sphere=sphere)
+                dg = BootDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere)
             elif directget == 'clos':
-                dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
-                                                             sphere=sphere)
+                dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere)
             elif directget == 'det':
-                dg = DeterministicMaximumDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr),
-                                                                      sphere=sphere)
+                dg = DeterministicMaximumDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere)
             else:
                 raise ValueError('ERROR: No valid direction getter(s) specified.')
 
             for step in step_list:
                 print("%s%s" % ('Step: ', step))
+
                 # Perform wm-gm interface seeding, using n_seeds at a time
                 seeds = utils.random_seeds_from_mask(atlas_data_wm_gm_int > 0, seeds_count=n_seeds_per_iter,
                                                      seed_count_per_voxel=False, affine=np.eye(4))
@@ -400,6 +346,7 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
                     raise RuntimeWarning('Warning: No valid seed points found in wm-gm interface...')
 
                 print(seeds)
+
                 # Perform tracking
                 if track_type == 'local':
                     streamline_generator = LocalTracking(dg, tiss_classifier, seeds, np.eye(4),
@@ -443,8 +390,8 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
 def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels_im_file_wm_gm_int,
               labels_im_file, target_samples, curv_thr_list, step_list, track_type, max_length, maxcrossing, directget,
               conn_model, gtab_file, dwi_file, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
-              prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, life_run, min_length,
-              fa_path):
+              prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, min_length,
+              fa_path, roi_neighborhood_tol=2):
     '''
     Run all ensemble tractography and filtering routines.
 
@@ -524,12 +471,16 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
         unweighted graph.
     atlas_mni : str
         File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
-    life_run : bool
-        Indicates whether to perform Linear Fascicle Evaluation (LiFE).
     min_length : int
         Minimum fiber length threshold in mm.
     fa_path : str
         File path to FA Nifti1Image.
+    roi_neighborhood_tol : float
+        Distance (in the units of the streamlines, usually mm). If any
+        coordinate in the streamline is within this distance from the center
+        of any voxel in the ROI, the filtering criterion is set to True for
+        this streamline, otherwise False. Defaults to the distance between
+        the center of each voxel and the corner of the voxel.
 
     Returns
     -------
@@ -656,13 +607,14 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
 
     # Commence Ensemble Tractography
     streamlines = track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere,
-                                 directget, curv_thr_list, step_list, track_type, maxcrossing, max_length)
+                                 directget, curv_thr_list, step_list, track_type, maxcrossing, max_length,
+                                 roi_neighborhood_tol)
     print('Tracking Complete')
 
     # Perform streamline filtering routines
     dir_path = utils.do_dir_path(atlas, dwi_file)
-    [streams, dir_path, dm_path] = filter_streamlines(dwi_file, dir_path, gtab, streamlines, life_run, min_length,
+    [streams, dir_path, dm_path] = filter_streamlines(dwi_file, dir_path, gtab, streamlines, min_length,
                                                       conn_model, target_samples, node_size, curv_thr_list, step_list,
                                                       network, roi)
 
-    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path, directget
+    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path, directget, roi_neighborhood_tol

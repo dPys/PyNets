@@ -15,8 +15,6 @@ curv_thr_list:
     - 60
     - 30
     - 10
-life_run:
-    - False
 nilearn_parc_atlases:
     - 'atlas_harvard_oxford'
     - 'atlas_aal'

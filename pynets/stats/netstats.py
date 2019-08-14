@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
@@ -9,6 +10,9 @@ import numpy as np
 import networkx as nx
 import warnings
 warnings.simplefilter("ignore")
+import tkinter
+import matplotlib
+matplotlib.use('agg')
 
 
 def timeout(seconds):
@@ -851,6 +855,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
         import _pickle as pickle
     from pathlib import Path
     from pynets.core import thresholding, utils
+    from graspy.utils import pass_to_ranks
 
     # Advanced options
     fmt = 'edgelist_ssv'
@@ -866,12 +871,24 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     in_mat = np.array(np.array(thresholding.autofix(in_mat_raw)))
 
     # Normalize connectivity matrix
-    # Force edges to values between 0-1
+    # By maximum edge weight
     if norm == 1:
         in_mat = thresholding.normalize(in_mat)
     # Apply log10
     elif norm == 2:
         in_mat = np.log10(in_mat)
+    # Apply PTR simple-nonzero
+    elif norm == 3:
+        in_mat = pass_to_ranks(in_mat, method="simple-nonzero")
+    # Apply PTR simple-all
+    elif norm == 4:
+        in_mat = pass_to_ranks(in_mat, method="simple-all")
+    # Apply PTR zero-boost
+    elif norm == 5:
+        in_mat = pass_to_ranks(in_mat, method="zero-boost")
+    # Apply standardization [0, 1]
+    elif norm == 6:
+        in_mat = thresholding.standardize(in_mat)
     else:
         pass
 

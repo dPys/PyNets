@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov  7 10:40:07 2017
+Copyright (C) 2018
+@author: Derek Pisner & James Kunert-Graf
+"""
 import numpy as np
 from copy import copy
 from collections import Counter
@@ -17,8 +24,8 @@ def countmotifs(A, N=4):
 
     Returns
     -------
-    umotifs :
-
+    umotifs : int
+        Total count of size N motifs for graph A.
     '''
     assert N in [3, 4], "Only motifs of size N=3,4 currently supported"
     X2 = np.array([[k] for k in range(A.shape[0]-1)])
@@ -46,22 +53,43 @@ def countmotifs(A, N=4):
     return umotifs
 
 
-def adaptivethresh(in_mat, thr, m4lib):
-    mf = countmotifs((in_mat > thr).astype(int), N=4)
-    mf = np.array([mf[k] for k in m4lib])
+def adaptivethresh(in_mat, thr, mlib, N):
+    '''
+    Counts number of motifs with a given absolute threshold.
+
+    Parameters
+    ----------
+    in_mat : ndarray
+        M x M Connectivity matrix
+    thr : float
+        Absolute threshold [0, 1].
+    mlib : list
+        List of motif classes.
+
+    Returns
+    -------
+    mf : ndarray
+        1D vector listing the total motifs of size N for each
+        class of mlib.
+    '''
+    from pynets.stats.netmotifs import countmotifs
+    mf = countmotifs((in_mat > thr).astype(int), N=N)
+    try:
+        mf = np.array([mf[k] for k in mlib])
+    except:
+        mf = np.zeros(N)
     return mf
 
 
 def compare_motifs(struct_mat, func_mat, name, bins=50, N=4):
-    from pynets.stats.netmotifs import adaptivethresh, countmotifs
-    from pynets.core.thresholding import normalize
-    from graspy.utils import pass_to_ranks
+    from pynets.stats.netmotifs import adaptivethresh
+    from pynets.core.thresholding import standardize
     from scipy import spatial
     import pandas as pd
     from py3plex.core import multinet
 
     # Structural graph threshold window
-    struct_mat = pass_to_ranks(np.abs(normalize(struct_mat)))
+    struct_mat = standardize(struct_mat)
     dims_struct = struct_mat.shape[0]
     struct_mat[range(dims_struct), range(dims_struct)] = 0
     tmin_struct = struct_mat.min()
@@ -69,7 +97,7 @@ def compare_motifs(struct_mat, func_mat, name, bins=50, N=4):
     threshes_struct = np.linspace(tmin_struct, tmax_struct, bins)
 
     # Functional graph threshold window
-    func_mat = pass_to_ranks(np.abs(normalize(func_mat)))
+    func_mat = standardize(func_mat)
     dims_func = func_mat.shape[0]
     func_mat[range(dims_func), range(dims_func)] = 0
     tmin_func = func_mat.min()
@@ -80,27 +108,27 @@ def compare_motifs(struct_mat, func_mat, name, bins=50, N=4):
     assert np.all(func_mat == func_mat.T), "Functional Matrix must be symmetric"
 
     # list of
-    m4lib = ['1113', '1122', '1223', '2222', '2233', '3333']
+    mlib = ['1113', '1122', '1223', '2222', '2233', '3333']
 
     # Count motifs
+    print("%s%s%s%s" % ('Mining ', N, '-node motifs: ', mlib))
     motif_dict = {}
     for thr_struct, thr_func in list(itertools.product(threshes_struct, threshes_func)):
-        print('Structural threshold: ', thr_struct)
-        print('Functional threshold: ', thr_func)
-
         # Count
-        try:
-            at_struct = adaptivethresh(struct_mat, float(thr_struct), m4lib)
-        except:
-            at_struct = 0
-        try:
-            at_func = adaptivethresh(func_mat, float(thr_func), m4lib)
-        except:
-            at_func = 0
+        at_struct = adaptivethresh(struct_mat, float(thr_struct), mlib, N)
+        at_func = adaptivethresh(func_mat, float(thr_func), mlib, N)
 
-        motif_dict['struct_' + str(np.round(thr_struct, 4)) + '_func_' + str(np.round(thr_func, 4))] = {}
-        motif_dict['struct_' + str(np.round(thr_struct, 4)) + '_func_' + str(np.round(thr_func, 4))]['struct'] = at_struct
-        motif_dict['struct_' + str(np.round(thr_struct, 4)) + '_func_' + str(np.round(thr_func, 4))]['func'] = at_func
+        motif_dict["%s%s%s%s" % ('struct_', np.round(thr_struct, 4), '_func_',
+                                 np.round(thr_func, 4))] = {}
+        motif_dict["%s%s%s%s" % ('struct_', np.round(thr_struct, 4), '_func_',
+                                 np.round(thr_func, 4))]['struct'] = at_struct
+        motif_dict["%s%s%s%s" % ('struct_', np.round(thr_struct, 4), '_func_',
+                                 np.round(thr_func, 4))]['func'] = at_func
+
+        print("%s%s%s%s%s" % ('Layer 1 (structural) with absolute threshold of : ', thr_struct, ' yields ',
+                              np.sum(at_struct), ' total motifs'))
+        print("%s%s%s%s%s" % ('Layer 2 (functional) with absolute threshold of : ', thr_func, ' yields ',
+                              np.sum(at_func), ' total motifs'))
 
     for k, v in list(motif_dict.items()):
         if np.sum(v['struct']) == 0 or np.sum(v['func']) == 0:
@@ -170,10 +198,9 @@ def compare_motifs(struct_mat, func_mat, name, bins=50, N=4):
 
     # Take the top 25th percentile
     df = df[df['dist'] < df['dist'].quantile(0.25)]
-
     best_threshes = []
     best_mats = []
-    best_graphs = []
+    #best_graphs = []
     best_multigraphs = []
     for str in list(df.index):
         func_mat_tmp = func_mat.copy()
@@ -187,15 +214,15 @@ def compare_motifs(struct_mat, func_mat, name, bins=50, N=4):
         best_mats.append((func_mat_tmp, struct_mat_tmp))
 
         G = build_nx_multigraph(func_mat, struct_mat, str)
-        best_graphs.append(G)
+        #best_graphs.append(G)
 
         B = multinet.multi_layer_network(network_type="multiplex", directed=False)
         B.add_edges([[x, 1, y, 2, z] for x, y, z in list(G.edges)], input_type="list")
         best_multigraphs.append(B)
 
-    mg_dict = dict(zip(best_threshes, best_mats))
+    mg_dict = dict(zip(best_threshes, best_multigraphs))
 
-    return best_multigraphs, mg_dict
+    return mg_dict
 
 
 def build_nx_multigraph(func_mat, struct_mat, name):
@@ -210,10 +237,6 @@ def build_nx_multigraph(func_mat, struct_mat, name):
 
 
 def build_multigraphs(est_path_iterlist, ID):
-    import warnings
-    warnings.filterwarnings("ignore")
-    import yaml
-    from pathlib import Path
     """
     Constructs a multimodal multigraph for each available resolution of vertices.
 
@@ -223,7 +246,17 @@ def build_multigraphs(est_path_iterlist, ID):
         List of file paths to .npy file containing graph.
     ID : str
         A subject id or other unique identifier.
+
+    Returns
+    -------
+    ml_graph_path_list : list
+        List of path strings to multilayer graph edgelists.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
+    import yaml
+    import os
+    from pathlib import Path
     # Available functional and structural connectivity models
     with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
         hardcoded_params = yaml.load(stream)
@@ -236,20 +269,18 @@ def build_multigraphs(est_path_iterlist, ID):
         except KeyError:
             print('ERROR: available structural models not sucessfully extracted from runconfig.yaml')
 
-    out_path = None
     atlases = list(set([x.split('/')[-3].split('/')[0] for x in est_path_iterlist]))
     parcel_dict_func = dict.fromkeys(atlases)
     parcel_dict_dwi = dict.fromkeys(atlases)
-
     est_path_iterlist_dwi = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in
                                       struct_models]))
     est_path_iterlist_func = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in
                                        func_models]))
 
     func_subnets = list(set([i.split('_est')[0].split('/')[-1] for i in est_path_iterlist_func]))
-
     dwi_subnets = list(set([i.split('_est')[0].split('/')[-1] for i in est_path_iterlist_dwi]))
 
+    multigraph_list_all = []
     for atlas in atlases:
         if len(func_subnets) > 1:
             parcel_dict_func[atlas] = {}
@@ -284,20 +315,33 @@ def build_multigraphs(est_path_iterlist, ID):
                     parcel_dict_func[atlas].append(graph_path)
 
         parcel_dict = {}
-        # Create dictionary of all possible pairs of structural-functional graphs for each unique resolution of odf_vertices
+        # Create dictionary of all possible pairs of structural-functional graphs for each unique resolution of vertices
         for res in list(set([i for i in parcel_dict_dwi.keys() if i in parcel_dict_func.keys()])):
             parcel_dict[res] = list(set(itertools.product(parcel_dict_dwi[res], parcel_dict_func[res])))
 
+        dir_path = str(Path(os.path.dirname(est_path_iterlist_dwi[0])).parent)
+        namer_dir = dir_path + '/graphs_multilayer'
+        if not os.path.isdir(namer_dir):
+            os.mkdir(namer_dir)
+        ml_graph_path_list = []
         multigraph_list = []
         for res in list(parcel_dict.keys()):
             for struct_graph_path, func_graph_path in parcel_dict[res]:
                 struct_mat = np.load(struct_graph_path)
                 func_mat = np.load(func_graph_path)
-                name = "%s%s%s%s%s" % (ID, '_multigraph_LAYER1_', struct_graph_path.split('/')[-1].split('.npy')[0],
-                                       '_LAYER2_', func_graph_path.split('/')[-1].split('.npy')[0])
-                [mlgraphs, mldict] = compare_motifs(func_mat, struct_mat, name)
-                multigraph_list.append(mlgraphs)
+                name = "%s%s%s%s%s%s%s" % (ID, '_', res, '_multigraph_LAYER1_',
+                                           struct_graph_path.split('/')[-1].split('.npy')[0],
+                                           '_LAYER2_', func_graph_path.split('/')[-1].split('.npy')[0])
+                mldict = compare_motifs(func_mat, struct_mat, name)
+                multigraph_list.append(mldict)
+                for thr in list(mldict.keys()):
+                    multigraph = mldict[thr]
+                    out_path = "%s%s%s%s%s%s%s%s" % (namer_dir, '/struct_func_mtlayer_', atlas, '_', name, '_thr',
+                                                     thr, '.edgelist')
+                    multigraph.save_network(out_path)
+                    ml_graph_path_list.append(out_path)
+        multigraph_list_all.append(ml_graph_path_list)
 
-    return multigraph_list
+    return multigraph_list_all
 
 

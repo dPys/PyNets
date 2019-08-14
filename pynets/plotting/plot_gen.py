@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
@@ -8,6 +9,9 @@ import numpy as np
 import networkx as nx
 import os.path as op
 import warnings
+import tkinter
+import matplotlib
+matplotlib.use('agg')
 warnings.filterwarnings("ignore")
 
 
@@ -825,6 +829,21 @@ def structural_glass_brain_plotting(conn_matrix, uatlas, streamlines_mni, templa
         fig_path = os.path.dirname(streamlines_mni) + '/3d_connectome_fig.png'
         window.record(r, out_path=fig_path, size=(600, 600))
 
+    return
+
+
+def show_template_bundles(final_streamlines, template_path, fname):
+    import nibabel as nib
+    from fury import actor, window
+    renderer = window.Renderer()
+    template_img_data = nib.load(template_path).get_data().astype('bool')
+    template_actor = actor.contour_from_roi(template_img_data,
+                                            color=(50, 50, 50), opacity=0.05)
+    renderer.add(template_actor)
+    lines_actor = actor.streamtube(final_streamlines, window.colors.orange,
+                                   linewidth=0.3)
+    renderer.add(lines_actor)
+    window.record(renderer, n_frames=1, out_path=fname, size=(900, 900))
     return
 
 
