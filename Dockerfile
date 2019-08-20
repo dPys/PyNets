@@ -97,10 +97,6 @@ RUN git clone -b development https://github.com/dPys/PyNets PyNets && \
     pip install -r requirements.txt && \
     python setup.py install
 
-RUN git clone https://github.com/neurodata/graspy graspy && \
-    cd graspy && \
-    python setup.py install
-
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
 
