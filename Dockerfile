@@ -97,7 +97,7 @@ RUN git clone -b development https://github.com/dPys/PyNets PyNets && \
     pip install -r requirements.txt && \
     python setup.py install
 
-RUN git clone -b jrdpg https://github.com/neurodata/graspy graspy && \
+RUN git clone https://github.com/neurodata/graspy graspy && \
     cd graspy && \
     python setup.py install
 
