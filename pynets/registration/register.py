@@ -19,7 +19,7 @@ except KeyError:
 
 
 def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_samples, conn_model, network, node_size,
-                           dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas,
+                           dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, labels_im_file, uatlas,
                            labels, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list, directget):
     """
     A Function to perform normalization of streamlines tracked in native diffusion space to an
@@ -64,6 +64,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
         Indicates whether to prune final graph of disconnected nodes/isolates.
     atlas : str
         Name of atlas parcellation used.
+    labels_im_file : str
+        File path to atlas parcellation Nifti1Image aligned to dwi space.
     uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
@@ -160,6 +162,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     from dipy.tracking import utils
     import pkg_resources
     import os.path as op
+    import copy
+    from nilearn.image import resample_to_img
 
     dsn_dir = "%s%s" % (basedir_path, '/dmri_tmp/DSN')
     if not os.path.isdir(dsn_dir):
@@ -222,6 +226,25 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     # DSN QC plotting
     plot_gen.show_template_bundles(mni_streamlines, template_path, streams_warp_png)
+
+    # Map parcellation from native space back to MNI-space and create an 'uncertainty-union' with original mni-space uatlas
+    atlas_img = nib.load(labels_im_file)
+    uatlas_mni_img = nib.load(uatlas)
+    warped_uatlas = affine_map.transform_inverse(mapping.transform(atlas_img.get_data().astype('int16'),
+                                                                   interpolation='nearestneighbour'),
+                                                 interp='nearest')
+    union_ua = "%s%s%s%s" % (os.path.dirname(uatlas), '/', os.path.basename(uatlas).split('.nii.gz')[0],
+                             '_UNION.nii.gz')
+
+    warped_uatlas_img = nib.Nifti1Image(warped_uatlas, affine=template_img.affine)
+    warped_uatlas_img_res = resample_to_img(warped_uatlas_img, uatlas_mni_img, interpolation='nearest', clip=False)
+    warped_uatlas_img_res_data = warped_uatlas_img_res.get_data()
+    uatlas_mni_data = uatlas_mni_img.get_data()
+    overlap_mask = np.invert(warped_uatlas_img_res_data.astype('bool') * uatlas_mni_data.astype('bool'))
+    union_atlas = warped_uatlas_img_res_data * overlap_mask.astype('int') + uatlas_mni_data * overlap_mask.astype('int')
+    union_atlas_corr = union_atlas + np.invert(overlap_mask).astype('int')*uatlas_mni_data
+    nib.save(nib.Nifti1Image(union_atlas_corr, affine=template_img.affine), union_ua)
+    atlas_mni = union_ua
 
     return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget, warped_fa
 
@@ -457,11 +480,11 @@ class DmriReg(object):
 
         # Set intensities to int
         atlas_img = nib.load(dwi_aligned_atlas)
-        atlas_data = atlas_img.get_fdata().astype('int')
+        atlas_data = np.around(atlas_img.get_fdata()).astype('int16')
         t_img = load_img(self.wm_gm_int_in_dwi)
         mask = math_img('img > 0', img=t_img)
         mask.to_filename(self.wm_gm_int_in_dwi_bin)
-        nib.save(nib.Nifti1Image(atlas_data.astype(np.int32), affine=atlas_img.affine, header=atlas_img.header),
+        nib.save(nib.Nifti1Image(atlas_data.astype('int16'), affine=atlas_img.affine, header=atlas_img.header),
                  dwi_aligned_atlas)
         os.system("fslmaths {} -mas {} {}".format(dwi_aligned_atlas, self.wm_gm_int_in_dwi_bin,
                                                   dwi_aligned_atlas_wmgm_int))
@@ -518,7 +541,7 @@ class DmriReg(object):
 
         # Threshold CSF to binary in dwi space
         thr_img = nib.load(self.csf_mask_dwi)
-        thr_img.get_fdata()[thr_img.get_fdata() < 0.95] = 0
+        thr_img.get_fdata()[thr_img.get_fdata() < 0.99] = 0
         nib.save(thr_img, self.csf_mask_dwi)
 
         # Threshold WM to binary in dwi space
@@ -669,8 +692,8 @@ class FmriReg(object):
 
         # Set intensities to int
         atlas_img = nib.load(aligned_atlas_t1mni)
-        atlas_data = atlas_img.get_fdata().astype('int')
-        nib.save(nib.Nifti1Image(atlas_data.astype(np.int32), affine=atlas_img.affine,
+        atlas_data = np.around(atlas_img.get_fdata()).astype('int16')
+        nib.save(nib.Nifti1Image(atlas_data.astype('int16'), affine=atlas_img.affine,
                                  header=atlas_img.header), aligned_atlas_t1mni)
         os.system("fslmaths {} -mas {} {}".format(aligned_atlas_t1mni, gm_mask_mni, aligned_atlas_t1mni_gm))
 

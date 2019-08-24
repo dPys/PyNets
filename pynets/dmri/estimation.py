@@ -156,7 +156,7 @@ def csd_mod_est(gtab, data, wm_in_dwi):
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
                   dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels,
-                  coords, norm, binary, directget, warped_fa, error_margin, voxel_size='2mm', fa_wei=True):
+                  coords, norm, binary, directget, warped_fa, voxel_size='2mm', fa_wei=True):
     '''
     Use tracked streamlines as a basis for estimating a structural connectome.
 
@@ -219,8 +219,6 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         and prob (probabilistic).
     warped_fa : str
         File path to MNI-space warped FA Nifti1Image.
-    error_margin : int
-        Euclidean margin of error for classifying a streamline as a connection to an ROI.
     voxel_size : str
         Target isotropic voxel resolution of all input Nifti1Image files.
     fa_wei :  bool
@@ -290,7 +288,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     import networkx as nx
     from itertools import combinations
     from collections import defaultdict
-    from pynets.core import nodemaker, utils
+    from pynets.core import utils
     import time
 
     # Read Streamlines
@@ -308,17 +306,17 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Load parcellation
     roi_img = nib.load(atlas_mni)
-    atlas_data = roi_img.get_fdata()
+    atlas_data = np.around(roi_img.get_fdata())
 
     # Instantiate empty networkX graph object & dictionary and create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4), voxel_size)
-    mx = len(np.unique(atlas_data.astype(np.int64))) - 1
+    mx = len(np.unique(atlas_data.astype('int16'))) - 1
     g = nx.Graph(ecount=0, vcount=mx)
     edge_dict = defaultdict(int)
-    node_dict = dict(zip(np.unique(atlas_data) + 1, np.arange(mx) + 1))
+    node_dict = dict(zip(np.unique(atlas_data.astype('int16')) + 1, np.arange(mx) + 1))
 
     # Add empty vertices
-    for node in range(1, mx+1):
+    for node in range(1, mx + 1):
         g.add_node(node)
 
     # Build graph
@@ -327,14 +325,18 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     ix = 0
     for s in streamlines:
         # Map the streamlines coordinates to voxel coordinates and get labels for label_volume
-        i, j, k = np.vstack(np.array([nodemaker.get_sphere(coord, error_margin, roi_img.header.get_zooms(),
-                                                           roi_img.shape) for coord in
-                                      _to_voxel_coordinates(s, lin_T, offset)])).T
+        points = _to_voxel_coordinates(s, lin_T, offset)
+
+        # get labels for label_volume
+        i, j, k = points.T
         lab_arr = atlas_data[i, j, k]
         endlabels = []
-        for lab in np.unique(lab_arr):
-            if (lab > 0) and (lab in node_dict.keys()) and (np.sum(lab_arr == lab) >= overlap_thr):
-                endlabels.append(node_dict[lab])
+        for lab in np.unique(lab_arr).astype('int16'):
+            if (lab > 0) and (np.sum(lab_arr == lab) >= overlap_thr):
+                try:
+                    endlabels.append(node_dict[lab])
+                except:
+                    print("%s%s%s" % ('Label ', lab, ' missing from parcellation...'))
 
         edges = combinations(endlabels, 2)
         for edge in edges:

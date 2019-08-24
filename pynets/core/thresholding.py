@@ -815,7 +815,8 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         raise ValueError('ERROR: Raw connectivity matrix contains only zeros.')
 
     # Save unthresholded
-    unthr_path = utils.create_unthr_path(ID, network, conn_model, roi, dir_path)
+    unthr_path = utils.create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth, c_boot,
+                                            hpass, parc)
     utils.save_mat(conn_matrix, unthr_path)
 
     if min_span_tree is True:
@@ -989,7 +990,8 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
         raise ValueError('ERROR: Raw connectivity matrix contains only zeros.')
 
     # Save unthresholded
-    unthr_path = utils.create_unthr_path(ID, network, conn_model, roi, dir_path)
+    unthr_path = utils.create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, target_samples,
+                                            track_type, parc)
     utils.save_mat(conn_matrix, unthr_path)
 
     if min_span_tree is True:

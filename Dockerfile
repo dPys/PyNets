@@ -89,16 +89,12 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
 RUN conda install -yq python=3.6 ipython
 RUN pip install --upgrade pip
 RUN conda clean -tipsy
-RUN pip install awscli pybids boto3 python-dateutil requests dipy
+RUN pip install awscli pybids boto3 python-dateutil requests dipy scikit-image
 
 RUN git clone -b development https://github.com/dPys/PyNets PyNets && \
     chmod 775 -R PyNets/*/*.py && \
     cd PyNets && \
     pip install -r requirements.txt && \
-    python setup.py install
-
-RUN git clone -b jrdpg https://github.com/neurodata/graspy graspy && \
-    cd graspy && \
     python setup.py install
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
@@ -179,4 +175,4 @@ RUN python -c "from matplotlib import font_manager" && \
     sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
 
 # and add it as an entrypoint
-ENTRYPOINT ["pynets_run"]
+ENTRYPOINT ["pynets_run.py"]

@@ -348,7 +348,6 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
     """
     import warnings
     warnings.filterwarnings("ignore")
-    import os
     import os.path as op
     from pynets.registration.reg_utils import reorient_dwi, reorient_img, match_target_vox_res
 
@@ -356,36 +355,34 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
     img = nib.load(infile)
     vols = img.shape[-1]
 
-    reoriented = "%s%s%s%s" % (outdir, '/', infile.split('/')[-1].split('.nii.gz')[0], '_reor.nii.gz')
-    resampled = "%s%s%s%s" % (outdir, '/', os.path.basename(infile).split('.nii.gz')[0], '_res.nii.gz')
-
     # Check orientation
     if (vols > 1) and (bvecs is not None):
         # dwi case
         # Check orientation
-        if not os.path.isfile(reoriented) or (overwrite is True):
+        if ('RAS' not in infile) or (overwrite is True):
             [infile, bvecs] = reorient_dwi(infile, bvecs, outdir)
         # Check dimensions
-        if not os.path.isfile(resampled) or (overwrite is True):
+        if ('reor' not in infile) or (overwrite is True):
             outfile = match_target_vox_res(infile, vox_size, outdir)
+            print(outfile)
     elif (vols > 1) and (bvecs is None):
         # func case
         # Check orientation
-        if not os.path.isfile(reoriented) or (overwrite is True):
+        if ('RAS' not in infile) or (overwrite is True):
             infile = reorient_img(infile, outdir)
         # Check dimensions
-        if not os.path.isfile(resampled) or (overwrite is True):
+        if ('reor' not in infile) or (overwrite is True):
             outfile = match_target_vox_res(infile, vox_size, outdir)
+            print(outfile)
     else:
         # t1w case
         # Check orientation
-        if not os.path.isfile(reoriented) or (overwrite is True):
+        if ('RAS' not in infile) or (overwrite is True):
             infile = reorient_img(infile, outdir)
-        if not os.path.isfile(resampled) or (overwrite is True):
+        if ('reor' not in infile) or (overwrite is True):
             # Check dimensions
             outfile = match_target_vox_res(infile, vox_size, outdir)
-
-    print(outfile)
+            print(outfile)
 
     if bvecs is None:
         return outfile
@@ -474,7 +471,7 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
             output_array[this_axnum] = bvec_array[int(axnum)] * float(flip)
         np.savetxt(out_bvec_fname, output_array, fmt="%.8f ")
     else:
-        out_fname = "%s%s%s%s" % (out_dir, '/', dwi_prep.split('/')[-1].split('.nii.gz')[0], '_RAS.nii.gz')
+        out_fname = "%s%s%s%s" % (out_dir, '/', dwi_prep.split('/')[-1].split('.nii.gz')[0], '_noreor_RAS.nii.gz')
         out_bvec_fname = bvec_fname
 
     normalized.to_filename(out_fname)
@@ -512,7 +509,7 @@ def reorient_img(img, out_dir):
         print("%s%s%s" % ('Reorienting ', img, ' to RAS+...'))
         out_name = "%s%s%s%s" % (out_dir, '/', img.split('/')[-1].split('.nii.gz')[0], '_reor_RAS.nii.gz')
     else:
-        out_name = "%s%s%s%s" % (out_dir, '/', img.split('/')[-1].split('.nii.gz')[0], '_RAS.nii.gz')
+        out_name = "%s%s%s%s" % (out_dir, '/', img.split('/')[-1].split('.nii.gz')[0], '_noreor_RAS.nii.gz')
 
     normalized.to_filename(out_name)
 
@@ -554,13 +551,15 @@ def match_target_vox_res(img_file, vox_size, out_dir):
 
     if (abs(zooms[0]), abs(zooms[1]), abs(zooms[2])) != new_zooms:
         print('Reslicing image ' + img_file + ' to ' + vox_size + '...')
-        img_file_res = "%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii.gz')[0], '_res.nii.gz')
+        img_file_res = "%s%s%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii.gz')[0], '_res',
+                                         vox_size, '.nii.gz')
         data2, affine2 = reslice(data, affine, zooms, new_zooms)
         img2 = nib.Nifti1Image(data2, affine=affine2)
         nib.save(img2, img_file_res)
         img_file = img_file_res
     else:
-        img_file_nores = "%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii.gz')[0], '_nores.nii.gz')
+        img_file_nores = "%s%s%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii.gz')[0], '_nores',
+                                           vox_size, '.nii.gz')
         nib.save(img, img_file_nores)
         img_file = img_file_nores
 

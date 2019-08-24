@@ -732,6 +732,8 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas):
                               mask=mask_img)
     clust_est.fit(func_img)
     region_labels = connected_label_regions(clust_est.labels_img_)
+    # TODO
+    # Remove spurious regions < 1500 m^3 in size
     nib.save(region_labels, uatlas)
     print("%s%s%s" % (clust_type, k, " clusters: %.2fs" % (time.time() - start)))
     return region_labels
