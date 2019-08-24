@@ -8,7 +8,6 @@ numpydoc>=0.8.0
 nibabel>=2.2.1
 seaborn>=0.7.1
 matplotlib>=2.2.0
-#skggm>=0.2.7
 pytest>=3.3.1
 networkx>=2.0
 nipype>=1.1.0
@@ -19,6 +18,8 @@ boto3>=1.9.111
 pybids>=0.6.4
 colorama>=0.3.9
 python-louvain==0.13
-graspy>=0.0.2
-py3plex>=0.67
+scikit-image==0.14.2
+#skggm>=0.2.7
+#graspy>=0.0.2
+#py3plex>=0.67
 #-e git+git://github.com/dPys/nilearn.git#egg=0.4.2
