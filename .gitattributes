@@ -144,3 +144,6 @@ tests/examples/002/dmri/DesikanKlein2012/streamlines_mni_csd_100000_Nonemm_curv[
 tests/examples/002/dmri/DesikanKlein2012/streamlines_mni_tensor_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5].trk filter=lfs diff=lfs merge=lfs -text
 tests/examples/002/dmri/DesikanKlein2012/streamlines_mni_tensor_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5]_warped.trk filter=lfs diff=lfs merge=lfs -text
 tests/examples/002/dmri/DesikanKlein2012/streamlines_tensor_100000_Nonemm_curv[60_30_10]_step[0.2_0.3_0.4_0.5].trk filter=lfs diff=lfs merge=lfs -text
+*.nii filter=lfs diff=lfs merge=lfs -text
+*.nii.gz filter=lfs diff=lfs merge=lfs -text
+*.trk filter=lfs diff=lfs merge=lfs -text
