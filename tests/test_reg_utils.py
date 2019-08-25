@@ -138,7 +138,7 @@ def test_transform_to_affine():
     base_dir = str(Path(__file__).parent/"examples")
     dwi_dir = base_dir + '/001/dmri'
     trac_out = dwi_dir + '/tractography'
-    streams = trac_out + '/sstreamlines_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].trk'
+    streams = trac_out + '/streamlines_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].trk'
     reg_utils.transform_to_affine(streams, header, affine)
     
 def test_match_target_vox_res():
