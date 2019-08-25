@@ -531,7 +531,7 @@ class DmriReg(object):
 
         # Threshold WM to binary in dwi space
         thr_img = nib.load(self.wm_in_dwi)
-        thr_img.get_fdata()[thr_img.get_fdata() < 0.2] = 0
+        thr_img.get_fdata()[thr_img.get_fdata() < 0.1] = 0
         nib.save(thr_img, self.wm_in_dwi_bin)
 
         # Threshold GM to binary in dwi space

@@ -156,7 +156,7 @@ def csd_mod_est(gtab, data, wm_in_dwi):
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
                   dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels,
-                  coords, norm, binary, directget, warped_fa, voxel_size='2mm', fa_wei=True):
+                  coords, norm, binary, directget, warped_fa, error_margin, voxel_size='2mm', fa_wei=True):
     '''
     Use tracked streamlines as a basis for estimating a structural connectome.
 
@@ -219,6 +219,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         and prob (probabilistic).
     warped_fa : str
         File path to MNI-space warped FA Nifti1Image.
+    error_margin : int
+        Euclidean margin of error for classifying a streamline as a connection to an ROI. Default is 2 voxels.
     voxel_size : str
         Target isotropic voxel resolution of all input Nifti1Image files.
     fa_wei :  bool
@@ -288,7 +290,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     import networkx as nx
     from itertools import combinations
     from collections import defaultdict
-    from pynets.core import utils
+    from pynets.core import utils, nodemaker
     import time
 
     # Read Streamlines
@@ -325,17 +327,18 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     ix = 0
     for s in streamlines:
         # Map the streamlines coordinates to voxel coordinates and get labels for label_volume
-        points = _to_voxel_coordinates(s, lin_T, offset)
+        i, j, k = np.vstack(np.array([nodemaker.get_sphere(coord, error_margin, roi_img.header.get_zooms(),
+                                                           roi_img.shape) for coord in
+                                      _to_voxel_coordinates(s, lin_T, offset)])).T
 
         # get labels for label_volume
-        i, j, k = points.T
         lab_arr = atlas_data[i, j, k]
         endlabels = []
         for lab in np.unique(lab_arr).astype('int16'):
             if (lab > 0) and (np.sum(lab_arr == lab) >= overlap_thr):
                 try:
                     endlabels.append(node_dict[lab])
-                except:
+                except UserWarning:
                     print("%s%s%s" % ('Label ', lab, ' missing from parcellation...'))
 
         edges = combinations(endlabels, 2)

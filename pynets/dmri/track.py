@@ -108,8 +108,8 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
         voxel_size = np.average(wm_mask.get_header()['pixdim'][1:4])
         tiss_classifier = CmcTissueClassifier.from_pve(wm_mask_data, gm_mask_data, vent_csf_in_dwi_data,
                                                        step_size=cmc_step_size, average_voxel_size=voxel_size)
-    else:
-        B0_mask_data = nib.load(B0_mask).get_fdata().astype('bool')
+    elif tiss_class == 'wb':
+        B0_mask_data = mask_img.get_fdata().astype('bool')
         tiss_classifier = BinaryTissueClassifier(B0_mask_data)
 
     return tiss_classifier
@@ -157,10 +157,10 @@ def save_streams(dwi_img, streamlines, streams):
     return streams
 
 
-def filter_streamlines(dwi_file, dir_path, gtab, streamlines, min_length, conn_model, target_samples,
+def create_density_map(dwi_file, dir_path, gtab, streamlines, conn_model, target_samples,
                        node_size, curv_thr_list, step_list, network, roi):
     '''
-    Perform various routines for reducing false-positive streamlines from tractography.
+    Create a density map of the list of streamlines.
 
     Parameters
     ----------
@@ -172,8 +172,6 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, min_length, conn_m
         DiPy object storing diffusion gradient information.
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
-    min_length : int
-        Minimum fiber length threshold in mm.
     conn_model : str
         Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
     target_samples : int
@@ -210,10 +208,6 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, min_length, conn_m
     dwi_img = nib.load(dwi_file)
     data = dwi_img.get_fdata()
 
-    # Flatten streamlines list, and apply min length filter
-    print('Filtering streamlines...')
-    streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in streamlines if len(s) > float(min_length)])
-
     # Create density map
     dm = utils.density_map(streamlines, dwi_img.shape, affine=np.eye(4))
 
@@ -247,8 +241,8 @@ def filter_streamlines(dwi_file, dir_path, gtab, streamlines, min_length, conn_m
 
 
 def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere, directget,
-                   curv_thr_list, step_list, track_type, maxcrossing, max_length, roi_neighborhood_tol,
-                   n_seeds_per_iter=200, pft_back_tracking_dist=2, pft_front_tracking_dist=1, particle_count=15):
+                   curv_thr_list, step_list, track_type, maxcrossing, max_length, roi_neighborhood_tol, min_length,
+                   n_seeds_per_iter=100, pft_back_tracking_dist=2, pft_front_tracking_dist=1, particle_count=15):
     """
     Perform native-space ensemble tractography, restricted to a vector of ROI masks.
 
@@ -285,6 +279,8 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
         of any voxel in the ROI, the filtering criterion is set to True for
         this streamline, otherwise False. Defaults to the distance between
         the center of each voxel and the corner of the voxel.
+    min_length : int
+        Minimum fiber length threshold in mm.
     n_seeds_per_iter : int
         Number of seeds from which to initiate tracking for each unique ensemble combination.
         By default this is set to 200.
@@ -368,6 +364,11 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
                                                                       mode='any', affine=np.eye(4),
                                                                       tol=roi_neighborhood_tol))
 
+                print('Filtering streamlines...')
+                roi_proximal_streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in
+                                                                                         roi_proximal_streamlines if
+                                                                                         len(s) > float(min_length)])
+
                 # Repeat process until target samples condition is met
                 ix = ix + 1
                 for s in roi_proximal_streamlines:
@@ -391,7 +392,7 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
               labels_im_file, target_samples, curv_thr_list, step_list, track_type, max_length, maxcrossing, directget,
               conn_model, gtab_file, dwi_file, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
               prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, min_length,
-              fa_path, roi_neighborhood_tol=10):
+              fa_path, roi_neighborhood_tol=4):
     '''
     Run all ensemble tractography and filtering routines.
 
@@ -555,7 +556,7 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     from colorama import Fore, Style
     from dipy.data import get_sphere
     from pynets.core import utils
-    from pynets.dmri.track import prep_tissues, reconstruction, filter_streamlines, track_ensemble
+    from pynets.dmri.track import prep_tissues, reconstruction, create_density_map, track_ensemble
 
     # Load gradient table
     gtab = load_pickle(gtab_file)
@@ -608,13 +609,13 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     # Commence Ensemble Tractography
     streamlines = track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere,
                                  directget, curv_thr_list, step_list, track_type, maxcrossing, max_length,
-                                 roi_neighborhood_tol)
+                                 roi_neighborhood_tol, min_length)
     print('Tracking Complete')
 
-    # Perform streamline filtering routines
+    # Create streamline density map
     dir_path = utils.do_dir_path(atlas, dwi_file)
-    [streams, dir_path, dm_path] = filter_streamlines(dwi_file, dir_path, gtab, streamlines, min_length,
-                                                      conn_model, target_samples, node_size, curv_thr_list, step_list,
+    [streams, dir_path, dm_path] = create_density_map(dwi_file, dir_path, gtab, streamlines, conn_model,
+                                                      target_samples, node_size, curv_thr_list, step_list,
                                                       network, roi)
 
-    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path, directget, labels_im_file
+    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path, directget, labels_im_file, roi_neighborhood_tol

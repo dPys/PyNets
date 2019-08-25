@@ -8,11 +8,13 @@ overlap_thr_list:
     - null
 step_list:
     - 0.2
+    - 0.2
     - 0.3
     - 0.4
     - 0.5
 curv_thr_list:
     - 60
+    - 30
     - 30
     - 10
 nilearn_parc_atlases:
