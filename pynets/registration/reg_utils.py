@@ -351,8 +351,8 @@ def check_orient_and_dims(infile, vox_size, bvecs=None):
     img = nib.load(infile)
     vols = img.shape[-1]
 
-    reoriented = "%s%s%s%s" % (outdir, '/', infile.split('/')[-1].split('.nii.gz')[0], '_pre_reor.nii.gz')
-    resampled = "%s%s%s%s" % (outdir, '/', os.path.basename(infile).split('.nii.gz')[0], '_pre_res.nii.gz')
+    reoriented = "%s%s%s%s" % (outdir, '/', infile.split('/')[-1].split('.nii')[0], '_pre_reor.nii.gz')
+    resampled = "%s%s%s%s" % (outdir, '/', os.path.basename(infile).split('.nii')[0], '_pre_res.nii.gz')
 
     # Check orientation
     if (vols > 1) and (bvecs is not None):
@@ -527,7 +527,7 @@ def reorient_img(img, out_dir):
     cmd_run.close()
     img_orig = img
     hash = str(random.randint(1, 10000))
-    img = "%s%s%s%s%s%s" % (out_dir, '/', img.split('/')[-1].split('.nii.gz')[0], '_pre_reor_', hash, '.nii.gz')
+    img = "%s%s%s%s%s%s" % (out_dir, '/', img.split('/')[-1].split('.nii')[0], '_pre_reor_', hash, '.nii.gz')
     shutil.copyfile(img_orig, img)
     cmd_run = os.popen('fslorient -getqform {}'.format(img))
     qform = cmd_run.read().strip('\n')
@@ -629,7 +629,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, sens):
 
     if (abs(zooms[0]), abs(zooms[1]), abs(zooms[2])) != new_zooms:
         print('Reslicing image ' + img_file + ' to ' + vox_size + '...')
-        img_file_pre = "%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii.gz')[0], '_pre_res.nii.gz')
+        img_file_pre = "%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii')[0], '_pre_res.nii.gz')
         shutil.copyfile(img_file, img_file_pre)
         data2, affine2 = reslice(data, affine, zooms, new_zooms)
         if sens == 'dwi':
