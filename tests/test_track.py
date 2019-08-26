@@ -5,8 +5,6 @@ Created on Thur July 18 20:19:14 2019
 @authors: Derek Pisner & Ryan Hammonds
 
 """
-import numpy as np
-import os
 try:
     import cPickle as pickle
 except ImportError:
@@ -15,12 +13,7 @@ from pathlib import Path
 from pynets.dmri import track
 
 import nibabel as nib
-from dipy.io import read_bvals_bvecs
 from dipy.core.gradients import gradient_table
-from dipy.tracking.eudx import EuDX
-from dipy.reconst import peaks, shm
-from dipy.tracking import utils
-from dipy.tracking.streamline import Streamlines
 from dipy.io.streamline import load_trk
 
 

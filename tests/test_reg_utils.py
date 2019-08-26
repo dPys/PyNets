@@ -100,7 +100,7 @@ def test_combine_xfms():
 # def test_invwarp():
 #     base_dir = str(Path(__file__).parent/"examples")
 #     anat_dir = base_dir + '/003/anat'
-#     ref = anat_dir + '/sub-003_T1w.nii'
+#     ref = anat_dir + '/sub-003_T1w.nii.gz'
 #     warp = anat_dir + '/highres2standard_warp'
 #     out = anat_dir + '/highres2standard_warp_inv.nii.gz'
 #     reg_utils.inverse_warp(ref, out, warp)
@@ -113,7 +113,7 @@ def test_combine_xfms():
 #     base_dir = str(Path(__file__).parent/"examples")
 #     anat_dir = base_dir + '/003/anat'
 #     ref = anat_dir + '/MNI152_T1_2mm.nii.gz'
-#     inp = anat_dir + '/sub-003_T1w.nii'
+#     inp = anat_dir + '/sub-003_T1w.nii.gz'
 #     out = anat_dir + '/highres2standard_test_apply_warp.nii.gz'
 #     warp = anat_dir + '/highres2standard_warp.nii.gz'
 #     xfm = anat_dir + '/highres2standard.mat'
@@ -144,28 +144,26 @@ def test_match_target_vox_res():
     test_out = base_dir + '/003/test_out/test_match_target_vox_res'
     
     # Orig anat input has isotropic (1x1x1mm) dimensions.
-    anat_img_file = test_out + '/sub-003_T1w.nii'
+    anat_img_file = test_out + '/sub-003_T1w_pre_res.nii.gz'
     anat_vox_size = '2mm'
     anat_out_dir = test_out
-    anat_sens = 'anat'
     anat_img_file = reg_utils.match_target_vox_res(anat_img_file, anat_vox_size, anat_out_dir)
     anat_new_img = nib.load(anat_img_file)
     anat_dims = anat_new_img.header.get_zooms()
     anat_success = True
-    for anat_dim in anat_dims[:3]:
+    for anat_dim in np.round(anat_dims[:3], 2):
         if anat_dim != 2:
             anat_success = False
     
     # Orig dMRI image has anisotropic (1.75x1.75x3mm) dimensions.
-    dwi_img_file = test_out + '/sub-003_dwi.nii.gz'
+    dwi_img_file = test_out + '/sub-003_dwi_pre_res.nii.gz'
     dwi_vox_size = '1mm'
-    dwi_out_dir = test_out 
-    dwi_sens = 'dwi'
+    dwi_out_dir = test_out
     dwi_img_file = reg_utils.match_target_vox_res(dwi_img_file, dwi_vox_size, dwi_out_dir)
     dwi_new_img = nib.load(dwi_img_file)
     dwi_dims = dwi_new_img.header.get_zooms()
     dwi_success = True
-    for dwi_dim in dwi_dims[:3]:
+    for dwi_dim in np.round(dwi_dims[:3], 2):
         if dwi_dim != 1:
             dwi_success = False
             
