@@ -9,10 +9,7 @@
     <bookmark url="file://$PROJECT_DIR$/pynets/core/utils.py" description="    warnings.filterwarnings(&quot;ignore&quot;)&#10;    try:&#10;   ..." line="1241" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_track.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_track.py" afterDir="false" />
-    </list>
+    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="" />
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -30,44 +27,7 @@
     <favorites_list name="PyNets" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/core/nodemaker.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="360">
-              <caret line="24" column="26" lean-forward="true" selection-start-line="24" selection-start-column="26" selection-end-line="24" selection-end-column="26" />
-              <folding>
-                <element signature="e#132#150#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/tests/test_track.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="465">
-              <caret line="31" column="27" selection-start-line="31" selection-start-column="27" selection-end-line="31" selection-end-column="27" />
-              <folding>
-                <element signature="e#192#216#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="485">
-              <caret line="548" column="27" selection-start-line="548" selection-start-column="27" selection-end-line="548" selection-end-column="27" />
-              <folding>
-                <element signature="e#132#141#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -79,7 +39,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>tc</find>
       <find>streams2gr</find>
       <find>streams2graph_nod</find>
       <find>run_tracking_node</find>
@@ -109,6 +68,7 @@
       <find>anat_success</find>
       <find>0021001_Default_est_sps_0.19densparc_mm.npy</find>
       <find>match</find>
+      <find>load_trk</find>
     </findStrings>
     <replaceStrings>
       <replace>dwi_aligned_atlas</replace>
@@ -203,9 +163,9 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="636" />
-    <option name="y" value="27" />
+  <component name="ProjectFrameBounds" extendedState="1">
+    <option name="x" value="637" />
+    <option name="y" value="26" />
     <option name="width" value="1082" />
     <option name="height" value="984" />
   </component>
@@ -469,11 +429,10 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="950775000" />
+    <option name="totallyTimeSpent" value="951279000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="636" y="27" width="1082" height="984" extended-state="0" />
-    <editor active="true" />
+    <frame x="637" y="26" width="1082" height="984" extended-state="1" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.493228" weight="0.11923077" />
       <window_info id="Structure" order="1" sideWeight="0.506772" side_tool="true" weight="0.08945455" />
@@ -601,9 +560,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/docs/installation.rst">
-      <provider selected="true" editor-type-id="restructured-text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/docs/usage.rst">
       <provider selected="true" editor-type-id="restructured-text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/nodemaker.py" />
@@ -865,16 +821,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="485">
-          <caret line="548" column="27" selection-start-line="548" selection-start-column="27" selection-end-line="548" selection-end-column="27" />
-          <folding>
-            <element signature="e#132#141#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="545">
@@ -892,6 +838,26 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="485">
+          <caret line="548" column="27" selection-start-line="548" selection-start-column="27" selection-end-line="548" selection-end-column="27" />
+          <folding>
+            <element signature="e#132#141#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_track.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="330">
+          <caret line="22" column="38" selection-start-line="22" selection-start-column="38" selection-end-line="22" selection-end-column="38" />
+          <folding>
+            <element signature="e#192#216#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/core/nodemaker.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="360">
@@ -902,15 +868,8 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_track.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="465">
-          <caret line="31" column="27" selection-start-line="31" selection-start-column="27" selection-end-line="31" selection-end-column="27" />
-          <folding>
-            <element signature="e#192#216#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/docs/usage.rst">
+      <provider selected="true" editor-type-id="restructured-text-editor" />
     </entry>
   </component>
 </project>
