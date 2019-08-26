@@ -71,7 +71,7 @@ def test_reconstruction():
     bvals = dir_path + '/sub-003_dwi.bval'
     bvecs = dir_path + '/sub-003_dwi.bvec'
     gtab = gradient_table(bvals, bvecs)
-    dwi_file = dir_path + '/sub-003_dwi.nii'
+    dwi_file = dir_path + '/sub-003_dwi.nii.gz'
     wm_in_dwi = dir_path + '/wm_mask_dmri.nii.gz'
     for conn_model in ['csa', 'tensor', 'csd']:
         mod = track.reconstruction(conn_model, gtab, dwi_file, wm_in_dwi)

@@ -10,157 +10,183 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.travis.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.travis.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/__about__.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/__about__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/core/nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/nodemaker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/core/thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/thresholding.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/dmri/track.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/track.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/plotting/plot_graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/plotting/plot_graphs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/registration/register.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/register.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/001/dmri/tractography/density_map_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/001/dmri/tractography/density_map_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/001/dmri/tractography/streamlines_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].trk" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/001/dmri/tractography/streamlines_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].trk" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/001/dmri/tractography/test_save.trk" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/001/dmri/tractography/test_save.trk" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/Default_coords_rsn.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/DesikanKlein2012/Default_coords_rsn.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/average_betweenness_centrality_mean_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/average_betweenness_centrality_mean_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/average_clustering_mean_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/average_clustering_mean_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/average_degree_cent_mean_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/average_degree_cent_mean_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/average_eigenvector_centrality_mean_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/average_eigenvector_centrality_mean_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/average_local_efficiency_mean_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/average_local_efficiency_mean_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/average_local_efficiency_nodewise_mean_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/average_local_efficiency_nodewise_mean_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/average_rich_club_coefficient_mean_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/average_rich_club_coefficient_mean_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/average_shortest_path_length_mean_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/average_shortest_path_length_mean_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/bval.bval" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/bval.bval" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/bvec.bvec" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/bvec.bvec" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/degree_assortativity_coefficient_mean_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/degree_assortativity_coefficient_mean_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/degree_pearson_correlation_coefficient_mean_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/degree_pearson_correlation_coefficient_mean_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/dmri_tmp/b0.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/dmri_tmp/b0.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/global_efficiency_mean_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/global_efficiency_mean_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/graph_number_of_cliques_mean_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/graph_number_of_cliques_mean_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/iso_eddy_corrected_data_denoised.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/iso_eddy_corrected_data_denoised.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/modularity_mean_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/modularity_mean_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/dmri/transitivity_mean_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/dmri/transitivity_mean_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_connectogram_sps.js" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_connectogram_sps.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_connectogram_sps.json" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_connectogram_sps.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_fdg_sps.js" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_fdg_sps.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_fdg_sps.json" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_fdg_sps.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_mask.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_mask.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_wb_ts_plot.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_wb_ts_plot.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_whole_brain_cluster_labels_PCA200_func_adj_mat_sps_0.95_2mm_2nb_2fwhm.png0.1Hz.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_whole_brain_cluster_labels_PCA200_func_adj_mat_sps_0.95_2mm_2nb_2fwhm.png0.1Hz.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/002_whole_brain_cluster_labels_PCA200_func_adj_mat_sps_0.95_2mm_3nb_2fwhm.png0.1Hz.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/002_whole_brain_cluster_labels_PCA200_func_adj_mat_sps_0.95_2mm_3nb_2fwhm.png0.1Hz.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/Default_parcels.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/Default_parcels.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/DesikanKlein2012/graphs/0021001_Default_est_sps_0.19densparc_mm_pruned_mat.ssv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/DesikanKlein2012/graphs/0021001_Default_est_sps_0.19densparc_mm_pruned_mat.ssv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/DesikanKlein2012/metrickl/net_met_list_Default" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/DesikanKlein2012/metrickl/net_met_list_Default" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/atlas_labelnames_pDMN_3_bin.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/atlas_labelnames_pDMN_3_bin.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/pDMN_3_bin_kmeans_k3/pDMN_3_bin_kmeans_k3.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/pDMN_3_bin_kmeans_k3/pDMN_3_bin_kmeans_k3.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/pDMN_3_bin_mask.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/pDMN_3_bin_mask.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/triple_net_ICA_overlap_3_sig_bin_average_k50.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/triple_net_ICA_overlap_3_sig_bin_average_k50.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/triple_net_ICA_overlap_3_sig_bin_complete_k50.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/triple_net_ICA_overlap_3_sig_bin_complete_k50.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/triple_net_ICA_overlap_3_sig_bin_kmeans_k50.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/triple_net_ICA_overlap_3_sig_bin_kmeans_k50.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/triple_net_ICA_overlap_3_sig_bin_ward_k50.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/triple_net_ICA_overlap_3_sig_bin_ward_k50.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002.graphml" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002.graphml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default.graphml" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default.graphml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.9.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.9.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.91.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.91.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.92.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.92.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.93.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.93.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.94.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.94.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.95.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.95.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_rsn_net_ts.npy" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_Default_rsn_net_ts.npy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA.graphml" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA.graphml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_est_sps_0.9.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_est_sps_0.9.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_est_sps_0.91.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_est_sps_0.91.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_est_sps_0.92.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_est_sps_0.92.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_est_sps_0.93.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_est_sps_0.93.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_est_sps_0.94.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_est_sps_0.94.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_est_sps_0.95.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_est_sps_0.95.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_rsn_net_ts.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_SomMotA_rsn_net_ts.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.9.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.9.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.91.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.91.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.91_pDMN_3_bin.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.91_pDMN_3_bin.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.92.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.92.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.92_pDMN_3_bin.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.92_pDMN_3_bin.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.93.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.93.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.93_pDMN_3_bin.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.93_pDMN_3_bin.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.94.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.94.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.94_pDMN_3_bin.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.94_pDMN_3_bin.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.95.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.95.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.9_pDMN_3_bin.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_0.9_pDMN_3_bin.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.9" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.9" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.9.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.9.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.91" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.91" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.91.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.91.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.91_pDMN_3_bin" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.91_pDMN_3_bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.91_pDMN_3_bin.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.91_pDMN_3_bin.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.92" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.92" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.92.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.92.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.92_pDMN_3_bin" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.92_pDMN_3_bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.92_pDMN_3_bin.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.92_pDMN_3_bin.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.93" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.93" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.93.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.93.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.93_pDMN_3_bin" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.93_pDMN_3_bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.93_pDMN_3_bin.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.93_pDMN_3_bin.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.94" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.94" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.94.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.94.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.94_pDMN_3_bin" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.94_pDMN_3_bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.94_pDMN_3_bin.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.94_pDMN_3_bin.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.95" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.95" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.95.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.95.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.9_pDMN_3_bin" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.9_pDMN_3_bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.9_pDMN_3_bin.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.9_pDMN_3_bin.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_pDMN_3_bin.graphml" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_pDMN_3_bin.graphml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_pDMN_3_bin_net_ts.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_pDMN_3_bin_net_ts.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_pDMN_3_bin_wb_net_ts.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_pDMN_3_bin_wb_net_ts.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_wb_net_ts.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/002_wb_net_ts.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/SomMotA_func_coords_wb.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/SomMotA_func_coords_wb.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/SomMotA_func_labelnames_wb.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/SomMotA_func_labelnames_wb.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/WB_func_coords_pDMN_3_bin.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/WB_func_coords_pDMN_3_bin.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/WB_func_labelnames_pDMN_3_bin.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/WB_func_labelnames_pDMN_3_bin.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/WB_func_labelnames_wb.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/whole_brain_cluster_labels_PCA200/WB_func_labelnames_wb.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/anat/highres2standard.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/anat/highres2standard.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/anat/highres2standard_2.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/anat/highres2standard_2.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/anat/highres2standard_nonlinear.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/anat/highres2standard_nonlinear.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/anat/highres2standard_warp.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/anat/highres2standard_warp.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/anat/highres2standard_warp_inv.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/anat/highres2standard_warp_inv.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/anat/precuneous2highres.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/anat/precuneous2highres.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor.nii.gz5262" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor.nii.gz8773" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor5262.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1003.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1003_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1069.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1069_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1229.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1229_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1325.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1325_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1417.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1417_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1620.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1620_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1692.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1692_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1747.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1747_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1847.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1847_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1873.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_1873_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_2728.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_2728_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_2853.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_2853_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_2920.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_2920_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3095.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3095_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3183.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3183_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3246.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3246_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3396.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3396_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3571.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3571_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3589.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3589_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3609.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3609_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3978.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_3978_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_4060.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_4060_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_453.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_453_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_461.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_461_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_4911.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_4911_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_4992.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_4992_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_548.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_548_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_5517.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_5517_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_555.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_555_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_5656.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_5656_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_5788.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_5788_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_5993.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_5993_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_6347.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_6347_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_6674.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_6674_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_6774.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_6774_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_6830.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_6830_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_6843.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_6843_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_6891.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_6891_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_7057.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_7057_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_7256.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_7256_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_757.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_757_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_7707.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_7707_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_8028.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_8028_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_8201.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_8201_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_8388.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_8388_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_8442.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_8442_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_8982.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_8982_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_9025.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_9025_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_9727.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_9727_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_9884.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_reor_9884_pre_res.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/002/anat/std_fmri/s002_anat_brain_pre_res.nii.gz" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/003/anat/test_segment_t1w_mixeltype.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/anat/test_segment_t1w_mixeltype.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/anat/test_segment_t1w_pve_0.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/anat/test_segment_t1w_pve_0.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/anat/test_segment_t1w_pve_1.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/anat/test_segment_t1w_pve_1.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/anat/test_segment_t1w_pve_2.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/anat/test_segment_t1w_pve_2.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/anat/test_segment_t1w_pveseg.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/anat/test_segment_t1w_pveseg.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/anat/test_segment_t1w_seg.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/anat/test_segment_t1w_seg.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_LAS/sub-003_T1w_LAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_LAS/sub-003_T1w_LAS.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_RAS/sub-003_T1w_RAS.nii" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/bak/anat_LAS/sub-003_T1w_LAS.nii.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/bak/anat_RAS/sub-003_T1w_RAS.nii" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/bak/dmri_LAS/bvec.orig.bvec" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/bak/dmri_LAS/iso_eddy_corrected_data_denoised_LAS.nii.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/bak/dmri_RAS/bvec.trans.bvec" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/bak/dmri_RAS/iso_eddy_corrected_data_denoised_RAS.nii.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/dmri_LAS/iso_eddy_corrected_data_denoised_LAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/dmri_LAS/iso_eddy_corrected_data_denoised_LAS.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/dmri_RAS/iso_eddy_corrected_data_denoised_RAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/dmri_RAS/iso_eddy_corrected_data_denoised_RAS.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/output_LAS/img_reor_IS.nii.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/output_LAS/img_reor_PA.nii.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/output_LAS/sub-003_T1w_LAS_pre_reor_3388.nii.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/output_RAS/sub-003_T1w_RAS_pre_reor_1030.nii.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/sub-003_T1w.nii" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/sub-003_T1w_LAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/sub-003_T1w_LAS.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/sub-003_T1w_RAS.nii" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_clustering.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_clustering.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_clustools.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_clustools.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_netstats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_nodemaker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_plotting.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_refs.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_refs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/dmri/intermediate/brain.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/dmri/intermediate/csf_mask.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/dmri/intermediate/gm_mask.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/dmri/intermediate/orig.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/dmri/intermediate/sub-003_dwi.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/dmri/intermediate/wm_mask.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/dmri/sub-003_dwi.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/dmri/sub-003_dwi_bak.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/CSF.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/T1.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/aparc+aseg.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/aparc.DKTatlas+aseg.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/aparc.a2009s+aseg.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/aseg.auto.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/aseg.auto_noCCseg.label_intensities.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/aseg.auto_noCCseg.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/aseg.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/aseg.presurf.hypos.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/aseg.presurf.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/brain.finalsurfs.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/brain.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/brainmask.auto.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/brainmask.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/ctrl_pts.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/filled.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/lh.ribbon.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/mri_nu_correct.mni.log.bak" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/norm.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/nu.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/orig.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/orig/001.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/orig_nu.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/rawavg.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/rh.ribbon.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/ribbon.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/segment.dat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/talairach.label_intensities.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/transforms/cc_up.lta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/transforms/talairach.auto.xfm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/transforms/talairach.auto.xfm.lta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/transforms/talairach.lta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/transforms/talairach.m3z" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/transforms/talairach.xfm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/transforms/talairach_with_skull.lta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/transforms/talsrcimg_to_711-2C_as_mni_average_305_t4_vox2vox.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/wm.asegedit.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/wm.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/wm.seg.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/wm_thr.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/fs/wmparc.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/func/sub-003_ses-01_task-rest_bold.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_LAS/sub-003_T1w_LAS_reor_RAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_LAS/sub-003_T1w_LAS_reor_RAS.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_LAS/sub-003_T1w_LAS_reor_RAS_res2mm.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_LAS/sub-003_T1w_LAS_reor_RAS_res2mm.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_RAS/sub-003_T1w_RAS_reor_RAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_RAS/sub-003_T1w_RAS_reor_RAS.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_RAS/sub-003_T1w_RAS_reor_RAS_res2mm.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_RAS/sub-003_T1w_RAS_reor_RAS_res2mm.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/dmri_LAS/iso_eddy_corrected_data_denoised_LAS_reor_RAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/dmri_LAS/iso_eddy_corrected_data_denoised_LAS_reor_RAS.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_match_target_vox_res/sub-003_T1w.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_match_target_vox_res/sub-003_T1w.nii_nores2mm.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_match_target_vox_res/sub-003_T1w.nii_nores2mm.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_match_target_vox_res/sub-003_T1w_bak.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_match_target_vox_res/sub-003_dwi.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_match_target_vox_res/sub-003_dwi.nii_nores1mm.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_match_target_vox_res/sub-003_dwi.nii_nores1mm.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_match_target_vox_res/sub-003_dwi_bak.nii" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_dwi/bak/bval.bval" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_dwi/bak/bvec.bvec" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_dwi/bak/iso_eddy_corrected_data_denoised.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_dwi/bak/iso_eddy_corrected_data_denoised_LAS.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_dwi/bak/iso_eddy_corrected_data_denoised_RAS.nii.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_dwi/output/iso_eddy_corrected_data_denoised_RAS_reor_RAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_dwi/output/iso_eddy_corrected_data_denoised_RAS_reor_RAS.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/output_LAS/sub-003_T1w_LAS_reor_RAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/output_LAS/sub-003_T1w_LAS_reor_RAS.nii.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/output_RAS/sub-003_T1w_RAS_reor_RAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/output_RAS/sub-003_T1w_RAS_reor_RAS.nii.gz" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/test_reg_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_reg_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_thresholding.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/test_track.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_track.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_utils.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -204,25 +230,13 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/tests/test_reg_utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="585">
-              <caret line="39" column="63" lean-forward="true" selection-start-line="39" selection-start-column="63" selection-end-line="39" selection-end-column="63" />
+            <state relative-caret-position="515">
+              <caret line="292" column="34" selection-start-line="292" selection-start-column="34" selection-end-line="292" selection-end-column="34" />
               <folding>
                 <element signature="e#96#114#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="7770">
-              <caret line="518" column="4" selection-start-line="518" selection-start-column="4" selection-end-line="518" selection-end-column="53" />
-              <folding>
-                <element signature="e#132#141#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -231,8 +245,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="290">
-              <caret line="139" selection-start-line="139" selection-end-line="139" selection-end-column="105" />
+            <state relative-caret-position="300">
+              <caret line="139" column="102" selection-start-line="139" selection-start-column="102" selection-end-line="139" selection-end-column="102" />
               <folding>
                 <element signature="e#131#149#0" expanded="true" />
               </folding>
@@ -255,8 +269,11 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tests/test_clustools.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="12" column="33" selection-start-line="12" selection-start-column="33" selection-end-line="12" selection-end-column="33" />
+            <state relative-caret-position="285">
+              <caret line="19" column="36" selection-start-line="19" selection-start-column="32" selection-end-line="19" selection-end-column="36" />
+              <folding>
+                <element signature="e#190#214#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -264,8 +281,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tests/test_plotting.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="170">
-              <caret line="218" column="16" selection-start-line="218" selection-start-column="16" selection-end-line="218" selection-end-column="16" />
+            <state relative-caret-position="755">
+              <caret line="257" selection-start-line="257" selection-end-line="257" />
               <folding>
                 <element signature="e#131#149#0" expanded="true" />
               </folding>
@@ -276,8 +293,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tests/test_track.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="140">
-              <caret line="53" column="24" selection-start-line="53" selection-start-column="24" selection-end-line="53" selection-end-column="24" />
+            <state relative-caret-position="272">
+              <caret line="29" column="40" selection-start-line="29" selection-start-column="36" selection-end-line="29" selection-end-column="40" />
               <folding>
                 <element signature="e#109#127#0" expanded="true" />
               </folding>
@@ -309,7 +326,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>labels_im_file</find>
       <find>label_im_file</find>
       <find>mask_img</find>
       <find>max_length</find>
@@ -339,6 +355,7 @@
       <find>local_th</find>
       <find>test_local_thresholding_dens</find>
       <find>anat_check</find>
+      <find>.nii</find>
     </findStrings>
     <replaceStrings>
       <replace>dwi_aligned_atlas</replace>
@@ -433,7 +450,7 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds">
+  <component name="ProjectFrameBounds" extendedState="1">
     <option name="x" value="598" />
     <option name="y" value="23" />
     <option name="width" value="1082" />
@@ -699,7 +716,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="947315000" />
+    <option name="totallyTimeSpent" value="947713000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="598" y="23" width="1082" height="984" extended-state="0" />
@@ -1051,37 +1068,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_clustering.py">
+    <entry file="file://$PROJECT_DIR$/tests/test_estimation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="665">
-          <caret line="60" column="40" selection-start-line="60" selection-start-column="40" selection-end-line="60" selection-end-column="40" />
-          <folding>
-            <element signature="e#107#116#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_clustools.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="12" column="33" selection-start-line="12" selection-start-column="33" selection-end-line="12" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="290">
-          <caret line="139" selection-start-line="139" selection-end-line="139" selection-end-column="105" />
-          <folding>
-            <element signature="e#131#149#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_plotting.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="170">
-          <caret line="218" column="16" selection-start-line="218" selection-start-column="16" selection-end-line="218" selection-end-column="16" />
+        <state relative-caret-position="515">
+          <caret line="132" column="38" selection-start-line="132" selection-start-column="38" selection-end-line="132" selection-end-column="38" />
           <folding>
             <element signature="e#131#149#0" expanded="true" />
           </folding>
@@ -1090,20 +1080,20 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_track.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="140">
-          <caret line="53" column="24" selection-start-line="53" selection-start-column="24" selection-end-line="53" selection-end-column="24" />
+        <state relative-caret-position="272">
+          <caret line="29" column="40" selection-start-line="29" selection-start-column="36" selection-end-line="29" selection-end-column="40" />
           <folding>
             <element signature="e#109#127#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_estimation.py">
+    <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="515">
-          <caret line="132" column="38" selection-start-line="132" selection-start-column="38" selection-end-line="132" selection-end-column="38" />
+        <state relative-caret-position="272">
+          <caret line="45" column="56" selection-start-line="45" selection-start-column="52" selection-end-line="45" selection-end-column="56" />
           <folding>
-            <element signature="e#131#149#0" expanded="true" />
+            <element signature="e#132#141#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -1118,22 +1108,52 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_reg_utils.py">
+    <entry file="file://$PROJECT_DIR$/tests/test_plotting.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="585">
-          <caret line="39" column="63" lean-forward="true" selection-start-line="39" selection-start-column="63" selection-end-line="39" selection-end-column="63" />
+        <state relative-caret-position="755">
+          <caret line="257" selection-start-line="257" selection-end-line="257" />
           <folding>
-            <element signature="e#96#114#0" expanded="true" />
+            <element signature="e#131#149#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
+    <entry file="file://$PROJECT_DIR$/tests/test_clustools.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="7770">
-          <caret line="518" column="4" selection-start-line="518" selection-start-column="4" selection-end-line="518" selection-end-column="53" />
+        <state relative-caret-position="285">
+          <caret line="19" column="36" selection-start-line="19" selection-start-column="32" selection-end-line="19" selection-end-column="36" />
           <folding>
-            <element signature="e#132#141#0" expanded="true" />
+            <element signature="e#190#214#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_clustering.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="665">
+          <caret line="60" column="40" selection-start-line="60" selection-start-column="40" selection-end-line="60" selection-end-column="40" />
+          <folding>
+            <element signature="e#107#116#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="300">
+          <caret line="139" column="102" selection-start-line="139" selection-start-column="102" selection-end-line="139" selection-end-column="102" />
+          <folding>
+            <element signature="e#131#149#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_reg_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="515">
+          <caret line="292" column="34" selection-start-line="292" selection-start-column="34" selection-end-line="292" selection-end-column="34" />
+          <folding>
+            <element signature="e#96#114#0" expanded="true" />
           </folding>
         </state>
       </provider>

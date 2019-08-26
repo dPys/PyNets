@@ -21,7 +21,7 @@ def test_align():
     # Linear registrattion
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = base_dir + '/003/anat'
-    inp = anat_dir + '/sub-003_T1w_brain.nii'
+    inp = anat_dir + '/sub-003_T1w_brain.nii.gz'
     ref = anat_dir + '/MNI152_T1_2mm_brain.nii.gz'
     out = anat_dir + '/highres2standard.nii.gz'
     xfm_out = anat_dir + '/highres2standard.mat'
@@ -38,7 +38,7 @@ def test_applyxfm():
     anat_dir = base_dir + '/003/anat'
     
     ## First test: Apply xfm from test_align to orig anat img. 
-    inp = anat_dir + '/sub-003_T1w_brain.nii' 
+    inp = anat_dir + '/sub-003_T1w_brain.nii.gz'
     ref = anat_dir + '/MNI152_T1_2mm_brain.nii.gz'
     xfm = anat_dir + '/highres2standard.mat'
     aligned = anat_dir + '/highres2standard_2.nii.gz'
@@ -54,7 +54,7 @@ def test_applyxfm():
     
     ## Second test: Apply xfm to standard space roi (invert xfm first) >> native space roi.
     # ref is native space anat image
-    ref = anat_dir + '/sub-003_T1w.nii'
+    ref = anat_dir + '/sub-003_T1w.nii.gz'
     # input is standard space precuneus mask
     inp = anat_dir + '/precuneous_thr_bin.nii.gz'
     # xfm is standard2native from convert_xfm -omat standard2highres.mat highres2standard.mat
@@ -71,7 +71,7 @@ def test_align_nonlinear():
     # Nonlinear normlization
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = base_dir + '/003/anat'
-    inp = anat_dir + '/sub-003_T1w.nii'
+    inp = anat_dir + '/sub-003_T1w.nii.gz'
     ref = anat_dir + '/MNI152_T1_2mm.nii.gz'
     out = anat_dir + '/highres2standard_nonlinear.nii.gz'
     warp = anat_dir + '/highres2standard_warp'
@@ -132,7 +132,7 @@ def test_combine_xfms():
 def test_segment_t1w():
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = base_dir + '/003/anat'
-    t1w = anat_dir + '/sub-003_T1w.nii'
+    t1w = anat_dir + '/sub-003_T1w.nii.gz'
     basename = anat_dir + '/test_segment_t1w'
     out = reg_utils.segment_t1w(t1w, basename, opts='')
     print(out)
@@ -157,7 +157,7 @@ def test_match_target_vox_res():
             anat_success = False
     
     # Orig dMRI image has anisotropic (1.75x1.75x3mm) dimensions.
-    dwi_img_file = test_out + '/sub-003_dwi.nii'
+    dwi_img_file = test_out + '/sub-003_dwi.nii.gz'
     dwi_vox_size = '1mm'
     dwi_out_dir = test_out 
     dwi_sens = 'dwi'
