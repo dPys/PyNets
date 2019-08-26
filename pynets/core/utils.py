@@ -1169,6 +1169,8 @@ def list_first_mems(est_path, network, thr, dir_path, node_size, smooth, c_boot,
     thr = thr[0]
     dir_path = dir_path[0]
     node_size = node_size[0]
+    c_boot = c_boot[0]
+    hpass = hpass[0]
     # print('\n\n\n\n')
     # print(est_path)
     # print(network)

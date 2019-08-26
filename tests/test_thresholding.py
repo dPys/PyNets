@@ -13,7 +13,8 @@ try:
 except ImportError:
     import _pickle as pickle
 from pathlib import Path
-from pynets import thresholding
+from pynets.core import thresholding
+import networkx as nx
 
 
 def test_binarize():
@@ -56,7 +57,8 @@ def test_autofix():
 
 def test_density_thresholding():
     base_dir = str(Path(__file__).parent/"examples")
-    x = np.genfromtxt(base_dir + '/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_raw_mat.txt')
+    x = np.genfromtxt(
+        base_dir + '/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_raw_mat.txt')
     l = thresholding.est_density((thresholding.density_thresholding(x, 0.01)))
     h = thresholding.est_density((thresholding.density_thresholding(x, 0.04)))
     assert np.equal(l, 0.009748743718592965)
@@ -65,7 +67,8 @@ def test_density_thresholding():
 
 def test_est_density():
     base_dir = str(Path(__file__).parent/"examples")
-    x = np.genfromtxt(base_dir + '/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_raw_mat.txt')
+    x = np.genfromtxt(
+        base_dir + '/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_raw_mat.txt')
     d = thresholding.est_density(x)
     assert np.round(d, 1) == 0.1
 
@@ -76,7 +79,7 @@ def test_thr2prob():
     s = thresholding.normalize(x)
     s[0][0] = 0.0000001
     t = thresholding.thr2prob(s)
-    assert float(len(t[np.logical_and(t < 0.001, t>0)])) == float(0.0)
+    assert float(len(t[np.logical_and(t < 0.001, t > 0)])) == float(0.0)
 
 
 def test_thresh_func():
@@ -86,7 +89,7 @@ def test_thresh_func():
     thr = 0.95
     smooth = 2
     c_boot = 3
-    conn_matrix=np.random.rand(3,3)
+    conn_matrix = np.random.rand(3, 3)
     conn_model = 'cov'
     network = 'Default'
     min_span_tree = False
@@ -110,11 +113,11 @@ def test_thresh_func():
 
     start_time = time.time()
     [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _, _, _, _, _, _,
-    _, _, _, _, _, _, _] = thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model,
-    network, ID, dir_path, roi, node_size, min_span_tree, smooth, disp_filt,
-    parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass)
+     _, _, _, _, _, _, _] = thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model,
+                                                     network, ID, dir_path, roi, node_size, min_span_tree, smooth, disp_filt,
+                                                     parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
-    np.round(time.time() - start_time, 1), 's'))
+                      np.round(time.time() - start_time, 1), 's'))
 
     assert conn_matrix_thr is not None
     assert edge_threshold is not None
@@ -157,3 +160,130 @@ def test_thresh_func():
 #     assert conn_matrix_thr is not None
 #     assert est_path is not None
 #     assert edge_threshold is not None
+
+def test_disparity_filter():
+    k = 10
+    conn_matrix = np.random.rand(10, 10)
+
+    # NaN's across diagonal of connectivity matrix
+    for idx, val in enumerate(conn_matrix):
+        conn_matrix[idx][idx] = np.nan
+
+    # Create KNN graph, undirected and directed
+    G_undirected = thresholding.knn(conn_matrix, k)
+    G_directed = G_undirected.to_directed()
+
+    # Test both undirected and directed graphs
+    N = thresholding.disparity_filter(G_undirected, weight='weight')
+    B = thresholding.disparity_filter(G_directed, weight='weight')
+
+    assert N is not None
+    assert B is not None
+
+
+def test_disparity_filter_alpha_cut():
+    k = 10
+    conn_matrix = np.random.rand(10, 10)
+
+    # NaN's across diagonal of connectivity matrix
+    for idx, val in enumerate(conn_matrix):
+        conn_matrix[idx][idx] = np.nan
+
+    # Create KNN graph, undirected and directed
+    G_undirected = thresholding.knn(conn_matrix, k)
+    G_directed = G_undirected.to_directed()
+
+    # Test both undirected and directed graphs
+    N = thresholding.disparity_filter_alpha_cut(G_undirected, weight='weight')
+    B = thresholding.disparity_filter_alpha_cut(G_directed, weight='weight')
+
+    assert N is not None
+    assert B is not None
+
+
+def test_knn():
+    # Generate connectivity matrix with 100 nodes and random weights
+    conn_matrix = np.random.rand(100, 100)
+
+    # NaN's across diagonal of connectivity matrix
+    for idx, val in enumerate(conn_matrix):
+        conn_matrix[idx][idx] = np.nan
+
+    # Test range of nearest neighbors, k
+    for k in range(1, 11):
+        gra = thresholding.knn(conn_matrix, k)
+        assert gra is not None
+
+
+def test_local_thresholding_dens():
+    # Generate connectivity matrix with 10 nodes and random weights
+    conn_matrix = np.random.rand(10, 10)
+
+    # NaN's across diagonal of connectivity matrix
+    # Create list of coords = nodes
+    coords = []
+    labels = []
+    for idx, val in enumerate(conn_matrix):
+        conn_matrix[idx][idx] = np.nan
+        coords.append(idx)
+        labels.append('ROI_' + str(idx))
+
+    # Test range of thresholds
+    for val in range(0, 11):
+        thr = round(val*0.1, 1)
+        conn_matrix_thr = thresholding.local_thresholding_dens(conn_matrix, coords, labels, thr)
+        assert conn_matrix_thr is not None
+
+
+def test_local_thresholding_prop():
+    # Generate connectivity matrix with 10 nodes and random weights
+    conn_matrix = np.random.rand(10, 10)
+
+    # NaN's across diagonal of connectivity matrix
+    # Create list of coords = nodes
+    coords = []
+    labels = []
+    for idx, val in enumerate(conn_matrix):
+        conn_matrix[idx][idx] = np.nan
+        coords.append(idx)
+        labels.append('ROI_' + str(idx))
+
+    # Test range of thresholds
+    for val in range(0, 11):
+        thr = round(val*0.1, 1)
+        conn_matrix_thr = thresholding.local_thresholding_prop(conn_matrix, coords, labels, thr)
+        assert conn_matrix_thr is not None
+
+
+def test_weight_conversion():
+    # Note: wcm='Normalize' is listed as option in input but not implemented.
+
+    # Generate connectivity matrix with 10 nodes and random weights
+    W = np.random.rand(10, 10)
+
+    # NaN's across diagonal of connectivity matrix
+    for idx, val in enumerate(W):
+        W[idx][idx] = np.nan
+
+    # Cross test all wcm and copy combinations
+    for wcm in ['binarize', 'lengths']:
+        for copy in [True, False]:
+            w = thresholding.weight_conversion(W, wcm, copy)
+            assert w is not None
+
+
+def test_weight_to_distance():
+    # Generate connectivity matrix with 10 nodes and random weights
+    conn_matrix = np.random.rand(10, 10)
+
+    # NaN's across diagonal of connectivity matrix
+    for idx, val in enumerate(conn_matrix):
+        conn_matrix[idx][idx] = np.nan
+
+    # Create graph using knn
+    k = 10
+    G = thresholding.knn(conn_matrix, k)
+    G = nx.from_numpy_matrix(conn_matrix)
+
+    g = thresholding.weight_to_distance(G)
+    assert g is not None
