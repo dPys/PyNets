@@ -9,28 +9,7 @@
     <bookmark url="file://$PROJECT_DIR$/pynets/core/utils.py" description="    warnings.filterwarnings(&quot;ignore&quot;)&#10;    try:&#10;   ..." line="1241" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/DesikanKlein2012/netmetrics/002_net_mets_Default_cov_0.95_parc.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/DesikanKlein2012/netmetrics/002_net_mets_Default_cov_0.95_parc.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/002/fmri/DesikanKlein2012/netmetrics/002_net_mets_Default_cov_0.95_parc_neat.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/002/fmri/DesikanKlein2012/netmetrics/002_net_mets_Default_cov_0.95_parc_neat.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_LAS/sub-003_T1w_LAS_reor_RAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_LAS/sub-003_T1w_LAS_reor_RAS.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_LAS/sub-003_T1w_LAS_reor_RAS_res2mm.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_LAS/sub-003_T1w_LAS_reor_RAS_res2mm.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_RAS/sub-003_T1w_RAS_reor_RAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_RAS/sub-003_T1w_RAS_reor_RAS.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_RAS/sub-003_T1w_RAS_reor_RAS_res2mm.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/anat_RAS/sub-003_T1w_RAS_reor_RAS_res2mm.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/dmri_LAS/iso_eddy_corrected_data_denoised_LAS_reor_RAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/dmri_LAS/iso_eddy_corrected_data_denoised_LAS_reor_RAS.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/dmri_LAS/iso_eddy_corrected_data_denoised_LAS_reor_RAS_res1mm.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/dmri_LAS/iso_eddy_corrected_data_denoised_LAS_reor_RAS_res1mm.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/dmri_RAS/iso_eddy_corrected_data_denoised_RAS_noreor_RAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/dmri_RAS/iso_eddy_corrected_data_denoised_RAS_noreor_RAS.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/dmri_RAS/iso_eddy_corrected_data_denoised_RAS_noreor_RAS_res1mm.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_check_orient_and_dims/dmri_RAS/iso_eddy_corrected_data_denoised_RAS_noreor_RAS_res1mm.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_match_target_vox_res/sub-003_T1w.nii_nores2mm.nii.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_match_target_vox_res/sub-003_T1w_pre_res.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_match_target_vox_res/sub-003_T1w_pre_res.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_match_target_vox_res/sub-003_dwi.nii_nores1mm.nii.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_match_target_vox_res/sub-003_dwi_pre_res.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_match_target_vox_res/sub-003_dwi_pre_res.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_dwi/output/iso_eddy_corrected_data_denoised_RAS_reor_RAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_dwi/output/iso_eddy_corrected_data_denoised_RAS_reor_RAS.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/output_LAS/sub-003_T1w_LAS_reor_RAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/output_LAS/sub-003_T1w_LAS_reor_RAS.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/output_RAS/sub-003_T1w_RAS_reor_RAS.nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/003/test_out/test_reorient_img/output_RAS/sub-003_T1w_RAS_reor_RAS.nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_reg_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_reg_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_track.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_track.py" afterDir="false" />
-    </list>
+    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="" />
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -49,37 +28,13 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="517">
-              <caret line="156" column="38" selection-start-line="156" selection-start-column="38" selection-end-line="156" selection-end-column="38" />
-              <folding>
-                <element signature="e#131#149#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tests/test_track.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="90">
-              <caret line="6" column="3" selection-start-line="6" selection-start-column="3" selection-end-line="6" selection-end-column="3" />
-              <folding>
-                <element signature="e#193#217#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/tests/test_reg_utils.py">
+        <entry file="file://$PROJECT_DIR$/pynets/core/nodemaker.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="575">
-              <caret line="178" column="4" lean-forward="true" selection-start-line="178" selection-start-column="4" selection-end-line="178" selection-end-column="4" />
+            <state relative-caret-position="16050">
+              <caret line="1070" selection-start-line="1070" selection-end-line="1163" />
               <folding>
-                <element signature="e#96#114#0" expanded="true" />
+                <element signature="e#132#150#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -88,35 +43,10 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="457">
+            <state relative-caret-position="485">
               <caret line="548" column="27" selection-start-line="548" selection-start-column="27" selection-end-line="548" selection-end-column="27" />
               <folding>
                 <element signature="e#132#141#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tests/test_thresholding.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="160">
-              <caret line="215" selection-start-line="215" selection-end-line="215" />
-              <folding>
-                <element signature="e#46#130#1" />
-                <element signature="e#131#149#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tests/test_estimation.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="515">
-              <caret line="132" column="38" selection-start-line="132" selection-start-column="38" selection-end-line="132" selection-end-column="38" />
-              <folding>
-                <element signature="e#131#149#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -134,7 +64,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>min_length</find>
       <find>tc</find>
       <find>streams2gr</find>
       <find>streams2graph_nod</find>
@@ -161,8 +90,9 @@
       <find>test_local_thresholding_dens</find>
       <find>anat_check</find>
       <find>.nii</find>
-      <find>0021001_Default_est_sps_0.19densparc_mm.npy</find>
       <find>.nii'</find>
+      <find>anat_success</find>
+      <find>0021001_Default_est_sps_0.19densparc_mm.npy</find>
       <find>match</find>
     </findStrings>
     <replaceStrings>
@@ -524,7 +454,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="949812000" />
+    <option name="totallyTimeSpent" value="950336000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="636" y="27" width="1082" height="984" extended-state="0" />
@@ -708,16 +638,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/core/nodemaker.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="680">
-          <caret line="1158" column="17" selection-start-line="1158" selection-start-column="17" selection-end-line="1158" selection-end-column="17" />
-          <folding>
-            <element signature="e#132#150#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/dmri/estimation.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-2620">
@@ -776,13 +696,6 @@
           <folding>
             <element signature="e#132#163#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/stats/benchmarking.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="11" column="24" lean-forward="true" selection-start-line="11" selection-start-column="24" selection-end-line="11" selection-end-column="24" />
         </state>
       </provider>
     </entry>
@@ -906,10 +819,20 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_reg_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="318">
+          <caret line="159" column="14" selection-start-line="159" selection-start-column="14" selection-end-line="159" selection-end-column="14" />
+          <folding>
+            <element signature="e#96#114#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_estimation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="515">
-          <caret line="132" column="38" selection-start-line="132" selection-start-column="38" selection-end-line="132" selection-end-column="38" />
+        <state relative-caret-position="140">
+          <caret line="107" column="52" lean-forward="true" selection-start-line="107" selection-start-column="52" selection-end-line="107" selection-end-column="52" />
           <folding>
             <element signature="e#131#149#0" expanded="true" />
           </folding>
@@ -918,20 +841,10 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_track.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
+        <state relative-caret-position="-460">
           <caret line="6" column="3" selection-start-line="6" selection-start-column="3" selection-end-line="6" selection-end-column="3" />
           <folding>
             <element signature="e#193#217#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="517">
-          <caret line="156" column="38" selection-start-line="156" selection-start-column="38" selection-end-line="156" selection-end-column="38" />
-          <folding>
-            <element signature="e#131#149#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -949,7 +862,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="457">
+        <state relative-caret-position="485">
           <caret line="548" column="27" selection-start-line="548" selection-start-column="27" selection-end-line="548" selection-end-column="27" />
           <folding>
             <element signature="e#132#141#0" expanded="true" />
@@ -957,12 +870,29 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_reg_utils.py">
+    <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="575">
-          <caret line="178" column="4" lean-forward="true" selection-start-line="178" selection-start-column="4" selection-end-line="178" selection-end-column="4" />
+        <state relative-caret-position="545">
+          <caret line="156" column="52" lean-forward="true" selection-start-line="156" selection-start-column="52" selection-end-line="156" selection-end-column="52" />
           <folding>
-            <element signature="e#96#114#0" expanded="true" />
+            <element signature="e#131#149#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/stats/benchmarking.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="165">
+          <caret line="11" column="24" lean-forward="true" selection-start-line="11" selection-start-column="24" selection-end-line="11" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/core/nodemaker.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="16050">
+          <caret line="1070" selection-start-line="1070" selection-end-line="1163" />
+          <folding>
+            <element signature="e#132#150#0" expanded="true" />
           </folding>
         </state>
       </provider>
