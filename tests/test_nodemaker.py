@@ -10,7 +10,7 @@ import numpy as np
 import time
 import nibabel as nib
 from pathlib import Path
-from pynets import nodemaker
+from pynets.core import nodemaker
 try:
     import cPickle as pickle
 except ImportError:
@@ -431,33 +431,33 @@ def test_RSN_fetch_nodes_and_labels2():
 def test_create_spherical_roi_volumes():
     import pkg_resources
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
+    dir_path = base_dir + '/002/dmri'
     node_size = 2
     vox_size = '2mm'
     template_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size +
                                                     "_brain_mask.nii.gz")
-    coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
-    file_ = open(coords_file, 'rb')
-    coords = pickle.load(file_)
+    coords_file = dir_path + '/DesikanKlein2012/Default_coords_rsn.pkl'
+    with open(coords_file, 'rb') as file_:
+        coords = pickle.load(file_)
     [parcel_list, par_max, node_size, parc] = nodemaker.create_spherical_roi_volumes(node_size, coords, template_mask)
     assert len(parcel_list) > 0
 
 
 def test_get_sphere():
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    func_file = dir_path + '/002.nii.gz'
-    func_img = nib.load(func_file)
+    dir_path = base_dir + '/002/dmri'
+    img_file = dir_path + '/nodif_b0_bet.nii.gz'
+    img = nib.load(img_file)
     r = 4
     vox_dims = (2.0, 2.0, 2.0)
-    coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
-    file_ = open(coords_file, 'rb')
-    coords = pickle.load(file_)
+    coords_file = dir_path + '/DesikanKlein2012/Default_coords_rsn.pkl'
+    with open(coords_file, 'rb') as file_:
+        coords = pickle.load(file_)
     neighbors = []
     for coord in coords:
-        neighbors.append(nodemaker.get_sphere(coord, r, vox_dims, func_img.shape[0:3]))
+        neighbors.append(nodemaker.get_sphere(coord, r, vox_dims, img.shape[0:3]))
     neighbors = [i for i in neighbors if len(i)>0]
-    assert len(neighbors) == 8
+    assert len(neighbors) == 4
 
 
 def test_mask_roi():

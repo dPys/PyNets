@@ -162,43 +162,29 @@ def test_thresh_func():
 #     assert edge_threshold is not None
 
 def test_disparity_filter():
-    k = 10
-    conn_matrix = np.random.rand(10, 10)
+    import random
 
-    # NaN's across diagonal of connectivity matrix
-    for idx, val in enumerate(conn_matrix):
-        conn_matrix[idx][idx] = np.nan
+    G = nx.gnm_random_graph(10, 10)
+    for (u, v, w) in G.edges(data=True):
+        w['weight'] = random.randint(0, 10)
 
-    # Create KNN graph, undirected and directed
-    G_undirected = thresholding.knn(conn_matrix, k)
-    G_directed = G_undirected.to_directed()
-
-    # Test both undirected and directed graphs
-    N = thresholding.disparity_filter(G_undirected, weight='weight')
-    B = thresholding.disparity_filter(G_directed, weight='weight')
+    # Test undirected graphs
+    N = thresholding.disparity_filter(G, weight='weight')
 
     assert N is not None
-    assert B is not None
 
 
 def test_disparity_filter_alpha_cut():
-    k = 10
-    conn_matrix = np.random.rand(10, 10)
+    import random
 
-    # NaN's across diagonal of connectivity matrix
-    for idx, val in enumerate(conn_matrix):
-        conn_matrix[idx][idx] = np.nan
+    G = nx.gnm_random_graph(10, 10)
+    for (u, v, w) in G.edges(data=True):
+        w['weight'] = random.randint(0, 10)
 
-    # Create KNN graph, undirected and directed
-    G_undirected = thresholding.knn(conn_matrix, k)
-    G_directed = G_undirected.to_directed()
-
-    # Test both undirected and directed graphs
-    N = thresholding.disparity_filter_alpha_cut(G_undirected, weight='weight')
-    B = thresholding.disparity_filter_alpha_cut(G_directed, weight='weight')
+    # Test undirected graphs
+    N = thresholding.disparity_filter_alpha_cut(G, weight='weight')
 
     assert N is not None
-    assert B is not None
 
 
 def test_knn():
@@ -213,26 +199,6 @@ def test_knn():
     for k in range(1, 11):
         gra = thresholding.knn(conn_matrix, k)
         assert gra is not None
-
-
-def test_local_thresholding_dens():
-    # Generate connectivity matrix with 10 nodes and random weights
-    conn_matrix = np.random.rand(10, 10)
-
-    # NaN's across diagonal of connectivity matrix
-    # Create list of coords = nodes
-    coords = []
-    labels = []
-    for idx, val in enumerate(conn_matrix):
-        conn_matrix[idx][idx] = np.nan
-        coords.append(idx)
-        labels.append('ROI_' + str(idx))
-
-    # Test range of thresholds
-    for val in range(0, 11):
-        thr = round(val*0.1, 1)
-        conn_matrix_thr = thresholding.local_thresholding_dens(conn_matrix, coords, labels, thr)
-        assert conn_matrix_thr is not None
 
 
 def test_local_thresholding_prop():

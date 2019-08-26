@@ -37,15 +37,15 @@ def test_ncut():
     
     assert eigen_val is not None
     assert eigen_vec is not None
-    
-def test_discretisation():
-    W = np.random.rand(100,100)
-    nbEigenValues = 100
-    eigen_val, eigen_vec = clustools.ncut(W, nbEigenValues)
 
-    eigenvec_discrete = clustools.discretisation(eigen_vec)
-    assert eigenvec_discrete is not None
-    
+# def test_discretisation():
+#     W = np.random.rand(100,100)
+#     nbEigenValues = 100
+#     eigen_val, eigen_vec = clustools.ncut(W, nbEigenValues)
+#
+#     eigenvec_discrete = clustools.discretisation(eigen_vec)
+#     assert eigenvec_discrete is not None
+#
 
 def test_indx_1dto3d():
     sz = np.random.rand(10,10,10)

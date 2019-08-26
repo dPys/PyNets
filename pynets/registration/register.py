@@ -175,7 +175,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     # Run SyN and normalize streamlines
     fa_img = nib.load(fa_path)
-    vox_size = fa_img.get_header().get_zooms()[0]
+    vox_size = fa_img.header.get_zooms()[0]
     template_path = pkg_resources.resource_filename("pynets", "%s%s%s" % ('templates/FA_', int(vox_size), 'mm.nii.gz'))
     template_img = nib.load(template_path)
     template_data = template_img.get_data().astype('bool')
@@ -541,7 +541,7 @@ class DmriReg(object):
 
         # Threshold CSF to binary in dwi space
         thr_img = nib.load(self.csf_mask_dwi)
-        thr_img.get_fdata()[thr_img.get_fdata() < 0.99] = 0
+        thr_img.get_fdata()[thr_img.get_fdata() < 0.95] = 0
         nib.save(thr_img, self.csf_mask_dwi)
 
         # Threshold WM to binary in dwi space

@@ -62,7 +62,7 @@ RUN curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sourc
     apt-key add /root/.neurodebian.gpg && \
     (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true) && \
     apt-get update -qq
-RUN apt-get update -qq && apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates fsl-first-data
+RUN apt-get update -qq && apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates fsl-first-data afni
 
 # Add git-lfs
 # Configure git-lfs
@@ -156,10 +156,6 @@ ENV AFNI_MODELPATH="/usr/lib/afni/models" \
     AFNI_TTATLAS_DATASET="/usr/share/afni/atlases" \
     AFNI_PLUGINPATH="/usr/lib/afni/plugins"
 ENV PATH="/usr/lib/afni/bin:$PATH"
-
-# ANTs ENV Config
-ENV PATH=$ANTSPATH:$PATH
-ENV ANTS_VERSION=2.2.0
 
 # Misc environment vars
 ENV MPLCONFIGDIR /tmp/matplotlib

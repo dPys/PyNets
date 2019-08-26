@@ -37,13 +37,13 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig):
     if rois_num < 100:
         try:
             plot_matrix(conn_matrix, figure=(10, 10), labels=labels,
-                        reorder=False, auto_fit=True, grid=False, colorbar=False)
+                        reorder=False, auto_fit=True, grid=False, colorbar=True)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')
     else:
         try:
             plot_matrix(conn_matrix, figure=(10, 10), auto_fit=True,
-                        grid=False, colorbar=False)
+                        grid=False, colorbar=True)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')
     plt.savefig(out_path_fig, dpi=dpi_resolution)

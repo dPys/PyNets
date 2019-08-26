@@ -15,8 +15,6 @@ from pathlib import Path
 from pynets.core import utils
 import nibabel as nib
 
-# Fails
-
 
 def test_export_to_pandas():
     base_dir = str(Path(__file__).parent/"examples")
@@ -29,22 +27,19 @@ def test_export_to_pandas():
     outfile = utils.export_to_pandas(csv_loc, ID, network, roi)
     assert outfile is not None
 
-# Fails
-
 
 def test_save_RSN_coords_and_labels_to_pickle():
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
+    dir_path = base_dir + '/002/dmri'
+    coord_file_path = dir_path + '/DesikanKlein2012/Default_coords_rsn.pkl'
     coord_file = open(coord_file_path, 'rb')
     coords = pickle.load(coord_file)
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+    labels_file_path = dir_path + '/DesikanKlein2012/Default_labels_rsn.pkl'
     labels_file = open(labels_file_path, 'rb')
     labels = pickle.load(labels_file)
     network = None
 
-    [coord_path, labels_path] = utils.save_RSN_coords_and_labels_to_pickle(
-        coords, labels, dir_path, network)
+    [coord_path, labels_path] = utils.save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network)
     assert os.path.isfile(coord_path) is True
     assert os.path.isfile(labels_path) is True
 
@@ -59,8 +54,7 @@ def test_save_nifti_parcels_map():
     affine = np.diag([1, 2, 3, 1])
     net_parcels_map_nifti = nib.Nifti1Image(array_data, affine)
 
-    net_parcels_nii_path = utils.save_nifti_parcels_map(
-        ID, dir_path, roi, network, net_parcels_map_nifti)
+    net_parcels_nii_path = utils.save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti)
     assert os.path.isfile(net_parcels_nii_path) is True
 
 
@@ -194,8 +188,8 @@ def test_create_est_path_diff():
             thr = round(val*0.1, 1)
             for thr_type in ['prop', 'abs', 'dens', 'mst', 'disp']:
                 for parc in [True, False]:
-                    utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path,
-                                               node_size, smooth, c_boot, thr_type, hpass, parc)
+                    utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot,
+                                               thr_type, hpass, parc)
 
 
 def test_create_est_path_func():
@@ -222,16 +216,34 @@ def test_create_est_path_func():
 
 def test_create_unthr_path():
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/dmri'
+    dir_path = base_dir + '/002/fmri'
     network = 'Default'
     ID = '002'
+    node_size = 2
+    smooth = 2
+    c_boot = 10
+    hpass = 2
+    parc_types = [True, False]
     models = ['corr', 'cov', 'sps', 'partcorr']
     roi = None
     for conn_model in models:
-        unthr_path = utils.create_unthr_path(ID, network, conn_model, roi, dir_path)
-        assert unthr_path is not None
+        for parc in parc_types:
+            unthr_path_func = utils.create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth, c_boot, hpass, parc)
+            assert unthr_path_func is not None
 
-# No function utils.cuberoot
+    dir_path = base_dir + '/002/dmri'
+    network = 'Default'
+    ID = '002'
+    node_size = 2
+    target_samples = 1000
+    track_type = 'local'
+    parc_types = [True, False]
+    models = ['csd', 'csa']
+    roi = None
+    for conn_model in models:
+        for parc in parc_types:
+            unthr_path_diff = utils.create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, target_samples, track_type, parc)
+            assert unthr_path_diff is not None
 
 
 def test_do_dir_path():
@@ -280,8 +292,12 @@ def test_list_first_mems():
     c_boot_in = [100, 1000, 10000]
     hpass_in = [50, 100, 150, 200]
 
-    [est_path, network, thr, dir_path, node_size, smooth, c_boot, hpass] = utils.list_first_mems(
-        est_path_in, network_in, thr_in, dir_path_in, node_size_in, smooth_in, c_boot_in, hpass_in)
+    [est_path, network, thr, dir_path, node_size, smooth, c_boot, hpass] = utils.list_first_mems(est_path_in,
+                                                                                                 network_in,
+                                                                                                 thr_in, dir_path_in,
+                                                                                                 node_size_in,
+                                                                                                 smooth_in,
+                                                                                                 c_boot_in, hpass_in)
 
     assert est_path == est_path_in[0] == '002_Default__rsn_net_ts.npy'
     assert network == network_in[0] == 'Default'
@@ -366,8 +382,7 @@ def test_pass_meta_ins_multi():
     conn_model_func = 'cor'
     conn_model_struct = 'cov'
     est_path_func = func_path + '/002_Default_est_cov_0.95propTEST_mm3_nb2_fwhm0.1_Hz.npy'
-    est_path_struct = dmri_path + \
-        '/DesikanKlein2012/0021001_Default_est_tensor_0.05dens_100000samples_particle_track.npy'
+    est_path_struct = dmri_path + '/DesikanKlein2012/0021001_Default_est_tensor_0.05dens_100000samples_particle_track.npy'
     network_func = 'Default'
     network_struct = 'Default'
     node_size_func = 6
@@ -401,7 +416,6 @@ def test_pass_meta_ins_multi():
 
 
 def test_pass_meta_outs():
-    # Fails, this one was messy
     base_dir = str(Path(__file__).parent/"examples")
     dmri_path = base_dir + '/002/dmri'
     func_path = base_dir + '/002/fmri'
@@ -409,8 +423,7 @@ def test_pass_meta_outs():
     conn_model_func = 'cor'
     conn_model_struct = 'cov'
     est_path_func = dmri_path + '/DesikanKlein2012/0021001_Default_est_tensor_0.05dens_100000samples_particle_track.npy'
-    est_path_struct = dmri_path + \
-        '/DesikanKlein2012/0021001_Default_est_tensor_0.05dens_100000samples_particle_track.npy'
+    est_path_struct = dmri_path + '/DesikanKlein2012/0021001_Default_est_tensor_0.05dens_100000samples_particle_track.npy'
     network_func = 'Default'
     network_struct = 'Default'
     node_size_func = 6
@@ -432,7 +445,7 @@ def test_pass_meta_outs():
         conn_model_func, est_path_func, network_func, node_size_func, thr_func, prune_func, ID_func, roi_func, norm_func, binary_func, conn_model_struct, est_path_struct, network_struct, node_size_struct, thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct)
 
     [conn_model_iterlist_out, est_path_iterlist_out, network_iterlist_out, node_size_iterlist_out, thr_iterlist_out, prune_iterlist_out, ID_iterlist_out, roi_iterlist_out, norm_iterlist_out, binary_iterlist_out] = utils.pass_meta_outs(
-        conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=True, multimodal=False)
+        conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=False, multimodal=False)
 
     assert conn_model_iterlist_out is not None
     assert est_path_iterlist_out is not None

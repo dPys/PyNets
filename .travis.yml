@@ -6,19 +6,36 @@ python:
   - 3.6
   - 3.5
 
+before_install:
+  - cp docker/files/neurodebian.gpg /root/.neurodebian.gpg
+  - curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list  
+  - sudo apt-key add /root/.neurodebian.gpg && (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
+  - sudo apt-get update -qq
+  - sudo apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates fsl-first-data afni
+
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
   - pip install -r requirements.txt
   - python setup.py install
 
+before_script:
+  - export FSLDIR=/usr/share/fsl/5.0
+  - export PATH=$PATH:$FSLDIR
+  - export AFNI=/usr/lib/afni/bin
+  - export PATH=$PATH:$AFNI
+
 # command to run tests, e.g. python setup.py test
 script:
    - travis_wait 60 pytest tests/test_estimation.py -s
-   - pytest tests/test_nodemaker.py -s
-   - pytest tests/test_plotting.py -s
+   - travis_wait 60 pytest tests/test_nodemaker.py -s
+   - travis_wait 60 pytest tests/test_plotting.py -s
    - travis_wait 60 pytest tests/test_thresholding.py -s
    - travis_wait 60 pytest tests/test_utils.py -s
    - travis_wait 60 pytest tests/test_clustools.py -s
+   - travis_wait 60 pytest tests/test_clustering.py -s
+   - travis_wait 60 pytest tests/test_netstats.py -s
+   - travis_wait 60 pytest tests/test_track.py -s
+#   - travis_wait 60 pytest tests/test_reg_utils.py -s
    - pytest tests/test_refs.py -s
 
 after_success:
