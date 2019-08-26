@@ -582,7 +582,7 @@ def knn(conn_matrix, k):
     nodes = list(range(len(conn_matrix[0])))
     gra.add_nodes_from(nodes)
     for i in nodes:
-        line = np.ma.masked_array(conn_matrix[i, :], roi=np.isnan(conn_matrix[i]))
+        line = np.ma.masked_array(conn_matrix[i, :], mask=np.isnan(conn_matrix[i]))
         line.mask[i] = True
         for _ in range(k):
             node = np.argmax(line)
