@@ -24,7 +24,7 @@ def test_create_density_map():
 
     # Load output from test_filter_streamlines: dictionary of streamline info
     streamlines_trk = dir_path + '/tractography/streamlines_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].trk'
-    streamlines = load_trk(streamlines_trk)[0]
+    streamlines = load_trk(streamlines_trk, lazy_load=True)[0]
 
     conn_model = 'csa'
     target_samples = 10

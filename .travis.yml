@@ -17,11 +17,10 @@ install:
   - pip install -r requirements.txt
   - python setup.py install
 
-before_script:
-  - export FSLDIR=/usr/share/fsl/5.0
-  - export PATH=$PATH:$FSLDIR
-  - export AFNI=/usr/lib/afni/bin
-  - export PATH=$PATH:$AFNI
+env:
+  global:
+  - FSLDIR=/usr/share/fsl/5.0
+  - AFNI=/usr/lib/afni/bin
 
 # command to run tests, e.g. python setup.py test
 script:
@@ -34,7 +33,7 @@ script:
    - travis_wait 60 pytest tests/test_clustering.py -s
    - travis_wait 60 pytest tests/test_netstats.py -s
    - travis_wait 60 pytest tests/test_track.py -s
-#   - travis_wait 60 pytest tests/test_reg_utils.py -s
+   - travis_wait 60 pytest tests/test_reg_utils.py -s
    - pytest tests/test_refs.py -s
 
 after_success:
