@@ -11,15 +11,14 @@ before_install:
   - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
   - sudo apt-get update -qq
   - sudo apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates fsl-first-data afni
+  - sudo apt-get install python-dipy
   - PYTHONPATH=$PYTHONPATH:$(pwd)
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
   - pip install --upgrade pip
-  - pip install -r requirements.txt
+  - pip install -r requirements.txt --ignore-installed
   - python setup.py install
-  - pip uninstall --yes dipy
-  - git clone https://github.com/nipy/dipy.git && cd dipy && python setup.py install && cd ..
 
 env:
   global:
