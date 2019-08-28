@@ -10,21 +10,21 @@ try:
 except ImportError:
     import _pickle as pickle
 from pathlib import Path
-from pynets.dmri import track
-
 import nibabel as nib
-from dipy.core.gradients import gradient_table
-from dipy.io.streamline import load_trk
+import dipy
 
 
 def test_create_density_map():
+    from pynets.dmri import track
+    from dipy.io.streamline import load_trk
+
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/001/dmri'
     dwi_file = dir_path + '/HARDI150.nii.gz'
 
     # Load output from test_filter_streamlines: dictionary of streamline info
     streamlines_trk = dir_path + '/tractography/streamlines_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].trk'
-    streamlines = load_trk(streamlines_trk, lazy_load=True)[0]
+    streamlines = load_trk(streamlines_trk)[0]
 
     conn_model = 'csa'
     target_samples = 10
@@ -45,6 +45,8 @@ def test_create_density_map():
 
 
 def test_prep_tissues():
+    from dipy.tracking.local import ActTissueClassifier, CmcTissueClassifier, BinaryTissueClassifier
+    from pynets.dmri import track
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/003/dmri'
     B0_mask = dir_path + '/sub-003_b0_brain_mask.nii.gz'
@@ -58,9 +60,19 @@ def test_prep_tissues():
         
         
 def test_reconstruction():
+    from pynets.dmri.estimation import tens_mod_est, csa_mod_est, csd_mod_est
+    from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
+    from dipy.reconst.shm import CsaOdfModel
+    from dipy.reconst.dti import TensorModel
+    from dipy.data import get_sphere
+    from dipy.io import load_pickle
+    from dipy.reconst.dti import TensorModel
+    from dipy.reconst.dti import fractional_anisotropy
+    from pynets.dmri import track
+    from dipy.core.gradients import gradient_table
     base_dir = str(Path(__file__).parent/"examples")
+
     dir_path = base_dir + '/003/dmri'
-    
     bvals = dir_path + '/sub-003_dwi.bval'
     bvecs = dir_path + '/sub-003_dwi.bvec'
     gtab = gradient_table(bvals, bvecs)
@@ -72,6 +84,8 @@ def test_reconstruction():
 
     
 def test_save_streams():
+    from pynets.dmri import track
+    from dipy.io.streamline import load_trk
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/001/dmri'
     dwi_file = dir_path + '/HARDI150.nii.gz'
