@@ -11,7 +11,6 @@ except ImportError:
     import _pickle as pickle
 from pathlib import Path
 import nibabel as nib
-import dipy
 
 
 def test_create_density_map():
@@ -45,7 +44,6 @@ def test_create_density_map():
 
 
 def test_prep_tissues():
-    from dipy.tracking.local import ActTissueClassifier, CmcTissueClassifier, BinaryTissueClassifier
     from pynets.dmri import track
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/003/dmri'
@@ -60,14 +58,6 @@ def test_prep_tissues():
         
         
 def test_reconstruction():
-    from pynets.dmri.estimation import tens_mod_est, csa_mod_est, csd_mod_est
-    from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
-    from dipy.reconst.shm import CsaOdfModel
-    from dipy.reconst.dti import TensorModel
-    from dipy.data import get_sphere
-    from dipy.io import load_pickle
-    from dipy.reconst.dti import TensorModel
-    from dipy.reconst.dti import fractional_anisotropy
     from pynets.dmri import track
     from dipy.core.gradients import gradient_table
     base_dir = str(Path(__file__).parent/"examples")

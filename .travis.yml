@@ -35,7 +35,7 @@ script:
    - travis_wait 60 pytest tests/test_clustools.py -s
    - travis_wait 60 pytest tests/test_clustering.py -s
    - travis_wait 60 pytest tests/test_netstats.py -s
-   - travis_wait 60 pytest tests/test_track.py -s
+#   - travis_wait 60 pytest tests/test_track.py -s
    - travis_wait 60 pytest tests/test_reg_utils.py -s
    - pytest tests/test_refs.py -s
 

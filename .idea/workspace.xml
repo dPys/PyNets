@@ -10,8 +10,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.travis.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.travis.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/test_track.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_track.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
@@ -47,8 +45,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/tests/test_track.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="674">
-              <caret line="69" column="54" selection-start-line="69" selection-start-column="54" selection-end-line="69" selection-end-column="54" />
+            <state relative-caret-position="180">
+              <caret line="12" column="21" selection-start-line="12" selection-start-column="21" selection-end-line="12" selection-end-column="21" />
               <folding>
                 <element signature="e#192#216#0" expanded="true" />
               </folding>
@@ -102,7 +100,7 @@
         <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="63">
-              <caret line="473" lean-forward="true" selection-start-line="473" selection-end-line="473" />
+              <caret line="473" selection-start-line="473" selection-end-line="473" />
               <folding>
                 <element signature="e#132#163#0" expanded="true" />
               </folding>
@@ -524,7 +522,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="954357000" />
+    <option name="totallyTimeSpent" value="954617000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="637" y="26" width="1082" height="984" extended-state="0" />
@@ -913,7 +911,7 @@
     <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="63">
-          <caret line="473" lean-forward="true" selection-start-line="473" selection-end-line="473" />
+          <caret line="473" selection-start-line="473" selection-end-line="473" />
           <folding>
             <element signature="e#132#163#0" expanded="true" />
           </folding>
@@ -959,8 +957,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_track.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="674">
-          <caret line="69" column="54" selection-start-line="69" selection-start-column="54" selection-end-line="69" selection-end-column="54" />
+        <state relative-caret-position="180">
+          <caret line="12" column="21" selection-start-line="12" selection-start-column="21" selection-end-line="12" selection-end-column="21" />
           <folding>
             <element signature="e#192#216#0" expanded="true" />
           </folding>
