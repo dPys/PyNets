@@ -12,7 +12,7 @@ pytest>=3.3.1
 networkx>=2.0
 nipype>=1.1.0
 scikit_learn>=0.19.1
-dipy>=0.13.0
+dipy>=0.16.0
 pyyaml>=4.2b1
 boto3>=1.9.111
 pybids>=0.6.4
@@ -20,6 +20,6 @@ colorama>=0.3.9
 python-louvain==0.13
 scikit-image==0.14.2
 #skggm>=0.2.7
-#graspy>=0.0.2
+graspy>=0.0.2
 #py3plex>=0.67
 #-e git+git://github.com/dPys/nilearn.git#egg=0.4.2

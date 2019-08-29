@@ -23,7 +23,7 @@ def test_bigref():
 
 
 def test_atlases():
-    base_dir = "%s%s" % (str(Path(__file__).parent), '/../pynets/atlases')
+    base_dir = "%s%s" % (str(Path(__file__).parent), '/../pynets/core/atlases')
     whole_brain_cluster_labels_PCA200 = nib.load("%s%s" % (base_dir, '/whole_brain_cluster_labels_PCA200.nii.gz'))
     AAL2zourioMazoyer2002 = nib.load("%s%s" % (base_dir, '/AAL2zourioMazoyer2002.nii.gz'))
     AALTzourioMazoyer2002 = nib.load("%s%s" % (base_dir, '/AALTzourioMazoyer2002.nii.gz'))
@@ -70,8 +70,29 @@ def test_atlases():
 def test_templates():
     base_dir = "%s%s" % (str(Path(__file__).parent), '/../pynets/templates')
     ch2better = nib.load("%s%s" % (base_dir, '/ch2better.nii.gz'))
-    FSL_HCP1065_FA_2mm = nib.load("%s%s" % (base_dir, '/FSL_HCP1065_FA_2mm.nii.gz'))
+
+    FA_2mm = nib.load("%s%s" % (base_dir, '/FA_2mm.nii.gz'))
     MNI152_T1_2mm_brain = nib.load("%s%s" % (base_dir, '/MNI152_T1_2mm_brain.nii.gz'))
+    CorpusCallosum_2mm = nib.load("%s%s" % (base_dir, '/CorpusCallosum_2mm.nii.gz'))
+    LateralVentricles_2mm = nib.load("%s%s" % (base_dir, '/LateralVentricles_2mm.nii.gz'))
+    MNI152_T1_2mm_brain_mask = nib.load("%s%s" % (base_dir, '/MNI152_T1_2mm_brain_mask.nii.gz'))
+
+    FA_1mm = nib.load("%s%s" % (base_dir, '/FA_1mm.nii.gz'))
+    MNI152_T1_1mm_brain = nib.load("%s%s" % (base_dir, '/MNI152_T1_1mm_brain.nii.gz'))
+    CorpusCallosum_1mm = nib.load("%s%s" % (base_dir, '/CorpusCallosum_1mm.nii.gz'))
+    LateralVentricles_1mm = nib.load("%s%s" % (base_dir, '/LateralVentricles_1mm.nii.gz'))
+    MNI152_T1_1mm_brain_mask = nib.load("%s%s" % (base_dir, '/MNI152_T1_1mm_brain_mask.nii.gz'))
+
+
     assert ch2better is not None
-    assert FSL_HCP1065_FA_2mm is not None
+    assert FA_2mm is not None
     assert MNI152_T1_2mm_brain is not None
+    assert CorpusCallosum_2mm is not None
+    assert LateralVentricles_2mm is not None
+    assert MNI152_T1_2mm_brain_mask is not None
+
+    assert FA_1mm is not None
+    assert MNI152_T1_1mm_brain is not None
+    assert CorpusCallosum_1mm is not None
+    assert LateralVentricles_1mm is not None
+    assert MNI152_T1_1mm_brain_mask is not None

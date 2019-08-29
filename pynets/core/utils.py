@@ -1169,6 +1169,8 @@ def list_first_mems(est_path, network, thr, dir_path, node_size, smooth, c_boot,
     thr = thr[0]
     dir_path = dir_path[0]
     node_size = node_size[0]
+    c_boot = c_boot[0]
+    hpass = hpass[0]
     # print('\n\n\n\n')
     # print(est_path)
     # print(network)
@@ -1471,11 +1473,13 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
 
     # loading bvecs/bvals
     bvals, bvecs = read_bvals_bvecs(fbval, fbvec)
+    # Correct any corrupted
     bvecs[np.where(np.any(abs(bvecs) >= 10, axis=1) == True)] = [1, 0, 0]
     bvecs[np.where(bvals == 0)] = 0
     if len(bvecs[np.where(np.logical_and(bvals > 50, np.all(abs(bvecs) == np.array([0, 0, 0]), axis=1)))]) > 0:
         raise ValueError('WARNING: Encountered potentially corrupted bval/bvecs. Check to ensure volumes with a '
                          'diffusion weighting are not being treated as B0\'s along the bvecs')
+    # Save corrected
     np.savetxt(fbval, bvals)
     np.savetxt(fbvec, bvecs)
     bvec_rescaled = rescale_bvec(fbvec, bvec_rescaled)
@@ -1514,9 +1518,12 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
     nib.save(mean_B0_img, B0)
 
     # Create mean b0 brain mask
-    mean_b0_mask = compute_epi_mask(mean_B0_img, lower_cutoff=0.15, upper_cutoff=0.75)
-    nib.save(mean_b0_mask, B0_mask)
-    nib.save(nib.Nifti1Image(applymask(mean_B0_img.get_data(), mean_b0_mask.get_data()), affine=dwi_img.affine), B0_bet)
+    # Get mean b0 brain mask
+    cmd = 'bet ' + B0 + ' ' + B0_bet + ' -m -f 0.2'
+    os.system(cmd)
+    # mean_b0_mask = compute_epi_mask(mean_B0_img, lower_cutoff=0.15, upper_cutoff=0.75)
+    # nib.save(mean_b0_mask, B0_mask)
+    # nib.save(nib.Nifti1Image(applymask(mean_B0_img.get_data(), mean_b0_mask.get_data()), affine=dwi_img.affine), B0_bet)
 
     return gtab_file, B0_bet, B0_mask, dwi_file
 

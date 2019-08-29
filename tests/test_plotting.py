@@ -97,7 +97,7 @@ def test_plot_all_nonet_no_mask():
 
     start_time = time.time()
     #coords already a list
-    plot_gen.plot_all(conn_matrix, conn_model, atlas, dir_path, ID,
+    plot_gen.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID,
     network, labels, roi, coords, edge_threshold, thr, node_size, smooth,
     prune, parlistfile, c_boot, norm, binary, hpass)
     print("%s%s%s" % ('plot_all --> finished: ',
@@ -133,7 +133,7 @@ def test_plot_all_nonet_with_mask():
 
     start_time = time.time()
     #coords already a list
-    plot_gen.plot_all(conn_matrix, conn_model, atlas, dir_path, ID,
+    plot_gen.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID,
     network, labels, roi, coords, edge_threshold, thr, node_size, smooth,
     prune, parlistfile, c_boot, norm, binary, hpass)
     print("%s%s%s" % ('plot_all (Masking version) --> finished: ',

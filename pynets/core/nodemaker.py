@@ -717,7 +717,8 @@ def AAL_naming(coords):
     labels_ix = []
     print('Building region index using AAL MNI coords...')
     for coord in coords:
-        reg_lab = aal_coords_ix.loc[aal_coords_ix['coord_tuple'] == str(tuple(np.round(coord).astype('int'))), 'Region_index']
+        reg_lab = aal_coords_ix.loc[aal_coords_ix['coord_tuple'] == str(tuple(np.round(coord).astype('int'))),
+                                    'Region_index']
         if len(reg_lab) > 0:
             labels_ix.append(reg_lab.values[0])
         else:

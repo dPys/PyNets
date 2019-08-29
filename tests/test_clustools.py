@@ -11,6 +11,7 @@ except ImportError:
     import _pickle as pickle
 from pathlib import Path
 from pynets.fmri import clustools
+import numpy as np
 
 
 def test_individual_clustering():
@@ -27,3 +28,39 @@ def test_individual_clustering():
     assert uatlas is not None
     assert atlas is not None
     assert clustering is True
+    
+    
+def test_ncut():
+    W = np.random.rand(100,100)
+    nbEigenValues = 100
+    eigen_val, eigen_vec = clustools.ncut(W, nbEigenValues)
+    
+    assert eigen_val is not None
+    assert eigen_vec is not None
+
+# def test_discretisation():
+#     W = np.random.rand(100,100)
+#     nbEigenValues = 100
+#     eigen_val, eigen_vec = clustools.ncut(W, nbEigenValues)
+#
+#     eigenvec_discrete = clustools.discretisation(eigen_vec)
+#     assert eigenvec_discrete is not None
+#
+
+def test_indx_1dto3d():
+    sz = np.random.rand(10,10,10)
+    idx = 45
+    
+    x, y, z = clustools.indx_1dto3d(idx, sz)
+    assert x is not None
+    assert y is not None
+    assert z is not None
+    
+def test_indx_3dto1d():
+    sz = np.random.rand(10,10,10)
+    idx = 45
+    
+    x, y, z = clustools.indx_1dto3d(idx, sz)
+    assert x is not None
+    assert y is not None
+    assert z is not None

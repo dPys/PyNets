@@ -48,55 +48,6 @@ def test_make_local_connectivity_scorr():
     assert outfile is not None
 
 
-def test_make_tcorr_parcellation():
-    """
-    Test for tcorr connectivity
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    k = 50
-    print('tcorr connectivity')
-    outfile = dir_path + '/variant-tcorr' + str(k) + '_roi.npy'
-    outfile_parc = dir_path + '/rm_tcorr_indiv_cluster_' + str(k) + '_roi'
-    outname = clustools.binfile_parcellate(outfile, outfile_parc, int(k))
-
-    assert outname is not None
-
-
-def test_make_scorr_parcellation():
-    """
-    Test for scorr connectivity
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    k = 50
-    print('scorr connectivity')
-    outfile = dir_path + '/variant-scorr' + str(k) + '_roi.npy'
-    outfile_parc = dir_path + '/rm_scorr_indiv_cluster_' + str(k) + '_roi.nii.gz'
-    outname = clustools.binfile_parcellate(outfile, outfile_parc, int(k))
-
-    assert outname is not None
-
-
-def test_make_image_from_bin_renum():
-    """
-    Test for scorr connectivity
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    mask_file = base_dir + '/triple_net_ICA_overlap_3_sig_bin.nii.gz'
-    image_file = dir_path + '/002.nii.gz'
-    ID = '002'
-    k = 50
-    atlas = 'variant-scorr' + str(k) + '_roi'
-    print('scorr connectivity')
-    working_dir = "%s%s%s" % (dir_path, '/', atlas)
-    binfile = "%s%s%s%s" % ("%s%s%s%s" % (working_dir, '/rm_scorr_conn_', str(ID), '.npy'), '_', str(k), '.npy')
-    outname = clustools.make_image_from_bin_renum(image_file, binfile, mask_file)
-
-    assert outname is not None
-
-
 def test_nil_parcellate():
     """
     Test for scorr connectivity

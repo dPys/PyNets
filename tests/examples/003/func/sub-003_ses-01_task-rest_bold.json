@@ -1,0 +1,25 @@
+{
+	"Manufacturer": "Philips",
+	"PatientPosition": "HFS",
+	"SeriesDescription": "ImageMRSERIES",
+	"ProtocolName": "WIPRestingStateSENSE",
+	"SeriesNumber": 4,
+	"AcquisitionNumber": 4,
+	"ImageComments": "MEG",
+	"PhilipsRescaleSlope": 1.44713,
+	"PhilipsRescaleIntercept": 0,
+	"PhilipsScaleSlope": 0.000695036,
+	"UsePhilipsFloatNotDisplayScaling": 1,
+	"EchoTime": 0.029,
+	"RepetitionTime": 2,
+	"ReconMatrixPE": 64,
+	"ImageOrientationPatientDICOM": [
+		0.99962,
+		-0.00277682,
+		-0.0274325,
+		0,
+		0.994916,
+		-0.100709	],
+	"ConversionSoftware": "dcm2niix",
+	"ConversionSoftwareVersion": "v1.0.20180622 (JP2:OpenJPEG) (JP-LS:CharLS) GCC5.5.0"
+}
