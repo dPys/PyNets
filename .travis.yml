@@ -11,7 +11,6 @@ before_install:
   - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
   - sudo apt-get update -qq
   - sudo apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates fsl-first-data afni
-  - sudo apt-get install python-dipy
   - PYTHONPATH=$PYTHONPATH:$(pwd)
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
@@ -23,7 +22,6 @@ install:
 env:
   global:
     - FSLDIR=/usr/share/fsl/5.0
-    - AFNI=/usr/lib/afni/bin
 
 # command to run tests, e.g. python setup.py test
 script:
@@ -40,4 +38,4 @@ script:
    - pytest tests/test_refs.py -s
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash) -t d62ad7b3-39a6-4657-a2e3-6acf2362d36d
+  - bash <(curl -s https://codecov.io/bash)
