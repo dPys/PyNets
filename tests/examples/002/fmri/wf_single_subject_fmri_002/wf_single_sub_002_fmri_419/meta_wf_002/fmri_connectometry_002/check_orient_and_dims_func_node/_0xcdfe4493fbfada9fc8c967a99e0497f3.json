@@ -1,0 +1,17 @@
+[
+    [
+        "function_str",
+        "def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):\n    \"\"\"\n    An API to reorient any image to RAS+ and resample any image to a given voxel resolution.\n\n    Parameters\n    ----------\n    infile : str\n        File path to a dwi Nifti1Image.\n    vox_size : str\n        Voxel size in mm. (e.g. 2mm).\n    bvecs : str\n        File path to corresponding bvecs file if infile is a dwi.\n    overwrite : bool\n        Boolean indicating whether to overwrite existing outputs. Default is True.\n\n    Returns\n    -------\n    outfile : str\n        File path to the reoriented and/or resample Nifti1Image.\n    bvecs : str\n        File path to corresponding reoriented bvecs file if outfile is a dwi.\n    \"\"\"\n    import warnings\n    warnings.filterwarnings(\"ignore\")\n    import os.path as op\n    from pynets.registration.reg_utils import reorient_dwi, reorient_img, match_target_vox_res\n\n    outdir = op.dirname(infile)\n    img = nib.load(infile)\n    vols = img.shape[-1]\n\n    # Check orientation\n    if (vols > 1) and (bvecs is not None):\n        # dwi case\n        # Check orientation\n        if ('RAS' not in infile) or (overwrite is True):\n            [infile, bvecs] = reorient_dwi(infile, bvecs, outdir)\n        # Check dimensions\n        if ('reor' not in infile) or (overwrite is True):\n            outfile = match_target_vox_res(infile, vox_size, outdir)\n            print(outfile)\n    elif (vols > 1) and (bvecs is None):\n        # func case\n        # Check orientation\n        if ('RAS' not in infile) or (overwrite is True):\n            infile = reorient_img(infile, outdir)\n        # Check dimensions\n        if ('reor' not in infile) or (overwrite is True):\n            outfile = match_target_vox_res(infile, vox_size, outdir)\n            print(outfile)\n    else:\n        # t1w case\n        # Check orientation\n        if ('RAS' not in infile) or (overwrite is True):\n            infile = reorient_img(infile, outdir)\n        if ('reor' not in infile) or (overwrite is True):\n            # Check dimensions\n            outfile = match_target_vox_res(infile, vox_size, outdir)\n            print(outfile)\n\n    if bvecs is None:\n        return outfile\n    else:\n        return outfile, bvecs\n"
+    ],
+    [
+        "infile",
+        [
+            "/Users/derekpisner/Applications/PyNets/tests/examples/002/fmri/002.nii.gz",
+            "4c84f86ef7cb1061c5201345fbe7dc77"
+        ]
+    ],
+    [
+        "vox_size",
+        "2mm"
+    ]
+]
