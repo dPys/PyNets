@@ -1,7 +1,7 @@
 PyNets™
 =======
 [![Build Status](https://travis-ci.org/dPys/PyNets.svg?branch=master)](https://travis-ci.org/dPys/PyNets)
-[![Coverage Status](https://coveralls.io/repos/github/dPys/PyNets/badge.svg?branch=master)](https://coveralls.io/github/dPys/PyNets?branch=master)
+[![codecov](https://codecov.io/gh/dPys/PyNets/branch/master/graph/badge.svg)](https://codecov.io/gh/dPys/PyNets)
 
 About
 -----

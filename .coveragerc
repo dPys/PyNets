@@ -1,0 +1,17 @@
+[run]
+omit = 
+	*__init__*
+	tests/*
+	docs/*
+	setup.py
+	pynets/__about__.py
+	pynets/_version.py
+	get_version.py
+	versioneer.py
+	pynets/cli.py
+	pynets/templates/*
+	pynets/rsnrefs/*
+	pynets/core/atlases/*
+	pynets/core/labelcharts/*
+	pynets/core/runconfig.yaml
+	pynets/stats/nodal_graph_measures.yaml

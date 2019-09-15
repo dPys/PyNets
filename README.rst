@@ -1,6 +1,8 @@
 PyNets™
 =======
 .. image:: https://travis-ci.org/dPys/PyNets.svg?branch=master
+.. image:: https://codecov.io/gh/dPys/PyNets/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/dPys/PyNets
 
 About
 -----

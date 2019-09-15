@@ -1,0 +1,99 @@
+[
+    {
+        "group": 1,
+        "imports": [],
+        "name": "00_check_orient_and_dims_func_node",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "00_check_orient_and_dims_func_node"
+        ],
+        "name": "01_fetch_nodes_and_labels_node",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "01_fetch_nodes_and_labels_node"
+        ],
+        "name": "02_node_gen_node",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "01_fetch_nodes_and_labels_node",
+            "02_node_gen_node",
+            "00_check_orient_and_dims_func_node"
+        ],
+        "name": "03_extract_ts_node",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "03_extract_ts_node"
+        ],
+        "name": "04_get_conn_matrix_node",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "04_get_conn_matrix_node"
+        ],
+        "name": "05_thresh_func_node",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "05_thresh_func_node"
+        ],
+        "name": "06_pass_meta_ins_func_node",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "06_pass_meta_ins_func_node"
+        ],
+        "name": "07_pass_meta_outs_node",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "07_pass_meta_outs_node"
+        ],
+        "name": "08_ExtractNetStats",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "07_pass_meta_outs_node",
+            "08_ExtractNetStats"
+        ],
+        "name": "09_Export2Pandas",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "09_Export2Pandas"
+        ],
+        "name": "10_AggregatePandasPickles",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "10_AggregatePandasPickles"
+        ],
+        "name": "11_CollectPandasDfs",
+        "size": 1
+    }
+]
