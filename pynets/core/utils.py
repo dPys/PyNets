@@ -217,7 +217,7 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
                                                      '%s' % (network + '_' if network is not None else ''),
                                                      '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                      'est_', conn_model, '_', thr, thr_type, '_',
-                                                     '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                                     '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc'),
                                                      "%s" % ("%s%s%s" % ('_', int(target_samples), 'samples') if float(target_samples) > 0 else ''),
                                                      track_type, '_dwi.npy')
     return est_path
@@ -324,7 +324,7 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
                                                '%s' % (network + '_' if network is not None else ''),
                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                'raw_', conn_model, '_',
-                                               '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                               '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc'),
                                                "%s" % ("%s%s%s" % ('_', int(target_samples), 'samples') if float(target_samples) > 0 else ''),
                                                track_type, '_dwi.npy')
     return est_path

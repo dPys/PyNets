@@ -375,7 +375,6 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                                                       mode='any',
                                                                       tol=roi_neighborhood_tol))
 
-                print('Filtering by length...')
                 roi_proximal_streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in
                                                                                          roi_proximal_streamlines if
                                                                                          len(s) > float(min_length)])
