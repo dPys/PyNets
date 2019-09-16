@@ -11,7 +11,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def reconstruction(conn_model, gtab, dwi_file, wm_in_dwi):
+def reconstruction(conn_model, gtab, dwi_data, wm_in_dwi):
     '''
     Estimate a tensor model from dwi data.
 
@@ -21,8 +21,8 @@ def reconstruction(conn_model, gtab, dwi_file, wm_in_dwi):
         Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
     gtab : Obj
         DiPy object storing diffusion gradient information.
-    dwi_file : str
-        File path to diffusion weighted image.
+    dwi_data : array
+        4D array of dwi data.
     wm_in_dwi : str
         File path to white-matter tissue segmentation Nifti1Image.
 
@@ -38,14 +38,12 @@ def reconstruction(conn_model, gtab, dwi_file, wm_in_dwi):
     except ImportError:
         import _pickle as pickle
     from pynets.dmri.estimation import tens_mod_est, csa_mod_est, csd_mod_est
-    dwi_img = nib.load(dwi_file)
-    data = dwi_img.get_fdata()
     if conn_model == 'tensor':
-        mod = tens_mod_est(gtab, data, wm_in_dwi)
+        mod = tens_mod_est(gtab, dwi_data, wm_in_dwi)
     elif conn_model == 'csa':
-        mod = csa_mod_est(gtab, data, wm_in_dwi)
+        mod = csa_mod_est(gtab, dwi_data, wm_in_dwi)
     elif conn_model == 'csd':
-        mod = csd_mod_est(gtab, data, wm_in_dwi)
+        mod = csd_mod_est(gtab, dwi_data, wm_in_dwi)
     else:
         raise ValueError('Error: Either no seeds supplied, or no valid seeds found in white-matter interface')
 
@@ -82,7 +80,7 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
-    from dipy.tracking.local import ActTissueClassifier, CmcTissueClassifier, BinaryTissueClassifier
+    from dipy.tracking.stopping_criterion import ActStoppingCriterion, CmcStoppingCriterion, BinaryStoppingCriterion
     # Loads mask and ensures it's a true binary mask
     mask_img = nib.load(B0_mask)
     # Load tissue maps and prepare tissue classifier
@@ -98,19 +96,22 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
         include_map = gm_mask_data
         include_map[background > 0] = 1
         exclude_map = vent_csf_in_dwi_data
-        tiss_classifier = ActTissueClassifier(include_map, exclude_map)
+        tiss_classifier = ActStoppingCriterion(include_map, exclude_map)
     elif tiss_class == 'bin':
         wm_in_dwi_data = nib.load(wm_in_dwi).get_fdata().astype('bool')
-        tiss_classifier = BinaryTissueClassifier(wm_in_dwi_data)
+        tiss_classifier = BinaryStoppingCriterion(wm_in_dwi_data)
     elif tiss_class == 'cmc':
         vent_csf_in_dwi = nib.load(vent_csf_in_dwi)
         vent_csf_in_dwi_data = vent_csf_in_dwi.get_fdata()
         voxel_size = np.average(wm_mask.get_header()['pixdim'][1:4])
-        tiss_classifier = CmcTissueClassifier.from_pve(wm_mask_data, gm_mask_data, vent_csf_in_dwi_data,
-                                                       step_size=cmc_step_size, average_voxel_size=voxel_size)
+        tiss_classifier = CmcStoppingCriterion.from_pve(wm_mask_data, gm_mask_data, vent_csf_in_dwi_data,
+                                                        step_size=cmc_step_size, average_voxel_size=voxel_size)
     elif tiss_class == 'wb':
         B0_mask_data = mask_img.get_fdata().astype('bool')
-        tiss_classifier = BinaryTissueClassifier(B0_mask_data)
+        tiss_classifier = BinaryStoppingCriterion(B0_mask_data)
+
+    else:
+        raise ValueError('Tissue Classifier cannot be none.')
 
     return tiss_classifier
 
@@ -153,22 +154,21 @@ def save_streams(dwi_img, streamlines, streams):
     tractogram = nib.streamlines.Tractogram(streamlines, affine_to_rasmm=trk_affine)
     trkfile = nib.streamlines.trk.TrkFile(tractogram, header=trk_hdr)
     nib.streamlines.save(trkfile, streams)
+
     return streams
 
 
-def create_density_map(dwi_file, dir_path, gtab, streamlines, conn_model, target_samples,
+def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_samples,
                        node_size, curv_thr_list, step_list, network, roi):
     '''
     Create a density map of the list of streamlines.
 
     Parameters
     ----------
-    dwi_file : str
-        File path to diffusion weighted image.
+    dwi_img : Nifti1Image
+        Dwi data stored as a Nifti1image object.
     dir_path : str
         Path to directory containing subject derivative data for a given pynets run.
-    gtab : Obj
-        DiPy object storing diffusion gradient information.
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
     conn_model : str
@@ -204,11 +204,8 @@ def create_density_map(dwi_file, dir_path, gtab, streamlines, conn_model, target
     from dipy.tracking import utils
     from pynets.dmri.track import save_streams
 
-    dwi_img = nib.load(dwi_file)
-    data = dwi_img.get_fdata()
-
     # Create density map
-    dm = utils.density_map(streamlines, dwi_img.shape, affine=np.eye(4))
+    dm = utils.density_map(streamlines, affine=np.eye(4), vol_dims=dwi_img.shape)
 
     # Save density map
     dm_img = nib.Nifti1Image(dm.astype('int16'), dwi_img.affine)
@@ -239,12 +236,14 @@ def create_density_map(dwi_file, dir_path, gtab, streamlines, conn_model, target
     return streams, dir_path, dm_path
 
 
-def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere, directget,
+def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere, directget,
                    curv_thr_list, step_list, track_type, maxcrossing, max_length, roi_neighborhood_tol, min_length,
                    n_seeds_per_iter=100, pft_back_tracking_dist=2, pft_front_tracking_dist=1, particle_count=15):
     """
     Perform native-space ensemble tractography, restricted to a vector of ROI masks.
 
+    dwi_data : array
+        4D array of dwi data.
     target_samples : int
         Total number of streamline samples specified to generate streams.
     atlas_data_wm_gm_int : array
@@ -306,11 +305,11 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
     from colorama import Fore, Style
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
-    from dipy.tracking.local import LocalTracking, ParticleFilteringTracking
+    from dipy.tracking.local_tracking import LocalTracking, ParticleFilteringTracking
     from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
 
     # Commence Ensemble Tractography
-    parcel_vec = np.ones(len(parcels)).astype('bool')
+    parcel_vec = list(np.ones(len(parcels)).astype('bool'))
     streamlines = nib.streamlines.array_sequence.ArraySequence()
     ix = 0
     circuit_ix = 0
@@ -323,7 +322,7 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
             if directget == 'prob':
                 dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere)
             elif directget == 'boot':
-                dg = BootDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere)
+                dg = BootDirectionGetter.from_data(dwi_data, mod_fit, max_angle=float(curv_thr), sphere=sphere)
             elif directget == 'clos':
                 dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere)
             elif directget == 'det':
@@ -359,8 +358,9 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
                     raise ValueError('ERROR: No valid tracking method(s) specified.')
 
                 # Filter resulting streamlines by roi-intersection characteristics
-                roi_proximal_streamlines = Streamlines(select_by_rois(streamline_generator, parcels, parcel_vec,
-                                                                      mode='any', affine=np.eye(4),
+                roi_proximal_streamlines = Streamlines(select_by_rois(streamline_generator, affine=np.eye(4),
+                                                                      rois=parcels, include=parcel_vec,
+                                                                      mode='any',
                                                                       tol=roi_neighborhood_tol))
 
                 print('Filtering streamlines...')
@@ -560,8 +560,12 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     # Load gradient table
     gtab = load_pickle(gtab_file)
 
+    # Load diffusion data
+    dwi_img = nib.load(dwi_file)
+    dwi_data = dwi_img.get_fdata()
+
     # Fit diffusion model
-    mod_fit = reconstruction(conn_model, gtab, dwi_file, wm_in_dwi)
+    mod_fit = reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
 
     # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
     atlas_img = nib.load(labels_im_file)
@@ -606,14 +610,14 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     print(Style.RESET_ALL)
 
     # Commence Ensemble Tractography
-    streamlines = track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere,
-                                 directget, curv_thr_list, step_list, track_type, maxcrossing, max_length,
+    streamlines = track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier,
+                                 sphere, directget, curv_thr_list, step_list, track_type, maxcrossing, max_length,
                                  roi_neighborhood_tol, min_length)
     print('Tracking Complete')
 
     # Create streamline density map
     dir_path = utils.do_dir_path(atlas, dwi_file)
-    [streams, dir_path, dm_path] = create_density_map(dwi_file, dir_path, gtab, streamlines, conn_model,
+    [streams, dir_path, dm_path] = create_density_map(dwi_img, dir_path, streamlines, conn_model,
                                                       target_samples, node_size, curv_thr_list, step_list,
                                                       network, roi)
 
