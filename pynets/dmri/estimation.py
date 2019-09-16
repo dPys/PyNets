@@ -141,15 +141,11 @@ def csd_mod_est(gtab, data, B0_mask):
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     print('Fitting CSD model...')
     B0_mask_data = nib.load(B0_mask).get_fdata().astype('bool')
-    try:
-        print('Reconstructing...')
-        model = ConstrainedSphericalDeconvModel(gtab, None, sh_order=6)
-    except:
-        print('Falling back to recursive response...')
-        response = recursive_response(gtab, data, mask=B0_mask_data, sh_order=8, peak_thr=0.01, init_fa=0.08,
-                                      init_trace=0.0021, iter=8, convergence=0.001, parallel=False)
-        print('CSD Reponse: ' + str(response))
-        model = ConstrainedSphericalDeconvModel(gtab, response)
+    print('Reconstructing...')
+    response = recursive_response(gtab, data, mask=B0_mask_data, sh_order=8, peak_thr=0.01, init_fa=0.08,
+                                  init_trace=0.0021, iter=8, convergence=0.001, parallel=False)
+    print('CSD Reponse: ' + str(response))
+    model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=6)
     csd_mod = model.fit(data, B0_mask_data).shm_coeff
     return csd_mod
 

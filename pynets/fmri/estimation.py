@@ -346,7 +346,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     if conf is not None:
         import pandas as pd
         confounds = pd.read_csv(conf, sep='\t')
-        if confounds.isnull().values.any() is True:
+        if confounds.isnull().values.any():
             print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but these '
                   'should be check manually')
             confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
@@ -464,7 +464,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         if conf is not None:
             import pandas as pd
             confounds = pd.read_csv(conf, sep='\t')
-            if confounds.isnull().values.any() is True:
+            if confounds.isnull().values.any():
                 print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but these '
                       'should be check manually')
                 confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
