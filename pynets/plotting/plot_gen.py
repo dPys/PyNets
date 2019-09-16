@@ -761,7 +761,7 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
             except:
                 print("%s%s" % ('Warning: Inf or NaN values encounterd. No numeric data to plot for ', name))
                 pass
-        out_path_fig = "%s%s%s%s" % (op.dirname(op.dirname(net_pick_file)), '/', name, '_mean_plot.png')
+        out_path_fig = "%s%s%s%s" % (op.dirname(op.dirname(net_pick_file)), '/figures/', name, '_mean_plot.png')
         fig.savefig(out_path_fig)
         plt.close('all')
     return

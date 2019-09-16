@@ -135,7 +135,7 @@ def get_parser():
     parser.add_argument('-parc',
                         default=False,
                         action='store_true',
-                        help='Include this flag to use parcels instead of coordinates as nodes.\n')
+                        help='Include this flag to use parcels instead of spheres as nodes.\n')
     parser.add_argument('-names',
                         default=False,
                         action='store_true',
@@ -350,6 +350,7 @@ def build_workflow(args, retval):
     import warnings
     warnings.filterwarnings("ignore")
     import os
+    import glob
     import ast
     import os.path as op
     import sys
@@ -1656,6 +1657,20 @@ def build_workflow(args, retval):
     if verbose is True:
         handler.close()
         logger.removeHandler(handler)
+
+    # Clean up temporary directories
+    if func_file:
+        for metrickl_dir in glob.glob("%s%s" % (func_dir, '/*/metrickl')):
+            shutil.rmtree(metrickl_dir)
+        for net_pkl in [i for i in glob.glob("%s%s" % (func_dir, '/*/netmetrics/*')) if 'neat.csv' not in i]:
+            os.remove(net_pkl)
+
+    elif dwi_file:
+        for metrickl_dir in glob.glob("%s%s" % (dwi_dir, '/*/metrickl')):
+            shutil.rmtree(metrickl_dir)
+        for net_pkl in [i for i in glob.glob("%s%s" % (dwi_dir, '/*/netmetrics/*')) if 'neat.csv' not in i]:
+            os.remove(net_pkl)
+        shutil.rmtree("%s%s" % (dwi_dir, '/dmri_tmp'))
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)
