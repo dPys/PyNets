@@ -371,6 +371,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
     import warnings
     warnings.filterwarnings("ignore")
     import os
+    import os.path as op
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
