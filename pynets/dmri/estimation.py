@@ -307,7 +307,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     atlas_data = np.around(roi_img.get_fdata())
 
     # Instantiate empty networkX graph object & dictionary and create voxel-affine mapping
-    lin_T, offset = _mapping_to_voxel(np.eye(4), voxel_size)
+    lin_T, offset = _mapping_to_voxel(np.eye(4))
     mx = len(np.unique(atlas_data.astype('int16'))) - 1
     g = nx.Graph(ecount=0, vcount=mx)
     edge_dict = defaultdict(int)
