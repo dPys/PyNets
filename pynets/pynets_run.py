@@ -740,7 +740,7 @@ def build_workflow(args, retval):
     if func_subjects_list or struct_subjects_list:
         print('Running workflow of workflows across multiple subjects:')
     elif func_subjects_list is None and struct_subjects_list is None:
-        print('Running workflow across single subject:')
+        print('Running workflow for single subject:')
     print(str(ID))
 
     if graph is None and multi_graph is None:
