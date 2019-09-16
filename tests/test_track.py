@@ -78,7 +78,7 @@ def test_reconstruction():
         assert mod is not None
 
     
-def test_save_streams():
+def test_load_and_save_streams():
     from pynets.dmri import track
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/001/dmri'
@@ -89,7 +89,7 @@ def test_save_streams():
     streamlines_trk = dir_path + '/tractography/streamlines_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].trk'
     streamlines = nib.streamlines.load(streamlines_trk).streamlines
     # First entry is nibabel.streamlines.array_sequence... type
-    streamlines = streamlines[0]
+    #streamlines = streamlines[0]
     streams = dir_path + '/tractography/test_save.trk'
     streams_out = track.save_streams(dwi_img, streamlines, streams)
     assert streams_out is not None
