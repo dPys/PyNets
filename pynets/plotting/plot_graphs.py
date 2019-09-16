@@ -168,7 +168,7 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
                                                            '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                            'func_adj_mat_', conn_model, '_', thr, '_', node_size,
                                                            '%s' % ("mm_" if node_size != 'parc' else "_"),
-                                                           '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
+                                                           '%s' % ("%s%s" % (int(c_boot), 'nb') if float(c_boot) > 0 else 'nb'),
                                                            '%s' % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''),
                                                            '%s' % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
 
@@ -184,7 +184,7 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
                                                                     '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                                     'func_adj_mat_comm_', conn_model, '_', thr, '_',
                                                                     node_size, '%s' % ("mm_" if node_size != 'parc' else "_"),
-                                                                    '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
+                                                                    '%s' % ("%s%s" % (int(c_boot), 'nb') if float(c_boot) > 0 else 'nb'),
                                                                     '%s' % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''),
                                                                     '%s' % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
         plot_graphs.plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, node_comm_aff_mat)
