@@ -26,6 +26,8 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig):
     out_path_fig : str
         File path to save the connectivity matrix image as a .png figure.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
@@ -66,6 +68,8 @@ def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_af
     community_aff : array
         Community-affiliation vector.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import matplotlib
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
@@ -152,6 +156,8 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import networkx as nx
     import os.path as op
     import community
@@ -226,6 +232,8 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, 
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from pynets.plotting import plot_graphs
     import networkx as nx
     import community

@@ -302,7 +302,7 @@ def get_parser():
                         help='Optionally use this flag if you wish to apply local thresholding via the disparity '
                              'filter approach. -thr values in this case correspond to α.\n')
     parser.add_argument('-mplx',
-                        metavar='Perform various levels of multiplex graph analysis if structural and diffusion '
+                        metavar='Perform various levels of multiplex graph analysis if both structural and diffusion '
                                 'connectomes are provided.',
                         default=0,
                         nargs=1,
@@ -1227,6 +1227,9 @@ def build_workflow(args, retval):
                                maxcrossing, min_length, directget, tiss_class, runtime_dict, embed,
                                multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
                                multiplex):
+        import warnings
+        warnings.filterwarnings("ignore")
+
         """A function interface for generating a single-subject workflow"""
         if (func_file is not None) and (dwi_file is None):
             wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_fmri_', random.randint(1, 1000)))
@@ -1420,6 +1423,9 @@ def build_workflow(args, retval):
                          directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list,
                          template, template_mask, vox_size, multiplex):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
+        import warnings
+        warnings.filterwarnings("ignore")
+
         wf_multi = pe.Workflow(name="%s%s" % ('wf_multisub_', random.randint(1001, 9000)))
 
         if func_subjects_list and not struct_subjects_list:

@@ -343,7 +343,19 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                  detrend=detrending, verbose=2, resampling_target='data')
-    ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
+    if conf is not None:
+        import pandas as pd
+        confounds = pd.read_csv(conf, sep='\t')
+        if confounds.isnull().values.any() is True:
+            print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but these '
+                  'should be check manually')
+            confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
+            conf_corr = dir_path + '/confounds_mean_corrected.tsv'
+            confounds_nonan.to_csv(conf_corr, sep='\t')
+            ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf_corr)
+        else:
+            ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
+
     if ts_within_nodes is None:
         raise RuntimeError('\nERROR: Time-series extraction failed!')
     if float(c_boot) > 0:
@@ -449,7 +461,19 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                        standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                        detrend=detrending, verbose=2)
-        ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
+        if conf is not None:
+            import pandas as pd
+            confounds = pd.read_csv(conf, sep='\t')
+            if confounds.isnull().values.any() is True:
+                print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but these '
+                      'should be check manually')
+                confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
+                conf_corr = dir_path + '/confounds_mean_corrected.tsv'
+                confounds_nonan.to_csv(conf_corr, sep='\t')
+                ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf_corr)
+            else:
+                ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
+
         if float(c_boot) > 0:
             print("%s%s%s" % ('Performing circular block bootstrapping iteration: ', c_boot, '...'))
             ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]

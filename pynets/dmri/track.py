@@ -11,7 +11,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def reconstruction(conn_model, gtab, dwi_data, wm_in_dwi):
+def reconstruction(conn_model, gtab, dwi_data, B0_mask):
     '''
     Estimate a tensor model from dwi data.
 
@@ -23,8 +23,8 @@ def reconstruction(conn_model, gtab, dwi_data, wm_in_dwi):
         DiPy object storing diffusion gradient information.
     dwi_data : array
         4D array of dwi data.
-    wm_in_dwi : str
-        File path to white-matter tissue segmentation Nifti1Image.
+    B0_mask : str
+        File path to B0 brain mask.
 
     Returns
     -------
@@ -39,11 +39,11 @@ def reconstruction(conn_model, gtab, dwi_data, wm_in_dwi):
         import _pickle as pickle
     from pynets.dmri.estimation import tens_mod_est, csa_mod_est, csd_mod_est
     if conn_model == 'tensor':
-        mod = tens_mod_est(gtab, dwi_data, wm_in_dwi)
+        mod = tens_mod_est(gtab, dwi_data, B0_mask)
     elif conn_model == 'csa':
-        mod = csa_mod_est(gtab, dwi_data, wm_in_dwi)
+        mod = csa_mod_est(gtab, dwi_data, B0_mask)
     elif conn_model == 'csd':
-        mod = csd_mod_est(gtab, dwi_data, wm_in_dwi)
+        mod = csd_mod_est(gtab, dwi_data, B0_mask)
     else:
         raise ValueError('Error: Either no seeds supplied, or no valid seeds found in white-matter interface')
 
@@ -162,7 +162,7 @@ def save_streams(dwi_img, streamlines, streams, affine=np.eye(4), shifted_origin
 
     sft = StatefulTractogram(streamlines, reference=trk_hdr, space=Space.RASMM, shifted_origin=shifted_origin)
 
-    save_confirm = save_tractogram(sft, streams, bbox_valid_check=True)
+    save_confirm = save_tractogram(sft, streams, bbox_valid_check=False)
 
     if save_confirm is False:
         raise FileExistsError('Streamline tractogram file save failed.')
@@ -577,7 +577,7 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     dwi_data = dwi_img.get_fdata()
 
     # Fit diffusion model
-    mod_fit = reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
+    mod_fit = reconstruction(conn_model, gtab, dwi_data, B0_mask)
 
     # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
     atlas_img = nib.load(labels_im_file)

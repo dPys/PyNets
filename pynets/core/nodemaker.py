@@ -513,6 +513,8 @@ def coords_masker(roi, coords, labels, error):
     labels : list
         Filtered list of string labels corresponding to ROI nodes with a spatial affinity for the specified ROI mask.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from nilearn import masking
     from pynets.core.nodemaker import mmToVox
 
@@ -579,6 +581,8 @@ def get_names_and_coords_of_parcels(uatlas):
     par_max : int
         The maximum label intensity in the parcellation image.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import os.path as op
     from nilearn.plotting import find_parcellation_cut_coords
     if not op.isfile(uatlas):
@@ -608,6 +612,8 @@ def gen_img_list(uatlas):
     img_list : list
         List of binarized Nifti1Images corresponding to ROI masks for each unique atlas label.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import os.path as op
     from nilearn.image import new_img_like
     if not op.isfile(uatlas):
@@ -661,6 +667,8 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     out_path : str
         File path to a new, RSN-filtered atlas parcellation Nifti1Image.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     from nilearn.image import concat_imgs
     from pynets.core import nodemaker
     import os.path as op
@@ -698,10 +706,10 @@ def AAL_naming(coords):
     labels : list
         List of string labels corresponding to each coordinates closest anatomical label based on AAL.
     """
-    import pandas as pd
-    import csv
     import warnings
     warnings.filterwarnings("ignore")
+    import pandas as pd
+    import csv
     from pathlib import Path
 
     aal_coords_ix_path = "%s%s" % (str(Path(__file__).parent), '/labelcharts/aal_coords_ix.csv')

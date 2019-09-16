@@ -59,7 +59,7 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
     return fa_path, B0_mask, gtab_file, dwi_file
 
 
-def tens_mod_est(gtab, data, wm_in_dwi):
+def tens_mod_est(gtab, data, B0_mask):
     '''
     Estimate a tensor model from dwi data.
 
@@ -69,8 +69,8 @@ def tens_mod_est(gtab, data, wm_in_dwi):
         DiPy object storing diffusion gradient information
     data : array
         4D numpy array of diffusion image data.
-    wm_in_dwi : str
-        File path to white-matter tissue segmentation Nifti1Image.
+    B0_mask : str
+        File path to B0 brain mask.
 
     Returns
     -------
@@ -83,14 +83,14 @@ def tens_mod_est(gtab, data, wm_in_dwi):
     from dipy.data import get_sphere
     print('Fitting tensor model...')
     sphere = get_sphere('repulsion724')
-    wm_in_dwi_mask = nib.load(wm_in_dwi).get_fdata().astype('bool')
+    B0_mask_data = nib.load(B0_mask).get_fdata().astype('bool')
     model = TensorModel(gtab)
-    mod = model.fit(data, wm_in_dwi_mask)
+    mod = model.fit(data, B0_mask_data)
     tensor_odf = mod.odf(sphere)
     return tensor_odf
 
 
-def csa_mod_est(gtab, data, wm_in_dwi):
+def csa_mod_est(gtab, data, B0_mask):
     '''
     Estimate a Constant Solid Angle (CSA) model from dwi data.
 
@@ -100,8 +100,8 @@ def csa_mod_est(gtab, data, wm_in_dwi):
         DiPy object storing diffusion gradient information
     data : array
         4D numpy array of diffusion image data.
-    wm_in_dwi : str
-        File path to white-matter tissue segmentation Nifti1Image.
+    B0_mask : str
+        File path to B0 brain mask.
 
     Returns
     -------
@@ -112,13 +112,13 @@ def csa_mod_est(gtab, data, wm_in_dwi):
     warnings.filterwarnings("ignore")
     from dipy.reconst.shm import CsaOdfModel
     print('Fitting CSA model...')
-    wm_in_dwi_mask = nib.load(wm_in_dwi).get_fdata().astype('bool')
+    B0_mask_data = nib.load(B0_mask).get_fdata().astype('bool')
     model = CsaOdfModel(gtab, sh_order=6)
-    csa_mod = model.fit(data, wm_in_dwi_mask).shm_coeff
+    csa_mod = model.fit(data, B0_mask_data).shm_coeff
     return csa_mod
 
 
-def csd_mod_est(gtab, data, wm_in_dwi):
+def csd_mod_est(gtab, data, B0_mask):
     '''
     Estimate a Constrained Spherical Deconvolution (CSD) model from dwi data.
 
@@ -128,8 +128,8 @@ def csd_mod_est(gtab, data, wm_in_dwi):
         DiPy object storing diffusion gradient information.
     data : array
         4D numpy array of diffusion image data.
-    wm_in_dwi : str
-        File path to white-matter tissue segmentation Nifti1Image.
+    B0_mask : str
+        File path to B0 brain mask.
 
     Returns
     -------
@@ -140,17 +140,17 @@ def csd_mod_est(gtab, data, wm_in_dwi):
     warnings.filterwarnings("ignore")
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     print('Fitting CSD model...')
-    wm_in_dwi_mask = nib.load(wm_in_dwi).get_fdata().astype('bool')
+    B0_mask_data = nib.load(B0_mask).get_fdata().astype('bool')
     try:
         print('Reconstructing...')
         model = ConstrainedSphericalDeconvModel(gtab, None, sh_order=6)
     except:
         print('Falling back to recursive response...')
-        response = recursive_response(gtab, data, mask=wm_in_dwi_mask, sh_order=8, peak_thr=0.01, init_fa=0.08,
+        response = recursive_response(gtab, data, mask=B0_mask_data, sh_order=8, peak_thr=0.01, init_fa=0.08,
                                       init_trace=0.0021, iter=8, convergence=0.001, parallel=False)
         print('CSD Reponse: ' + str(response))
         model = ConstrainedSphericalDeconvModel(gtab, response)
-    csd_mod = model.fit(data, wm_in_dwi_mask).shm_coeff
+    csd_mod = model.fit(data, B0_mask_data).shm_coeff
     return csd_mod
 
 

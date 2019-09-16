@@ -8,10 +8,10 @@ Copyright (C) 2018
 import numpy as np
 import networkx as nx
 import os.path as op
-import warnings
 import tkinter
 import matplotlib
 matplotlib.use('agg')
+import warnings
 warnings.filterwarnings("ignore")
 
 
@@ -45,7 +45,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
     from networkx.readwrite import json_graph
     from pynets.core.thresholding import normalize
     from pynets.stats.netstats import most_important
-    from scipy.cluster.hierarchy import linkage, fcluster
+    # from scipy.cluster.hierarchy import linkage, fcluster
     from nipype.utils.filemanip import save_json
 
     # Advanced Settings
@@ -722,6 +722,8 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
     net_pick_file : st
         File path to .pkl file of network measures used to generate df_concat.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
