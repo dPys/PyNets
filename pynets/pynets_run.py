@@ -1135,7 +1135,7 @@ def build_workflow(args, retval):
         block_size = None
         multimodal = False
     elif func_file and dwi_file is None:
-        print('\nRunning dmri connectometry only...')
+        print('\nRunning fmri connectometry only...')
         if func_subjects_list:
             for func_file in func_subjects_list:
                 print("%s%s" % ('BOLD Image: ', func_file))

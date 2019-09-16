@@ -34,18 +34,18 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig):
     from nilearn.plotting import plot_matrix
 
     dpi_resolution = 300
-
+    [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
     rois_num = conn_matrix.shape[0]
     if rois_num < 100:
         try:
-            plot_matrix(conn_matrix, figure=(10, 10), labels=labels,
-                        reorder=False, auto_fit=True, grid=False, colorbar=True)
+            plot_matrix(conn_matrix, figure=(10, 10), labels=labels, vmax=z_max*0.5, vmin=z_min*0.5,
+                        reorder=False, auto_fit=True, grid=False, colorbar=False)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')
     else:
         try:
-            plot_matrix(conn_matrix, figure=(10, 10), auto_fit=True,
-                        grid=False, colorbar=True)
+            plot_matrix(conn_matrix, figure=(10, 10), auto_fit=True, vmax=z_max*0.5, vmin=z_min*0.5,
+                        grid=False, colorbar=False)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')
     plt.savefig(out_path_fig, dpi=dpi_resolution)

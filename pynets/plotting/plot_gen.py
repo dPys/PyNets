@@ -371,6 +371,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
     import warnings
     warnings.filterwarnings("ignore")
     import os
+    import os.path as op
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
@@ -384,6 +385,8 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
+
+    ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
 
     coords = list(coords)
     labels = list(labels)
@@ -472,7 +475,6 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
 
-        ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
         connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
         connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
         #connectome.add_overlay(ch2better_loc, alpha=0.35, cmap=plt.cm.gray)
@@ -561,6 +563,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
     import matplotlib
     matplotlib.use('agg')
     import os
+    import os.path as op
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
     import pkg_resources
@@ -574,6 +577,8 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
+
+    ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
 
     coords = list(coords)
     labels = list(labels)
@@ -660,7 +665,6 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
 
-        ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
         connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
         connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
         #connectome.add_overlay(ch2better_loc, alpha=0.35, cmap=plt.cm.gray)
