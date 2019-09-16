@@ -15,15 +15,16 @@ import nibabel as nib
 
 def test_create_density_map():
     from pynets.dmri import track
-    from dipy.io.streamline import load_trk
 
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/001/dmri'
     dwi_file = dir_path + '/HARDI150.nii.gz'
 
+    dwi_img = nib.load(dwi_file)
+
     # Load output from test_filter_streamlines: dictionary of streamline info
     streamlines_trk = dir_path + '/tractography/streamlines_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].trk'
-    streamlines = load_trk(streamlines_trk)[0]
+    streamlines = nib.streamlines.load(streamlines_trk).streamlines
 
     conn_model = 'csa'
     target_samples = 10
@@ -32,9 +33,8 @@ def test_create_density_map():
     step_list = [0.1, 0.2, 0.5]
     network = 'Default'
     roi = None
-    gtab = None
 
-    [streams, dir_path, dm_path] = track.create_density_map(dwi_file, dir_path, gtab, streamlines, conn_model,
+    [streams, dir_path, dm_path] = track.create_density_map(dwi_img, dir_path, streamlines, conn_model,
                                                             target_samples, node_size, curv_thr_list, step_list,
                                                             network, roi)
 
@@ -53,7 +53,8 @@ def test_prep_tissues():
     wm_in_dwi = dir_path + '/wm_mask_dmri.nii.gz'
     
     for tiss_class in ['act', 'bin', 'cmc', 'wb']:
-        tiss_classifier = track.prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc_step_size=0.2)
+        tiss_classifier = track.prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
+                                             cmc_step_size=0.2)
         assert tiss_classifier is not None
         
         
@@ -68,14 +69,17 @@ def test_reconstruction():
     gtab = gradient_table(bvals, bvecs)
     dwi_file = dir_path + '/sub-003_dwi.nii.gz'
     wm_in_dwi = dir_path + '/wm_mask_dmri.nii.gz'
+
+    dwi_img = nib.load(dwi_file)
+    dwi_data = dwi_img.get_fdata()
+
     for conn_model in ['csa', 'tensor', 'csd']:
-        mod = track.reconstruction(conn_model, gtab, dwi_file, wm_in_dwi)
+        mod = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
         assert mod is not None
 
     
 def test_save_streams():
     from pynets.dmri import track
-    from dipy.io.streamline import load_trk
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/001/dmri'
     dwi_file = dir_path + '/HARDI150.nii.gz'
@@ -83,7 +87,7 @@ def test_save_streams():
     
     # Load output from test_filter_streamlines: dictionary of streamline info
     streamlines_trk = dir_path + '/tractography/streamlines_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].trk'
-    streamlines = load_trk(streamlines_trk)
+    streamlines = nib.streamlines.load(streamlines_trk).streamlines
     # First entry is nibabel.streamlines.array_sequence... type
     streamlines = streamlines[0]
     streams = dir_path + '/tractography/test_save.trk'
