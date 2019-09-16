@@ -13,7 +13,7 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/dmri/track.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/track.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/examples/001/dmri/tractography/density_map_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].nii.gz" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/001/dmri/tractography/density_map_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].nii.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/examples/001/dmri/tractography/test_save.trk" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/001/dmri/tractography/test_save.trk" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/examples/001/dmri/tractography/streamlines_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].trk" beforeDir="false" afterPath="$PROJECT_DIR$/tests/examples/001/dmri/tractography/streamlines_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].trk" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/test_track.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_track.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
@@ -34,11 +34,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2025">
-              <caret line="135" column="52" lean-forward="true" selection-start-line="135" selection-start-column="52" selection-end-line="135" selection-end-column="52" />
+            <state relative-caret-position="550">
+              <caret line="137" column="11" selection-start-line="137" selection-start-column="11" selection-end-line="137" selection-end-column="11" />
               <folding>
                 <element signature="e#139#157#0" expanded="true" />
               </folding>
@@ -127,11 +127,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/tests/test_track.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="755">
-              <caret line="95" lean-forward="true" selection-start-line="95" selection-end-line="95" />
+            <state relative-caret-position="795">
+              <caret line="53" column="4" lean-forward="true" selection-start-line="53" selection-start-column="4" selection-end-line="53" selection-end-column="4" />
               <folding>
                 <element signature="e#192#216#0" expanded="true" />
               </folding>
@@ -163,7 +163,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>create_</find>
       <find>weight</find>
       <find>sum(np.absolute(G[u][v][weight]) for v in G[u])</find>
       <find>G</find>
@@ -193,6 +192,7 @@
       <find>load_trk</find>
       <find>nib.stre</find>
       <find>affine</find>
+      <find>np.eye</find>
     </findStrings>
     <replaceStrings>
       <replace>gm_mask_mni</replace>
@@ -301,7 +301,10 @@
       <showMembers ProjectPane="true" />
       <foldersAlwaysOnTop value="true" />
     </navigator>
-    <panes />
+    <panes>
+      <pane id="ProjectPane" />
+      <pane id="Scope" />
+    </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
@@ -552,18 +555,18 @@
       <workItem from="1567584466765" duration="2341000" />
       <workItem from="1567890530845" duration="3365000" />
       <workItem from="1568155972064" duration="297000" />
-      <workItem from="1568339193487" duration="8273000" />
+      <workItem from="1568339193487" duration="8717000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="973331000" />
+    <option name="totallyTimeSpent" value="973775000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="446" y="23" width="1082" height="984" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.493228" weight="0.11923077" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.493228" visible="true" weight="0.11923077" />
       <window_info id="Structure" order="1" sideWeight="0.506772" side_tool="true" weight="0.08945455" />
       <window_info id="Favorites" order="2" sideWeight="0.50468385" side_tool="true" weight="0.09234412" />
       <window_info id="aws.explorer" order="3" sideWeight="0.503386" side_tool="true" weight="0.1362916" />
@@ -925,13 +928,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="20820">
-          <caret line="1388" column="52" selection-start-line="1388" selection-start-column="52" selection-end-line="1388" selection-end-column="52" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
       <provider selected="true" editor-type-id="text-editor">
         <state>
@@ -992,22 +988,29 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_track.py">
+    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="755">
-          <caret line="95" lean-forward="true" selection-start-line="95" selection-end-line="95" />
-          <folding>
-            <element signature="e#192#216#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="20820">
+          <caret line="1388" column="52" selection-start-line="1388" selection-start-column="52" selection-end-line="1388" selection-end-column="52" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2025">
-          <caret line="135" column="52" lean-forward="true" selection-start-line="135" selection-start-column="52" selection-end-line="135" selection-end-column="52" />
+        <state relative-caret-position="550">
+          <caret line="137" column="11" selection-start-line="137" selection-start-column="11" selection-end-line="137" selection-end-column="11" />
           <folding>
             <element signature="e#139#157#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_track.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="795">
+          <caret line="53" column="4" lean-forward="true" selection-start-line="53" selection-start-column="4" selection-end-line="53" selection-end-column="4" />
+          <folding>
+            <element signature="e#192#216#0" expanded="true" />
           </folding>
         </state>
       </provider>

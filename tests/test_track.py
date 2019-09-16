@@ -88,8 +88,6 @@ def test_load_and_save_streams():
     # Load output from test_filter_streamlines: dictionary of streamline info
     streamlines_trk = dir_path + '/tractography/streamlines_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].trk'
     streamlines = nib.streamlines.load(streamlines_trk).streamlines
-    # First entry is nibabel.streamlines.array_sequence... type
-    #streamlines = streamlines[0]
     streams = dir_path + '/tractography/test_save.trk'
     streams_out = track.save_streams(dwi_img, streamlines, streams)
     assert streams_out is not None

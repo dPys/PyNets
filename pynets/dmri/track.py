@@ -116,7 +116,7 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     return tiss_classifier
 
 
-def save_streams(dwi_img, streamlines, streams, affine=np.eye, shifted_origin=False):
+def save_streams(dwi_img, streamlines, streams, affine=np.eye(4), shifted_origin=False):
     '''
     Save streamlines as .trk file with DTK-compatible trackvis header.
 
