@@ -529,18 +529,18 @@ def coords_masker(roi, coords, labels, error):
         coords_vox.append(mmToVox(mask_aff, i))
     coords_vox = list(tuple(map(lambda y: isinstance(y, float) and int(round(y, 0)), x)) for x in coords_vox)
     bad_coords = []
-    for coords in coords_vox:
+    for coord_vox in coords_vox:
         sphere_vol = np.zeros(mask_data.shape, dtype=bool)
-        sphere_vol[tuple(coords)] = 1
+        sphere_vol[tuple(coord_vox)] = 1
         if (mask_data & sphere_vol).any():
-            print("%s%s" % (coords, ' falls within mask...'))
+            print("%s%s" % (coord_vox, ' falls within mask...'))
             continue
-        inds = get_sphere(coords, error, (np.abs(x_vox), y_vox, z_vox), mask_data.shape)
+        inds = get_sphere(coord_vox, error, (np.abs(x_vox), y_vox, z_vox), mask_data.shape)
         sphere_vol[tuple(inds.T)] = 1
         if (mask_data & sphere_vol).any():
-            print("%s%s%.2f%s" % (coords, ' is within a + or - ', float(error), ' mm neighborhood...'))
+            print("%s%s%.2f%s" % (coord_vox, ' is within a + or - ', float(error), ' mm neighborhood...'))
             continue
-        bad_coords.append(coords)
+        bad_coords.append(coord_vox)
 
     bad_coords = [x for x in bad_coords if x is not None]
     indices = []
@@ -548,7 +548,7 @@ def coords_masker(roi, coords, labels, error):
         indices.append(coords_vox.index(bad_coords))
 
     labels = list(labels)
-    coords = list(tuple(x) for x in coords_vox)
+    coords = list(tuple(x) for x in coords)
     try:
         for ix in sorted(indices, reverse=True):
             print("%s%s%s%s" % ('Removing: ', labels[ix], ' at ', coords[ix]))
