@@ -355,16 +355,23 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
             ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf_corr)
         else:
             ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
+    else:
+        ts_within_nodes = parcel_masker.fit_transform(func_file)
 
     if ts_within_nodes is None:
         raise RuntimeError('\nERROR: Time-series extraction failed!')
+
     if float(c_boot) > 0:
         print("%s%s%s" % ('Performing circular block bootstrapping iteration: ', c_boot, '...'))
         ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
                         len(coords), ' volumetric ROI\'s'))
-    print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
-    print("%s%s%s" % ('Applying high-pass filter: ', hpass, ' Hz\n'))
+    if smooth:
+        if float(smooth) > 0:
+            print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
+
+    if hpass:
+        print("%s%s%s" % ('Applying high-pass filter: ', hpass, ' Hz\n'))
 
     # Save time series as file
     utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
@@ -473,23 +480,30 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
                 ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf_corr)
             else:
                 ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
+        else:
+            ts_within_nodes = spheres_masker.fit_transform(func_file)
 
         if float(c_boot) > 0:
             print("%s%s%s" % ('Performing circular block bootstrapping iteration: ', c_boot, '...'))
             ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
         if ts_within_nodes is None:
             raise RuntimeError('\nERROR: Time-series extraction failed!')
+
+        print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]),
+                            ' mean extracted from ', len(coords), ' coordinate ROI\'s'))
     else:
         raise RuntimeError(
             '\nERROR: Cannot extract time-series from an empty list of coordinates. \nThis usually means '
             'that no nodes were generated based on the specified conditions at runtime (e.g. atlas was '
             'overly restricted by an RSN or some user-defined mask.')
 
-    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
-                        len(coords), ' coordinate ROI\'s'))
     print("%s%s%s" % ('Using node radius: ', node_size, ' mm'))
-    print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
-    print("%s%s%s" % ('Applying high-pass filter: ', hpass, ' Hz\n'))
+    if smooth:
+        if float(smooth) > 0:
+            print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
+
+    if hpass:
+        print("%s%s%s" % ('Applying high-pass filter: ', hpass, ' Hz\n'))
 
     # Save time series as file
     utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
