@@ -116,7 +116,7 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     return tiss_classifier
 
 
-def save_streams(dwi_img, streamlines, streams):
+def save_streams(dwi_img, streamlines, streams, affine=np.eye(4), shifted_origin=False):
     '''
     Save streamlines as .trk file with DTK-compatible trackvis header.
 
@@ -128,6 +128,12 @@ def save_streams(dwi_img, streamlines, streams):
         DiPy list/array-like object of streamline points from tractography.
     streams : str
         File path to save streamline array sequence in .trk format.
+    affine : array
+        4 x 4 2D Numpy array that is the affine of the image space that the coordinates inhabit. Default is identity.
+    shifted_origin : bool
+        Information on the position of the origin,
+        False is Trackvis standard, default (corner of the voxel)
+        True is NIFTI standard (center of the voxel)
 
     Returns
     -------
@@ -135,11 +141,13 @@ def save_streams(dwi_img, streamlines, streams):
         File path to saved streamline array sequence in DTK-compatible trackvis (.trk) format.
     '''
     import warnings
+    from dipy.io.stateful_tractogram import Space, StatefulTractogram
+    from dipy.io.streamline import save_tractogram
     warnings.filterwarnings("ignore")
     hdr = dwi_img.header
 
-    # Save streamlines
-    trk_affine = np.eye(4)
+    # Create trackvis-compatible header
+    trk_affine = affine
     trk_hdr = nib.streamlines.trk.TrkFile.create_empty_header()
     trk_hdr['hdr_size'] = 1000
     trk_hdr['dimensions'] = hdr['dim'][1:4].astype('float32')
@@ -151,11 +159,15 @@ def save_streams(dwi_img, streamlines, streams):
     trk_hdr['endianness'] = '<'
     trk_hdr['_offset_data'] = 1000
     trk_hdr['nb_streamlines'] = len(streamlines)
-    tractogram = nib.streamlines.Tractogram(streamlines, affine_to_rasmm=trk_affine)
-    trkfile = nib.streamlines.trk.TrkFile(tractogram, header=trk_hdr)
-    nib.streamlines.save(trkfile, streams)
 
-    return streams
+    sft = StatefulTractogram(streamlines, reference=trk_hdr, space=Space.RASMM, shifted_origin=shifted_origin)
+
+    save_confirm = save_tractogram(sft, streams, bbox_valid_check=True)
+
+    if save_confirm is False:
+        raise FileExistsError('Streamline tractogram file save failed.')
+    else:
+        return streams
 
 
 def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_samples,
