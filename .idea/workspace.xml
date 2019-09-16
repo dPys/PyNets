@@ -11,7 +11,6 @@
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/pynets/dmri/estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/estimation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/fmri/estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/fmri/estimation.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -46,8 +45,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/dmri/estimation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1938">
-              <caret line="151" lean-forward="true" selection-start-line="151" selection-end-line="151" />
+            <state relative-caret-position="-490">
+              <caret line="296" column="57" selection-start-line="296" selection-start-column="57" selection-end-line="296" selection-end-column="57" />
               <folding>
                 <element signature="e#139#157#0" expanded="true" />
               </folding>
@@ -79,7 +78,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>.nii</find>
       <find>.nii'</find>
       <find>anat_success</find>
       <find>0021001_Default_est_sps_0.19densparc_mm.npy</find>
@@ -109,6 +107,7 @@
       <find>density</find>
       <find>gtab_file</find>
       <find>density_map</find>
+      <find>values_from</find>
     </findStrings>
     <replaceStrings>
       <replace>gm_mask_mni</replace>
@@ -198,8 +197,8 @@
         <option value="$PROJECT_DIR$/pynets/plotting/plot_graphs.py" />
         <option value="$PROJECT_DIR$/pynets/dmri/track.py" />
         <option value="$PROJECT_DIR$/pynets/registration/register.py" />
-        <option value="$PROJECT_DIR$/pynets/dmri/estimation.py" />
         <option value="$PROJECT_DIR$/pynets/fmri/estimation.py" />
+        <option value="$PROJECT_DIR$/pynets/dmri/estimation.py" />
       </list>
     </option>
   </component>
@@ -471,12 +470,12 @@
       <workItem from="1567584466765" duration="2341000" />
       <workItem from="1567890530845" duration="3365000" />
       <workItem from="1568155972064" duration="297000" />
-      <workItem from="1568339193487" duration="13449000" />
+      <workItem from="1568339193487" duration="13825000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="978507000" />
+    <option name="totallyTimeSpent" value="978883000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="521" y="32" width="1082" height="984" extended-state="0" />
@@ -935,8 +934,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/dmri/estimation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1938">
-          <caret line="151" lean-forward="true" selection-start-line="151" selection-end-line="151" />
+        <state relative-caret-position="-490">
+          <caret line="296" column="57" selection-start-line="296" selection-start-column="57" selection-end-line="296" selection-end-column="57" />
           <folding>
             <element signature="e#139#157#0" expanded="true" />
           </folding>

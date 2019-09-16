@@ -294,7 +294,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     streamlines = Streamlines(streamlines_mni.streamlines)
 
     fa_map = nib.load(warped_fa).get_data()
-    fa_weights = values_from_volume(fa_map, streamlines)
+    fa_weights = values_from_volume(fa_map, streamlines, np.eye(4))
     global_fa_weights = list(utils.flatten(fa_weights))
     min_global_fa_wei = min(global_fa_weights)
     max_global_fa_wei = max(global_fa_weights)
