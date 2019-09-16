@@ -155,14 +155,12 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     import warnings
     warnings.filterwarnings("ignore")
     from dipy.tracking.streamline import deform_streamlines
-    from dipy.io.streamline import load_trk
     from pynets.registration import reg_utils as regutils
     from pynets.dmri.track import save_streams
     from pynets.plotting import plot_gen
     from dipy.tracking import utils
     import pkg_resources
     import os.path as op
-    import copy
     from nilearn.image import resample_to_img
 
     dsn_dir = "%s%s" % (basedir_path, '/dmri_tmp/DSN')
@@ -206,7 +204,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     # SyN FA->Template
     [mapping, affine_map, warped_fa] = regutils.wm_syn(template_path, fa_path, dsn_dir)
-    [streamlines, _] = load_trk(streams)
+    streamlines = nib.streamlines.load(streams).streamlines
 
     # Warp streamlines
     adjusted_affine = affine_map.affine.copy()
@@ -221,8 +219,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     save_streams(fa_img, mni_streamlines, streams_mni)
 
     # Create and save MNI density map
-    nib.save(nib.Nifti1Image(utils.density_map(mni_streamlines, template_img.shape, affine=np.eye(4)),
-                             template_img.affine), density_mni)
+    nib.save(nib.Nifti1Image(utils.density_map(mni_streamlines, affine=np.eye(4), vol_dims=template_img.shape),
+             template_img.affine), density_mni)
 
     # DSN QC plotting
     plot_gen.show_template_bundles(mni_streamlines, template_path, streams_warp_png)
@@ -253,6 +251,9 @@ class DmriReg(object):
     """
     A Class for Registering an atlas to a subject's MNI-aligned T1w image in native diffusion space.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
+
     def __init__(self, basedir_path, fa_path, B0_mask, anat_file, vox_size, simple):
         import pkg_resources
         self.simple = simple
@@ -580,6 +581,8 @@ class FmriReg(object):
     """
     A Class for Registering an atlas to a subject's MNI-aligned T1w image.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
 
     def __init__(self, basedir_path, anat_file, vox_size):
         import pkg_resources

@@ -1368,6 +1368,8 @@ def timeseries_bootstrap(tseries, block_size):
        special issue on Statistical Challenges and Advances in Brain Science,
        2008, 18: 1253-1268.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     np.random.seed(int(42))
 
     # calculate number of blocks
@@ -1401,6 +1403,8 @@ def rescale_bvec(bvec, bvec_rescaled):
     bvec_rescaled : str
         File name of the new (normalized) b-vectors file. Must have extension `.bvec`.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     bv1 = np.array(np.loadtxt(bvec))
     # Enforce proper dimensions
     bv1 = bv1.T if bv1.shape[0] == 3 else bv1
@@ -1453,11 +1457,11 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
     from dipy.io import read_bvals_bvecs
     from dipy.core.gradients import gradient_table
     from pynets.core.utils import rescale_bvec
-    from dipy.segment.mask import applymask
+    # from dipy.segment.mask import applymask
     from nilearn.image import mean_img
-    from nilearn.masking import compute_epi_mask
-    from dipy.denoise.nlmeans import nlmeans
-    from skimage import exposure
+    # from nilearn.masking import compute_epi_mask
+    # from dipy.denoise.nlmeans import nlmeans
+    # from skimage import exposure
 
     outdir = op.dirname(dwi_file)
 
