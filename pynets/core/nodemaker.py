@@ -563,7 +563,7 @@ def coords_masker(roi, coords, labels, error):
     return coords, labels
 
 
-def get_names_and_coords_of_parcels(uatlas):
+def get_names_and_coords_of_parcels(uatlas, background_label=0):
     """
     Return list of coordinates and max label intensity for a 3D atlas parcellation image.
 
@@ -585,12 +585,14 @@ def get_names_and_coords_of_parcels(uatlas):
     warnings.filterwarnings("ignore")
     import os.path as op
     from nilearn.plotting import find_parcellation_cut_coords
+
     if not op.isfile(uatlas):
         raise ValueError('\nERROR: User-specified atlas input not found! Check that the file(s) specified with the -ua '
                          'flag exist(s)')
 
     atlas = uatlas.split('/')[-1].split('.')[0]
-    [coords, label_intensities] = find_parcellation_cut_coords(uatlas, return_label_names=True)
+
+    [coords, label_intensities] = find_parcellation_cut_coords(uatlas, background_label, return_label_names=True)
     print("%s%s" % ('Region intensities:\n', label_intensities))
     par_max = len(coords)
 

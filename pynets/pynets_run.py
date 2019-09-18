@@ -102,8 +102,10 @@ def get_parser():
     parser.add_argument('-ua',
                         metavar='Path to parcellation file',
                         default=None,
-                        help='Optionally specify a path to a parcellation/atlas Nifti1Image file. If specifying a '
-                             'list of paths to multiple user atlases, separate them by comma.\n')
+                        help='Optionally specify a path to a parcellation/atlas Nifti1Image file. Labels should be '
+                             'spatially distinct across hemispheres and ordered with consecutive integers with a value '
+                             'of 0 as the background label. If specifying a list of paths to multiple user atlases, '
+                             'separate them by comma.\n')
     parser.add_argument('-templ',
                         metavar='Path to template file',
                         default=None,
@@ -1479,8 +1481,7 @@ def build_workflow(args, retval):
             if func_file:
                 wf_selected = "%s%s" % ('fmri_connectometry_', ID[i])
                 meta_wf_name = "%s%s" % ('Meta_wf_', ID[i])
-                for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(
-                    wf_selected).list_node_names():
+                for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
