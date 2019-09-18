@@ -102,8 +102,10 @@ def get_parser():
     parser.add_argument('-ua',
                         metavar='Path to parcellation file',
                         default=None,
-                        help='Optionally specify a path to a parcellation/atlas Nifti1Image file. If specifying a '
-                             'list of paths to multiple user atlases, separate them by comma.\n')
+                        help='Optionally specify a path to a parcellation/atlas Nifti1Image file. Labels should be '
+                             'spatially distinct across hemispheres and ordered with consecutive integers with a value '
+                             'of 0 as the background label. If specifying a list of paths to multiple user atlases, '
+                             'separate them by comma.\n')
     parser.add_argument('-templ',
                         metavar='Path to template file',
                         default=None,
@@ -135,7 +137,7 @@ def get_parser():
     parser.add_argument('-parc',
                         default=False,
                         action='store_true',
-                        help='Include this flag to use parcels instead of coordinates as nodes.\n')
+                        help='Include this flag to use parcels instead of spheres as nodes.\n')
     parser.add_argument('-names',
                         default=False,
                         action='store_true',
@@ -350,6 +352,7 @@ def build_workflow(args, retval):
     import warnings
     warnings.filterwarnings("ignore")
     import os
+    import glob
     import ast
     import os.path as op
     import sys
@@ -1478,8 +1481,7 @@ def build_workflow(args, retval):
             if func_file:
                 wf_selected = "%s%s" % ('fmri_connectometry_', ID[i])
                 meta_wf_name = "%s%s" % ('Meta_wf_', ID[i])
-                for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(
-                    wf_selected).list_node_names():
+                for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
@@ -1656,6 +1658,20 @@ def build_workflow(args, retval):
     if verbose is True:
         handler.close()
         logger.removeHandler(handler)
+
+    # Clean up temporary directories
+    if func_file:
+        for metrickl_dir in glob.glob("%s%s" % (func_dir, '/*/metrickl')):
+            shutil.rmtree(metrickl_dir)
+        for net_pkl in [i for i in glob.glob("%s%s" % (func_dir, '/*/netmetrics/*')) if 'neat.csv' not in i]:
+            os.remove(net_pkl)
+
+    elif dwi_file:
+        for metrickl_dir in glob.glob("%s%s" % (dwi_dir, '/*/metrickl')):
+            shutil.rmtree(metrickl_dir)
+        for net_pkl in [i for i in glob.glob("%s%s" % (dwi_dir, '/*/netmetrics/*')) if 'neat.csv' not in i]:
+            os.remove(net_pkl)
+        shutil.rmtree("%s%s" % (dwi_dir, '/dmri_tmp'))
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)

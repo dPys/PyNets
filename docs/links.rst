@@ -5,5 +5,4 @@
 .. _Usage: usage.html
 .. _Installation: installation.html
 .. _FSL: https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/
-.. _ANTs: https://stnava.github.io/ANTs/
 .. _`fmriprep`: https://pypi.python.org/pypi/fmriprep

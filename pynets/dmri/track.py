@@ -375,7 +375,6 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                                                       mode='any',
                                                                       tol=roi_neighborhood_tol))
 
-                print('Filtering streamlines...')
                 roi_proximal_streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in
                                                                                          roi_proximal_streamlines if
                                                                                          len(s) > float(min_length)])
@@ -612,13 +611,13 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     print("%s%s%s%s" % (Fore.GREEN, 'Tracking type: ', Fore.BLUE, track_type))
     print(Style.RESET_ALL)
     if directget == 'prob':
-        print("%s%s%s" % ('Using ', Fore.MAGENTA, 'Probabilistic Direction...'))
+        print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Probabilistic'))
     elif directget == 'boot':
-        print("%s%s%s" % ('Using ', Fore.MAGENTA, 'Bootstrapped Direction...'))
+        print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Bootstrapped'))
     elif directget == 'closest':
-        print("%s%s%s" % ('Using ', Fore.MAGENTA, 'Closest Peak Direction...'))
+        print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Closest Peak'))
     elif directget == 'det':
-        print("%s%s%s" % ('Using ', Fore.MAGENTA, 'Deterministic Maximum Direction...'))
+        print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Deterministic Maximum'))
     print(Style.RESET_ALL)
 
     # Commence Ensemble Tractography
