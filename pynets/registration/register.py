@@ -176,7 +176,6 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     vox_size = fa_img.header.get_zooms()[0]
     template_path = pkg_resources.resource_filename("pynets", "%s%s%s" % ('templates/FA_', int(vox_size), 'mm.nii.gz'))
     template_img = nib.load(template_path)
-    template_data = template_img.get_data().astype('bool')
 
     streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_',
                                                   '%s' % (network + '_' if network is not None else ''),
@@ -208,7 +207,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     # Warp streamlines
     adjusted_affine = affine_map.affine.copy()
-    adjusted_affine[1][3] = -adjusted_affine[1][3]/vox_size**2
+    adjusted_affine[1][3] = -adjusted_affine[1][3] / vox_size ** 2
     mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field()[-1:],
                                          stream_to_current_grid=template_img.affine,
                                          current_grid_to_world=adjusted_affine,
