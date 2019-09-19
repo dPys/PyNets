@@ -1570,7 +1570,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     fmri_connectometry_wf.base_directory = "%s%s" % ('/tmp/', base_dirname)
 
     # Create basedir_path
-    basedir_path = utils.do_dir_path('reg_fmri', func_file)
+    if parc is True:
+        basedir_path = utils.do_dir_path('reg_fmri', func_file)
 
     # Create input/output nodes
     inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID', 'atlas', 'network',
