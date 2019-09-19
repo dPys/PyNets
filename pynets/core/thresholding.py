@@ -5,10 +5,10 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
-import numpy as np
-import networkx as nx
 import warnings
 warnings.filterwarnings("ignore")
+import numpy as np
+import networkx as nx
 
 
 def threshold_absolute(W, thr, copy=True):
@@ -173,8 +173,6 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
     ----------
     .. Adapted from Adapted from bctpy
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from pynets.core import thresholding
     np.fill_diagonal(conn_matrix, 0)
 
@@ -418,8 +416,6 @@ def disparity_filter(G, weight='weight'):
     .. [1] M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks.
        PNAS, 106:16, pp. 6483-6488.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from scipy import integrate
 
     if nx.is_directed(G):  # directed case
@@ -611,8 +607,6 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
     conn_matrix_thr : array
         Weighted, MST local-thresholded, NxN matrix.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from pynets.core import thresholding
     from pynets.stats import netstats
 
@@ -802,8 +796,6 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from pynets.core import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -980,8 +972,6 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from pynets.core import utils, thresholding
 
     thr_perc = 100 * float(thr)

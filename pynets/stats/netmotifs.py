@@ -7,6 +7,8 @@ Copyright (C) 2018
 """
 import numpy as np
 from copy import copy
+import warnings
+warnings.filterwarnings("ignore")
 from collections import Counter
 import itertools
 
@@ -252,8 +254,6 @@ def build_multigraphs(est_path_iterlist, ID):
     ml_graph_path_list : list
         List of path strings to multilayer graph edgelists.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import yaml
     import os
     from pathlib import Path

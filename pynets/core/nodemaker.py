@@ -5,10 +5,10 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner
 """
-import numpy as np
-import nibabel as nib
 import warnings
 warnings.filterwarnings("ignore")
+import numpy as np
+import nibabel as nib
 
 
 def get_sphere(coords, r, vox_dims, dims):
@@ -37,8 +37,6 @@ def get_sphere(coords, r, vox_dims, dims):
     ----------
     .. Adapted from NeuroSynth
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     r = float(r)
     xx, yy, zz = [slice(-r / vox_dims[i], r / vox_dims[i] + 0.01, 1) for i in range(len(coords))]
     cube = np.vstack([row.ravel() for row in np.mgrid[xx, yy, zz]])
@@ -66,8 +64,6 @@ def create_parcel_atlas(parcel_list):
         List of 3D boolean numpy arrays or binarized Nifti1Images corresponding to ROI masks, prepended with a
         background image of zeros.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from nilearn.image import new_img_like, concat_imgs
     parcel_background = new_img_like(parcel_list[0], np.zeros(parcel_list[0].shape, dtype=bool))
     parcel_list_exp = [parcel_background] + parcel_list
@@ -100,8 +96,6 @@ def fetch_nilearn_atlas_coords(atlas):
     labels : list
         List of string labels corresponding to atlas nodes.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from nilearn import datasets
     atlas = getattr(datasets, 'fetch_%s' % atlas)()
     atlas_name = atlas['description'].splitlines()[0]
@@ -149,8 +143,6 @@ def nilearn_atlas_helper(atlas, parc):
     uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from nilearn import datasets
     if atlas == 'atlas_harvard_oxford':
         atlas_fetch_obj = getattr(datasets, 'fetch_%s' % atlas, 'atlas_name')('cort-maxprob-thr0-1mm')
@@ -268,8 +260,6 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
         brain subgraphs.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from nilearn.image import resample_img
     from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm
     import pkg_resources
@@ -425,8 +415,6 @@ def parcel_masker(roi, coords, parcel_list, labels, dir_path, ID, perc_overlap):
         Filtered list of 3D boolean numpy arrays or binarized Nifti1Images corresponding to ROI masks with a spatial
         affinity to the specified ROI mask.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from pynets.core import nodemaker
     from nilearn.image import resample_img
     from nilearn import masking
@@ -513,8 +501,6 @@ def coords_masker(roi, coords, labels, error):
     labels : list
         Filtered list of string labels corresponding to ROI nodes with a spatial affinity for the specified ROI mask.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from nilearn import masking
     from pynets.core.nodemaker import mmToVox
 
@@ -581,8 +567,6 @@ def get_names_and_coords_of_parcels(uatlas, background_label=0):
     par_max : int
         The maximum label intensity in the parcellation image.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import os.path as op
     from nilearn.plotting import find_parcellation_cut_coords
 
@@ -614,8 +598,6 @@ def gen_img_list(uatlas):
     img_list : list
         List of binarized Nifti1Images corresponding to ROI masks for each unique atlas label.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import os.path as op
     from nilearn.image import new_img_like
     if not op.isfile(uatlas):
@@ -669,8 +651,6 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     out_path : str
         File path to a new, RSN-filtered atlas parcellation Nifti1Image.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from nilearn.image import concat_imgs
     from pynets.core import nodemaker
     import os.path as op
@@ -708,8 +688,6 @@ def AAL_naming(coords):
     labels : list
         List of string labels corresponding to each coordinates closest anatomical label based on AAL.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import pandas as pd
     import csv
     from pathlib import Path
@@ -788,8 +766,6 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
     dir_path : str
         Path to directory containing subject derivative data for given run.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from pynets.core import utils, nodemaker
     import pandas as pd
     import time
@@ -977,8 +953,6 @@ def node_gen_masking(roi, coords, parcel_list, labels, dir_path, ID, parc, atlas
     dir_path : str
         Path to directory containing subject derivative data for given run.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from pynets.core import nodemaker
     import os.path as op
     try:
@@ -1052,8 +1026,6 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
     dir_path : str
         Path to directory containing subject derivative data for given run.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     try:
         import cPickle as pickle
     except ImportError:
@@ -1102,8 +1074,6 @@ def mask_roi(dir_path, roi, mask, img_file):
         File path to binarized/boolean region-of-interest Nifti1Image file, reduced to the spatial intersection with
         the input brain mask.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import os
     import os.path as op
     from nilearn import masking
@@ -1147,8 +1117,6 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     parc : bool
         Indicates whether to use the raw parcels as ROI nodes instead of coordinates at their center-of-mass.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from pynets.core.nodemaker import get_sphere, mmToVox
     mask_img = nib.load(template_mask)
     mask_aff = mask_img.affine

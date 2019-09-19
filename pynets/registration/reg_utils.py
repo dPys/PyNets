@@ -346,8 +346,6 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
     bvecs : str
         File path to corresponding reoriented bvecs file if outfile is a dwi.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import os.path as op
     from pynets.registration.reg_utils import reorient_dwi, reorient_img, match_target_vox_res
 
@@ -496,8 +494,6 @@ def reorient_img(img, out_dir):
         File path to reoriented Nifti1Image.
     """
     from pynets.registration.reg_utils import normalize_xform
-    import warnings
-    warnings.filterwarnings("ignore")
 
     # Load image, orient as RAS
     orig_img = nib.load(img)
@@ -534,8 +530,6 @@ def match_target_vox_res(img_file, vox_size, out_dir):
     img_file : str
         File path to resampled Nifti1Image.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from dipy.align.reslice import reslice
 
     # Check dimensions

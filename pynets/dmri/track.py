@@ -5,10 +5,10 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
-import numpy as np
-import nibabel as nib
 import warnings
 warnings.filterwarnings("ignore")
+import numpy as np
+import nibabel as nib
 
 
 def reconstruction(conn_model, gtab, dwi_data, B0_mask):
@@ -31,8 +31,6 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
     mod : obj
         Connectivity reconstruction model.
     '''
-    import warnings
-    warnings.filterwarnings("ignore")
     try:
         import cPickle as pickle
     except ImportError:
@@ -74,8 +72,6 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     tiss_classifier : obj
         Tissue classifier object.
     '''
-    import warnings
-    warnings.filterwarnings("ignore")
     try:
         import cPickle as pickle
     except ImportError:
@@ -116,20 +112,18 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     return tiss_classifier
 
 
-def save_streams(dwi_img, streamlines, streams, affine=np.eye(4), shifted_origin=False):
+def save_streams(in_img, streamlines, streams, shifted_origin=True):
     '''
-    Save streamlines as .trk file with DTK-compatible trackvis header.
+    Save streamlines as stateful .trk file with DTK-compatible trackvis header.
 
     Parameters
     ----------
-    dwi_img : Nifti1Image
-        File path to diffusion weighted Nifti1Image.
+    in_img : Nifti1Image
+        File path to reference Nifti1Image.
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
     streams : str
         File path to save streamline array sequence in .trk format.
-    affine : array
-        4 x 4 2D Numpy array that is the affine of the image space that the coordinates inhabit. Default is identity.
     shifted_origin : bool
         Information on the position of the origin,
         False is Trackvis standard, default (corner of the voxel)
@@ -138,39 +132,38 @@ def save_streams(dwi_img, streamlines, streams, affine=np.eye(4), shifted_origin
     Returns
     -------
     streams : str
-        File path to saved streamline array sequence in DTK-compatible trackvis (.trk) format.
+        File path to saved streamline array sequence in (.trk) format.
     '''
-    import warnings
-    # from dipy.io.stateful_tractogram import Space, StatefulTractogram
-    # from dipy.io.streamline import save_tractogram
-    warnings.filterwarnings("ignore")
-    hdr = dwi_img.header
+    from dipy.io.stateful_tractogram import Space, StatefulTractogram
+    from dipy.io.streamline import save_tractogram
+    # hdr = in_img.header
 
-    # Create trackvis-compatible header
-    trk_affine = affine
-    trk_hdr = nib.streamlines.trk.TrkFile.create_empty_header()
-    trk_hdr['hdr_size'] = 1000
-    trk_hdr['dimensions'] = hdr['dim'][1:4].astype('float32')
-    trk_hdr['voxel_sizes'] = hdr['pixdim'][1:4]
-    trk_hdr['voxel_to_rasmm'] = trk_affine
-    trk_hdr['voxel_order'] = 'RAS'
-    trk_hdr['pad2'] = 'RAS'
-    trk_hdr['image_orientation_patient'] = np.array([1., 0., 0., 0., 1., 0.]).astype('float32')
-    trk_hdr['endianness'] = '<'
-    trk_hdr['_offset_data'] = 1000
-    trk_hdr['nb_streamlines'] = len(streamlines)
+    # # Create trackvis-compatible header
+    # trk_affine = in_img.affine
+    # trk_hdr = nib.streamlines.trk.TrkFile.create_empty_header()
+    # trk_hdr['hdr_size'] = 1000
+    # trk_hdr['dimensions'] = hdr['dim'][1:4].astype('float32')
+    # trk_hdr['voxel_sizes'] = hdr['pixdim'][1:4]
+    # trk_hdr['voxel_to_rasmm'] = trk_affine
+    # trk_hdr['voxel_order'] = 'RAS'
+    # trk_hdr['pad2'] = 'RAS'
+    # trk_hdr['image_orientation_patient'] = np.array([1., 0., 0., 0., 1., 0.]).astype('float32')
+    # trk_hdr['endianness'] = '<'
+    # trk_hdr['_offset_data'] = 1000
+    # trk_hdr['nb_streamlines'] = len(streamlines)
 
-    # sft = StatefulTractogram(streamlines, reference=trk_hdr, space=Space.RASMM, shifted_origin=shifted_origin)
-    #
-    # save_confirm = save_tractogram(sft, streams, bbox_valid_check=False)
-    #
-    # if save_confirm is False:
-    #     raise FileExistsError('Streamline tractogram file save failed.')
-    # else:
-    #     return streams
-    tractogram = nib.streamlines.Tractogram(streamlines, affine_to_rasmm=trk_affine)
-    trkfile = nib.streamlines.trk.TrkFile(tractogram, header=trk_hdr)
-    nib.streamlines.save(trkfile, streams)
+    #sft = StatefulTractogram(streamlines, reference=trk_hdr, space=Space.RASMM, shifted_origin=shifted_origin)
+
+    sft = StatefulTractogram(streamlines, reference=in_img, space=Space.VOXMM, shifted_origin=shifted_origin)
+    save_confirm = save_tractogram(sft, streams, bbox_valid_check=True)
+
+    if save_confirm is False:
+        raise FileExistsError('Streamline tractogram file save failed.')
+    else:
+        return streams
+    # tractogram = nib.streamlines.Tractogram(streamlines, affine_to_rasmm=trk_affine)
+    # trkfile = nib.streamlines.trk.TrkFile(tractogram, header=trk_hdr)
+    # nib.streamlines.save(trkfile, streams)
     return streams
 
 
@@ -213,8 +206,6 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
     dm_path : str
         File path to fiber density map Nifti1Image.
     '''
-    import warnings
-    warnings.filterwarnings("ignore")
     import os
     import os.path as op
     from dipy.tracking import utils
@@ -316,8 +307,6 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from colorama import Fore, Style
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
@@ -560,8 +549,6 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     '''
-    import warnings
-    warnings.filterwarnings("ignore")
     try:
         import cPickle as pickle
     except ImportError:
