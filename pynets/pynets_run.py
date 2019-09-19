@@ -3,12 +3,12 @@
 # Created on Tue Nov  7 10:40:07 2017
 # Copyright (C) 2018
 # @author: Derek Pisner (dPys)
+import warnings
+warnings.filterwarnings("ignore")
 
 
 def get_parser():
     """Parse command-line inputs"""
-    import warnings
-    warnings.filterwarnings("ignore")
     import argparse
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '

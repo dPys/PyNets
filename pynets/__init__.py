@@ -11,13 +11,9 @@ from .__about__ import (  # noqa
     __credits__,
     __packagename__,
 )
+
 import warnings
-warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
-warnings.filterwarnings('ignore', r'cmp not installed')
-warnings.filterwarnings('ignore', r'This has not been fully tested. Please report any failures.')
-warnings.filterwarnings('ignore', r"can't resolve package from __spec__ or __package__")
-warnings.simplefilter('ignore', DeprecationWarning)
-warnings.simplefilter('ignore', ResourceWarning)
+warnings.filterwarnings("ignore")
 from .stats import *
 from .registration import *
 from .dmri import *

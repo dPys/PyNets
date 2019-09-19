@@ -7,9 +7,9 @@ Copyright (C) 2018
 """
 from __future__ import division
 import numpy as np
-import networkx as nx
 import warnings
 warnings.simplefilter("ignore")
+import networkx as nx
 import tkinter
 import matplotlib
 matplotlib.use('agg')
@@ -69,8 +69,6 @@ def average_shortest_path_length_for_all(G):
     in the case that a graph is disconnected. Calculation occurs
     across all subgraphs detected in G.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import math
     subgraphs = [sbg for sbg in nx.connected_component_subgraphs(G) if len(sbg) > 1]
     return math.fsum(nx.average_shortest_path_length(sg) for sg in subgraphs) / len(subgraphs)
@@ -506,8 +504,6 @@ def link_communities(W, type_clustering='single'):
     ----------
     Adapted from bctpy
     '''
-    import warnings
-    warnings.filterwarnings("ignore")
     from pynets.core.thresholding import normalize
 
     n = len(W)
@@ -843,8 +839,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     out_path : str
         Path to .csv file where graph analysis results are saved.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import pandas as pd
     import yaml
     import os

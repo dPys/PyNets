@@ -5,14 +5,14 @@ Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
+import warnings
+warnings.filterwarnings("ignore")
 import os
 import os.path as op
 import nibabel as nib
 import numpy as np
 from pynets.stats.netstats import extractnetstats
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface
-import warnings
-warnings.filterwarnings("ignore")
 
 
 def get_file():
@@ -41,8 +41,6 @@ def export_to_pandas(csv_loc, ID, network, roi):
     net_pickle_mt : pkl
         File path to pickled pandas dataframe.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import pandas as pd
     import os
     from pathlib import Path
@@ -393,8 +391,6 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
     fmt : str
         Format to save connectivity matrix/graph (e.g. .npy, .pkl, .graphml, .txt, .ssv, .csv). Default is .npy.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import networkx as nx
     G = nx.from_numpy_array(conn_matrix)
     G.graph['ecount'] = nx.number_of_edges(G)
@@ -485,8 +481,6 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, nod
     multimodal_iterlist : list
         List of booleans indicating whether multiple modalities of input data have been specified.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from pynets.core.utils import build_omnetome, flatten
     from pynets.stats import netmotifs
 
@@ -729,8 +723,6 @@ def flatten(l):
 
 
 def build_omnetome(est_path_iterlist, ID, multimodal):
-    import warnings
-    warnings.filterwarnings("ignore")
     import os
     import yaml
     from pathlib import Path
@@ -978,8 +970,6 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
     plot_switch : bool
         Activate summary plotting (histograms, ROC curves, etc.)
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import pandas as pd
     import numpy as np
     import matplotlib
@@ -1070,8 +1060,6 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, 
     multimodal : bool
         Indicates whether multiple modalities of input data have been specified.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from pathlib import Path
     import yaml
     from pynets.core.utils import collect_pandas_df_make, flatten
@@ -1238,8 +1226,6 @@ def save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network):
     labels_path : str
         Path to pickled labels list.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     try:
         import cPickle as pickle
     except ImportError:
@@ -1287,8 +1273,6 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
         membership.
     """
     import os
-    import warnings
-    warnings.filterwarnings("ignore")
 
     namer_dir = dir_path + '/parcellations'
     if not os.path.isdir(namer_dir):
@@ -1368,8 +1352,6 @@ def timeseries_bootstrap(tseries, block_size):
        special issue on Statistical Challenges and Advances in Brain Science,
        2008, 18: 1253-1268.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     np.random.seed(int(42))
 
     # calculate number of blocks
@@ -1403,8 +1385,6 @@ def rescale_bvec(bvec, bvec_rescaled):
     bvec_rescaled : str
         File name of the new (normalized) b-vectors file. Must have extension `.bvec`.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     bv1 = np.array(np.loadtxt(bvec))
     # Enforce proper dimensions
     bv1 = bv1.T if bv1.shape[0] == 3 else bv1
@@ -1449,8 +1429,6 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
     dwi_file : str
         File path to diffusion weighted image.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import os
     from dipy.io import save_pickle
     import os.path as op

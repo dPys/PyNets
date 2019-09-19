@@ -6,12 +6,12 @@ Copyright (C) 2018
 @author: Derek Pisner
 """
 import os
+import warnings
+warnings.filterwarnings("ignore")
 import nibabel as nib
 import numpy as np
 from pynets.registration import reg_utils as regutils
 from nilearn.image import load_img, math_img
-import warnings
-warnings.filterwarnings("ignore")
 try:
     FSLDIR = os.environ['FSLDIR']
 except KeyError:
@@ -152,8 +152,6 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different spatial normalization approaches on
            tractography and structural brain networks. Network Neuroscience, 1-19.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from dipy.tracking.streamline import deform_streamlines
     from pynets.registration import reg_utils as regutils
     from pynets.dmri.track import save_streams
@@ -162,6 +160,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     import pkg_resources
     import os.path as op
     from nilearn.image import resample_to_img
+    from dipy.io.streamline import load_tractogram
+    from dipy.io.stateful_tractogram import Space
 
     dsn_dir = "%s%s" % (basedir_path, '/dmri_tmp/DSN')
     if not os.path.isdir(dsn_dir):
@@ -203,28 +203,34 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     # SyN FA->Template
     [mapping, affine_map, warped_fa] = regutils.wm_syn(template_path, fa_path, dsn_dir)
-    streamlines = nib.streamlines.load(streams).streamlines
+
+    tractogram = load_tractogram(streams, fa_img, to_space=Space.VOXMM, shifted_origin=True, bbox_valid_check=True)
+    streamlines = tractogram.streamlines
+    warped_fa_img = nib.load(warped_fa)
 
     # Warp streamlines
     adjusted_affine = affine_map.affine.copy()
-    adjusted_affine[1][3] = -adjusted_affine[1][3] / vox_size ** 2
-    mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field()[-1:],
-                                         stream_to_current_grid=template_img.affine,
+    adjusted_affine[0][3] = adjusted_affine[0][3] / vox_size
+    adjusted_affine[1][3] = adjusted_affine[1][3] / vox_size
+    adjusted_affine[2][3] = adjusted_affine[2][3] / vox_size
+    mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field(),
+                                         stream_to_current_grid=warped_fa_img.affine,
                                          current_grid_to_world=adjusted_affine,
                                          stream_to_ref_grid=template_img.affine,
                                          ref_grid_to_world=np.eye(4))
 
     # Save streamlines
-    save_streams(fa_img, mni_streamlines, streams_mni)
+    save_streams(warped_fa_img, mni_streamlines, streams_mni)
 
     # Create and save MNI density map
-    nib.save(nib.Nifti1Image(utils.density_map(mni_streamlines, affine=np.eye(4), vol_dims=template_img.shape),
-             template_img.affine), density_mni)
+    nib.save(nib.Nifti1Image(utils.density_map(mni_streamlines, affine=np.eye(4), vol_dims=warped_fa_img.shape),
+             warped_fa_img.affine), density_mni)
 
     # DSN QC plotting
     plot_gen.show_template_bundles(mni_streamlines, template_path, streams_warp_png)
 
-    # Map parcellation from native space back to MNI-space and create an 'uncertainty-union' with original mni-space uatlas
+    # Map parcellation from native space back to MNI-space and create an 'uncertainty-union' parcellation
+    # with original mni-space uatlas
     atlas_img = nib.load(labels_im_file)
     uatlas_mni_img = nib.load(uatlas)
     warped_uatlas = affine_map.transform_inverse(mapping.transform(atlas_img.get_data().astype('int16'),
@@ -233,14 +239,14 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     union_ua = "%s%s%s%s" % (os.path.dirname(uatlas), '/', os.path.basename(uatlas).split('.nii.gz')[0],
                              '_UNION.nii.gz')
 
-    warped_uatlas_img = nib.Nifti1Image(warped_uatlas, affine=template_img.affine)
+    warped_uatlas_img = nib.Nifti1Image(warped_uatlas, affine=warped_fa_img.affine)
     warped_uatlas_img_res = resample_to_img(warped_uatlas_img, uatlas_mni_img, interpolation='nearest', clip=False)
     warped_uatlas_img_res_data = warped_uatlas_img_res.get_data()
     uatlas_mni_data = uatlas_mni_img.get_data()
     overlap_mask = np.invert(warped_uatlas_img_res_data.astype('bool') * uatlas_mni_data.astype('bool'))
     union_atlas = warped_uatlas_img_res_data * overlap_mask.astype('int') + uatlas_mni_data * overlap_mask.astype('int')
-    union_atlas_corr = union_atlas + np.invert(overlap_mask).astype('int')*uatlas_mni_data
-    nib.save(nib.Nifti1Image(union_atlas_corr, affine=template_img.affine), union_ua)
+    union_atlas_corr = union_atlas + np.invert(overlap_mask).astype('int') * uatlas_mni_data
+    nib.save(nib.Nifti1Image(union_atlas_corr, affine=warped_fa_img.affine), union_ua)
     atlas_mni = union_ua
 
     return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget, warped_fa
@@ -250,8 +256,6 @@ class DmriReg(object):
     """
     A Class for Registering an atlas to a subject's MNI-aligned T1w image in native diffusion space.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
 
     def __init__(self, basedir_path, fa_path, B0_mask, anat_file, vox_size, simple):
         import pkg_resources
@@ -580,8 +584,6 @@ class FmriReg(object):
     """
     A Class for Registering an atlas to a subject's MNI-aligned T1w image.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
 
     def __init__(self, basedir_path, anat_file, vox_size):
         import pkg_resources
@@ -752,8 +754,6 @@ def register_all_dwi(basedir_path, fa_path, B0_mask, anat_file, gtab_file, dwi_f
     dwi_file : str
         File path to diffusion weighted image.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import os.path as op
     from pynets.registration import register
     reg = register.DmriReg(basedir_path, fa_path, B0_mask, anat_file, vox_size, simple)
@@ -853,8 +853,6 @@ def register_atlas_dwi(uatlas, atlas, node_size, basedir_path, fa_path, B0_mask,
     dwi_file : str
         File path to diffusion weighted image.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
 
@@ -887,8 +885,6 @@ def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=False):
     overwrite : bool
         Indicates whether to overwrite existing registration files. Default is False.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import os.path as op
     from pynets.registration import register
 
@@ -930,8 +926,6 @@ def register_atlas_fmri(uatlas, atlas, node_size, basedir_path, anat_file, vox_s
     aligned_atlas_t1mni_gm : str
         File path to atlas parcellation Nifti1Image in T1w-warped MNI space, restricted only to grey-matter.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
 

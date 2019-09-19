@@ -5,10 +5,10 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
-import numpy as np
-import nibabel as nib
 import warnings
 warnings.filterwarnings("ignore")
+import numpy as np
+import nibabel as nib
 
 
 def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
@@ -35,8 +35,6 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
     dwi_file : str
         File path to diffusion weighted Nifti1Image.
     '''
-    import warnings
-    warnings.filterwarnings("ignore")
     import os
     from dipy.io import load_pickle
     from dipy.reconst.dti import TensorModel
@@ -77,8 +75,6 @@ def tens_mod_est(gtab, data, B0_mask):
     tensor_odf : obj
         Tensor-estimated orientation distribution function.
     '''
-    import warnings
-    warnings.filterwarnings("ignore")
     from dipy.reconst.dti import TensorModel
     from dipy.data import get_sphere
     print('Fitting tensor model...')
@@ -108,8 +104,6 @@ def csa_mod_est(gtab, data, B0_mask):
     csa_mod : obj
         Spherical harmonics coefficients of the CSA-estimated reconstruction model.
     '''
-    import warnings
-    warnings.filterwarnings("ignore")
     from dipy.reconst.shm import CsaOdfModel
     print('Fitting CSA model...')
     B0_mask_data = nib.load(B0_mask).get_fdata().astype('bool')
@@ -136,8 +130,6 @@ def csd_mod_est(gtab, data, B0_mask):
     csd_mod : obj
         Spherical harmonics coefficients of the CSD-estimated reconstruction model.
     '''
-    import warnings
-    warnings.filterwarnings("ignore")
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     print('Fitting CSD model...')
     B0_mask_data = nib.load(B0_mask).get_fdata().astype('bool')
@@ -279,8 +271,6 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     '''
-    import warnings
-    warnings.filterwarnings("ignore")
     from dipy.tracking.streamline import Streamlines, values_from_volume
     from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
     import networkx as nx
@@ -335,7 +325,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
                 try:
                     endlabels.append(node_dict[lab])
                 except UserWarning:
-                    print("%s%s%s" % ('Label ', lab, ' missing from parcellation...'))
+                    print("%s%s%s" % ('Label ', lab, ' missing from parcellation. Check registration and ensure valid '
+                                                     'input parcellation file.'))
 
         edges = combinations(endlabels, 2)
         for edge in edges:

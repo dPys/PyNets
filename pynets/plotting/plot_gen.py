@@ -5,14 +5,14 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
+import warnings
+warnings.filterwarnings("ignore")
 import numpy as np
 import networkx as nx
 import os.path as op
 import tkinter
 import matplotlib
 matplotlib.use('agg')
-import warnings
-warnings.filterwarnings("ignore")
 
 
 def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, labels):
@@ -38,8 +38,6 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
     labels : list
         List of string labels corresponding to ROI nodes.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import json
     from pathlib import Path
     from networkx.readwrite import json_graph
@@ -293,8 +291,6 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas, labels):
     labels : list
         List of string labels corresponding to ROI nodes.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import matplotlib
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
@@ -368,8 +364,6 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import os
     import os.path as op
     import matplotlib
@@ -558,8 +552,6 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import matplotlib
     matplotlib.use('agg')
     import os
@@ -726,8 +718,6 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
     net_pick_file : st
         File path to .pkl file of network measures used to generate df_concat.
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt

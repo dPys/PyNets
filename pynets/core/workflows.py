@@ -6,8 +6,8 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-import numpy as np
 warnings.filterwarnings("ignore")
+import numpy as np
 
 
 def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas, multi_nets,
@@ -21,8 +21,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
                       template_mask, vox_size, multiplex, clean=True):
     """A Meta-Interface for selecting nested workflows to link into a given single-subject workflow"""
-    import warnings
-    warnings.filterwarnings("ignore")
     import yaml
     from pathlib import Path
     import pkg_resources
@@ -618,8 +616,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                        track_type, max_length, maxcrossing, min_length, directget, tiss_class,
                        runtime_dict, multi_directget, template, template_mask, vox_size):
     """A function interface for generating a dMRI nested workflow"""
-    import warnings
-    warnings.filterwarnings("ignore")
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core import  nodemaker, thresholding, utils
@@ -630,8 +626,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     import os
     import os.path as op
 
-    import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib",
-                   "import warnings", "warnings.filterwarnings(\"ignore\")"]
+    import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
+                   "import numpy as np", "import networkx as nx", "import nibabel as nib"]
     base_dirname = "%s%s" % ('dmri_connectometry_', ID)
     dmri_connectometry_wf = pe.Workflow(name=base_dirname)
     if not os.path.isdir("%s%s" % ('/tmp/', base_dirname)):
@@ -639,7 +635,10 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     dmri_connectometry_wf.base_directory = "%s%s" % ('/tmp/', base_dirname)
 
     # Create basedir_path
-    basedir_path = utils.do_dir_path('reg_dmri', dwi_file)
+    if parc is True:
+        basedir_path = utils.do_dir_path('reg_dmri', dwi_file)
+    else:
+        basedir_path = None
 
     # Create input/output nodes
     inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'atlas', 'network', 'node_size', 'roi',
@@ -1549,8 +1548,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                        clust_type, clust_type_list, plugin_type, c_boot, block_size, mask, norm, binary,
                        anat_file, runtime_dict, hpass, hpass_list, template, template_mask, vox_size):
     """A function interface for generating an fMRI nested workflow"""
-    import warnings
-    warnings.filterwarnings("ignore")
     import os
     import os.path as op
     from nipype.pipeline import engine as pe
@@ -1561,8 +1558,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
 
-    import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib",
-                   "import warnings", "warnings.filterwarnings(\"ignore\")"]
+    import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib"]
     fmri_connectometry_wf = pe.Workflow(name="%s%s" % ('fmri_connectometry_', ID))
     base_dirname = "%s%s" % ('fmri_connectometry_', ID)
     if not os.path.isdir("%s%s" % ('/tmp/', base_dirname)):
@@ -1572,6 +1568,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     # Create basedir_path
     if parc is True:
         basedir_path = utils.do_dir_path('reg_fmri', func_file)
+    else:
+        basedir_path = None
 
     # Create input/output nodes
     inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID', 'atlas', 'network',

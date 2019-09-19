@@ -53,8 +53,6 @@ def indx_1dto3d(idx, sz):
     ----------
     .. Adapted from PyClusterROI
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from scipy import divide, prod
     x = divide(idx, prod(sz[1:3]))
     y = divide(idx - x * prod(sz[1:3]), sz[2])
@@ -82,8 +80,6 @@ def indx_3dto1d(idx, sz):
     ----------
     .. Adapted from PyClusterROI
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from scipy import prod, rank
     if rank(idx) == 1:
         idx1 = idx[0] * prod(sz[1:3]) + idx[1] * sz[2] + idx[2]
@@ -121,8 +117,6 @@ def make_local_connectivity_scorr(func_file, clust_mask, outfile, thresh):
     ----------
     .. Adapted from PyClusterROI
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from scipy.sparse import csc_matrix
     from scipy import prod, rank
     neighbors = np.array([[-1, -1, -1], [0, -1, -1], [1, -1, -1],
@@ -278,8 +272,6 @@ def make_local_connectivity_tcorr(func_file, clust_mask, outfile, thresh):
         Threshold value, correlation coefficients lower than this value
         will be removed from the matrix (set to zero).
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from scipy.sparse import csc_matrix
     from scipy import prod, rank
     from itertools import product
@@ -415,8 +407,6 @@ def ncut(W, nbEigenValues):
        IEEE International Conference on Computer Vision, (1), 313-319 vol.1. Ieee.
        doi: 10.1109/ICCV.2003.1238361
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from scipy.sparse.linalg import eigsh
     from scipy.sparse import spdiags
     from numpy.linalg import norm
@@ -504,8 +494,6 @@ def discretisation(eigen_vec):
        IEEE International Conference on Computer Vision, (1), 313-319 vol.1. Ieee.
        doi: 10.1109/ICCV.2003.1238361
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import scipy as sp
     from scipy.sparse import csc_matrix
     from scipy.linalg import LinAlgError, svd
@@ -597,8 +585,6 @@ def binfile_parcellate(infile, outfile, k):
     ----------
     .. Adapted from PyClusterROI
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     from scipy.sparse import csc_matrix
 
     # Read in the file
@@ -717,8 +703,6 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas):
     ----------
     .. Adapted from PyClusterROI
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import time
     import nibabel as nib
     from nilearn.regions import Parcellations
@@ -760,8 +744,6 @@ def individual_clustering(func_file, clust_mask, ID, k, clust_type, thresh=0.5):
         Threshold value to be used for NCUT tcorr and scorr. Correlation coefficients
         lower than this value will be removed from the matrix (set to zero).
     """
-    import warnings
-    warnings.filterwarnings("ignore")
     import os
     from pynets.core import utils
     from pynets.fmri import clustools
