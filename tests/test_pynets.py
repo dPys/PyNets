@@ -5,8 +5,7 @@
 
 import pytest
 from click.testing import CliRunner
-from pynets import cli
-
+from pynets import pynets_run
 
 @pytest.fixture
 def response():
@@ -27,9 +26,9 @@ def test_content(response):
 def test_command_line_interface():
     """Test the CLI."""
     runner = CliRunner()
-    result = runner.invoke(cli.main)
+    result = runner.invoke(pynets_run.main)
     assert result.exit_code == 0
-    assert 'pynets.cli.main' in result.output
-    help_result = runner.invoke(cli.main, ['--help'])
+    assert 'pynets.pynets_run.main' in result.output
+    help_result = runner.invoke(pynets_run.main, ['--help'])
     assert help_result.exit_code == 0
     assert '--help  Show this message and exit.' in help_result.output

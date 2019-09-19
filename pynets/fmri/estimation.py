@@ -328,6 +328,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     import warnings
     warnings.filterwarnings("ignore")
     import os.path as op
+    import nibabel as nib
     from nilearn import input_data
     from pynets.core import utils
 
@@ -340,9 +341,15 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
             raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the '
                              '-conf flag exist(s)')
 
+    func_img = nib.load(func_file)
+    hdr = func_img.header
+    if hpass:
+        t_r = hdr.get_zooms()[-1]
+    else:
+        t_r = None
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
-                                                 detrend=detrending, verbose=2, resampling_target='data')
+                                                 detrend=detrending, t_r=t_r, verbose=2, resampling_target='data')
     if conf is not None:
         import pandas as pd
         confounds = pd.read_csv(conf, sep='\t')
@@ -452,6 +459,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     import warnings
     warnings.filterwarnings("ignore")
     import os.path as op
+    import nibabel as nib
     from nilearn import input_data
     from pynets.core import utils
 
@@ -464,18 +472,26 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
             raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the '
                              '-conf flag exist(s)')
 
+    func_img = nib.load(func_file)
+    hdr = func_img.header
+    if hpass:
+        t_r = hdr.get_zooms()[-1]
+    else:
+        t_r = None
+
     if len(coords) > 0:
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                        standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
-                                                       detrend=detrending, verbose=2)
+                                                       detrend=detrending, t_r=t_r, verbose=2)
         if conf is not None:
             import pandas as pd
             confounds = pd.read_csv(conf, sep='\t')
             if confounds.isnull().values.any():
-                print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but these '
-                      'should be check manually')
+                import random
+                print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
+                      'regressor file should be checked manually.')
                 confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-                conf_corr = dir_path + '/confounds_mean_corrected.tsv'
+                conf_corr = dir_path + '/confounds_mean_corrected_' + str(random.randint(1, 1000)) + '.tsv'
                 confounds_nonan.to_csv(conf_corr, sep='\t')
                 ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf_corr)
             else:

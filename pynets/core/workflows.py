@@ -786,7 +786,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         node_gen_node = pe.Node(niu.Function(input_names=['roi', 'coords', 'parcel_list', 'labels', 'dir_path',
                                                           'ID', 'parc', 'atlas', 'uatlas'],
                                              output_names=['net_parcels_map_nifti', 'coords', 'labels',
-                                                           'atlas', 'uatlas'],
+                                                           'atlas', 'uatlas', 'dir_path'],
                                              function=nodemaker.node_gen_masking, imports=import_list),
                                 name="node_gen_node")
     else:
@@ -794,7 +794,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         node_gen_node = pe.Node(niu.Function(input_names=['coords', 'parcel_list', 'labels', 'dir_path',
                                                           'ID', 'parc', 'atlas', 'uatlas'],
                                              output_names=['net_parcels_map_nifti', 'coords', 'labels',
-                                                           'atlas', 'uatlas'],
+                                                           'atlas', 'uatlas', 'dir_path'],
                                              function=nodemaker.node_gen, imports=import_list), name="node_gen_node")
 
     # RSN case
@@ -1002,7 +1002,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                             joinsource=atlas_join_source,
                                             joinfield=map_fields)
         if not conn_model_list and not multi_directget and (node_size_list and parc is False):
-            print('Node extraction iterables only...')
+            print('Node extraction iterables...')
             join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
                                           name='join_iters_prep_spheres_node',
                                           joinsource=prep_spherical_nodes_node, joinfield=map_fields)
@@ -1026,7 +1026,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                     print('Single atlas...')
                     dmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
         elif (conn_model_list or multi_directget) and not node_size_list:
-            print('Connectivity model iterables only...')
+            print('Multiple connectivity models...')
             join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
                                           name='join_iters_run_track_node',
                                           joinsource=run_tracking_node, joinfield=map_fields)
@@ -1160,7 +1160,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                                           'uatlas', 'labels', 'coords', 'norm',
                                                                           'binary', 'target_samples', 'track_type',
                                                                           'atlas_mni', 'streams', 'directget'],
-                                      nested=False)
+                                      nested=True)
 
     # Set iterables for thr on thresh_diff, else set thr to singular input
     if multi_thr is True:
@@ -1183,7 +1183,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                     function=plot_gen.plot_all_struct, imports=import_list),
                                        itersource=thr_info_node,
                                        iterfield=plot_fields,
-                                       name="plot_all_node")
+                                       name="plot_all_node", nested=True)
         else:
             # Plotting singular graph solution
             plot_all_node = pe.Node(niu.Function(input_names=plot_fields, output_names='None',
@@ -2043,7 +2043,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         node_gen_node = pe.Node(niu.Function(input_names=['roi', 'coords', 'parcel_list', 'labels', 'dir_path',
                                                           'ID', 'parc', 'atlas', 'uatlas'],
                                              output_names=['net_parcels_map_nifti', 'coords', 'labels',
-                                                           'atlas', 'uatlas'],
+                                                           'atlas', 'uatlas', 'dir_path'],
                                              function=nodemaker.node_gen_masking, imports=import_list),
                                 name="node_gen_node")
 
@@ -2052,7 +2052,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         node_gen_node = pe.Node(niu.Function(input_names=['coords', 'parcel_list', 'labels', 'dir_path',
                                                           'ID', 'parc', 'atlas', 'uatlas'],
                                              output_names=['net_parcels_map_nifti', 'coords', 'labels',
-                                                           'atlas', 'uatlas'],
+                                                           'atlas', 'uatlas', 'dir_path'],
                                              function=nodemaker.node_gen, imports=import_list), name="node_gen_node")
 
     # Extract time-series from nodes
@@ -2235,14 +2235,14 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                             joinsource=atlas_join_source,
                                             joinfield=map_fields)
         if not conn_model_list and (node_size_list or smooth_list or float(c_boot) > 0 or hpass_list):
-            print('Time-series node extraction iterables only...')
+            print('Time-series node extraction iterables...')
             join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_extract_ts_node',
                                           joinsource=extract_ts_node, joinfield=map_fields)
             if multi_thr:
                 print('Multiple thresholds...')
                 fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
                 if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-                    # print('Multiple atlases...')
+                    print('Multiple atlases...')
                     fmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_atlas, map_connects)])
                     fmri_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
                 else:
@@ -2251,14 +2251,14 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             else:
                 print('Single threshold...')
                 if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-                    # print('Multiple atlases...')
+                    print('Multiple atlases...')
                     fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects)])
                     fmri_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
                 else:
                     print('Single atlas...')
                     fmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
         elif conn_model_list and (not node_size_list and not smooth_list and not float(c_boot) > 0 and not hpass_list):
-            print('Connectivity model iterables only...')
+            print('Multiple connectivity models...')
             join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
                                           name='join_iters_get_conn_matrix_node',
                                           joinsource=get_conn_matrix_node, joinfield=map_fields)
@@ -2386,7 +2386,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                                           'disp_filt', 'parc', 'prune', 'atlas',
                                                                           'uatlas', 'labels', 'coords',
                                                                           'c_boot', 'norm', 'binary', 'hpass'],
-                                      nested=False)
+                                      nested=True)
 
     # Set iterables for thr on thresh_func, else set thr to singular input
     if multi_thr is True:
@@ -2408,7 +2408,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                     function=plot_gen.plot_all_func, imports=import_list),
                                        itersource=thr_info_node,
                                        iterfield=plot_fields,
-                                       name="plot_all_node")
+                                       name="plot_all_node", nested=True)
         else:
             # Plotting singular graph solution
             plot_all_node = pe.Node(niu.Function(input_names=plot_fields, output_names='None',
@@ -2502,10 +2502,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                            ('norm', 'norm'),
                                            ('roi', 'roi'),
                                            ('binary', 'binary')]),
-        (fetch_nodes_and_labels_node, extract_ts_node, [('dir_path', 'dir_path')]),
         (node_gen_node, extract_ts_node, [('net_parcels_map_nifti', 'net_parcels_map_nifti'),
                                           ('coords', 'coords'), ('labels', 'labels'),
-                                          ('atlas', 'atlas'), ('uatlas', 'uatlas')]),
+                                          ('atlas', 'atlas'), ('uatlas', 'uatlas'),
+                                          ('dir_path', 'dir_path')]),
         (extract_ts_node, get_conn_matrix_node, [('ts_within_nodes', 'time_series'), ('dir_path', 'dir_path'),
                                                  ('node_size', 'node_size'), ('smooth', 'smooth'),
                                                  ('coords', 'coords'), ('labels', 'labels'),

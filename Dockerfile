@@ -91,11 +91,12 @@ RUN pip install --upgrade pip
 RUN conda clean -tipsy
 RUN pip install awscli pybids boto3 python-dateutil requests dipy scikit-image
 
-RUN git clone -b development https://github.com/dPys/PyNets PyNets && \
-    chmod 775 -R PyNets/*/*.py && \
-    cd PyNets && \
-    pip install -r requirements.txt && \
-    python setup.py install
+#RUN git clone -b development https://github.com/dPys/PyNets PyNets && \
+#    chmod 775 -R PyNets/*/*.py && \
+#    cd PyNets && \
+#    pip install -r requirements.txt && \
+#    python setup.py install
+RUN pip install pynets --upgrade
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
