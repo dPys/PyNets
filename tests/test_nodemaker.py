@@ -280,14 +280,14 @@ def test_nodemaker_tools_masking_parlistfile_WB():
 
     start_time = time.time()
     [WB_net_parcels_map_nifti_unmasked, WB_coords_unmasked, _,
-     WB_atlas, WB_uatlas] = nodemaker.node_gen(WB_coords, WB_parcel_list, WB_labels,
+     WB_atlas, WB_uatlas, dir_path] = nodemaker.node_gen(WB_coords, WB_parcel_list, WB_labels,
                                                                         dir_path, ID, parc, atlas, parlistfile)
     print("%s%s%s" % ('node_gen (Masking whole-brain version) --> finished: ',
     np.round(time.time() - start_time, 1), 's'))
 
     start_time = time.time()
     [WB_net_parcels_map_nifti_masked, WB_coords_masked, WB_labels_masked,
-     WB_atlas, WB_uatlas] = nodemaker.node_gen_masking(roi, WB_coords, WB_parcel_list,
+     WB_atlas, WB_uatlas, dir_path] = nodemaker.node_gen_masking(roi, WB_coords, WB_parcel_list,
                                                                                 WB_labels, dir_path, ID, parc,
                                                                                 atlas, parlistfile)
 

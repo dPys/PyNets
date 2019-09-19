@@ -974,6 +974,8 @@ def node_gen_masking(roi, coords, parcel_list, labels, dir_path, ID, parc, atlas
         See Nilearn's datasets.atlas module for more detailed reference.
     uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
     """
     import warnings
     warnings.filterwarnings("ignore")
@@ -1003,7 +1005,7 @@ def node_gen_masking(roi, coords, parcel_list, labels, dir_path, ID, parc, atlas
     with open(labels_path, 'wb') as f:
         pickle.dump(labels, f, protocol=2)
 
-    return net_parcels_map_nifti, coords, labels, atlas, uatlas
+    return net_parcels_map_nifti, coords, labels, atlas, uatlas, dir_path
 
 
 def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
@@ -1047,6 +1049,8 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
         See Nilearn's datasets.atlas module for more detailed reference.
     uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
+    dir_path : str
+        Path to directory containing subject derivative data for given run.
     """
     import warnings
     warnings.filterwarnings("ignore")
@@ -1074,7 +1078,7 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
         with open(labels_path, 'wb') as f:
             pickle.dump(labels, f, protocol=2)
 
-    return net_parcels_map_nifti, coords, labels, atlas, uatlas
+    return net_parcels_map_nifti, coords, labels, atlas, uatlas, dir_path
 
 
 def mask_roi(dir_path, roi, mask, img_file):
