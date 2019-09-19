@@ -141,8 +141,8 @@ def save_streams(dwi_img, streamlines, streams, affine=np.eye(4), shifted_origin
         File path to saved streamline array sequence in DTK-compatible trackvis (.trk) format.
     '''
     import warnings
-    from dipy.io.stateful_tractogram import Space, StatefulTractogram
-    from dipy.io.streamline import save_tractogram
+    # from dipy.io.stateful_tractogram import Space, StatefulTractogram
+    # from dipy.io.streamline import save_tractogram
     warnings.filterwarnings("ignore")
     hdr = dwi_img.header
 
@@ -160,14 +160,18 @@ def save_streams(dwi_img, streamlines, streams, affine=np.eye(4), shifted_origin
     trk_hdr['_offset_data'] = 1000
     trk_hdr['nb_streamlines'] = len(streamlines)
 
-    sft = StatefulTractogram(streamlines, reference=trk_hdr, space=Space.RASMM, shifted_origin=shifted_origin)
-
-    save_confirm = save_tractogram(sft, streams, bbox_valid_check=False)
-
-    if save_confirm is False:
-        raise FileExistsError('Streamline tractogram file save failed.')
-    else:
-        return streams
+    # sft = StatefulTractogram(streamlines, reference=trk_hdr, space=Space.RASMM, shifted_origin=shifted_origin)
+    #
+    # save_confirm = save_tractogram(sft, streams, bbox_valid_check=False)
+    #
+    # if save_confirm is False:
+    #     raise FileExistsError('Streamline tractogram file save failed.')
+    # else:
+    #     return streams
+    tractogram = nib.streamlines.Tractogram(streamlines, affine_to_rasmm=trk_affine)
+    trkfile = nib.streamlines.trk.TrkFile(tractogram, header=trk_hdr)
+    nib.streamlines.save(trkfile, streams)
+    return streams
 
 
 def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_samples,
