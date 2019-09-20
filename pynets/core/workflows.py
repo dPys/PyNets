@@ -21,6 +21,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
                       template_mask, vox_size, multiplex, clean=True):
     """A Meta-Interface for selecting nested workflows to link into a given single-subject workflow"""
+    import warnings
+    warnings.filterwarnings("ignore")
     import yaml
     from pathlib import Path
     import pkg_resources
@@ -616,9 +618,11 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                        track_type, max_length, maxcrossing, min_length, directget, tiss_class,
                        runtime_dict, multi_directget, template, template_mask, vox_size):
     """A function interface for generating a dMRI nested workflow"""
+    import warnings
+    warnings.filterwarnings("ignore")
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
-    from pynets.core import  nodemaker, thresholding, utils
+    from pynets.core import nodemaker, thresholding, utils
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
     from pynets.dmri import estimation, track
@@ -1548,6 +1552,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                        clust_type, clust_type_list, plugin_type, c_boot, block_size, mask, norm, binary,
                        anat_file, runtime_dict, hpass, hpass_list, template, template_mask, vox_size):
     """A function interface for generating an fMRI nested workflow"""
+    import warnings
+    warnings.filterwarnings("ignore")
     import os
     import os.path as op
     from nipype.pipeline import engine as pe

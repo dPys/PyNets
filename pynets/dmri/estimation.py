@@ -277,11 +277,17 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     from itertools import combinations
     from collections import defaultdict
     from pynets.core import utils, nodemaker
+    from dipy.io.streamline import load_tractogram
+    from dipy.io.stateful_tractogram import Space
     import time
 
+    # Load parcellation
+    roi_img = nib.load(atlas_mni)
+    atlas_data = np.around(roi_img.get_fdata())
+
     # Read Streamlines
-    streamlines_mni = nib.streamlines.load(streams)
-    streamlines = Streamlines(streamlines_mni.streamlines)
+    tractogram = load_tractogram(streams, roi_img, to_space=Space.RASMM, shifted_origin=True, bbox_valid_check=False)
+    streamlines = Streamlines(tractogram.streamlines)
 
     fa_map = nib.load(warped_fa).get_data()
     fa_weights = values_from_volume(fa_map, streamlines, np.eye(4))
@@ -291,10 +297,6 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     fa_weights_norm = []
     for val_list in fa_weights:
         fa_weights_norm.append((val_list - min_global_fa_wei) / (max_global_fa_wei - min_global_fa_wei))
-
-    # Load parcellation
-    roi_img = nib.load(atlas_mni)
-    atlas_data = np.around(roi_img.get_fdata())
 
     # Instantiate empty networkX graph object & dictionary and create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4))
