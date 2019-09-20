@@ -76,18 +76,3 @@ def test_reconstruction():
     for conn_model in ['csa', 'tensor', 'csd']:
         mod = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
         assert mod is not None
-
-    
-def test_load_and_save_streams():
-    from pynets.dmri import track
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/001/dmri'
-    dwi_file = dir_path + '/HARDI150.nii.gz'
-    dwi_img = nib.load(dwi_file)
-    
-    # Load output from test_filter_streamlines: dictionary of streamline info
-    streamlines_trk = dir_path + '/tractography/streamlines_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].trk'
-    streamlines = nib.streamlines.load(streamlines_trk).streamlines
-    streams = dir_path + '/tractography/test_save.trk'
-    streams_out = track.save_streams(dwi_img, streamlines, streams)
-    assert streams_out is not None

@@ -154,14 +154,14 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     """
     from dipy.tracking.streamline import deform_streamlines
     from pynets.registration import reg_utils as regutils
-    from pynets.dmri.track import save_streams
+    from dipy.io.stateful_tractogram import Space, StatefulTractogram
+    from dipy.io.streamline import save_tractogram
     from pynets.plotting import plot_gen
     from dipy.tracking import utils
     import pkg_resources
     import os.path as op
     from nilearn.image import resample_to_img
     from dipy.io.streamline import load_tractogram
-    from dipy.io.stateful_tractogram import Space
 
     dsn_dir = "%s%s" % (basedir_path, '/dmri_tmp/DSN')
     if not os.path.isdir(dsn_dir):
@@ -175,7 +175,6 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     fa_img = nib.load(fa_path)
     vox_size = fa_img.header.get_zooms()[0]
     template_path = pkg_resources.resource_filename("pynets", "%s%s%s" % ('templates/FA_', int(vox_size), 'mm.nii.gz'))
-    template_img = nib.load(template_path)
 
     streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_',
                                                   '%s' % (network + '_' if network is not None else ''),
@@ -204,23 +203,31 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     # SyN FA->Template
     [mapping, affine_map, warped_fa] = regutils.wm_syn(template_path, fa_path, dsn_dir)
 
-    tractogram = load_tractogram(streams, fa_img, to_space=Space.VOXMM, shifted_origin=True, bbox_valid_check=True)
+    tractogram = load_tractogram(streams, fa_img, to_space=Space.RASMM, shifted_origin=True, bbox_valid_check=False)
     streamlines = tractogram.streamlines
     warped_fa_img = nib.load(warped_fa)
 
-    # Warp streamlines
+    # Create origin isocenter mapping
     adjusted_affine = affine_map.affine.copy()
     adjusted_affine[0][3] = adjusted_affine[0][3] / vox_size
     adjusted_affine[1][3] = adjusted_affine[1][3] / vox_size
-    adjusted_affine[2][3] = adjusted_affine[2][3] / vox_size
-    mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field(),
+    adjusted_affine[2][3] = adjusted_affine[2][3] + adjusted_affine[2][3] / vox_size
+    adjusted_affine[0][0] = vox_size
+    adjusted_affine[1][1] = vox_size
+    adjusted_affine[2][2] = vox_size
+    ref_grid_aff = np.eye(4) * 2
+    ref_grid_aff[3][3] = 1
+
+    # Warp streamlines
+    mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field()[-1:],
                                          stream_to_current_grid=warped_fa_img.affine,
                                          current_grid_to_world=adjusted_affine,
-                                         stream_to_ref_grid=template_img.affine,
-                                         ref_grid_to_world=np.eye(4))
+                                         stream_to_ref_grid=warped_fa_img.affine,
+                                         ref_grid_to_world=ref_grid_aff)
 
     # Save streamlines
-    save_streams(warped_fa_img, mni_streamlines, streams_mni)
+    save_tractogram(StatefulTractogram(mni_streamlines, reference=warped_fa_img, space=Space.RASMM,
+                                       shifted_origin=True), streams_mni, bbox_valid_check=False)
 
     # Create and save MNI density map
     nib.save(nib.Nifti1Image(utils.density_map(mni_streamlines, affine=np.eye(4), vol_dims=warped_fa_img.shape),

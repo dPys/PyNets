@@ -112,61 +112,6 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     return tiss_classifier
 
 
-def save_streams(in_img, streamlines, streams, shifted_origin=True):
-    '''
-    Save streamlines as stateful .trk file with DTK-compatible trackvis header.
-
-    Parameters
-    ----------
-    in_img : Nifti1Image
-        File path to reference Nifti1Image.
-    streamlines : ArraySequence
-        DiPy list/array-like object of streamline points from tractography.
-    streams : str
-        File path to save streamline array sequence in .trk format.
-    shifted_origin : bool
-        Information on the position of the origin,
-        False is Trackvis standard, default (corner of the voxel)
-        True is NIFTI standard (center of the voxel)
-
-    Returns
-    -------
-    streams : str
-        File path to saved streamline array sequence in (.trk) format.
-    '''
-    from dipy.io.stateful_tractogram import Space, StatefulTractogram
-    from dipy.io.streamline import save_tractogram
-    # hdr = in_img.header
-
-    # # Create trackvis-compatible header
-    # trk_affine = in_img.affine
-    # trk_hdr = nib.streamlines.trk.TrkFile.create_empty_header()
-    # trk_hdr['hdr_size'] = 1000
-    # trk_hdr['dimensions'] = hdr['dim'][1:4].astype('float32')
-    # trk_hdr['voxel_sizes'] = hdr['pixdim'][1:4]
-    # trk_hdr['voxel_to_rasmm'] = trk_affine
-    # trk_hdr['voxel_order'] = 'RAS'
-    # trk_hdr['pad2'] = 'RAS'
-    # trk_hdr['image_orientation_patient'] = np.array([1., 0., 0., 0., 1., 0.]).astype('float32')
-    # trk_hdr['endianness'] = '<'
-    # trk_hdr['_offset_data'] = 1000
-    # trk_hdr['nb_streamlines'] = len(streamlines)
-
-    #sft = StatefulTractogram(streamlines, reference=trk_hdr, space=Space.RASMM, shifted_origin=shifted_origin)
-
-    sft = StatefulTractogram(streamlines, reference=in_img, space=Space.VOXMM, shifted_origin=shifted_origin)
-    save_confirm = save_tractogram(sft, streams, bbox_valid_check=True)
-
-    if save_confirm is False:
-        raise FileExistsError('Streamline tractogram file save failed.')
-    else:
-        return streams
-    # tractogram = nib.streamlines.Tractogram(streamlines, affine_to_rasmm=trk_affine)
-    # trkfile = nib.streamlines.trk.TrkFile(tractogram, header=trk_hdr)
-    # nib.streamlines.save(trkfile, streams)
-    return streams
-
-
 def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_samples,
                        node_size, curv_thr_list, step_list, network, roi):
     '''
@@ -209,7 +154,8 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
     import os
     import os.path as op
     from dipy.tracking import utils
-    from pynets.dmri.track import save_streams
+    from dipy.io.stateful_tractogram import Space, StatefulTractogram
+    from dipy.io.streamline import save_tractogram
 
     # Create density map
     dm = utils.density_map(streamlines, affine=np.eye(4), vol_dims=dwi_img.shape)
@@ -238,7 +184,9 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
                                                 '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
                                                 'curv', str(curv_thr_list).replace(', ', '_'),
                                                 '_step', str(step_list).replace(', ', '_'), '.trk')
-    streams = save_streams(dwi_img, streamlines, streams)
+
+    save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, shifted_origin=True), streams,
+                    bbox_valid_check=False)
 
     return streams, dir_path, dm_path
 
