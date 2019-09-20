@@ -211,7 +211,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     adjusted_affine = affine_map.affine.copy()
     adjusted_affine[0][3] = adjusted_affine[0][3] / vox_size
     adjusted_affine[1][3] = adjusted_affine[1][3] / vox_size
-    adjusted_affine[2][3] = adjusted_affine[2][3] / vox_size
+    adjusted_affine[2][3] = adjusted_affine[2][3] + adjusted_affine[2][3] / vox_size
     adjusted_affine[0][0] = vox_size
     adjusted_affine[1][1] = vox_size
     adjusted_affine[2][2] = vox_size
@@ -220,7 +220,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     # Warp streamlines
     mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field()[-1:],
-                                         stream_to_current_grid=fa_img.affine,
+                                         stream_to_current_grid=warped_fa_img.affine,
                                          current_grid_to_world=adjusted_affine,
                                          stream_to_ref_grid=warped_fa_img.affine,
                                          ref_grid_to_world=ref_grid_aff)

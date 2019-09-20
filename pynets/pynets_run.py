@@ -1807,7 +1807,6 @@ def build_workflow(args, retval):
             shutil.rmtree(metrickl_dir)
         for net_pkl in [i for i in glob.glob("%s%s" % (dwi_dir, '/*/netmetrics/*')) if 'neat.csv' not in i]:
             os.remove(net_pkl)
-        shutil.rmtree("%s%s" % (dwi_dir, '/dmri_tmp'))
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)
