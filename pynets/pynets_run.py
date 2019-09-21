@@ -269,12 +269,12 @@ def get_parser():
                              'Default is det.\n')
     parser.add_argument('-tc',
                         metavar='Tissue classification method',
-                        default='wb',
+                        default='bin',
                         nargs=1,
                         choices=['wb', 'cmc', 'act', 'bin'],
                         help='Include this flag to manually specify a tissue classification method for dmri '
                              'connectome estimation. Options are: cmc (continuous), act (anatomically-constrained), '
-                             'wb (whole-brain mask), and bin (binary to white-matter only). Default is wb.\n')
+                             'wb (whole-brain mask), and bin (binary to white-matter only). Default is bin.\n')
     parser.add_argument('-thr',
                         metavar='Graph threshold',
                         default=1.00,
