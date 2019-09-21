@@ -185,8 +185,8 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
                                                 'curv', str(curv_thr_list).replace(', ', '_'),
                                                 '_step', str(step_list).replace(', ', '_'), '.trk')
 
-    save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, shifted_origin=True), streams,
-                    bbox_valid_check=False)
+    save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, shifted_origin=True),
+                    streams, bbox_valid_check=False)
 
     return streams, dir_path, dm_path
 

@@ -152,12 +152,12 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different spatial normalization approaches on
            tractography and structural brain networks. Network Neuroscience, 1-19.
     """
-    from dipy.tracking.streamline import deform_streamlines
+    from dipy.tracking import utils
+    from dipy.tracking.streamline import values_from_volume, transform_streamlines
     from pynets.registration import reg_utils as regutils
     from dipy.io.stateful_tractogram import Space, StatefulTractogram
     from dipy.io.streamline import save_tractogram
     from pynets.plotting import plot_gen
-    from dipy.tracking import utils
     import pkg_resources
     import os.path as op
     from nilearn.image import resample_to_img
@@ -170,6 +170,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     namer_dir = dir_path + '/tractography'
     if not os.path.isdir(namer_dir):
         os.mkdir(namer_dir)
+
+    atlas_img = nib.load(labels_im_file)
 
     # Run SyN and normalize streamlines
     fa_img = nib.load(fa_path)
@@ -207,38 +209,41 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     streamlines = tractogram.streamlines
     warped_fa_img = nib.load(warped_fa)
 
-    # Create origin isocenter mapping
-    adjusted_affine = affine_map.affine.copy()
-    adjusted_affine[0][3] = adjusted_affine[0][3] / vox_size
-    adjusted_affine[1][3] = adjusted_affine[1][3] / vox_size
-    adjusted_affine[2][3] = adjusted_affine[2][3] + adjusted_affine[2][3] / vox_size
-    adjusted_affine[0][0] = vox_size
-    adjusted_affine[1][1] = vox_size
-    adjusted_affine[2][2] = vox_size
-    ref_grid_aff = np.eye(4) * 2
+    streams_in_curr_grid = transform_streamlines(streamlines, warped_fa_img.affine)
+
+    ref_grid_aff = vox_size*np.eye(4)
     ref_grid_aff[3][3] = 1
 
-    # Warp streamlines
-    mni_streamlines = deform_streamlines(streamlines, deform_field=mapping.get_forward_field()[-1:],
-                                         stream_to_current_grid=warped_fa_img.affine,
-                                         current_grid_to_world=adjusted_affine,
-                                         stream_to_ref_grid=warped_fa_img.affine,
-                                         ref_grid_to_world=ref_grid_aff)
+    # Deform streamlines
+    displacements = values_from_volume(mapping.get_forward_field(), streams_in_curr_grid,
+                                       ref_grid_aff)
+
+    new_streams_in_world = [sum(d, s) for d, s in zip(displacements,
+                                                      streams_in_curr_grid)]
+
+    # Create origin isocenter mapping
+    adjusted_affine = affine_map.affine.copy()
+    adjusted_affine[0][3] = -adjusted_affine[0][3]/vox_size
+    adjusted_affine[1][3] = -adjusted_affine[1][3]/(vox_size**vox_size)
+    adjusted_affine[2][3] = -adjusted_affine[2][3]/vox_size
+
+    streams_isocentered = transform_streamlines(new_streams_in_world, np.linalg.inv(adjusted_affine))
+
+    streams_final = transform_streamlines(streams_isocentered, np.linalg.inv(warped_fa_img.affine))
 
     # Save streamlines
-    save_tractogram(StatefulTractogram(mni_streamlines, reference=warped_fa_img, space=Space.RASMM,
+    save_tractogram(StatefulTractogram(streams_final, reference=warped_fa_img, space=Space.RASMM,
                                        shifted_origin=True), streams_mni, bbox_valid_check=False)
 
     # Create and save MNI density map
-    nib.save(nib.Nifti1Image(utils.density_map(mni_streamlines, affine=np.eye(4), vol_dims=warped_fa_img.shape),
+    nib.save(nib.Nifti1Image(utils.density_map(streams_final, affine=np.eye(4), vol_dims=warped_fa_img.shape),
              warped_fa_img.affine), density_mni)
 
     # DSN QC plotting
-    plot_gen.show_template_bundles(mni_streamlines, template_path, streams_warp_png)
+    plot_gen.show_template_bundles(streams_final, template_path, streams_warp_png)
 
     # Map parcellation from native space back to MNI-space and create an 'uncertainty-union' parcellation
     # with original mni-space uatlas
-    atlas_img = nib.load(labels_im_file)
     uatlas_mni_img = nib.load(uatlas)
     warped_uatlas = affine_map.transform_inverse(mapping.transform(atlas_img.get_data().astype('int16'),
                                                                    interpolation='nearestneighbour'),
