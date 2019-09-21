@@ -221,11 +221,11 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     new_streams_in_world = [sum(d, s) for d, s in zip(displacements,
                                                       streams_in_curr_grid)]
 
-    # Create origin isocenter mapping
+    # Create origin isocenter mapping where y, x, z offsets follow a multiplicative sequence of 1/4, 1/2, 3/4
     adjusted_affine = affine_map.affine.copy()
     adjusted_affine[0][3] = -adjusted_affine[0][3]/vox_size
-    adjusted_affine[1][3] = -adjusted_affine[1][3]/(vox_size**vox_size)
-    adjusted_affine[2][3] = -adjusted_affine[2][3]/vox_size
+    adjusted_affine[1][3] = -adjusted_affine[1][3]/(vox_size**2)
+    adjusted_affine[2][3] = -adjusted_affine[2][3] + adjusted_affine[2][3]/(vox_size**2)
 
     streams_isocentered = transform_streamlines(new_streams_in_world, np.linalg.inv(adjusted_affine))
 
