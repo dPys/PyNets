@@ -218,16 +218,27 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     displacements = values_from_volume(mapping.get_forward_field(), streams_in_curr_grid,
                                        ref_grid_aff)
 
-    new_streams_in_world = [sum(d, s) for d, s in zip(displacements,
-                                                      streams_in_curr_grid)]
+    deformed_streams = [sum(d, s) for d, s in zip(displacements, streams_in_curr_grid)]
 
-    # Create origin isocenter mapping
+    # Create origin isocenter mapping where we anchor the origin transformatioin affine
+    # to the corner of the FOV by scaling x, y, z offsets according to a multiplicative
+    # van der Corput sequence with a base value equal to the voxel resolution
+    def vdc(n, base=vox_size):
+        vdc, denom = 0, 1
+        while n:
+            denom *= base
+            n, remainder = divmod(n, base)
+            vdc += remainder / denom
+        return vdc
+
+    [x_mul, y_mul, z_mul] = [vdc(i) for i in range(1, 4)]
+
     adjusted_affine = affine_map.affine.copy()
-    adjusted_affine[0][3] = -adjusted_affine[0][3]/vox_size
-    adjusted_affine[1][3] = -adjusted_affine[1][3]/(vox_size**vox_size)
-    adjusted_affine[2][3] = -adjusted_affine[2][3]/vox_size
+    adjusted_affine[0][3] = -adjusted_affine[0][3]*x_mul
+    adjusted_affine[1][3] = -adjusted_affine[1][3]*y_mul
+    adjusted_affine[2][3] = -adjusted_affine[2][3]*z_mul
 
-    streams_isocentered = transform_streamlines(new_streams_in_world, np.linalg.inv(adjusted_affine))
+    streams_isocentered = transform_streamlines(deformed_streams, np.linalg.inv(adjusted_affine))
 
     streams_final = transform_streamlines(streams_isocentered, np.linalg.inv(warped_fa_img.affine))
 
