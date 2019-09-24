@@ -220,7 +220,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     deformed_streams = [sum(d, s) for d, s in zip(displacements, streams_in_curr_grid)]
 
-    # Create origin isocenter mapping where we anchor the origin transformatioin affine
+    # Create isocenter mapping where we anchor the origin transformation affine
     # to the corner of the FOV by scaling x, y, z offsets according to a multiplicative
     # van der Corput sequence with a base value equal to the voxel resolution
     def vdc(n, base=vox_size):
