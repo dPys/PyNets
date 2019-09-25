@@ -153,8 +153,9 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
            tractography and structural brain networks. Network Neuroscience, 1-19.
     """
     from dipy.tracking import utils
-    from dipy.tracking.streamline import values_from_volume, transform_streamlines
+    from dipy.tracking.streamline import values_from_volume, transform_streamlines, Streamlines
     from pynets.registration import reg_utils as regutils
+    from dipy.tracking._utils import _mapping_to_voxel
     from dipy.io.stateful_tractogram import Space, StatefulTractogram
     from dipy.io.streamline import save_tractogram
     from pynets.plotting import plot_gen
@@ -177,6 +178,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     fa_img = nib.load(fa_path)
     vox_size = fa_img.header.get_zooms()[0]
     template_path = pkg_resources.resource_filename("pynets", "%s%s%s" % ('templates/FA_', int(vox_size), 'mm.nii.gz'))
+    template_img = nib.load(template_path)
+    brain_mask = template_img.get_fdata().astype('bool')
 
     streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_',
                                                   '%s' % (network + '_' if network is not None else ''),
@@ -215,8 +218,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     ref_grid_aff[3][3] = 1
 
     # Deform streamlines
-    displacements = values_from_volume(mapping.get_forward_field(), streams_in_curr_grid,
-                                       ref_grid_aff)
+    displacements = values_from_volume(mapping.get_forward_field(), streams_in_curr_grid, ref_grid_aff)
 
     deformed_streams = [sum(d, s) for d, s in zip(displacements, streams_in_curr_grid)]
 
@@ -242,16 +244,30 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     streams_final = transform_streamlines(streams_isocentered, np.linalg.inv(warped_fa_img.affine))
 
-    # Save streamlines
-    save_tractogram(StatefulTractogram(streams_final, reference=warped_fa_img, space=Space.RASMM,
-                                       shifted_origin=True), streams_mni, bbox_valid_check=False)
+    # Remove streamlines outside brain
+    streams_final_filt = Streamlines(utils.target_line_based(streams_final, np.eye(4), brain_mask, include=True))
 
-    # Create and save MNI density map
-    nib.save(nib.Nifti1Image(utils.density_map(streams_final, affine=np.eye(4), vol_dims=warped_fa_img.shape),
-             warped_fa_img.affine), density_mni)
+    # Remove streamlines with negative voxel indices
+    lin_T, offset = _mapping_to_voxel(np.eye(4))
+    streams_final_filt_final = []
+    for sl in streams_final_filt:
+        inds = np.dot(sl, lin_T)
+        inds += offset
+        if not inds.min().round(decimals=6) < 0:
+            streams_final_filt_final.append(sl)
+
+    # Save streamlines
+    stf = StatefulTractogram(streams_final_filt_final, reference=warped_fa_img, space=Space.RASMM, shifted_origin=True)
+    stf.remove_invalid_streamlines()
+    streams_final_filt_final = stf.streamlines
+    save_tractogram(stf, streams_mni, bbox_valid_check=True)
 
     # DSN QC plotting
-    plot_gen.show_template_bundles(streams_final, template_path, streams_warp_png)
+    plot_gen.show_template_bundles(streams_final_filt_final, template_path, streams_warp_png)
+
+    # Create and save MNI density map
+    nib.save(nib.Nifti1Image(utils.density_map(streams_final_filt_final, affine=np.eye(4),
+                                               vol_dims=warped_fa_img.shape), warped_fa_img.affine), density_mni)
 
     # Map parcellation from native space back to MNI-space and create an 'uncertainty-union' parcellation
     # with original mni-space uatlas
