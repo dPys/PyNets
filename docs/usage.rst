@@ -118,7 +118,9 @@ Example E) You wish to generate a structural connectome, using probabilistic ens
 
 *Note that spherical nodes are possible but NOT recommended from dmri connectometry in pynets
 
-There are many other options than these. To explore all of the possible hyperparameter combinations that pynets has to offer, see pynets_run.py -h.
+Iterable sampling parameters specified at runtime should always be space-delimited and, to be safe, contained within single quotes.
+
+There are many other runtime options than these examples demonstrate. To explore all of the possible hyperparameter combinations that pynets has to offer, see pynets_run.py -h. A full set of tutorials and python notebooks will be available Fall 2019.
 
 Interpreting outputs
 ===============================================
