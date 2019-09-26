@@ -72,18 +72,15 @@ def tens_mod_est(gtab, data, B0_mask):
 
     Returns
     -------
-    tensor_odf : obj
-        Tensor-estimated orientation distribution function.
+    tensor_mod : obj
+        Tensor-estimated reconstruction model.
     '''
     from dipy.reconst.dti import TensorModel
-    from dipy.data import get_sphere
     print('Fitting tensor model...')
-    sphere = get_sphere('repulsion724')
     B0_mask_data = nib.load(B0_mask).get_fdata().astype('bool')
     model = TensorModel(gtab)
-    mod = model.fit(data, B0_mask_data)
-    tensor_odf = mod.odf(sphere)
-    return tensor_odf
+    tensor_mod = model.fit(data, B0_mask_data)
+    return tensor_mod
 
 
 def csa_mod_est(gtab, data, B0_mask):
