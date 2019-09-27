@@ -233,9 +233,9 @@ def get_parser():
                              'resampling of the node-extracted time-series.\n')
     parser.add_argument('-p',
                         metavar='Pruning strategy',
-                        default=2,
+                        default=1,
                         help='Include this flag to prune the resulting graph of any isolated (1) or isolated + fully '
-                             'disconnected (2) nodes. Default pruning=2. Include -p 0 to disable pruning.\n')
+                             'disconnected (2) nodes. Default pruning=1. Include -p 0 to disable pruning.\n')
     parser.add_argument('-bin',
                         default=False,
                         action='store_true',

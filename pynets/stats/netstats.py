@@ -861,8 +861,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
     else:
         in_mat_raw = np.array(np.load(est_path))
 
-    # De-diagnal and remove nan's and inf's
-    in_mat = np.array(np.array(thresholding.autofix(in_mat_raw)))
+    # De-diagnal and remove nan's and inf's, ensure edge weights are positive
+    in_mat = np.array(np.abs(np.array(thresholding.autofix(in_mat_raw))))
 
     # Normalize connectivity matrix
     # By maximum edge weight
