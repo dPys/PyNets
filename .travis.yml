@@ -12,6 +12,8 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates fsl-first-data afni
   - PYTHONPATH=$PYTHONPATH:$(pwd)
+  - wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O examples.tar.gz "https://osf.io/7fb6w/download"
+  - tar -xvzf examples.tar.gz -C $TRAVIS_BUILD_DIR/tests
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
@@ -34,7 +36,7 @@ script:
 #   - travis_wait 60 pytest tests/test_clustering.py -s
    - travis_wait 60 pytest tests/test_netstats.py -s
    - travis_wait 60 pytest tests/test_track.py -s
-   - travis_wait 60 pytest tests/test_reg_utils.py -s
+#   - travis_wait 60 pytest tests/test_reg_utils.py -s
    - pytest tests/test_refs.py -s
 
 after_success:
