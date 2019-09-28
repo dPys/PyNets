@@ -1564,7 +1564,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
 
-    import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os", "import numpy as np", "import networkx as nx", "import nibabel as nib"]
+    import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
+                   "import numpy as np", "import networkx as nx", "import nibabel as nib"]
     fmri_connectometry_wf = pe.Workflow(name="%s%s" % ('fmri_connectometry_', ID))
     base_dirname = "%s%s" % ('fmri_connectometry_', ID)
     if not os.path.isdir("%s%s" % ('/tmp/', base_dirname)):

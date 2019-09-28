@@ -151,13 +151,7 @@ ENV FSLWISH=/usr/bin/wish
 ENV FSLOUTPUTTYPE=NIFTI_GZ
 
 # Misc environment vars
-ENV MPLCONFIGDIR /tmp/matplotlib
 ENV PYTHONWARNINGS ignore
-
-# Unless otherwise specified each process should only use one thread - nipype
-# will handle parallelization
-ENV MKL_NUM_THREADS=1 \
-    OMP_NUM_THREADS=1
 
 # Precaching fonts, set 'Agg' as default backend for matplotlib
 RUN python -c "from matplotlib import font_manager" && \
