@@ -122,7 +122,7 @@ RUN apt-get remove --purge -y \
 
 # Create mountpoints
 RUN mkdir /inputs && \
-    chmod -R 777 /data
+    chmod -R 777 /inputs
 
 RUN mkdir /outputs && \
     chmod -R 777 /outputs
