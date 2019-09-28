@@ -230,7 +230,8 @@ def get_parser():
                         default=None,
                         nargs='+',
                         help='If using the -b flag, you may manually specify a bootstrap block size for circular-block '
-                             'resampling of the node-extracted time-series.\n')
+                             'resampling of the node-extracted time-series. sqrt(TR) rounded to the nearest integer is '
+                             'recommended\n')
     parser.add_argument('-p',
                         metavar='Pruning strategy',
                         default=1,
