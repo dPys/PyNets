@@ -8,10 +8,7 @@
     <bookmark url="file://$PROJECT_DIR$/pynets/registration/register.py" description="        # Create linear transform/ initializer T1w..." line="678" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/pynets/core/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
-    </list>
+    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="" />
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -52,7 +49,7 @@
         <entry file="file://$PROJECT_DIR$/pynets/core/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="30660">
-              <caret line="2044" lean-forward="true" selection-start-line="2044" selection-end-line="2044" />
+              <caret line="2044" selection-start-line="2044" selection-end-line="2044" />
             </state>
           </provider>
         </entry>
@@ -481,12 +478,12 @@
       <workItem from="1569302969374" duration="1020000" />
       <workItem from="1569305159380" duration="2000" />
       <workItem from="1569353631521" duration="7458000" />
-      <workItem from="1569467774494" duration="3074000" />
+      <workItem from="1569467774494" duration="3131000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1066738000" />
+    <option name="totallyTimeSpent" value="1066795000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="167" y="48" width="1455" height="984" extended-state="1" />
@@ -927,7 +924,7 @@
     <entry file="file://$PROJECT_DIR$/pynets/core/workflows.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="30660">
-          <caret line="2044" lean-forward="true" selection-start-line="2044" selection-end-line="2044" />
+          <caret line="2044" selection-start-line="2044" selection-end-line="2044" />
         </state>
       </provider>
     </entry>
