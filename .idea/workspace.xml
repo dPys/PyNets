@@ -10,8 +10,6 @@
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/pynets/core/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/fmri/estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/fmri/estimation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/registration/register.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/register.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -58,7 +56,7 @@
         <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="748">
-              <caret line="770" column="36" lean-forward="true" selection-start-line="770" selection-start-column="36" selection-end-line="770" selection-end-column="36" />
+              <caret line="770" column="36" selection-start-line="770" selection-start-column="36" selection-end-line="770" selection-end-column="36" />
               <folding>
                 <element signature="e#132#141#0" expanded="true" />
               </folding>
@@ -93,8 +91,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/core/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="412">
-              <caret line="955" lean-forward="true" selection-start-line="955" selection-end-line="955" />
+            <state relative-caret-position="322">
+              <caret line="915" column="40" lean-forward="true" selection-start-line="915" selection-start-column="40" selection-end-line="915" selection-end-column="40" />
               <folding>
                 <element signature="e#139#154#0" expanded="true" />
               </folding>
@@ -106,7 +104,7 @@
         <entry file="file://$PROJECT_DIR$/pynets/core/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="28560">
-              <caret line="1904" column="41" lean-forward="true" selection-start-line="1904" selection-start-column="41" selection-end-line="1904" selection-end-column="41" />
+              <caret line="1904" column="41" selection-start-line="1904" selection-start-column="41" selection-end-line="1904" selection-end-column="41" />
               <folding>
                 <element signature="e#139#154#0" expanded="true" />
               </folding>
@@ -118,7 +116,7 @@
         <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="457">
-              <caret line="489" column="31" lean-forward="true" selection-start-line="489" selection-start-column="31" selection-end-line="489" selection-end-column="31" />
+              <caret line="489" column="31" selection-start-line="489" selection-start-column="31" selection-end-line="489" selection-end-column="31" />
               <folding>
                 <element signature="e#139#154#0" expanded="true" />
               </folding>
@@ -171,7 +169,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>int(block_size)</find>
       <find>list_first_mems</find>
       <find>vm</find>
       <find>matrix</find>
@@ -201,6 +198,7 @@
       <find>save</find>
       <find>for graph in pop_ref:</find>
       <find>pop_ref</find>
+      <find>flatten</find>
     </findStrings>
     <replaceStrings>
       <replace>regutils</replace>
@@ -583,12 +581,12 @@
       <workItem from="1569302969374" duration="1020000" />
       <workItem from="1569305159380" duration="2000" />
       <workItem from="1569353631521" duration="7458000" />
-      <workItem from="1569467774494" duration="24411000" />
+      <workItem from="1569467774494" duration="25451000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1088075000" />
+    <option name="totallyTimeSpent" value="1089115000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="542" y="23" width="1130" height="984" extended-state="0" />
@@ -1020,17 +1018,7 @@
     <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="457">
-          <caret line="489" column="31" lean-forward="true" selection-start-line="489" selection-start-column="31" selection-end-line="489" selection-end-column="31" />
-          <folding>
-            <element signature="e#139#154#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/core/workflows.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="28560">
-          <caret line="1904" column="41" lean-forward="true" selection-start-line="1904" selection-start-column="41" selection-end-line="1904" selection-end-column="41" />
+          <caret line="489" column="31" selection-start-line="489" selection-start-column="31" selection-end-line="489" selection-end-column="31" />
           <folding>
             <element signature="e#139#154#0" expanded="true" />
           </folding>
@@ -1040,17 +1028,27 @@
     <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="748">
-          <caret line="770" column="36" lean-forward="true" selection-start-line="770" selection-start-column="36" selection-end-line="770" selection-end-column="36" />
+          <caret line="770" column="36" selection-start-line="770" selection-start-column="36" selection-end-line="770" selection-end-column="36" />
           <folding>
             <element signature="e#132#141#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/core/workflows.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="28560">
+          <caret line="1904" column="41" selection-start-line="1904" selection-start-column="41" selection-end-line="1904" selection-end-column="41" />
+          <folding>
+            <element signature="e#139#154#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/core/utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="412">
-          <caret line="955" lean-forward="true" selection-start-line="955" selection-end-line="955" />
+        <state relative-caret-position="322">
+          <caret line="915" column="40" lean-forward="true" selection-start-line="915" selection-start-column="40" selection-end-line="915" selection-end-column="40" />
           <folding>
             <element signature="e#139#154#0" expanded="true" />
           </folding>

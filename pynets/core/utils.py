@@ -742,6 +742,8 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
         List of booleans indicating whether multiple modalities of input data have been specified.
     """
 
+    est_path_iterlist = list(flatten(est_path_iterlist))
+
     def _omni_embed(pop_array, subgraph_name='whole_brain'):
         variance_threshold = VarianceThreshold(threshold=0.01)
         diags = np.array([np.triu(pop_array[i]) for i in range(len(pop_array))])
@@ -899,7 +901,7 @@ def build_omnetome(est_path_iterlist, ID, multimodal):
     elif (multimodal is False) and (len(est_path_iterlist) > 1):
         atlases = list(set([x.split('/')[-3].split('/')[0] for x in est_path_iterlist]))
         parcel_dict = dict.fromkeys(atlases)
-        subnets = list(set([i.split('_est')[0].split('/')[-1] for i in est_path_iterlist]))
+        subnets = list(set([i.split('_est')[0].split('/')[-1] for i in est_path_iterlist if i.split('_est')[0].split('/')[-1] != ID]))
         out_path = None
         for atlas in atlases:
             if len(subnets) > 1:
