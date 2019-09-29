@@ -340,9 +340,14 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     func_img = nib.load(func_file)
     hdr = func_img.header
     if hpass:
-        t_r = hdr.get_zooms()[-1]
+        if len(hdr.get_zooms()) == 4:
+            t_r = float(hdr.get_zooms()[-1])
+        else:
+            t_r = None
     else:
         t_r = None
+    if hpass is not None:
+        hpass = float(hpass)
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                  detrend=detrending, t_r=t_r, verbose=2, resampling_target='data')
@@ -469,10 +474,14 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     func_img = nib.load(func_file)
     hdr = func_img.header
     if hpass:
-        t_r = hdr.get_zooms()[-1]
+        if len(hdr.get_zooms()) == 4:
+            t_r = float(hdr.get_zooms()[-1])
+        else:
+            t_r = None
     else:
         t_r = None
-
+    if hpass is not None:
+        hpass = float(hpass)
     if len(coords) > 0:
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                        standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,

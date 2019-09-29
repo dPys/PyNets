@@ -1260,7 +1260,7 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth,
                                             '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
                                             "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''),
                                             "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None else ''),
-                                            '_net_ts.npy')
+                                            'ts_from_nodes.npy')
 
     np.save(out_path_ts, ts_within_nodes)
     return out_path_ts
