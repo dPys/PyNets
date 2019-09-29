@@ -6,13 +6,13 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.filterwarnings("ignore")
 import os
 import os.path as op
 import nibabel as nib
 import numpy as np
 from pynets.stats.netstats import extractnetstats
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface
+warnings.filterwarnings("ignore")
 
 
 def get_file():
@@ -1104,74 +1104,6 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, 
     return
 
 
-def list_first_mems(est_path, network, thr, dir_path, node_size, smooth, c_boot, hpass):
-    """
-    Convert parameters as lists to parameters as strings.
-
-    Parameters
-    ----------
-    est_path : list
-        File paths to .npy file containing graph with thresholding applied.
-    network : list
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
-    thr : list
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
-    dir_path : list
-        Path to directory containing subject derivative data for given run.
-    node_size : list
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
-    smooth : list
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
-    c_boot : list
-        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
-    hpass : list
-        High-pass filter values (Hz) to apply to node-extracted time-series.
-
-    Returns
-    -------
-    est_path : str
-        File paths to .npy file containing graph with thresholding applied.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
-    thr : float
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
-    dir_path : str
-        Path to directory containing subject derivative data for given run.
-    node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
-    smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
-    c_boot : int
-        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
-    hpass : float
-        High-pass filter values (Hz) to apply to node-extracted time-series.
-    """
-    est_path = est_path[0]
-    network = network[0]
-    thr = thr[0]
-    dir_path = dir_path[0]
-    node_size = node_size[0]
-    c_boot = c_boot[0]
-    hpass = hpass[0]
-    # print('\n\n\n\n')
-    # print(est_path)
-    # print(network)
-    # print(thr)
-    # print(dir_path)
-    # print(node_size)
-    # print(smooth)
-    # print(c_boot)
-    # print(hpass)
-    # print('\n\n\n\n')
-    return est_path, network, thr, dir_path, node_size, smooth, c_boot, hpass
-
-
 def check_est_path_existence(est_path_list):
     """
     Checks for the existence of each graph estimated and saved to disk.
@@ -1287,7 +1219,7 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
     return net_parcels_nii_path
 
 
-def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
+def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass):
     """
     This function saves the time-series 4D numpy array to disk as a .npy file.
 
@@ -1307,6 +1239,10 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
         n = number of ROI's, where ROI's are parcel volumes.
     c_boot : int
         Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
+    smooth : int
+        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+    hpass : bool
+        High-pass filter values (Hz) to apply to node-extracted time-series.
 
     Returns
     -------
@@ -1319,10 +1255,12 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot):
         os.mkdir(namer_dir)
 
     # Save time series as npy file
-    out_path_ts = "%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
-                                        '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                        '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
-                                        'rsn_net_ts.npy')
+    out_path_ts = "%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
+                                            '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                            '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
+                                            "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''),
+                                            "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None else ''),
+                                            '_net_ts.npy')
 
     np.save(out_path_ts, ts_within_nodes)
     return out_path_ts
@@ -1530,6 +1468,24 @@ def merge_dicts(x, y):
     z = x.copy()
     z.update(y)
     return z
+
+
+def proportional(k, voxels_list):
+    '''Hagenbach-Bischoff Quota'''
+    quota=sum(voxels_list)/(1.+k)
+    frac=[voxels/quota for voxels in voxels_list]
+    res=[int(f) for f in frac]
+    n=k-sum(res)
+    if n==0: return res
+    if n<0: return [min(x,k) for x in res]
+    remainders=[ai-bi for ai,bi in zip(frac,res)]
+    limit=sorted(remainders,reverse=True)[n-1]
+    for i,r in enumerate(remainders):
+        if r>=limit:
+            res[i]+=1
+            n-=1
+            if n==0: return res
+    raise
 
 
 class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):

@@ -6,10 +6,10 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.filterwarnings("ignore")
 import numpy as np
 import tkinter
 import matplotlib
+warnings.filterwarnings("ignore")
 matplotlib.use('agg')
 
 

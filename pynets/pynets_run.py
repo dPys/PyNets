@@ -620,7 +620,7 @@ def build_workflow(args, retval):
     print('\n\n\n------------------------------------------------------------------------\n')
 
     # Hard-coded:
-    with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
+    with open("%s%s" % (str(Path(__file__).parent), '/core/runconfig.yaml'), 'r') as stream:
         try:
             hardcoded_params = yaml.load(stream)
             maxcrossing = hardcoded_params['maxcrossing'][0]
@@ -796,10 +796,6 @@ def build_workflow(args, retval):
     else:
         anat_file_list = None
 
-    if (c_boot and not block_size) or (block_size and not c_boot):
-        raise ValueError("Error: Both number of bootstraps (-b) and block size (-bs) must be specified to run "
-                         "bootstrapped resampling.")
-
     if mask:
         if isinstance(mask, list) and func_file_list and dwi_file_list:
             if len(mask) != len(func_file_list) and len(mask) != len(dwi_file_list):
@@ -901,6 +897,11 @@ def build_workflow(args, retval):
             else:
                 hpass = None
 
+            if isinstance(c_boot, list):
+                c_boot = c_boot[0]
+            if isinstance(block_size, list):
+                block_size = block_size[0]
+
             if float(c_boot) > 0:
                 try:
                     c_boot = int(c_boot)
@@ -912,6 +913,9 @@ def build_workflow(args, retval):
                     print('ERROR: number of boostraps indicated with the -b flag must be an integer > 0.')
                 print("%s%s%s%s" % ('Applying circular block bootstrapping to the node-extracted time-series using: ',
                                     int(c_boot), ' bootstraps with block size ', int(block_size)))
+            if (c_boot and not block_size) or (block_size and not c_boot):
+                raise ValueError("Error: Both number of bootstraps (-b) and block size (-bs) must be specified to run "
+                                 "bootstrapped resampling.")
 
         if conn_model_list:
             print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ',
@@ -919,6 +923,7 @@ def build_workflow(args, retval):
             conn_model = None
         else:
             print("%s%s" % ("\nUsing connectivity model: ", conn_model))
+
     elif graph or multi_graph:
         network = 'custom_graph'
         thr = 0
@@ -1819,8 +1824,8 @@ def build_workflow(args, retval):
 def main():
     """Initializes main script from command-line call to generate single-subject or multi-subject workflow(s)"""
     import warnings
-    warnings.filterwarnings("ignore")
     import sys
+    warnings.filterwarnings("ignore")
     try:
         from pynets.core.utils import do_dir_path
     except ImportError:

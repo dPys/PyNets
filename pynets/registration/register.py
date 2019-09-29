@@ -7,11 +7,11 @@ Copyright (C) 2018
 """
 import os
 import warnings
-warnings.filterwarnings("ignore")
 import nibabel as nib
 import numpy as np
 from pynets.registration import reg_utils as regutils
 from nilearn.image import load_img, math_img
+warnings.filterwarnings("ignore")
 try:
     FSLDIR = os.environ['FSLDIR']
 except KeyError:

@@ -8,12 +8,11 @@ Copyright (C) 2018
 from __future__ import division
 import numpy as np
 import warnings
-warnings.simplefilter("ignore")
 import networkx as nx
 import tkinter
 import matplotlib
 matplotlib.use('agg')
-
+warnings.filterwarnings("ignore")
 
 def timeout(seconds):
     """

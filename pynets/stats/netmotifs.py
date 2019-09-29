@@ -8,9 +8,9 @@ Copyright (C) 2018
 import numpy as np
 from copy import copy
 import warnings
-warnings.filterwarnings("ignore")
 from collections import Counter
 import itertools
+warnings.filterwarnings("ignore")
 
 
 def countmotifs(A, N=4):

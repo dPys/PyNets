@@ -6,9 +6,9 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.filterwarnings("ignore")
 import numpy as np
 import networkx as nx
+warnings.filterwarnings("ignore")
 
 
 def threshold_absolute(W, thr, copy=True):
