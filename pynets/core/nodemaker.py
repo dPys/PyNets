@@ -6,9 +6,9 @@ Copyright (C) 2018
 @author: Derek Pisner
 """
 import warnings
-warnings.filterwarnings("ignore")
 import numpy as np
 import nibabel as nib
+warnings.filterwarnings("ignore")
 
 
 def get_sphere(coords, r, vox_dims, dims):
@@ -586,7 +586,7 @@ def get_names_and_coords_of_parcels(uatlas, background_label=0):
 def gen_img_list(uatlas):
     """
     Return list of boolean nifti masks where each masks corresponds to a unique atlas label for the provided atlas
-    parcellation.
+    parcellation. Path string to Nifti1Image is input.
 
     Parameters
     ----------

@@ -6,9 +6,9 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.filterwarnings("ignore")
 import numpy as np
 import nibabel as nib
+warnings.filterwarnings("ignore")
 
 
 def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):

@@ -62,11 +62,13 @@ def test_save_ts_to_file():
     base_dir = str(Path(__file__).parent/"examples")
     roi = None
     c_boot = 3
+    smooth=2
+    hpass=None
     network = None
     ID = '002'
     dir_path = base_dir + '/002/fmri'
     ts_within_nodes = '/tmp/'
-    out_path_ts = utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot)
+    out_path_ts = utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass)
     assert os.path.isfile(out_path_ts) is True
 
 
@@ -275,37 +277,6 @@ def test_flatten():
 def test_get_file():
     base_path = utils.get_file()
     assert base_path is not None
-
-
-def test_list_first_mems():
-    est_path_in = ['002_Default__rsn_net_ts.npy', '002_Default_est_cov_0.95propTEST_mm3_nb2_fwhm0.1_Hz.npy',
-                   '002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz.npy', '002_Default_est_cov_raw_mat.npy',
-                   '002_Default_rsn_net_ts.npy']
-    network_in = ['Default', 'Salience', 'ECN', 'LeftParietal']
-    thr_in = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    node_size_in = [0, 10, 100]
-    base_dir = str(Path(__file__).parent/"examples")
-    path1 = base_dir + '/002/dmri'
-    path2 = base_dir + '/002/fmri'
-    dir_path_in = [path1, path2]
-    smooth_in = [3, 6, 8, 10]
-    c_boot_in = [100, 1000, 10000]
-    hpass_in = [50, 100, 150, 200]
-
-    [est_path, network, thr, dir_path, node_size, smooth, c_boot, hpass] = utils.list_first_mems(est_path_in,
-                                                                                                 network_in,
-                                                                                                 thr_in, dir_path_in,
-                                                                                                 node_size_in,
-                                                                                                 smooth_in,
-                                                                                                 c_boot_in, hpass_in)
-
-    assert est_path == est_path_in[0] == '002_Default__rsn_net_ts.npy'
-    assert network == network_in[0] == 'Default'
-    assert thr == thr_in[0] == 0.1
-    assert node_size == node_size_in[0] == 0
-    assert dir_path == dir_path_in[0] == path1
-    assert c_boot == c_boot_in[0] == 100
-    assert hpass == hpass_in[0] == 50
 
 
 def test_make_gtab_and_bmask():

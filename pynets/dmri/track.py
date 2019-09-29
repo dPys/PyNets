@@ -6,9 +6,9 @@ Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
 import warnings
-warnings.filterwarnings("ignore")
 import numpy as np
 import nibabel as nib
+warnings.filterwarnings("ignore")
 
 
 def reconstruction(conn_model, gtab, dwi_data, B0_mask):
