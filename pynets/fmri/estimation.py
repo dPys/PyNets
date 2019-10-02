@@ -355,10 +355,13 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
         import pandas as pd
         confounds = pd.read_csv(conf, sep='\t')
         if confounds.isnull().values.any():
+            import uuid
+            from time import strftime
+            run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
             print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but these '
                   'should be check manually')
             confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-            conf_corr = dir_path + '/confounds_mean_corrected.tsv'
+            conf_corr = '/tmp/confounds_mean_corrected_' + str(run_uuid) + '.tsv'
             confounds_nonan.to_csv(conf_corr, sep='\t')
             ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf_corr)
         else:
@@ -490,11 +493,13 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
             import pandas as pd
             confounds = pd.read_csv(conf, sep='\t')
             if confounds.isnull().values.any():
-                import random
+                import uuid
+                from time import strftime
+                run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
                 print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
                       'regressor file should be checked manually.')
                 confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-                conf_corr = dir_path + '/confounds_mean_corrected_' + str(random.randint(1, 1000)) + '.tsv'
+                conf_corr = '/tmp/confounds_mean_corrected_' + str(run_uuid) + '.tsv'
                 confounds_nonan.to_csv(conf_corr, sep='\t')
                 ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf_corr)
             else:
