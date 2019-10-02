@@ -332,10 +332,11 @@ def get_parser():
                              'embedding and analysis; (3) Additionally perform plotting. '
                              'Default is (0) which is no multiplex analysis.\n')
     parser.add_argument('-embed',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to embed the ensemble(s) produced into omnibus '
-                             'feature vector(s).\n')
+                        default=None,
+                        nargs=1,
+                        choices=[None, 'omni', 'mase'],
+                        help='Optionally use this flag if you wish to embed the ensemble(s) produced into '
+                             'feature vector(s). Options include: omni or mase. Default is None.\n')
     parser.add_argument('-vox',
                         default='2mm',
                         nargs=1,
@@ -613,7 +614,7 @@ def build_workflow(args, retval):
             multi_directget = None
     else:
         multi_directget = None
-    embed = args.embed
+    embed = args.embed[0]
     multiplex = args.mplx
     vox_size = args.vox
 

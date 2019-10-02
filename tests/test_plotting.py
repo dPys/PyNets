@@ -17,6 +17,9 @@ from pynets.plotting import plot_gen, plot_graphs
 
 
 def test_plot_conn_mat_nonet_no_mask():
+    """
+    Test plot_conn_mat_nonet_no_mask functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
@@ -43,6 +46,9 @@ def test_plot_conn_mat_nonet_no_mask():
 
 
 def test_plot_conn_mat_nonet_mask():
+    """
+    Test plot_conn_mat_nonet_mask functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
@@ -69,6 +75,9 @@ def test_plot_conn_mat_nonet_mask():
 
 
 def test_plot_all_nonet_no_mask():
+    """
+    Test plot_all_nonet_no_mask functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
@@ -105,6 +114,9 @@ def test_plot_all_nonet_no_mask():
 
 
 def test_plot_all_nonet_with_mask():
+    """
+    Test plot_all_nonet_with_mask functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
@@ -141,6 +153,9 @@ def test_plot_all_nonet_with_mask():
 
 
 def test_plot_connectogram():
+    """
+    Test plot_connectogram functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
@@ -161,6 +176,9 @@ def test_plot_connectogram():
 
 
 def test_plot_timeseries():
+    """
+    Test plot_timeseries functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
@@ -178,6 +196,9 @@ def test_plot_timeseries():
 
 
 def test_plot_conn_mat_rois_gt_100():
+    """
+    Test plot_conn_mat_rois_gt_100 functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.95.txt')

@@ -18,6 +18,9 @@ warnings.filterwarnings("ignore")
 
 
 def test_align():
+    """
+    Test align functionality
+    """
     # Linear registrattion
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = base_dir + '/003/anat'
@@ -34,6 +37,9 @@ def test_align():
 
 
 def test_applyxfm():
+    """
+    Test applyxfm functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = base_dir + '/003/anat'
     
@@ -68,6 +74,9 @@ def test_applyxfm():
 
     
 def test_align_nonlinear():
+    """
+    Test align_nonlinear functionality
+    """
     # Nonlinear normlization
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = base_dir + '/003/anat'
@@ -85,6 +94,9 @@ def test_align_nonlinear():
 
 
 def test_combine_xfms():
+    """
+    Test combine_xfms functionality
+    """
     # Combine func2anat and anat2std to create func2std mat
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = base_dir + '/003/anat'
@@ -130,6 +142,9 @@ def test_combine_xfms():
 
 
 def test_segment_t1w():
+    """
+    Test segment_t1w functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = base_dir + '/003/anat'
     t1w = anat_dir + '/sub-003_T1w.nii.gz'
@@ -140,6 +155,9 @@ def test_segment_t1w():
 
 
 def test_match_target_vox_res():
+    """
+    Test match_target_vox_res functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     test_out = base_dir + '/003/test_out/test_match_target_vox_res'
     
@@ -174,6 +192,9 @@ def test_match_target_vox_res():
 
 
 def test_reorient_dwi():
+    """
+    Test reorient_dwi functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     test_dir = base_dir + '/003/test_out/test_reorient_dwi'
     
@@ -202,6 +223,9 @@ def test_reorient_dwi():
 
 
 def test_reorient_img():
+    """
+    Test reorient_img functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     test_dir = base_dir + '/003/test_out/test_reorient_img'
     
@@ -237,6 +261,9 @@ def test_reorient_img():
 
 
 def test_check_orient_and_dims():
+    """
+    Test check_orient_and_dims functionality
+    """
     # This test has a bak folder in its test_dir. 
     # To replicate test rm data in test_dir and cp from bak
     base_dir = str(Path(__file__).parent/"examples")

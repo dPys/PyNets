@@ -42,6 +42,9 @@ except ImportError:
 
 ##nilearn.plotting.find_parcellation_cut_coords will not import##
 def test_nodemaker_tools_parlistfile_RSN():
+    """
+    Test nodemaker_tools_parlistfile_RSN functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
@@ -85,6 +88,9 @@ def test_nodemaker_tools_parlistfile_RSN():
 
 
 def test_nodemaker_tools_nilearn_coords_RSN():
+    """
+    Test nodemaker_tools_nilearn_coords_RSN functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
@@ -113,6 +119,9 @@ def test_nodemaker_tools_nilearn_coords_RSN():
 
 
 def test_nodemaker_tools_masking_parlistfile_RSN():
+    """
+    Test nodemaker_tools_masking_parlistfile_RSN functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
@@ -170,6 +179,9 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
 
 
 def test_nodemaker_tools_masking_coords_RSN():
+    """
+    Test nodemaker_tools_masking_coords_RSN functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     dir_path= base_dir + '/002/fmri'
@@ -207,6 +219,9 @@ def test_nodemaker_tools_masking_coords_RSN():
 
 
 def test_nodemaker_tools_parlistfile_WB():
+    """
+    Test nodemaker_tools_parlistfile_WB functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
@@ -235,6 +250,9 @@ def test_nodemaker_tools_parlistfile_WB():
 
 
 def test_nodemaker_tools_nilearn_coords_WB():
+    """
+    Test nodemaker_tools_nilearn_coords_WB functionality
+    """
     # Set example inputs
     atlas = 'coords_dosenbach_2010'
 
@@ -248,6 +266,9 @@ def test_nodemaker_tools_nilearn_coords_WB():
 
 
 def test_nodemaker_tools_masking_parlistfile_WB():
+    """
+    Test nodemaker_tools_masking_parlistfile_WB functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
@@ -309,6 +330,9 @@ def test_nodemaker_tools_masking_parlistfile_WB():
 
 
 def test_nodemaker_tools_masking_coords_WB():
+    """
+    Test nodemaker_tools_masking_coords_WB functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     roi = base_dir + '/pDMN_3_bin.nii.gz'
@@ -331,6 +355,9 @@ def test_nodemaker_tools_masking_coords_WB():
 
 
 def test_WB_fetch_nodes_and_labels1():
+    """
+    Test WB_fetch_nodes_and_labels1 functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
@@ -356,6 +383,9 @@ def test_WB_fetch_nodes_and_labels1():
 
 
 def test_WB_fetch_nodes_and_labels2():
+    """
+    Test WB_fetch_nodes_and_labels2 functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
@@ -378,6 +408,9 @@ def test_WB_fetch_nodes_and_labels2():
 
 
 def test_RSN_fetch_nodes_and_labels1():
+    """
+    Test RSN_fetch_nodes_and_labels1 functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
@@ -404,6 +437,9 @@ def test_RSN_fetch_nodes_and_labels1():
 
 
 def test_RSN_fetch_nodes_and_labels2():
+    """
+    Test RSN_fetch_nodes_and_labels2 functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
@@ -429,6 +465,9 @@ def test_RSN_fetch_nodes_and_labels2():
 
 
 def test_create_spherical_roi_volumes():
+    """
+    Test create_spherical_roi_volumes functionality
+    """
     import pkg_resources
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/dmri'
@@ -444,6 +483,9 @@ def test_create_spherical_roi_volumes():
 
 
 def test_get_sphere():
+    """
+    Test get_sphere functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/dmri'
     img_file = dir_path + '/nodif_b0_bet.nii.gz'
@@ -461,6 +503,9 @@ def test_get_sphere():
 
 
 def test_mask_roi():
+    """
+    Test mask_roi functionality
+    """
     import pkg_resources
     vox_size = '2mm'
     mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size + "_brain_mask.nii.gz")

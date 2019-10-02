@@ -18,6 +18,9 @@ import networkx as nx
 
 
 def test_binarize():
+    """
+    Test binarize functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
     s = thresholding.binarize(thresholding.threshold_proportional(x, .41))
@@ -25,6 +28,9 @@ def test_binarize():
 
 
 def test_normalize():
+    """
+    Test normalize functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
     s = thresholding.normalize(thresholding.threshold_proportional(x, .79))
@@ -33,6 +39,9 @@ def test_normalize():
 
 
 def test_threshold_absolute():
+    """
+    Test threshold_absolute functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
     s = thresholding.threshold_absolute(x, 0.1)
@@ -40,6 +49,9 @@ def test_threshold_absolute():
 
 
 def test_invert():
+    """
+    Test invert functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
     s = thresholding.invert(thresholding.threshold_proportional(x, .9))
@@ -47,6 +59,9 @@ def test_invert():
 
 
 def test_autofix():
+    """
+    Test autofix functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
     x[1][1] = np.inf
@@ -56,6 +71,9 @@ def test_autofix():
 
 
 def test_density_thresholding():
+    """
+    Test density_thresholding functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     x = np.genfromtxt(
         base_dir + '/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_raw_mat.txt')
@@ -66,6 +84,9 @@ def test_density_thresholding():
 
 
 def test_est_density():
+    """
+    Test est_density functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     x = np.genfromtxt(
         base_dir + '/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_raw_mat.txt')
@@ -74,6 +95,9 @@ def test_est_density():
 
 
 def test_thr2prob():
+    """
+    Test thr2prob functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
     s = thresholding.normalize(x)
@@ -83,6 +107,9 @@ def test_thr2prob():
 
 
 def test_thresh_func():
+    """
+    Test thresh_func functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
     dens_thresh = False
@@ -162,6 +189,9 @@ def test_thresh_func():
 #     assert edge_threshold is not None
 
 def test_disparity_filter():
+    """
+    Test disparity_filter functionality
+    """
     import random
 
     G = nx.gnm_random_graph(10, 10)
@@ -175,6 +205,9 @@ def test_disparity_filter():
 
 
 def test_disparity_filter_alpha_cut():
+    """
+    Test disparity_filter_alpha_cut functionality
+    """
     import random
 
     G = nx.gnm_random_graph(10, 10)
@@ -188,6 +221,9 @@ def test_disparity_filter_alpha_cut():
 
 
 def test_knn():
+    """
+    Test knn functionality
+    """
     # Generate connectivity matrix with 100 nodes and random weights
     conn_matrix = np.random.rand(100, 100)
 
@@ -202,6 +238,9 @@ def test_knn():
 
 
 def test_local_thresholding_prop():
+    """
+    Test local_thresholding_prop functionality
+    """
     # Generate connectivity matrix with 10 nodes and random weights
     conn_matrix = np.random.rand(10, 10)
 
@@ -222,6 +261,9 @@ def test_local_thresholding_prop():
 
 
 def test_weight_conversion():
+    """
+    Test weight_conversion functionality
+    """
     # Note: wcm='Normalize' is listed as option in input but not implemented.
 
     # Generate connectivity matrix with 10 nodes and random weights
@@ -239,6 +281,9 @@ def test_weight_conversion():
 
 
 def test_weight_to_distance():
+    """
+    Test weight_to_distance functionality
+    """
     # Generate connectivity matrix with 10 nodes and random weights
     conn_matrix = np.random.rand(10, 10)
 

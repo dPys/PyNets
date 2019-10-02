@@ -1,17 +1,39 @@
 [run]
 omit = 
 	*__init__*
+	*__pycache__*
 	tests/*
 	docs/*
 	setup.py
+	setup.cfg
+	tox.ini
+	requirements.txt
+	requirements_dev.txt
+	README.rst
+	README.md
+	MANIFEST.ini
+	Makefile
+	Dockerfile
+	CONTRIBUTING.rst
+	AUTHORS.rst
+	docker/*
 	pynets/__about__.py
+	pynets/pynets_run.py
+	pynets/pynets_bids.py
 	pynets/_version.py
 	get_version.py
 	versioneer.py
-	pynets/cli.py
+	pynets/plotting/connectogram.js
+	pynets/plotting/FD_graph.json
+	pynets/plotting/fdg.js
+	pynets/plotting/index.html
 	pynets/templates/*
 	pynets/rsnrefs/*
 	pynets/core/atlases/*
 	pynets/core/labelcharts/*
 	pynets/core/runconfig.yaml
+	pynets/core/workflows.py
 	pynets/stats/nodal_graph_measures.yaml
+	pynets/stats/netmotifs.py
+	pynets/stats/benchmarking.py
+	pynets/registration/register.py

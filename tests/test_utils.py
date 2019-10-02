@@ -17,6 +17,9 @@ import nibabel as nib
 
 
 def test_export_to_pandas():
+    """
+    Test export_to_pandas functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
     csv_loc = dir_path + '/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.9_pDMN_3_bin.csv'
@@ -29,6 +32,9 @@ def test_export_to_pandas():
 
 
 def test_save_RSN_coords_and_labels_to_pickle():
+    """
+    Test save_RSN_coords_and_labels_to_pickle functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/dmri'
     coord_file_path = dir_path + '/DesikanKlein2012/Default_coords_rsn.pkl'
@@ -45,6 +51,9 @@ def test_save_RSN_coords_and_labels_to_pickle():
 
 
 def test_save_nifti_parcels_map():
+    """
+    Test save_nifti_parcels_map functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     ID = '002'
     dir_path = base_dir + '/002/fmri'
@@ -59,6 +68,9 @@ def test_save_nifti_parcels_map():
 
 
 def test_save_ts_to_file():
+    """
+    Test save_ts_to_file functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     roi = None
     c_boot = 3
@@ -72,21 +84,29 @@ def test_save_ts_to_file():
     assert os.path.isfile(out_path_ts) is True
 
 
-def test_build_omnetome():
+def test_build_embedded_connectome():
+    """
+    Test build_embedded_connectome functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/dmri'
     ID = '002'
     multimodal = False
+    types = ['omni', 'mase']
     est_path_iterlist = [dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track.npy',
                          dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.08dens_100000samples_particle_track.npy',
                          dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.07dens_100000samples_particle_track.npy',
                          dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.06dens_100000samples_particle_track.npy',
                          dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.05dens_100000samples_particle_track.npy']
-    out_path = utils.build_omnetome(est_path_iterlist, ID, multimodal)
-    assert out_path is not None
+    for type in types:
+        out_path = utils.build_embedded_connectome(est_path_iterlist, ID, multimodal, type)
+        assert out_path is not None
 
 
 def test_check_est_path_existence():
+    """
+    Test check_est_path_existence functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/dmri'
     est_path_list = [dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track.npy',
@@ -99,6 +119,9 @@ def test_check_est_path_existence():
 
 
 def test_collect_pandas_df():
+    """
+    Test collect_pandas_df functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/dmri'
     multi_nets = ['Default', 'SalVentAttn']
@@ -128,6 +151,9 @@ def test_collect_pandas_df():
 
 
 def test_collect_pandas_df_make():
+    """
+    Test collect_pandas_df_make functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/dmri'
     network = 'Default'
@@ -155,6 +181,9 @@ def test_collect_pandas_df_make():
 
 
 def test_create_csv_path():
+    """
+    Test create_csv_path functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/dmri'
     network = 'Default'
@@ -172,6 +201,9 @@ def test_create_csv_path():
 
 
 def test_create_est_path_diff():
+    """
+    Test create_est_path_diff functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/dmri'
     network = 'Default'
@@ -195,6 +227,9 @@ def test_create_est_path_diff():
 
 
 def test_create_est_path_func():
+    """
+    Test create_est_path_func functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/dmri'
     network = 'Default'
@@ -217,6 +252,9 @@ def test_create_est_path_func():
 
 
 def test_create_unthr_path():
+    """
+    Test create_unthr_path functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
     network = 'Default'
@@ -249,6 +287,9 @@ def test_create_unthr_path():
 
 
 def test_do_dir_path():
+    """
+    Test do_dir_path functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     func_path = base_dir + '/002/fmri'
     dwi_path = base_dir + '/002/dmri'
@@ -264,6 +305,9 @@ def test_do_dir_path():
 
 
 def test_flatten():
+    """
+    Test list flatten functionality
+    """
     # Slow, but successfully flattens a large array
     l = np.random.rand(3, 3, 3).tolist()
     l = utils.flatten(l)
@@ -275,11 +319,17 @@ def test_flatten():
 
 
 def test_get_file():
+    """
+    Test get_file functionality
+    """
     base_path = utils.get_file()
     assert base_path is not None
 
 
 def test_make_gtab_and_bmask():
+    """
+    Test make_gtab_and_bmask functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dwi_path = base_dir + '/002/dmri'
     fbval = dwi_path + '/bval.bval'
@@ -300,6 +350,9 @@ def test_make_gtab_and_bmask():
 
 
 def test_merge_dicts():
+    """
+    Test merge_dicts functionality
+    """
     x = {
         'a': 1,
         'b': 2,
@@ -317,6 +370,9 @@ def test_merge_dicts():
 
 
 def test_pass_meta_ins():
+    """
+    Test pass_meta_ins functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/dmri'
     conn_model = 'corr'
@@ -346,6 +402,9 @@ def test_pass_meta_ins():
 
 
 def test_pass_meta_ins_multi():
+    """
+    Test pass_meta_ins_multi functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dmri_path = base_dir + '/002/dmri'
     func_path = base_dir + '/002/fmri'
@@ -387,6 +446,9 @@ def test_pass_meta_ins_multi():
 
 
 def test_pass_meta_outs():
+    """
+    Test pass_meta_outs functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dmri_path = base_dir + '/002/dmri'
     func_path = base_dir + '/002/fmri'
@@ -416,7 +478,7 @@ def test_pass_meta_outs():
         conn_model_func, est_path_func, network_func, node_size_func, thr_func, prune_func, ID_func, roi_func, norm_func, binary_func, conn_model_struct, est_path_struct, network_struct, node_size_struct, thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct)
 
     [conn_model_iterlist_out, est_path_iterlist_out, network_iterlist_out, node_size_iterlist_out, thr_iterlist_out, prune_iterlist_out, ID_iterlist_out, roi_iterlist_out, norm_iterlist_out, binary_iterlist_out] = utils.pass_meta_outs(
-        conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=False, multimodal=False)
+        conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=None, multimodal=False, multiplex=False)
 
     assert conn_model_iterlist_out is not None
     assert est_path_iterlist_out is not None
