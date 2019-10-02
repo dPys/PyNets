@@ -14,6 +14,9 @@ import nibabel as nib
 
 
 def test_create_density_map():
+    """
+    Test for create_density_map functionality
+    """
     from pynets.dmri import track
 
     base_dir = str(Path(__file__).parent/"examples")
@@ -44,6 +47,9 @@ def test_create_density_map():
 
 
 def test_prep_tissues():
+    """
+    Test for prep_tissues functionality
+    """
     from pynets.dmri import track
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/003/dmri'
@@ -59,6 +65,9 @@ def test_prep_tissues():
         
         
 def test_reconstruction():
+    """
+    Test for reconstruction functionality
+    """
     from pynets.dmri import track
     from dipy.core.gradients import gradient_table
     base_dir = str(Path(__file__).parent/"examples")

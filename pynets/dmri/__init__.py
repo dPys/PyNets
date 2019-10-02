@@ -4,5 +4,5 @@ __author__ = """Derek Pisner"""
 __email__ = 'dpisner@utexas.edu'
 
 import warnings
-warnings.filterwarnings("ignore")
 from . import *
+warnings.filterwarnings("ignore")

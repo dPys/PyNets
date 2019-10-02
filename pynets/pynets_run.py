@@ -332,10 +332,11 @@ def get_parser():
                              'embedding and analysis; (3) Additionally perform plotting. '
                              'Default is (0) which is no multiplex analysis.\n')
     parser.add_argument('-embed',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to embed the ensemble(s) produced into omnibus '
-                             'feature vector(s).\n')
+                        default=None,
+                        nargs=1,
+                        choices=[None, 'omni', 'mase'],
+                        help='Optionally use this flag if you wish to embed the ensemble(s) produced into '
+                             'feature vector(s). Options include: omni or mase. Default is None.\n')
     parser.add_argument('-vox',
                         default='2mm',
                         nargs=1,
@@ -613,7 +614,7 @@ def build_workflow(args, retval):
             multi_directget = None
     else:
         multi_directget = None
-    embed = args.embed
+    embed = args.embed[0]
     multiplex = args.mplx
     vox_size = args.vox
 
@@ -1347,7 +1348,6 @@ def build_workflow(args, retval):
     # Import wf core and interfaces
     import warnings
     warnings.filterwarnings("ignore")
-    import random
     from pynets.core.utils import CollectPandasDfs, Export2Pandas, ExtractNetStats, CollectPandasJoin
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -1366,14 +1366,15 @@ def build_workflow(args, retval):
                                multiplex):
         import warnings
         warnings.filterwarnings("ignore")
+        from time import strftime
 
         """A function interface for generating a single-subject workflow"""
         if (func_file is not None) and (dwi_file is None):
-            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_fmri_', random.randint(1, 1000)))
+            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_fmri_', strftime('%Y%m%d-%H%M%S')))
         elif (dwi_file is not None) and (func_file is None):
-            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_dmri_', random.randint(1, 1000)))
+            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_dmri_', strftime('%Y%m%d-%H%M%S')))
         else:
-            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_', random.randint(1, 1000)))
+            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_', strftime('%Y%m%d-%H%M%S')))
         import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx",
                        "import nibabel as nib", "import warnings", "warnings.filterwarnings(\"ignore\")",
                        "np.warnings.filterwarnings(\"ignore\")", "warnings.simplefilter(\"ignore\")"]
@@ -1562,8 +1563,9 @@ def build_workflow(args, retval):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         import warnings
         warnings.filterwarnings("ignore")
+        from time import strftime
 
-        wf_multi = pe.Workflow(name="%s%s" % ('wf_multisub_', random.randint(1001, 9000)))
+        wf_multi = pe.Workflow(name="%s%s" % ('wf_multisub_', strftime('%Y%m%d-%H%M%S')))
 
         if func_file_list and not dwi_file_list:
             dwi_file_list = len(func_file_list) * [None]

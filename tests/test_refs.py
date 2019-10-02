@@ -10,7 +10,10 @@ import nibabel as nib
 from pathlib import Path
 
 
-def test_bigref():
+def test_bigsmallref():
+    """
+    Test big and small ref files for existence and non-corruption
+    """
     base_dir = "%s%s" % (str(Path(__file__).parent), '/../pynets/rsnrefs')
     bigref1mm = nib.load("%s%s" % (base_dir, '/BIGREF1mm.nii.gz'))
     bigref2mm = nib.load("%s%s" % (base_dir, '/BIGREF2mm.nii.gz'))
@@ -23,6 +26,9 @@ def test_bigref():
 
 
 def test_atlases():
+    """
+    Test atlas files for existence and non-corruption
+    """
     base_dir = "%s%s" % (str(Path(__file__).parent), '/../pynets/core/atlases')
     whole_brain_cluster_labels_PCA200 = nib.load("%s%s" % (base_dir, '/whole_brain_cluster_labels_PCA200.nii.gz'))
     AAL2zourioMazoyer2002 = nib.load("%s%s" % (base_dir, '/AAL2zourioMazoyer2002.nii.gz'))
@@ -68,6 +74,9 @@ def test_atlases():
 
 
 def test_templates():
+    """
+    Test template files for existence and non-corruption
+    """
     base_dir = "%s%s" % (str(Path(__file__).parent), '/../pynets/templates')
     ch2better = nib.load("%s%s" % (base_dir, '/ch2better.nii.gz'))
 

@@ -14,6 +14,9 @@ from pynets.stats import netstats
 
 
 def test_average_shortest_path_length_for_all():
+    """
+    Test for average_shortest_path_length_for_all functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     in_mat = np.load(base_dir + '/002/fmri/graphs/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz_func.npy')
     G = nx.from_numpy_array(in_mat)
@@ -26,6 +29,9 @@ def test_average_shortest_path_length_for_all():
 
 
 def test_average_local_efficiency():
+    """
+    Test for average_local_efficiency functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     in_mat = np.load(base_dir + '/002/fmri/graphs/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz_func.npy')
     G = nx.from_numpy_array(in_mat)
@@ -39,6 +45,9 @@ def test_average_local_efficiency():
 
 # used random node_comm_aff_mat
 def test_create_communities():
+    """
+    Test for create_communities functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     node_comm_aff_mat = np.random.rand(5,5)
     node_num = 3
@@ -51,6 +60,9 @@ def test_create_communities():
 
 
 def test_participation_coef():
+    """
+    Test for participation_coef functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     in_mat = np.load(base_dir + '/002/fmri/graphs/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz_func.npy')
     ci = np.ones(in_mat.shape[0])
@@ -65,6 +77,9 @@ def test_participation_coef():
 
 
 def test_modularity():
+    """
+    Test for modularity functionality
+    """
     import community
     base_dir = str(Path(__file__).parent/"examples")
     in_mat = np.load(base_dir + '/002/fmri/graphs/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz_func.npy')
@@ -79,6 +94,9 @@ def test_modularity():
 
 
 def test_diversity_coef_sign():
+    """
+    Test for diversity_coef_sign functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     in_mat = np.load(base_dir + '/002/fmri/graphs/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz_func.npy')
     ci = np.ones(in_mat.shape[0])
@@ -94,6 +112,9 @@ def test_diversity_coef_sign():
 
 
 def test_link_communities():
+    """
+    Test for link_communities functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     in_mat = np.load(base_dir + '/002/fmri/graphs/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz_func.npy')
 
@@ -105,6 +126,9 @@ def test_link_communities():
 
 
 def test_prune_disconnected():
+    """
+    Test pruning functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     in_mat = np.load(base_dir + '/002/fmri/graphs/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz_func.npy')
     G = nx.from_numpy_array(in_mat)
@@ -119,6 +143,9 @@ def test_prune_disconnected():
 
 
 def test_most_important():
+    """
+    Test pruning for most important nodes functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     in_mat = np.load(base_dir + '/002/fmri/graphs/002_Default_est_cov_0.95prop_TESTmm_3nb_2fwhm_0.1Hz_func.npy')
     G = nx.from_numpy_array(in_mat)
@@ -132,6 +159,9 @@ def test_most_important():
 
 
 def test_extractnetstats():
+    """
+    Test extractnetstats functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     ID = '002'
     network = 'Default'
@@ -152,6 +182,9 @@ def test_extractnetstats():
 
 
 def test_raw_mets():
+    """
+    Test raw_mets extraction functionality
+    """
     from pynets.stats.netstats import global_efficiency, average_local_efficiency
     from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, sigma
     base_dir = str(Path(__file__).parent/"examples")

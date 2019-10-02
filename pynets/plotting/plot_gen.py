@@ -60,7 +60,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
     # Advanced Settings
 
     conn_matrix = normalize(conn_matrix)
-    G = nx.from_numpy_matrix(conn_matrix)
+    G = nx.from_numpy_matrix(np.abs(conn_matrix))
     if pruned is True:
         [G, pruned_nodes] = most_important(G)
         conn_matrix = nx.to_numpy_array(G)
@@ -89,14 +89,39 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
 
     if comm == 'nodes' and len(conn_matrix) > 40:
         import community
-        G = nx.from_numpy_matrix(conn_matrix)
-        try:
-            node_comm_aff_mat = np.array(list(community.best_partition(G).values()))
-            print("%s%s%s" % ('Found ', str(len(np.unique(node_comm_aff_mat))), ' communities...'))
-        except:
-            print('\nWARNING: Louvain community detection failed. Proceeding with single community affiliation '
-                  'vector...')
-            node_comm_aff_mat = np.ones(conn_matrix.shape[0]).astype('int')
+        G = nx.from_numpy_matrix(np.abs(conn_matrix))
+        resolution = 1
+        node_comm_aff_mat = np.array(list(community.best_partition(G, resolution=resolution).values()))
+        num_comms = len(np.unique(node_comm_aff_mat))
+        if num_comms == 1:
+            resolution = 10
+            tries = 0
+            while num_comms == 1:
+                node_comm_aff_mat = np.array(list(community.best_partition(G, resolution=resolution).values()))
+                num_comms = len(np.unique(node_comm_aff_mat))
+                print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
+                resolution = resolution + 10
+                tries = tries + 1
+                if tries > 100:
+                    print('\nWARNING: Louvain community detection failed. Proceeding with single community affiliation '
+                          'vector...')
+                    break
+        elif num_comms > len(G.edges())/10:
+            resolution = 0.1
+            tries = 0
+            while num_comms == 1:
+                node_comm_aff_mat = np.array(list(community.best_partition(G, resolution=resolution).values()))
+                num_comms = len(np.unique(node_comm_aff_mat))
+                print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
+                resolution = resolution / 10
+                tries = tries + 1
+                if tries > 100:
+                    print('\nWARNING: Louvain community detection failed. Proceeding with single community affiliation '
+                          'vector...')
+                    break
+        else:
+            print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
+        node_comm_aff_mat = np.ones(conn_matrix.shape[0]).astype('int')
         clust_levels = len(node_comm_aff_mat)
         clust_levels_tmp = int(clust_levels) - 1
         mask_mat = np.squeeze(np.array([node_comm_aff_mat == 0]).astype('int'))
@@ -218,7 +243,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
     save_json(connectogram_plot, output)
 
     # Force-directed graphing
-    G = nx.from_numpy_matrix(np.round(conn_matrix.astype('float64'), 6))
+    G = nx.from_numpy_matrix(np.round(np.abs(conn_matrix).astype('float64'), 6))
     data = json_graph.node_link_data(G)
     data.pop('directed', None)
     data.pop('graph', None)
@@ -389,7 +414,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         if '\'b' in atlas:
             atlas = atlas.decode('utf-8')
         if (prune == 1 or prune == 2) and len(coords) == conn_matrix.shape[0]:
-            G_pre = nx.from_numpy_matrix(conn_matrix)
+            G_pre = nx.from_numpy_matrix(np.abs(conn_matrix))
             if prune == 1:
                 [G, pruned_nodes] = prune_disconnected(G_pre)
             elif prune == 2:
@@ -436,7 +461,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         if roi:
             out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
                                                                      '_', op.basename(roi).split('.')[0],
-                                                                     "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"),
+                                                                     "%s" % ("%s%s%s" % ('_', network, '_thr-') if network else "_thr-"),
                                                                      thr, '_', node_size,
                                                                      '%s' % ("mm_" if node_size != 'parc' else "_"),
                                                                      "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
@@ -454,7 +479,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
                 pickle.dump(labels, f, protocol=2)
         else:
             out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
-                                                                 "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"),
+                                                                 "%s" % ("%s%s%s" % ('_', network, '_thr-') if network else "_thr-"),
                                                                  thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"),
                                                                  "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
                                                                  "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''),
@@ -579,7 +604,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         if '\'b' in atlas:
             atlas = atlas.decode('utf-8')
         if (prune == 1 or prune == 2) and len(coords) == conn_matrix.shape[0]:
-            G_pre = nx.from_numpy_matrix(conn_matrix)
+            G_pre = nx.from_numpy_matrix(np.abs(conn_matrix))
             if prune == 1:
                 [G, pruned_nodes] = prune_disconnected(G_pre)
             elif prune == 2:
@@ -625,7 +650,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         if roi:
             out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
                                                                      '_', op.basename(roi).split('.')[0],
-                                                                     "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"), thr, '_', node_size,
+                                                                     "%s" % ("%s%s%s" % ('_', network, '_thr-') if network else "_thr-"), thr, '_', node_size,
                                                                      '%s' % ("mm_" if node_size != 'parc' else "_"),
                                                                      "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
                                                                      "%s%s%s" % ('_', track_type, '_track'),
@@ -642,7 +667,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
                 pickle.dump(labels, f, protocol=2)
         else:
             out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
-                                                                 "%s" % ("%s%s%s" % ('_', network, '_') if network else "_"),
+                                                                 "%s" % ("%s%s%s" % ('_', network, '_thr-') if network else "_thr-"),
                                                                  thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"),
                                                                  "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
                                                                  "%s%s%s" % ('_', track_type, '_track'),
@@ -687,21 +712,6 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
 
     plt.close('all')
 
-    return
-
-
-def show_template_bundles(final_streamlines, template_path, fname):
-    import nibabel as nib
-    from fury import actor, window
-    renderer = window.Renderer()
-    template_img_data = nib.load(template_path).get_data().astype('bool')
-    template_actor = actor.contour_from_roi(template_img_data,
-                                            color=(50, 50, 50), opacity=0.05)
-    renderer.add(template_actor)
-    lines_actor = actor.streamtube(final_streamlines, window.colors.orange,
-                                   linewidth=0.3)
-    renderer.add(lines_actor)
-    window.record(renderer, n_frames=1, out_path=fname, size=(900, 900))
     return
 
 

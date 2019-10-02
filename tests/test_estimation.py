@@ -19,6 +19,9 @@ from pathlib import Path
 
 
 def test_get_conn_matrix_cov():
+    """
+    Test for get_conn_matrix functionality
+    """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
     time_series_file = dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_rsn_net_ts.npy'
@@ -77,6 +80,9 @@ def test_get_conn_matrix_cov():
 
 
 def test_extract_ts_rsn_parc():
+    """
+    Test for extract_ts_parc functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
@@ -113,6 +119,9 @@ def test_extract_ts_rsn_parc():
 
 
 def test_extract_ts_rsn_coords():
+    """
+    Test for extract_ts_coords functionality
+    """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'

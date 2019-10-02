@@ -85,6 +85,12 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
         Threshold value, correlation coefficients lower than this value
         will be removed from the matrix (set to zero).
 
+    Returns
+    -------
+    W : Compressed Sparse Matrix
+        A Scipy sparse matrix, with weights corresponding to the spatial correlation between the time series from
+        voxel i and voxel j
+
     References
     ----------
     .. Adapted from PyClusterROI
@@ -180,7 +186,7 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
 
         # Calculate the spatial correlation between FC maps
         R = np.corrcoef(fc)
-        if np.linalg.matrix_rank(R) == 0:
+        if np.linalg.matrix_rank(R) == 0 or np.linalg.matrix_rank(R) == 1:
             R = np.reshape(R, (1, 1))
 
         # Set NaN values to 0
@@ -222,8 +228,7 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
     The weights w_ij of the connectivity matrix W correspond to the
     temporal correlation between the time series from voxel i and voxel j.
     Connectivity is only calculated between a voxel and the 27 voxels in its 3D
-    neighborhood (face touching and edge touching). The resulting datafiles are
-    suitable as inputs to the function binfile_parcellate.
+    neighborhood (face touching and edge touching).
 
     References
     ----------
@@ -239,9 +244,15 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
     thresh : str
         Threshold value, correlation coefficients lower than this value
         will be removed from the matrix (set to zero).
+
+    Returns
+    -------
+    W : Compressed Sparse Matrix
+        A Scipy sparse matrix, with weights corresponding to the temporal correlation between the time series from
+        voxel i and voxel j
     """
     from scipy.sparse import csc_matrix
-    from scipy import prod, rank
+    from scipy import prod
     from itertools import product
 
     # Index array used to calculate 3D neigbors
@@ -306,7 +317,7 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
 
         # Calculate the correlation between all of the voxel TCs
         R = np.corrcoef(tc)
-        if rank(R) == 0:
+        if np.linalg.matrix_rank(R) == 0 or np.linalg.matrix_rank(R) == 1:
             R = np.reshape(R, (1, 1))
 
         # Extract just the correlations with the seed TC
@@ -344,8 +355,8 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
     return W
 
 
-def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf, local_corr,
-                   detrending=True, standardize=True):
+def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf, local_corr, detrending=True,
+                   standardize=True):
     """
     API for performing any of a variety of clustering routines available through NiLearn.
 
@@ -368,6 +379,16 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
         File path to a confound regressor file for reduce noise in the time-series when extracting from ROI's.
     local_corr : str
         Type of local connectivity estimation ('tcorr' or 'scorr').
+    detrending : bool
+        Indicates whether to remove linear trends from time-series when extracting across nodes. Default is True.
+    standardize : bool
+        If standardize is True, the time-series are centered and normed: their mean is put to 0 and their variance to 1
+        in the time dimension.
+
+    Returns
+    -------
+    region_labels : Nifti1Image
+        A parcellation image.
     """
     import time
     from nilearn.regions import connected_regions, Parcellations, connected_label_regions
@@ -391,11 +412,13 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
             import pandas as pd
             confounds = pd.read_csv(conf, sep='\t')
             if confounds.isnull().values.any():
-                import random
+                import uuid
+                from time import strftime
+                run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
                 print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
                       'regressor file should be checked manually.')
                 confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-                conf_corr = dir_path + '/confounds_mean_corrected_' + str(random.randint(1, 1000)) + '.tsv'
+                conf_corr = '/tmp/confounds_mean_corrected_' + str(run_uuid) + '.tsv'
                 confounds_nonan.to_csv(conf_corr, sep='\t')
                 clust_est.fit(func_img, confounds=conf_corr)
             else:
@@ -411,11 +434,13 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
             import pandas as pd
             confounds = pd.read_csv(conf, sep='\t')
             if confounds.isnull().values.any():
-                import random
+                import uuid
+                from time import strftime
+                run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
                 print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
                       'regressor file should be checked manually.')
                 confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-                conf_corr = dir_path + '/confounds_mean_corrected_' + str(random.randint(1, 1000)) + '.tsv'
+                conf_corr = '/tmp/confounds_mean_corrected_' + str(run_uuid) + '.tsv'
                 confounds_nonan.to_csv(conf_corr, sep='\t')
                 clust_est.fit(func_img, confounds=conf_corr)
             else:
@@ -449,6 +474,22 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type):
         Numbers of clusters that will be generated.
     clust_type : str
         Type of clustering to be performed (e.g. 'ward', 'kmeans', 'complete', 'average').
+
+    Returns
+    -------
+    uatlas : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    atlas : str
+        Name of the atlas based on `clust_type`, `k`, and `clust_mask`
+    clustering : bool
+        A variable indicating that clustering was performed successfully.
+    clust_mask : str
+        File path to a 3D NIFTI file containing a mask, which restricted the
+        voxels used in the analysis.
+    k : int
+        Numbers of clusters that were generated.
+    clust_type : str
+        Type of clustering to be performed (e.g. 'ward', 'kmeans', 'complete', 'average').
     """
     import os
     from pynets.core import utils
@@ -465,10 +506,10 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type):
 
     if clust_type in nilearn_clust_list:
         clustools.nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf, local_corr='tcorr')
+        clustering = True
     else:
         raise ValueError('Clustering method not recognized. '
                          'See: https://nilearn.github.io/modules/generated/nilearn.regions.Parcellations.html#nilearn.'
                          'regions.Parcellations')
 
-    clustering = True
     return uatlas, atlas, clustering, clust_mask, k, clust_type
