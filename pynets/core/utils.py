@@ -1453,9 +1453,8 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas, b0_th
     if not os.path.isdir(namer_dir):
         os.mkdir(namer_dir)
 
-    B0 = "%s%s" % (namer_dir, "/b0.nii.gz")
-    B0_bet = "%s%s" % (namer_dir, "/b0_bet.nii.gz")
-    B0_mask = "%s%s" % (namer_dir, "/B0_bet_mask.nii.gz")
+    B0_bet = "%s%s" % (namer_dir, "/mean_B0_bet.nii.gz")
+    B0_mask = "%s%s" % (namer_dir, "/mean_B0_bet_mask.nii.gz")
     bvec_rescaled = "%s%s" % (namer_dir, "/bvec_scaled.bvec")
     gtab_file = "%s%s" % (namer_dir, "/gtab.pkl")
     all_b0s_file = "%s%s" % (namer_dir, "/all_b0s.nii.gz")
@@ -1484,7 +1483,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas, b0_th
     gtab.b0_threshold = b0_thr
 
     # Get b0 indices
-    b0s = np.where(gtab.bvals == gtab.b0_threshold)[0]
+    b0s = np.where(gtab.bvals <= gtab.b0_threshold)[0]
     print("%s%s" % ('b0\'s found at: ', b0s))
 
     # Correct b0 mask
