@@ -1391,7 +1391,23 @@ def rescale_bvec(bvec, bvec_rescaled):
     return bvec_rescaled
 
 
-def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
+def make_mean_b0(in_file):
+    import time
+
+    b0_img = nib.load(in_file)
+    b0_img_data = b0_img.get_data()
+    mean_b0 = np.mean(b0_img_data, axis=3, dtype=b0_img_data.dtype)
+    mean_file_out = in_file.split(".nii.gz")[0] + "_mean_b0.nii.gz"
+    nib.save(
+        nib.Nifti1Image(mean_b0, affine=b0_img.affine, header=b0_img.header),
+        mean_file_out,
+    )
+    while os.path.isfile(mean_file_out) is False:
+        time.sleep(1)
+    return mean_file_out
+
+
+def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas, b0_thr=100):
     """
     Create gradient table from bval/bvec, and a mean B0 brain mask.
 
@@ -1429,12 +1445,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
     import os.path as op
     from dipy.io import read_bvals_bvecs
     from dipy.core.gradients import gradient_table
-    from pynets.core.utils import rescale_bvec
-    # from dipy.segment.mask import applymask
-    from nilearn.image import mean_img
-    # from nilearn.masking import compute_epi_mask
-    # from dipy.denoise.nlmeans import nlmeans
-    # from skimage import exposure
+    from pynets.core.utils import rescale_bvec, make_mean_b0
 
     outdir = op.dirname(dwi_file)
 
@@ -1447,6 +1458,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
     B0_mask = "%s%s" % (namer_dir, "/B0_bet_mask.nii.gz")
     bvec_rescaled = "%s%s" % (namer_dir, "/bvec_scaled.bvec")
     gtab_file = "%s%s" % (namer_dir, "/gtab.pkl")
+    all_b0s_file = "%s%s" % (namer_dir, "/all_b0s.nii.gz")
 
     # loading bvecs/bvals
     bvals, bvecs = read_bvals_bvecs(fbval, fbvec)
@@ -1469,11 +1481,17 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
     gtab = gradient_table(bvals, bvecs)
 
     # Correct b0 threshold
-    gtab.b0_threshold = min(bvals)
+    gtab.b0_threshold = b0_thr
 
     # Get b0 indices
     b0s = np.where(gtab.bvals == gtab.b0_threshold)[0]
     print("%s%s" % ('b0\'s found at: ', b0s))
+
+    # Correct b0 mask
+    gtab_bvals = gtab.bvals.copy()
+    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
+    gtab_bvals[b0_thr_ixs] = 0
+    gtab.b0s_mask = gtab_bvals == 0
 
     # Show info
     print(gtab.info)
@@ -1481,8 +1499,8 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
     # Save gradient table to pickle
     save_pickle(gtab_file, gtab)
 
-    # Extract and Combine all b0s collected
-    print('Extracting b0\'s...')
+    # Extract and Combine all b0s collected, make mean b0
+    print("Extracting b0's...")
     b0_vols = []
     dwi_img = nib.load(dwi_file)
     dwi_data = dwi_img.get_data()
@@ -1490,17 +1508,15 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas):
         print(b0)
         b0_vols.append(dwi_data[:, :, :, b0])
 
-    # Save mean B0
-    mean_B0_img = mean_img([nib.Nifti1Image(B0, affine=dwi_img.affine) for B0 in b0_vols])
-    nib.save(mean_B0_img, B0)
+    all_b0s = np.stack(b0_vols, axis=3)
+    all_b0s_aff = dwi_img.affine.copy()
+    all_b0s_aff[3][3] = len(b0_vols)
+    nib.save(nib.Nifti1Image(all_b0s, affine=all_b0s_aff), all_b0s_file)
+    mean_b0_file = make_mean_b0(all_b0s_file)
 
     # Create mean b0 brain mask
-    # Get mean b0 brain mask
-    cmd = 'bet ' + B0 + ' ' + B0_bet + ' -m -f 0.2'
+    cmd = 'bet ' + mean_b0_file + ' ' + B0_bet + ' -m -f 0.2'
     os.system(cmd)
-    # mean_b0_mask = compute_epi_mask(mean_B0_img, lower_cutoff=0.15, upper_cutoff=0.75)
-    # nib.save(mean_b0_mask, B0_mask)
-    # nib.save(nib.Nifti1Image(applymask(mean_B0_img.get_data(), mean_b0_mask.get_data()), affine=dwi_img.affine), B0_bet)
 
     return gtab_file, B0_bet, B0_mask, dwi_file
 

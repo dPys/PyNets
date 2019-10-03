@@ -164,7 +164,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     from nilearn.image import resample_to_img
     from dipy.io.streamline import load_tractogram
 
-    dsn_dir = "%s%s" % (basedir_path, '/dmri_tmp/DSN')
+    dsn_dir = "%s%s" % (basedir_path, '/dmri_reg_tmp/DSN')
     if not os.path.isdir(dsn_dir):
         os.mkdir(dsn_dir)
 
@@ -306,8 +306,8 @@ class DmriReg(object):
         self.t1w_name = 't1w'
         self.dwi_name = 'dwi'
         self.basedir_path = basedir_path
-        self.tmp_path = "%s%s" % (basedir_path, '/dmri_tmp')
-        self.reg_path = "%s%s" % (basedir_path, '/dmri_tmp/reg')
+        self.tmp_path = "%s%s" % (basedir_path, '/dmri_reg_tmp')
+        self.reg_path = "%s%s" % (basedir_path, '/dmri_reg_tmp/reg')
         self.anat_path = "%s%s" % (basedir_path, '/anat_reg')
         self.reg_path_mat = "%s%s" % (self.reg_path, '/mats')
         self.reg_path_warp = "%s%s" % (self.reg_path, '/warps')
