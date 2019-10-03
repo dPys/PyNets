@@ -8,10 +8,7 @@
     <bookmark url="file://$PROJECT_DIR$/pynets/registration/register.py" description="        # Create linear transform/ initializer T1w..." line="686" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/pynets/core/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/registration/register.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/register.py" afterDir="false" />
-    </list>
+    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="" />
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -179,7 +176,7 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
+  <component name="ProjectFrameBounds">
     <option name="x" value="101" />
     <option name="y" value="103" />
     <option name="width" value="1479" />
@@ -468,12 +465,12 @@
       <workItem from="1569302969374" duration="1020000" />
       <workItem from="1569305159380" duration="2000" />
       <workItem from="1569353631521" duration="7458000" />
-      <workItem from="1569467774494" duration="52042000" />
+      <workItem from="1569467774494" duration="52301000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1115706000" />
+    <option name="totallyTimeSpent" value="1115965000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="101" y="103" width="1479" height="984" extended-state="0" />
