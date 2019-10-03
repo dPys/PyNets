@@ -33,7 +33,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     from pynets.core.utils import pass_meta_ins, pass_meta_outs, pass_meta_ins_multi
 
     # Available functional and structural connectivity models
-    with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
+    with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
             func_models = hardcoded_params['available_models']['func_models']

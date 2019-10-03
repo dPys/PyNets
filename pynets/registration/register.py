@@ -161,7 +161,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     from pynets.plotting import plot_gen
     import pkg_resources
     import os.path as op
-    from nilearn.image import resample_to_img
+    from nilearn.image import resample_to_img, resample_img
     from dipy.io.streamline import load_tractogram
 
     dsn_dir = "%s%s" % (basedir_path, '/dmri_reg_tmp/DSN')
@@ -272,9 +272,9 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     # Map parcellation from native space back to MNI-space and create an 'uncertainty-union' parcellation
     # with original mni-space uatlas
     uatlas_mni_img = nib.load(uatlas)
+
     warped_uatlas = affine_map.transform_inverse(mapping.transform(atlas_img.get_data().astype('int16'),
-                                                                   interpolation='nearestneighbour'),
-                                                 interp='nearest')
+                                                                   interpolation='nearestneighbour'), interp='nearest')
     union_ua = "%s%s%s%s" % (os.path.dirname(uatlas), '/', os.path.basename(uatlas).split('.nii.gz')[0],
                              '_UNION.nii.gz')
 
@@ -473,19 +473,12 @@ class DmriReg(object):
         Tries nonlinear registration first, and if that fails, does a linear registration instead. For this to succeed,
         must first have called t1w2dwi_align.
         """
-        from nilearn.image import resample_to_img
-        uatlas_res_file = "%s%s%s%s" % (self.anat_path, '/', atlas, "_res.nii.gz")
         aligned_atlas_t1mni = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni.nii.gz")
         aligned_atlas_skull = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_skull.nii.gz")
         dwi_aligned_atlas = "%s%s%s%s" % (self.reg_path_img, '/', atlas, "_dwi_track.nii.gz")
         dwi_aligned_atlas_wmgm_int = "%s%s%s%s" % (self.reg_path_img, '/', atlas, "_dwi_track_wmgm_int.nii.gz")
 
-        uatlas_img = nib.load(uatlas)
-        t1_aligned_mni_img = nib.load(self.t1_aligned_mni)
-        uatlas_res_img = resample_to_img(uatlas_img, t1_aligned_mni_img, interpolation='nearest', clip=False)
-        nib.save(uatlas_res_img, uatlas_res_file)
-
-        regutils.align(uatlas_res_file, self.t1_aligned_mni, init=None, xfm=None, out=aligned_atlas_t1mni, dof=12,
+        regutils.align(uatlas, self.t1_aligned_mni, init=None, xfm=None, out=aligned_atlas_t1mni, dof=12,
                        searchrad=True, interp="nearestneighbour", cost='mutualinfo')
 
         if self.simple is False:
@@ -503,31 +496,28 @@ class DmriReg(object):
                       "registration.")
 
                 # Create transform to align atlas to T1w using flirt
-                regutils.align(uatlas_res_file, self.t1w_brain, xfm=self.xfm_atlas2t1w_init, init=None, bins=None,
-                               dof=6, cost='mutualinfo', searchrad=True, interp="spline", out=None, sch=None)
-                regutils.align(uatlas_res_file, self.t1_aligned_mni, xfm=self.xfm_atlas2t1w, out=None, dof=6,
-                               searchrad=True, bins=None, interp="spline", cost='mutualinfo',
-                               init=self.xfm_atlas2t1w_init)
+                regutils.align(aligned_atlas_t1mni, self.t1w_brain, xfm=self.xfm_atlas2t1w, init=None, bins=None,
+                               dof=6, cost='mutualinfo', searchrad=True, interp="spline", out=aligned_atlas_skull,
+                               sch=None)
 
                 # Combine our linear transform from t1w to template with our transform from dwi to t1w space to get a
                 # transform from atlas ->(-> t1w ->)-> dwi
                 regutils.combine_xfms(self.xfm_atlas2t1w, self.t1wtissue2dwi_xfm, self.temp2dwi_xfm)
 
                 # Apply linear transformation from template to dwi space
-                regutils.applyxfm(self.fa_path, uatlas_res_file, self.temp2dwi_xfm, dwi_aligned_atlas)
+                regutils.applyxfm(self.fa_path, aligned_atlas_t1mni, self.temp2dwi_xfm, dwi_aligned_atlas)
         else:
             # Create transform to align atlas to T1w using flirt
-            regutils.align(uatlas_res_file, self.t1w_brain, xfm=self.xfm_atlas2t1w_init, init=None, bins=None, dof=6,
-                           cost='mutualinfo', searchrad=None, interp="spline", out=None, sch=None)
-            regutils.align(uatlas_res_file, self.t1w_brain, xfm=self.xfm_atlas2t1w, out=None, dof=6, searchrad=True,
-                           bins=None, interp="spline", cost='mutualinfo', init=self.xfm_atlas2t1w_init)
+            regutils.align(aligned_atlas_t1mni, self.t1w_brain, xfm=self.xfm_atlas2t1w, init=None, bins=None,
+                           dof=6, cost='mutualinfo', searchrad=True, interp="spline", out=aligned_atlas_skull,
+                           sch=None)
 
             # Combine our linear transform from t1w to template with our transform from dwi to t1w space to get a
             # transform from atlas ->(-> t1w ->)-> dwi
             regutils.combine_xfms(self.xfm_atlas2t1w, self.t1wtissue2dwi_xfm, self.temp2dwi_xfm)
 
             # Apply linear transformation from template to dwi space
-            regutils.applyxfm(self.fa_path, uatlas_res_file, self.temp2dwi_xfm, dwi_aligned_atlas)
+            regutils.applyxfm(self.fa_path, aligned_atlas_t1mni, self.temp2dwi_xfm, dwi_aligned_atlas)
 
         # Set intensities to int
         atlas_img = nib.load(dwi_aligned_atlas)
@@ -724,29 +714,21 @@ class FmriReg(object):
     def atlas2t1wmni_align(self, uatlas, atlas):
         """
         A function to perform atlas alignment from atlas --> T1_MNI.
-        Tries nonlinear registration first, and if that fails, does a linear registration instead.
         """
-        from nilearn.image import resample_to_img
-        uatlas_res_file = "%s%s%s%s" % (self.anat_path, '/', atlas, "_res.nii.gz")
         aligned_atlas_t1mni = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni.nii.gz")
-        aligned_atlas_skull = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_skull.nii.gz")
         gm_mask_mni = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_gm_mask_t1w_mni.nii.gz")
         aligned_atlas_t1mni_gm = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni_gm.nii.gz")
 
-        uatlas_img = nib.load(uatlas)
-        t1_aligned_mni_img = nib.load(self.t1_aligned_mni)
-        uatlas_res_img = resample_to_img(uatlas_img, t1_aligned_mni_img, interpolation='nearest', clip=False)
-        nib.save(uatlas_res_img, uatlas_res_file)
-
-        regutils.align(uatlas_res_file, self.t1_aligned_mni, init=None, xfm=None, out=aligned_atlas_t1mni, dof=12,
-                       searchrad=True, interp="nearestneighbour", cost='mutualinfo')
-        # Apply warp resulting from the inverse of T1w-->MNI created earlier
-        regutils.apply_warp(self.t1w_brain, aligned_atlas_t1mni, aligned_atlas_skull, warp=self.mni2t1w_warp,
-                            interp='nn', sup=True)
-
-        # Apply warp resulting from the inverse MNI->T1w created earlier
-        regutils.apply_warp(self.t1w_brain, self.gm_mask_thr, gm_mask_mni, warp=self.mni2t1w_warp, interp='nn',
-                            sup=True)
+        regutils.align(uatlas, self.t1_aligned_mni, init=None, xfm=None, out=aligned_atlas_t1mni,
+                       dof=12, searchrad=True, interp="nearestneighbour", cost='mutualinfo')
+        try:
+            # Apply warp resulting from the inverse MNI->T1w created earlier
+            regutils.apply_warp(self.t1_aligned_mni, self.gm_mask_thr, gm_mask_mni, warp=self.warp_t1w2mni)
+        except:
+            print("Warning: Application of non-linear warp from gm mask in t1w space to MNI space "
+                  "failed,\nusing linear template registration.")
+            regutils.align(self.gm_mask_thr, self.t1_aligned_mni, init=None, xfm=None, out=gm_mask_mni,
+                           dof=6, searchrad=True, interp="spline", cost='mutualinfo')
 
         # Set intensities to int
         atlas_img = nib.load(aligned_atlas_t1mni)

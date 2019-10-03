@@ -12,11 +12,11 @@ from .__about__ import (
     __packagename__,
 )
 
-import warnings
 from .stats import *
 from .registration import *
 from .dmri import *
 from .fmri import *
 from .core import *
 from .plotting import *
+import warnings
 warnings.filterwarnings("ignore")

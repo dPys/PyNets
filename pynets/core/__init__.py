@@ -3,6 +3,6 @@
 __author__ = """Derek Pisner"""
 __email__ = 'dpisner@utexas.edu'
 
-import warnings
 from . import *
+import warnings
 warnings.filterwarnings("ignore")
