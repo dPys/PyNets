@@ -614,14 +614,16 @@ def build_workflow(args, retval):
             multi_directget = None
     else:
         multi_directget = None
-    embed = args.embed[0]
+    embed = args.embed
+    if embed is not None:
+        embed = embed[0]
     multiplex = args.mplx
     vox_size = args.vox
 
     print('\n\n\n------------------------------------------------------------------------\n')
 
     # Hard-coded:
-    with open("%s%s" % (str(Path(__file__).parent), '/core/runconfig.yaml'), 'r') as stream:
+    with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
         try:
             hardcoded_params = yaml.load(stream)
             maxcrossing = hardcoded_params['maxcrossing'][0]

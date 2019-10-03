@@ -22,4 +22,4 @@ scikit-image==0.14.2
 #skggm>=0.2.7
 graspy>=0.0.2
 #py3plex>=0.67
-#-e git+git://github.com/dPys/nilearn.git#egg=0.4.2
+git+https://github.com/dPys/nilearn.git
