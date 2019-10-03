@@ -80,5 +80,5 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     setup_requires=setup_requirements,
-    scripts=["pynets/pynets_run.py", "pynets/core/runconfig.yaml"]
+    scripts=["pynets/pynets_run.py", "pynets/runconfig.yaml"]
 )

@@ -806,7 +806,7 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
         return out_path
 
     # Available functional and structural connectivity models
-    with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
+    with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
             func_models = hardcoded_params['available_models']['func_models']
@@ -1122,7 +1122,7 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, 
     from pynets.core.utils import collect_pandas_df_make, flatten
 
     # Available functional and structural connectivity models
-    with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
+    with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
             func_models = hardcoded_params['available_models']['func_models']
