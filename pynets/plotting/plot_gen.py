@@ -715,6 +715,21 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
     return
 
 
+def show_template_bundles(final_streamlines, template_path, fname):
+    import nibabel as nib
+    from fury import actor, window
+    renderer = window.Renderer()
+    template_img_data = nib.load(template_path).get_data().astype('bool')
+    template_actor = actor.contour_from_roi(template_img_data,
+                                            color=(50, 50, 50), opacity=0.05)
+    renderer.add(template_actor)
+    lines_actor = actor.streamtube(final_streamlines, window.colors.orange,
+                                   linewidth=0.3)
+    renderer.add(lines_actor)
+    window.record(renderer, n_frames=1, out_path=fname, size=(900, 900))
+    return
+
+
 def plot_graph_measure_hists(df_concat, measures, net_pick_file):
     """
     Plot histograms for each graph theoretical measure.
