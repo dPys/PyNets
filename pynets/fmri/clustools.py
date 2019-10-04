@@ -180,11 +180,17 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
 
         # Extract the time courses corresponding to the "seed"
         # and 3D neighborhood voxels
-        tc = imdat[ondx1d, :]
+        tc = np.array(imdat[ondx1d.astype('int'), :])
+
+        # Ensure that the "seed" has variance, if not just skip it
+        if np.var(tc[nndx, :]) == 0:
+            continue
 
         # Calculate functional connectivity maps for "seed"
         # and 3D neighborhood voxels
         fc = np.dot(tc, imdat.T) / (sz[3] - 1)
+
+        R = np.corrcoef(fc)
 
         if np.linalg.matrix_rank(R) == 1:
             R = np.reshape(R, (1, 1))
@@ -196,7 +202,6 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
         R[R < thresh] = 0
 
         # Calculate the spatial correlation between FC maps
-        R = np.corrcoef(fc)
         if np.linalg.matrix_rank(R) == 0:
             R = np.reshape(R, (1, 1))
 
