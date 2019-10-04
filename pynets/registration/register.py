@@ -275,7 +275,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     warped_uatlas = affine_map.transform_inverse(mapping.transform(atlas_img.get_data().astype('int16'),
                                                                    interpolation='nearestneighbour'), interp='nearest')
-    union_ua = "%s%s%s%s" % (os.path.dirname(uatlas), '/', os.path.basename(uatlas).split('.nii.gz')[0],
+    union_ua = "%s%s%s%s" % (dir_path, '/parcellations', os.path.basename(uatlas).split('.nii.gz')[0],
                              '_UNION.nii.gz')
 
     warped_uatlas_img = nib.Nifti1Image(warped_uatlas, affine=warped_fa_img.affine)
@@ -328,7 +328,9 @@ class DmriReg(object):
         self.dwi2t1w_bbr_xfm = "%s%s" % (self.reg_path_mat, "/dwi2t1w_bbr_xfm.mat")
         self.t1wtissue2dwi_xfm = "%s%s" % (self.reg_path_mat, "/t1wtissue2dwi_xfm.mat")
         self.xfm_atlas2t1w_init = "%s%s%s%s" % (self.reg_path_mat, '/', self.t1w_name, "_xfm_atlas2t1w_init.mat")
+        self.atlas2t1mni_xfm_init = "%s%s%s%s" % (self.reg_path_mat, '/', self.t1w_name, "_xfm_atlas2t1mni_init.mat")
         self.xfm_atlas2t1w = "%s%s%s%s" % (self.reg_path_mat, '/', self.t1w_name, "_xfm_atlas2t1w.mat")
+        self.atlas_skull2dwi_xfm = "%s%s" % (self.reg_path_mat, "/atlas_skull2dwi_xfm.mat")
         self.temp2dwi_xfm = "%s%s%s%s" % (self.reg_path_mat, '/', self.dwi_name, "_xfm_temp2dwi.mat")
         self.temp2dwi_xfm = "%s%s%s%s" % (self.reg_path_mat, '/', self.dwi_name, "_xfm_temp2dwi.mat")
         self.map_path = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_seg")
@@ -467,7 +469,7 @@ class DmriReg(object):
 
         return
 
-    def atlas2t1w2dwi_align(self, uatlas, atlas):
+    def atlas2t1w2dwi_align(self, uatlas, uatlas_parcels, atlas):
         """
         A function to perform atlas alignment atlas --> T1 --> dwi.
         Tries nonlinear registration first, and if that fails, does a linear registration instead. For this to succeed,
@@ -478,8 +480,8 @@ class DmriReg(object):
         dwi_aligned_atlas = "%s%s%s%s" % (self.reg_path_img, '/', atlas, "_dwi_track.nii.gz")
         dwi_aligned_atlas_wmgm_int = "%s%s%s%s" % (self.reg_path_img, '/', atlas, "_dwi_track_wmgm_int.nii.gz")
 
-        regutils.align(uatlas, self.t1_aligned_mni, init=None, xfm=None, out=aligned_atlas_t1mni, dof=12,
-                       searchrad=True, interp="nearestneighbour", cost='mutualinfo')
+        regutils.align(uatlas, self.t1_aligned_mni, init=None, xfm=self.atlas2t1mni_xfm_init, out=aligned_atlas_t1mni,
+                       dof=12, searchrad=True, interp="nearestneighbour", cost='mutualinfo')
 
         if self.simple is False:
             try:
@@ -487,37 +489,78 @@ class DmriReg(object):
                 regutils.apply_warp(self.t1w_brain, aligned_atlas_t1mni, aligned_atlas_skull,
                                     warp=self.mni2t1w_warp, interp='nn', sup=True)
 
-                # Apply transform to dwi space
-                regutils.align(aligned_atlas_skull, self.fa_path, init=self.t1wtissue2dwi_xfm, xfm=None,
-                               out=dwi_aligned_atlas, dof=6, searchrad=True, interp="nearestneighbour",
-                               cost='mutualinfo')
+                if uatlas_parcels is not None:
+                    aligned_atlas_t1mni_parcels = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni_parcels.nii.gz")
+                    aligned_atlas_skull_parcels = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_skull_parcels.nii.gz")
+                    regutils.applyxfm(self.t1_aligned_mni, uatlas_parcels, self.atlas2t1mni_xfm_init,
+                                      aligned_atlas_t1mni_parcels, interp="nearestneighbour")
+                    regutils.apply_warp(self.t1w_brain, aligned_atlas_t1mni_parcels, aligned_atlas_skull_parcels,
+                                        warp=self.mni2t1w_warp, interp='nn', sup=True)
+                else:
+                    aligned_atlas_skull_parcels = None
+
+                # Create mapping from atlas in t1w space to dwi space
+                regutils.align(aligned_atlas_skull, self.fa_path, init=self.t1wtissue2dwi_xfm,
+                               xfm=self.atlas_skull2dwi_xfm, out=None, dof=6, searchrad=True,
+                               interp="nearestneighbour", cost='mutualinfo')
+
+                if uatlas_parcels is not None:
+                    regutils.applyxfm(self.fa_path, aligned_atlas_skull_parcels, self.atlas_skull2dwi_xfm,
+                                      dwi_aligned_atlas, interp="nearestneighbour")
+                else:
+                    regutils.applyxfm(self.fa_path, aligned_atlas_skull, self.atlas_skull2dwi_xfm,
+                                      dwi_aligned_atlas, interp="nearestneighbour")
             except:
                 print("Warning: Atlas is not in correct dimensions, or input is low quality,\nusing linear template "
                       "registration.")
 
                 # Create transform to align atlas to T1w using flirt
                 regutils.align(aligned_atlas_t1mni, self.t1w_brain, xfm=self.xfm_atlas2t1w, init=None, bins=None,
-                               dof=6, cost='mutualinfo', searchrad=True, interp="spline", out=aligned_atlas_skull,
-                               sch=None)
+                               dof=6, cost='mutualinfo', searchrad=True, interp="nearestneighbour",
+                               out=aligned_atlas_skull, sch=None)
 
                 # Combine our linear transform from t1w to template with our transform from dwi to t1w space to get a
                 # transform from atlas ->(-> t1w ->)-> dwi
                 regutils.combine_xfms(self.xfm_atlas2t1w, self.t1wtissue2dwi_xfm, self.temp2dwi_xfm)
 
-                # Apply linear transformation from template to dwi space
-                regutils.applyxfm(self.fa_path, aligned_atlas_t1mni, self.temp2dwi_xfm, dwi_aligned_atlas)
+                if uatlas_parcels is not None:
+                    aligned_atlas_t1mni_parcels = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni_parcels.nii.gz")
+                    regutils.applyxfm(self.t1_aligned_mni, uatlas_parcels, self.atlas2t1mni_xfm_init,
+                                      aligned_atlas_t1mni_parcels, interp="nearestneighbour")
+                    # Apply linear transformation from template to dwi space
+                    regutils.applyxfm(self.fa_path, aligned_atlas_t1mni_parcels, self.temp2dwi_xfm, dwi_aligned_atlas,
+                                      interp="nearestneighbour")
+                    aligned_atlas_t1mni = aligned_atlas_t1mni_parcels
+                else:
+                    regutils.applyxfm(self.t1_aligned_mni, uatlas, self.atlas2t1mni_xfm_init,
+                                      aligned_atlas_t1mni, interp="nearestneighbour")
+                    # Apply linear transformation from template to dwi space
+                    regutils.applyxfm(self.fa_path, aligned_atlas_t1mni, self.temp2dwi_xfm, dwi_aligned_atlas,
+                                      interp="nearestneighbour")
         else:
             # Create transform to align atlas to T1w using flirt
             regutils.align(aligned_atlas_t1mni, self.t1w_brain, xfm=self.xfm_atlas2t1w, init=None, bins=None,
-                           dof=6, cost='mutualinfo', searchrad=True, interp="spline", out=aligned_atlas_skull,
-                           sch=None)
+                           dof=6, cost='mutualinfo', searchrad=True, interp="nearestneighbour",
+                           out=aligned_atlas_skull, sch=None)
 
             # Combine our linear transform from t1w to template with our transform from dwi to t1w space to get a
             # transform from atlas ->(-> t1w ->)-> dwi
             regutils.combine_xfms(self.xfm_atlas2t1w, self.t1wtissue2dwi_xfm, self.temp2dwi_xfm)
 
-            # Apply linear transformation from template to dwi space
-            regutils.applyxfm(self.fa_path, aligned_atlas_t1mni, self.temp2dwi_xfm, dwi_aligned_atlas)
+            if uatlas_parcels is not None:
+                aligned_atlas_t1mni_parcels = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni_parcels.nii.gz")
+                regutils.applyxfm(self.t1_aligned_mni, uatlas_parcels, self.atlas2t1mni_xfm_init,
+                                  aligned_atlas_t1mni_parcels, interp="nearestneighbour")
+                # Apply linear transformation from template to dwi space
+                regutils.applyxfm(self.fa_path, aligned_atlas_t1mni_parcels, self.temp2dwi_xfm, dwi_aligned_atlas,
+                                  interp="nearestneighbour")
+                aligned_atlas_t1mni = aligned_atlas_t1mni_parcels
+            else:
+                regutils.applyxfm(self.t1_aligned_mni, uatlas, self.atlas2t1mni_xfm_init,
+                                  aligned_atlas_t1mni, interp="nearestneighbour")
+                # Apply linear transformation from template to dwi space
+                regutils.applyxfm(self.fa_path, aligned_atlas_t1mni, self.temp2dwi_xfm, dwi_aligned_atlas,
+                                  interp="nearestneighbour")
 
         # Set intensities to int
         atlas_img = nib.load(dwi_aligned_atlas)
@@ -622,11 +665,12 @@ class FmriReg(object):
     A Class for Registering an atlas to a subject's MNI-aligned T1w image.
     """
 
-    def __init__(self, basedir_path, anat_file, vox_size):
+    def __init__(self, basedir_path, anat_file, vox_size, simple):
         import pkg_resources
         self.t1w = anat_file
         self.vox_size = vox_size
         self.t1w_name = 't1w'
+        self.simple = simple
         self.basedir_path = basedir_path
         self.tmp_path = "%s%s" % (basedir_path, '/fmri_tmp')
         self.reg_path = "%s%s" % (basedir_path, '/fmri_tmp/reg')
@@ -636,9 +680,11 @@ class FmriReg(object):
         self.reg_path_img = "%s%s" % (self.reg_path, '/imgs')
         self.t12mni_xfm_init = "%s%s" % (self.reg_path_mat, "/xfm_t1w2mni_init.mat")
         self.mni2t1_xfm_init = "%s%s" % (self.reg_path_mat, "/xfm_mni2t1w_init.mat")
+        self.atlas2t1wmni_xfm_init = "%s%s" % (self.reg_path_mat, "/atlas2t1wmni_xfm_init.mat")
         self.t12mni_xfm = "%s%s" % (self.reg_path_mat, "/xfm_t1w2mni.mat")
         self.mni2t1_xfm = "%s%s" % (self.reg_path_mat, "/xfm_mni2t1.mat")
         self.mni2t1w_warp = "%s%s" % (self.reg_path_warp, "/mni2t1w_warp.nii.gz")
+        self.warp_atlas2t1wmni = "%s%s" % (self.reg_path_warp, "/warp_atlas2t1wmni.nii.gz")
         self.warp_t1w2mni = "%s%s" % (self.reg_path_warp, "/t1w2mni_warp.nii.gz")
         self.t1_aligned_mni = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_aligned_mni.nii.gz")
         self.t1w_brain = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_brain.nii.gz")
@@ -702,16 +748,10 @@ class FmriReg(object):
             regutils.align_nonlinear(self.t1w_brain, self.input_mni, xfm=self.t12mni_xfm_init, out=self.t1_aligned_mni,
                                      warp=self.warp_t1w2mni, ref_mask=self.input_mni_mask)
 
-            # Get warp from MNI -> T1
-            regutils.inverse_warp(self.t1w_brain, self.mni2t1w_warp, self.warp_t1w2mni)
-
-            # Get mat from MNI -> T1
-            os.system("convert_xfm -omat {} -inverse {}".format(self.mni2t1_xfm_init, self.t12mni_xfm_init))
-
         except RuntimeError('Error: FNIRT failed!'):
             pass
 
-    def atlas2t1wmni_align(self, uatlas, atlas):
+    def atlas2t1wmni_align(self, uatlas, uatlas_parcels, atlas):
         """
         A function to perform atlas alignment from atlas --> T1_MNI.
         """
@@ -719,16 +759,21 @@ class FmriReg(object):
         gm_mask_mni = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_gm_mask_t1w_mni.nii.gz")
         aligned_atlas_t1mni_gm = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni_gm.nii.gz")
 
-        regutils.align(uatlas, self.t1_aligned_mni, init=None, xfm=None, out=aligned_atlas_t1mni,
-                       dof=12, searchrad=True, interp="nearestneighbour", cost='mutualinfo')
+        regutils.align(uatlas, self.t1_aligned_mni, init=None, xfm=self.atlas2t1wmni_xfm_init,
+                       out=None, dof=12, searchrad=True, interp="nearestneighbour", cost='mutualinfo')
+
+        if uatlas_parcels is not None:
+            regutils.applyxfm(self.t1_aligned_mni, uatlas_parcels, self.atlas2t1wmni_xfm_init, aligned_atlas_t1mni,
+                              interp="nearestneighbour")
+        else:
+            regutils.applyxfm(self.t1_aligned_mni, uatlas, self.atlas2t1wmni_xfm_init, aligned_atlas_t1mni,
+                              interp="nearestneighbour")
+
         try:
-            # Apply warp resulting from the inverse MNI->T1w created earlier
-            regutils.apply_warp(self.t1_aligned_mni, self.gm_mask_thr, gm_mask_mni, warp=self.warp_t1w2mni)
+            regutils.apply_warp(self.t1_aligned_mni, self.gm_mask_thr, gm_mask_mni, warp=self.warp_t1w2mni,
+                                xfm=self.t12mni_xfm_init)
         except:
-            print("Warning: Application of non-linear warp from gm mask in t1w space to MNI space "
-                  "failed,\nusing linear template registration.")
-            regutils.align(self.gm_mask_thr, self.t1_aligned_mni, init=None, xfm=None, out=gm_mask_mni,
-                           dof=6, searchrad=True, interp="spline", cost='mutualinfo')
+            regutils.applyxfm(self.t1_aligned_mni, self.gm_mask_thr, self.t12mni_xfm_init, gm_mask_mni)
 
         # Set intensities to int
         atlas_img = nib.load(aligned_atlas_t1mni)
@@ -763,7 +808,7 @@ def register_all_dwi(basedir_path, fa_path, B0_mask, anat_file, gtab_file, dwi_f
         Voxel size in mm. (e.g. 2mm).
     simple : bool
         Indicates whether to use non-linear registration and BBR (True) or entirely linear methods (False).
-        Default is True.
+        Default is False.
     overwrite : bool
         Indicates whether to overwrite existing registration files. Default is False.
 
@@ -809,9 +854,9 @@ def register_all_dwi(basedir_path, fa_path, B0_mask, anat_file, gtab_file, dwi_f
     return reg.wm_gm_int_in_dwi, reg.wm_in_dwi, reg.gm_in_dwi, reg.vent_csf_in_dwi, reg.csf_mask_dwi, anat_file, B0_mask, fa_path, gtab_file, dwi_file
 
 
-def register_atlas_dwi(uatlas, atlas, node_size, basedir_path, fa_path, B0_mask, anat_file, wm_gm_int_in_dwi, coords,
-                       labels, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, gtab_file, dwi_file, vox_size='2mm',
-                       simple=False):
+def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, fa_path, B0_mask, anat_file,
+                       wm_gm_int_in_dwi, coords, labels, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, gtab_file, dwi_file,
+                       vox_size='2mm', simple=False):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 
@@ -819,6 +864,8 @@ def register_atlas_dwi(uatlas, atlas, node_size, basedir_path, fa_path, B0_mask,
     ----------
     uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
+    uatlas_parcels : str
+        File path to subset atlas parcellation Nifti1Image in MNI template space, if any.
     atlas : str
         Name of atlas parcellation used.
     node_size : int
@@ -852,7 +899,7 @@ def register_atlas_dwi(uatlas, atlas, node_size, basedir_path, fa_path, B0_mask,
         Voxel size in mm. (e.g. 2mm).
     simple : bool
         Indicates whether to use non-linear registration and BBR (True) or entirely linear methods (False). 
-        Default is True.
+        Default is False.
         
     Returns
     -------
@@ -901,12 +948,16 @@ def register_atlas_dwi(uatlas, atlas, node_size, basedir_path, fa_path, B0_mask,
     uatlas = regutils.check_orient_and_dims(uatlas, vox_size)
 
     # Apply warps/coregister atlas to dwi
-    [dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas, atlas)
+    if uatlas == uatlas_parcels:
+        uatlas_parcels = None
+    [dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas,
+                                                                                                   uatlas_parcels,
+                                                                                                   atlas)
 
     return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni, uatlas, atlas, coords, labels, node_size, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, fa_path, gtab_file, B0_mask, dwi_file
 
 
-def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=False):
+def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=False, simple=False):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 
@@ -920,11 +971,14 @@ def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=False):
         Voxel size in mm. (e.g. 2mm).
     overwrite : bool
         Indicates whether to overwrite existing registration files. Default is False.
+    simple : bool
+        Indicates whether to use non-linear registration (True) or entirely linear methods (False).
+        Default is False.
     """
     import os.path as op
     from pynets.registration import register
 
-    reg = register.FmriReg(basedir_path, anat_file, vox_size)
+    reg = register.FmriReg(basedir_path, anat_file, vox_size, simple)
 
     if (overwrite is True) or (op.isfile(reg.map_path) is False):
         # Perform anatomical segmentation
@@ -937,7 +991,7 @@ def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=False):
     return
 
 
-def register_atlas_fmri(uatlas, atlas, node_size, basedir_path, anat_file, vox_size):
+def register_atlas_fmri(uatlas, uatlas_parcels, atlas, node_size, basedir_path, anat_file, vox_size, simple=False):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 
@@ -945,6 +999,8 @@ def register_atlas_fmri(uatlas, atlas, node_size, basedir_path, anat_file, vox_s
     ----------
     uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
+    uatlas_parcels : str
+        File path to subset atlas parcellation Nifti1Image in MNI template space, if any.
     atlas : str
         Name of atlas parcellation used.
     node_size : int
@@ -956,6 +1012,9 @@ def register_atlas_fmri(uatlas, atlas, node_size, basedir_path, anat_file, vox_s
         Path to a skull-stripped anatomical Nifti1Image.
     vox_size : str
         Voxel size in mm. (e.g. 2mm).
+    simple : bool
+        Indicates whether to use non-linear registration (True) or entirely linear methods (False).
+        Default is False.
 
     Returns
     -------
@@ -965,7 +1024,7 @@ def register_atlas_fmri(uatlas, atlas, node_size, basedir_path, anat_file, vox_s
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
 
-    reg = register.FmriReg(basedir_path, anat_file, vox_size)
+    reg = register.FmriReg(basedir_path, anat_file, vox_size, simple)
 
     if node_size is not None:
         atlas = "%s%s%s" % (atlas, '_', node_size)
@@ -974,6 +1033,8 @@ def register_atlas_fmri(uatlas, atlas, node_size, basedir_path, anat_file, vox_s
     uatlas = regutils.check_orient_and_dims(uatlas, vox_size)
 
     # Apply warps/coregister atlas to t1w_mni
-    aligned_atlas_t1mni_gm = reg.atlas2t1wmni_align(uatlas, atlas)
+    if uatlas == uatlas_parcels:
+        uatlas_parcels = None
+    aligned_atlas_t1mni_gm = reg.atlas2t1wmni_align(uatlas, uatlas_parcels, atlas)
 
     return aligned_atlas_t1mni_gm
