@@ -835,7 +835,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                          function=register.register_all_dwi, imports=import_list),
                             name="register_node")
 
-    register_atlas_node = pe.Node(niu.Function(input_names=['uatlas', 'atlas', 'node_size',
+    register_atlas_node = pe.Node(niu.Function(input_names=['uatlas', 'uatlas_parcels', 'atlas', 'node_size',
                                                             'basedir_path', 'fa_path', 'B0_mask', 'anat_file',
                                                             'wm_gm_int_in_dwi', 'coords', 'labels',
                                                             'gm_in_dwi', 'vent_csf_in_dwi', 'wm_in_dwi', 'gtab_file',
@@ -1207,7 +1207,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                                           ('node_size', 'node_size'),
                                                                           ('edge_threshold', 'edge_threshold'),
                                                                           ('prune', 'prune'),
-                                                                          ('uatlas', 'uatlas'),
+                                                                          ('atlas_mni', 'uatlas'),
                                                                           ('target_samples', 'target_samples'),
                                                                           ('norm', 'norm'),
                                                                           ('binary', 'binary'),
@@ -1304,7 +1304,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                        ('prune', 'prune'),
                                        ('atlas', 'atlas'),
                                        ('labels_im_file', 'labels_im_file'),
-                                       ('uatlas', 'uatlas'),
                                        ('labels', 'labels'),
                                        ('coords', 'coords'),
                                        ('norm', 'norm'),
@@ -1384,8 +1383,10 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                            (get_node_membership_node, save_nifti_parcels_node,
                                             [('network', 'network')]),
                                            (prep_spherical_nodes_node, gtab_node, [('node_size', 'node_size')]),
+                                           (fetch_nodes_and_labels_node, register_atlas_node, [('uatlas', 'uatlas')]),
                                            (save_nifti_parcels_node, register_atlas_node, [('net_parcels_nii_path',
-                                                                                            'uatlas')])
+                                                                                            'uatlas_parcels')]),
+                                           (save_nifti_parcels_node, dsn_node, [('net_parcels_nii_path', 'uatlas')])
                                            ])
         else:
             dmri_connectometry_wf.connect([(prep_spherical_nodes_node, node_gen_node,
@@ -1401,9 +1402,10 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                             [('network', 'network')]),
                                            (inputnode, gtab_node, [('network', 'network')]),
                                            (prep_spherical_nodes_node, gtab_node, [('node_size', 'node_size')]),
-                                           (node_gen_node, register_atlas_node, [('uatlas', 'uatlas')]),
-                                           (inputnode, run_tracking_node,
-                                            [('network', 'network')])
+                                           (fetch_nodes_and_labels_node, register_atlas_node, [('uatlas', 'uatlas')]),
+                                           (node_gen_node, register_atlas_node, [('uatlas', 'uatlas_parcels')]),
+                                           (run_tracking_node, dsn_node, [('uatlas', 'uatlas')]),
+                                           (inputnode, run_tracking_node, [('network', 'network')])
                                            ])
 
         dmri_connectometry_wf.connect([(inputnode, prep_spherical_nodes_node,
@@ -1453,7 +1455,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                            (inputnode, gtab_node, [('node_size', 'node_size')]),
                                            (get_node_membership_node, save_coords_and_labels_node,
                                             [('net_coords', 'coords'), ('net_labels', 'labels'),
-                                             ('network', 'network')])
+                                             ('network', 'network')]),
+                                           (save_nifti_parcels_node, dsn_node, [('net_parcels_nii_path', 'uatlas')])
                                            ])
         else:
             dmri_connectometry_wf.connect([(fetch_nodes_and_labels_node, node_gen_node,
@@ -1464,7 +1467,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                                    ('node_size', 'node_size')]),
                                            (inputnode, save_nifti_parcels_node,
                                             [('network', 'network')]),
-                                           (inputnode, run_tracking_node, [('network', 'network')])
+                                           (inputnode, run_tracking_node, [('network', 'network')]),
+                                           (run_tracking_node, dsn_node, [('uatlas', 'uatlas')])
                                            ])
 
         dmri_connectometry_wf.connect([(inputnode, run_tracking_node,
@@ -1480,8 +1484,9 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                         [('dir_path', 'dir_path')]),
                                        (node_gen_node, save_nifti_parcels_node,
                                         [('net_parcels_map_nifti', 'net_parcels_map_nifti')]),
+                                       (fetch_nodes_and_labels_node, register_atlas_node, [('uatlas', 'uatlas')]),
                                        (save_nifti_parcels_node, register_atlas_node, [('net_parcels_nii_path',
-                                                                                        'uatlas')]),
+                                                                                        'uatlas_parcels')]),
                                        (node_gen_node, register_atlas_node, [('atlas', 'atlas'),
                                                                              ('coords', 'coords'),
                                                                              ('labels', 'labels')]),
@@ -1707,7 +1712,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                          function=register.register_all_fmri, imports=import_list),
                             name="register_node")
 
-    register_atlas_node = pe.Node(niu.Function(input_names=['uatlas', 'atlas', 'node_size',
+    register_atlas_node = pe.Node(niu.Function(input_names=['uatlas', 'uatlas_parcels', 'atlas', 'node_size',
                                                             'basedir_path', 'anat_file', 'vox_size'],
                                                output_names=['aligned_atlas_t1mni_gm'],
                                                function=register.register_atlas_fmri, imports=import_list),
@@ -2525,9 +2530,18 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             (inputnode, register_node, [('basedir_path', 'basedir_path'), ('vox_size', 'vox_size')]),
             (inputnode, register_atlas_node, [('basedir_path', 'basedir_path'), ('node_size', 'node_size'),
                                               ('vox_size', 'vox_size')]),
-            (node_gen_node, register_atlas_node, [('atlas', 'atlas'), ('uatlas', 'uatlas')]),
+            (fetch_nodes_and_labels_node, register_atlas_node, [('uatlas', 'uatlas')]),
+            (node_gen_node, register_atlas_node, [('atlas', 'atlas'), ('uatlas', 'uatlas_parcels')]),
             (register_atlas_node, extract_ts_node, [('aligned_atlas_t1mni_gm', 'uatlas')]),
         ])
+
+        if k_clustering > 0:
+            fmri_connectometry_wf.disconnect([
+                (fetch_nodes_and_labels_node, register_atlas_node, [('uatlas', 'uatlas')])
+            ])
+            fmri_connectometry_wf.connect([
+                (check_orient_and_dims_func_node, register_atlas_node, [('outfile', 'uatlas')]),
+            ])
 
     # Set cpu/memory reqs
     for node_name in fmri_connectometry_wf.list_node_names():

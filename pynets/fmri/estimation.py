@@ -248,6 +248,9 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         raise ValueError('\nERROR! No connectivity model specified at runtime. Select a valid estimator using the '
                          '-mod flag.')
 
+    # Enforce symmetry
+    conn_matrix = np.maximum(conn_matrix, conn_matrix.T)
+
     if conn_matrix.shape < (2, 2):
         raise RuntimeError('\nERROR! Matrix estimation selection yielded an empty or 1-dimensional graph. '
                            'Check time-series for errors or try using a different atlas')

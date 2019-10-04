@@ -98,6 +98,8 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
     from scipy.sparse import csc_matrix
     from scipy import prod
     from itertools import product
+    from pynets.fmri.clustools import indx_1dto3d, indx_3dto1d
+
     neighbors = np.array(sorted(sorted(sorted([list(x) for x in list(set(product({-1, 0, 1}, repeat=3)))],
                                               key=lambda k: (k[0])), key=lambda k: (k[1])), key=lambda k: (k[2])))
 
@@ -184,16 +186,19 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
         # and 3D neighborhood voxels
         fc = np.dot(tc, imdat.T) / (sz[3] - 1)
 
-        # Calculate the spatial correlation between FC maps
-        R = np.corrcoef(fc)
-        if np.linalg.matrix_rank(R) == 0 or np.linalg.matrix_rank(R) == 1:
+        if np.linalg.matrix_rank(R) == 1:
             R = np.reshape(R, (1, 1))
 
-        # Set NaN values to 0
+        # Set nans to 0
         R[np.isnan(R)] = 0
 
         # Set values below thresh to 0
         R[R < thresh] = 0
+
+        # Calculate the spatial correlation between FC maps
+        R = np.corrcoef(fc)
+        if np.linalg.matrix_rank(R) == 0:
+            R = np.reshape(R, (1, 1))
 
         # Keep track of the indices and the correlation weights
         # to construct sparse connectivity matrix
@@ -254,6 +259,7 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
     from scipy.sparse import csc_matrix
     from scipy import prod
     from itertools import product
+    from pynets.fmri.clustools import indx_1dto3d, indx_3dto1d
 
     # Index array used to calculate 3D neigbors
     neighbors = np.array(sorted(sorted(sorted([list(x) for x in list(set(product({-1, 0, 1}, repeat=3)))],
@@ -317,18 +323,24 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
 
         # Calculate the correlation between all of the voxel TCs
         R = np.corrcoef(tc)
-        if np.linalg.matrix_rank(R) == 0 or np.linalg.matrix_rank(R) == 1:
+
+        if np.linalg.matrix_rank(R) == 1:
+            R = np.reshape(R, (1, 1))
+
+        # Set nans to 0
+        R[np.isnan(R)] = 0
+
+        # Set values below thresh to 0
+        R[R < thresh] = 0
+
+        if np.linalg.matrix_rank(R) == 0:
             R = np.reshape(R, (1, 1))
 
         # Extract just the correlations with the seed TC
         R = R[nndx, :].flatten()
 
         # Set NaN values to 0
-        R[np.isnan(R)] = 0
         negcount = negcount + sum(R < 0)
-
-        # Set values below thresh to 0
-        R[R < thresh] = 0
 
         # Determine the non-zero correlations (matrix weights) and add their indices and values to the list
         nzndx = np.nonzero(R)[0]
@@ -392,6 +404,7 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
     """
     import time
     from nilearn.regions import connected_regions, Parcellations, connected_label_regions
+    from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
 
     start = time.time()
     func_img = nib.load(func_file)
@@ -494,6 +507,8 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type):
     import os
     from pynets.core import utils
     from pynets.fmri import clustools
+    from time import strftime
+    import uuid
 
     nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
@@ -503,6 +518,17 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type):
                               ' for ', str(atlas), '...\n'))
     dir_path = utils.do_dir_path(atlas, func_file)
     uatlas = "%s%s%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
+
+    # Ensure mask does not inclue voxels outside of the brain
+    mask_img = nib.load(clust_mask)
+    mask_data = mask_img.get_data().astype('bool')
+    func_img = nib.load(func_file)
+    func_data = func_img.get_data().astype('bool')
+    masked = mask_data.copy()
+    masked[~func_data[:,:,:,0]] = 0
+    run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
+    clust_mask_corr = '/tmp/' + mask_name + '_' + run_uuid + '.nii.gz'
+    nib.save(nib.Nifti1Image(masked, affine=mask_img.affine, header=mask_img.header), clust_mask_corr)
 
     if clust_type in nilearn_clust_list:
         clustools.nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf, local_corr='tcorr')
