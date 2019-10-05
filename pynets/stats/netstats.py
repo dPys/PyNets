@@ -14,6 +14,7 @@ import matplotlib
 matplotlib.use('agg')
 warnings.filterwarnings("ignore")
 
+
 def timeout(seconds):
     """
     Timeout function for hung calculations during automated graph analysis.

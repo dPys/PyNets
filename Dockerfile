@@ -110,6 +110,7 @@ RUN conda install -yq \
         libgfortran \
         matplotlib \
         openblas \
+	liblapack-dev \
     && conda clean -tipsy \
     && pip install skggm
 
