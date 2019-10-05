@@ -48,6 +48,7 @@ RUN apt-get update -qq \
         libglu1-mesa-dev \
         libglib2.0-0 \
         libglw1-mesa \
+	liblapack-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && curl -o /tmp/libxp6.deb -sSL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
@@ -110,7 +111,6 @@ RUN conda install -yq \
         libgfortran \
         matplotlib \
         openblas \
-	liblapack-dev \
     && conda clean -tipsy \
     && pip install skggm
 
