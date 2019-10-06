@@ -1030,15 +1030,11 @@ def register_atlas_fmri(uatlas, uatlas_parcels, atlas, node_size, basedir_path, 
         File path to atlas parcellation Nifti1Image in T1w-warped MNI space, restricted only to grey-matter.
     """
     from pynets.registration import register
-    from pynets.registration import reg_utils as regutils
 
     reg = register.FmriReg(basedir_path, anat_file, vox_size, simple)
 
     if node_size is not None:
         atlas = "%s%s%s" % (atlas, '_', node_size)
-
-    # Check orientation and resolution
-    uatlas = regutils.check_orient_and_dims(uatlas, vox_size)
 
     # Apply warps/coregister atlas to t1w_mni
     if uatlas == uatlas_parcels:

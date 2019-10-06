@@ -2547,6 +2547,13 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         fmri_connectometry_wf.disconnect([
             (node_gen_node, extract_ts_node, [('uatlas', 'uatlas')]),
         ])
+        # Check orientation and resolution
+        check_orient_and_dims_uatlas_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'],
+                                                                 output_names=['outfile'],
+                                                                 function=regutils.check_orient_and_dims,
+                                                                 imports=import_list),
+                                                    name="check_orient_and_dims_uatlas_node")
+
         fmri_connectometry_wf.connect([
             (inputnode, check_orient_and_dims_anat_node, [('anat_file', 'infile'), ('vox_size', 'vox_size')]),
             (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_file')]),
@@ -2554,7 +2561,9 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             (inputnode, register_node, [('basedir_path', 'basedir_path'), ('vox_size', 'vox_size')]),
             (inputnode, register_atlas_node, [('basedir_path', 'basedir_path'), ('node_size', 'node_size'),
                                               ('vox_size', 'vox_size')]),
-            (fetch_nodes_and_labels_node, register_atlas_node, [('uatlas', 'uatlas')]),
+            (inputnode, check_orient_and_dims_uatlas_node, [('vox_size', 'vox_size')]),
+            (fetch_nodes_and_labels_node, check_orient_and_dims_uatlas_node, [('uatlas', 'infile')]),
+            (check_orient_and_dims_uatlas_node, register_atlas_node, [('outfile', 'uatlas')]),
             (node_gen_node, register_atlas_node, [('atlas', 'atlas'), ('uatlas', 'uatlas_parcels')]),
             (register_atlas_node, extract_ts_node, [('aligned_atlas_t1mni_gm', 'uatlas')]),
         ])
