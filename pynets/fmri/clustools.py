@@ -475,7 +475,8 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
 
 def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type):
     """
-    Meta-API for performing any of several types of fMRI clustering based on NiLearn or NCUT.
+    Meta-API for performing any of several types of fMRI clustering based on NiLearn Parcellations and tcorr/scorr
+    spatial constraints.
 
     Parameters
     ----------
@@ -536,7 +537,12 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type):
     nib.save(nib.Nifti1Image(masked, affine=mask_img.affine, header=mask_img.header), clust_mask_corr)
 
     if clust_type in nilearn_clust_list:
-        clustools.nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf, local_corr='tcorr')
+        try:
+            clustools.nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf, local_corr='tcorr')
+        except:
+            print('Warning: clustering failed, most likely because tcorr connectivity matrix was invalid. '
+                  'Attempting scorr instead.')
+            clustools.nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf, local_corr='scorr')
         clustering = True
     else:
         raise ValueError('Clustering method not recognized. '
