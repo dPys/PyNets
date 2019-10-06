@@ -473,7 +473,7 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
     return region_labels
 
 
-def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type):
+def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, local_corr='tcorr'):
     """
     Meta-API for performing any of several types of fMRI clustering based on NiLearn Parcellations and tcorr/scorr
     spatial constraints.
@@ -493,6 +493,9 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type):
         Numbers of clusters that will be generated.
     clust_type : str
         Type of clustering to be performed (e.g. 'ward', 'kmeans', 'complete', 'average').
+    local_corr : str
+        Type of local connectivity to use as the basis for clustering methods. Options are tcorr or scorr.
+        Default is tcorr.
 
     Returns
     -------
@@ -527,7 +530,7 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type):
 
     # Ensure mask does not inclue voxels outside of the brain
     mask_img = nib.load(clust_mask)
-    mask_data = mask_img.get_data().astype('bool')
+    mask_data = mask_img.get_data().astype('bool').astype('int')
     func_img = nib.load(func_file)
     func_data = func_img.get_data().astype('bool')
     masked = mask_data.copy()
@@ -537,12 +540,8 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type):
     nib.save(nib.Nifti1Image(masked, affine=mask_img.affine, header=mask_img.header), clust_mask_corr)
 
     if clust_type in nilearn_clust_list:
-        try:
-            clustools.nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf, local_corr='tcorr')
-        except:
-            print('Warning: clustering failed, most likely because tcorr connectivity matrix was invalid. '
-                  'Attempting scorr instead.')
-            clustools.nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf, local_corr='scorr')
+        clustools.nil_parcellate(func_file, clust_mask_corr, k, clust_type, uatlas, dir_path, conf,
+                                 local_corr=local_corr)
         clustering = True
     else:
         raise ValueError('Clustering method not recognized. '

@@ -755,9 +755,17 @@ class FmriReg(object):
         """
         A function to perform atlas alignment from atlas --> T1_MNI.
         """
+        from nilearn.image import index_img
         aligned_atlas_t1mni = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni.nii.gz")
         gm_mask_mni = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_gm_mask_t1w_mni.nii.gz")
         aligned_atlas_t1mni_gm = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni_gm.nii.gz")
+
+        # Test if uatlas is 4D. If it is, then assume clustering was performed and grab the first volume for reg
+        uatlas_img = nib.load(uatlas)
+        if len(uatlas_img.shape) == 4:
+            single_uatlas_image = index_img(uatlas_img, 1)
+            uatlas = uatlas.split('.nii')[0] + '_firstvol.nii.gz'
+            nib.save(single_uatlas_image, uatlas)
 
         regutils.align(uatlas, self.t1_aligned_mni, init=None, xfm=self.atlas2t1wmni_xfm_init,
                        out=None, dof=12, searchrad=True, interp="nearestneighbour", cost='mutualinfo')
@@ -1035,6 +1043,7 @@ def register_atlas_fmri(uatlas, uatlas_parcels, atlas, node_size, basedir_path, 
     # Apply warps/coregister atlas to t1w_mni
     if uatlas == uatlas_parcels:
         uatlas_parcels = None
+
     aligned_atlas_t1mni_gm = reg.atlas2t1wmni_align(uatlas, uatlas_parcels, atlas)
 
     return aligned_atlas_t1mni_gm
