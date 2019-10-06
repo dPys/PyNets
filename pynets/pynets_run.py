@@ -186,9 +186,9 @@ def get_parser():
                         metavar='Clustering type',
                         default='ncut',
                         nargs='+',
-                        choices=['ncut_tcorr', 'ncut_scorr', 'ward', 'kmeans', 'complete', 'average'],
-                        help='Specify the types of clustering to use. Options include ncut, '
-                             'ward, kmeans, complete, and average. If specifying a list of '
+                        choices=['ward', 'kmeans', 'complete', 'average'],
+                        help='Specify the types of clustering to use. Recommended options are: '
+                             'ward, kmeans, or average. If specifying a list of '
                              'clustering types, separate them by space.\n')
     parser.add_argument('-n',
                         metavar='Resting-state network',
@@ -837,21 +837,21 @@ def build_workflow(args, retval):
         max_thr = None
         step_thr = None
 
-    if (k_min is not None and k_max is not None) and k is None and clust_mask_list is not None and clust_type_list is not None:
+    if (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is not None) and (clust_type_list is not None):
         k_clustering = 8
-    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is not None and clust_type_list is not None:
+    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is not None) and (clust_type_list is not None):
         k_clustering = 7
-    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is None and clust_type_list is not None:
+    elif (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is None) and (clust_type_list is not None):
         k_clustering = 6
-    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is None and clust_type_list is not None:
+    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is None) and (clust_type_list is not None):
         k_clustering = 5
-    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is not None and clust_type_list is None:
+    elif (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is not None) and (clust_type_list is None):
         k_clustering = 4
-    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is not None and clust_type_list is None:
+    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is not None) and (clust_type_list is None):
         k_clustering = 3
-    elif (k_min is not None and k_max is not None) and k is None and clust_mask_list is None and clust_type_list is None:
+    elif (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is None) and (clust_type_list is None):
         k_clustering = 2
-    elif k is not None and (k_min is None and k_max is None) and clust_mask_list is None and clust_type_list is None:
+    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is None) and (clust_type_list is None):
         k_clustering = 1
     else:
         k_clustering = 0
@@ -1023,6 +1023,7 @@ def build_workflow(args, retval):
                     atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', _k)
                     print("%s%s" % ("Cluster atlas: ", atlas_clust))
                     do_dir_path(atlas_clust, func_file)
+            k = None
         elif k_clustering == 3:
             print("\nClustering within multiple masks at a single resolution...")
             if func_file_list:
@@ -1054,6 +1055,7 @@ def build_workflow(args, retval):
                         atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', _k)
                         do_dir_path(atlas_clust, func_file)
             clust_mask = None
+            k = None
         elif k_clustering == 5:
             for _clust_type in clust_type_list:
                 cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
@@ -1085,6 +1087,7 @@ def build_workflow(args, retval):
                         print("%s%s" % ("Cluster atlas: ", atlas_clust))
                         do_dir_path(atlas_clust, func_file)
             clust_type = None
+            k = None
         elif k_clustering == 7:
             print("\nClustering within multiple masks at a single resolution using multiple clustering methods...")
             if func_file_list:
@@ -1124,6 +1127,7 @@ def build_workflow(args, retval):
                             do_dir_path(atlas_clust, func_file)
             clust_mask = None
             clust_type = None
+            k = None
         elif (user_atlas_list is not None or uatlas is not None) and (k_clustering == 4 or
                                                                       k_clustering == 3 or
                                                                       k_clustering == 2 or
@@ -1313,11 +1317,11 @@ def build_workflow(args, retval):
     # print("%s%s" % ('k_clustering: ', k_clustering))
     # print("%s%s" % ('user_atlas_list: ', user_atlas_list))
     # print("%s%s" % ('clust_mask_list: ', clust_mask_list))
+    # print("%s%s" % ('clust_type: ', clust_type))
+    # print("%s%s" % ('clust_type_list: ', clust_type_list))
     # print("%s%s" % ('prune: ', prune))
     # print("%s%s" % ('node_size_list: ', node_size_list))
     # print("%s%s" % ('smooth_list: ', smooth_list))
-    # print("%s%s" % ('clust_type: ', clust_type))
-    # print("%s%s" % ('clust_type_list: ', clust_type_list))
     # print("%s%s" % ('c_boot: ', c_boot))
     # print("%s%s" % ('block_size: ', block_size))
     # print("%s%s" % ('mask: ', mask))
@@ -1735,6 +1739,8 @@ def build_workflow(args, retval):
         warnings.filterwarnings("ignore")
         import shutil
         import os
+        import uuid
+        from time import strftime
         if (func_file is not None) and (dwi_file is None):
             base_dirname = "%s%s" % ('wf_single_subject_fmri_', str(ID))
         elif (dwi_file is not None) and (func_file is None):
@@ -1742,18 +1748,19 @@ def build_workflow(args, retval):
         else:
             base_dirname = "%s%s" % ('wf_single_subject_', str(ID))
 
+        run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
         if func_file:
             func_dir = os.path.dirname(func_file)
-            if os.path.exists("%s%s%s" % (func_dir, '/', base_dirname)):
-                shutil.rmtree("%s%s%s" % (func_dir, '/', base_dirname))
-            os.mkdir("%s%s%s" % (func_dir, '/', base_dirname))
-            wf.base_dir = "%s%s%s" % (func_dir, '/', base_dirname)
+            if os.path.exists("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)):
+                shutil.rmtree("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
+            os.mkdir("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
+            wf.base_dir = "%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)
         elif dwi_file:
             dwi_dir = os.path.dirname(dwi_file)
-            if os.path.exists("%s%s%s" % (dwi_dir, '/', base_dirname)):
-                shutil.rmtree("%s%s%s" % (dwi_dir, '/', base_dirname))
-            os.mkdir("%s%s%s" % (dwi_dir, '/', base_dirname))
-            wf.base_dir = "%s%s%s" % (dwi_dir, '/', base_dirname)
+            if os.path.exists("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)):
+                shutil.rmtree("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
+            os.mkdir("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
+            wf.base_dir = "%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)
 
         if verbose is True:
             from nipype import config, logging
