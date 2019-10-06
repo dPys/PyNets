@@ -1747,17 +1747,17 @@ def build_workflow(args, retval):
             base_dirname = "%s%s" % ('wf_single_subject_', str(ID))
 
         if func_file:
-            func_dir = os.path.dirname(func_file)
-            if os.path.exists("%s%s%s" % (func_dir, '/', base_dirname)):
-                shutil.rmtree("%s%s%s" % (func_dir, '/', base_dirname))
-            os.mkdir("%s%s%s" % (func_dir, '/', base_dirname))
-            wf.base_dir = "%s%s%s" % (func_dir, '/', base_dirname)
+            func_dir = os.path.basename(func_file)
+            if os.path.exists("%s%s%s%s" % ('/tmp/', func_dir, '/', base_dirname)):
+                shutil.rmtree("%s%s%s%s" % ('/tmp/', func_dir, '/', base_dirname))
+            os.mkdir("%s%s%s%s" % ('/tmp/', func_dir, '/', base_dirname))
+            wf.base_dir = "%s%s%s%s" % ('/tmp/', func_dir, '/', base_dirname)
         elif dwi_file:
-            dwi_dir = os.path.dirname(dwi_file)
-            if os.path.exists("%s%s%s" % (dwi_dir, '/', base_dirname)):
-                shutil.rmtree("%s%s%s" % (dwi_dir, '/', base_dirname))
-            os.mkdir("%s%s%s" % (dwi_dir, '/', base_dirname))
-            wf.base_dir = "%s%s%s" % (dwi_dir, '/', base_dirname)
+            dwi_dir = os.path.basename(dwi_file)
+            if os.path.exists("%s%s%s%s" % ('/tmp/', dwi_dir, '/', base_dirname)):
+                shutil.rmtree("%s%s%s%s" % ('/tmp/', dwi_dir, '/', base_dirname))
+            os.mkdir("%s%s%s%s" % ('/tmp/', dwi_dir, '/', base_dirname))
+            wf.base_dir = "%s%s%s%s" % ('/tmp/', dwi_dir, '/', base_dirname)
 
         if verbose is True:
             from nipype import config, logging

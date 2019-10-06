@@ -2553,7 +2553,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                                  function=regutils.check_orient_and_dims,
                                                                  imports=import_list),
                                                     name="check_orient_and_dims_uatlas_node")
-
+        fmri_connectometry_wf.add_nodes([register_atlas_node])
         fmri_connectometry_wf.connect([
             (inputnode, check_orient_and_dims_anat_node, [('anat_file', 'infile'), ('vox_size', 'vox_size')]),
             (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_file')]),
@@ -2570,7 +2570,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
         if k_clustering > 0:
             fmri_connectometry_wf.disconnect([
-                (fetch_nodes_and_labels_node, register_atlas_node, [('uatlas', 'uatlas')])
+                (check_orient_and_dims_uatlas_node, register_atlas_node, [('outfile', 'uatlas')])
             ])
             fmri_connectometry_wf.connect([
                 (check_orient_and_dims_func_node, register_atlas_node, [('outfile', 'uatlas')]),
