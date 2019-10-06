@@ -634,9 +634,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]
     base_dirname = "%s%s" % ('dmri_connectometry_', ID)
     dmri_connectometry_wf = pe.Workflow(name=base_dirname)
-    if not os.path.isdir("%s%s" % ('/tmp/', base_dirname)):
-        os.mkdir("%s%s" % ('/tmp/', base_dirname))
-    dmri_connectometry_wf.base_directory = "%s%s" % ('/tmp/', base_dirname)
 
     # Create basedir_path
     if parc is True:
@@ -1573,9 +1570,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]
     fmri_connectometry_wf = pe.Workflow(name="%s%s" % ('fmri_connectometry_', ID))
     base_dirname = "%s%s" % ('fmri_connectometry_', ID)
-    if not os.path.isdir("%s%s" % ('/tmp/', base_dirname)):
-        os.mkdir("%s%s" % ('/tmp/', base_dirname))
-    fmri_connectometry_wf.base_directory = "%s%s" % ('/tmp/', base_dirname)
 
     # Create basedir_path
     if parc is True:

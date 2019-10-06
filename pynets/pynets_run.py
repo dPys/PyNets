@@ -1739,6 +1739,8 @@ def build_workflow(args, retval):
         warnings.filterwarnings("ignore")
         import shutil
         import os
+        import uuid
+        from time import strftime
         if (func_file is not None) and (dwi_file is None):
             base_dirname = "%s%s" % ('wf_single_subject_fmri_', str(ID))
         elif (dwi_file is not None) and (func_file is None):
@@ -1746,18 +1748,19 @@ def build_workflow(args, retval):
         else:
             base_dirname = "%s%s" % ('wf_single_subject_', str(ID))
 
+        run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
         if func_file:
-            func_dir = os.path.basename(func_file)
-            if os.path.exists("%s%s%s%s" % ('/tmp/', func_dir, '/', base_dirname)):
-                shutil.rmtree("%s%s%s%s" % ('/tmp/', func_dir, '/', base_dirname))
-            os.mkdir("%s%s%s%s" % ('/tmp/', func_dir, '/', base_dirname))
-            wf.base_dir = "%s%s%s%s" % ('/tmp/', func_dir, '/', base_dirname)
+            func_dir = os.path.dirname(func_file)
+            if os.path.exists("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)):
+                shutil.rmtree("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
+            os.mkdir("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
+            wf.base_dir = "%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)
         elif dwi_file:
-            dwi_dir = os.path.basename(dwi_file)
-            if os.path.exists("%s%s%s%s" % ('/tmp/', dwi_dir, '/', base_dirname)):
-                shutil.rmtree("%s%s%s%s" % ('/tmp/', dwi_dir, '/', base_dirname))
-            os.mkdir("%s%s%s%s" % ('/tmp/', dwi_dir, '/', base_dirname))
-            wf.base_dir = "%s%s%s%s" % ('/tmp/', dwi_dir, '/', base_dirname)
+            dwi_dir = os.path.dirname(dwi_file)
+            if os.path.exists("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)):
+                shutil.rmtree("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
+            os.mkdir("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
+            wf.base_dir = "%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)
 
         if verbose is True:
             from nipype import config, logging
