@@ -92,15 +92,14 @@ RUN pip install --upgrade pip
 RUN conda clean -tipsy
 RUN pip install awscli pybids boto3 python-dateutil requests dipy scikit-image
 
-#RUN git clone -b master https://github.com/dPys/PyNets PyNets && \
-#    cd PyNets && \
-#    pip install -r requirements.txt && \
-#    python setup.py install
-RUN pip install pynets==0.9.58
-
-RUN git clone -b master https://github.com/dPys/nilearn.git nilearn && \
-    cd nilearn && \
+RUN git clone -b master https://github.com/dPys/PyNets PyNets && \
+    cd PyNets && \
+    pip install -r requirements.txt && \
     python setup.py install
+
+#RUN git clone -b master https://github.com/dPys/nilearn.git nilearn && \
+#    cd nilearn && \
+#    python setup.py install
 
 RUN sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py
@@ -138,8 +137,8 @@ USER neuro
 ENV LD_LIBRARY_PATH="/opt/conda/lib":$LD_LIBRARY_PATH
 
 # Link to local packages
-RUN echo PATH=\"\$HOME/.local/bin:\$PATH\" >> $HOME/.profile \
-    && echo "shell -bash" >> ~/.screenrc
+#RUN echo PATH=\"\$HOME/.local/bin:\$PATH\" >> $HOME/.profile \
+#    && echo "shell -bash" >> ~/.screenrc
 
 # PyNets ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets:$PATH"

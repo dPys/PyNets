@@ -52,7 +52,7 @@ resource_dict:
       - 'node_gen_node':
         - (1, 1)
       - 'clustering_node':
-        - (1, 4)
+        - (2, 8)
       - 'get_conn_matrix_node':
         - (1, 1)
       - 'thresh_func_node':
@@ -62,7 +62,7 @@ resource_dict:
       - 'get_fa_node':
         - (1, 1)
       - 'run_tracking_node':
-        - (1, 4)
+        - (2, 4)
       - 'thresh_diff_node':
         - (1, 1)
       - 'dsn_node':
