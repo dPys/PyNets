@@ -627,7 +627,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     from pynets.registration import reg_utils as regutils
     from pynets.dmri import estimation, track
     from pynets.plotting import plot_gen
-    import os
     import os.path as op
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
@@ -1556,7 +1555,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     """A function interface for generating an fMRI nested workflow"""
     import warnings
     warnings.filterwarnings("ignore")
-    import os
     import os.path as op
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -1568,8 +1566,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]
-    fmri_connectometry_wf = pe.Workflow(name="%s%s" % ('fmri_connectometry_', ID))
     base_dirname = "%s%s" % ('fmri_connectometry_', ID)
+    fmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
     # Create basedir_path
     if parc is True:

@@ -357,7 +357,8 @@ def get_parser():
                         metavar='Scheduler type',
                         default='MultiProc',
                         nargs=1,
-                        choices=['Linear', 'MultiProc', 'SGE', 'PBS', 'SLURM', 'SGEgraph', 'SLURMgraph'],
+                        choices=['Linear', 'MultiProc', 'SGE', 'PBS', 'SLURM', 'SGEgraph', 'SLURMgraph',
+                                 'LegacyMultiProc'],
                         help='Include this flag to specify a workflow plugin other than the default MultiProc.\n')
     parser.add_argument('-v',
                         default=False,
