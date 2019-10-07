@@ -158,7 +158,7 @@ ENV FSLOUTPUTTYPE=NIFTI_GZ
 # Misc environment vars
 ENV PYTHONWARNINGS ignore
 ENV OMP_NUM_THREADS=1
-ENV USE_SIMPLE_THREADED_LEVEL3= 1
+ENV USE_SIMPLE_THREADED_LEVEL3=1
 
 # Precaching fonts, set 'Agg' as default backend for matplotlib
 RUN python -c "from matplotlib import font_manager" && \
