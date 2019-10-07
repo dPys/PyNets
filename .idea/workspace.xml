@@ -8,14 +8,7 @@
     <bookmark url="file://$PROJECT_DIR$/pynets/registration/register.py" description="        # Create linear transform/ initializer T1w..." line="731" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/__about__.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/__about__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/core/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/dmri/track.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/track.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/registration/register.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/register.py" afterDir="false" />
-    </list>
+    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="" />
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -72,8 +65,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="673">
-              <caret line="312" column="59" selection-start-line="312" selection-start-column="59" selection-end-line="312" selection-end-column="59" />
+            <state relative-caret-position="1757">
+              <caret line="340" column="50" lean-forward="true" selection-start-line="340" selection-start-column="50" selection-end-line="340" selection-end-column="50" />
               <folding>
                 <element signature="e#139#154#0" expanded="true" />
               </folding>
@@ -192,9 +185,9 @@
       <find>standard</find>
       <find>self.waymask_in_dwi</find>
       <find>prep_tissues</find>
-      <find>overlap_thr</find>
       <find>roi_neighborhood_tol</find>
       <find>print</find>
+      <find>overlap_thr</find>
     </findStrings>
     <replaceStrings>
       <replace>'fmri_connectometry_'</replace>
@@ -321,6 +314,11 @@
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
               <item name="pynets" type="462c0819:PsiDirectoryNode" />
               <item name="dmri" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="tests" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -593,19 +591,19 @@
       <workItem from="1569305159380" duration="2000" />
       <workItem from="1569353631521" duration="7458000" />
       <workItem from="1569467774494" duration="96986000" />
-      <workItem from="1570379759615" duration="17974000" />
+      <workItem from="1570379759615" duration="19000000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1178624000" />
+    <option name="totallyTimeSpent" value="1179650000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="373" y="84" width="1198" height="984" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49071926" visible="true" weight="0.15570934" />
-      <window_info active="true" id="Structure" order="1" sideWeight="0.50928074" side_tool="true" visible="true" weight="0.15570934" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49071926" visible="true" weight="0.15570934" />
+      <window_info id="Structure" order="1" sideWeight="0.50928074" side_tool="true" visible="true" weight="0.15570934" />
       <window_info id="Favorites" order="2" sideWeight="0.50468385" side_tool="true" weight="0.09234412" />
       <window_info id="aws.explorer" order="3" sideWeight="0.503386" side_tool="true" weight="0.1362916" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -810,16 +808,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_clustools.py" />
-    <entry file="file://$PROJECT_DIR$/tests/test_track.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="485">
-          <caret line="68" column="27" selection-start-line="68" selection-start-column="27" selection-end-line="68" selection-end-column="27" />
-          <folding>
-            <element signature="e#192#216#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_estimation.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1755">
@@ -1085,10 +1073,20 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_track.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="440">
+          <caret line="68" column="27" selection-start-line="68" selection-start-column="27" selection-end-line="68" selection-end-column="27" />
+          <folding>
+            <element signature="e#192#216#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="673">
-          <caret line="312" column="59" selection-start-line="312" selection-start-column="59" selection-end-line="312" selection-end-column="59" />
+        <state relative-caret-position="1757">
+          <caret line="340" column="50" lean-forward="true" selection-start-line="340" selection-start-column="50" selection-end-line="340" selection-end-column="50" />
           <folding>
             <element signature="e#139#154#0" expanded="true" />
           </folding>
