@@ -105,7 +105,6 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     elif tiss_class == 'wb':
         B0_mask_data = mask_img.get_fdata().astype('bool')
         tiss_classifier = BinaryStoppingCriterion(B0_mask_data)
-
     else:
         raise ValueError('Tissue Classifier cannot be none.')
 
@@ -192,7 +191,7 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
 
 
 def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere, directget,
-                   curv_thr_list, step_list, track_type, maxcrossing, max_length, roi_neighborhood_tol, min_length,
+                   curv_thr_list, step_list, track_type, maxcrossing, max_length, roi_neighborhood_tol, min_length, waymask,
                    n_seeds_per_iter=100, pft_back_tracking_dist=2, pft_front_tracking_dist=1, particle_count=15):
     """
     Perform native-space ensemble tractography, restricted to a vector of ROI masks.
@@ -234,6 +233,8 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
         the center of each voxel and the corner of the voxel.
     min_length : int
         Minimum fiber length threshold in mm.
+    waymask : str
+        Path to a Nifti1Image in native diffusion space to constrain tractography.
     n_seeds_per_iter : int
         Number of seeds from which to initiate tracking for each unique ensemble combination.
         By default this is set to 200.
@@ -260,6 +261,10 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
     from dipy.tracking.streamline import Streamlines, select_by_rois
     from dipy.tracking.local_tracking import LocalTracking, ParticleFilteringTracking
     from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
+
+    if waymask:
+        waymask_img = nib.load(waymask)
+        waymask_data = waymask_img.get_fdata().astype('bool')
 
     # Commence Ensemble Tractography
     parcel_vec = list(np.ones(len(parcels)).astype('bool'))
@@ -315,10 +320,21 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                                                       rois=parcels, include=parcel_vec,
                                                                       mode='any',
                                                                       tol=roi_neighborhood_tol))
+                print("%s%s" % ('Qualifying Streamlines by node intersection: ', len(roi_proximal_streamlines)))
 
                 roi_proximal_streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in
                                                                                          roi_proximal_streamlines if
                                                                                          len(s) > float(min_length)])
+
+                print("%s%s" % ('Qualifying Streamlines by minimum length criterion: ', len(roi_proximal_streamlines)))
+
+                if waymask:
+                    roi_proximal_streamlines = roi_proximal_streamlines[utils.near_roi(roi_proximal_streamlines,
+                                                                                       np.eye(4),
+                                                                                       waymask_data,
+                                                                                       tol=roi_neighborhood_tol,
+                                                                                       mode='any')]
+                    print("%s%s" % ('Qualifying Streamlines by waymask proximity: ', len(roi_proximal_streamlines)))
 
                 # Repeat process until target samples condition is met
                 ix = ix + 1
@@ -343,7 +359,7 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
               labels_im_file, target_samples, curv_thr_list, step_list, track_type, max_length, maxcrossing, directget,
               conn_model, gtab_file, dwi_file, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
               prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, min_length,
-              fa_path, roi_neighborhood_tol=4):
+              fa_path, waymask, roi_neighborhood_tol=4):
     '''
     Run all ensemble tractography and filtering routines.
 
@@ -427,6 +443,8 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
         Minimum fiber length threshold in mm.
     fa_path : str
         File path to FA Nifti1Image.
+    waymask : str
+        Path to a Nifti1Image in native diffusion space to constrain tractography.
     roi_neighborhood_tol : float
         Distance (in the units of the streamlines, usually mm). If any
         coordinate in the streamline is within this distance from the center
@@ -562,7 +580,7 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     # Commence Ensemble Tractography
     streamlines = track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier,
                                  sphere, directget, curv_thr_list, step_list, track_type, maxcrossing, max_length,
-                                 roi_neighborhood_tol, min_length)
+                                 roi_neighborhood_tol, min_length, waymask)
     print('Tracking Complete')
 
     # Create streamline density map

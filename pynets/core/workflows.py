@@ -19,7 +19,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                       overlap_thr_list, track_type, max_length, maxcrossing, min_length, directget,
                       tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
-                      template_mask, vox_size, multiplex, clean=True):
+                      template_mask, vox_size, multiplex, waymask, clean=True):
     """A Meta-Interface for selecting nested workflows to link into a given single-subject workflow"""
     import warnings
     warnings.filterwarnings("ignore")
@@ -107,7 +107,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                      target_samples, curv_thr_list, step_list, overlap_thr,
                                                      overlap_thr_list, track_type, max_length, maxcrossing,
                                                      min_length, directget, tiss_class, runtime_dict,
-                                                     multi_directget, template, template_mask, vox_size)
+                                                     multi_directget, template, template_mask, vox_size, waymask)
         if func_file is None:
             sub_func_wf = None
 
@@ -167,7 +167,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                            'maxcrossing', 'min_length', 'directget',
                                                            'tiss_class', 'embed', 'multi_directget', 'multimodal',
                                                            'hpass', 'hpass_list', 'template', 'template_mask',
-                                                           'vox_size', 'multiplex']),
+                                                           'vox_size', 'multiplex', 'waymask']),
                              name='meta_inputnode')
     meta_inputnode.inputs.func_file = func_file
     meta_inputnode.inputs.ID = ID
@@ -243,6 +243,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     meta_inputnode.inputs.template_mask = template_mask
     meta_inputnode.inputs.vox_size = vox_size
     meta_inputnode.inputs.multiplex = multiplex
+    meta_inputnode.inputs.waymask = waymask
 
     if multimodal is True:
         # Create input/output nodes
@@ -310,7 +311,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                           ('multi_directget', 'inputnode.multi_directget'),
                                                           ('template', 'inputnode.template'),
                                                           ('template_mask', 'inputnode.template_mask'),
-                                                          ('vox_size', 'inputnode.vox_size')
+                                                          ('vox_size', 'inputnode.vox_size'),
+                                                          ('waymask', 'inputnode.waymask')
                                                           ])
                          ])
         meta_wf.connect([(meta_inputnode, sub_func_wf, [('func_file', 'inputnode.func_file'),
@@ -449,7 +451,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                               ('multi_directget', 'inputnode.multi_directget'),
                                                               ('template', 'inputnode.template'),
                                                               ('template_mask', 'inputnode.template_mask'),
-                                                              ('vox_size', 'inputnode.vox_size')
+                                                              ('vox_size', 'inputnode.vox_size'),
+                                                              ('waymask', 'inputnode.waymask')
                                                               ])
                              ])
 
@@ -616,7 +619,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                        min_span_tree, use_AAL_naming, disp_filt, plugin_type, multi_nets, prune, mask, norm,
                        binary, target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list,
                        track_type, max_length, maxcrossing, min_length, directget, tiss_class,
-                       runtime_dict, multi_directget, template, template_mask, vox_size):
+                       runtime_dict, multi_directget, template, template_mask, vox_size, waymask):
     """A function interface for generating a dMRI nested workflow"""
     import warnings
     warnings.filterwarnings("ignore")
@@ -627,7 +630,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     from pynets.registration import reg_utils as regutils
     from pynets.dmri import estimation, track
     from pynets.plotting import plot_gen
-    import os
     import os.path as op
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
@@ -652,7 +654,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                       'curv_thr_list', 'step_list', 'overlap_thr', 'overlap_thr_list',
                                                       'track_type', 'max_length', 'maxcrossing',
                                                       'min_length', 'directget', 'tiss_class', 'vox_size',
-                                                      'basedir_path', 'multi_directget']),
+                                                      'basedir_path', 'multi_directget', 'waymask']),
                         name='inputnode')
 
     inputnode.inputs.ID = ID
@@ -705,6 +707,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     inputnode.inputs.vox_size = vox_size
     inputnode.inputs.basedir_path = basedir_path
     inputnode.inputs.multi_directget = multi_directget
+    inputnode.inputs.waymask = waymask
 
     # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
@@ -825,18 +828,17 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                        function=estimation.tens_mod_fa_est, imports=import_list), name="get_fa_node")
 
     register_node = pe.Node(niu.Function(input_names=['basedir_path', 'fa_path', 'B0_mask', 'anat_file',
-                                                      'gtab_file', 'dwi_file', 'vox_size'],
-                                         output_names=['wm_gm_int_in_dwi', 'wm_in_dwi', 'gm_in_dwi', 'vent_csf_in_dwi',
+                                                      'gtab_file', 'dwi_file', 'vox_size', 'waymask'],
+                                         output_names=['wm_in_dwi', 'gm_in_dwi', 'vent_csf_in_dwi',
                                                        'csf_mask_dwi', 'anat_file', 'B0_mask', 'fa_path',
-                                                       'gtab_file', 'dwi_file'],
+                                                       'gtab_file', 'dwi_file', 'waymask_dwi'],
                                          function=register.register_all_dwi, imports=import_list),
                             name="register_node")
 
     register_atlas_node = pe.Node(niu.Function(input_names=['uatlas', 'uatlas_parcels', 'atlas', 'node_size',
                                                             'basedir_path', 'fa_path', 'B0_mask', 'anat_file',
-                                                            'wm_gm_int_in_dwi', 'coords', 'labels',
-                                                            'gm_in_dwi', 'vent_csf_in_dwi', 'wm_in_dwi', 'gtab_file',
-                                                            'dwi_file', 'vox_size'],
+                                                            'coords', 'labels', 'gm_in_dwi', 'vent_csf_in_dwi',
+                                                            'wm_in_dwi', 'gtab_file', 'dwi_file', 'vox_size'],
                                                output_names=['dwi_aligned_atlas_wmgm_int', 'dwi_aligned_atlas',
                                                              'aligned_atlas_t1mni', 'uatlas', 'atlas',
                                                              'coords', 'labels', 'node_size', 'gm_in_dwi',
@@ -853,7 +855,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                           'node_size', 'dens_thresh', 'ID', 'roi', 'min_span_tree',
                                                           'disp_filt', 'parc', 'prune', 'atlas',
                                                           'uatlas', 'labels', 'coords', 'norm', 'binary',
-                                                          'atlas_mni', 'min_length', 'fa_path'],
+                                                          'atlas_mni', 'min_length', 'fa_path', 'waymask'],
                                              output_names=['streams', 'track_type', 'target_samples',
                                                            'conn_model', 'dir_path', 'network', 'node_size',
                                                            'dens_thresh', 'ID', 'roi', 'min_span_tree',
@@ -1239,7 +1241,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                               ('gm_in_dwi', 'gm_in_dwi'),
                                               ('vent_csf_in_dwi', 'vent_csf_in_dwi'),
                                               ('wm_in_dwi', 'wm_in_dwi'),
-                                              ('wm_gm_int_in_dwi', 'wm_gm_int_in_dwi'),
                                               ('fa_path', 'fa_path'),
                                               ('B0_mask', 'B0_mask'),
                                               ('gtab_file', 'gtab_file'),
@@ -1344,6 +1345,23 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                          ('atlas', 'atlas')])
                                        ])
 
+    if waymask is not None:
+        check_orient_and_dims_waymask_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'],
+                                                                  output_names=['outfile'],
+                                                                  function=regutils.check_orient_and_dims,
+                                                                  imports=import_list),
+                                                     name="check_orient_and_dims_waymask_node")
+        dmri_connectometry_wf.connect([
+            (inputnode, check_orient_and_dims_waymask_node, [('waymask', 'infile'), ('vox_size', 'vox_size')]),
+            (check_orient_and_dims_waymask_node, register_node, [('outfile', 'waymask')]),
+            (register_node, run_tracking_node, [('waymask_dwi', 'waymask')]),
+        ])
+    else:
+        dmri_connectometry_wf.connect([
+            (inputnode, register_node, [('waymask', 'waymask')]),
+            (inputnode, run_tracking_node, [('waymask', 'waymask')]),
+        ])
+
     # Handle masking scenarios (brain mask and/or roi)
     if mask and (op.isfile(template_mask) is True):
         dmri_connectometry_wf.connect([
@@ -1353,6 +1371,18 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         dmri_connectometry_wf.connect([
             (inputnode, node_gen_node, [('mask', 'roi')]),
         ])
+
+    # Check orientation and resolution
+    check_orient_and_dims_uatlas_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'],
+                                                             output_names=['outfile'],
+                                                             function=regutils.check_orient_and_dims,
+                                                             imports=import_list),
+                                                name="check_orient_and_dims_uatlas_node")
+    dmri_connectometry_wf.connect([
+        (inputnode, check_orient_and_dims_uatlas_node, [('vox_size', 'vox_size')]),
+        (fetch_nodes_and_labels_node, check_orient_and_dims_uatlas_node, [('uatlas', 'infile')]),
+        (check_orient_and_dims_uatlas_node, register_atlas_node, [('outfile', 'uatlas')]),
+    ])
 
     if parc is False:
         if network or multi_nets:
@@ -1380,7 +1410,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                            (get_node_membership_node, save_nifti_parcels_node,
                                             [('network', 'network')]),
                                            (prep_spherical_nodes_node, gtab_node, [('node_size', 'node_size')]),
-                                           (fetch_nodes_and_labels_node, register_atlas_node, [('uatlas', 'uatlas')]),
                                            (save_nifti_parcels_node, register_atlas_node, [('net_parcels_nii_path',
                                                                                             'uatlas_parcels')]),
                                            (save_nifti_parcels_node, dsn_node, [('net_parcels_nii_path', 'uatlas')])
@@ -1399,7 +1428,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                             [('network', 'network')]),
                                            (inputnode, gtab_node, [('network', 'network')]),
                                            (prep_spherical_nodes_node, gtab_node, [('node_size', 'node_size')]),
-                                           (fetch_nodes_and_labels_node, register_atlas_node, [('uatlas', 'uatlas')]),
                                            (node_gen_node, register_atlas_node, [('uatlas', 'uatlas_parcels')]),
                                            (run_tracking_node, dsn_node, [('uatlas', 'uatlas')]),
                                            (inputnode, run_tracking_node, [('network', 'network')])
@@ -1481,7 +1509,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                         [('dir_path', 'dir_path')]),
                                        (node_gen_node, save_nifti_parcels_node,
                                         [('net_parcels_map_nifti', 'net_parcels_map_nifti')]),
-                                       (fetch_nodes_and_labels_node, register_atlas_node, [('uatlas', 'uatlas')]),
                                        (save_nifti_parcels_node, register_atlas_node, [('net_parcels_nii_path',
                                                                                         'uatlas_parcels')]),
                                        (node_gen_node, register_atlas_node, [('atlas', 'atlas'),
@@ -1556,7 +1583,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     """A function interface for generating an fMRI nested workflow"""
     import warnings
     warnings.filterwarnings("ignore")
-    import os
     import os.path as op
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -1568,8 +1594,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]
-    fmri_connectometry_wf = pe.Workflow(name="%s%s" % ('fmri_connectometry_', ID))
     base_dirname = "%s%s" % ('fmri_connectometry_', ID)
+    fmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
     # Create basedir_path
     if parc is True:
