@@ -49,8 +49,8 @@ def get_parser():
                         default=None,
                         nargs='+',
                         help='Specify either a path to a preprocessed functional Nifti1Image in '
-                             'standard space OR multiple space-separated paths to multiple preprocessed functional '
-                             'Nifti1Image files in standard space and in .nii or .nii.gz format, '
+                             'MNI152 space OR multiple space-separated paths to multiple preprocessed functional '
+                             'Nifti1Image files in MNI152 space and in .nii or .nii.gz format, '
                              'OR the path to a text file containing a list of paths '
                              'to subject files.\n')
     parser.add_argument('-conf',
@@ -96,17 +96,22 @@ def get_parser():
                         metavar='Path to binarized mask Nifti1Image to apply to regions before extracting signals',
                         default=None,
                         nargs='+',
-                        help='Specify either a path to a binarized brain mask Nifti1Image in standard space '
+                        help='Specify either a path to a binarized brain mask Nifti1Image in MNI152 space '
                              'OR multiple paths to multiple brain mask Nifti1Image files in the case of running '
                              'multiple participants, in which case paths should be separated by a space. If no brain '
                              'mask is supplied, a default MNI152 template mask will be used\n')
     parser.add_argument('-roi',
-                        metavar='Path to binarized region-of-interest Nifti1Image',
+                        metavar='Path to binarized Region-of-Interest (ROI) Nifti1Image',
                         default=None,
                         nargs='+',
-                        help='Optionally specify a thresholded binarized ROI mask and retain only those nodes '
-                             'contained within that mask for functional connectome estimation, or constrain the '
-                             'tractography in the case of dmri connectome estimation.\n')
+                        help='Optionally specify a binarized ROI mask and retain only those nodes '
+                             'of a parcellation contained within that mask for connectome estimation.\n')
+    parser.add_argument('-way',
+                        metavar='Path to binarized Nifti1Image to constrain tractography',
+                        default=None,
+                        nargs='+',
+                        help='Optionally specify a binarized ROI mask in MNI-space to constrain tractography in the '
+                             'case of dmri connectome estimation.\n')
     parser.add_argument('-cm',
                         metavar='Cluster mask',
                         default=None,
@@ -115,23 +120,23 @@ def get_parser():
                              'If specifying a list of paths to multiple cluster masks, separate '
                              'them by space.\n')
     parser.add_argument('-ua',
-                        metavar='Path to parcellation file',
+                        metavar='Path to parcellation file in MNI-space',
                         default=None,
                         nargs='+',
-                        help='Optionally specify a path to a parcellation/atlas Nifti1Image file. Labels should be '
-                             'spatially distinct across hemispheres and ordered with consecutive integers with a value '
-                             'of 0 as the background label. If specifying a list of paths to multiple user atlases, '
-                             'separate them by space.\n')
+                        help='Optionally specify a path to a parcellation/atlas Nifti1Image file in MNI152 space. '
+                             'Labels should be spatially distinct across hemispheres and ordered with consecutive '
+                             'integers with a value of 0 as the background label. If specifying a list of paths to '
+                             'multiple user atlases, separate them by space.\n')
     parser.add_argument('-templ',
                         metavar='Path to template file',
                         default=None,
                         help='Optionally specify a path to a template Nifti1Image file. If none is specified, then '
-                             'will use the FSL MNI152 template by default.\n')
+                             'will use the MNI152 template by default.\n')
     parser.add_argument('-templm',
                         metavar='Path to template mask file',
                         default=None,
                         help='Optionally specify a path to a template mask Nifti1Image file. If none is specified, '
-                             'then will use the FSL MNI152 template mask by default.\n')
+                             'then will use the MNI152 template mask by default.\n')
     parser.add_argument('-ref',
                         metavar='Atlas reference file path',
                         default=None,
@@ -549,6 +554,9 @@ def build_workflow(args, retval):
             clust_mask_list = None
     else:
         clust_mask_list = None
+    waymask = args.way
+    if isinstance(waymask, list):
+        waymask = waymask[0]
     network = args.n
     if network:
         if (type(network) is list) and (len(network) > 1):
@@ -652,8 +660,8 @@ def build_workflow(args, retval):
 
     # Check required inputs for existence, and configure run
     if (func_file is None) and (dwi_file is None) and (graph is None) and (multi_graph is None):
-        raise ValueError("\nError: You must include a file path to either a standard space functional image in .nii or "
-                         ".nii.gz format with the -func flag.")
+        raise ValueError("\nError: You must include a file path to either an MNI152-normalized space functional image "
+                         "in .nii or .nii.gz format with the -func flag.")
     
     if func_file:
         if isinstance(func_file, list) and len(func_file) > 1:
@@ -1310,6 +1318,7 @@ def build_workflow(args, retval):
     # print("%s%s" % ('parc: ', parc))
     # print("%s%s" % ('ref_txt: ', ref_txt))
     # print("%s%s" % ('procmem: ', procmem))
+    # print("%s%s" % ('waymask: ', waymask))
     # print("%s%s" % ('k: ', k))
     # print("%s%s" % ('clust_mask: ', clust_mask))
     # print("%s%s" % ('k_min: ', k_min))
@@ -1370,7 +1379,7 @@ def build_workflow(args, retval):
                                curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
                                maxcrossing, min_length, directget, tiss_class, runtime_dict, embed,
                                multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
-                               multiplex):
+                               multiplex, waymask):
         import warnings
         warnings.filterwarnings("ignore")
         from time import strftime
@@ -1431,7 +1440,7 @@ def build_workflow(args, retval):
                                     target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
                                     max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict,
                                     embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
-                                    vox_size, multiplex)
+                                    vox_size, multiplex, waymask)
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
@@ -1566,7 +1575,8 @@ def build_workflow(args, retval):
                          smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask, norm,
                          binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list,
                          track_type, max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict, embed,
-                         multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex):
+                         multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex,
+                         waymask):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1625,7 +1635,7 @@ def build_workflow(args, retval):
                 max_length=max_length, maxcrossing=maxcrossing, min_length=min_length,
                 directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, embed=embed,
                 multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
-                template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex)
+                template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex, waymask=waymask)
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
@@ -1667,7 +1677,8 @@ def build_workflow(args, retval):
                                     block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list,
                                     step_list, overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing,
                                     min_length, directget, tiss_class, runtime_dict, embed, multi_directget,
-                                    multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex)
+                                    multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex,
+                                    waymask)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1735,7 +1746,7 @@ def build_workflow(args, retval):
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     overlap_thr_list, track_type, max_length, maxcrossing, min_length,
                                     directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass,
-                                    hpass_list, template, template_mask, vox_size, multiplex)
+                                    hpass_list, template, template_mask, vox_size, multiplex, waymask)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil

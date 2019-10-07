@@ -96,7 +96,7 @@ RUN pip install awscli pybids boto3 python-dateutil requests dipy scikit-image
 #    cd PyNets && \
 #    pip install -r requirements.txt && \
 #    python setup.py install
-RUN pip install pynets==0.9.57
+RUN pip install pynets==0.9.58
 
 RUN git clone -b master https://github.com/dPys/nilearn.git nilearn && \
     cd nilearn && \
