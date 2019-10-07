@@ -19,6 +19,8 @@ pybids>=0.6.4
 colorama>=0.3.9
 python-louvain==0.13
 scikit-image==0.14.2
+pyvtk>=0.5.18
+fury>=0.2.0
 #skggm>=0.2.7
 graspy>=0.0.2
 #py3plex>=0.67
