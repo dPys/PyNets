@@ -1584,15 +1584,19 @@ def build_workflow(args, retval):
 
         wf_multi = pe.Workflow(name="%s%s" % ('wf_multisub_', strftime('%Y%m%d-%H%M%S')))
 
-        if func_file_list and not dwi_file_list:
-            dwi_file_list = len(func_file_list) * [None]
-            fbvec_list = len(fbvec_list) * [None]
-            fbval_list = len(fbval_list) * [None]
-        elif dwi_file_list and not func_file_list:
+        if (func_file_list is None) and dwi_file_list:
             func_file_list = len(dwi_file_list) * [None]
-            conf_list = len(conf_list) * [None]
-        else:
-            pass
+            conf_list = len(dwi_file_list) * [None]
+
+        if (dwi_file_list is None) and func_file_list:
+            dwi_file_list = len(func_file_list) * [None]
+            fbvec_list = len(func_file_list) * [None]
+            fbval_list = len(func_file_list) * [None]
+
+        print('\n\n')
+        print(dwi_file_list)
+        print(func_file_list)
+        print('\n\n')
 
         i = 0
         for dwi_file, func_file in zip(dwi_file_list, func_file_list):
@@ -1640,7 +1644,7 @@ def build_workflow(args, retval):
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
                 wf_selected = "%s%s" % ('fmri_connectometry_', ID[i])
-                meta_wf_name = "%s%s" % ('Meta_wf_', ID[i])
+                meta_wf_name = "%s%s" % ('meta_wf_', ID[i])
                 for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
@@ -1650,8 +1654,8 @@ def build_workflow(args, retval):
                     wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._mem_gb = runtime_dict['clustering_node'][1]
 
             if dwi_file:
-                wf_selected = "%s%s" % ('dmri_connectometry_', ID)
-                meta_wf_name = "%s%s" % ('Meta_wf_', ID[i])
+                wf_selected = "%s%s" % ('dmri_connectometry_', ID[i])
+                meta_wf_name = "%s%s" % ('meta_wf_', ID[i])
                 for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]

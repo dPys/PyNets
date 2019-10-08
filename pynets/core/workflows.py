@@ -45,7 +45,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
             print('ERROR: available structural models not sucessfully extracted from runconfig.yaml')
 
     # Handle modality logic
-    if func_file and dwi_file:
+    if (func_file is not None) and (dwi_file is not None):
+        print('Parsing multimodal models...')
         func_model_list = []
         dwi_model_list = []
         if conn_model_list is not None:
@@ -66,11 +67,13 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
             raise RuntimeError('ERROR: Multimodal fMRI-dMRI pipeline specified, but only one connectivity model '
                                'specified.')
     elif (dwi_file is not None) and (func_file is None):
+        print('Parsing diffusion models...')
         conn_model_dwi = conn_model
         dwi_model_list = conn_model_list
         conn_model_func = None
         func_model_list = None
     elif (func_file is not None) and (dwi_file is None):
+        print('Parsing functional models...')
         conn_model_func = conn_model
         func_model_list = conn_model_list
         conn_model_dwi = None
@@ -100,7 +103,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
         sub_struct_wf = workflows.dmri_connectometry(ID, atlas, network, node_size, roi,
                                                      uatlas, plot_switch, parc, ref_txt, procmem,
                                                      dwi_file, fbval, fbvec, anat_file, thr, dens_thresh,
-                                                     conn_model_func, user_atlas_list, multi_thr, multi_atlas,
+                                                     conn_model_dwi, user_atlas_list, multi_thr, multi_atlas,
                                                      max_thr, min_thr, step_thr, node_size_list,
                                                      dwi_model_list, min_span_tree, use_AAL_naming, disp_filt,
                                                      plugin_type, multi_nets, prune, mask, norm, binary,
@@ -114,7 +117,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     # Workflow 2: Functional connectome
     if func_file is not None:
         sub_func_wf = workflows.fmri_connectometry(func_file, ID, atlas, network, node_size,
-                                                   roi, thr, uatlas, conn_model_dwi, dens_thresh, conf,
+                                                   roi, thr, uatlas, conn_model_func, dens_thresh, conf,
                                                    plot_switch, parc, ref_txt, procmem,
                                                    multi_thr, multi_atlas, max_thr, min_thr, step_thr,
                                                    k, clust_mask, k_min, k_max, k_step, k_clustering,
