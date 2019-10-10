@@ -1011,6 +1011,7 @@ def build_workflow(args, retval):
                     atlas_par = _uatlas.split('/')[-1].split('.')[0]
                     print(atlas_par)
                     do_dir_path(atlas_par, func_file)
+
         if k_clustering == 1:
             cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
             atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
@@ -1686,12 +1687,9 @@ def build_workflow(args, retval):
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
-        import uuid
-        from time import strftime
 
-        run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
-        os.makedirs("%s%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', wf_multi_subject, ID), exist_ok=True)
-        wf_multi.base_dir = "%s%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', wf_multi_subject, ID)
+        os.makedirs("%s%s%s%s%s" % (work_dir, '/', wf_multi_subject, '_', ID), exist_ok=True)
+        wf_multi.base_dir = "%s%s%s%s%s" % (work_dir, '/', wf_multi_subject, '_', ID)
 
         if verbose is True:
             from nipype import config, logging

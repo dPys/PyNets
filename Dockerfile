@@ -90,7 +90,7 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
 RUN conda install -yq python=3.6 ipython
 RUN pip install --upgrade pip
 RUN conda clean -tipsy
-RUN pip install awscli pybids boto3 python-dateutil requests dipy scikit-image
+RUN pip install awscli pybids boto3 python-dateutil requests scikit-image
 
 RUN git clone -b master https://github.com/dPys/PyNets PyNets && \
     cd PyNets && \

@@ -330,6 +330,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     import nibabel as nib
     from nilearn import input_data
     from pynets.core import utils
+    import numbers
 
     if not op.isfile(func_file):
         raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
@@ -350,13 +351,15 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     else:
         t_r = None
 
-    if (hpass is not None) and (hpass != 0) and (hpass != 'None'):
-        hpass = float(hpass)
-        detrending = False
-    elif hpass == 0:
-        hpass = None
-        detrending = True
+    if (hpass is not None) and isinstance(hpass, numbers.Number):
+        if float(hpass) > 0:
+            hpass = float(hpass)
+            detrending = False
+        else:
+            hpass = None
+            detrending = True
     else:
+        hpass = None
         detrending = True
 
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
@@ -473,6 +476,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     import nibabel as nib
     from nilearn import input_data
     from pynets.core import utils
+    import numbers
 
     if not op.isfile(func_file):
         raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
@@ -493,13 +497,15 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     else:
         t_r = None
 
-    if (hpass is not None) and (hpass != 0) and (hpass != 'None'):
-        hpass = float(hpass)
-        detrending = False
-    elif hpass == 0:
-        hpass = None
-        detrending = True
+    if (hpass is not None) and isinstance(hpass, numbers.Number):
+        if float(hpass) > 0:
+            hpass = float(hpass)
+            detrending = False
+        else:
+            hpass = None
+            detrending = True
     else:
+        hpass = None
         detrending = True
 
     if len(coords) > 0:

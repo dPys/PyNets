@@ -1542,22 +1542,18 @@ def merge_dicts(x, y):
     return z
 
 
-def proportional(k, voxels_list):
-    '''Hagenbach-Bischoff Quota'''
-    quota=sum(voxels_list)/(1.+k)
-    frac=[voxels/quota for voxels in voxels_list]
-    res=[int(f) for f in frac]
-    n=k-sum(res)
-    if n==0: return res
-    if n<0: return [min(x,k) for x in res]
-    remainders=[ai-bi for ai,bi in zip(frac,res)]
-    limit=sorted(remainders,reverse=True)[n-1]
-    for i,r in enumerate(remainders):
-        if r>=limit:
-            res[i]+=1
-            n-=1
-            if n==0: return res
-    raise
+def create_temporary_copy(path, temp_file_name, format):
+    """
+    A function to create temporary file equivalents
+    """
+    import tempfile, shutil, os
+    from time import strftime
+    import uuid
+    run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
+    temp_dir = tempfile.gettempdir()
+    temp_path = "%s%s%s%s%s%s" % (temp_dir, '/', temp_file_name, '_', run_uuid, format)
+    shutil.copy2(path, temp_path)
+    return temp_path
 
 
 class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):

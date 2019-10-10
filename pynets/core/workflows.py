@@ -646,6 +646,9 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     else:
         basedir_path = None
 
+    if roi is not None:
+        roi = utils.create_temporary_copy(roi, op.basename(roi).split('.nii.gz')[0], '.nii.gz')
+
     # Create input/output nodes
     inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'atlas', 'network', 'node_size', 'roi',
                                                       'uatlas', 'plot_switch', 'parc', 'ref_txt', 'procmem',
@@ -1589,7 +1592,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     import os.path as op
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
-    from pynets.core import  nodemaker, utils, thresholding
+    from pynets.core import nodemaker, utils, thresholding
     from pynets.plotting import plot_gen
     from pynets.fmri import estimation, clustools
     from pynets.registration import register
@@ -1605,6 +1608,16 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         basedir_path = utils.do_dir_path('reg_fmri', func_file)
     else:
         basedir_path = None
+
+    # Create temporary file equivalents
+    if k_clustering > 0:
+        if k_clustering == 3 or k_clustering == 4 or k_clustering == 7 or k_clustering == 8:
+            clust_mask_list = [utils.create_temporary_copy(cl_mask, op.basename(cl_mask).split('.nii.gz')[0], '.nii.gz') for cl_mask in clust_mask_list]
+        else:
+            clust_mask = utils.create_temporary_copy(clust_mask, op.basename(clust_mask).split('.nii.gz')[0], '.nii.gz')
+
+    if roi is not None:
+        roi = utils.create_temporary_copy(roi, op.basename(roi).split('.nii.gz')[0], '.nii.gz')
 
     # Create input/output nodes
     inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID', 'atlas', 'network',
@@ -1960,12 +1973,12 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         if k_clustering == 1:
             fmri_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k'), ('clust_type', 'clust_type')]),
                                            (inputnode, check_orient_and_dims_clust_mask_node,
-                                            [('clust_mask', 'clust_mask')])
+                                            [('clust_mask', 'infile')])
                                            ])
         elif k_clustering == 2:
             fmri_connectometry_wf.connect([(inputnode, clustering_node, [('clust_type', 'clust_type')]),
                                            (inputnode, check_orient_and_dims_clust_mask_node,
-                                            [('clust_mask', 'clust_mask')])
+                                            [('clust_mask', 'infile')])
                                            ])
         elif k_clustering == 3:
             fmri_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k'),
@@ -1977,11 +1990,11 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         elif k_clustering == 5:
             fmri_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k')]),
                                            (inputnode, check_orient_and_dims_clust_mask_node,
-                                            [('clust_mask', 'clust_mask')])
+                                            [('clust_mask', 'infile')])
                                            ])
         elif k_clustering == 6:
             fmri_connectometry_wf.connect([(inputnode, check_orient_and_dims_clust_mask_node,
-                                            [('clust_mask', 'clust_mask')])
+                                            [('clust_mask', 'infile')])
                                            ])
         elif k_clustering == 7:
             fmri_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k')])
