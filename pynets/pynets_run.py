@@ -369,6 +369,10 @@ def get_parser():
                         default=False,
                         action='store_true',
                         help='Verbose print for debugging.\n')
+    parser.add_argument('-work',
+                        metavar='Working directory',
+                        default='/tmp/work',
+                        help='Specify the path to a working directory for pynets to run. Default is /tmp/work.\n')
     return parser
 
 
@@ -628,6 +632,7 @@ def build_workflow(args, retval):
         embed = embed[0]
     multiplex = args.mplx
     vox_size = args.vox
+    work_dir = args.work
 
     print('\n\n\n------------------------------------------------------------------------\n')
 
@@ -1380,11 +1385,11 @@ def build_workflow(args, retval):
                                maxcrossing, min_length, directget, tiss_class, runtime_dict, embed,
                                multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
                                multiplex, waymask):
+        """A function interface for generating a single-subject workflow"""
         import warnings
         warnings.filterwarnings("ignore")
         from time import strftime
 
-        """A function interface for generating a single-subject workflow"""
         if (func_file is not None) and (dwi_file is None):
             wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_fmri_', strftime('%Y%m%d-%H%M%S')))
         elif (dwi_file is not None) and (func_file is None):
@@ -1593,11 +1598,6 @@ def build_workflow(args, retval):
             fbvec_list = len(func_file_list) * [None]
             fbval_list = len(func_file_list) * [None]
 
-        print('\n\n')
-        print(dwi_file_list)
-        print(func_file_list)
-        print('\n\n')
-
         i = 0
         for dwi_file, func_file in zip(dwi_file_list, func_file_list):
             if conf_list and func_file:
@@ -1686,10 +1686,12 @@ def build_workflow(args, retval):
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
-        wf_multi.base_dir = '/tmp/wf_multi_subject'
-        if op.exists(wf_multi.base_dir):
-            shutil.rmtree(wf_multi.base_dir)
-        os.mkdir(wf_multi.base_dir)
+        import uuid
+        from time import strftime
+
+        run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
+        os.makedirs("%s%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', wf_multi_subject, ID), exist_ok=True)
+        wf_multi.base_dir = "%s%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', wf_multi_subject, ID)
 
         if verbose is True:
             from nipype import config, logging
@@ -1735,7 +1737,7 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
             print('Plotting resource profile from run...')
-            generate_gantt_chart('/tmp/wf_multi_subject/multi_sub_run_stats.log', cores=int(procmem[0]))
+            generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
 
     # Single-subject workflow generator
     else:
@@ -1767,16 +1769,12 @@ def build_workflow(args, retval):
         run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
         if func_file:
             func_dir = os.path.dirname(func_file)
-            if os.path.exists("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)):
-                shutil.rmtree("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
-            os.mkdir("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
-            wf.base_dir = "%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)
+            os.makedirs("%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname), exist_ok=True)
+            wf.base_dir = "%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname)
         elif dwi_file:
             dwi_dir = os.path.dirname(dwi_file)
-            if os.path.exists("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)):
-                shutil.rmtree("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
-            os.mkdir("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
-            wf.base_dir = "%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)
+            os.makedirs("%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname), exist_ok=True)
+            wf.base_dir = "%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname)
 
         if verbose is True:
             from nipype import config, logging
@@ -1822,7 +1820,7 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
             print('Plotting resource profile from run...')
-            generate_gantt_chart("%s%s" % (wf.base_dir, '/run_stats.log'), cores=int(procmem[0]))
+            generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
 
     if verbose is True:
         handler.close()

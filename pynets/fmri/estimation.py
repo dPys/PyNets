@@ -349,8 +349,16 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
             t_r = None
     else:
         t_r = None
-    if hpass is not None:
+
+    if (hpass is not None) and (hpass != 0) and (hpass != 'None'):
         hpass = float(hpass)
+        detrending = False
+    elif hpass == 0:
+        hpass = None
+        detrending = True
+    else:
+        detrending = True
+
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                  detrend=detrending, t_r=t_r, verbose=2, resampling_target='data')
@@ -394,7 +402,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
 
 
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, network, smooth, atlas,
-                      uatlas, labels, c_boot, block_size, hpass, detrending=True):
+                      uatlas, labels, c_boot, block_size, hpass):
     """
     API for employing Nilearn's NiftiSpheresMasker to extract fMRI time-series data from spherical ROI's based on a
     given list of seed coordinates. The resulting time-series can then optionally be resampled using circular-block
@@ -434,8 +442,6 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         Size bootstrap blocks if bootstrapping (c_boot) is performed.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
-    detrending : bool
-        Indicates whether to remove linear trends from time-series when extracting across nodes. Default is True.
 
     Returns
     -------
@@ -486,8 +492,16 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
             t_r = None
     else:
         t_r = None
-    if hpass is not None:
+
+    if (hpass is not None) and (hpass != 0) and (hpass != 'None'):
         hpass = float(hpass)
+        detrending = False
+    elif hpass == 0:
+        hpass = None
+        detrending = True
+    else:
+        detrending = True
+
     if len(coords) > 0:
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                        standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
