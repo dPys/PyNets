@@ -518,7 +518,6 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, local_
     from pynets.fmri import clustools
     from time import strftime
     import uuid
-    from shutil import copyfile
 
     nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
@@ -530,9 +529,7 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, local_
     uatlas = "%s%s%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
 
     # Ensure mask does not inclue voxels outside of the brain
-    clust_mask_tmp = "%s%s%s%s" % (dir_path, '/', mask_name, '.nii.gz')
-    copyfile(clust_mask, clust_mask_tmp)
-    mask_img = nib.load(clust_mask_tmp)
+    mask_img = nib.load(clust_mask)
     mask_data = mask_img.get_data().astype('bool').astype('int')
     func_img = nib.load(func_file)
     func_data = func_img.get_data().astype('bool')
