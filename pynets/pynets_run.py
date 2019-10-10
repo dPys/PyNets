@@ -369,6 +369,10 @@ def get_parser():
                         default=False,
                         action='store_true',
                         help='Verbose print for debugging.\n')
+    parser.add_argument('-work',
+                        metavar='Working directory',
+                        default='/tmp/work',
+                        help='Specify the path to a working directory for pynets to run. Default is /tmp/work.\n')
     return parser
 
 
@@ -628,6 +632,7 @@ def build_workflow(args, retval):
         embed = embed[0]
     multiplex = args.mplx
     vox_size = args.vox
+    work_dir = args.work
 
     print('\n\n\n------------------------------------------------------------------------\n')
 
@@ -1380,11 +1385,11 @@ def build_workflow(args, retval):
                                maxcrossing, min_length, directget, tiss_class, runtime_dict, embed,
                                multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
                                multiplex, waymask):
+        """A function interface for generating a single-subject workflow"""
         import warnings
         warnings.filterwarnings("ignore")
         from time import strftime
 
-        """A function interface for generating a single-subject workflow"""
         if (func_file is not None) and (dwi_file is None):
             wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_fmri_', strftime('%Y%m%d-%H%M%S')))
         elif (dwi_file is not None) and (func_file is None):
@@ -1584,15 +1589,14 @@ def build_workflow(args, retval):
 
         wf_multi = pe.Workflow(name="%s%s" % ('wf_multisub_', strftime('%Y%m%d-%H%M%S')))
 
-        if func_file_list and not dwi_file_list:
-            dwi_file_list = len(func_file_list) * [None]
-            fbvec_list = len(fbvec_list) * [None]
-            fbval_list = len(fbval_list) * [None]
-        elif dwi_file_list and not func_file_list:
+        if (func_file_list is None) and dwi_file_list:
             func_file_list = len(dwi_file_list) * [None]
-            conf_list = len(conf_list) * [None]
-        else:
-            pass
+            conf_list = len(dwi_file_list) * [None]
+
+        if (dwi_file_list is None) and func_file_list:
+            dwi_file_list = len(func_file_list) * [None]
+            fbvec_list = len(func_file_list) * [None]
+            fbval_list = len(func_file_list) * [None]
 
         i = 0
         for dwi_file, func_file in zip(dwi_file_list, func_file_list):
@@ -1640,7 +1644,7 @@ def build_workflow(args, retval):
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
                 wf_selected = "%s%s" % ('fmri_connectometry_', ID[i])
-                meta_wf_name = "%s%s" % ('Meta_wf_', ID[i])
+                meta_wf_name = "%s%s" % ('meta_wf_', ID[i])
                 for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
@@ -1650,8 +1654,8 @@ def build_workflow(args, retval):
                     wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._mem_gb = runtime_dict['clustering_node'][1]
 
             if dwi_file:
-                wf_selected = "%s%s" % ('dmri_connectometry_', ID)
-                meta_wf_name = "%s%s" % ('Meta_wf_', ID[i])
+                wf_selected = "%s%s" % ('dmri_connectometry_', ID[i])
+                meta_wf_name = "%s%s" % ('meta_wf_', ID[i])
                 for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
@@ -1682,10 +1686,12 @@ def build_workflow(args, retval):
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
-        wf_multi.base_dir = '/tmp/wf_multi_subject'
-        if op.exists(wf_multi.base_dir):
-            shutil.rmtree(wf_multi.base_dir)
-        os.mkdir(wf_multi.base_dir)
+        import uuid
+        from time import strftime
+
+        run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
+        os.makedirs("%s%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', wf_multi_subject, ID), exist_ok=True)
+        wf_multi.base_dir = "%s%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', wf_multi_subject, ID)
 
         if verbose is True:
             from nipype import config, logging
@@ -1731,7 +1737,7 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
             print('Plotting resource profile from run...')
-            generate_gantt_chart('/tmp/wf_multi_subject/multi_sub_run_stats.log', cores=int(procmem[0]))
+            generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
 
     # Single-subject workflow generator
     else:
@@ -1763,16 +1769,12 @@ def build_workflow(args, retval):
         run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
         if func_file:
             func_dir = os.path.dirname(func_file)
-            if os.path.exists("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)):
-                shutil.rmtree("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
-            os.mkdir("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
-            wf.base_dir = "%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)
+            os.makedirs("%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname), exist_ok=True)
+            wf.base_dir = "%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname)
         elif dwi_file:
             dwi_dir = os.path.dirname(dwi_file)
-            if os.path.exists("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)):
-                shutil.rmtree("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
-            os.mkdir("%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname))
-            wf.base_dir = "%s%s%s%s" % ('/tmp/', run_uuid, '_', base_dirname)
+            os.makedirs("%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname), exist_ok=True)
+            wf.base_dir = "%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname)
 
         if verbose is True:
             from nipype import config, logging
@@ -1818,7 +1820,7 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
             print('Plotting resource profile from run...')
-            generate_gantt_chart("%s%s" % (wf.base_dir, '/run_stats.log'), cores=int(procmem[0]))
+            generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
 
     if verbose is True:
         handler.close()
