@@ -346,6 +346,7 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
     bvecs : str
         File path to corresponding reoriented bvecs file if outfile is a dwi.
     """
+    import os
     import os.path as op
     from pynets.registration.reg_utils import reorient_dwi, reorient_img, match_target_vox_res
 
@@ -362,6 +363,8 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
         # Check dimensions
         if ('reor' not in infile) or (overwrite is True):
             outfile = match_target_vox_res(infile, vox_size, outdir)
+            if op.exists(infile):
+                os.remove(infile)
             print(outfile)
     elif (vols > 1) and (bvecs is None):
         # func case
@@ -371,15 +374,19 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
         # Check dimensions
         if ('reor' not in infile) or (overwrite is True):
             outfile = match_target_vox_res(infile, vox_size, outdir)
+            if op.exists(infile):
+                os.remove(infile)
             print(outfile)
     else:
         # t1w case
         # Check orientation
         if ('RAS' not in infile) or (overwrite is True):
             infile = reorient_img(infile, outdir)
+        # Check dimensions
         if ('reor' not in infile) or (overwrite is True):
-            # Check dimensions
             outfile = match_target_vox_res(infile, vox_size, outdir)
+            if op.exists(infile):
+                os.remove(infile)
             print(outfile)
 
     if bvecs is None:

@@ -259,7 +259,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                                      'prune_struct', 'ID_struct', 'roi_struct',
                                                                      'norm_struct', 'binary_struct'],
                                                         output_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                                      'network_iterlist', 'node_size_iterlist',
+                                                                      'network_iterlist',
                                                                       'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
                                                                       'roi_iterlist', 'norm_iterlist',
                                                                       'binary_iterlist'],
@@ -373,7 +373,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
             (sub_func_wf.get_node('outputnode'), pass_meta_ins_multi_node, [('conn_model', 'conn_model_func'),
                                                                             ('est_path', 'est_path_func'),
                                                                             ('network', 'network_func'),
-                                                                            ('node_size', 'node_size_func'),
                                                                             ('thr', 'thr_func'),
                                                                             ('prune', 'prune_func'),
                                                                             ('ID', 'ID_func'),
@@ -383,7 +382,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
             (sub_struct_wf.get_node('outputnode'), pass_meta_ins_multi_node, [('conn_model', 'conn_model_struct'),
                                                                               ('est_path', 'est_path_struct'),
                                                                               ('network', 'network_struct'),
-                                                                              ('node_size', 'node_size_struct'),
                                                                               ('thr', 'thr_struct'),
                                                                               ('prune', 'prune_struct'),
                                                                               ('ID', 'ID_struct'),
@@ -400,7 +398,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                                           'node_size', 'thr', 'prune', 'ID', 'roi',
                                                                           'norm', 'binary'],
                                                              output_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                                           'network_iterlist', 'node_size_iterlist',
+                                                                           'network_iterlist',
                                                                            'thr_iterlist', 'prune_iterlist',
                                                                            'ID_iterlist', 'roi_iterlist',
                                                                            'norm_iterlist',
@@ -462,9 +460,9 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
             # Connect outputs of nested workflow to parent wf
             meta_wf.connect([(sub_struct_wf.get_node('outputnode'),
                               pass_meta_ins_struct_node, [('conn_model', 'conn_model'), ('est_path', 'est_path'),
-                                                          ('network', 'network'), ('node_size', 'node_size'),
-                                                          ('thr', 'thr'), ('prune', 'prune'), ('ID', 'ID'),
-                                                          ('roi', 'roi'), ('norm', 'norm'), ('binary', 'binary')])
+                                                          ('network', 'network'), ('thr', 'thr'), ('prune', 'prune'),
+                                                          ('ID', 'ID'), ('roi', 'roi'), ('norm', 'norm'),
+                                                          ('binary', 'binary')])
                              ])
 
         if func_file:
@@ -472,7 +470,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                                         'node_size', 'thr', 'prune', 'ID', 'roi',
                                                                         'norm', 'binary'],
                                                            output_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                                         'network_iterlist', 'node_size_iterlist',
+                                                                         'network_iterlist',
                                                                          'thr_iterlist', 'prune_iterlist',
                                                                          'ID_iterlist', 'roi_iterlist', 'norm_iterlist',
                                                                          'binary_iterlist'],
@@ -532,17 +530,17 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
             # Connect outputs of nested workflow to parent wf
             meta_wf.connect([(sub_func_wf.get_node('outputnode'), pass_meta_ins_func_node,
                               [('conn_model', 'conn_model'), ('est_path', 'est_path'), ('network', 'network'),
-                               ('node_size', 'node_size'), ('thr', 'thr'), ('prune', 'prune'), ('ID', 'ID'),
+                               ('thr', 'thr'), ('prune', 'prune'), ('ID', 'ID'),
                                ('roi', 'roi'), ('norm', 'norm'), ('binary', 'binary')])
                              ])
 
     pass_meta_outs_node = pe.Node(niu.Function(input_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                            'network_iterlist', 'node_size_iterlist',
+                                                            'network_iterlist',
                                                             'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
                                                             'roi_iterlist', 'norm_iterlist', 'binary_iterlist',
                                                             'embed', 'multimodal', 'multiplex'],
                                                output_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                             'network_iterlist', 'node_size_iterlist',
+                                                             'network_iterlist',
                                                              'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
                                                              'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
                                                function=pass_meta_outs), name='pass_meta_outs_node')
@@ -558,7 +556,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                               [('conn_model_iterlist', 'conn_model_iterlist'),
                                ('est_path_iterlist', 'est_path_iterlist'),
                                ('network_iterlist', 'network_iterlist'),
-                               ('node_size_iterlist', 'node_size_iterlist'),
                                ('thr_iterlist', 'thr_iterlist'),
                                ('prune_iterlist', 'prune_iterlist'),
                                ('ID_iterlist', 'ID_iterlist'),
@@ -571,7 +568,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                               [('conn_model_iterlist', 'conn_model_iterlist'),
                                ('est_path_iterlist', 'est_path_iterlist'),
                                ('network_iterlist', 'network_iterlist'),
-                               ('node_size_iterlist', 'node_size_iterlist'),
                                ('thr_iterlist', 'thr_iterlist'),
                                ('prune_iterlist', 'prune_iterlist'),
                                ('ID_iterlist', 'ID_iterlist'),
@@ -584,7 +580,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                           [('conn_model_iterlist', 'conn_model_iterlist'),
                            ('est_path_iterlist', 'est_path_iterlist'),
                            ('network_iterlist', 'network_iterlist'),
-                           ('node_size_iterlist', 'node_size_iterlist'),
                            ('thr_iterlist', 'thr_iterlist'),
                            ('prune_iterlist', 'prune_iterlist'),
                            ('ID_iterlist', 'ID_iterlist'),
@@ -926,7 +921,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
 
     # Create outputnode to capture results of nested workflow
     outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'network', 'prune', 'ID', 'roi',
-                                                       'conn_model', 'node_size', 'norm', 'binary']),
+                                                       'conn_model', 'norm', 'binary']),
                          name='outputnode')
 
     if (multi_atlas is not None and user_atlas_list is None and uatlas is None) or (multi_atlas is None and
@@ -1549,15 +1544,14 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                       ('atlas_mni', 'atlas_mni'), ('streams', 'streams'),
                                                       ('directget', 'directget')]),
             (join_iters_node_nets, outputnode, [('thr', 'thr'), ('network', 'network'), ('est_path', 'est_path'),
-                                                ('node_size', 'node_size'), ('roi', 'roi'),
-                                                ('conn_model', 'conn_model'), ('ID', 'ID'), ('prune', 'prune'),
-                                                ('norm', 'norm'), ('binary', 'binary')])
+                                                ('roi', 'roi'), ('conn_model', 'conn_model'), ('ID', 'ID'),
+                                                ('prune', 'prune'), ('norm', 'norm'), ('binary', 'binary')])
         ])
     else:
         dmri_connectometry_wf.connect([
             (thresh_diff_node, outputnode, [('thr', 'thr'), ('network', 'network'), ('est_path', 'est_path'),
-                                            ('node_size', 'node_size'), ('roi', 'roi'), ('conn_model', 'conn_model'),
-                                            ('ID', 'ID'), ('prune', 'prune'), ('norm', 'norm'), ('binary', 'binary')]),
+                                            ('roi', 'roi'), ('conn_model', 'conn_model'), ('ID', 'ID'),
+                                            ('prune', 'prune'), ('norm', 'norm'), ('binary', 'binary')]),
         ])
 
     for node_name in dmri_connectometry_wf.list_node_names():
@@ -2502,7 +2496,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                        ])
     # Create outputnode to capture results of nested workflow
     outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'network', 'prune', 'ID', 'roi',
-                                                       'conn_model', 'node_size', 'norm', 'binary']),
+                                                       'conn_model', 'norm', 'binary']),
                          name='outputnode')
 
     # Handle multiple RSN cases with multi_nets joinnode
@@ -2523,15 +2517,14 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                       ('prune', 'prune'), ('c_boot', 'c_boot'),
                                                       ('norm', 'norm'), ('binary', 'binary'), ('hpass', 'hpass')]),
             (join_iters_node_nets, outputnode, [('thr', 'thr'), ('network', 'network'), ('est_path', 'est_path'),
-                                                ('node_size', 'node_size'), ('roi', 'roi'),
-                                                ('conn_model', 'conn_model'), ('ID', 'ID'), ('prune', 'prune'),
-                                                ('norm', 'norm'), ('binary', 'binary')])
+                                                ('roi', 'roi'), ('conn_model', 'conn_model'), ('ID', 'ID'),
+                                                ('prune', 'prune'), ('norm', 'norm'), ('binary', 'binary')])
         ])
     else:
         fmri_connectometry_wf.connect([
             (thresh_func_node, outputnode, [('thr', 'thr'), ('network', 'network'), ('est_path', 'est_path'),
-                                            ('node_size', 'node_size'), ('roi', 'roi'), ('conn_model', 'conn_model'),
-                                            ('ID', 'ID'), ('prune', 'prune'), ('norm', 'norm'), ('binary', 'binary')])
+                                            ('roi', 'roi'), ('conn_model', 'conn_model'), ('ID', 'ID'),
+                                            ('prune', 'prune'), ('norm', 'norm'), ('binary', 'binary')])
         ])
 
     # Handle masking scenarios (brain mask and/or roi)

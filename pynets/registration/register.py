@@ -886,7 +886,7 @@ def register_all_dwi(basedir_path, fa_path, B0_mask, anat_file, gtab_file, dwi_f
 
 def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, fa_path, B0_mask, anat_file,
                        coords, labels, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, gtab_file, dwi_file,
-                       vox_size='2mm', simple=False):
+                       vox_size, simple=False):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 

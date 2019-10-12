@@ -180,32 +180,12 @@ def test_collect_pandas_df_make():
     utils.collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
 
 
-def test_create_csv_path():
-    """
-    Test create_csv_path functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/dmri'
-    network = 'Default'
-    ID = '002'
-    roi = None
-    models = ['corr', 'cov', 'sps', 'partcorr']
-    node_size = 6
-
-    # Cross test all models and thresh 0 to 1 by 0.1
-    for conn_model in models:
-        for val in range(1, 11):
-            thr = round(val*0.1, 1)
-            out_path = utils.create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size)
-            assert out_path is not None
-
-
-def test_create_est_path_diff():
+def test_create_est_path_func():
     """
     Test create_est_path_diff functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/dmri'
+    dir_path = base_dir + '/002/fmri'
     network = 'Default'
     ID = '002'
     models = ['corr', 'cov', 'sps', 'partcorr']
@@ -222,11 +202,12 @@ def test_create_est_path_diff():
             thr = round(val*0.1, 1)
             for thr_type in ['prop', 'abs', 'dens', 'mst', 'disp']:
                 for parc in [True, False]:
-                    utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot,
+                    est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot,
                                                thr_type, hpass, parc)
+                    assert est_path is not None
 
 
-def test_create_est_path_func():
+def test_create_est_path_diff():
     """
     Test create_est_path_func functionality
     """
@@ -249,6 +230,56 @@ def test_create_est_path_func():
                                                                   dir_path, node_size, target_samples,
                                                                   track_type, thr_type, parc)
                             assert est_path is not None
+
+
+def test_create_csv_path():
+    """
+    Test create_csv_path functionality
+    """
+    base_dir = str(Path(__file__).parent/"examples")
+
+    # fmri case
+    dir_path = base_dir + '/002/fmri'
+    network = 'Default'
+    ID = '002'
+    models = ['corr', 'cov', 'sps', 'partcorr']
+    roi = None
+    node_size = 6
+    smooth = 6
+    c_boot = 100
+    hpass = 100
+    parc = True
+
+    # Cross test various connectivity models, thresholds, and parc true/false.
+    for conn_model in models:
+        for val in range(1, 10):
+            thr = round(val*0.1, 1)
+            for thr_type in ['prop', 'abs', 'dens', 'mst', 'disp']:
+                for parc in [True, False]:
+                    est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot,
+                                               thr_type, hpass, parc)
+                    out_path = utils.create_csv_path(dir_path, est_path)
+                    assert out_path is not None
+
+    dir_path = base_dir + '/002/dmri'
+    network = 'Default'
+    ID = '002'
+    models = ['corr', 'cov', 'sps', 'partcorr']
+    roi = None
+    node_size = 6
+
+    for conn_model in models:
+        for val in range(1, 10):
+            thr = round(val*0.1, 1)
+            for thr_type in ['prop', 'abs', 'dens', 'mst', 'disp']:
+                for target_samples in range(0, 100, 1000):
+                    for track_type in ['local', 'particle']:
+                        for parc in [True, False]:
+                            est_path = utils.create_est_path_diff(ID, network, conn_model, thr, roi,
+                                                                  dir_path, node_size, target_samples,
+                                                                  track_type, thr_type, parc)
+                            out_path = utils.create_csv_path(dir_path, est_path)
+                            assert out_path is not None
 
 
 def test_create_unthr_path():
@@ -378,7 +409,6 @@ def test_pass_meta_ins():
     conn_model = 'corr'
     est_path = dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track.npy'
     network = 'Default'
-    node_size = 6
     thr = 0.5
     prune = True
     ID = '002'
@@ -386,13 +416,12 @@ def test_pass_meta_ins():
     norm = 10
     binary = True
 
-    [conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist,
-        norm_iterlist, binary_iterlist] = utils.pass_meta_ins(conn_model, est_path, network, node_size, thr, prune, ID, roi, norm, binary)
+    [conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist,
+        norm_iterlist, binary_iterlist] = utils.pass_meta_ins(conn_model, est_path, network, thr, prune, ID, roi, norm, binary)
 
     assert conn_model_iterlist is not None
     assert est_path_iterlist is not None
     assert network_iterlist is not None
-    assert node_size_iterlist is not None
     assert thr_iterlist is not None
     assert prune_iterlist is not None
     assert ID_iterlist is not None
@@ -415,8 +444,6 @@ def test_pass_meta_ins_multi():
     est_path_struct = dmri_path + '/DesikanKlein2012/0021001_Default_est_tensor_0.05dens_100000samples_particle_track.npy'
     network_func = 'Default'
     network_struct = 'Default'
-    node_size_func = 6
-    node_size_struct = 8
     thr_func = 0.6
     thr_struct = 0.8
     prune_func = True
@@ -430,13 +457,12 @@ def test_pass_meta_ins_multi():
     binary_func = False
     binary_struct = True
 
-    [conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist] = utils.pass_meta_ins_multi(
-        conn_model_func, est_path_func, network_func, node_size_func, thr_func, prune_func, ID_func, roi_func, norm_func, binary_func, conn_model_struct, est_path_struct, network_struct, node_size_struct, thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct)
+    [conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist] = utils.pass_meta_ins_multi(
+        conn_model_func, est_path_func, network_func, thr_func, prune_func, ID_func, roi_func, norm_func, binary_func, conn_model_struct, est_path_struct, network_struct, thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct)
 
     assert len(conn_model_iterlist) == 2
     assert len(est_path_iterlist) == 2
     assert len(network_iterlist) == 2
-    assert len(node_size_iterlist) == 2
     assert len(thr_iterlist) == 2
     assert len(prune_iterlist) == 2
     assert len(ID_iterlist) == 2
@@ -459,8 +485,6 @@ def test_pass_meta_outs():
     est_path_struct = dmri_path + '/DesikanKlein2012/0021001_Default_est_tensor_0.05dens_100000samples_particle_track.npy'
     network_func = 'Default'
     network_struct = 'Default'
-    node_size_func = 6
-    node_size_struct = 8
     thr_func = 0.6
     thr_struct = 0.8
     prune_func = True
@@ -474,16 +498,15 @@ def test_pass_meta_outs():
     binary_func = False
     binary_struct = True
 
-    [conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist] = utils.pass_meta_ins_multi(
-        conn_model_func, est_path_func, network_func, node_size_func, thr_func, prune_func, ID_func, roi_func, norm_func, binary_func, conn_model_struct, est_path_struct, network_struct, node_size_struct, thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct)
+    [conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist] = utils.pass_meta_ins_multi(
+        conn_model_func, est_path_func, network_func, thr_func, prune_func, ID_func, roi_func, norm_func, binary_func, conn_model_struct, est_path_struct, network_struct, thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct)
 
-    [conn_model_iterlist_out, est_path_iterlist_out, network_iterlist_out, node_size_iterlist_out, thr_iterlist_out, prune_iterlist_out, ID_iterlist_out, roi_iterlist_out, norm_iterlist_out, binary_iterlist_out] = utils.pass_meta_outs(
-        conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=None, multimodal=False, multiplex=False)
+    [conn_model_iterlist_out, est_path_iterlist_out, network_iterlist_out, thr_iterlist_out, prune_iterlist_out, ID_iterlist_out, roi_iterlist_out, norm_iterlist_out, binary_iterlist_out] = utils.pass_meta_outs(
+        conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=None, multimodal=False, multiplex=False)
 
     assert conn_model_iterlist_out is not None
     assert est_path_iterlist_out is not None
     assert network_iterlist_out is not None
-    assert node_size_iterlist_out is not None
     assert thr_iterlist_out is not None
     assert prune_iterlist_out is not None
     assert ID_iterlist_out is not None

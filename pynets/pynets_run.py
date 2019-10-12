@@ -155,10 +155,10 @@ def get_parser():
                              '\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\n'
                              'atlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl\ncoords_dosenbach_2010\n'
                              'coords_power_2011\natlas_pauli_2017.\n')
-    parser.add_argument('-parc',
+    parser.add_argument('-spheres',
                         default=False,
                         action='store_true',
-                        help='Include this flag to use parcels instead of spheres as nodes.\n')
+                        help='Include this flag to use spheres instead of parcels as nodes.\n')
     parser.add_argument('-names',
                         default=False,
                         action='store_true',
@@ -519,7 +519,12 @@ def build_workflow(args, retval):
     step_thr = args.step_thr
     anat_file = args.anat
     num_total_samples = args.s
-    parc = args.parc
+    spheres = args.spheres
+    if spheres is True:
+        parc = False
+    else:
+        parc = True
+
     if parc is True:
         node_size = None
         node_size_list = None
@@ -1158,7 +1163,7 @@ def build_workflow(args, retval):
                         if (parc is True) and (_atlas in nilearn_coord_atlases or _atlas in
                                                nilearn_prob_atlases):
                             raise ValueError("%s%s%s" % ('\nERROR: ', _atlas,
-                                                         ' is a coordinate atlas and cannot be combined with the -parc '
+                                                         ' is a coordinate atlas and must be used with the -spheres '
                                                          'flag.'))
                         else:
                             print(_atlas)
@@ -1168,7 +1173,7 @@ def build_workflow(args, retval):
                     if (parc is True) and (_atlas in nilearn_coord_atlases or _atlas in
                                            nilearn_prob_atlases):
                         raise ValueError("%s%s%s" % ('\nERROR: ', _atlas,
-                                                     ' is a coordinate atlas and cannot be combined with the -parc '
+                                                     ' is a coordinate atlas and must be used with the -spheres '
                                                      'flag.'))
                     else:
                         print(_atlas)
@@ -1176,7 +1181,7 @@ def build_workflow(args, retval):
         elif atlas is not None:
             if (parc is True) and (atlas in nilearn_coord_atlases or atlas in nilearn_prob_atlases):
                 raise ValueError("%s%s%s" % ('\nERROR: ', atlas,
-                                             ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                                             ' is a coordinate atlas and must be used with the -spheres flag.'))
             else:
                 print("%s%s" % ("\nPredefined atlas: ", atlas))
                 if func_file_list:
@@ -1219,7 +1224,7 @@ def build_workflow(args, retval):
                     for _atlas in multi_atlas:
                         if (parc is True) and (_atlas in nilearn_coord_atlases):
                             raise ValueError("%s%s%s" % ('\nERROR: ', _atlas,
-                                                         ' is a coordinate atlas and cannot be combined with the -parc '
+                                                         ' is a coordinate atlas and must be used with the -spheres '
                                                          'flag.'))
                         else:
                             print(_atlas)
@@ -1228,7 +1233,7 @@ def build_workflow(args, retval):
                 for _atlas in multi_atlas:
                     if (parc is True) and (_atlas in nilearn_coord_atlases):
                         raise ValueError("%s%s%s" % ('\nERROR: ', _atlas,
-                                                     ' is a coordinate atlas and cannot be combined with the -parc '
+                                                     ' is a coordinate atlas and must be used with the -spheres '
                                                      'flag.'))
                     else:
                         print(_atlas)
@@ -1236,7 +1241,7 @@ def build_workflow(args, retval):
         elif atlas:
             if (parc is True) and (atlas in nilearn_coord_atlases):
                 raise ValueError("%s%s%s" % ('\nERROR: ', atlas,
-                                             ' is a coordinate atlas and cannot be combined with the -parc flag.'))
+                                             ' is a coordinate atlas and must be used with the -spheres flag.'))
             else:
                 print("%s%s" % ("\nNilearn atlas: ", atlas))
                 if dwi_file_list:
@@ -1321,7 +1326,7 @@ def build_workflow(args, retval):
     # print("%s%s" % ('min_thr: ', min_thr))
     # print("%s%s" % ('max_thr: ', max_thr))
     # print("%s%s" % ('step_thr: ', step_thr))
-    # print("%s%s" % ('parc: ', parc))
+    # print("%s%s" % ('spheres: ', spheres))
     # print("%s%s" % ('ref_txt: ', ref_txt))
     # print("%s%s" % ('procmem: ', procmem))
     # print("%s%s" % ('waymask: ', waymask))
@@ -1469,8 +1474,8 @@ def build_workflow(args, retval):
 
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
-                                   iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
-                                              'roi', 'prune', 'node_size', 'norm', 'binary'], nested=True,
+                                   iterfield=['network', 'thr', 'conn_model', 'est_path',
+                                              'roi', 'prune', 'norm', 'binary'], nested=True,
                                    imports=import_list)
 
         # Export graph analysis results to pandas dataframes
@@ -1487,7 +1492,7 @@ def build_workflow(args, retval):
 
         # Combine dataframes across models
         collect_pandas_dfs_node = pe.Node(interface=CollectPandasDfs(), name="CollectPandasDfs",
-                                          input_names=['network', 'ID', 'net_pickle_mt_list', 'plot_switch',
+                                          input_names=['network', 'ID', 'net_mets_csv_list', 'plot_switch',
                                                        'multi_nets', 'multimodal'], imports=import_list)
 
         handshake_node = meta_wf.get_node('pass_meta_outs_node')
@@ -1496,11 +1501,9 @@ def build_workflow(args, retval):
             (handshake_node, net_mets_node, [('est_path_iterlist', 'est_path'),
                                              ('network_iterlist', 'network'),
                                              ('thr_iterlist', 'thr'),
-                                             ('ID_iterlist', 'ID'),
                                              ('conn_model_iterlist', 'conn_model'),
                                              ('roi_iterlist', 'roi'),
                                              ('prune_iterlist', 'prune'),
-                                             ('node_size_iterlist', 'node_size'),
                                              ('norm_iterlist', 'norm'),
                                              ('binary_iterlist', 'binary')]),
             (handshake_node, export_to_pandas_node, [('network_iterlist', 'network'),
@@ -1513,7 +1516,7 @@ def build_workflow(args, retval):
                                                   ('multi_nets', 'multi_nets'),
                                                   ('multimodal', 'multimodal')]),
             (export_to_pandas_node, collect_pd_list_net_pickles_node, [('net_pickle_mt', 'net_pickle_mt')]),
-            (collect_pd_list_net_pickles_node, collect_pandas_dfs_node, [('net_pickle_mt_out', 'net_pickle_mt_list')])
+            (collect_pd_list_net_pickles_node, collect_pandas_dfs_node, [('net_pickle_mt_out', 'net_mets_csv_list')])
         ])
 
         # Raw graph case
@@ -1522,11 +1525,9 @@ def build_workflow(args, retval):
                             [('est_path_iterlist', 'est_path'),
                              ('network_iterlist', 'network'),
                              ('thr_iterlist', 'thr'),
-                             ('ID_iterlist', 'ID'),
                              ('conn_model_iterlist', 'conn_model'),
                              ('roi_iterlist', 'roi'),
                              ('prune_iterlist', 'prune'),
-                             ('node_size_iterlist', 'node_size'),
                              ('norm_iterlist', 'norm'),
                              ('binary_iterlist', 'binary')])
                            ])
@@ -1540,9 +1541,7 @@ def build_workflow(args, retval):
             # Multiple raw graphs
             if multi_graph:
                 net_mets_node.inputs.est_path = multi_graph
-                net_mets_node.inputs.ID = [ID] * len(multi_graph)
                 net_mets_node.inputs.roi = [roi] * len(multi_graph)
-                net_mets_node.inputs.node_size = [node_size] * len(multi_graph)
                 net_mets_node.inputs.thr = [thr] * len(multi_graph)
                 net_mets_node.inputs.prune = [prune] * len(multi_graph)
                 net_mets_node.inputs.network = [network] * len(multi_graph)
@@ -1555,11 +1554,9 @@ def build_workflow(args, retval):
             else:
                 wf.connect([(inputnode, net_mets_node, [('network', 'network'),
                                                         ('thr', 'thr'),
-                                                        ('ID', 'ID'),
                                                         ('conn_model', 'conn_model'),
                                                         ('roi', 'roi'),
                                                         ('prune', 'prune'),
-                                                        ('node_size', 'node_size'),
                                                         ('graph', 'est_path'),
                                                         ('norm', 'norm'),
                                                         ('binary', 'binary')])
@@ -1688,8 +1685,8 @@ def build_workflow(args, retval):
         warnings.filterwarnings("ignore")
         import shutil
 
-        os.makedirs("%s%s%s%s%s" % (work_dir, '/', wf_multi_subject, '_', ID), exist_ok=True)
-        wf_multi.base_dir = "%s%s%s%s%s" % (work_dir, '/', wf_multi_subject, '_', ID)
+        os.makedirs("%s%s%s" % (work_dir, '/wf_multi_subject_', '_'.join(ID)), exist_ok=True)
+        wf_multi.base_dir = "%s%s%s" % (work_dir, '/wf_multi_subject_', '_'.join(ID))
 
         if verbose is True:
             from nipype import config, logging
@@ -1826,16 +1823,8 @@ def build_workflow(args, retval):
 
     # Clean up temporary directories
     if func_file:
-        for metrickl_dir in glob.glob("%s%s" % (func_dir, '/*/metrickl')):
-            shutil.rmtree(metrickl_dir)
-        for net_pkl in [i for i in glob.glob("%s%s" % (func_dir, '/*/netmetrics/*')) if 'neat.csv' not in i]:
-            os.remove(net_pkl)
-
-    elif dwi_file:
-        for metrickl_dir in glob.glob("%s%s" % (dwi_dir, '/*/metrickl')):
-            shutil.rmtree(metrickl_dir)
-        for net_pkl in [i for i in glob.glob("%s%s" % (dwi_dir, '/*/netmetrics/*')) if 'neat.csv' not in i]:
-            os.remove(net_pkl)
+        for cnfnd_tmp_dir in glob.glob("%s%s" % (func_dir, '/*/confounds_tmp')):
+            shutil.rmtree(cnfnd_tmp_dir)
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)

@@ -370,12 +370,14 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
         confounds = pd.read_csv(conf, sep='\t')
         if confounds.isnull().values.any():
             import uuid
+            import os
             from time import strftime
             run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
             print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but these '
-                  'should be check manually')
+                  'should be checked manually')
             confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-            conf_corr = '/tmp/confounds_mean_corrected_' + str(run_uuid) + '.tsv'
+            os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
+            conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
             confounds_nonan.to_csv(conf_corr, sep='\t')
             ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf_corr)
         else:
@@ -399,7 +401,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
         print("%s%s%s" % ('Applying high-pass filter: ', hpass, ' Hz\n'))
 
     # Save time series as file
-    utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass)
+    utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass, node_size='parc')
     node_size = None
     return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass
 
@@ -415,7 +417,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     ----------
     node_size : int
         Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for tracking.
+        are used as ROI's for time-series extraction.
     conf : str
         File path to a confound regressor file for reduce noise in the time-series when extracting from ROI's.
     func_file : str
@@ -517,12 +519,14 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
             confounds = pd.read_csv(conf, sep='\t')
             if confounds.isnull().values.any():
                 import uuid
+                import os
                 from time import strftime
                 run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
                 print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
                       'regressor file should be checked manually.')
                 confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-                conf_corr = '/tmp/confounds_mean_corrected_' + str(run_uuid) + '.tsv'
+                os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
+                conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
                 confounds_nonan.to_csv(conf_corr, sep='\t')
                 ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf_corr)
             else:
@@ -553,5 +557,5 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         print("%s%s%s" % ('Applying high-pass filter: ', hpass, ' Hz\n'))
 
     # Save time series as file
-    utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass)
+    utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass, node_size)
     return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass

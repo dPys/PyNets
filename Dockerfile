@@ -100,11 +100,17 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && git clone -b master https://github.com/dPys/nilearn.git /home/neuro/nilearn && \
     cd /home/neuro/nilearn && \
     python setup.py install \
+    # Install latest nipype from master
+    && pip install -U https://github.com/nipy/nipype/archive/master.zip \
     && sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     # Precaching fonts, set 'Agg' as default backend for matplotlib
     && python -c "from matplotlib import font_manager" \
-    && sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
+    && sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" ) \
+    # Create nipype config for resource monitoring
+    && mkdir -p ~/.nipype \
+    && echo "[monitoring]" > ~/.nipype/nipype.cfg \
+    && echo "enabled = true" >> ~/.nipype/nipype.cfg
 
 # Handle permissions, cleanup, and create mountpoints
 USER root
