@@ -799,14 +799,12 @@ def raw_mets(G, i, custom_weight):
 
 
 # Extract network metrics interface
-def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_size, norm, binary, custom_weight=None):
+def extractnetstats(network, thr, conn_model, est_path, roi, prune, norm, binary, custom_weight=None):
     """
     Function interface for performing fully-automated graph analysis.
 
     Parameters
     ----------
-    ID : str
-        A subject id or other unique identifier.
     network : str
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
         brain subgraphs.
@@ -822,9 +820,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
         File path to binarized/boolean region-of-interest Nifti1Image file.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
-    node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
     norm : int
         Indicates method of normalizing resulting graph.
     binary : bool
@@ -1293,24 +1288,10 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_siz
             print('Rich club coefficient cannot be calculated for graph G')
             pass
 
-    namer_dir = str(Path(op.dirname(op.abspath(est_path))).parent) + '/metrickl'
-    if not os.path.isdir(namer_dir):
-        os.mkdir(namer_dir)
-
-    met_list_picke_path = "%s%s%s%s" % (namer_dir, '/net_met_list',
-                                        '%s' % ('_' + network if network is not None else ''),
-                                        '%s' % ('_' + op.basename(roi).split('.')[0] if roi is not None else ''))
-
-    pickle.dump(metric_list_names, open(met_list_picke_path, 'wb'), protocol=2)
-
     # And save results to csv
-    out_path = utils.create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size)
-    np.savetxt(out_path, net_met_val_list_final, delimiter='\t')
+    out_path = utils.create_csv_path(dir_path, est_path)
 
-    if frag is True:
-        out_path_neat = "%s%s" % (out_path.split('.csv')[0], '_frag_neat.csv')
-    else:
-        out_path_neat = "%s%s" % (out_path.split('.csv')[0], '_neat.csv')
+    out_path_neat = "%s%s" % (out_path.split('.csv')[0], '_neat.csv')
     df = pd.DataFrame.from_dict(dict(zip(metric_list_names, net_met_val_list_final)), orient='index').transpose()
     df.to_csv(out_path_neat, index=False)
 

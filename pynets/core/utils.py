@@ -56,7 +56,7 @@ def export_to_pandas(csv_loc, ID, network, roi):
     namer_dir = str(Path(op.dirname(op.abspath(csv_loc))).parent) + '/metrickl'
 
     if not os.path.isdir(namer_dir):
-        os.mkdir(namer_dir)
+        os.makedirs(namer_dir, exist_ok=True)
 
     met_list_picke_path = "%s%s%s%s" % (namer_dir, '/net_met_list',
                                         '%s' % ('_' + network if network is not None else ''),
@@ -97,7 +97,7 @@ def do_dir_path(atlas, in_file):
     """
     dir_path = "%s%s%s" % (op.dirname(op.realpath(in_file)), '/', atlas)
     if not op.exists(dir_path) and atlas is not None:
-        os.makedirs(dir_path)
+        os.makedirs(dir_path, exist_ok=True)
     elif atlas is None:
         raise ValueError("Error: cannot create directory for a null atlas!")
     return dir_path
@@ -149,16 +149,16 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
 
     namer_dir = dir_path + '/graphs'
     if not os.path.isdir(namer_dir):
-        os.mkdir(namer_dir)
+        os.makedirs(namer_dir, exist_ok=True)
 
     est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
                                                        '%s' % (network + '_' if network is not None else ''),
                                                        '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                       'est_', conn_model, '_thr-', thr, thr_type, '_',
-                                                       '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
-                                                       "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
-                                                       "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''),
-                                                       "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None else ''),
+                                                       'est-', conn_model, '_thr-', thr, thr_type, '_',
+                                                       '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                                       "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if float(c_boot) > 0 else ''),
+                                                       "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if float(smooth) > 0 else ''),
+                                                       "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if hpass is not None else ''),
                                                        'func.npy')
 
     return est_path
@@ -209,14 +209,14 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
 
     namer_dir = dir_path + '/graphs'
     if not os.path.isdir(namer_dir):
-        os.mkdir(namer_dir)
+        os.makedirs(namer_dir, exist_ok=True)
 
     est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
                                                      '%s' % (network + '_' if network is not None else ''),
                                                      '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                     'est_', conn_model, '_thr-', thr, thr_type, '_',
-                                                     '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc'),
-                                                     "%s" % ("%s%s%s" % ('_', int(target_samples), 'samples') if float(target_samples) > 0 else ''),
+                                                     'est-', conn_model, '_thr-', thr, thr_type, '_',
+                                                     '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                                     "%s" % ("%s%s%s" % ('samples-', int(target_samples), 'streams_') if float(target_samples) > 0 else '_'),
                                                      track_type, '_dwi.npy')
     return est_path
 
@@ -262,16 +262,16 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
 
     namer_dir = dir_path + '/graphs'
     if not os.path.isdir(namer_dir):
-        os.mkdir(namer_dir)
+        os.makedirs(namer_dir, exist_ok=True)
 
     est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
                                                  '%s' % (network + '_' if network is not None else ''),
                                                  '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                  'raw_', conn_model, '_',
-                                                 '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
-                                                 "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
-                                                 "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''),
-                                                 "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None else ''),
+                                                 '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                                 "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if float(c_boot) > 0 else ''),
+                                                 "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if float(smooth) > 0 else ''),
+                                                 "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if hpass is not None else ''),
                                                  'func.npy')
 
     return est_path
@@ -316,43 +316,29 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
 
     namer_dir = dir_path + '/graphs'
     if not os.path.isdir(namer_dir):
-        os.mkdir(namer_dir)
+        os.makedirs(namer_dir, exist_ok=True)
 
     est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
                                                '%s' % (network + '_' if network is not None else ''),
                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                'raw_', conn_model, '_',
-                                               '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc'),
-                                               "%s" % ("%s%s%s" % ('_', int(target_samples), 'samples') if float(target_samples) > 0 else ''),
+                                               '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                               "%s" % ("%s%s%s" % ('samples-', int(target_samples), 'streams_') if float(target_samples) > 0 else '_'),
                                                track_type, '_dwi.npy')
     return est_path
 
 
-def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size):
+def create_csv_path(dir_path, est_path):
     """
 
     Create a csv path to save graph metrics.
 
     Parameters
     ----------
-    ID : str
-        A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
-    conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
-    thr : float
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
-    roi : str
-        File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+    est_path : str
+        File path to .npy file containing graph with thresholding applied.
 
     Returns
     -------
@@ -364,17 +350,10 @@ def create_csv_path(ID, network, conn_model, thr, roi, dir_path, node_size):
 
     namer_dir = str(Path(dir_path).parent) + '/netmetrics'
     if not os.path.isdir(namer_dir):
-        os.mkdir(namer_dir)
+        os.makedirs(namer_dir, exist_ok=True)
 
-    if node_size is None:
-        node_size = 'parc'
+    out_path = "%s%s%s%s" % (namer_dir, '/', est_path.split('/')[-1].split('.npy')[0], '_net_mets.csv')
 
-    out_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_net_mets_',
-                                               '%s' % (network + '_' if network is not None else ''),
-                                               '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                               conn_model, '_thr-', thr, '_', node_size,
-                                               '%s' % ("mm" if ((node_size != 'parc') and (node_size is not None)) else ''),
-                                               '.csv')
     return out_path
 
 
@@ -413,7 +392,7 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
     return
 
 
-def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist,
+def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist,
                    prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed,
                    multimodal, multiplex):
     """
@@ -429,8 +408,6 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, nod
     network_iterlist : list
         List of resting-state networks based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
         study of brain subgraphs.
-    node_size_iterlist : list
-        List of spherical centroid node sizes in the case that coordinate-based centroids are used as ROI's.
     thr_iterlist : list
         List of values, between 0 and 1, to threshold the graph using any variety of methods
         triggered through other options.
@@ -461,8 +438,6 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, nod
     network_iterlist : list
         List of resting-state networks based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
         study of brain subgraphs.
-    node_size_iterlist : list
-        List of spherical centroid node sizes in the case that coordinate-based centroids are used as ROI's.
     thr_iterlist : list
         List of values, between 0 and 1, to threshold the graph using any variety of methods
         triggered through other options.
@@ -490,10 +465,10 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, nod
     if (multiplex > 0) and (multimodal is True):
         multigraph_list_all = netmotifs.build_multigraphs(est_path_iterlist, list(flatten(ID_iterlist))[0])
 
-    return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
+    return conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 
 
-def pass_meta_ins(conn_model, est_path, network, node_size, thr, prune, ID, roi, norm, binary):
+def pass_meta_ins(conn_model, est_path, network, thr, prune, ID, roi, norm, binary):
     """
     Passes parameters as metadata.
 
@@ -507,9 +482,6 @@ def pass_meta_ins(conn_model, est_path, network, node_size, thr, prune, ID, roi,
     network : str
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
         brain subgraphs.
-    node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
     thr : float
         A value, between 0 and 1, to threshold the graph using any variety of methods
         triggered through other options.
@@ -535,9 +507,6 @@ def pass_meta_ins(conn_model, est_path, network, node_size, thr, prune, ID, roi,
     network : str
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
         brain subgraphs.
-    node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
     thr : float
         A value, between 0 and 1, to threshold the graph using any variety of methods
         triggered through other options.
@@ -556,7 +525,6 @@ def pass_meta_ins(conn_model, est_path, network, node_size, thr, prune, ID, roi,
     est_path_iterlist = est_path
     conn_model_iterlist = conn_model
     network_iterlist = network
-    node_size_iterlist = node_size
     thr_iterlist = thr
     prune_iterlist = prune
     ID_iterlist = ID
@@ -567,7 +535,6 @@ def pass_meta_ins(conn_model, est_path, network, node_size, thr, prune, ID, roi,
     # print(conn_model_iterlist)
     # print(est_path_iterlist)
     # print(network_iterlist)
-    # print(node_size_iterlist)
     # print(thr_iterlist)
     # print(prune_iterlist)
     # print(ID_iterlist)
@@ -575,12 +542,12 @@ def pass_meta_ins(conn_model, est_path, network, node_size, thr, prune, ID, roi,
     # print(norm_iterlist)
     # print(binary_iterlist)
     # print('\n\n')
-    return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
+    return conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 
 
-def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, node_size_func, thr_func, prune_func, ID_func,
+def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, thr_func, prune_func, ID_func,
                         roi_func, norm_func, binary_func, conn_model_struct, est_path_struct, network_struct,
-                        node_size_struct, thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct):
+                        thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct):
     """
     Passes multimodal iterable parameters as metadata.
 
@@ -594,9 +561,6 @@ def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, node_size_
     network_func : str
         Functional resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
         study of brain subgraphs.
-    node_size_func : int
-        Ffunctional spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
     thr_func : float
         A value, between 0 and 1, to threshold the functional graph using any variety of methods
         triggered through other options.
@@ -618,9 +582,6 @@ def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, node_size_
     network_struct : str
         Diffusion structural resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter
         nodes in the study of brain subgraphs.
-    node_size_struct : int
-        Diffusion structural spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
     thr_struct : float
         A value, between 0 and 1, to threshold the diffusion structural graph using any variety of methods
         triggered through other options.
@@ -646,8 +607,6 @@ def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, node_size_
     network_iterlist : list
         List of resting-state networks based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
         study of brain subgraphs.
-    node_size_iterlist : list
-        List of spherical centroid node sizes in the case that coordinate-based centroids are used as ROI's.
     thr_iterlist : list
         List of values, between 0 and 1, to threshold the graph using any variety of methods
         triggered through other options.
@@ -669,7 +628,6 @@ def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, node_size_
     est_path_iterlist = [est_path_func, est_path_struct]
     conn_model_iterlist = [conn_model_func, conn_model_struct]
     network_iterlist = [network_func, network_struct]
-    node_size_iterlist = [node_size_func, node_size_struct]
     thr_iterlist = [thr_func, thr_struct]
     prune_iterlist = [prune_func, prune_struct]
     ID_iterlist = [ID_func, ID_struct]
@@ -680,7 +638,6 @@ def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, node_size_
     # print(conn_model_iterlist)
     # print(est_path_iterlist)
     # print(network_iterlist)
-    # print(node_size_iterlist)
     # print(thr_iterlist)
     # print(prune_iterlist)
     # print(ID_iterlist)
@@ -688,7 +645,7 @@ def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, node_size_
     # print(norm_iterlist)
     # print(binary_iterlist)
     # print('\n\n')
-    return conn_model_iterlist, est_path_iterlist, network_iterlist, node_size_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
+    return conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 
 
 def CollectPandasJoin(net_pickle_mt):
@@ -768,7 +725,7 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
 
         namer_dir = dir_path + '/embeddings'
         if not os.path.isdir(namer_dir):
-            os.mkdir(namer_dir)
+            os.makedirs(namer_dir, exist_ok=True)
 
         out_path = "%s%s%s%s%s%s%s%s" % (namer_dir, '/', list(flatten(ID))[0], '_omnetome_', atlas, '_', subgraph_name,
                                          '.npy')
@@ -796,7 +753,7 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
         dir_path = str(Path(os.path.dirname(graph_path)).parent)
         namer_dir = dir_path + '/embeddings'
         if not os.path.isdir(namer_dir):
-            os.mkdir(namer_dir)
+            os.makedirs(namer_dir, exist_ok=True)
 
         out_path = "%s%s%s%s%s%s%s%s" % (namer_dir, '/', list(flatten(ID))[0], '_masetome_', atlas, '_', subgraph_name,
                                          '.npy')
@@ -823,9 +780,9 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
         parcel_dict_func = dict.fromkeys(atlases)
         parcel_dict_dwi = dict.fromkeys(atlases)
 
-        est_path_iterlist_dwi = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in
+        est_path_iterlist_dwi = list(set([i for i in est_path_iterlist if i.split('est-')[1].split('_')[0] in
                                           struct_models]))
-        est_path_iterlist_func = list(set([i for i in est_path_iterlist if i.split('est_')[1].split('_')[0] in
+        est_path_iterlist_func = list(set([i for i in est_path_iterlist if i.split('est-')[1].split('_')[0] in
                                            func_models]))
 
         func_subnets = list(set([i.split('_est')[0].split('/')[-1] for i in est_path_iterlist_func]))
@@ -1011,13 +968,13 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
     return out_path
 
 
-def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
+def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch):
     """
     Summarize list of pickled pandas dataframes of graph metrics unique to eacho unique combination of hyperparameters.
 
     Parameters
     ----------
-    net_pickle_mt_list : list
+    net_mets_csv_list : list
         List of file paths to pickled pandas dataframes as themselves.
     ID : str
         A subject id or other unique identifier.
@@ -1025,51 +982,67 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
         study of brain subgraphs.
     plot_switch : bool
-        Activate summary plotting (histograms, ROC curves, etc.)
+        Activate summary plotting (histograms, central tendency, AUC, etc.)
     """
     import pandas as pd
     import numpy as np
     import matplotlib
     matplotlib.use('Agg')
-    from itertools import chain
+    from itertools import chain, groupby
+    import re
 
     # Check for existence of net_pickle files, condensing final list to only those that were actually produced.
-    net_pickle_mt_list_exist = []
-    for net_pickle_mt in list(net_pickle_mt_list):
+    net_mets_csv_list_exist = []
+    for net_pickle_mt in list(net_mets_csv_list):
         if op.isfile(net_pickle_mt) is True:
-            net_pickle_mt_list_exist.append(net_pickle_mt)
+            net_mets_csv_list_exist.append(net_pickle_mt)
 
-    if len(list(net_pickle_mt_list)) > len(net_pickle_mt_list_exist):
+    if len(list(net_mets_csv_list)) > len(net_mets_csv_list_exist):
         raise UserWarning('Warning! Number of actual models produced less than expected. Some graphs were excluded')
 
-    net_pickle_mt_list = net_pickle_mt_list_exist
+    net_mets_csv_list = net_mets_csv_list_exist
 
-    if len(net_pickle_mt_list) > 1:
-        print("%s%s%s" % ('\n\nList of result files to concatenate:\n', str(net_pickle_mt_list), '\n\n'))
-        subject_path = op.dirname(op.dirname(net_pickle_mt_list[0]))
-        name_of_network_pickle = "%s%s" % ('net_mets_', net_pickle_mt_list[0].split('_0.')[0].split('net_mets_')[1])
-        net_pickle_mt_list.sort()
+    if len(net_mets_csv_list) > 1:
+        print("%s%s%s" % ('\n\nList of result files to concatenate:\n', str(net_mets_csv_list), '\n\n'))
+        subject_path = op.dirname(op.dirname(net_mets_csv_list[0]))
+        name_of_network_pickle = "%s%s" % ('net_mets_', net_mets_csv_list[0].split('_0.')[0].split('net_mets_')[1])
+        net_mets_csv_list.sort()
 
-        list_ = []
         models = []
-        for file_ in net_pickle_mt_list:
-            df = pd.read_pickle(file_)
-            try:
-                node_cols = [s for s in list(df.columns) if isinstance(s, int) or any(c.isdigit() for c in s)]
-                df = df.drop(node_cols, axis=1)
+        for file_ in net_mets_csv_list:
                 models.append(op.basename(file_))
-            except RuntimeError:
-                print('Error: Node column removal failed for mean stats file...')
-            list_.append(df)
+
+        models_grouped = [list(x) for x in zip(*[list(g) for k, g in groupby(models, lambda s: s.split('thr-')[1].split('_')[0])])]
+
+        meta = dict()
+        non_decimal = re.compile(r'[^\d.]+')
+        for thr_set in range(len(models_grouped)):
+            meta[thr_set] = dict()
+            meta[thr_set]['dataframes'] = dict()
+            for i in models_grouped[thr_set]:
+                thr = non_decimal.sub('', i.split('thr-')[1].split('_')[0])
+                _file = subject_path + '/netmetrics/' + i
+                df = pd.read_csv(_file)
+                #node_cols = [s for s in list(df.columns) if isinstance(s, int) or any(c.isdigit() for c in s)]
+                #df = df.drop(node_cols, axis=1)
+                meta[thr_set]['dataframes'][thr] = df
+
+        # For each unique threshold set, for each graph measure, extract AUC
+        for thr_set in meta.keys():
+            df_summary = pd.concat(meta[thr_set]['dataframes'].values())
+            df_summary['thr'] = meta[thr_set]['dataframes'].keys()
+            meta[thr_set]['summary_dataframe'] = df_summary
+            df_summary_auc = df_summary.iloc[[0]]
+            df_summary_auc.columns = [col + '_auc' for col in df_summary.columns]
+            for measure in df_summary.columns[:-1]:
+                # Get Area Under the Curve
+                df_summary_auc[measure] = np.trapz(np.array(df_summary[measure]).astype('float64'), np.array(df_summary['thr']).astype('float64'))
+            meta[thr_set]['auc_dataframe'] = df_summary_auc
 
         try:
             # Concatenate and find mean across dataframes
-            list_of_dicts = [cur_df.T.to_dict().values() for cur_df in list_]
-            df_concat = pd.DataFrame(list(chain(*list_of_dicts)))
-            df_concat["Model"] = np.array([i.replace('_net_mets', '') for i in models])
+            df_concat = pd.concat([meta[thr_set]['auc_dataframe'] for thr_set in meta.keys()])
             measures = list(df_concat.columns)
-            measures.remove('id')
-            measures.remove('Model')
             if plot_switch is True:
                 from pynets.plotting import plot_gen
                 plot_gen.plot_graph_measure_hists(df_concat, measures, file_)
@@ -1097,7 +1070,7 @@ def collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch):
     return
 
 
-def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, multimodal):
+def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal):
     """
     API for summarizing independent lists of pickled pandas dataframes of graph metrics for each modality, RSN, and roi.
 
@@ -1108,7 +1081,7 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, 
         study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
-    net_pickle_mt_list : list
+    net_mets_csv_list : list
         List of file paths to pickled pandas dataframes as themselves.
     plot_switch : bool
         Activate summary plotting (histograms, ROC curves, etc.)
@@ -1132,31 +1105,31 @@ def collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, 
             struct_models = hardcoded_params['available_models']['struct_models']
         except KeyError:
             print('ERROR: available structural models not sucessfully extracted from runconfig.yaml')
-    net_pickle_mt_list = list(flatten(net_pickle_mt_list))
+    net_mets_csv_list = list(flatten(net_mets_csv_list))
 
     if multi_nets is not None:
-        net_pickle_mt_list_nets = net_pickle_mt_list
+        net_mets_csv_list_nets = net_mets_csv_list
         for network in multi_nets:
-            net_pickle_mt_list = list(set([i for i in net_pickle_mt_list_nets if network in i]))
+            net_mets_csv_list = list(set([i for i in net_mets_csv_list_nets if network in i]))
             if multimodal is True:
-                net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('mets_')[1].split('_')[0]
+                net_mets_csv_list_dwi = list(set([i for i in net_mets_csv_list if i.split('mets_')[1].split('_')[0]
                                                    in struct_models]))
-                collect_pandas_df_make(net_pickle_mt_list_dwi, ID, network, plot_switch)
-                net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if
+                collect_pandas_df_make(net_mets_csv_list_dwi, ID, network, plot_switch)
+                net_mets_csv_list_func = list(set([i for i in net_mets_csv_list if
                                                     i.split('mets_')[1].split('_')[0] in func_models]))
-                collect_pandas_df_make(net_pickle_mt_list_func, ID, network, plot_switch)
+                collect_pandas_df_make(net_mets_csv_list_func, ID, network, plot_switch)
             else:
-                collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
+                collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch)
     else:
         if multimodal is True:
-            net_pickle_mt_list_dwi = list(set([i for i in net_pickle_mt_list if i.split('mets_')[1].split('_')[0] in
+            net_mets_csv_list_dwi = list(set([i for i in net_mets_csv_list if i.split('mets_')[1].split('_')[0] in
                                                struct_models]))
-            collect_pandas_df_make(net_pickle_mt_list_dwi, ID, network, plot_switch)
-            net_pickle_mt_list_func = list(set([i for i in net_pickle_mt_list if i.split('mets_')[1].split('_')[0]
+            collect_pandas_df_make(net_mets_csv_list_dwi, ID, network, plot_switch)
+            net_mets_csv_list_func = list(set([i for i in net_mets_csv_list if i.split('mets_')[1].split('_')[0]
                                                 in func_models]))
-            collect_pandas_df_make(net_pickle_mt_list_func, ID, network, plot_switch)
+            collect_pandas_df_make(net_mets_csv_list_func, ID, network, plot_switch)
         else:
-            collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
+            collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch)
 
     return
 
@@ -1223,7 +1196,7 @@ def save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network):
 
     namer_dir = dir_path + '/nodes'
     if not os.path.isdir(namer_dir):
-        os.mkdir(namer_dir)
+        os.makedirs(namer_dir, exist_ok=True)
 
     # Save coords to pickle
     coord_path = "%s%s%s%s" % (namer_dir, '/', network, '_coords_rsn.pkl')
@@ -1265,7 +1238,7 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
 
     namer_dir = dir_path + '/parcellations'
     if not os.path.isdir(namer_dir):
-        os.mkdir(namer_dir)
+        os.makedirs(namer_dir, exist_ok=True)
 
     net_parcels_nii_path = "%s%s%s%s%s%s%s" % (namer_dir, '/', str(ID), '_parcels_masked',
                                                '%s' % ('_' + network if network is not None else ''),
@@ -1276,7 +1249,7 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
     return net_parcels_nii_path
 
 
-def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass):
+def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass, node_size):
     """
     This function saves the time-series 4D numpy array to disk as a .npy file.
 
@@ -1300,6 +1273,9 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth,
         Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's for time-series extraction.
 
     Returns
     -------
@@ -1309,14 +1285,15 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth,
     import os
     namer_dir = dir_path + '/timeseries'
     if not os.path.isdir(namer_dir):
-        os.mkdir(namer_dir)
+        os.makedirs(namer_dir, exist_ok=True)
 
     # Save time series as npy file
-    out_path_ts = "%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
+    out_path_ts = "%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
                                             '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                            '%s' % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else ''),
-                                            "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''),
-                                            "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None else ''),
+                                            '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                            '%s' % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if float(c_boot) > 0 else ''),
+                                            "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if float(smooth) > 0 else ''),
+                                            "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if hpass is not None else ''),
                                             'ts_from_nodes.npy')
 
     np.save(out_path_ts, ts_within_nodes)
@@ -1451,7 +1428,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas, b0_th
 
     namer_dir = outdir + '/dmri_tmp'
     if not os.path.isdir(namer_dir):
-        os.mkdir(namer_dir)
+        os.makedirs(namer_dir, exist_ok=True)
 
     B0_bet = "%s%s" % (namer_dir, "/mean_B0_bet.nii.gz")
     B0_mask = "%s%s" % (namer_dir, "/mean_B0_bet_mask.nii.gz")
@@ -1560,14 +1537,12 @@ class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
     """
     Input interface wrapper for ExtractNetStats
     """
-    ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=False)
     thr = traits.Any(mandatory=True)
     conn_model = traits.Str(mandatory=True)
     est_path = File(exists=True, mandatory=True, desc="")
     roi = traits.Any(mandatory=False)
     prune = traits.Any(mandatory=False)
-    node_size = traits.Any(mandatory=False)
     norm = traits.Any(mandatory=False)
     binary = traits.Any(mandatory=False)
 
@@ -1588,14 +1563,12 @@ class ExtractNetStats(BaseInterface):
 
     def _run_interface(self, runtime):
         out = extractnetstats(
-            self.inputs.ID,
             self.inputs.network,
             self.inputs.thr,
             self.inputs.conn_model,
             self.inputs.est_path,
             self.inputs.roi,
             self.inputs.prune,
-            self.inputs.node_size,
             self.inputs.norm,
             self.inputs.binary)
         setattr(self, '_outpath', out)
@@ -1650,7 +1623,7 @@ class CollectPandasDfsInputSpec(BaseInterfaceInputSpec):
     """
     ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=True)
-    net_pickle_mt_list = traits.List(mandatory=True)
+    net_mets_csv_list = traits.List(mandatory=True)
     plot_switch = traits.Any(mandatory=True)
     multi_nets = traits.Any(mandatory=True)
     multimodal = traits.Any(mandatory=True)
@@ -1666,7 +1639,7 @@ class CollectPandasDfs(SimpleInterface):
         collect_pandas_df(
             self.inputs.network,
             self.inputs.ID,
-            self.inputs.net_pickle_mt_list,
+            self.inputs.net_mets_csv_list,
             self.inputs.plot_switch,
             self.inputs.multi_nets,
             self.inputs.multimodal)

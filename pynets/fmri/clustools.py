@@ -408,6 +408,7 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
         A parcellation image.
     """
     import time
+    import os
     from nilearn.regions import connected_regions, Parcellations, connected_label_regions
     from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
 
@@ -436,7 +437,8 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
                 print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
                       'regressor file should be checked manually.')
                 confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-                conf_corr = '/tmp/confounds_mean_corrected_' + str(run_uuid) + '.tsv'
+                os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
+                conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
                 confounds_nonan.to_csv(conf_corr, sep='\t')
                 clust_est.fit(func_img, confounds=conf_corr)
             else:
@@ -458,7 +460,8 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
                 print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
                       'regressor file should be checked manually.')
                 confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-                conf_corr = '/tmp/confounds_mean_corrected_' + str(run_uuid) + '.tsv'
+                os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
+                conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
                 confounds_nonan.to_csv(conf_corr, sep='\t')
                 clust_est.fit(func_img, confounds=conf_corr)
             else:

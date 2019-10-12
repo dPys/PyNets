@@ -748,7 +748,6 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
     import matplotlib.pyplot as plt
     import pandas as pd
     print('Saving model plots...')
-    df_concat = df_concat.drop(columns=['id'])
     model_list = list(df_concat['Model'])
     for name in measures:
         try:
