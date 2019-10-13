@@ -927,10 +927,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
         print(i)
 
     if nx.is_connected(G) is True:
-        frag = False
         print('Graph is connected...')
     else:
-        frag = True
         print('Warning: Graph is fragmented...\n')
 
     # Create Length matrix

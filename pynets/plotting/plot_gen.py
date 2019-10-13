@@ -440,7 +440,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
 
         namer_dir = dir_path + '/figures'
         if not os.path.isdir(namer_dir):
-            os.mkdir(namer_dir)
+            os.makedirs(namer_dir, exist_ok=True)
 
         # Plot connectogram
         if len(conn_matrix) > 20:
@@ -629,7 +629,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
 
         namer_dir = dir_path + '/figures'
         if not os.path.isdir(namer_dir):
-            os.mkdir(namer_dir)
+            os.makedirs(namer_dir, exist_ok=True)
 
         # Plot connectogram
         if len(conn_matrix) > 20:
@@ -743,12 +743,17 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
     net_pick_file : st
         File path to .pkl file of network measures used to generate df_concat.
     """
+    import os
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     import pandas as pd
     print('Saving model plots...')
-    model_list = list(df_concat['Model'])
+
+    namer_dir = op.dirname(op.dirname(net_pick_file)) + '/figures'
+    if not os.path.isdir(namer_dir):
+        os.makedirs(namer_dir, exist_ok=True)
+
     for name in measures:
         try:
             x = np.array(df_concat[name][np.isfinite(df_concat[name])])
@@ -775,7 +780,7 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
             except:
                 print("%s%s" % ('Warning: Inf or NaN values encounterd. No numeric data to plot for ', name))
                 pass
-        out_path_fig = "%s%s%s%s" % (op.dirname(op.dirname(net_pick_file)), '/', name, '_mean_plot.png')
+        out_path_fig = "%s%s%s%s" % (namer_dir, '/', name, '_mean_plot.png')
         fig.savefig(out_path_fig)
         plt.close('all')
     return
