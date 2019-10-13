@@ -1267,11 +1267,15 @@ def build_workflow(args, retval):
                 print("%s%s" % ('B-Values:\n', _fbval))
                 print("%s%s" % ('B-Vectors:\n', _fbvec))
                 print("%s%s" % ('T1-weighted Image:\n', _anat_file))
+                if waymask is not None:
+                    print("%s%s" % ('Waymask:\n', waymask))
         else:
             print("%s%s" % ('Diffusion-Weighted Image:\n', dwi_file))
             print("%s%s" % ('B-Values:\n', fbval))
             print("%s%s" % ('B-Vectors:\n', fbvec))
             print("%s%s" % ('T1-weighted Image:\n', anat_file))
+            if waymask is not None:
+                print("%s%s" % ('Waymask:\n', waymask))
         conf = None
         k = None
         clust_mask = None

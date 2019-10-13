@@ -293,14 +293,6 @@ def create_csv_path(dir_path, est_path):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    namer_subdir1 = namer_dir + '/AUC'
-    if not os.path.isdir(namer_subdir1):
-        os.makedirs(namer_subdir1, exist_ok=True)
-
-    namer_subdir2 = namer_dir + '/summary'
-    if not os.path.isdir(namer_subdir2):
-        os.makedirs(namer_subdir2, exist_ok=True)
-
     out_path = "%s%s%s%s" % (namer_dir, '/', est_path.split('/')[-1].split('.npy')[0], '_net_mets.csv')
 
     return out_path
@@ -950,10 +942,10 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch):
         raise UserWarning('Warning! Number of actual models produced less than expected. Some graphs were excluded')
 
     net_mets_csv_list = net_mets_csv_list_exist
+    subject_path = op.dirname(op.dirname(net_mets_csv_list[0]))
 
     if len(net_mets_csv_list) > 1:
         print("%s%s%s" % ('\n\nList of result files to concatenate:\n', str(net_mets_csv_list), '\n\n'))
-        subject_path = op.dirname(op.dirname(net_mets_csv_list[0]))
         net_mets_csv_list.sort()
 
         models = []
@@ -976,7 +968,10 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch):
                 meta[thr_set]['dataframes'][thr] = df
 
         # For each unique threshold set, for each graph measure, extract AUC
-        auc_dir = subject_path + '/netmetrics/AUC/'
+        auc_dir = subject_path + '/netmetrics/auc/'
+        if not os.path.isdir(auc_dir):
+            os.makedirs(auc_dir, exist_ok=True)
+
         for thr_set in meta.keys():
             df_summary = pd.concat(meta[thr_set]['dataframes'].values())
             df_summary['thr'] = meta[thr_set]['dataframes'].keys()
@@ -998,6 +993,9 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch):
 
         try:
             summary_dir = subject_path + '/netmetrics/summary/'
+            if not os.path.isdir(summary_dir):
+                os.makedirs(summary_dir, exist_ok=True)
+
             # Concatenate and find mean across dataframes
             df_concat = pd.concat([meta[thr_set]['auc_dataframe'] for thr_set in meta.keys()])
             measures = list(df_concat.columns)
