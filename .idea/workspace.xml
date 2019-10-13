@@ -9,15 +9,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/__about__.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/__about__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/core/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/core/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/registration/register.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/register.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/stats/netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/stats/netstats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_netstats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_utils.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -51,7 +45,7 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="453">
@@ -63,8 +57,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/core/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="688">
-              <caret line="1529" column="47" selection-start-line="1529" selection-start-column="47" selection-end-line="1529" selection-end-column="47" />
+            <state relative-caret-position="713">
+              <caret line="1017" column="30" selection-start-line="1017" selection-start-column="30" selection-end-line="1017" selection-end-column="30" />
               <folding>
                 <element signature="e#139#154#0" expanded="true" />
               </folding>
@@ -84,11 +78,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="740">
-              <caret line="1296" column="11" selection-start-line="1296" selection-start-column="11" selection-end-line="1296" selection-end-column="24" />
+            <state relative-caret-position="695">
+              <caret line="961" column="35" lean-forward="true" selection-start-line="961" selection-start-column="35" selection-end-line="961" selection-end-column="35" />
               <folding>
                 <element signature="e#132#163#0" expanded="true" />
               </folding>
@@ -168,9 +162,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>parame</find>
-      <find>thresh_func</find>
-      <find>outputnode</find>
       <find>thresh_func_node</find>
       <find>map_connects</find>
       <find>join_iters_node_thr</find>
@@ -197,7 +188,10 @@
       <find>pynets.core.utils</find>
       <find>CollectPandasDfs</find>
       <find>save_ts</find>
+      <find>name_of_network_pickle</find>
+      <find>netmetrics</find>
       <find>out_path_neat</find>
+      <find>create_csv</find>
     </findStrings>
     <replaceStrings>
       <replace>## Adapted from NetworkX to incorporate weight parameter ##</replace>
@@ -286,9 +280,9 @@
         <option value="$PROJECT_DIR$/tests/test_netstats.py" />
         <option value="$PROJECT_DIR$/pynets/registration/register.py" />
         <option value="$PROJECT_DIR$/pynets/core/workflows.py" />
-        <option value="$PROJECT_DIR$/pynets/stats/netstats.py" />
         <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
         <option value="$PROJECT_DIR$/pynets/core/utils.py" />
+        <option value="$PROJECT_DIR$/pynets/stats/netstats.py" />
       </list>
     </option>
   </component>
@@ -625,12 +619,12 @@
       <workItem from="1570674158527" duration="5006000" />
       <workItem from="1570734223201" duration="5184000" />
       <workItem from="1570756648107" duration="16977000" />
-      <workItem from="1570862811437" duration="10409000" />
+      <workItem from="1570862811437" duration="12922000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1226337000" />
+    <option name="totallyTimeSpent" value="1228850000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -1109,30 +1103,30 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
+    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="740">
-          <caret line="1296" column="11" selection-start-line="1296" selection-start-column="11" selection-end-line="1296" selection-end-column="24" />
-          <folding>
-            <element signature="e#132#163#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="453">
+          <caret line="1526" column="38" selection-start-line="1526" selection-start-column="38" selection-end-line="1526" selection-end-column="38" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/core/utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="688">
-          <caret line="1529" column="47" selection-start-line="1529" selection-start-column="47" selection-end-line="1529" selection-end-column="47" />
+        <state relative-caret-position="713">
+          <caret line="1017" column="30" selection-start-line="1017" selection-start-column="30" selection-end-line="1017" selection-end-column="30" />
           <folding>
             <element signature="e#139#154#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
+    <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="453">
-          <caret line="1526" column="38" selection-start-line="1526" selection-start-column="38" selection-end-line="1526" selection-end-column="38" />
+        <state relative-caret-position="695">
+          <caret line="961" column="35" lean-forward="true" selection-start-line="961" selection-start-column="35" selection-end-line="961" selection-end-column="35" />
+          <folding>
+            <element signature="e#132#163#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

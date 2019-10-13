@@ -947,12 +947,12 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     from pynets.stats.netstats import average_local_efficiency, global_efficiency, participation_coef, participation_coef_sign, diversity_coef_sign, smallworldness_measure, smallworldness, create_random_graph
     # For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the
     # function (with a G-only input) to the netstats module.
-    metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
-                        average_clustering, average_shortest_path_length,
-                        graph_number_of_cliques, transitivity, smallworldness]
     # metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
     #                     average_clustering, average_shortest_path_length,
-    #                     graph_number_of_cliques, transitivity]
+    #                     graph_number_of_cliques, transitivity, smallworldness]
+    metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
+                        average_clustering, average_shortest_path_length,
+                        graph_number_of_cliques, transitivity]
     metric_list_comm = ['louvain_modularity']
     # with open("%s%s" % (str(Path(__file__).parent), '/global_graph_measures.yaml'), 'r') as stream:
     #     try:
