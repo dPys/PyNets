@@ -16,21 +16,6 @@ from pynets.core import utils
 import nibabel as nib
 
 
-def test_export_to_pandas():
-    """
-    Test export_to_pandas functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    csv_loc = dir_path + '/whole_brain_cluster_labels_PCA200/002_net_metrics_sps_0.9_pDMN_3_bin.csv'
-    network = None
-    roi = None
-    ID = '002'
-
-    outfile = utils.export_to_pandas(csv_loc, ID, network, roi)
-    assert outfile is not None
-
-
 def test_save_RSN_coords_and_labels_to_pickle():
     """
     Test save_RSN_coords_and_labels_to_pickle functionality
@@ -119,66 +104,66 @@ def test_check_est_path_existence():
     assert est_path_list_ex is not None
 
 
-def test_collect_pandas_df():
-    """
-    Test collect_pandas_df functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/dmri'
-    multi_nets = ['Default', 'SalVentAttn']
-    network = 'Default'
-    ID = '002'
-    plot_switch = True
-    multimodal = False
-    net_pickle_mt_list = [dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_0.05_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_0.06_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_0.07_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_0.08_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_0.09_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_0.1_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_0.05_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_0.06_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_0.07_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_0.08_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_0.09_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_0.05_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_0.06_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_0.07_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_0.08_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_0.09_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_0.1_parc']
-    utils.collect_pandas_df(network, ID, net_pickle_mt_list, plot_switch, multi_nets, multimodal)
-
-
-def test_collect_pandas_df_make():
-    """
-    Test collect_pandas_df_make functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/dmri'
-    network = 'Default'
-    ID = '002'
-    plot_switch = True
-    net_pickle_mt_list = [dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_0.05_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_0.06_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_0.07_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_0.08_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_0.09_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_0.1_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_0.05_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_0.06_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_0.07_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_0.08_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_0.09_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_0.05_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_0.06_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_0.07_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_0.08_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_0.09_parc',
-                          dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_0.1_parc']
-    utils.collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
+# def test_collect_pandas_df():
+#     """
+#     Test collect_pandas_df functionality
+#     """
+#     base_dir = str(Path(__file__).parent/"examples")
+#     dir_path = base_dir + '/002/dmri'
+#     multi_nets = ['Default', 'SalVentAttn']
+#     network = 'Default'
+#     ID = '002'
+#     plot_switch = True
+#     multimodal = False
+#     net_mets_csv_list = [dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_thr-0.05_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_thr-0.06_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_thr-0.07_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_thr-0.08_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_thr-0.09_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_thr-0.1_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_thr-0.05_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_thr-0.06_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_thr-0.07_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_thr-0.08_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_thr-0.09_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_thr-0.1_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_thr-0.05_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_thr-0.06_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_thr-0.07_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_thr-0.08_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_thr-0.09_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_thr-0.1_parc.csv']
+#     utils.collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal)
+#
+#
+# def test_collect_pandas_df_make():
+#     """
+#     Test collect_pandas_df_make functionality
+#     """
+#     base_dir = str(Path(__file__).parent/"examples")
+#     dir_path = base_dir + '/002/dmri'
+#     network = 'Default'
+#     ID = '002'
+#     plot_switch = True
+#     net_pickle_mt_list = [dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_thr-0.05_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_thr-0.06_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_thr-0.07_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_thr-0.08_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_thr-0.09_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csa_thr-0.1_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_thr-0.05_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_thr-0.06_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_thr-0.07_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_thr-0.08_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_thr-0.09_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_thr-0.1_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_thr-0.05_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_thr-0.06_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_thr-0.07_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_thr-0.08_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_thr-0.09_parc.csv',
+#                           dir_path + '/DesikanKlein2012/0021001_net_mets_Default_tensor_thr-0.1_parc.csv']
+#     utils.collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
 
 
 def test_create_est_path_func():
