@@ -275,7 +275,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     warped_uatlas = affine_map.transform_inverse(mapping.transform(atlas_img.get_data().astype('int16'),
                                                                    interpolation='nearestneighbour'), interp='nearest')
-    union_ua = "%s%s%s%s" % (dir_path, '/parcellations', os.path.basename(uatlas).split('.nii.gz')[0],
+    union_ua = "%s%s%s%s" % (dir_path, '/parcellations/', os.path.basename(uatlas).split('.nii.gz')[0],
                              '_UNION.nii.gz')
 
     warped_uatlas_img = nib.Nifti1Image(warped_uatlas, affine=warped_fa_img.affine)

@@ -359,7 +359,7 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
               labels_im_file, target_samples, curv_thr_list, step_list, track_type, max_length, maxcrossing, directget,
               conn_model, gtab_file, dwi_file, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
               prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, min_length,
-              fa_path, waymask, roi_neighborhood_tol=4):
+              fa_path, waymask, roi_neighborhood_tol=8):
     '''
     Run all ensemble tractography and filtering routines.
 

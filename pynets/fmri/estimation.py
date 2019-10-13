@@ -389,7 +389,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
         raise RuntimeError('\nERROR: Time-series extraction failed!')
 
     if float(c_boot) > 0:
-        print("%s%s%s" % ('Performing circular block bootstrapping iteration: ', c_boot, '...'))
+        print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))
         ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
                         len(coords), ' volumetric ROI\'s'))
@@ -535,7 +535,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
             ts_within_nodes = spheres_masker.fit_transform(func_file)
 
         if float(c_boot) > 0:
-            print("%s%s%s" % ('Performing circular block bootstrapping iteration: ', c_boot, '...'))
+            print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))
             ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
         if ts_within_nodes is None:
             raise RuntimeError('\nERROR: Time-series extraction failed!')
