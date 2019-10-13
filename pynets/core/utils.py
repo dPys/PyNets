@@ -20,65 +20,6 @@ def get_file():
     return base_path
 
 
-def export_to_pandas(csv_loc, ID, network, roi):
-    """
-    Saves network metric files to formatted pandas dataframes.
-
-    Parameters
-    ----------
-    csv_loc : str
-        File path to .csv containing graph metrics.
-    ID : str
-        A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
-    roi : str
-        File path to binarized/boolean region-of-interest Nifti1Image file.
-
-    Returns
-    -------
-    net_pickle_mt : pkl
-        File path to pickled pandas dataframe.
-    """
-    import pandas as pd
-    import os
-    from pathlib import Path
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
-
-    # Check for existence of csv_loc
-    if op.isfile(csv_loc) is False:
-        raise FileNotFoundError('\nERROR: Missing netmetrics csv file output. Cannot export to pandas df!')
-
-    namer_dir = str(Path(op.dirname(op.abspath(csv_loc))).parent) + '/metrickl'
-
-    if not os.path.isdir(namer_dir):
-        os.makedirs(namer_dir, exist_ok=True)
-
-    met_list_picke_path = "%s%s%s%s" % (namer_dir, '/net_met_list',
-                                        '%s' % ('_' + network if network is not None else ''),
-                                        '%s' % ('_' + op.basename(roi).split('.')[0] if roi is not None else ''))
-
-    metric_list_names = pickle.load(open(met_list_picke_path, 'rb'))
-    df = pd.read_csv(csv_loc, delimiter='\t', header=None).fillna('')
-    df = df.T
-    column_headers = {k: v for k, v in enumerate(metric_list_names)}
-    df = df.rename(columns=column_headers)
-    df['id'] = range(1, len(df) + 1)
-    cols = df.columns.tolist()
-    ix = cols.index('id')
-    cols_ID = cols[ix:ix + 1] + cols[:ix] + cols[ix + 1:]
-    df = df[cols_ID]
-    df['id'] = df['id'].astype('object')
-    df.id = df.id.replace(1, ID)
-    net_pickle_mt = csv_loc.split('.csv')[0]
-    df.to_pickle(net_pickle_mt, protocol=2)
-    return net_pickle_mt
-
-
 def do_dir_path(atlas, in_file):
     """
     Creates an atlas subdirectory from the base directory of the given subject's input file.
@@ -648,22 +589,22 @@ def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, thr_func, 
     return conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 
 
-def CollectPandasJoin(net_pickle_mt):
+def CollectPandasJoin(net_mets_csv):
     """
-    Passes pickled pandas dataframe as metadata.
+    Passes csv pandas dataframe as metadata.
 
     Parameters
     ----------
-    net_pickle_mt : pkl
-        File path to pickled pandas dataframe.
+    net_mets_csv : str
+        File path to csv pandas dataframe.
 
     Returns
     -------
-    net_pickle_mt_out : pkl
-        File path to pickled pandas dataframe as itself.
+    net_mets_csv_out : str
+        File path to csv pandas dataframe as itself.
     """
-    net_pickle_mt_out = net_pickle_mt
-    return net_pickle_mt_out
+    net_mets_csv_out = net_mets_csv
+    return net_mets_csv_out
 
 
 def flatten(l):
@@ -988,14 +929,14 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch):
     import numpy as np
     import matplotlib
     matplotlib.use('Agg')
-    from itertools import chain, groupby
+    from itertools import groupby
     import re
 
-    # Check for existence of net_pickle files, condensing final list to only those that were actually produced.
+    # Check for existence of net_mets csv files, condensing final list to only those that were actually produced.
     net_mets_csv_list_exist = []
-    for net_pickle_mt in list(net_mets_csv_list):
-        if op.isfile(net_pickle_mt) is True:
-            net_mets_csv_list_exist.append(net_pickle_mt)
+    for net_mets_csv in list(net_mets_csv_list):
+        if op.isfile(net_mets_csv) is True:
+            net_mets_csv_list_exist.append(net_mets_csv)
 
     if len(list(net_mets_csv_list)) > len(net_mets_csv_list_exist):
         raise UserWarning('Warning! Number of actual models produced less than expected. Some graphs were excluded')
@@ -1034,9 +975,14 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch):
             meta[thr_set]['summary_dataframe'] = df_summary
             df_summary_auc = df_summary.iloc[[0]]
             df_summary_auc.columns = [col + '_auc' for col in df_summary.columns]
+
+            print('\nCalculating AUC for:')
             for measure in df_summary.columns[:-1]:
                 # Get Area Under the Curve
-                df_summary_auc[measure] = np.trapz(np.array(df_summary[measure]).astype('float64'), np.array(df_summary['thr']).astype('float64'))
+                print(measure)
+                df_summary_nonan = df_summary.dropna(subset=[measure], axis=0)
+                df_summary_auc[measure] = np.trapz(np.array(df_summary_nonan[measure]).astype('float64'),
+                                                   np.array(df_summary_nonan['thr']).astype('float64'))
             meta[thr_set]['auc_dataframe'] = df_summary_auc
 
         try:
@@ -1289,12 +1235,12 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth,
 
     # Save time series as npy file
     out_path_ts = "%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
-                                            '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                            '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
-                                            '%s' % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if float(c_boot) > 0 else ''),
-                                            "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if float(smooth) > 0 else ''),
-                                            "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if hpass is not None else ''),
-                                            'ts_from_nodes.npy')
+                                              '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                              '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                              '%s' % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if float(c_boot) > 0 else ''),
+                                              "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if float(smooth) > 0 else ''),
+                                              "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if hpass is not None else ''),
+                                              'ts_from_nodes.npy')
 
     np.save(out_path_ts, ts_within_nodes)
     return out_path_ts
@@ -1523,7 +1469,7 @@ def create_temporary_copy(path, temp_file_name, format):
     """
     A function to create temporary file equivalents
     """
-    import tempfile, shutil, os
+    import tempfile, shutil
     from time import strftime
     import uuid
     run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
@@ -1537,10 +1483,11 @@ class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
     """
     Input interface wrapper for ExtractNetStats
     """
+    ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=False)
     thr = traits.Any(mandatory=True)
     conn_model = traits.Str(mandatory=True)
-    est_path = File(exists=True, mandatory=True, desc="")
+    est_path = File(exists=True, mandatory=True)
     roi = traits.Any(mandatory=False)
     prune = traits.Any(mandatory=False)
     norm = traits.Any(mandatory=False)
@@ -1551,7 +1498,7 @@ class ExtractNetStatsOutputSpec(TraitedSpec):
     """
     Output interface wrapper for ExtractNetStats
     """
-    out_file = File()
+    out_path_neat = File(exists=True, mandatory=True)
 
 
 class ExtractNetStats(BaseInterface):
@@ -1563,6 +1510,7 @@ class ExtractNetStats(BaseInterface):
 
     def _run_interface(self, runtime):
         out = extractnetstats(
+            self.inputs.ID,
             self.inputs.network,
             self.inputs.thr,
             self.inputs.conn_model,
@@ -1576,50 +1524,12 @@ class ExtractNetStats(BaseInterface):
 
     def _list_outputs(self):
         import os.path as op
-        return {'out_file': op.abspath(getattr(self, '_outpath'))}
+        return {'out_path_neat': op.abspath(getattr(self, '_outpath'))}
 
 
-class Export2PandasInputSpec(BaseInterfaceInputSpec):
+class CombinePandasDfsInputSpec(BaseInterfaceInputSpec):
     """
-    Input interface wrapper for Export2Pandas
-    """
-    csv_loc = File(exists=True, mandatory=True, desc="")
-    ID = traits.Any(mandatory=True)
-    network = traits.Any(mandatory=False)
-    roi = traits.Any(mandatory=False)
-
-
-class Export2PandasOutputSpec(TraitedSpec):
-    """
-    Output interface wrapper for Export2Pandas
-    """
-    net_pickle_mt = traits.Any(mandatory=True)
-
-
-class Export2Pandas(BaseInterface):
-    """
-    Interface wrapper for Export2Pandas
-    """
-    input_spec = Export2PandasInputSpec
-    output_spec = Export2PandasOutputSpec
-
-    def _run_interface(self, runtime):
-        out = export_to_pandas(
-            self.inputs.csv_loc,
-            self.inputs.ID,
-            self.inputs.network,
-            self.inputs.roi)
-        setattr(self, '_outpath', out)
-        return runtime
-
-    def _list_outputs(self):
-        import os.path as op
-        return {'net_pickle_mt': op.abspath(getattr(self, '_outpath'))}
-
-
-class CollectPandasDfsInputSpec(BaseInterfaceInputSpec):
-    """
-    Input interface wrapper for CollectPandasDfs
+    Input interface wrapper for CombinePandasDfs
     """
     ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=True)
@@ -1629,11 +1539,11 @@ class CollectPandasDfsInputSpec(BaseInterfaceInputSpec):
     multimodal = traits.Any(mandatory=True)
 
 
-class CollectPandasDfs(SimpleInterface):
+class CombinePandasDfs(SimpleInterface):
     """
-    Interface wrapper for CollectPandasDfs
+    Interface wrapper for CombinePandasDfs
     """
-    input_spec = CollectPandasDfsInputSpec
+    input_spec = CombinePandasDfsInputSpec
 
     def _run_interface(self, runtime):
         collect_pandas_df(

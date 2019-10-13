@@ -1015,7 +1015,7 @@ def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=False, simple
     return
 
 
-def register_atlas_fmri(uatlas, uatlas_parcels, atlas, node_size, basedir_path, anat_file, vox_size, simple=False):
+def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, vox_size, simple=False):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 
@@ -1027,9 +1027,6 @@ def register_atlas_fmri(uatlas, uatlas_parcels, atlas, node_size, basedir_path, 
         File path to subset atlas parcellation Nifti1Image in MNI template space, if any.
     atlas : str
         Name of atlas parcellation used.
-    node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for tracking.
     basedir_path : str
         Path to directory to output direct-streamline normalized temp files and outputs.
     anat_file : str
@@ -1049,8 +1046,6 @@ def register_atlas_fmri(uatlas, uatlas_parcels, atlas, node_size, basedir_path, 
 
     reg = register.FmriReg(basedir_path, anat_file, vox_size, simple)
 
-    if node_size is not None:
-        atlas = "%s%s%s" % (atlas, '_', node_size)
 
     # Apply warps/coregister atlas to t1w_mni
     if uatlas == uatlas_parcels:

@@ -10,7 +10,7 @@ matplotlib>=2.2.0
 pytest>=3.3.1
 networkx>=2.0
 git+https://github.com/dPys/nilearn.git
-nipype>=1.1.0
+nipype==1.2.0
 scikit_learn>=0.19.1
 dipy>=1.0.0
 pyyaml>=4.2b1

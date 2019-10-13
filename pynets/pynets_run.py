@@ -1375,7 +1375,7 @@ def build_workflow(args, retval):
     # Import wf core and interfaces
     import warnings
     warnings.filterwarnings("ignore")
-    from pynets.core.utils import CollectPandasDfs, Export2Pandas, ExtractNetStats, CollectPandasJoin
+    from pynets.core.utils import CombinePandasDfs, ExtractNetStats, CollectPandasJoin
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core.workflows import workflow_selector
@@ -1474,24 +1474,19 @@ def build_workflow(args, retval):
 
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
-                                   iterfield=['network', 'thr', 'conn_model', 'est_path',
+                                   iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
                                               'roi', 'prune', 'norm', 'binary'], nested=True,
                                    imports=import_list)
 
-        # Export graph analysis results to pandas dataframes
-        export_to_pandas_node = pe.MapNode(interface=Export2Pandas(), name="Export2Pandas",
-                                           iterfield=['csv_loc', 'ID', 'network', 'roi'], nested=True,
-                                           imports=import_list)
-
         # Aggregate list of paths to pandas dataframe pickles
-        collect_pd_list_net_pickles_node = pe.Node(niu.Function(input_names=['net_pickle_mt'],
-                                                                output_names=['net_pickle_mt_out'],
-                                                                function=CollectPandasJoin),
-                                                   name="AggregatePandasPickles",
-                                                   imports=import_list)
+        collect_pd_list_net_csv_node = pe.Node(niu.Function(input_names=['net_mets_csv'],
+                                                            output_names=['net_mets_csv_out'],
+                                                            function=CollectPandasJoin),
+                                               name="AggregatePandasCSVs",
+                                               imports=import_list)
 
         # Combine dataframes across models
-        collect_pandas_dfs_node = pe.Node(interface=CollectPandasDfs(), name="CollectPandasDfs",
+        combine_pandas_dfs_node = pe.Node(interface=CombinePandasDfs(), name="CombinePandasDfs",
                                           input_names=['network', 'ID', 'net_mets_csv_list', 'plot_switch',
                                                        'multi_nets', 'multimodal'], imports=import_list)
 
@@ -1501,22 +1496,19 @@ def build_workflow(args, retval):
             (handshake_node, net_mets_node, [('est_path_iterlist', 'est_path'),
                                              ('network_iterlist', 'network'),
                                              ('thr_iterlist', 'thr'),
+                                             ('ID_iterlist', 'ID'),
                                              ('conn_model_iterlist', 'conn_model'),
                                              ('roi_iterlist', 'roi'),
                                              ('prune_iterlist', 'prune'),
                                              ('norm_iterlist', 'norm'),
                                              ('binary_iterlist', 'binary')]),
-            (handshake_node, export_to_pandas_node, [('network_iterlist', 'network'),
-                                                     ('ID_iterlist', 'ID'),
-                                                     ('roi_iterlist', 'roi')]),
-            (net_mets_node, export_to_pandas_node, [('out_file', 'csv_loc')]),
-            (inputnode, collect_pandas_dfs_node, [('network', 'network'),
+            (inputnode, combine_pandas_dfs_node, [('network', 'network'),
                                                   ('ID', 'ID'),
                                                   ('plot_switch', 'plot_switch'),
                                                   ('multi_nets', 'multi_nets'),
                                                   ('multimodal', 'multimodal')]),
-            (export_to_pandas_node, collect_pd_list_net_pickles_node, [('net_pickle_mt', 'net_pickle_mt')]),
-            (collect_pd_list_net_pickles_node, collect_pandas_dfs_node, [('net_pickle_mt_out', 'net_mets_csv_list')])
+            (net_mets_node, collect_pd_list_net_csv_node, [('out_path_neat', 'net_mets_csv')]),
+            (collect_pd_list_net_csv_node, combine_pandas_dfs_node, [('net_mets_csv_out', 'net_mets_csv_list')])
         ])
 
         # Raw graph case
@@ -1525,22 +1517,19 @@ def build_workflow(args, retval):
                             [('est_path_iterlist', 'est_path'),
                              ('network_iterlist', 'network'),
                              ('thr_iterlist', 'thr'),
+                             ('ID_iterlist', 'ID'),
                              ('conn_model_iterlist', 'conn_model'),
                              ('roi_iterlist', 'roi'),
                              ('prune_iterlist', 'prune'),
                              ('norm_iterlist', 'norm'),
                              ('binary_iterlist', 'binary')])
                            ])
-            wf.disconnect([(handshake_node, export_to_pandas_node,
-                            [('network_iterlist', 'network'),
-                             ('ID_iterlist', 'ID'),
-                             ('roi_iterlist', 'roi')])
-                           ])
             wf.remove_nodes([meta_wf])
 
             # Multiple raw graphs
             if multi_graph:
                 net_mets_node.inputs.est_path = multi_graph
+                net_mets_node.inputs.ID = [ID] * len(multi_graph)
                 net_mets_node.inputs.roi = [roi] * len(multi_graph)
                 net_mets_node.inputs.thr = [thr] * len(multi_graph)
                 net_mets_node.inputs.prune = [prune] * len(multi_graph)
@@ -1548,11 +1537,9 @@ def build_workflow(args, retval):
                 net_mets_node.inputs.conn_model = conn_model_list
                 net_mets_node.inputs.norm = [norm] * len(multi_graph)
                 net_mets_node.inputs.binary = [binary] * len(multi_graph)
-                export_to_pandas_node.inputs.ID = [ID] * len(multi_graph)
-                export_to_pandas_node.inputs.roi = [roi] * len(multi_graph)
-                export_to_pandas_node.inputs.network = [network] * len(multi_graph)
             else:
                 wf.connect([(inputnode, net_mets_node, [('network', 'network'),
+                                                        ('ID', 'ID'),
                                                         ('thr', 'thr'),
                                                         ('conn_model', 'conn_model'),
                                                         ('roi', 'roi'),
@@ -1560,10 +1547,6 @@ def build_workflow(args, retval):
                                                         ('graph', 'est_path'),
                                                         ('norm', 'norm'),
                                                         ('binary', 'binary')])
-                            ])
-                wf.connect([(inputnode, export_to_pandas_node, [('network', 'network'),
-                                                                ('ID', 'ID'),
-                                                                ('roi', 'roi')])
                             ])
 
         return wf

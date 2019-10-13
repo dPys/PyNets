@@ -799,12 +799,14 @@ def raw_mets(G, i, custom_weight):
 
 
 # Extract network metrics interface
-def extractnetstats(network, thr, conn_model, est_path, roi, prune, norm, binary, custom_weight=None):
+def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, binary, custom_weight=None):
     """
     Function interface for performing fully-automated graph analysis.
 
     Parameters
     ----------
+    ID : str
+        A subject id or other unique identifier.
     network : str
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
         brain subgraphs.
@@ -837,7 +839,6 @@ def extractnetstats(network, thr, conn_model, est_path, roi, prune, norm, binary
     import pandas as pd
     import yaml
     import os
-    import os.path as op
     try:
         import cPickle as pickle
     except ImportError:
@@ -946,12 +947,12 @@ def extractnetstats(network, thr, conn_model, est_path, roi, prune, norm, binary
     from pynets.stats.netstats import average_local_efficiency, global_efficiency, participation_coef, participation_coef_sign, diversity_coef_sign, smallworldness_measure, smallworldness, create_random_graph
     # For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the
     # function (with a G-only input) to the netstats module.
-    #metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
-    #                    average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient,
-    #                    graph_number_of_cliques, transitivity, smallworldness]
     metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
-                        average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient,
-                        graph_number_of_cliques, transitivity]
+                        average_clustering, average_shortest_path_length,
+                        graph_number_of_cliques, transitivity, smallworldness]
+    # metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
+    #                     average_clustering, average_shortest_path_length,
+    #                     graph_number_of_cliques, transitivity]
     metric_list_comm = ['louvain_modularity']
     # with open("%s%s" % (str(Path(__file__).parent), '/global_graph_measures.yaml'), 'r') as stream:
     #     try:
@@ -1289,10 +1290,8 @@ def extractnetstats(network, thr, conn_model, est_path, roi, prune, norm, binary
             pass
 
     # And save results to csv
-    out_path = utils.create_csv_path(dir_path, est_path)
-
-    out_path_neat = "%s%s" % (out_path.split('.csv')[0], '_neat.csv')
+    out_path_neat = "%s%s" % (utils.create_csv_path(dir_path, est_path).split('.csv')[0], '_neat.csv')
     df = pd.DataFrame.from_dict(dict(zip(metric_list_names, net_met_val_list_final)), orient='index').transpose()
     df.to_csv(out_path_neat, index=False)
 
-    return out_path
+    return out_path_neat

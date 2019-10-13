@@ -77,10 +77,11 @@ def test_save_ts_to_file():
     smooth=2
     hpass=None
     network = None
+    node_size = 'parc'
     ID = '002'
     dir_path = base_dir + '/002/fmri'
     ts_within_nodes = '/tmp/'
-    out_path_ts = utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass)
+    out_path_ts = utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass, node_size)
     assert os.path.isfile(out_path_ts) is True
 
 
