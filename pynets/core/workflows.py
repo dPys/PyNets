@@ -252,15 +252,14 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
         # Create input/output nodes
         print('Running Multimodal Meta-Workflow...')
         pass_meta_ins_multi_node = pe.Node(niu.Function(input_names=['conn_model_func', 'est_path_func', 'network_func',
-                                                                     'node_size_func', 'thr_func', 'prune_func',
-                                                                     'ID_func', 'roi_func', 'norm_func', 'binary_func',
-                                                                     'conn_model_struct', 'est_path_struct',
-                                                                     'network_struct', 'node_size_struct', 'thr_struct',
+                                                                     'thr_func', 'prune_func', 'ID_func', 'roi_func',
+                                                                     'norm_func', 'binary_func', 'conn_model_struct',
+                                                                     'est_path_struct', 'network_struct', 'thr_struct',
                                                                      'prune_struct', 'ID_struct', 'roi_struct',
                                                                      'norm_struct', 'binary_struct'],
                                                         output_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                                      'network_iterlist',
-                                                                      'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
+                                                                      'network_iterlist', 'thr_iterlist',
+                                                                      'prune_iterlist', 'ID_iterlist',
                                                                       'roi_iterlist', 'norm_iterlist',
                                                                       'binary_iterlist'],
                                                         function=pass_meta_ins_multi),
@@ -395,13 +394,12 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
 
         if dwi_file:
             pass_meta_ins_struct_node = pe.Node(niu.Function(input_names=['conn_model', 'est_path', 'network',
-                                                                          'node_size', 'thr', 'prune', 'ID', 'roi',
-                                                                          'norm', 'binary'],
+                                                                          'thr', 'prune', 'ID', 'roi', 'norm',
+                                                                          'binary'],
                                                              output_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                                           'network_iterlist',
-                                                                           'thr_iterlist', 'prune_iterlist',
-                                                                           'ID_iterlist', 'roi_iterlist',
-                                                                           'norm_iterlist',
+                                                                           'network_iterlist', 'thr_iterlist',
+                                                                           'prune_iterlist', 'ID_iterlist',
+                                                                           'roi_iterlist', 'norm_iterlist',
                                                                            'binary_iterlist'], function=pass_meta_ins),
                                                 name='pass_meta_ins_struct_node')
 
@@ -467,12 +465,12 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
 
         if func_file:
             pass_meta_ins_func_node = pe.Node(niu.Function(input_names=['conn_model', 'est_path', 'network',
-                                                                        'node_size', 'thr', 'prune', 'ID', 'roi',
+                                                                        'thr', 'prune', 'ID', 'roi',
                                                                         'norm', 'binary'],
                                                            output_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                                         'network_iterlist',
-                                                                         'thr_iterlist', 'prune_iterlist',
-                                                                         'ID_iterlist', 'roi_iterlist', 'norm_iterlist',
+                                                                         'network_iterlist', 'thr_iterlist',
+                                                                         'prune_iterlist', 'ID_iterlist',
+                                                                         'roi_iterlist', 'norm_iterlist',
                                                                          'binary_iterlist'],
                                                            function=pass_meta_ins), name='pass_meta_ins_func_node')
 
@@ -535,14 +533,13 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                              ])
 
     pass_meta_outs_node = pe.Node(niu.Function(input_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                            'network_iterlist',
-                                                            'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
-                                                            'roi_iterlist', 'norm_iterlist', 'binary_iterlist',
-                                                            'embed', 'multimodal', 'multiplex'],
+                                                            'network_iterlist', 'thr_iterlist', 'prune_iterlist',
+                                                            'ID_iterlist', 'roi_iterlist', 'norm_iterlist',
+                                                            'binary_iterlist', 'embed', 'multimodal', 'multiplex'],
                                                output_names=['conn_model_iterlist', 'est_path_iterlist',
-                                                             'network_iterlist',
-                                                             'thr_iterlist', 'prune_iterlist', 'ID_iterlist',
-                                                             'roi_iterlist', 'norm_iterlist', 'binary_iterlist'],
+                                                             'network_iterlist', 'thr_iterlist', 'prune_iterlist',
+                                                             'ID_iterlist', 'roi_iterlist', 'norm_iterlist',
+                                                             'binary_iterlist'],
                                                function=pass_meta_outs), name='pass_meta_outs_node')
 
     meta_wf.connect([(meta_inputnode, pass_meta_outs_node, [('embed', 'embed'),
@@ -1193,7 +1190,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                  function=plot_gen.plot_all_struct, imports=import_list),
                                     name="plot_all_node")
 
-        # Connect thresh_func_node outputs to plotting node
+        # Connect thresh_diff_node outputs to plotting node
         dmri_connectometry_wf.connect([(thresh_diff_node, plot_all_node, [('conn_matrix_thr', 'conn_matrix'),
                                                                           ('conn_model', 'conn_model'),
                                                                           ('atlas', 'atlas'),
@@ -1742,7 +1739,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                          function=register.register_all_fmri, imports=import_list),
                             name="register_node")
 
-    register_atlas_node = pe.Node(niu.Function(input_names=['uatlas', 'uatlas_parcels', 'atlas', 'node_size',
+    register_atlas_node = pe.Node(niu.Function(input_names=['uatlas', 'uatlas_parcels', 'atlas',
                                                             'basedir_path', 'anat_file', 'vox_size'],
                                                output_names=['aligned_atlas_t1mni_gm'],
                                                function=register.register_atlas_fmri, imports=import_list),
@@ -2588,7 +2585,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_file')]),
             (check_orient_and_dims_anat_node, register_atlas_node, [('outfile', 'anat_file')]),
             (inputnode, register_node, [('basedir_path', 'basedir_path'), ('vox_size', 'vox_size')]),
-            (inputnode, register_atlas_node, [('basedir_path', 'basedir_path'), ('node_size', 'node_size'),
+            (inputnode, register_atlas_node, [('basedir_path', 'basedir_path'),
                                               ('vox_size', 'vox_size')]),
             (inputnode, check_orient_and_dims_uatlas_node, [('vox_size', 'vox_size')]),
             (fetch_nodes_and_labels_node, check_orient_and_dims_uatlas_node, [('uatlas', 'infile')]),

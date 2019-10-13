@@ -169,13 +169,12 @@ def test_extractnetstats():
     conn_model = 'cov'
     est_path = base_dir + '/002/fmri/DesikanKlein2012/graphs/0021001_Default_est_sps_0.19densparc_mm.npy'
     prune = 1
-    node_size = 'parc'
     norm = 1
     binary = False
     roi = None
 
     start_time = time.time()
-    out_path = netstats.extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, node_size, norm, binary)
+    out_path = netstats.extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, binary)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
     assert out_path is not None
