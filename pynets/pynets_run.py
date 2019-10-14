@@ -1196,6 +1196,9 @@ def build_workflow(args, retval):
                 pass
 
     if dwi_file or dwi_file_list:
+        if (conn_model == 'tensor') and (directget == 'prob'):
+            raise ValueError('Cannot perform probabilistic tracking with tensor model estimation...')
+
         if user_atlas_list:
             print('\nIterating across multiple user atlases...')
             if dwi_file_list:
@@ -1267,11 +1270,15 @@ def build_workflow(args, retval):
                 print("%s%s" % ('B-Values:\n', _fbval))
                 print("%s%s" % ('B-Vectors:\n', _fbvec))
                 print("%s%s" % ('T1-weighted Image:\n', _anat_file))
+                if waymask is not None:
+                    print("%s%s" % ('Waymask:\n', waymask))
         else:
             print("%s%s" % ('Diffusion-Weighted Image:\n', dwi_file))
             print("%s%s" % ('B-Values:\n', fbval))
             print("%s%s" % ('B-Vectors:\n', fbvec))
             print("%s%s" % ('T1-weighted Image:\n', anat_file))
+            if waymask is not None:
+                print("%s%s" % ('Waymask:\n', waymask))
         conf = None
         k = None
         clust_mask = None
@@ -1461,9 +1468,6 @@ def build_workflow(args, retval):
                 if node_name in runtime_dict:
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
-            if k_clustering > 0:
-                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._n_procs = runtime_dict['clustering_node'][0]
-                wf.get_node(meta_wf.name).get_node(wf_selected).get_node('clustering_node')._mem_gb = runtime_dict['clustering_node'][1]
 
         if dwi_file:
             wf_selected = "%s%s" % ('dmri_connectometry_', ID)
@@ -1630,9 +1634,6 @@ def build_workflow(args, retval):
                     if node_name in runtime_dict:
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
-                if k_clustering > 0:
-                    wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._n_procs = runtime_dict['clustering_node'][0]
-                    wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node('clustering_node')._mem_gb = runtime_dict['clustering_node'][1]
 
             if dwi_file:
                 wf_selected = "%s%s" % ('dmri_connectometry_', ID[i])

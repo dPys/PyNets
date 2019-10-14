@@ -594,9 +594,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
             if node_name in runtime_dict:
                 meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._n_procs = runtime_dict[node_name][0]
                 meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._mem_gb = runtime_dict[node_name][1]
-        if k_clustering > 0:
-            meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._n_procs = 1
-            meta_wf.get_node("%s%s" % (wf_selected, '.clustering_node'))._mem_gb = 4
 
     if dwi_file:
         wf_selected = "%s%s" % ('dmri_connectometry_', ID)
@@ -2130,7 +2127,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         extract_ts_node = pe.Node(niu.Function(input_names=['net_parcels_map_nifti', 'conf', 'func_file', 'coords',
                                                             'roi', 'dir_path', 'ID', 'network', 'smooth',
                                                             'atlas', 'uatlas', 'labels', 'coords',
-                                                            'c_boot', 'block_size', 'hpass'],
+                                                            'c_boot', 'block_size', 'hpass', 'mask'],
                                                output_names=['ts_within_nodes', 'node_size', 'smooth', 'dir_path',
                                                              'atlas', 'uatlas', 'labels', 'coords',
                                                              'c_boot', 'hpass'],
@@ -2151,7 +2148,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         # Coordinate case
         extract_ts_node = pe.Node(niu.Function(input_names=['node_size', 'conf', 'func_file', 'coords', 'dir_path',
                                                             'ID', 'roi', 'network', 'smooth', 'atlas', 'uatlas',
-                                                            'labels', 'c_boot', 'block_size', 'hpass'],
+                                                            'labels', 'c_boot', 'block_size', 'hpass', 'mask'],
                                                output_names=['ts_within_nodes', 'node_size', 'smooth', 'dir_path',
                                                              'atlas', 'uatlas', 'labels', 'coords',
                                                              'c_boot', 'hpass'],
@@ -2528,10 +2525,19 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     if mask and (op.isfile(template_mask) is True):
         fmri_connectometry_wf.connect([
             (inputnode, node_gen_node, [('template_mask', 'roi')]),
+            (inputnode, extract_ts_node, [('mask', 'mask')])
         ])
     else:
+        check_orient_and_dims_mask_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'],
+                                                               output_names=['outfile'],
+                                                               function=regutils.check_orient_and_dims,
+                                                               imports=import_list),
+                                                  name="check_orient_and_dims_mask_node")
         fmri_connectometry_wf.connect([
             (inputnode, node_gen_node, [('mask', 'roi')]),
+            (inputnode, check_orient_and_dims_mask_node, [('mask', 'infile'), ('vox_size', 'vox_size')]),
+            (check_orient_and_dims_mask_node, extract_ts_node, [('outfile', 'mask')]),
+            (check_orient_and_dims_mask_node, node_gen_node, [('outfile', 'roi')]),
         ])
 
     # Connect remaining nodes of workflow
@@ -2609,12 +2615,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             fmri_connectometry_wf.get_node(node_name).interface.mem_gb = runtime_dict[node_name][1]
             fmri_connectometry_wf.get_node(node_name).n_procs = runtime_dict[node_name][0]
             fmri_connectometry_wf.get_node(node_name)._mem_gb = runtime_dict[node_name][1]
-
-    if k_clustering > 0:
-        clustering_node._mem_gb = runtime_dict['clustering_node'][1]
-        clustering_node.n_procs = runtime_dict['clustering_node'][0]
-        clustering_node.interface.mem_gb = runtime_dict['clustering_node'][1]
-        clustering_node.interface.n_procs = runtime_dict['clustering_node'][0]
 
     # Set runtime/logging configurations
     cfg = dict(execution={'stop_on_first_crash': True, 'hash_method': 'content', 'crashfile_format': 'txt',

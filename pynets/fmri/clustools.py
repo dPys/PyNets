@@ -519,8 +519,6 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, local_
     import os
     from pynets.core import utils
     from pynets.fmri import clustools
-    from time import strftime
-    import uuid
 
     nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
@@ -538,8 +536,7 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, local_
     func_data = func_img.get_data().astype('bool')
     masked = mask_data.copy()
     masked[~func_data[:,:,:,0]] = 0
-    run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
-    clust_mask_corr = "%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', run_uuid, '.nii.gz')
+    clust_mask_corr = "%s%s%s%s" % (dir_path, '/', mask_name, '.nii.gz')
     nib.save(nib.Nifti1Image(masked, affine=mask_img.affine, header=mask_img.header), clust_mask_corr)
 
     if clust_type in nilearn_clust_list:

@@ -183,6 +183,7 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
             else:
                 conn_matrix = estimator_shrunk.covariance_
     elif conn_model == 'QuicGraphicalLasso':
+
         try:
             from inverse_covariance import QuicGraphicalLasso
         except ImportError:
@@ -198,7 +199,7 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         print('\nCalculating QuicGraphLasso precision matrix using skggm...\n')
         model.fit(time_series)
         conn_matrix = -model.precision_
-    elif conn_model == 'QuicGraphLassoCV':
+    elif conn_model == 'QuicGraphicalLassoCV':
         try:
             from inverse_covariance import QuicGraphicalLassoCV
         except ImportError:
@@ -226,7 +227,7 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         print('\nCalculating QuicGraphLassoEBIC precision matrix using skggm...\n')
         model.fit(time_series)
         conn_matrix = -model.precision_
-    elif conn_model == 'AdaptiveQuicGraphLasso':
+    elif conn_model == 'AdaptiveQuicGraphicalLasso':
         try:
             from inverse_covariance import AdaptiveQuicGraphicalLasso, QuicGraphicalLassoEBIC
         except ImportError:
@@ -261,7 +262,7 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
 
 
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas,
-                    uatlas, labels, c_boot, block_size, hpass, detrending=True):
+                    uatlas, labels, c_boot, block_size, hpass, mask):
     """
     API for employing Nilearn's NiftiLabelsMasker to extract fMRI time-series data from spherical ROI's based on a
     given 3D atlas image of integer-based voxel intensities. The resulting time-series can then optionally be resampled
@@ -301,8 +302,8 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
         Size bootstrap blocks if bootstrapping (c_boot) is performed.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
-    detrending : bool
-        Indicates whether to remove linear trends from time-series when extracting across nodes. Default is True.
+    mask : str
+        File path to binarized/boolean brain mask Nifti1Image file.
 
     Returns
     -------
@@ -362,9 +363,14 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
         hpass = None
         detrending = True
 
+    if mask is not None:
+        mask_img = nib.load(mask)
+    else:
+        mask_img = None
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
-                                                 detrend=detrending, t_r=t_r, verbose=2, resampling_target='data')
+                                                 detrend=detrending, t_r=t_r, verbose=2, resampling_target='data',
+                                                 dtype="auto", mask_img=mask_img)
     if conf is not None:
         import pandas as pd
         confounds = pd.read_csv(conf, sep='\t')
@@ -389,7 +395,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
         raise RuntimeError('\nERROR: Time-series extraction failed!')
 
     if float(c_boot) > 0:
-        print("%s%s%s" % ('Performing circular block bootstrapping iteration: ', c_boot, '...'))
+        print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))
         ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
                         len(coords), ' volumetric ROI\'s'))
@@ -407,7 +413,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
 
 
 def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, network, smooth, atlas,
-                      uatlas, labels, c_boot, block_size, hpass):
+                      uatlas, labels, c_boot, block_size, hpass, mask):
     """
     API for employing Nilearn's NiftiSpheresMasker to extract fMRI time-series data from spherical ROI's based on a
     given list of seed coordinates. The resulting time-series can then optionally be resampled using circular-block
@@ -447,6 +453,8 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         Size bootstrap blocks if bootstrapping (c_boot) is performed.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
+    mask : str
+        File path to binarized/boolean brain mask Nifti1Image file.
 
     Returns
     -------
@@ -510,10 +518,16 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         hpass = None
         detrending = True
 
+    if mask is not None:
+        mask_img = nib.load(mask)
+    else:
+        mask_img = None
+
     if len(coords) > 0:
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                        standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
-                                                       detrend=detrending, t_r=t_r, verbose=2)
+                                                       detrend=detrending, t_r=t_r, verbose=2, dtype="auto",
+                                                       mask_img=mask_img)
         if conf is not None:
             import pandas as pd
             confounds = pd.read_csv(conf, sep='\t')
@@ -535,7 +549,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
             ts_within_nodes = spheres_masker.fit_transform(func_file)
 
         if float(c_boot) > 0:
-            print("%s%s%s" % ('Performing circular block bootstrapping iteration: ', c_boot, '...'))
+            print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))
             ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
         if ts_within_nodes is None:
             raise RuntimeError('\nERROR: Time-series extraction failed!')

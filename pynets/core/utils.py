@@ -293,14 +293,6 @@ def create_csv_path(dir_path, est_path):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    namer_subdir1 = namer_dir + '/AUC'
-    if not os.path.isdir(namer_subdir1):
-        os.makedirs(namer_subdir1, exist_ok=True)
-
-    namer_subdir2 = namer_dir + '/summary'
-    if not os.path.isdir(namer_subdir2):
-        os.makedirs(namer_subdir2, exist_ok=True)
-
     out_path = "%s%s%s%s" % (namer_dir, '/', est_path.split('/')[-1].split('.npy')[0], '_net_mets.csv')
 
     return out_path
@@ -950,15 +942,15 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch):
         raise UserWarning('Warning! Number of actual models produced less than expected. Some graphs were excluded')
 
     net_mets_csv_list = net_mets_csv_list_exist
+    subject_path = op.dirname(op.dirname(net_mets_csv_list[0]))
 
     if len(net_mets_csv_list) > 1:
         print("%s%s%s" % ('\n\nList of result files to concatenate:\n', str(net_mets_csv_list), '\n\n'))
-        subject_path = op.dirname(op.dirname(net_mets_csv_list[0]))
         net_mets_csv_list.sort()
 
         models = []
         for file_ in net_mets_csv_list:
-                models.append(op.basename(file_))
+            models.append(op.basename(file_))
 
         models_grouped = [list(x) for x in zip(*[list(g) for k, g in groupby(models, lambda s: s.split('thr-')[1].split('_')[0])])]
 
@@ -976,7 +968,10 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch):
                 meta[thr_set]['dataframes'][thr] = df
 
         # For each unique threshold set, for each graph measure, extract AUC
-        auc_dir = subject_path + '/netmetrics/AUC/'
+        auc_dir = subject_path + '/netmetrics/auc/'
+        if not os.path.isdir(auc_dir):
+            os.makedirs(auc_dir, exist_ok=True)
+
         for thr_set in meta.keys():
             df_summary = pd.concat(meta[thr_set]['dataframes'].values())
             df_summary['thr'] = meta[thr_set]['dataframes'].keys()
@@ -998,17 +993,22 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch):
 
         try:
             summary_dir = subject_path + '/netmetrics/summary/'
+            if not os.path.isdir(summary_dir):
+                os.makedirs(summary_dir, exist_ok=True)
+
             # Concatenate and find mean across dataframes
             df_concat = pd.concat([meta[thr_set]['auc_dataframe'] for thr_set in meta.keys()])
             measures = list(df_concat.columns)
             if plot_switch is True:
                 from pynets.plotting import plot_gen
                 plot_gen.plot_graph_measure_hists(df_concat, measures, file_)
-            df_concatted = df_concat.loc[:, measures].mean().to_frame().transpose()
-            df_concatted_std = df_concat.loc[:, measures].std().to_frame().transpose()
-            df_concatted.columns = [str(col) + '_mean' for col in df_concatted.columns]
-            df_concatted_std.columns = [str(col) + '_std_dev' for col in df_concatted_std.columns]
-            result = pd.concat([df_concatted, df_concatted_std], axis=1)
+            df_concatted_mean = df_concat.loc[:, measures].mean(skipna=True).to_frame().transpose()
+            df_concatted_median = df_concat.loc[:, measures].median(skipna=True).to_frame().transpose()
+            df_concatted_mode = df_concat.loc[:, measures].mode(dropna=True)
+            df_concatted_mean.columns = [str(col) + '_mean' for col in df_concatted_mean.columns]
+            df_concatted_median.columns = [str(col) + '_median' for col in df_concatted_median.columns]
+            df_concatted_mode.columns = [str(col) + '_mode' for col in df_concatted_mode.columns]
+            result = pd.concat([df_concatted_mean, df_concatted_median, df_concatted_mode], axis=1)
             df_concatted_final = result.reindex(sorted(result.columns), axis=1)
             print('\nConcatenating dataframes for ' + str(ID) + '...\n')
             net_csv_summary_out_path = "%s%s%s%s%s%s" % (summary_dir, '/', str(ID), '_net_mets',

@@ -141,7 +141,7 @@ def csd_mod_est(gtab, data, B0_mask):
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
                   dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels,
-                  coords, norm, binary, directget, warped_fa, error_margin, voxel_size='2mm', fa_wei=True):
+                  coords, norm, binary, directget, warped_fa, error_margin, fa_wei=True):
     '''
     Use tracked streamlines as a basis for estimating a structural connectome.
 
@@ -206,8 +206,6 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         File path to MNI-space warped FA Nifti1Image.
     error_margin : int
         Euclidean margin of error for classifying a streamline as a connection to an ROI. Default is 2 voxels.
-    voxel_size : str
-        Target isotropic voxel resolution of all input Nifti1Image files.
     fa_wei :  bool
         Scale streamline count edges by fractional anistropy (FA). Default is False.
 
