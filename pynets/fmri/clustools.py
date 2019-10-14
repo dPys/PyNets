@@ -109,7 +109,7 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
     msz = msk.shape
 
     # Convert the 3D mask array into a 1D vector
-    mskdat = np.reshape(msk.get_data(), prod(msz))
+    mskdat = np.reshape(np.asarray(msk.dataobj), prod(msz))
 
     # Determine the 1D coordinates of the non-zero
     # elements of the mask
@@ -122,7 +122,7 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
     sz = nim.shape
 
     # Reshape fmri data to a num_voxels x num_timepoints array
-    imdat = np.reshape(nim.get_data(), (prod(sz[:3]), sz[3]))
+    imdat = np.reshape(np.asarray(nim.dataobj), (prod(sz[:3]), sz[3]))
 
     # Mask the datset to only the in-mask voxels
     imdat = imdat[iv, :]
@@ -272,8 +272,8 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
 
     # Read in the mask
     msk = nib.load(clust_mask)
-    msz = np.shape(msk.get_data())
-    msk_data = msk.get_data()
+    msz = np.shape(np.asarray(msk.dataobj))
+    msk_data = np.asarray(msk.dataobj)
 
     # Convert the 3D mask array into a 1D vector
     mskdat = np.reshape(msk_data, prod(msz))
@@ -289,7 +289,7 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
     sz = nim.shape
 
     # Reshape fmri data to a num_voxels x num_timepoints array
-    data = nim.get_data()
+    data = np.asarray(nim.dataobj)
     imdat = np.reshape(data, (prod(sz[:3]), sz[3]))
 
     # Construct a sparse matrix from the mask
@@ -531,13 +531,15 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, local_
 
     # Ensure mask does not inclue voxels outside of the brain
     mask_img = nib.load(clust_mask)
-    mask_data = mask_img.get_data().astype('bool').astype('int')
+    mask_data = np.asarray(mask_img.dataobj).astype('bool').astype('int')
     func_img = nib.load(func_file)
-    func_data = func_img.get_data().astype('bool')
-    masked = mask_data.copy()
-    masked[~func_data[:,:,:,0]] = 0
+    func_data = np.asarray(func_img.dataobj).astype('bool')
+    func_data_sample_slice = func_data[:, :, :, 0]
+    mask_data[~func_data_sample_slice] = 0
     clust_mask_corr = "%s%s%s%s" % (dir_path, '/', mask_name, '.nii.gz')
-    nib.save(nib.Nifti1Image(masked, affine=mask_img.affine, header=mask_img.header), clust_mask_corr)
+    nib.save(nib.Nifti1Image(mask_data, affine=mask_img.affine, header=mask_img.header), clust_mask_corr)
+    del mask_data
+    del func_data
 
     if clust_type in nilearn_clust_list:
         clustools.nil_parcellate(func_file, clust_mask_corr, k, clust_type, uatlas, dir_path, conf,

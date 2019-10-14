@@ -1482,12 +1482,10 @@ def create_temporary_copy(path, temp_file_name, format):
     A function to create temporary file equivalents
     """
     import tempfile, shutil
-    from time import strftime
-    import uuid
-    run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
     temp_dir = tempfile.gettempdir()
-    temp_path = "%s%s%s%s%s%s" % (temp_dir, '/', temp_file_name, '_', run_uuid, format)
-    shutil.copy2(path, temp_path)
+    temp_path = "%s%s%s%s" % (temp_dir, '/', temp_file_name, format)
+    if not os.path.isfile(temp_path):
+        shutil.copy2(path, temp_path)
     return temp_path
 
 

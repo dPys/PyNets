@@ -390,6 +390,7 @@ def build_workflow(args, retval):
     import yaml
     try:
         import pynets
+        print("%s%s%s" % ('PyNets Version:\n', pynets.__version__, '\n\n'))
     except ImportError:
         print('PyNets not installed! Ensure that you are using the correct python version.')
     from pynets.core.utils import do_dir_path
