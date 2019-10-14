@@ -48,19 +48,19 @@ resource_dict:
       - 'fetch_nodes_and_labels_node':
         - (1, 1)
       - 'extract_ts_node':
-        - (2, 4)
+        - (2, 6)
       - 'node_gen_node':
         - (1, 1)
       - 'clustering_node':
-        - (4, 8)
+        - (4, 10)
       - 'get_conn_matrix_node':
         - (1, 1)
       - 'thresh_func_node':
         - (1, 1)
       - 'register_node':
-        - (1, 2)
+        - (2, 6)
       - 'register_atlas_node':
-        - (1, 2)
+        - (2, 6)
       - 'get_fa_node':
         - (1, 1)
       - 'run_tracking_node':

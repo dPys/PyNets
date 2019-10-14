@@ -370,7 +370,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                  detrend=detrending, t_r=t_r, verbose=2, resampling_target='data',
-                                                 dtype="auto", mask_img=mask_img)
+                                                 dtype="auto", mask_img=mask_img, memory_level=0)
     if conf is not None:
         import pandas as pd
         confounds = pd.read_csv(conf, sep='\t')
@@ -527,7 +527,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                        standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                        detrend=detrending, t_r=t_r, verbose=2, dtype="auto",
-                                                       mask_img=mask_img)
+                                                       mask_img=mask_img, memory_level=0)
         if conf is not None:
             import pandas as pd
             confounds = pd.read_csv(conf, sep='\t')

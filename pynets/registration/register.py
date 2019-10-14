@@ -161,7 +161,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     from pynets.plotting import plot_gen
     import pkg_resources
     import os.path as op
-    from nilearn.image import resample_to_img, resample_img
+    from nilearn.image import resample_to_img
     from dipy.io.streamline import load_tractogram
 
     dsn_dir = "%s%s" % (basedir_path, '/dmri_reg_tmp/DSN')
@@ -179,7 +179,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     vox_size = fa_img.header.get_zooms()[0]
     template_path = pkg_resources.resource_filename("pynets", "%s%s%s" % ('templates/FA_', int(vox_size), 'mm.nii.gz'))
     template_img = nib.load(template_path)
-    brain_mask = template_img.get_fdata().astype('bool')
+    brain_mask = np.asarray(template_img.dataobj).astype('bool')
 
     streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_',
                                                   '%s' % (network + '_' if network is not None else ''),
@@ -273,15 +273,15 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     # with original mni-space uatlas
     uatlas_mni_img = nib.load(uatlas)
 
-    warped_uatlas = affine_map.transform_inverse(mapping.transform(atlas_img.get_data().astype('int16'),
+    warped_uatlas = affine_map.transform_inverse(mapping.transform(np.asarray(atlas_img.dataobj).astype('int16'),
                                                                    interpolation='nearestneighbour'), interp='nearest')
     union_ua = "%s%s%s%s" % (dir_path, '/parcellations/', os.path.basename(uatlas).split('.nii.gz')[0],
                              '_UNION.nii.gz')
 
     warped_uatlas_img = nib.Nifti1Image(warped_uatlas, affine=warped_fa_img.affine)
     warped_uatlas_img_res = resample_to_img(warped_uatlas_img, uatlas_mni_img, interpolation='nearest', clip=False)
-    warped_uatlas_img_res_data = warped_uatlas_img_res.get_data()
-    uatlas_mni_data = uatlas_mni_img.get_data()
+    warped_uatlas_img_res_data = np.asarray(warped_uatlas_img_res.dataobj)
+    uatlas_mni_data = np.asarray(uatlas_mni_img.dataobj)
     overlap_mask = np.invert(warped_uatlas_img_res_data.astype('bool') * uatlas_mni_data.astype('bool'))
     union_atlas = warped_uatlas_img_res_data * overlap_mask.astype('int') + uatlas_mni_data * overlap_mask.astype('int')
     union_atlas_corr = union_atlas + np.invert(overlap_mask).astype('int') * uatlas_mni_data
@@ -557,7 +557,7 @@ class DmriReg(object):
 
         # Set intensities to int
         atlas_img = nib.load(dwi_aligned_atlas)
-        atlas_data = np.around(atlas_img.get_fdata()).astype('int16')
+        atlas_data = np.around(np.asarray(atlas_img.dataobj)).astype('int16')
         t_img = load_img(self.wm_gm_int_in_dwi)
         mask = math_img('img > 0', img=t_img)
         mask.to_filename(self.wm_gm_int_in_dwi_bin)
@@ -608,17 +608,17 @@ class DmriReg(object):
 
         # Threshold WM to binary in dwi space
         thr_img = nib.load(self.wm_in_dwi)
-        thr_img.get_fdata()[thr_img.get_fdata() < 0.1] = 0
+        np.asarray(thr_img.dataobj)[np.asarray(thr_img.dataobj) < 0.1] = 0
         nib.save(thr_img, self.wm_in_dwi_bin)
 
         # Threshold GM to binary in dwi space
         thr_img = nib.load(self.gm_in_dwi)
-        thr_img.get_fdata()[thr_img.get_fdata() < 0.2] = 0
+        np.asarray(thr_img.dataobj)[np.asarray(thr_img.dataobj) < 0.2] = 0
         nib.save(thr_img, self.gm_in_dwi_bin)
 
         # Threshold CSF to binary in dwi space
         thr_img = nib.load(self.csf_mask_dwi)
-        thr_img.get_fdata()[thr_img.get_fdata() < 0.95] = 0
+        np.asarray(thr_img.dataobj)[np.asarray(thr_img.dataobj) < 0.95] = 0
         nib.save(thr_img, self.csf_mask_dwi)
 
         # Threshold WM to binary in dwi space
@@ -798,7 +798,7 @@ class FmriReg(object):
 
         # Set intensities to int
         atlas_img = nib.load(aligned_atlas_t1mni)
-        atlas_data = np.around(atlas_img.get_fdata()).astype('int16')
+        atlas_data = np.around(np.asarray(atlas_img.dataobj)).astype('int16')
         nib.save(nib.Nifti1Image(atlas_data.astype('int16'), affine=atlas_img.affine,
                                  header=atlas_img.header), aligned_atlas_t1mni)
         os.system("fslmaths {} -mas {} {}".format(aligned_atlas_t1mni, gm_mask_mni, aligned_atlas_t1mni_gm))
