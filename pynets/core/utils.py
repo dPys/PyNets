@@ -950,7 +950,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch):
 
         models = []
         for file_ in net_mets_csv_list:
-                models.append(op.basename(file_))
+            models.append(op.basename(file_))
 
         models_grouped = [list(x) for x in zip(*[list(g) for k, g in groupby(models, lambda s: s.split('thr-')[1].split('_')[0])])]
 
@@ -1002,11 +1002,13 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch):
             if plot_switch is True:
                 from pynets.plotting import plot_gen
                 plot_gen.plot_graph_measure_hists(df_concat, measures, file_)
-            df_concatted = df_concat.loc[:, measures].mean().to_frame().transpose()
-            df_concatted_std = df_concat.loc[:, measures].std().to_frame().transpose()
-            df_concatted.columns = [str(col) + '_mean' for col in df_concatted.columns]
-            df_concatted_std.columns = [str(col) + '_std_dev' for col in df_concatted_std.columns]
-            result = pd.concat([df_concatted, df_concatted_std], axis=1)
+            df_concatted_mean = df_concat.loc[:, measures].mean(skipna=True).to_frame().transpose()
+            df_concatted_median = df_concat.loc[:, measures].median(skipna=True).to_frame().transpose()
+            df_concatted_mode = df_concat.loc[:, measures].mode(dropna=True)
+            df_concatted_mean.columns = [str(col) + '_mean' for col in df_concatted_mean.columns]
+            df_concatted_median.columns = [str(col) + '_median' for col in df_concatted_median.columns]
+            df_concatted_mode.columns = [str(col) + '_mode' for col in df_concatted_mode.columns]
+            result = pd.concat([df_concatted_mean, df_concatted_median, df_concatted_mode], axis=1)
             df_concatted_final = result.reindex(sorted(result.columns), axis=1)
             print('\nConcatenating dataframes for ' + str(ID) + '...\n')
             net_csv_summary_out_path = "%s%s%s%s%s%s" % (summary_dir, '/', str(ID), '_net_mets',

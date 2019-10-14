@@ -860,6 +860,10 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     # De-diagnal and remove nan's and inf's, ensure edge weights are positive
     in_mat = np.array(np.abs(np.array(thresholding.autofix(in_mat_raw))))
 
+    # Get hyperbolic tangent (i.e. fischer r-to-z transform) of matrix if non-covariance
+    if (conn_model == 'corr') or (conn_model == 'partcorr'):
+        in_mat = np.arctanh(in_mat)
+
     # Normalize connectivity matrix
     # By maximum edge weight
     if norm == 1:
@@ -882,10 +886,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     else:
         pass
 
-    # Get hyperbolic tangent (i.e. fischer r-to-z transform) of matrix if non-covariance
-    if (conn_model == 'corr') or (conn_model == 'partcorr'):
-        in_mat = np.arctanh(in_mat)
-
     # Binarize graph
     if binary is True:
         in_mat = thresholding.binarize(in_mat)
@@ -898,14 +898,16 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
 
     # Prune irrelevant nodes (i.e. nodes who are fully disconnected from the graph and/or those whose betweenness
     # centrality are > 3 standard deviations below the mean)
-    if prune == 1:
+    if (prune == 1) or (nx.is_connected(G_pre) is True):
+        if nx.is_connected(G_pre) is False:
+            print('Warning: Graph is fragmented...\n')
         print('Pruning disconnected nodes...')
         [G, _] = prune_disconnected(G_pre)
     elif prune == 2:
         print('Pruning to retain only most important nodes...')
         [G, _] = most_important(G_pre)
     else:
-        print('No node pruning applied...')
+        print('Graph is connected...')
         G = G_pre
 
     # Get corresponding matrix
@@ -926,11 +928,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     for i in info_list:
         print(i)
 
-    if nx.is_connected(G) is True:
-        print('Graph is connected...')
-    else:
-        print('Warning: Graph is fragmented...\n')
-
     # Create Length matrix
     mat_len = thresholding.weight_conversion(in_mat, 'lengths')
 
@@ -946,11 +943,10 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     # For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the
     # function (with a G-only input) to the netstats module.
     # metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
-    #                     average_clustering, average_shortest_path_length,
-    #                     graph_number_of_cliques, transitivity, smallworldness]
+    #                     average_clustering, average_shortest_path_length, graph_number_of_cliques, transitivity,
+    #                     smallworldness]
     metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
-                        average_clustering, average_shortest_path_length,
-                        graph_number_of_cliques, transitivity]
+                        average_clustering, average_shortest_path_length, graph_number_of_cliques, transitivity]
     metric_list_comm = ['louvain_modularity']
     # with open("%s%s" % (str(Path(__file__).parent), '/global_graph_measures.yaml'), 'r') as stream:
     #     try:
@@ -982,6 +978,9 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
         try:
             try:
                 net_met_val = raw_mets(G, i, custom_weight)
+                if net_met_val == 1.0:
+                    net_met_val = np.nan
+                    print("%s%s%s" % ('WARNING: ', str(i), ' is undefined for graph G'))
             except:
                 print("%s%s%s" % ('WARNING: ', net_met, ' failed for graph G.'))
                 net_met_val = np.nan
@@ -1009,6 +1008,9 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
             ci = community.best_partition(G)
             modularity = community.community_louvain.modularity(ci, G)
             metric_list_names.append('modularity')
+            if modularity == 1.0:
+                modularity = np.nan
+                print('Louvain modularity calculation is undefined for graph G')
             net_met_val_list_final.append(modularity)
         except:
             print('Louvain modularity calculation is undefined for graph G')

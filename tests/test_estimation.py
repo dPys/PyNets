@@ -108,9 +108,9 @@ def test_extract_ts_rsn_parc():
     start_time = time.time()
     net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
     [ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas,
-    labels, coords, c_boot, hpass] = fmri_estimation.extract_ts_parc(net_parcels_map_nifti,
-    conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas,
-    uatlas, labels, c_boot, boot_size, hpass)
+    labels, coords, c_boot, hpass] = fmri_estimation.extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords,
+                                                                     roi, dir_path, ID, network, smooth, atlas,
+                                                                     uatlas, labels, c_boot, boot_size, hpass, mask)
     print("%s%s%s" % ('extract_ts_parc --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     assert ts_within_nodes is not None
@@ -139,6 +139,7 @@ def test_extract_ts_rsn_coords():
     coords = pickle.load(file_)
     atlas = 'whole_brain_cluster_labels_PCA200'
     uatlas = None
+    mask = None
     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
     labels_file = open(labels_file_path, 'rb')
     labels = pickle.load(labels_file)
@@ -147,7 +148,7 @@ def test_extract_ts_rsn_coords():
     [ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas,
      labels, coords, c_boot, hpass] = fmri_estimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path,
                                                                         ID, roi, network, smooth, atlas, uatlas,
-                                                                        labels, c_boot, boot_size, hpass)
+                                                                        labels, c_boot, boot_size, hpass, mask)
     print("%s%s%s" % ('extract_ts_coords --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     assert ts_within_nodes is not None
