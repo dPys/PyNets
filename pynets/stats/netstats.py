@@ -686,7 +686,7 @@ def prune_disconnected(G):
     pruned_nodes : list
         List of indices of nodes that were pruned from G.
     """
-    print('Pruning fully disconnected...')
+    print('Pruning disconnected...')
 
     # List because it returns a generator
     components = list(nx.connected_components(G))
@@ -901,7 +901,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     if (prune == 1) or (nx.is_connected(G_pre) is True):
         if nx.is_connected(G_pre) is False:
             print('Warning: Graph is fragmented...\n')
-        print('Pruning disconnected nodes...')
         [G, _] = prune_disconnected(G_pre)
     elif prune == 2:
         print('Pruning to retain only most important nodes...')
