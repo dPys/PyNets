@@ -1477,15 +1477,18 @@ def merge_dicts(x, y):
     return z
 
 
-def create_temporary_copy(path, temp_file_name, format):
+def create_temporary_copy(path, temp_file_name, fmt):
     """
     A function to create temporary file equivalents
     """
     import tempfile, shutil
-    temp_dir = tempfile.gettempdir()
-    temp_path = "%s%s%s%s" % (temp_dir, '/', temp_file_name, format)
-    if not os.path.isfile(temp_path):
-        shutil.copy2(path, temp_path)
+    from time import strftime
+    import uuid
+    run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
+    temp_dir = tempfile.gettempdir() + '/' + run_uuid
+    os.makedirs(temp_dir, exist_ok=True)
+    temp_path = "%s%s%s%s" % (temp_dir, '/', temp_file_name, fmt)
+    shutil.copy2(path, temp_path)
     return temp_path
 
 
