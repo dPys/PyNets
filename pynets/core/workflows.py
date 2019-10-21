@@ -20,7 +20,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       overlap_thr_list, track_type, max_length, maxcrossing, min_length, directget,
                       tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
                       template_mask, vox_size, multiplex, waymask, clean=True):
-    """A Meta-Interface for selecting nested workflows to link into a given single-subject workflow"""
+    """A meta-interface for selecting nested workflows to link into a given single-subject workflow"""
     import warnings
     warnings.filterwarnings("ignore")
     import yaml
@@ -111,6 +111,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                      overlap_thr_list, track_type, max_length, maxcrossing,
                                                      min_length, directget, tiss_class, runtime_dict,
                                                      multi_directget, template, template_mask, vox_size, waymask)
+        sub_struct_wf.synchronize = True
         if func_file is None:
             sub_func_wf = None
 
@@ -127,6 +128,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                    clust_type_list, plugin_type, c_boot, block_size, mask,
                                                    norm, binary, anat_file, runtime_dict, hpass, hpass_list, template,
                                                    template_mask, vox_size)
+        sub_func_wf.synchronize = True
         if dwi_file is None:
             sub_struct_wf = None
 

@@ -909,7 +909,7 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
     return out_path
 
 
-def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch):
+def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_collect=False, create_summary=False):
     """
     Summarize list of pickled pandas dataframes of graph metrics unique to eacho unique combination of hyperparameters.
 
@@ -952,19 +952,26 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch):
         for file_ in net_mets_csv_list:
             models.append(op.basename(file_))
 
+        # Group by secondary attributes
         models_grouped = [list(x) for x in zip(*[list(g) for k, g in groupby(models, lambda s: s.split('thr-')[1].split('_')[0])])]
+
+        # group by estimator type
+        models_all = []
+        for mod in models_grouped:
+            models_all.extend([list(i) for j, i in groupby(mod, lambda s: s.split('est-')[1].split('_')[0])])
 
         meta = dict()
         non_decimal = re.compile(r'[^\d.]+')
-        for thr_set in range(len(models_grouped)):
+        for thr_set in range(len(models_all)):
             meta[thr_set] = dict()
             meta[thr_set]['dataframes'] = dict()
-            for i in models_grouped[thr_set]:
+            for i in models_all[thr_set]:
                 thr = non_decimal.sub('', i.split('thr-')[1].split('_')[0])
                 _file = subject_path + '/netmetrics/' + i
                 df = pd.read_csv(_file)
-                #node_cols = [s for s in list(df.columns) if isinstance(s, int) or any(c.isdigit() for c in s)]
-                #df = df.drop(node_cols, axis=1)
+                if nc_collect is False:
+                    node_cols = [s for s in list(df.columns) if isinstance(s, int) or any(c.isdigit() for c in s)]
+                    df = df.drop(node_cols, axis=1)
                 meta[thr_set]['dataframes'][thr] = df
 
         # For each unique threshold set, for each graph measure, extract AUC
@@ -988,36 +995,39 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch):
                                                    np.array(df_summary_nonan['thr']).astype('float64'))
             meta[thr_set]['auc_dataframe'] = df_summary_auc
 
-            auc_outfile = auc_dir + list(set([re.sub(r'thr\-\d+\.*\d+', '', i).replace('neat', 'auc') for i in models_grouped[thr_set]]))[0]
-            df.to_csv(auc_outfile, index=False)
+            auc_outfile = auc_dir + list(set([re.sub(r'thr\-\d+\.*\d+', '', i).replace('neat', 'auc') for i in models_all[thr_set]]))[0]
+            df_summary_auc.to_csv(auc_outfile, header=True, index=False, chunksize=100000, compression='gzip',
+                                  encoding='utf-8')
 
-        try:
-            summary_dir = subject_path + '/netmetrics/summary/'
-            if not os.path.isdir(summary_dir):
-                os.makedirs(summary_dir, exist_ok=True)
+        if create_summary is True:
+            try:
+                summary_dir = subject_path + '/netmetrics/summary/'
+                if not os.path.isdir(summary_dir):
+                    os.makedirs(summary_dir, exist_ok=True)
 
-            # Concatenate and find mean across dataframes
-            df_concat = pd.concat([meta[thr_set]['auc_dataframe'] for thr_set in meta.keys()])
-            measures = list(df_concat.columns)
-            if plot_switch is True:
-                from pynets.plotting import plot_gen
-                plot_gen.plot_graph_measure_hists(df_concat, measures, file_)
-            df_concatted_mean = df_concat.loc[:, measures].mean(skipna=True).to_frame().transpose()
-            df_concatted_median = df_concat.loc[:, measures].median(skipna=True).to_frame().transpose()
-            df_concatted_mode = df_concat.loc[:, measures].mode(dropna=True)
-            df_concatted_mean.columns = [str(col) + '_mean' for col in df_concatted_mean.columns]
-            df_concatted_median.columns = [str(col) + '_median' for col in df_concatted_median.columns]
-            df_concatted_mode.columns = [str(col) + '_mode' for col in df_concatted_mode.columns]
-            result = pd.concat([df_concatted_mean, df_concatted_median, df_concatted_mode], axis=1)
-            df_concatted_final = result.reindex(sorted(result.columns), axis=1)
-            print('\nConcatenating dataframes for ' + str(ID) + '...\n')
-            net_csv_summary_out_path = "%s%s%s%s%s%s" % (summary_dir, '/', str(ID), '_net_mets',
-                                                         '%s' % ('_' + network if network is not None else ''),
-                                                         '_mean.csv')
-            df_concatted_final.to_csv(net_csv_summary_out_path, index=False)
-        except RuntimeWarning:
-            print("%s%s%s" % ('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ', str(ID), '!\n'))
-            pass
+                # Concatenate and find mean across dataframes
+                print('Concatenating frames...')
+                df_concat = pd.concat([meta[thr_set]['auc_dataframe'] for thr_set in meta.keys()])
+                measures = list(df_concat.columns)
+                if plot_switch is True:
+                    from pynets.plotting import plot_gen
+                    plot_gen.plot_graph_measure_hists(df_concat, measures, file_)
+                df_concatted_mean = df_concat.loc[:, measures].mean(skipna=True).to_frame().transpose()
+                df_concatted_median = df_concat.loc[:, measures].median(skipna=True).to_frame().transpose()
+                df_concatted_mode = df_concat.loc[:, measures].mode(dropna=True)
+                df_concatted_mean.columns = [str(col) + '_mean' for col in df_concatted_mean.columns]
+                df_concatted_median.columns = [str(col) + '_median' for col in df_concatted_median.columns]
+                df_concatted_mode.columns = [str(col) + '_mode' for col in df_concatted_mode.columns]
+                result = pd.concat([df_concatted_mean, df_concatted_median, df_concatted_mode], axis=1)
+                df_concatted_final = result.reindex(sorted(result.columns), axis=1)
+                print('\nConcatenating dataframes for ' + str(ID) + '...\n')
+                net_csv_summary_out_path = "%s%s%s%s%s%s" % (summary_dir, '/', str(ID), '_net_mets',
+                                                             '%s' % ('_' + network if network is not None else ''),
+                                                             '_mean.csv')
+                df_concatted_final.to_csv(net_csv_summary_out_path, index=False)
+            except RuntimeWarning:
+                print("%s%s%s" % ('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ', str(ID), '!\n'))
+                pass
     else:
         if network is not None:
             print("%s%s%s%s%s" % ('\nSingle dataframe for the ', network, ' network for subject ', ID, '\n'))
