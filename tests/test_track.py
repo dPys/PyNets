@@ -82,6 +82,6 @@ def test_reconstruction():
     dwi_img = nib.load(dwi_file)
     dwi_data = dwi_img.get_fdata()
 
-    for conn_model in ['csa', 'tensor', 'csd']:
+    for conn_model in ['csa', 'csd']:
         mod = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
         assert mod is not None
