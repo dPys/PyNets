@@ -70,7 +70,9 @@ def average_shortest_path_length_for_all(G):
     across all subgraphs detected in G.
     """
     import math
-    subgraphs = [sbg for sbg in nx.connected_component_subgraphs(G) if len(sbg) > 1]
+    connected_component_subgraphs = [G.subgraph(c) for c in nx.connected_components(G)]
+    subgraphs = [sbg for sbg in connected_component_subgraphs if len(sbg) > 1]
+
     return math.fsum(nx.average_shortest_path_length(sg) for sg in subgraphs) / len(subgraphs)
 
 
