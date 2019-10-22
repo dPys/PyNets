@@ -35,10 +35,8 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
-    from pynets.dmri.estimation import tens_mod_est, csa_mod_est, csd_mod_est
-    if conn_model == 'tensor':
-        mod = tens_mod_est(gtab, dwi_data, B0_mask)
-    elif conn_model == 'csa':
+    from pynets.dmri.estimation import csa_mod_est, csd_mod_est
+    if conn_model == 'csa':
         mod = csa_mod_est(gtab, dwi_data, B0_mask)
     elif conn_model == 'csd':
         mod = csd_mod_est(gtab, dwi_data, B0_mask)

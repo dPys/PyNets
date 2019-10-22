@@ -57,32 +57,6 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
     return fa_path, B0_mask, gtab_file, dwi_file
 
 
-def tens_mod_est(gtab, data, B0_mask):
-    '''
-    Estimate a tensor model from dwi data.
-
-    Parameters
-    ----------
-    gtab : Obj
-        DiPy object storing diffusion gradient information
-    data : array
-        4D numpy array of diffusion image data.
-    B0_mask : str
-        File path to B0 brain mask.
-
-    Returns
-    -------
-    tensor_mod : obj
-        Tensor-estimated reconstruction model.
-    '''
-    from dipy.reconst.dti import TensorModel
-    print('Fitting tensor model...')
-    B0_mask_data = nib.load(B0_mask).get_fdata().astype('bool')
-    model = TensorModel(gtab)
-    tensor_mod = model.fit(data, B0_mask_data)
-    return tensor_mod
-
-
 def csa_mod_est(gtab, data, B0_mask):
     '''
     Estimate a Constant Solid Angle (CSA) model from dwi data.

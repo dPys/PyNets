@@ -284,7 +284,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     uatlas_mni_data = np.asarray(uatlas_mni_img.dataobj)
     overlap_mask = np.invert(warped_uatlas_img_res_data.astype('bool') * uatlas_mni_data.astype('bool'))
     union_atlas = warped_uatlas_img_res_data * overlap_mask.astype('int') + uatlas_mni_data * overlap_mask.astype('int')
-    union_atlas_corr = union_atlas + np.invert(overlap_mask).astype('int') * uatlas_mni_data
+    union_atlas_corr = union_atlas + np.invert(overlap_mask).astype('int') * warped_uatlas_img_res_data
     nib.save(nib.Nifti1Image(union_atlas_corr, affine=warped_fa_img.affine), union_ua)
     atlas_mni = union_ua
 

@@ -409,6 +409,12 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     # Save time series as file
     utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass, node_size='parc')
     node_size = None
+
+    del parcel_masker
+    del net_parcels_map_nifti
+    del mask_img
+    del func_img
+
     return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass
 
 
@@ -572,4 +578,9 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
 
     # Save time series as file
     utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass, node_size)
+
+    del spheres_masker
+    del mask_img
+    del func_img
+
     return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass
