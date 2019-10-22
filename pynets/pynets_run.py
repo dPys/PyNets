@@ -991,43 +991,25 @@ def build_workflow(args, retval):
         if (uatlas is not None) and (k_clustering == 0) and (user_atlas_list is None):
             atlas_par = uatlas.split('/')[-1].split('.')[0]
             print("%s%s" % ("\nUser atlas: ", atlas_par))
-            if func_file_list:
-                for _func_file in func_file_list:
-                    do_dir_path(atlas_par, _func_file)
-            else:
-                do_dir_path(atlas_par, func_file)
         elif (uatlas is not None) and (user_atlas_list is None) and (k_clustering == 0):
             atlas_par = uatlas.split('/')[-1].split('.')[0]
             print("%s%s" % ("\nUser atlas: ", atlas_par))
-            if func_file_list:
-                for _func_file in func_file_list:
-                    do_dir_path(atlas_par, _func_file)
-            else:
-                do_dir_path(atlas_par, func_file)
         elif user_atlas_list is not None:
             print('\nIterating across multiple user atlases...')
             if func_file_list:
                 for _uatlas in user_atlas_list:
                     atlas_par = _uatlas.split('/')[-1].split('.')[0]
                     print(atlas_par)
-                    for _func_file in func_file_list:
-                        do_dir_path(atlas_par, _func_file)
             else:
                 for _uatlas in user_atlas_list:
                     atlas_par = _uatlas.split('/')[-1].split('.')[0]
                     print(atlas_par)
-                    do_dir_path(atlas_par, func_file)
 
         if k_clustering == 1:
             cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
             atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
             print("%s%s" % ("\nCluster atlas: ", atlas_clust))
             print("\nClustering within mask at a single resolution...")
-            if func_file_list:
-                for _func_file in func_file_list:
-                    do_dir_path(atlas_clust, _func_file)
-            else:
-                do_dir_path(atlas_clust, func_file)
         elif k_clustering == 2:
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             print("\nClustering within mask at multiple resolutions...")
@@ -1036,14 +1018,11 @@ def build_workflow(args, retval):
                     cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
                     atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', _k)
                     print("%s%s" % ("Cluster atlas: ", atlas_clust))
-                    for _func_file in func_file_list:
-                        do_dir_path(atlas_clust, _func_file)
             else:
                 for _k in k_list:
                     cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
                     atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', _k)
                     print("%s%s" % ("Cluster atlas: ", atlas_clust))
-                    do_dir_path(atlas_clust, func_file)
             k = None
         elif k_clustering == 3:
             print("\nClustering within multiple masks at a single resolution...")
@@ -1051,13 +1030,12 @@ def build_workflow(args, retval):
                 for _clust_mask in clust_mask_list:
                     cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
                     atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                    for _func_file in func_file_list:
-                        do_dir_path(atlas_clust, _func_file)
+                    print("%s%s" % ("Cluster atlas: ", atlas_clust))
             else:
                 for _clust_mask in clust_mask_list:
                     cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
                     atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                    do_dir_path(atlas_clust, func_file)
+                    print("%s%s" % ("Cluster atlas: ", atlas_clust))
             clust_mask = None
         elif k_clustering == 4:
             print("\nClustering within multiple masks at multiple resolutions...")
@@ -1067,14 +1045,13 @@ def build_workflow(args, retval):
                     for _k in k_list:
                         cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
                         atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', _k)
-                        for func_file in func_file_list:
-                            do_dir_path(atlas_clust, _func_file)
+                        print("%s%s" % ("Cluster atlas: ", atlas_clust))
             else:
                 for _clust_mask in clust_mask_list:
                     for _k in k_list:
                         cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
                         atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', _k)
-                        do_dir_path(atlas_clust, func_file)
+                        print("%s%s" % ("Cluster atlas: ", atlas_clust))
             clust_mask = None
             k = None
         elif k_clustering == 5:
@@ -1083,11 +1060,6 @@ def build_workflow(args, retval):
                 atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', k)
                 print("%s%s" % ("\nCluster atlas: ", atlas_clust))
                 print("\nClustering within mask at a single resolution using multiple clustering methods...")
-                if func_file_list:
-                    for _func_file in func_file_list:
-                        do_dir_path(atlas_clust, _func_file)
-                else:
-                    do_dir_path(atlas_clust, func_file)
             clust_type = None
         elif k_clustering == 6:
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
@@ -1098,15 +1070,12 @@ def build_workflow(args, retval):
                         cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
                         atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', _k)
                         print("%s%s" % ("Cluster atlas: ", atlas_clust))
-                        for _func_file in func_file_list:
-                            do_dir_path(atlas_clust, _func_file)
             else:
                 for _clust_type in clust_type_list:
                     for _k in k_list:
                         cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
                         atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', _k)
                         print("%s%s" % ("Cluster atlas: ", atlas_clust))
-                        do_dir_path(atlas_clust, func_file)
             clust_type = None
             k = None
         elif k_clustering == 7:
@@ -1117,14 +1086,12 @@ def build_workflow(args, retval):
                         cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
                         atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', k)
                         print("%s%s" % ("Cluster atlas: ", atlas_clust))
-                        for _func_file in func_file_list:
-                            do_dir_path(atlas_clust, _func_file)
             else:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
                         cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
                         atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', k)
-                        do_dir_path(atlas_clust, func_file)
+                        print("%s%s" % ("Cluster atlas: ", atlas_clust))
             clust_mask = None
             clust_type = None
         elif k_clustering == 8:
@@ -1137,15 +1104,13 @@ def build_workflow(args, retval):
                             cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
                             atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', _k)
                             print("%s%s" % ("Cluster atlas: ", atlas_clust))
-                            for _func_file in func_file_list:
-                                do_dir_path(atlas_clust, _func_file)
             else:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
                         for _k in k_list:
                             cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
                             atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', _k)
-                            do_dir_path(atlas_clust, func_file)
+                            print("%s%s" % ("Cluster atlas: ", atlas_clust))
             clust_mask = None
             clust_type = None
             k = None
@@ -1207,20 +1172,15 @@ def build_workflow(args, retval):
                     for _uatlas in user_atlas_list:
                         atlas_par = _uatlas.split('/')[-1].split('.')[0]
                         print(atlas_par)
-                        do_dir_path(atlas_par, _dwi_file)
             else:
                 for _uatlas in user_atlas_list:
                     atlas_par = _uatlas.split('/')[-1].split('.')[0]
                     print(atlas_par)
-                    do_dir_path(atlas_par, dwi_file)
         elif (uatlas is not None) and (user_atlas_list is None):
             atlas_par = uatlas.split('/')[-1].split('.')[0]
+            print(atlas_par)
             ref_txt = "%s%s" % (uatlas.split('/')[-1:][0].split('.')[0], '.txt')
-            if dwi_file_list:
-                for _dwi_file in dwi_file_list:
-                    do_dir_path(atlas_par, _dwi_file)
-            else:
-                do_dir_path(atlas_par, dwi_file)
+            print("%s%s" % ('Using label reference: ', ref_txt))
         if multi_atlas:
             print('\nIterating across multiple predefined atlases...')
             if dwi_file_list:
@@ -1626,6 +1586,7 @@ def build_workflow(args, retval):
                 directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, embed=embed,
                 multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
                 template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex, waymask=waymask)
+            wf_single_subject.synchronize = True
             wf_multi.add_nodes([wf_single_subject])
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:

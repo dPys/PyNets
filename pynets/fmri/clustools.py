@@ -414,8 +414,10 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
 
     start = time.time()
     func_img = nib.load(func_file)
+    clust_mask_img = nib.load(clust_mask)
 
-    [conn_comps_img, _] = connected_regions(clust_mask, extract_type='connected_components')
+    [conn_comps_img, _] = connected_regions(clust_mask_img, min_region_size=540, smoothing_fwhm=0,
+                                            extract_type='connected_components')
 
     if conn_comps_img.shape[-1] > 1:
         if local_corr == 'tcorr':
@@ -426,7 +428,7 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
             raise ValueError('Local connectivity type not available')
 
         clust_est = Parcellations(method=clust_type, standardize=standardize, detrend=detrending, n_parcels=int(k),
-                                  mask=clust_mask, connectivity=local_conn)
+                                  mask=clust_mask_img, connectivity=local_conn)
         if conf is not None:
             import pandas as pd
             confounds = pd.read_csv(conf, sep='\t')
@@ -449,7 +451,7 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
         nib.save(region_labels, uatlas)
     else:
         clust_est = Parcellations(method=clust_type, standardize=standardize, detrend=detrending, n_parcels=int(k),
-                                  mask=clust_mask)
+                                  mask=clust_mask_img)
         if conf is not None:
             import pandas as pd
             confounds = pd.read_csv(conf, sep='\t')
@@ -469,8 +471,6 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
         else:
             clust_est.fit(func_img)
         region_labels = connected_label_regions(clust_est.labels_img_)
-        # TODO
-        # Remove spurious regions < 1500 m^3 in size
         nib.save(region_labels, uatlas)
     print("%s%s%s" % (clust_type, k, " clusters: %.2fs" % (time.time() - start)))
     return region_labels
