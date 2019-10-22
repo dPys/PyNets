@@ -31,13 +31,13 @@ def get_parser():
                         required=True,
                         nargs='+',
                         choices=['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
-                                 'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso', 'csa', 'tensor', 'csd'],
+                                 'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso', 'csa', 'csd'],
                         help='Specify connectivity estimation model. For fMRI, possible models include: '
                              'corr for correlation, cov for covariance, sps for precision covariance, partcorr for '
                              'partial correlation. sps type is used by default. '
                              'If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, '
                              'QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. '
-                             'Default is partcorr for fMRI. For dMRI, models include csa tensor, and csd.\n')
+                             'Default is partcorr for fMRI. For dMRI, models include csa and csd.\n')
     parser.add_argument('-g',
                         metavar='Path to graph file input.',
                         default=None,
@@ -1455,6 +1455,9 @@ def build_workflow(args, retval):
                                           input_names=['network', 'ID', 'net_mets_csv_list', 'plot_switch',
                                                        'multi_nets', 'multimodal'], imports=import_list)
 
+        combine_pandas_dfs_node._n_procs = 1
+        combine_pandas_dfs_node._mem_gb = 4
+
         handshake_node = meta_wf.get_node('pass_meta_outs_node')
 
         wf.connect([
@@ -1588,14 +1591,19 @@ def build_workflow(args, retval):
                 template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex, waymask=waymask)
             wf_single_subject.synchronize = True
             wf_multi.add_nodes([wf_single_subject])
+
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
                 wf_selected = "%s%s" % ('fmri_connectometry_', ID[i])
                 meta_wf_name = "%s%s" % ('meta_wf_', ID[i])
                 for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
-                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
-                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+                        if node_name == 'extract_ts_node' or node_name == 'clustering_node' or node_name == 'register_atlas_node':
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = 2*runtime_dict[node_name][1]
+                        else:
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
             if dwi_file:
                 wf_selected = "%s%s" % ('dmri_connectometry_', ID[i])
@@ -1604,6 +1612,9 @@ def build_workflow(args, retval):
                     if node_name in runtime_dict:
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+
+            wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._n_procs = 1
+            wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._mem_gb = 4
 
             i = i + 1
 

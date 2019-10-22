@@ -909,7 +909,7 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
     return out_path
 
 
-def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_collect=False, create_summary=False):
+def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_collect=False, create_summary=True):
     """
     Summarize list of pickled pandas dataframes of graph metrics unique to eacho unique combination of hyperparameters.
 

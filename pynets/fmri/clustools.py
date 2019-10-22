@@ -103,7 +103,6 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
     neighbors = np.array(sorted(sorted(sorted([list(x) for x in list(set(product({-1, 0, 1}, repeat=3)))],
                                               key=lambda k: (k[0])), key=lambda k: (k[1])), key=lambda k: (k[2])))
 
-
     # Read in the mask
     msk = nib.load(clust_mask)
     msz = msk.shape
@@ -123,6 +122,7 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
 
     # Reshape fmri data to a num_voxels x num_timepoints array
     imdat = np.reshape(np.asarray(nim.dataobj), (prod(sz[:3]), sz[3]))
+    del nim
 
     # Mask the datset to only the in-mask voxels
     imdat = imdat[iv, :]
@@ -229,6 +229,15 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
     # Make the sparse matrix, CSC format is supposedly efficient for matrix arithmetic
     W = csc_matrix((outlist[2, :], (outlist[0, :], outlist[1, :])), shape=(int(m), int(m)))
 
+    del imdat
+    del msk
+    del mskdat
+    del outlist
+    del m
+    del sparse_i
+    del sparse_j
+    del sparse_w
+
     return W
 
 
@@ -273,10 +282,9 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
     # Read in the mask
     msk = nib.load(clust_mask)
     msz = np.shape(np.asarray(msk.dataobj))
-    msk_data = np.asarray(msk.dataobj)
 
     # Convert the 3D mask array into a 1D vector
-    mskdat = np.reshape(msk_data, prod(msz))
+    mskdat = np.reshape(np.asarray(msk.dataobj), prod(msz))
 
     # Determine the 1D coordinates of the non-zero elements of the mask
     iv = np.nonzero(mskdat)[0]
@@ -289,8 +297,8 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
     sz = nim.shape
 
     # Reshape fmri data to a num_voxels x num_timepoints array
-    data = np.asarray(nim.dataobj)
-    imdat = np.reshape(data, (prod(sz[:3]), sz[3]))
+    imdat = np.reshape(np.asarray(nim.dataobj), (prod(sz[:3]), sz[3]))
+    del nim
 
     # Construct a sparse matrix from the mask
     msk = csc_matrix((list(range(1, m + 1)), (iv, np.zeros(m))), shape=(prod(sz[:-1]), 1))
@@ -368,6 +376,15 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
 
     # Make the sparse matrix
     W = csc_matrix((outlist[2, :], (outlist[0, :], outlist[1, :])), shape=(int(m), int(m)))
+
+    del imdat
+    del msk
+    del mskdat
+    del outlist
+    del m
+    del sparse_i
+    del sparse_j
+    del sparse_w
 
     return W
 
@@ -473,6 +490,12 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
         region_labels = connected_label_regions(clust_est.labels_img_)
         nib.save(region_labels, uatlas)
     print("%s%s%s" % (clust_type, k, " clusters: %.2fs" % (time.time() - start)))
+
+    del clust_est
+    del func_img
+    del conn_comps_img
+    del clust_mask_img
+
     return region_labels
 
 
@@ -545,6 +568,7 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, local_
         clustools.nil_parcellate(func_file, clust_mask_corr, k, clust_type, uatlas, dir_path, conf,
                                  local_corr=local_corr)
         clustering = True
+        del clust_mask_corr
     else:
         raise ValueError('Clustering method not recognized. '
                          'See: https://nilearn.github.io/modules/generated/nilearn.regions.Parcellations.html#nilearn.'

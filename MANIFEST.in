@@ -2,6 +2,8 @@ include AUTHORS.rst
 include CONTRIBUTING.rst
 include LICENSE
 include README.rst
+include versioneer.py
+include pynets/_version.py
 
 recursive-include * *.nii.gz
 recursive-include * *.html
