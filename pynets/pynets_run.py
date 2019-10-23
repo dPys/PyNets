@@ -1575,7 +1575,7 @@ def build_workflow(args, retval):
                 multi_nets=multi_nets, conn_model=conn_model, dens_thresh=dens_thresh, conf=conf_sub,
                 adapt_thresh=adapt_thresh, plot_switch=plot_switch, dwi_file=dwi_file, multi_thr=multi_thr,
                 multi_atlas=multi_atlas, min_thr=min_thr, max_thr=max_thr, step_thr=step_thr, anat_file=anat_file,
-                parc=parc, ref_txt=ref_txt, procmem='auto', k=k, clust_mask=clust_mask, k_min=k_min, k_max=k_max,
+                parc=parc, ref_txt=ref_txt, procmem=procmem, k=k, clust_mask=clust_mask, k_min=k_min, k_max=k_max,
                 k_step=k_step, k_clustering=k_clustering, user_atlas_list=user_atlas_list,
                 clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
@@ -1590,7 +1590,11 @@ def build_workflow(args, retval):
                 multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
                 template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex, waymask=waymask)
             wf_single_subject.synchronize = True
+            wf_single_subject._n_procs = procmem[0]
+            wf_single_subject._mem_gb = procmem[1]
             wf_multi.add_nodes([wf_single_subject])
+            wf_multi.get_node(wf_single_subject.name)._n_procs = procmem[0]
+            wf_multi.get_node(wf_single_subject.name)._mem_gb = procmem[1]
 
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
@@ -1598,12 +1602,8 @@ def build_workflow(args, retval):
                 meta_wf_name = "%s%s" % ('meta_wf_', ID[i])
                 for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
-                        if node_name == 'extract_ts_node' or node_name == 'clustering_node' or node_name == 'register_atlas_node':
-                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
-                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = 2*runtime_dict[node_name][1]
-                        else:
-                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
-                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
+                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
             if dwi_file:
                 wf_selected = "%s%s" % ('dmri_connectometry_', ID[i])

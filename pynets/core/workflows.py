@@ -1759,7 +1759,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                         name="check_orient_and_dims_clust_mask_node")
 
         # Don't forget that this setting exists
-        clustering_node.synchronize = False
+        clustering_node.synchronize = True
         # clustering_node iterables and names
         if k_clustering == 1:
             mask_name = op.basename(clust_mask).split('.nii.gz')[0]
@@ -2178,6 +2178,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         extract_ts_node.iterables = extract_ts_iterables
     else:
         fmri_connectometry_wf.connect([(inputnode, extract_ts_node, [('hpass', 'hpass')])])
+
+    extract_ts_node.synchronize = True
 
     # Connectivity matrix model fit
     get_conn_matrix_node = pe.Node(niu.Function(input_names=['time_series', 'conn_model', 'dir_path', 'node_size',
