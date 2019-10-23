@@ -145,10 +145,12 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
         config.update_config(cfg_v)
         config.enable_debug_mode()
         config.enable_resource_monitor()
+    plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
     cfg = dict(execution={'stop_on_first_crash': False, 'crashfile_format': 'txt', 'parameterize_dirs': False,
                           'display_variable': ':0', 'job_finished_timeout': 120, 'matplotlib_backend': 'Agg',
                           'plugin': str(plugin_type), 'use_relative_paths': True, 'remove_unnecessary_outputs': False,
-                          'remove_node_directories': False})
+                          'raise_insufficient': False, 'remove_node_directories': False, 'plugin_args': plugin_args,
+                          'maxtasksperchild': 1})
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             meta_wf.config[key][setting] = value
@@ -864,6 +866,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                              function=track.run_track,
                                              imports=import_list),
                                 name="run_tracking_node")
+    run_tracking_node.synchronize = True
 
     # Set reconstruction model iterables
     if conn_model_list or multi_directget:
@@ -894,6 +897,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                   'atlas_mni', 'directget', 'warped_fa'],
                                     function=register.direct_streamline_norm,
                                     imports=import_list), name="dsn_node")
+    dsn_node.synchronize = True
 
     streams2graph_node = pe.Node(niu.Function(input_names=['atlas_mni', 'streams', 'overlap_thr', 'dir_path',
                                                            'track_type', 'target_samples', 'conn_model',
@@ -908,6 +912,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                             'coords', 'norm', 'binary', 'directget'],
                                               function=estimation.streams2graph,
                                               imports=import_list), name="streams2graph_node")
+    streams2graph_node.synchronize = True
 
     # Set streams2graph_node iterables
     streams2graph_node_iterables = []
@@ -1557,11 +1562,12 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             dmri_connectometry_wf.get_node(node_name).n_procs = runtime_dict[node_name][0]
             dmri_connectometry_wf.get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
+    plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
     cfg = dict(execution={'stop_on_first_crash': True, 'hash_method': 'content', 'crashfile_format': 'txt',
                           'display_variable': ':0', 'job_finished_timeout': 65, 'matplotlib_backend': 'Agg',
                           'plugin': str(plugin_type), 'use_relative_paths': True, 'parameterize_dirs': True,
                           'remove_unnecessary_outputs': False, 'remove_node_directories': False,
-                          'raise_insufficient': True})
+                          'raise_insufficient': False, 'plugin_args': plugin_args, 'maxtasksperchild': 1})
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             dmri_connectometry_wf.config[key][setting] = value
@@ -2621,11 +2627,12 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             fmri_connectometry_wf.get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
     # Set runtime/logging configurations
+    plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
     cfg = dict(execution={'stop_on_first_crash': True, 'hash_method': 'content', 'crashfile_format': 'txt',
                           'display_variable': ':0', 'job_finished_timeout': 65, 'matplotlib_backend': 'Agg',
                           'plugin': str(plugin_type), 'use_relative_paths': True, 'parameterize_dirs': True,
                           'remove_unnecessary_outputs': False, 'remove_node_directories': False,
-                          'raise_insufficient': True, 'poll_sleep_duration': 0.01})
+                          'raise_insufficient': False, 'plugin_args': plugin_args, 'maxtasksperchild': 1})
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             fmri_connectometry_wf.config[key][setting] = value

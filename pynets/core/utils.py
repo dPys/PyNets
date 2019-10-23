@@ -924,6 +924,11 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
         study of brain subgraphs.
     plot_switch : bool
         Activate summary plotting (histograms, central tendency, AUC, etc.)
+
+    Returns
+    -------
+    combination_complete : bool
+        If True, then data integration completed successfully.
     """
     import pandas as pd
     import numpy as np
@@ -940,6 +945,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
 
     if len(list(net_mets_csv_list)) > len(net_mets_csv_list_exist):
         raise UserWarning('Warning! Number of actual models produced less than expected. Some graphs were excluded')
+        combination_complete = False
 
     net_mets_csv_list = net_mets_csv_list_exist
     subject_path = op.dirname(op.dirname(net_mets_csv_list[0]))
@@ -1025,17 +1031,21 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                                                              '%s' % ('_' + network if network is not None else ''),
                                                              '_mean.csv')
                 df_concatted_final.to_csv(net_csv_summary_out_path, index=False)
+                combination_complete = True
             except RuntimeWarning:
+                combination_complete = False
                 print("%s%s%s" % ('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ', str(ID), '!\n'))
                 pass
+        else:
+            combination_complete = True
     else:
         if network is not None:
             print("%s%s%s%s%s" % ('\nSingle dataframe for the ', network, ' network for subject ', ID, '\n'))
         else:
             print("%s%s%s" % ('\nSingle dataframe for subject ', ID, '\n'))
-        pass
+        combination_complete = True
 
-    return
+    return combination_complete
 
 
 def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal):
@@ -1057,6 +1067,11 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
         List of Yeo RSN's specified in workflow(s).
     multimodal : bool
         Indicates whether multiple modalities of input data have been specified.
+
+    Returns
+    -------
+    combination_complete : bool
+        If True, then collect_pandas_df completed successfully
     """
     from pathlib import Path
     import yaml
@@ -1082,24 +1097,34 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
             if multimodal is True:
                 net_mets_csv_list_dwi = list(set([i for i in net_mets_csv_list if i.split('mets_')[1].split('_')[0]
                                                    in struct_models]))
-                collect_pandas_df_make(net_mets_csv_list_dwi, ID, network, plot_switch)
+                combination_complete_dwi = collect_pandas_df_make(net_mets_csv_list_dwi, ID, network, plot_switch)
                 net_mets_csv_list_func = list(set([i for i in net_mets_csv_list if
                                                     i.split('mets_')[1].split('_')[0] in func_models]))
-                collect_pandas_df_make(net_mets_csv_list_func, ID, network, plot_switch)
+                combination_complete_func = collect_pandas_df_make(net_mets_csv_list_func, ID, network, plot_switch)
+
+                if combination_complete_dwi is True and combination_complete_func is True:
+                    combination_complete = True
+                else:
+                    combination_complete = False
             else:
-                collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch)
+                combination_complete = collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch)
     else:
         if multimodal is True:
             net_mets_csv_list_dwi = list(set([i for i in net_mets_csv_list if i.split('mets_')[1].split('_')[0] in
                                                struct_models]))
-            collect_pandas_df_make(net_mets_csv_list_dwi, ID, network, plot_switch)
+            combination_complete_dwi = collect_pandas_df_make(net_mets_csv_list_dwi, ID, network, plot_switch)
             net_mets_csv_list_func = list(set([i for i in net_mets_csv_list if i.split('mets_')[1].split('_')[0]
                                                 in func_models]))
-            collect_pandas_df_make(net_mets_csv_list_func, ID, network, plot_switch)
-        else:
-            collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch)
+            combination_complete_func = collect_pandas_df_make(net_mets_csv_list_func, ID, network, plot_switch)
 
-    return
+            if combination_complete_dwi is True and combination_complete_func is True:
+                combination_complete = True
+            else:
+                combination_complete = False
+        else:
+            combination_complete = collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch)
+
+    return combination_complete
 
 
 def check_est_path_existence(est_path_list):
@@ -1562,18 +1587,30 @@ class CombinePandasDfsInputSpec(BaseInterfaceInputSpec):
     multimodal = traits.Any(mandatory=True)
 
 
+class CombinePandasDfsOutputSpec(TraitedSpec):
+    """
+    Output interface wrapper for CombinePandasDfs
+    """
+    combination_complete = traits.Bool()
+
+
 class CombinePandasDfs(SimpleInterface):
     """
     Interface wrapper for CombinePandasDfs
     """
     input_spec = CombinePandasDfsInputSpec
+    output_spec = CombinePandasDfsOutputSpec
 
     def _run_interface(self, runtime):
-        collect_pandas_df(
+        combination_complete = collect_pandas_df(
             self.inputs.network,
             self.inputs.ID,
             self.inputs.net_mets_csv_list,
             self.inputs.plot_switch,
             self.inputs.multi_nets,
             self.inputs.multimodal)
+        setattr(self, '_combination_complete', combination_complete)
         return runtime
+
+    def _list_outputs(self):
+        return {'combination_complete': getattr(self, '_combination_complete')}

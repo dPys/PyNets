@@ -1420,6 +1420,9 @@ def build_workflow(args, retval):
                                     max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict,
                                     embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
                                     vox_size, multiplex, waymask)
+
+        meta_wf._n_procs = procmem[0]
+        meta_wf._mem_gb = procmem[1]
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
@@ -1429,6 +1432,8 @@ def build_workflow(args, retval):
                 if node_name in runtime_dict:
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+            wf.get_node(meta_wf.name)._n_procs = procmem[0]
+            wf.get_node(meta_wf.name)._mem_gb = procmem[1]
 
         if dwi_file:
             wf_selected = "%s%s" % ('dmri_connectometry_', ID)
@@ -1436,6 +1441,8 @@ def build_workflow(args, retval):
                 if node_name in runtime_dict:
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+            wf.get_node(meta_wf.name)._n_procs = procmem[0]
+            wf.get_node(meta_wf.name)._mem_gb = procmem[1]
 
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
@@ -1453,12 +1460,16 @@ def build_workflow(args, retval):
         # Combine dataframes across models
         combine_pandas_dfs_node = pe.Node(interface=CombinePandasDfs(), name="CombinePandasDfs",
                                           input_names=['network', 'ID', 'net_mets_csv_list', 'plot_switch',
-                                                       'multi_nets', 'multimodal'], imports=import_list)
+                                                       'multi_nets', 'multimodal'],
+                                          output_names=['combination_complete'],
+                                          imports=import_list)
 
         combine_pandas_dfs_node._n_procs = 1
         combine_pandas_dfs_node._mem_gb = 4
 
         handshake_node = meta_wf.get_node('pass_meta_outs_node')
+
+        final_outputnode = pe.Node(niu.IdentityInterface(fields=['combination_complete']), name='final_outputnode')
 
         wf.connect([
             (handshake_node, net_mets_node, [('est_path_iterlist', 'est_path'),
@@ -1476,7 +1487,8 @@ def build_workflow(args, retval):
                                                   ('multi_nets', 'multi_nets'),
                                                   ('multimodal', 'multimodal')]),
             (net_mets_node, collect_pd_list_net_csv_node, [('out_path_neat', 'net_mets_csv')]),
-            (collect_pd_list_net_csv_node, combine_pandas_dfs_node, [('net_mets_csv_out', 'net_mets_csv_list')])
+            (collect_pd_list_net_csv_node, combine_pandas_dfs_node, [('net_mets_csv_out', 'net_mets_csv_list')]),
+            (combine_pandas_dfs_node, final_outputnode, [('combination_complete', 'combination_complete')])
         ])
 
         # Raw graph case
@@ -1592,9 +1604,14 @@ def build_workflow(args, retval):
             wf_single_subject.synchronize = True
             wf_single_subject._n_procs = procmem[0]
             wf_single_subject._mem_gb = procmem[1]
+            wf_single_subject.n_procs = procmem[0]
+            wf_single_subject.mem_gb = procmem[1]
             wf_multi.add_nodes([wf_single_subject])
+            wf_multi.get_node(wf_single_subject.name).synchronize = True
             wf_multi.get_node(wf_single_subject.name)._n_procs = procmem[0]
             wf_multi.get_node(wf_single_subject.name)._mem_gb = procmem[1]
+            wf_multi.get_node(wf_single_subject.name).n_procs = procmem[0]
+            wf_multi.get_node(wf_single_subject.name).mem_gb = procmem[1]
 
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
@@ -1604,6 +1621,14 @@ def build_workflow(args, retval):
                     if node_name in runtime_dict:
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._n_procs = procmem[0]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._mem_gb = procmem[1]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).n_procs = procmem[0]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).mem_gb = procmem[1]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._n_procs = procmem[0]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._mem_gb = procmem[1]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).n_procs = procmem[0]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
             if dwi_file:
                 wf_selected = "%s%s" % ('dmri_connectometry_', ID[i])
@@ -1612,6 +1637,14 @@ def build_workflow(args, retval):
                     if node_name in runtime_dict:
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._n_procs = procmem[0]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._mem_gb = procmem[1]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).n_procs = procmem[0]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).mem_gb = procmem[1]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._n_procs = procmem[0]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._mem_gb = procmem[1]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).n_procs = procmem[0]
+                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._n_procs = 1
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._mem_gb = 4
@@ -1667,7 +1700,7 @@ def build_workflow(args, retval):
                               'crashfile_format': 'txt', 'parameterize_dirs': False, 'display_variable': ':0',
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
                               'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
-                              'remove_node_directories': False, 'raise_insufficient': True})
+                              'remove_node_directories': False, 'raise_insufficient': False, 'maxtasksperchild': 1})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf_multi.config[key][setting] = value
@@ -1750,7 +1783,7 @@ def build_workflow(args, retval):
                               'parameterize_dirs': False, 'crashfile_format': 'txt', 'display_variable': ':0',
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
                               'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
-                              'remove_node_directories': False, 'raise_insufficient': True})
+                              'remove_node_directories': False, 'raise_insufficient': False, 'maxtasksperchild': 1})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf.config[key][setting] = value
@@ -1793,6 +1826,7 @@ def build_workflow(args, retval):
 def main():
     """Initializes main script from command-line call to generate single-subject or multi-subject workflow(s)"""
     import warnings
+    import gc
     import sys
     warnings.filterwarnings("ignore")
     try:
@@ -1817,6 +1851,9 @@ def main():
 
             if p.exitcode != 0:
                 sys.exit(p.exitcode)
+
+            # Clean up master process before running workflow, which may create forks
+            gc.collect()
     except:
         print('\nWARNING: Forkserver failed to initialize. Are you using Python3 ?')
         retval = dict()
