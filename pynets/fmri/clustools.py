@@ -426,74 +426,47 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
     """
     import time
     import os
-    from nilearn.regions import connected_regions, Parcellations, connected_label_regions
+    from nilearn.regions import Parcellations, connected_label_regions
     from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
 
     start = time.time()
     func_img = nib.load(func_file)
     clust_mask_img = nib.load(clust_mask)
 
-    [conn_comps_img, _] = connected_regions(clust_mask_img, min_region_size=540, smoothing_fwhm=0,
-                                            extract_type='connected_components')
-
-    if conn_comps_img.shape[-1] > 1:
-        if local_corr == 'tcorr':
-            local_conn = make_local_connectivity_tcorr(func_file, clust_mask, thresh=0.5)
-        elif local_corr == 'scorr':
-            local_conn = make_local_connectivity_scorr(func_file, clust_mask, thresh=0.5)
-        else:
-            raise ValueError('Local connectivity type not available')
-
-        clust_est = Parcellations(method=clust_type, standardize=standardize, detrend=detrending, n_parcels=int(k),
-                                  mask=clust_mask_img, connectivity=local_conn)
-        if conf is not None:
-            import pandas as pd
-            confounds = pd.read_csv(conf, sep='\t')
-            if confounds.isnull().values.any():
-                import uuid
-                from time import strftime
-                run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
-                print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
-                      'regressor file should be checked manually.')
-                confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-                os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
-                conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
-                confounds_nonan.to_csv(conf_corr, sep='\t')
-                clust_est.fit(func_img, confounds=conf_corr)
-            else:
-                clust_est.fit(func_img, confounds=conf)
-        else:
-            clust_est.fit(func_img)
-        region_labels = connected_label_regions(clust_est.labels_img_)
-        nib.save(region_labels, uatlas)
+    if local_corr == 'tcorr':
+        local_conn = make_local_connectivity_tcorr(func_file, clust_mask, thresh=0.5)
+    elif local_corr == 'scorr':
+        local_conn = make_local_connectivity_scorr(func_file, clust_mask, thresh=0.5)
     else:
-        clust_est = Parcellations(method=clust_type, standardize=standardize, detrend=detrending, n_parcels=int(k),
-                                  mask=clust_mask_img)
-        if conf is not None:
-            import pandas as pd
-            confounds = pd.read_csv(conf, sep='\t')
-            if confounds.isnull().values.any():
-                import uuid
-                from time import strftime
-                run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
-                print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
-                      'regressor file should be checked manually.')
-                confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-                os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
-                conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
-                confounds_nonan.to_csv(conf_corr, sep='\t')
-                clust_est.fit(func_img, confounds=conf_corr)
-            else:
-                clust_est.fit(func_img, confounds=conf)
+        raise ValueError('Local connectivity type not available')
+
+    clust_est = Parcellations(method=clust_type, standardize=standardize, detrend=detrending, n_parcels=int(k),
+                              mask=clust_mask_img, connectivity=local_conn)
+    if conf is not None:
+        import pandas as pd
+        confounds = pd.read_csv(conf, sep='\t')
+        if confounds.isnull().values.any():
+            import uuid
+            from time import strftime
+            run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
+            print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
+                  'regressor file should be checked manually.')
+            confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
+            os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
+            conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
+            confounds_nonan.to_csv(conf_corr, sep='\t')
+            clust_est.fit(func_img, confounds=conf_corr)
         else:
-            clust_est.fit(func_img)
-        region_labels = connected_label_regions(clust_est.labels_img_)
-        nib.save(region_labels, uatlas)
+            clust_est.fit(func_img, confounds=conf)
+    else:
+        clust_est.fit(func_img)
+    region_labels = connected_label_regions(clust_est.labels_img_)
+    nib.save(region_labels, uatlas)
+
     print("%s%s%s" % (clust_type, k, " clusters: %.2fs" % (time.time() - start)))
 
     del clust_est
     del func_img
-    del conn_comps_img
     del clust_mask_img
 
     return region_labels
