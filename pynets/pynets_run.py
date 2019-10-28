@@ -1465,7 +1465,7 @@ def build_workflow(args, retval):
                                           imports=import_list)
 
         combine_pandas_dfs_node._n_procs = 1
-        combine_pandas_dfs_node._mem_gb = 4
+        combine_pandas_dfs_node._mem_gb = 2
 
         handshake_node = meta_wf.get_node('pass_meta_outs_node')
 
@@ -1619,8 +1619,12 @@ def build_workflow(args, retval):
                 meta_wf_name = "%s%s" % ('meta_wf_', ID[i])
                 for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
-                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
-                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+                        if node_name == 'clustering_node' or node_name == 'extract_ts_node' or node_name == 'register_atlas_node':
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+                        else:
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._n_procs = procmem[0]
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._mem_gb = procmem[1]
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).n_procs = procmem[0]
@@ -1647,7 +1651,7 @@ def build_workflow(args, retval):
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._n_procs = 1
-            wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._mem_gb = 4
+            wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._mem_gb = 2
 
             i = i + 1
 
@@ -1678,6 +1682,14 @@ def build_workflow(args, retval):
         os.makedirs("%s%s%s" % (work_dir, '/wf_multi_subject_', '_'.join(ID)), exist_ok=True)
         wf_multi.base_dir = "%s%s%s" % (work_dir, '/wf_multi_subject_', '_'.join(ID))
 
+        func_dir_list = []
+        if func_file_list:
+            func_dir_list.append(os.path.dirname(func_file))
+
+        dwi_dir_list = []
+        if dwi_file_list:
+            dwi_dir_list.append(os.path.dirname(dwi_file))
+
         if verbose is True:
             from nipype import config, logging
             cfg_v = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'DEBUG', 'interface_level': 'DEBUG',
@@ -1700,7 +1712,8 @@ def build_workflow(args, retval):
                               'crashfile_format': 'txt', 'parameterize_dirs': False, 'display_variable': ':0',
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
                               'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
-                              'remove_node_directories': False, 'raise_insufficient': False, 'maxtasksperchild': 1})
+                              'remove_node_directories': False, 'raise_insufficient': False, 'maxtasksperchild': 1,
+                              'poll_sleep_duration': 30})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf_multi.config[key][setting] = value
@@ -1708,21 +1721,26 @@ def build_workflow(args, retval):
             wf_multi.write_graph(graph2use="colored", format='png')
         except:
             pass
-        if procmem != 'auto':
-            if verbose is True:
-                from nipype.utils.profiler import log_nodes_cb
-                plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]),
-                               'status_callback': log_nodes_cb}
-            else:
-                plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
-            print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
-            wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
+        if verbose is True:
+            from nipype.utils.profiler import log_nodes_cb
+            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]),
+                           'status_callback': log_nodes_cb}
         else:
-            wf_multi.run(plugin=plugin_type)
+            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+        print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
+        wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
             print('Plotting resource profile from run...')
             generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
+            handler.close()
+            logger.removeHandler(handler)
+
+        # Clean up temporary directories
+        if len(func_dir_list) > 0:
+            for func_dir in func_dir_list:
+                for cnfnd_tmp_dir in glob.glob("%s%s" % (func_dir, '/*/confounds_tmp')):
+                    shutil.rmtree(cnfnd_tmp_dir)
 
     # Single-subject workflow generator
     else:
@@ -1754,12 +1772,10 @@ def build_workflow(args, retval):
         run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
         if func_file:
             func_dir = os.path.dirname(func_file)
-            os.makedirs("%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname), exist_ok=True)
-            wf.base_dir = "%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname)
-        elif dwi_file:
+        if dwi_file:
             dwi_dir = os.path.dirname(dwi_file)
-            os.makedirs("%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname), exist_ok=True)
-            wf.base_dir = "%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname)
+        os.makedirs("%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname), exist_ok=True)
+        wf.base_dir = "%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname)
 
         if verbose is True:
             from nipype import config, logging
@@ -1791,30 +1807,25 @@ def build_workflow(args, retval):
             wf.write_graph(graph2use="colored", format='png')
         except:
             pass
-        if procmem != 'auto':
-            if verbose is True:
-                from nipype.utils.profiler import log_nodes_cb
-                plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]),
-                               'status_callback': log_nodes_cb}
-            else:
-                plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
-            print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
-            wf.run(plugin=plugin_type, plugin_args=plugin_args)
+        if verbose is True:
+            from nipype.utils.profiler import log_nodes_cb
+            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]),
+                           'status_callback': log_nodes_cb}
         else:
-            wf.run(plugin=plugin_type)
+            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+        print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
+        wf.run(plugin=plugin_type, plugin_args=plugin_args)
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
             print('Plotting resource profile from run...')
             generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
+            handler.close()
+            logger.removeHandler(handler)
 
-    if verbose is True:
-        handler.close()
-        logger.removeHandler(handler)
-
-    # Clean up temporary directories
-    if func_file:
-        for cnfnd_tmp_dir in glob.glob("%s%s" % (func_dir, '/*/confounds_tmp')):
-            shutil.rmtree(cnfnd_tmp_dir)
+        # Clean up temporary directories
+        if func_file:
+            for cnfnd_tmp_dir in glob.glob("%s%s" % (func_dir, '/*/confounds_tmp')):
+                shutil.rmtree(cnfnd_tmp_dir)
 
     print('\n\n------------NETWORK COMPLETE-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)

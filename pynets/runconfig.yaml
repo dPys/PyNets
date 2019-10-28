@@ -48,10 +48,16 @@ resource_dict:
         - (1, 1)
       - 'check_orient_and_dims_func_node':
         - (1, 1)
+      - 'check_orient_and_dims_clust_mask_node':
+        - (1, 1)
+      - check_orient_and_dims_mask_node:
+        - (1, 1)
+      - node_gen_node:
+        - (1, 1)
       - 'check_orient_and_dims_dwi_node':
         - (1, 1)
       - 'extract_ts_node':
-        - (2, 6)
+        - (2, 8)
       - 'node_gen_node':
         - (1, 1)
       - 'clustering_node':
