@@ -772,9 +772,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                             name="prep_spherical_nodes_node")
 
         if node_size_list:
-            prep_spherical_nodes_node_iterables = []
-            prep_spherical_nodes_node_iterables.append(("node_size", node_size_list))
-            prep_spherical_nodes_node.iterables = prep_spherical_nodes_node_iterables
+            prep_spherical_nodes_node.iterables = [("node_size", node_size_list)]
 
     save_nifti_parcels_node = pe.Node(niu.Function(input_names=['ID', 'dir_path', 'roi', 'network',
                                                                 'net_parcels_map_nifti'],
@@ -833,6 +831,13 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                        'gtab_file', 'dwi_file', 'waymask_dwi'],
                                          function=register.register_all_dwi, imports=import_list),
                             name="register_node")
+
+    # Check orientation and resolution
+    check_orient_and_dims_uatlas_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'],
+                                                             output_names=['outfile'],
+                                                             function=regutils.check_orient_and_dims,
+                                                             imports=import_list),
+                                                name="check_orient_and_dims_uatlas_node")
 
     register_atlas_node = pe.Node(niu.Function(input_names=['uatlas', 'uatlas_parcels', 'atlas', 'node_size',
                                                             'basedir_path', 'fa_path', 'B0_mask', 'anat_file',
@@ -930,13 +935,9 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                                                     user_atlas_list is not None):
         flexi_atlas = False
         if multi_atlas is not None and user_atlas_list is None:
-            fetch_nodes_and_labels_node_iterables = []
-            fetch_nodes_and_labels_node_iterables.append(("atlas", multi_atlas))
-            fetch_nodes_and_labels_node.iterables = fetch_nodes_and_labels_node_iterables
+            fetch_nodes_and_labels_node.iterables = [("atlas", multi_atlas)]
         elif multi_atlas is None and user_atlas_list is not None:
-            fetch_nodes_and_labels_node_iterables = []
-            fetch_nodes_and_labels_node_iterables.append(("uatlas", user_atlas_list))
-            fetch_nodes_and_labels_node.iterables = fetch_nodes_and_labels_node_iterables
+            fetch_nodes_and_labels_node.iterables = [("uatlas", user_atlas_list)]
     elif ((atlas is not None and uatlas is None) or (atlas is None and uatlas is not None)) and (multi_atlas is None and user_atlas_list is None):
         flexi_atlas = False
         pass
@@ -1015,8 +1016,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                 dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
                 if user_atlas_list or multi_atlas or flexi_atlas is True:
                     # print('Multiple atlases...')
-                    dmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_atlas, map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                    dmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_atlas, map_connects),
+                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
                 else:
                     # print('Single atlas...')
                     dmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node, map_connects)])
@@ -1024,8 +1025,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                 # print('Single threshold...')
                 if user_atlas_list or multi_atlas or flexi_atlas is True:
                     # print('Multiple atlases...')
-                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects),
+                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
                 else:
                     # print('Single atlas...')
                     dmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
@@ -1038,19 +1039,19 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                 # print('Multiple thresholds...')
                 if user_atlas_list or multi_atlas or flexi_atlas is True:
                     # print('Multiple atlases...')
-                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_atlas, map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
+                                                   (join_iters_node_thr, join_iters_node_atlas, map_connects),
+                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
                 else:
                     # print('Single atlas...')
-                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node, map_connects)])
+                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
+                                                   (join_iters_node_thr, join_iters_node, map_connects)])
             else:
                 # print('Single threshold...')
                 if user_atlas_list or multi_atlas or flexi_atlas is True:
                     # print('Multiple atlases...')
-                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects),
+                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
                 else:
                     # print('Single atlas...')
                     dmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
@@ -1063,8 +1064,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                     join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
                                                   name='join_iters_iteratlas_node',
                                                   joinsource=atlas_join_source, joinfield=map_fields)
-                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node, map_connects)])
+                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
+                                                   (join_iters_node_thr, join_iters_node, map_connects)])
                 else:
                     # print('Single atlas...')
                     join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_node',
@@ -1092,30 +1093,26 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                 # print('Multiple thresholds...')
                 if user_atlas_list or multi_atlas or flexi_atlas is True:
                     # print('Multiple atlases...')
-                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_prep_spheres,
-                                                    map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_prep_spheres, join_iters_node_atlas,
-                                                    map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
+                                                   (join_iters_node_thr, join_iters_node_prep_spheres, map_connects),
+                                                   (join_iters_node_prep_spheres, join_iters_node_atlas, map_connects),
+                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
                 else:
                     # print('Single atlas...')
-                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_prep_spheres,
-                                                    map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_prep_spheres, join_iters_node, map_connects)])
+                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
+                                                   (join_iters_node_thr, join_iters_node_prep_spheres, map_connects),
+                                                   (join_iters_node_prep_spheres, join_iters_node, map_connects)])
             else:
                 # print('Single threshold...')
                 if user_atlas_list or multi_atlas or flexi_atlas is True:
                     # print('Multiple atlases...')
-                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_prep_spheres, map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_prep_spheres, join_iters_node_atlas,
-                                                    map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_prep_spheres, map_connects),
+                                                   (join_iters_node_prep_spheres, join_iters_node_atlas, map_connects),
+                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
                 else:
                     # print('Single atlas...')
-                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_prep_spheres, map_connects)])
-                    dmri_connectometry_wf.connect([(join_iters_node_prep_spheres, join_iters_node, map_connects)])
+                    dmri_connectometry_wf.connect([(thr_info_node, join_iters_node_prep_spheres, map_connects),
+                                                   (join_iters_node_prep_spheres, join_iters_node, map_connects)])
         else:
             raise RuntimeError('\nERROR: Unknown join context.')
 
@@ -1237,6 +1234,9 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         (fetch_nodes_and_labels_node, gtab_node, [('atlas', 'atlas')]),
         (inputnode, register_node, [('basedir_path', 'basedir_path'), ('vox_size', 'vox_size')]),
         (inputnode, check_orient_and_dims_anat_node, [('anat_file', 'infile'), ('vox_size', 'vox_size')]),
+        (inputnode, check_orient_and_dims_uatlas_node, [('vox_size', 'vox_size')]),
+        (fetch_nodes_and_labels_node, check_orient_and_dims_uatlas_node, [('uatlas', 'infile')]),
+        (check_orient_and_dims_uatlas_node, register_atlas_node, [('outfile', 'uatlas')]),
         (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_file')]),
         (inputnode, register_atlas_node, [('basedir_path', 'basedir_path'), ('vox_size', 'vox_size')]),
         (register_node, register_atlas_node, [('anat_file', 'anat_file'),
@@ -1373,18 +1373,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         dmri_connectometry_wf.connect([
             (inputnode, node_gen_node, [('mask', 'roi')]),
         ])
-
-    # Check orientation and resolution
-    check_orient_and_dims_uatlas_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'],
-                                                             output_names=['outfile'],
-                                                             function=regutils.check_orient_and_dims,
-                                                             imports=import_list),
-                                                name="check_orient_and_dims_uatlas_node")
-    dmri_connectometry_wf.connect([
-        (inputnode, check_orient_and_dims_uatlas_node, [('vox_size', 'vox_size')]),
-        (fetch_nodes_and_labels_node, check_orient_and_dims_uatlas_node, [('uatlas', 'infile')]),
-        (check_orient_and_dims_uatlas_node, register_atlas_node, [('outfile', 'uatlas')]),
-    ])
 
     if parc is False:
         if network or multi_nets:
@@ -1800,11 +1788,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             else:
                 user_atlas_list = cluster_atlas_file_list
         elif k_clustering == 3:
-            k_cluster_iterables = []
-            clust_mask_iterables = []
-            clust_mask_iterables.append(("infile", clust_mask_list))
-            clustering_node.iterables = k_cluster_iterables
-            check_orient_and_dims_clust_mask_node.iterables = clust_mask_iterables
+            check_orient_and_dims_clust_mask_node.iterables = [("infile", clust_mask_list)]
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for clust_mask in clust_mask_list:
@@ -1846,9 +1830,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             else:
                 user_atlas_list = cluster_atlas_file_list
         elif k_clustering == 5:
-            k_cluster_iterables = []
-            k_cluster_iterables.append(("clust_type", clust_type_list))
-            clustering_node.iterables = k_cluster_iterables
+            clustering_node.iterables = [("clust_type", clust_type_list)]
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
@@ -1888,12 +1870,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             else:
                 user_atlas_list = cluster_atlas_file_list
         elif k_clustering == 7:
-            k_cluster_iterables = []
-            clust_mask_iterables = []
-            clust_mask_iterables.append(("infile", clust_mask_list))
-            k_cluster_iterables.append(("clust_type", clust_type_list))
-            clustering_node.iterables = k_cluster_iterables
-            check_orient_and_dims_clust_mask_node.iterables = clust_mask_iterables
+            clustering_node.iterables = [("clust_type", clust_type_list)]
+            check_orient_and_dims_clust_mask_node.iterables = [("infile", clust_mask_list)]
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
@@ -2011,13 +1989,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         # print('\n\n\n\n')
         flexi_atlas = False
         if multi_atlas:
-            fetch_nodes_and_labels_node_iterables = []
-            fetch_nodes_and_labels_node_iterables.append(("atlas", multi_atlas))
-            fetch_nodes_and_labels_node.iterables = fetch_nodes_and_labels_node_iterables
+            fetch_nodes_and_labels_node.iterables = [("atlas", multi_atlas)]
         elif user_atlas_list:
-            fetch_nodes_and_labels_node_iterables = []
-            fetch_nodes_and_labels_node_iterables.append(("uatlas", user_atlas_list))
-            fetch_nodes_and_labels_node.iterables = fetch_nodes_and_labels_node_iterables
+            fetch_nodes_and_labels_node.iterables = [("uatlas", user_atlas_list)]
+
     elif (atlas is not None and
           uatlas is None and k_clustering == 0) or (atlas is None and uatlas is not None and
                                                     k_clustering == 0) or (k_clustering > 0 and atlas is
@@ -2202,10 +2177,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                    name="get_conn_matrix_node")
 
     # Set get_conn_matrix_node iterables
-    get_conn_matrix_node_iterables = []
     if conn_model_list:
-        get_conn_matrix_node_iterables.append(("conn_model", conn_model_list))
-        get_conn_matrix_node.iterables = get_conn_matrix_node_iterables
+        get_conn_matrix_node.iterables = [("conn_model", conn_model_list)]
     else:
         fmri_connectometry_wf.connect([(inputnode, get_conn_matrix_node, [('conn_model', 'conn_model')])])
 
@@ -2222,10 +2195,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                            function=utils.save_RSN_coords_and_labels_to_pickle,
                                                            imports=import_list), name="save_coords_and_labels_node")
         if multi_nets:
-            get_node_membership_node_iterables = []
-            network_iterables = ("network", multi_nets)
-            get_node_membership_node_iterables.append(network_iterables)
-            get_node_membership_node.iterables = get_node_membership_node_iterables
+            get_node_membership_node.iterables = [("network", multi_nets)]
 
         fmri_connectometry_wf.connect([(inputnode, get_node_membership_node, [('network', 'network'),
                                                                               ('template', 'infile'),
@@ -2305,8 +2275,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                 fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
                 if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
                     # print('Multiple atlases...')
-                    fmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_atlas, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                    fmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_atlas, map_connects),
+                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
                 else:
                     # print('Single atlas...')
                     fmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node, map_connects)])
@@ -2314,8 +2284,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                 # print('Single threshold...')
                 if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
                     # print('Multiple atlases...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects),
+                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
                 else:
                     # print('Single atlas...')
                     fmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
@@ -2328,19 +2298,19 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                 # print('Multiple thresholds...')
                 if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
                     # print('Multiple atlases...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_atlas, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
+                                                   (join_iters_node_thr, join_iters_node_atlas, map_connects),
+                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
                 else:
                     # print('Single atlas...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node, map_connects)])
+                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
+                                                   (join_iters_node_thr, join_iters_node, map_connects)])
             else:
                 # print('Single threshold...')
                 if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
                     # print('Multiple atlases...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects),
+                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
                 else:
                     # print('Single atlas...')
                     fmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
@@ -2353,8 +2323,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                     join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
                                                   name='join_iters_iteratlas_node',
                                                   joinsource=atlas_join_source, joinfield=map_fields)
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node, map_connects)])
+                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
+                                                   (join_iters_node_thr, join_iters_node, map_connects)])
                 else:
                     # print('Single atlas...')
                     join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
@@ -2385,26 +2355,26 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                 # print('Multiple thresholds...')
                 if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
                     # print('Multiple atlases...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_ext_ts, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_ext_ts, join_iters_node_atlas, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
+                                                   (join_iters_node_thr, join_iters_node_ext_ts, map_connects),
+                                                   (join_iters_node_ext_ts, join_iters_node_atlas, map_connects),
+                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
                 else:
                     # print('Single atlas...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_ext_ts, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_ext_ts, join_iters_node, map_connects)])
+                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
+                                                   (join_iters_node_thr, join_iters_node_ext_ts, map_connects),
+                                                   (join_iters_node_ext_ts, join_iters_node, map_connects)])
             else:
                 # print('Single threshold...')
                 if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
                     # print('Multiple atlases...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_ext_ts, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_ext_ts, join_iters_node_atlas, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_atlas, join_iters_node, map_connects)])
+                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_ext_ts, map_connects),
+                                                   (join_iters_node_ext_ts, join_iters_node_atlas, map_connects),
+                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
                 else:
                     # print('Single atlas...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_ext_ts, map_connects)])
-                    fmri_connectometry_wf.connect([(join_iters_node_ext_ts, join_iters_node, map_connects)])
+                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_ext_ts, map_connects),
+                                                   (join_iters_node_ext_ts, join_iters_node, map_connects)])
         else:
             raise RuntimeError('\nERROR: Unknown join context.')
 

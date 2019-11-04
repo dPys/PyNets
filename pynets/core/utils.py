@@ -645,9 +645,9 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
     def _omni_embed(pop_array, subgraph_name='whole_brain'):
         variance_threshold = VarianceThreshold(threshold=0.00001)
         diags = np.array([np.triu(pop_array[i]) for i in range(len(pop_array))])
-        diags_red = diags.reshape(diags.shape[0], diags.shape[1] * diags.shape[2])
-        var_thr = variance_threshold.fit(diags_red.T)
-        graphs_ix_keep = var_thr.get_support(indices=True)
+        graphs_ix_keep = variance_threshold.fit(diags.reshape(diags.shape[0],
+                                                              diags.shape[1] *
+                                                              diags.shape[2]).T).get_support(indices=True)
         pop_array_red = [pop_array[i] for i in graphs_ix_keep]
 
         # Omnibus embedding -- random dot product graph (rdpg)
@@ -678,9 +678,9 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
     def _mase_embed(pop_array, subgraph_name='whole_brain'):
         variance_threshold = VarianceThreshold(threshold=0.00001)
         diags = np.array([np.triu(pop_array[i]) for i in range(len(pop_array))])
-        diags_red = diags.reshape(diags.shape[0], diags.shape[1] * diags.shape[2])
-        var_thr = variance_threshold.fit(diags_red.T)
-        graphs_ix_keep = var_thr.get_support(indices=True)
+        graphs_ix_keep = variance_threshold.fit(diags.reshape(diags.shape[0],
+                                                              diags.shape[1] *
+                                                              diags.shape[2]).T).get_support(indices=True)
         pop_array_red = [pop_array[i] for i in graphs_ix_keep]
 
         # Omnibus embedding -- random dot product graph (rdpg)
@@ -701,6 +701,7 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
         print('Saving...')
         np.save(out_path, mase.scores_)
         del mase, mase_fit
+
         return out_path
 
     # Available functional and structural connectivity models

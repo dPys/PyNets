@@ -217,11 +217,6 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     ref_grid_aff = vox_size*np.eye(4)
     ref_grid_aff[3][3] = 1
 
-    # Deform streamlines
-    displacements = values_from_volume(mapping.get_forward_field(), streams_in_curr_grid, ref_grid_aff)
-
-    deformed_streams = [sum(d, s) for d, s in zip(displacements, streams_in_curr_grid)]
-
     # Create isocenter mapping where we anchor the origin transformation affine
     # to the corner of the FOV by scaling x, y, z offsets according to a multiplicative
     # van der Corput sequence with a base value equal to the voxel resolution
@@ -240,12 +235,14 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     adjusted_affine[1][3] = -adjusted_affine[1][3]*y_mul
     adjusted_affine[2][3] = -adjusted_affine[2][3]*z_mul
 
-    streams_isocentered = transform_streamlines(deformed_streams, np.linalg.inv(adjusted_affine))
-
-    streams_final = transform_streamlines(streams_isocentered, np.linalg.inv(warped_fa_img.affine))
-
-    # Remove streamlines outside brain
-    streams_final_filt = Streamlines(utils.target_line_based(streams_final, np.eye(4), brain_mask, include=True))
+    # Deform streamlines, isocenter, and remove streamlines outside brain
+    streams_final_filt = Streamlines(utils.target_line_based(transform_streamlines(
+        transform_streamlines(
+            nib.streamlines.array_sequence.ArraySequence([(d, s) for d, s in
+                                                          zip(values_from_volume(mapping.get_forward_field(),
+                                                                                 streams_in_curr_grid, ref_grid_aff),
+                                                              streams_in_curr_grid)]), np.linalg.inv(adjusted_affine)),
+        np.linalg.inv(warped_fa_img.affine)), np.eye(4), brain_mask, include=True))
 
     # Remove streamlines with negative voxel indices
     lin_T, offset = _mapping_to_voxel(np.eye(4))
@@ -275,18 +272,31 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     warped_uatlas = affine_map.transform_inverse(mapping.transform(np.asarray(atlas_img.dataobj).astype('int16'),
                                                                    interpolation='nearestneighbour'), interp='nearest')
-    union_ua = "%s%s%s%s" % (dir_path, '/parcellations/', os.path.basename(uatlas).split('.nii.gz')[0],
-                             '_UNION.nii.gz')
 
-    warped_uatlas_img = nib.Nifti1Image(warped_uatlas, affine=warped_fa_img.affine)
-    warped_uatlas_img_res = resample_to_img(warped_uatlas_img, uatlas_mni_img, interpolation='nearest', clip=False)
-    warped_uatlas_img_res_data = np.asarray(warped_uatlas_img_res.dataobj)
+    warped_uatlas_img_res_data = np.asarray(resample_to_img(nib.Nifti1Image(warped_uatlas, affine=warped_fa_img.affine), uatlas_mni_img, interpolation='nearest', clip=False).dataobj)
     uatlas_mni_data = np.asarray(uatlas_mni_img.dataobj)
     overlap_mask = np.invert(warped_uatlas_img_res_data.astype('bool') * uatlas_mni_data.astype('bool'))
-    union_atlas = warped_uatlas_img_res_data * overlap_mask.astype('int') + uatlas_mni_data * overlap_mask.astype('int')
-    union_atlas_corr = union_atlas + np.invert(overlap_mask).astype('int') * warped_uatlas_img_res_data
-    nib.save(nib.Nifti1Image(union_atlas_corr, affine=warped_fa_img.affine), union_ua)
-    atlas_mni = union_ua
+    atlas_mni = "%s%s%s%s" % (dir_path, '/parcellations/', os.path.basename(uatlas).split('.nii.gz')[0],
+                              '_UNION.nii.gz')
+    nib.save(nib.Nifti1Image(warped_uatlas_img_res_data * overlap_mask.astype('int') + uatlas_mni_data * overlap_mask.astype('int') + np.invert(overlap_mask).astype('int') * warped_uatlas_img_res_data, affine=warped_fa_img.affine), atlas_mni)
+
+    # Cleanup
+    uatlas_mni_img.uncache()
+    warped_fa_img.uncache()
+    template_img.uncache()
+    fa_img.uncache()
+    atlas_img.uncache()
+
+    del tractogram
+    del streamlines
+    del warped_uatlas_img_res_data
+    del uatlas_mni_data
+    del overlap_mask
+    del stf
+    del streams_final_filt_final
+    del streams_final_filt
+    del streams_in_curr_grid
+    del brain_mask
 
     return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget, warped_fa
 
@@ -557,14 +567,14 @@ class DmriReg(object):
 
         # Set intensities to int
         atlas_img = nib.load(dwi_aligned_atlas)
-        atlas_data = np.around(np.asarray(atlas_img.dataobj)).astype('int16')
         t_img = load_img(self.wm_gm_int_in_dwi)
         mask = math_img('img > 0', img=t_img)
         mask.to_filename(self.wm_gm_int_in_dwi_bin)
-        nib.save(nib.Nifti1Image(atlas_data.astype('int16'), affine=atlas_img.affine, header=atlas_img.header),
-                 dwi_aligned_atlas)
+        nib.save(nib.Nifti1Image(np.around(np.asarray(atlas_img.dataobj)).astype('int16'),
+                                 affine=atlas_img.affine, header=atlas_img.header), dwi_aligned_atlas)
         os.system("fslmaths {} -mas {} {}".format(dwi_aligned_atlas, self.wm_gm_int_in_dwi_bin,
                                                   dwi_aligned_atlas_wmgm_int))
+        atlas_img.uncache()
 
         return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni
 
@@ -772,9 +782,8 @@ class FmriReg(object):
         # Test if uatlas is 4D. If it is, then assume clustering was performed and grab the first volume for reg
         uatlas_img = nib.load(uatlas)
         if len(uatlas_img.shape) == 4:
-            single_uatlas_image = index_img(uatlas_img, 1)
             uatlas_filled = uatlas.split('.nii')[0] + '_firstvol.nii.gz'
-            nib.save(single_uatlas_image, uatlas_filled)
+            nib.save(index_img(uatlas_img, 1), uatlas_filled)
         else:
             uatlas_filled = "%s%s%s%s" % (self.anat_path, '/', atlas, "_filled.nii.gz")
             os.system("fslmaths {} -add {} -mas {} {}".format(self.input_mni_brain, uatlas, self.input_mni_mask,
@@ -802,6 +811,7 @@ class FmriReg(object):
         nib.save(nib.Nifti1Image(atlas_data.astype('int16'), affine=atlas_img.affine,
                                  header=atlas_img.header), aligned_atlas_t1mni)
         os.system("fslmaths {} -mas {} {}".format(aligned_atlas_t1mni, gm_mask_mni, aligned_atlas_t1mni_gm))
+        atlas_img.uncache()
 
         return aligned_atlas_t1mni_gm
 
@@ -1045,7 +1055,6 @@ def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, 
     from pynets.registration import register
 
     reg = register.FmriReg(basedir_path, anat_file, vox_size, simple)
-
 
     # Apply warps/coregister atlas to t1w_mni
     if uatlas == uatlas_parcels:

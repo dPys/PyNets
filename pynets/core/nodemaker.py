@@ -65,12 +65,10 @@ def create_parcel_atlas(parcel_list):
         background image of zeros.
     """
     from nilearn.image import new_img_like, concat_imgs
-    parcel_background = new_img_like(parcel_list[0], np.zeros(parcel_list[0].shape, dtype=bool))
-    parcel_list_exp = [parcel_background] + parcel_list
-    parcellation = concat_imgs(parcel_list_exp).get_fdata()
-    index_vec = np.array(range(len(parcel_list_exp)))
-    net_parcels_sum = np.sum(index_vec * parcellation, axis=3)
-    net_parcels_map_nifti = nib.Nifti1Image(net_parcels_sum, affine=parcel_list[0].affine)
+    parcel_list_exp = [new_img_like(parcel_list[0], np.zeros(parcel_list[0].shape, dtype=bool))] + parcel_list
+    net_parcels_map_nifti = nib.Nifti1Image(np.sum(np.array(range(len(parcel_list_exp))) *
+                                                   concat_imgs(parcel_list_exp).get_fdata(), axis=3),
+                                            affine=parcel_list[0].affine)
     return net_parcels_map_nifti, parcel_list_exp
 
 
@@ -349,9 +347,8 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
         net_labels = []
         for parcel in parcel_list:
             parcel_vol = np.zeros(RSNmask.shape, dtype=bool)
-            parcel_data_reshaped = resample_img(parcel, target_affine=par_img.affine,
-                                                target_shape=RSNmask.shape).get_fdata()
-            parcel_vol[parcel_data_reshaped == 1] = 1
+            parcel_vol[resample_img(parcel, target_affine=par_img.affine,
+                                    target_shape=RSNmask.shape).get_fdata() == 1] = 1
 
             # Count number of unique voxels where overlap of parcel and mask occurs
             overlap_count = len(np.unique(np.where((RSNmask.astype('uint8') == 1) & (parcel_vol.astype('uint8') == 1))))
@@ -465,9 +462,8 @@ def parcel_masker(roi, coords, parcel_list, labels, dir_path, ID, perc_overlap):
     # Create a resampled 3D atlas that can be viewed alongside mask img for QA
     resampled_parcels_nii_path = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_parcels_resampled2roimask_',
                                                    op.basename(roi).split('.')[0], '.nii.gz')
-    resampled_parcels_atlas, _ = nodemaker.create_parcel_atlas(parcel_list_adj)
-    resampled_parcels_map_nifti = resample_img(resampled_parcels_atlas, target_affine=mask_img.affine,
-                                               target_shape=mask_data.shape)
+    resampled_parcels_map_nifti = resample_img(nodemaker.create_parcel_atlas(parcel_list_adj)[0],
+                                               target_affine=mask_img.affine, target_shape=mask_data.shape)
     nib.save(resampled_parcels_map_nifti, resampled_parcels_nii_path)
     mask_img.uncache()
     resampled_parcels_map_nifti.uncache()
@@ -662,13 +658,9 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     img_list = nodemaker.gen_img_list(uatlas)
     print("%s%s%s" % ('\nExtracting parcels associated with ', network, ' network locations...\n'))
     net_parcels = [i for j, i in enumerate(img_list) if j in labels]
-    bna_4D = concat_imgs(net_parcels).get_fdata()
-    index_vec = np.array(range(len(net_parcels))) + 1
-    net_parcels_sum = np.sum(index_vec * bna_4D, axis=3)
-    net_parcels_map_nifti = nib.Nifti1Image(net_parcels_sum, affine=np.eye(4))
+    net_parcels_sum = np.sum((np.array(range(len(net_parcels))) + 1) * concat_imgs(net_parcels).get_fdata(), axis=3)
     out_path = "%s%s%s%s" % (dir_path, '/', network, '_parcels.nii.gz')
-    nib.save(net_parcels_map_nifti, out_path)
-    net_parcels_map_nifti.uncache()
+    nib.save(nib.Nifti1Image(net_parcels_sum, affine=np.eye(4)), out_path)
 
     return out_path
 
@@ -753,7 +745,7 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
     coords : list
         List of (x, y, z) tuples in mm-space corresponding to a coordinate atlas used or
         which represent the center-of-mass of each parcellation node.
-    atlas_name : str
+    atlas : str
         Name of atlas parcellation (can differ slightly from fetch API string).
     networks_list : list
         List of RSN's and their associated cooordinates, if predefined uniquely for a given atlas.
@@ -853,15 +845,14 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
             pass
         else:
             if (ref_txt is not None) and (op.exists(ref_txt)) and (use_AAL_naming is False):
-                dict_df = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])
-                labels = dict_df['Region'].tolist()
+                labels = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])['Region'].tolist()
             else:
                 try:
                     ref_txt = "%s%s%s%s" % (str(Path(base_path).parent), '/labelcharts/', atlas, '.txt')
                     if op.exists(ref_txt) and (use_AAL_naming is False):
                         try:
-                            dict_df = pd.read_csv(ref_txt, sep="\t", header=None, names=["Index", "Region"])
-                            labels = dict_df['Region'].tolist()
+                            labels = pd.read_csv(ref_txt,
+                                                 sep="\t", header=None, names=["Index", "Region"])['Region'].tolist()
                         except:
                             labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                     else:
@@ -889,7 +880,6 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
         print('WARNING: No labels available since atlas name is not specified!')
 
     print("%s%s" % ('Labels:\n', labels))
-    atlas_name = atlas
     dir_path = utils.do_dir_path(atlas, in_file)
 
     if len(coords) != len(labels):
@@ -897,7 +887,7 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
         if len(coords) != len(labels):
             raise ValueError('ERROR: length of coordinates is not equal to length of label names')
 
-    return labels, coords, atlas_name, networks_list, parcel_list, par_max, uatlas, dir_path
+    return labels, coords, atlas, networks_list, parcel_list, par_max, uatlas, dir_path
 
 
 def node_gen_masking(roi, coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas,
@@ -1079,8 +1069,7 @@ def mask_roi(dir_path, roi, mask, img_file):
     from nilearn import masking
 
     img_mask_path = "%s%s%s%s" % (dir_path, '/', op.basename(img_file).split('.')[0], '_mask.nii.gz')
-    img_mask = masking.compute_epi_mask(img_file)
-    nib.save(img_mask, img_mask_path)
+    nib.save(masking.compute_epi_mask(img_file), img_mask_path)
 
     if roi and mask:
         print('Refining ROI...')
@@ -1135,11 +1124,16 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     parcel_list = []
     i = 0
     for coord in coords_vox:
-        inds = get_sphere(coord, node_size, (np.abs(x_vox), y_vox, z_vox), mask_img.shape)
-        sphere_vol[tuple(inds.T)] = i * 1
+        sphere_vol[tuple(get_sphere(coord, node_size, (np.abs(x_vox), y_vox, z_vox), mask_img.shape).T)] = i * 1
         parcel_list.append(nib.Nifti1Image(sphere_vol.astype('int'), affine=mask_aff))
         i = i + 1
 
     par_max = len(coords)
-    parc = True
+    if par_max > 0:
+        parc = True
+    else:
+        raise ValueError('Number of nodes is zero.')
+
+    mask_img.uncache()
+
     return parcel_list, par_max, node_size, parc

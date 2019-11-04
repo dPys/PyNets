@@ -929,11 +929,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     for i in info_list:
         print(i)
 
-    # Create Length matrix
-    mat_len = thresholding.weight_conversion(in_mat, 'lengths')
-
-    # Load numpy matrix as networkx graph
-    G_len = nx.from_numpy_matrix(mat_len)
+    # Create Length matrix as networkx graph
+    G_len = nx.from_numpy_matrix(thresholding.weight_conversion(in_mat, 'lengths'))
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # # # # Calculate global and local metrics from graph G # # # #
@@ -1294,5 +1291,12 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     out_path_neat = "%s%s" % (utils.create_csv_path(dir_path, est_path).split('.csv')[0], '_neat.csv')
     df = pd.DataFrame.from_dict(dict(zip(metric_list_names, net_met_val_list_final)), orient='index').transpose()
     df.to_csv(out_path_neat, index=False)
+
+    # Cleanup
+    del df
+    del net_met_val_list
+    del net_met_val_list_final
+    for i in metric_list_glob:
+        del i
 
     return out_path_neat
