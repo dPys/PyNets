@@ -465,7 +465,8 @@ def parcel_masker(roi, coords, parcel_list, labels, dir_path, ID, perc_overlap):
     resampled_parcels_map_nifti = resample_img(nodemaker.create_parcel_atlas(parcel_list_adj)[0],
                                                target_affine=mask_img.affine, target_shape=mask_data.shape)
     nib.save(resampled_parcels_map_nifti, resampled_parcels_nii_path)
-    mask_img.uncache()
+    if mask_img is not None:
+        mask_img.uncache()
     resampled_parcels_map_nifti.uncache()
     if not coords_adj:
         raise ValueError('\nERROR: ROI mask was likely too restrictive and yielded < 2 remaining parcels')
@@ -1134,6 +1135,7 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     else:
         raise ValueError('Number of nodes is zero.')
 
-    mask_img.uncache()
+    if mask_img is not None:
+        mask_img.uncache()
 
     return parcel_list, par_max, node_size, parc
