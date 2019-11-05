@@ -45,15 +45,13 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
 
     print('Generating simple tensor FA image to use for registrations...')
     nodif_B0_img = nib.load(B0_mask)
-    B0_mask_data = nodif_B0_img.get_fdata().astype('bool')
     nodif_B0_affine = nodif_B0_img.affine
     model = TensorModel(gtab)
-    mod = model.fit(data, B0_mask_data)
+    mod = model.fit(data, nodif_B0_img.get_fdata().astype('bool'))
     FA = fractional_anisotropy(mod.evals)
     FA[np.isnan(FA)] = 0
-    fa_img = nib.Nifti1Image(FA.astype(np.float32), nodif_B0_affine)
     fa_path = "%s%s" % (os.path.dirname(B0_mask), '/tensor_fa.nii.gz')
-    nib.save(fa_img, fa_path)
+    nib.save(nib.Nifti1Image(FA.astype(np.float32), nodif_B0_affine), fa_path)
     return fa_path, B0_mask, gtab_file, dwi_file
 
 
@@ -77,9 +75,8 @@ def csa_mod_est(gtab, data, B0_mask):
     '''
     from dipy.reconst.shm import CsaOdfModel
     print('Fitting CSA model...')
-    B0_mask_data = nib.load(B0_mask).get_fdata().astype('bool')
     model = CsaOdfModel(gtab, sh_order=6)
-    csa_mod = model.fit(data, B0_mask_data).shm_coeff
+    csa_mod = model.fit(data, nib.load(B0_mask).get_fdata().astype('bool')).shm_coeff
     return csa_mod
 
 
@@ -255,11 +252,10 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     atlas_data = np.around(roi_img.get_fdata())
 
     # Read Streamlines
-    tractogram = load_tractogram(streams, roi_img, to_space=Space.RASMM, shifted_origin=True, bbox_valid_check=False)
-    streamlines = Streamlines(tractogram.streamlines)
+    streamlines = Streamlines(load_tractogram(streams, roi_img, to_space=Space.RASMM, shifted_origin=True,
+                                              bbox_valid_check=False).streamlines)
 
-    fa_map = nib.load(warped_fa).get_data()
-    fa_weights = values_from_volume(fa_map, streamlines, np.eye(4))
+    fa_weights = values_from_volume(nib.load(warped_fa).get_data(), streamlines, np.eye(4))
     global_fa_weights = list(utils.flatten(fa_weights))
     min_global_fa_wei = min(global_fa_weights)
     max_global_fa_wei = max(global_fa_weights)

@@ -78,33 +78,32 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     # Loads mask and ensures it's a true binary mask
     mask_img = nib.load(B0_mask)
     # Load tissue maps and prepare tissue classifier
-    gm_mask = nib.load(gm_in_dwi)
-    gm_mask_data = gm_mask.get_fdata()
-    wm_mask = nib.load(wm_in_dwi)
-    wm_mask_data = wm_mask.get_fdata()
+    gm_mask_data = nib.load(gm_in_dwi).get_fdata()
+    wm_mask_data = nib.load(wm_in_dwi).get_fdata()
+    vent_csf_in_dwi_data = nib.load(vent_csf_in_dwi).get_fdata()
     if tiss_class == 'act':
-        vent_csf_in_dwi = nib.load(vent_csf_in_dwi)
-        vent_csf_in_dwi_data = vent_csf_in_dwi.get_fdata()
         background = np.ones(mask_img.shape)
         background[(gm_mask_data + wm_mask_data + vent_csf_in_dwi_data) > 0] = 0
         include_map = gm_mask_data
         include_map[background > 0] = 1
-        exclude_map = vent_csf_in_dwi_data
-        tiss_classifier = ActStoppingCriterion(include_map, exclude_map)
+        tiss_classifier = ActStoppingCriterion(include_map, vent_csf_in_dwi_data)
+        del background
+        del include_map
     elif tiss_class == 'bin':
-        wm_in_dwi_data = nib.load(wm_in_dwi).get_fdata().astype('bool')
-        tiss_classifier = BinaryStoppingCriterion(wm_in_dwi_data)
+        tiss_classifier = BinaryStoppingCriterion(wm_mask_data.astype('bool'))
     elif tiss_class == 'cmc':
-        vent_csf_in_dwi = nib.load(vent_csf_in_dwi)
-        vent_csf_in_dwi_data = vent_csf_in_dwi.get_fdata()
-        voxel_size = np.average(wm_mask.get_header()['pixdim'][1:4])
+        voxel_size = np.average(mask_img.get_header()['pixdim'][1:4])
         tiss_classifier = CmcStoppingCriterion.from_pve(wm_mask_data, gm_mask_data, vent_csf_in_dwi_data,
                                                         step_size=cmc_step_size, average_voxel_size=voxel_size)
     elif tiss_class == 'wb':
-        B0_mask_data = mask_img.get_fdata().astype('bool')
-        tiss_classifier = BinaryStoppingCriterion(B0_mask_data)
+        tiss_classifier = BinaryStoppingCriterion(mask_img.get_fdata().astype('bool'))
     else:
         raise ValueError('Tissue Classifier cannot be none.')
+
+    del gm_mask_data
+    del wm_mask_data
+    del vent_csf_in_dwi_data
+    mask_img.uncache()
 
     return tiss_classifier
 
@@ -261,8 +260,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
     from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
 
     if waymask:
-        waymask_img = nib.load(waymask)
-        waymask_data = waymask_img.get_fdata().astype('bool')
+        waymask_data = nib.load(waymask).get_fdata().astype('bool')
 
     # Commence Ensemble Tractography
     parcel_vec = list(np.ones(len(parcels)).astype('bool'))
@@ -318,6 +316,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                                                       rois=parcels, include=parcel_vec,
                                                                       mode='any',
                                                                       tol=roi_neighborhood_tol))
+
                 print("%s%s" % ('Qualifying Streamlines by node intersection: ', len(roi_proximal_streamlines)))
 
                 roi_proximal_streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in
@@ -344,12 +343,25 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                     else:
                         continue
 
+                # Cleanup memory
+                del dg
+                del seeds
+                del roi_proximal_streamlines
+                del streamline_generator
+
         circuit_ix = circuit_ix + 1
         print("%s%s%s%s%s" % ('Completed hyperparameter circuit: ', circuit_ix, '...\nCumulative Streamline Count: ',
                               Fore.CYAN, stream_counter))
         print(Style.RESET_ALL)
 
     print('\n')
+
+    # Final cleanup
+    del waymask_data
+    del stream_counter
+    del parcel_vec
+    del parcels
+
     return streamlines
 
 
@@ -523,21 +535,16 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     from pynets.core import utils
     from pynets.dmri.track import prep_tissues, reconstruction, create_density_map, track_ensemble
 
-    # Load gradient table
-    gtab = load_pickle(gtab_file)
-
     # Load diffusion data
     dwi_img = nib.load(dwi_file)
     dwi_data = dwi_img.get_fdata()
 
     # Fit diffusion model
-    mod_fit = reconstruction(conn_model, gtab, dwi_data, B0_mask)
+    mod_fit = reconstruction(conn_model, load_pickle(gtab_file), dwi_data, B0_mask)
 
     # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
-    atlas_img = nib.load(labels_im_file)
-    atlas_data = atlas_img.get_fdata().astype('int')
-    atlas_img_wm_gm_int = nib.load(labels_im_file_wm_gm_int)
-    atlas_data_wm_gm_int = atlas_img_wm_gm_int.get_fdata().astype('int')
+    atlas_data = nib.load(labels_im_file).get_fdata().astype('int')
+    atlas_data_wm_gm_int = nib.load(labels_im_file_wm_gm_int).get_fdata().astype('int')
 
     # Build mask vector from atlas for later roi filtering
     parcels = []
@@ -545,12 +552,6 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     for roi_val in np.unique(atlas_data)[1:]:
         parcels.append(atlas_data == roi_val)
         i = i + 1
-
-    # Get sphere
-    sphere = get_sphere('repulsion724')
-
-    # Instantiate tissue classifier
-    tiss_classifier = prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class)
 
     if np.sum(atlas_data) == 0:
         raise ValueError('ERROR: No non-zero voxels found in atlas. Check any roi masks and/or wm-gm interface images '
@@ -576,15 +577,22 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     print(Style.RESET_ALL)
 
     # Commence Ensemble Tractography
-    streamlines = track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier,
-                                 sphere, directget, curv_thr_list, step_list, track_type, maxcrossing, max_length,
-                                 roi_neighborhood_tol, min_length, waymask)
+    streamlines = track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_fit,
+                                 prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class),
+                                 get_sphere('repulsion724'), directget, curv_thr_list, step_list, track_type,
+                                 maxcrossing, max_length, roi_neighborhood_tol, min_length, waymask)
     print('Tracking Complete')
 
     # Create streamline density map
-    dir_path = utils.do_dir_path(atlas, dwi_file)
-    [streams, dir_path, dm_path] = create_density_map(dwi_img, dir_path, streamlines, conn_model,
-                                                      target_samples, node_size, curv_thr_list, step_list,
+    [streams, dir_path, dm_path] = create_density_map(dwi_img, utils.do_dir_path(atlas, dwi_file), streamlines,
+                                                      conn_model, target_samples, node_size, curv_thr_list, step_list,
                                                       network, roi)
+
+    del streamlines
+    del dwi_data
+    del atlas_data_wm_gm_int
+    del atlas_data
+    del mod_fit
+    dwi_img.uncache()
 
     return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path, directget, labels_im_file, roi_neighborhood_tol

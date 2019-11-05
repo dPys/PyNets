@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Created on Tue Nov  7 10:40:07 2017
-# Copyright (C) 2018
-# @author: Derek Pisner (dPys)
+"""
+Created on Tue Nov  7 10:40:07 2017
+Copyright (C) 2018
+@author: Derek Pisner (dPys)
+"""
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -1684,11 +1686,15 @@ def build_workflow(args, retval):
 
         func_dir_list = []
         if func_file_list:
-            func_dir_list.append(os.path.dirname(func_file))
+            for func_file in func_file_list:
+                if func_file is not None:
+                    func_dir_list.append(os.path.dirname(func_file))
 
         dwi_dir_list = []
         if dwi_file_list:
-            dwi_dir_list.append(os.path.dirname(dwi_file))
+            for dwi_file in dwi_file_list:
+                if dwi_file is not None:
+                    dwi_dir_list.append(os.path.dirname(dwi_file))
 
         if verbose is True:
             from nipype import config, logging

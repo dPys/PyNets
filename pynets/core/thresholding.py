@@ -806,9 +806,8 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         raise ValueError('ERROR: Raw connectivity matrix contains only zeros.')
 
     # Save unthresholded
-    unthr_path = utils.create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth, c_boot,
-                                            hpass, parc)
-    utils.save_mat(conn_matrix, unthr_path)
+    utils.save_mat(conn_matrix, utils.create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth,
+                                                           c_boot, hpass, parc))
 
     if min_span_tree is True:
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
@@ -982,9 +981,8 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
         raise ValueError('ERROR: Raw connectivity matrix contains only zeros.')
 
     # Save unthresholded
-    unthr_path = utils.create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, target_samples,
-                                            track_type, parc)
-    utils.save_mat(conn_matrix, unthr_path)
+    utils.save_mat(conn_matrix, utils.create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size,
+                                                           target_samples, track_type, parc))
 
     if min_span_tree is True:
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')

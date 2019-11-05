@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Created on Tue Nov  7 10:40:07 2017
+Copyright (C) 2018
+@author: Derek Pisner (dPys)
+"""
 import nibabel as nib
 import numpy as np
 import warnings
@@ -466,8 +471,8 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
     print("%s%s%s" % (clust_type, k, " clusters: %.2fs" % (time.time() - start)))
 
     del clust_est
-    del func_img
-    del clust_mask_img
+    func_img.uncache()
+    clust_mask_img.uncache()
 
     return region_labels
 
@@ -513,6 +518,7 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, local_
         Type of clustering to be performed (e.g. 'ward', 'kmeans', 'complete', 'average').
     """
     import os
+    import gc
     from pynets.core import utils
     from pynets.fmri import clustools
 
@@ -528,14 +534,12 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, local_
     # Ensure mask does not inclue voxels outside of the brain
     mask_img = nib.load(clust_mask)
     mask_data = np.asarray(mask_img.dataobj).astype('bool').astype('int')
-    func_img = nib.load(func_file)
-    func_data = np.asarray(func_img.dataobj).astype('bool')
-    func_data_sample_slice = func_data[:, :, :, 0]
-    mask_data[~func_data_sample_slice] = 0
+    mask_data[~np.asarray(nib.load(func_file).dataobj)[:, :, :, 0].astype('bool')] = 0
     clust_mask_corr = "%s%s%s%s" % (dir_path, '/', mask_name, '.nii.gz')
     nib.save(nib.Nifti1Image(mask_data, affine=mask_img.affine, header=mask_img.header), clust_mask_corr)
     del mask_data
-    del func_data
+    mask_img.uncache()
+    gc.collect()
 
     if clust_type in nilearn_clust_list:
         clustools.nil_parcellate(func_file, clust_mask_corr, k, clust_type, uatlas, dir_path, conf,
