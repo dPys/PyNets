@@ -47,7 +47,7 @@ def timeout(seconds):
     return decorator
 
 
-@timeout(240)
+@timeout(720)
 def average_shortest_path_length_for_all(G):
     """
     Helper function, in the case of graph disconnectedness,
@@ -74,11 +74,11 @@ def average_shortest_path_length_for_all(G):
     connected_component_subgraphs = [G.subgraph(c) for c in nx.connected_components(G)]
     subgraphs = [sbg for sbg in connected_component_subgraphs if len(sbg) > 1]
 
-    return math.fsum(nx.average_shortest_path_length(sg) for sg in subgraphs) / len(subgraphs)
+    return math.fsum(nx.average_shortest_path_length(sg, weight='weight') for sg in subgraphs) / len(subgraphs)
 
 
-@timeout(120)
-def global_efficiency(G, weight=None):
+@timeout(720)
+def global_efficiency(G, weight='weight'):
     """
     Return the global efficiency of the graph G
 
@@ -133,8 +133,8 @@ def global_efficiency(G, weight=None):
     return sum(inv_lengths) / (N * (N - 1))
 
 
-@timeout(120)
-def local_efficiency(G, weight=None):
+@timeout(360)
+def local_efficiency(G, weight='weight'):
     """
     Return the local efficiency of each node in the graph G
 
@@ -192,8 +192,8 @@ def local_efficiency(G, weight=None):
     return efficiencies
 
 
-@timeout(120)
-def average_local_efficiency(G, weight=None):
+@timeout(720)
+def average_local_efficiency(G, weight='weight'):
     """
     Return the average local efficiency of all of the nodes in the graph G
 
@@ -232,86 +232,66 @@ def average_local_efficiency(G, weight=None):
     return total / N
 
 
-def create_random_graph(G, n, p):
-    """
-    Creates a random Erdos Renyi Graph
+@timeout(720)
+def smallworldness(G, niter=10, nrand=100):
+    """Returns the small-world coefficient (omega) of a graph
+
+    The small-world coefficient of a graph G is:
+
+    omega = Lr/L - C/Cl
+
+    where C and L are respectively the average clustering coefficient and
+    average shortest path length of G. Lr is the average shortest path length
+    of an equivalent random graph and Cl is the average clustering coefficient
+    of an equivalent lattice graph.
+
+    The small-world coefficient (omega) ranges between -1 and 1. Values close
+    to 0 means the G features small-world characteristics. Values close to -1
+    means G has a lattice shape whereas values close to 1 means G is a random
+    graph.
 
     Parameters
     ----------
-    G : Obj
-        NetworkX graph.
-    n : int
-        The number of nodes.
-    p : float
-        Probability for edge creation.
+    G : NetworkX graph
+        An undirected graph.
+
+    niter: integer (optional, default=10)
+        Approximate number of rewiring per edge to compute the equivalent
+        random graph.
+
+    nrand: integer (optional, default=100)
+        Number of random graphs generated to compute the average clustering
+        coefficient (Cr) and average shortest path length (Lr).
+
 
     Returns
     -------
-    rG : Obj
-        Random networkX graph.
+    omega : float
+        The small-work coefficient (omega)
     """
-    rG = nx.erdos_renyi_graph(n, p, seed=42)
-    return rG
 
+    from networkx.algorithms.smallworld import random_reference, lattice_reference
 
-def smallworldness_measure(G, rG):
-    """
-    Calculates smallworldness measure
+    # Compute the mean clustering coefficient and average shortest path length
+    # for an equivalent random graph
+    randMetrics = {"C": [], "L": []}
+    for i in range(nrand):
+        print('SW random iteration: ', i)
+        Gr = random_reference(G, niter=niter, seed=i)
+        Gl = lattice_reference(G, niter=niter, seed=i)
+        randMetrics["C"].append(weighted_transitivity(Gl))
+        randMetrics["L"].append(nx.average_shortest_path_length(Gr, weight='weight'))
+        del Gr, Gl
 
-    Parameters
-    ----------
-    G : Obj
-        NetworkX graph.
-    rG : Obj
-        Random networkX graph.
-
-    Returns
-    -------
-    swm : float
-        Smallworldness measure.
-    """
-    C_g = nx.algorithms.average_clustering(G)
-    C_r = nx.algorithms.average_clustering(rG)
+    C = weighted_transitivity(G)
     try:
-        L_g = nx.average_shortest_path_length(G)
-        L_r = nx.average_shortest_path_length(rG)
+        L = nx.average_shortest_path_length(G, weight='weight')
     except:
-        L_g = average_shortest_path_length_for_all(G)
-        L_r = average_shortest_path_length_for_all(rG)
-    gam = float(C_g) / float(C_r)
-    lam = float(L_g) / float(L_r)
-    swm = gam / lam
-    return swm
+        L = average_shortest_path_length_for_all(G)
+    Cl = np.mean(randMetrics["C"])
+    Lr = np.mean(randMetrics["L"])
 
-
-def smallworldness(G, rep=1000):
-    """
-    Calculates smallworldness.
-
-    Parameters
-    ----------
-    G : Obj
-        NetworkX graph.
-    rep : int
-        Number of repetitions. Default is 1000.
-
-    Returns
-    -------
-    mean_s : float
-        Mean smallworldness measure across repetitions.
-    """
-    print("%s%s%s" % ('Estimating smallworldness using ', rep, ' random graphs...'))
-    #import multiprocessing
-    n = nx.number_of_nodes(G)
-    m = nx.number_of_edges(G)
-    p = float(m) * 2 /(n*(n-1))
-    ss = []
-    for bb in range(rep):
-        rG = create_random_graph(G, n, p)
-        swm = smallworldness_measure(G, rG)
-        ss.append(swm)
-    mean_s = np.mean(ss)
-    return mean_s
+    return (Lr / L) - (C / Cl)
 
 
 def create_communities(node_comm_aff_mat, node_num):
@@ -340,7 +320,7 @@ def create_communities(node_comm_aff_mat, node_num):
     return com_assign
 
 
-@timeout(120)
+@timeout(360)
 def participation_coef(W, ci, degree='undirected'):
     '''
     Participation coefficient is a measure of diversity of intermodular
@@ -382,7 +362,7 @@ def participation_coef(W, ci, degree='undirected'):
 
     return P
 
-
+@timeout(360)
 def participation_coef_sign(W, ci):
     '''
     Participation coefficient is a measure of diversity of intermodular
@@ -432,7 +412,7 @@ def participation_coef_sign(W, ci):
 
     return Ppos, Pneg
 
-
+@timeout(360)
 def diversity_coef_sign(W, ci):
     '''
     The Shannon-entropy based diversity coefficient measures the diversity
@@ -673,6 +653,35 @@ def link_communities(W, type_clustering='single'):
     return M
 
 
+@timeout(360)
+def weighted_transitivity(G):
+    r"""Compute weighted graph transitivity, the fraction of all possible weighted triangles
+    present in G.
+
+    Possible triangles are identified by the number of "triads"
+    (two edges with a shared vertex).
+
+    The transitivity is
+
+    .. math::
+
+        T = 3\frac{\#triangles}{\#triads}.
+
+    Parameters
+    ----------
+    G : graph
+
+    Returns
+    -------
+    out : float
+       Transitivity
+    """
+    from networkx.algorithms.cluster import _weighted_triangles_and_degree_iter
+    triangles = sum(t for v, d, t in _weighted_triangles_and_degree_iter(G))
+    contri = sum(d * (d - 1) for v, d, t in _weighted_triangles_and_degree_iter(G))
+    return 0 if triangles == 0 else triangles / contri
+
+
 def prune_disconnected(G):
     """
     Returns a copy of G with isolates pruned.
@@ -725,7 +734,7 @@ def most_important(G):
        List of indices of nodes that were pruned from G.
     """
     print('Pruning fully disconnected and low importance nodes (3 SD < M)...')
-    ranking = nx.betweenness_centrality(G).items()
+    ranking = nx.betweenness_centrality(G, weight='weight').items()
     # print(ranking)
     r = [x[1] for x in ranking]
     m = sum(r) / len(r) - 3 * np.std(r)
@@ -755,8 +764,8 @@ def most_important(G):
     return Gt, pruned_nodes
 
 
-@timeout(300)
-def raw_mets(G, i, custom_weight):
+@timeout(720)
+def raw_mets(G, i):
     """
     API that iterates across NetworkX algorithms for a graph G.
 
@@ -766,16 +775,18 @@ def raw_mets(G, i, custom_weight):
         NetworkX graph.
     i : str
         Name of the NetworkX algorithm.
-    custom_weight : float
-        The edge attribute that holds the numerical value used as a weight.
-        If None, then each edge has weight 1. Default is None.
 
     Returns
     -------
     net_met_val : float
         Value of the graph metric i that was calculated from G.
     """
-    if str(i) is 'average_shortest_path_length':
+    from functools import partial
+    if isinstance(i, partial):
+        net_name = str(i.func)
+    else:
+        net_name = str(i)
+    if 'average_shortest_path_length' in net_name:
         if nx.is_connected(G) is True:
             try:
                 net_met_val = float(i(G))
@@ -785,18 +796,19 @@ def raw_mets(G, i, custom_weight):
             [H, _] = prune_disconnected(G)
             net_met_val = float(i(H))
 
-    elif str(i) is 'smallworldness':
+    elif 'smallworldness' in net_name:
         try:
             net_met_val = float(i(G))
         except:
             [H, _] = prune_disconnected(G)
             net_met_val = float(i(H))
+    elif 'degree_assortativity_coefficient' in net_name:
+            H = G.copy()
+            for u, v, d in H.edges(data=True):
+                H[u][v]['weight'] = int(np.round(100*H[u][v]['weight'], 1))
+            net_met_val = float(i(H))
     else:
-        if (custom_weight is not None) and (str(i) is 'degree_assortativity_coefficient' or str(i) is 'global_efficiency' or str(i) is 'average_local_efficiency' or str(i) is 'average_clustering'):
-            custom_weight_param = 'weight = ' + str(custom_weight)
-            net_met_val = float(i(G, custom_weight_param))
-        else:
-            net_met_val = float(i(G))
+        net_met_val = float(i(G))
 
     return net_met_val
 
@@ -825,13 +837,12 @@ class CleanGraphs(object):
     out_path : str
         Path to .csv file where graph analysis results are saved.
     """
-    def __init__(self, thr, conn_model, est_path, prune, norm, custom_weight=None, out_fmt='edgelist_ssv'):
+    def __init__(self, thr, conn_model, est_path, prune, norm, out_fmt='edgelist_ssv'):
         self.thr = thr
         self.conn_model = conn_model
         self.est_path = est_path
         self.prune = prune
         self.norm = norm
-        self.custom_weight = custom_weight
         self.out_fmt = out_fmt
         self.in_mat = None
         self.est_path_fmt = "%s%s" % ('.', self.est_path.split('.')[-1])
@@ -945,24 +956,25 @@ def save_netmets(dir_path, est_path, metric_list_names, net_met_val_list_final):
     return out_path_neat
 
 
-def iterate_nx_global_measures(G, metric_list_glob, custom_weight):
+def iterate_nx_global_measures(G, metric_list_glob):
+    # import random
     num_mets = len(metric_list_glob)
     net_met_arr = np.zeros([num_mets, 2], dtype='object')
     j = 0
     for i in metric_list_glob:
-        met_name = str(i).split('<function ')[1].split(' at')[0]
-        net_met = met_name
+        net_met = str(i).split('<function ')[1].split(' at')[0]
         try:
             try:
-                net_met_val = raw_mets(G, i, custom_weight)
-                if net_met_val == 1.0:
-                    net_met_val = np.nan
-                    print("%s%s%s" % ('WARNING: ', str(i), ' is undefined for graph G'))
+                net_met_val = raw_mets(G, i)
             except:
                 print("%s%s%s" % ('WARNING: ', net_met, ' failed for graph G.'))
+                # np.save("%s%s%s%s" % ('/tmp/', net_met, random.randint(1, 400), '.npy'),
+                #         np.array(nx.to_numpy_matrix(G)))
                 net_met_val = np.nan
         except:
             print("%s%s%s" % ('WARNING: ', str(i), ' is undefined for graph G'))
+            # np.save("%s%s%s%s" % ('/tmp/', net_met, random.randint(1, 400), '.npy'),
+            #         np.array(nx.to_numpy_matrix(G)))
             net_met_val = np.nan
         net_met_arr[j, 0] = net_met
         net_met_arr[j, 1] = net_met_val
@@ -1246,9 +1258,10 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
+@timeout(360)
 def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import rich_club_coefficient
-    rc_vector = rich_club_coefficient(G, normalized=True, seed=42)
+    rc_vector = rich_club_coefficient(G, normalized=True, seed=42, Q=100)
     print('\nExtracting Rich Club Coefficient vector for all network nodes...')
     rc_vals = list(rc_vector.values())
     rc_edges = list(rc_vector.keys())
@@ -1274,7 +1287,7 @@ def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
-def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, binary, custom_weight=None):
+def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, binary):
     """
     Function interface for performing fully-automated graph analysis.
 
@@ -1302,9 +1315,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
-    custom_weight : float
-        The edge attribute that holds the numerical value used as a weight.
-        If None, then each edge has weight 1. Default is None.
 
     Returns
     -------
@@ -1313,9 +1323,9 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     """
     import os.path as op
     import yaml
-    import random
-    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, graph_number_of_cliques, transitivity
-    from pynets.stats.netstats import average_local_efficiency, global_efficiency, smallworldness_measure, smallworldness, create_random_graph
+#    import random
+    import networkx
+    import pynets.stats.netstats
     try:
         import cPickle as pickle
     except ImportError:
@@ -1340,21 +1350,27 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
 
     dir_path = op.dirname(op.realpath(est_path))
 
-    # For non-nodal scalar metrics from custom functions, add the name of the function to metric_list and add the
-    # function (with a G-only input) to the netstats module.
-    # metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
-    #                     average_clustering, average_shortest_path_length, graph_number_of_cliques, transitivity,
-    #                     smallworldness]
-    metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
-                        average_clustering, average_shortest_path_length, graph_number_of_cliques, transitivity]
-    metric_list_comm = ['louvain_modularity']
-    # with open("%s%s" % (str(Path(__file__).parent), '/global_graph_measures.yaml'), 'r') as stream:
-    #     try:
-    #         metric_dict_global = yaml.load(stream)
-    #         metric_list_global = metric_dict_global['metric_list_global']
-    #         print("%s%s%s" % ('\n\nCalculating global measures:\n', metric_list_global, '\n\n'))
-    #     except FileNotFoundError:
-    #         print('Failed to parse global_graph_measures.yaml')
+    # Load netstats config and parse graph algorithms as objects
+    with open("%s%s" % (str(Path(__file__).parent), '/global_graph_measures.yaml'), 'r') as stream:
+        try:
+            nx_algs = ['degree_assortativity_coefficient', 'average_clustering', 'average_shortest_path_length',
+                       'graph_number_of_cliques']
+            pynets_algs = ['average_local_efficiency', 'global_efficiency', 'smallworldness', 'weighted_transitivity']
+            metric_dict_global = yaml.load(stream)
+            metric_list_global = metric_dict_global['metric_list_global']
+            metric_list_global = [getattr(networkx.algorithms, i) for i in
+                                  metric_list_global if i in
+                                  nx_algs] + [getattr(pynets.stats.netstats, i)
+                                              for i in metric_list_global if i in pynets_algs]
+            metric_list_global_names = [str(i).split('<function ')[1].split(' at')[0] for i in metric_list_global]
+            if binary is False:
+                from functools import partial
+                metric_list_global = [partial(i, weight='weight') if 'weight' in i.__code__.co_varnames else i for i in
+                                      metric_list_global]
+            print("%s%s%s" % ('\n\nCalculating global measures:\n',
+                              metric_list_global_names, '\n\n'))
+        except FileNotFoundError:
+            print('Failed to parse global_graph_measures.yaml')
 
     with open("%s%s" % (str(Path(__file__).parent), '/nodal_graph_measures.yaml'), 'r') as stream:
         try:
@@ -1369,17 +1385,17 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     # undefined. In those instances, solutions are assigned NaN's.
 
     # Iteratively run functions from above metric list that generate single scalar output
-    net_met_val_list_final, metric_list_names = iterate_nx_global_measures(G, metric_list_glob, custom_weight)
+    net_met_val_list_final, metric_list_names = iterate_nx_global_measures(G, metric_list_global)
 
     # Run miscellaneous functions that generate multiple outputs
     # Calculate modularity using the Louvain algorithm
-    if 'louvain_modularity' in metric_list_comm:
+    if 'louvain_modularity' in metric_list_nodal:
         try:
             net_met_val_list_final, metric_list_names, ci = get_community(G, net_met_val_list_final, metric_list_names)
         except:
             print('Louvain modularity calculation is undefined for graph G')
-            np.save("%s%s%s" % ('/tmp/community_failure', random.randint(1, 400), '.npy'),
-                    np.array(nx.to_numpy_matrix(G)))
+            # np.save("%s%s%s" % ('/tmp/community_failure', random.randint(1, 400), '.npy'),
+            #         np.array(nx.to_numpy_matrix(G)))
             pass
 
     # Participation Coefficient by louvain community
@@ -1392,7 +1408,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                           net_met_val_list_final)
         except:
             print('Participation coefficient cannot be calculated for graph G')
-            np.save("%s%s%s" % ('/tmp/partic_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
+            # np.save("%s%s%s" % ('/tmp/partic_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
             pass
 
     # Diversity Coefficient by louvain community
@@ -1405,7 +1421,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                       net_met_val_list_final)
         except:
             print('Diversity coefficient cannot be calculated for graph G')
-            np.save("%s%s%s" % ('/tmp/div_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
+            # np.save("%s%s%s" % ('/tmp/div_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
             pass
 
     # Local Efficiency
@@ -1415,8 +1431,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                              net_met_val_list_final)
         except:
             print('Local efficiency cannot be calculated for graph G')
-            np.save("%s%s%s" % ('/tmp/local_eff_failure', random.randint(1, 400), '.npy'),
-                    np.array(nx.to_numpy_matrix(G)))
+            # np.save("%s%s%s" % ('/tmp/local_eff_failure', random.randint(1, 400), '.npy'),
+            #         np.array(nx.to_numpy_matrix(G)))
             pass
 
     # Local Clustering
@@ -1425,8 +1441,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
             metric_list_names, net_met_val_list_final = get_clustering(G, metric_list_names, net_met_val_list_final)
         except:
             print('Local clustering cannot be calculated for graph G')
-            np.save("%s%s%s" % ('/tmp/local_clust_failure', random.randint(1, 400), '.npy'),
-                    np.array(nx.to_numpy_matrix(G)))
+            # np.save("%s%s%s" % ('/tmp/local_clust_failure', random.randint(1, 400), '.npy'),
+            #         np.array(nx.to_numpy_matrix(G)))
             pass
 
     # Degree centrality
@@ -1436,8 +1452,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                               net_met_val_list_final)
         except:
             print('Degree centrality cannot be calculated for graph G')
-            np.save("%s%s%s" % ('/tmp/degree_cent_failure', random.randint(1, 400), '.npy'),
-                    np.array(nx.to_numpy_matrix(G)))
+            # np.save("%s%s%s" % ('/tmp/degree_cent_failure', random.randint(1, 400), '.npy'),
+            #         np.array(nx.to_numpy_matrix(G)))
             pass
 
     # Betweenness Centrality
@@ -1447,8 +1463,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                                    net_met_val_list_final)
         except:
             print('Betweenness centrality cannot be calculated for graph G')
-            np.save("%s%s%s" % ('/tmp/betw_cent_failure', random.randint(1, 400), '.npy'),
-                    np.array(nx.to_numpy_matrix(G_len)))
+            # np.save("%s%s%s" % ('/tmp/betw_cent_failure', random.randint(1, 400), '.npy'),
+            #         np.array(nx.to_numpy_matrix(G_len)))
             pass
 
     # Eigenvector Centrality
@@ -1458,8 +1474,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                              net_met_val_list_final)
         except:
             print('Eigenvector centrality cannot be calculated for graph G')
-            np.save("%s%s%s" % ('/tmp/eig_cent_failure', random.randint(1, 400), '.npy'),
-                    np.array(nx.to_numpy_matrix(G)))
+            # np.save("%s%s%s" % ('/tmp/eig_cent_failure', random.randint(1, 400), '.npy'),
+            #         np.array(nx.to_numpy_matrix(G)))
             pass
 
     # Communicability Centrality
@@ -1469,8 +1485,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                             net_met_val_list_final)
         except:
             print('Communicability centrality cannot be calculated for graph G')
-            np.save("%s%s%s" % ('/tmp/comm_cent_failure', random.randint(1, 400), '.npy'),
-                    np.array(nx.to_numpy_matrix(G)))
+            # np.save("%s%s%s" % ('/tmp/comm_cent_failure', random.randint(1, 400), '.npy'),
+            #         np.array(nx.to_numpy_matrix(G)))
             pass
 
     # Rich club coefficient
@@ -1480,15 +1496,13 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                             net_met_val_list_final)
         except:
             print('Rich club coefficient cannot be calculated for graph G')
-            np.save("%s%s%s" % ('/tmp/rich_club_failure', random.randint(1, 400), '.npy'),
-                    np.array(nx.to_numpy_matrix(G)))
+            # np.save("%s%s%s" % ('/tmp/rich_club_failure', random.randint(1, 400), '.npy'),
+            #         np.array(nx.to_numpy_matrix(G)))
             pass
 
     out_path_neat = save_netmets(dir_path, est_path, metric_list_names, net_met_val_list_final)
 
     # Cleanup
-    del net_met_val_list_final, metric_list_names
-    for i in metric_list_glob:
-        del i
+    del net_met_val_list_final, metric_list_names, metric_list_global
 
     return out_path_neat

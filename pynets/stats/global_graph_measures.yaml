@@ -1,0 +1,9 @@
+metric_list_global:
+    - 'global_efficiency'
+    - 'average_local_efficiency'
+    - 'degree_assortativity_coefficient'
+    - 'average_clustering'
+    - 'average_shortest_path_length'
+    - 'graph_number_of_cliques'
+    - 'transitivity'
+    - 'smallworldness'
