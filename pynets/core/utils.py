@@ -10,8 +10,6 @@ import os
 import os.path as op
 import nibabel as nib
 import numpy as np
-from pynets.stats.netstats import extractnetstats
-from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface
 warnings.filterwarnings("ignore")
 
 
@@ -589,7 +587,7 @@ def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, thr_func, 
     return conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
 
 
-def CollectPandasJoin(net_mets_csv):
+def collectpandasjoin(net_mets_csv):
     """
     Passes csv pandas dataframe as metadata.
 
@@ -1526,92 +1524,3 @@ def create_temporary_copy(path, temp_file_name, fmt):
     temp_path = "%s%s%s%s" % (temp_dir, '/', temp_file_name, fmt)
     shutil.copy2(path, temp_path)
     return temp_path
-
-
-class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
-    """
-    Input interface wrapper for ExtractNetStats
-    """
-    ID = traits.Any(mandatory=True)
-    network = traits.Any(mandatory=False)
-    thr = traits.Any(mandatory=True)
-    conn_model = traits.Str(mandatory=True)
-    est_path = File(exists=True, mandatory=True)
-    roi = traits.Any(mandatory=False)
-    prune = traits.Any(mandatory=False)
-    norm = traits.Any(mandatory=False)
-    binary = traits.Any(mandatory=False)
-
-
-class ExtractNetStatsOutputSpec(TraitedSpec):
-    """
-    Output interface wrapper for ExtractNetStats
-    """
-    out_path_neat = File(exists=True, mandatory=True)
-
-
-class ExtractNetStats(BaseInterface):
-    """
-    Interface wrapper for ExtractNetStats
-    """
-    input_spec = ExtractNetStatsInputSpec
-    output_spec = ExtractNetStatsOutputSpec
-
-    def _run_interface(self, runtime):
-        out = extractnetstats(
-            self.inputs.ID,
-            self.inputs.network,
-            self.inputs.thr,
-            self.inputs.conn_model,
-            self.inputs.est_path,
-            self.inputs.roi,
-            self.inputs.prune,
-            self.inputs.norm,
-            self.inputs.binary)
-        setattr(self, '_outpath', out)
-        return runtime
-
-    def _list_outputs(self):
-        import os.path as op
-        return {'out_path_neat': op.abspath(getattr(self, '_outpath'))}
-
-
-class CombinePandasDfsInputSpec(BaseInterfaceInputSpec):
-    """
-    Input interface wrapper for CombinePandasDfs
-    """
-    ID = traits.Any(mandatory=True)
-    network = traits.Any(mandatory=True)
-    net_mets_csv_list = traits.List(mandatory=True)
-    plot_switch = traits.Any(mandatory=True)
-    multi_nets = traits.Any(mandatory=True)
-    multimodal = traits.Any(mandatory=True)
-
-
-class CombinePandasDfsOutputSpec(TraitedSpec):
-    """
-    Output interface wrapper for CombinePandasDfs
-    """
-    combination_complete = traits.Bool()
-
-
-class CombinePandasDfs(SimpleInterface):
-    """
-    Interface wrapper for CombinePandasDfs
-    """
-    input_spec = CombinePandasDfsInputSpec
-    output_spec = CombinePandasDfsOutputSpec
-
-    def _run_interface(self, runtime):
-        combination_complete = collect_pandas_df(
-            self.inputs.network,
-            self.inputs.ID,
-            self.inputs.net_mets_csv_list,
-            self.inputs.plot_switch,
-            self.inputs.multi_nets,
-            self.inputs.multimodal)
-        setattr(self, '_combination_complete', combination_complete)
-        return runtime
-
-    def _list_outputs(self):
-        return {'combination_complete': getattr(self, '_combination_complete')}

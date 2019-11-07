@@ -37,3 +37,9 @@ omit =
 	pynets/stats/netmotifs.py
 	pynets/stats/benchmarking.py
 	pynets/registration/register.py
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    raise NotImplementedError
+    warnings\.warn

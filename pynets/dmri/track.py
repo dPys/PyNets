@@ -100,9 +100,7 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     else:
         raise ValueError('Tissue Classifier cannot be none.')
 
-    del gm_mask_data
-    del wm_mask_data
-    del vent_csf_in_dwi_data
+    del gm_mask_data, wm_mask_data, vent_csf_in_dwi_data
     mask_img.uncache()
 
     return tiss_classifier
@@ -357,10 +355,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
     print('\n')
 
     # Final cleanup
-    del waymask_data
-    del stream_counter
-    del parcel_vec
-    del parcels
+    del waymask_data, stream_counter, parcel_vec, parcels
 
     return streamlines
 
@@ -588,11 +583,7 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
                                                       conn_model, target_samples, node_size, curv_thr_list, step_list,
                                                       network, roi)
 
-    del streamlines
-    del dwi_data
-    del atlas_data_wm_gm_int
-    del atlas_data
-    del mod_fit
+    del streamlines, dwi_data, atlas_data_wm_gm_int, atlas_data, mod_fit
     dwi_img.uncache()
 
     return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path, directget, labels_im_file, roi_neighborhood_tol

@@ -38,6 +38,8 @@ script:
    - travis_wait 60 pytest tests/test_track.py -s
    - travis_wait 60 pytest tests/test_reg_utils.py -s
    - pytest tests/test_refs.py -s
+#   - pytest -n 2 -vv --doctest-modules --cov pynets --cov-config .coveragerc --cov-report xml:cov.xml pynets
 
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+after_script:
+  - python -m pip install codecov
+  - codecov

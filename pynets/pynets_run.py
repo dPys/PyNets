@@ -1345,7 +1345,8 @@ def build_workflow(args, retval):
     # Import wf core and interfaces
     import warnings
     warnings.filterwarnings("ignore")
-    from pynets.core.utils import CombinePandasDfs, ExtractNetStats, CollectPandasJoin
+    from pynets.core.utils import collectpandasjoin
+    from pynets.core.interfaces import CombinePandasDfs, ExtractNetStats
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core.workflows import workflow_selector
@@ -1455,7 +1456,7 @@ def build_workflow(args, retval):
         # Aggregate list of paths to pandas dataframe pickles
         collect_pd_list_net_csv_node = pe.Node(niu.Function(input_names=['net_mets_csv'],
                                                             output_names=['net_mets_csv_out'],
-                                                            function=CollectPandasJoin),
+                                                            function=collectpandasjoin),
                                                name="AggregatePandasCSVs",
                                                imports=import_list)
 
