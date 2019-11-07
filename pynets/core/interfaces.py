@@ -21,7 +21,7 @@ class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
     roi = traits.Any(mandatory=False)
     prune = traits.Any(mandatory=False)
     norm = traits.Any(mandatory=False)
-    binary = traits.Any(mandatory=False)
+    binary = traits.Bool(False, usedefault=True)
 
 
 class ExtractNetStatsOutputSpec(TraitedSpec):
@@ -64,9 +64,9 @@ class CombinePandasDfsInputSpec(BaseInterfaceInputSpec):
     ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=True)
     net_mets_csv_list = traits.List(mandatory=True)
-    plot_switch = traits.Any(mandatory=True)
+    plot_switch = traits.Bool(False, usedefault=True)
     multi_nets = traits.Any(mandatory=True)
-    multimodal = traits.Any(mandatory=True)
+    multimodal = traits.Bool(False, usedefault=True)
 
 
 class CombinePandasDfsOutputSpec(TraitedSpec):
@@ -84,7 +84,7 @@ class CombinePandasDfs(SimpleInterface):
     output_spec = CombinePandasDfsOutputSpec
 
     def _run_interface(self, runtime):
-        from pynets.utils import collect_pandas_df
+        from pynets.core.utils import collect_pandas_df
         combination_complete = collect_pandas_df(
             self.inputs.network,
             self.inputs.ID,

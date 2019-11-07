@@ -1313,7 +1313,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     """
     import os.path as op
     import yaml
-    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, graph_number_of_cliques, transitivity, betweenness_centrality, eigenvector_centrality, communicability_betweenness_centrality, rich_club_coefficient
+    import random
+    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, graph_number_of_cliques, transitivity
     from pynets.stats.netstats import average_local_efficiency, global_efficiency, smallworldness_measure, smallworldness, create_random_graph
     try:
         import cPickle as pickle
@@ -1377,6 +1378,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
             net_met_val_list_final, metric_list_names, ci = get_community(G, net_met_val_list_final, metric_list_names)
         except:
             print('Louvain modularity calculation is undefined for graph G')
+            np.save("%s%s%s" % ('/tmp/community_failure', random.randint(1, 400), '.npy'),
+                    np.array(nx.to_numpy_matrix(G)))
             pass
 
     # Participation Coefficient by louvain community
@@ -1389,6 +1392,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                           net_met_val_list_final)
         except:
             print('Participation coefficient cannot be calculated for graph G')
+            np.save("%s%s%s" % ('/tmp/partic_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
             pass
 
     # Diversity Coefficient by louvain community
@@ -1401,6 +1405,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                       net_met_val_list_final)
         except:
             print('Diversity coefficient cannot be calculated for graph G')
+            np.save("%s%s%s" % ('/tmp/div_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
             pass
 
     # Local Efficiency
@@ -1410,6 +1415,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                              net_met_val_list_final)
         except:
             print('Local efficiency cannot be calculated for graph G')
+            np.save("%s%s%s" % ('/tmp/local_eff_failure', random.randint(1, 400), '.npy'),
+                    np.array(nx.to_numpy_matrix(G)))
             pass
 
     # Local Clustering
@@ -1418,6 +1425,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
             metric_list_names, net_met_val_list_final = get_clustering(G, metric_list_names, net_met_val_list_final)
         except:
             print('Local clustering cannot be calculated for graph G')
+            np.save("%s%s%s" % ('/tmp/local_clust_failure', random.randint(1, 400), '.npy'),
+                    np.array(nx.to_numpy_matrix(G)))
             pass
 
     # Degree centrality
@@ -1427,6 +1436,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                               net_met_val_list_final)
         except:
             print('Degree centrality cannot be calculated for graph G')
+            np.save("%s%s%s" % ('/tmp/degree_cent_failure', random.randint(1, 400), '.npy'),
+                    np.array(nx.to_numpy_matrix(G)))
             pass
 
     # Betweenness Centrality
@@ -1436,6 +1447,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                                    net_met_val_list_final)
         except:
             print('Betweenness centrality cannot be calculated for graph G')
+            np.save("%s%s%s" % ('/tmp/betw_cent_failure', random.randint(1, 400), '.npy'),
+                    np.array(nx.to_numpy_matrix(G_len)))
             pass
 
     # Eigenvector Centrality
@@ -1445,6 +1458,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                              net_met_val_list_final)
         except:
             print('Eigenvector centrality cannot be calculated for graph G')
+            np.save("%s%s%s" % ('/tmp/eig_cent_failure', random.randint(1, 400), '.npy'),
+                    np.array(nx.to_numpy_matrix(G)))
             pass
 
     # Communicability Centrality
@@ -1454,6 +1469,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                             net_met_val_list_final)
         except:
             print('Communicability centrality cannot be calculated for graph G')
+            np.save("%s%s%s" % ('/tmp/comm_cent_failure', random.randint(1, 400), '.npy'),
+                    np.array(nx.to_numpy_matrix(G)))
             pass
 
     # Rich club coefficient
@@ -1463,6 +1480,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                                                                             net_met_val_list_final)
         except:
             print('Rich club coefficient cannot be calculated for graph G')
+            np.save("%s%s%s" % ('/tmp/rich_club_failure', random.randint(1, 400), '.npy'),
+                    np.array(nx.to_numpy_matrix(G)))
             pass
 
     out_path_neat = save_netmets(dir_path, est_path, metric_list_names, net_met_val_list_final)
