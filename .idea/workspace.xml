@@ -9,9 +9,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.coveragerc" beforeDir="false" afterPath="$PROJECT_DIR$/.coveragerc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/stats/netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/stats/netstats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/stats/nodal_graph_measures.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/stats/nodal_graph_measures.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_netstats.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -123,7 +121,7 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="581">
@@ -131,6 +129,30 @@
               <folding>
                 <element signature="e#132#163#0" expanded="true" />
                 <marker date="1573167385764" expanded="true" signature="49326:49473" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tests/test_nodemaker.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="837">
+              <caret line="485" selection-start-line="485" selection-end-line="487" selection-end-column="7" />
+              <folding>
+                <element signature="e#131#149#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="536">
+              <caret line="188" column="52" lean-forward="true" selection-start-line="188" selection-start-column="52" selection-end-line="188" selection-end-column="52" />
+              <folding>
+                <element signature="e#131#149#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -248,7 +270,6 @@
         <option value="$PROJECT_DIR$/pynets/__init__.py" />
         <option value="$PROJECT_DIR$/docs/usage.rst" />
         <option value="$PROJECT_DIR$/pynets/registration/reg_utils.py" />
-        <option value="$PROJECT_DIR$/tests/test_netstats.py" />
         <option value="$PROJECT_DIR$/tests/test_utils.py" />
         <option value="$PROJECT_DIR$/tests/test_estimation.py" />
         <option value="$PROJECT_DIR$/tests/test_track.py" />
@@ -269,10 +290,11 @@
         <option value="$PROJECT_DIR$/pynets/stats/nodal_graph_measures.yaml" />
         <option value="$PROJECT_DIR$/pynets/stats/global_graph_measures.yaml" />
         <option value="$PROJECT_DIR$/pynets/stats/netstats.py" />
+        <option value="$PROJECT_DIR$/tests/test_netstats.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds">
+  <component name="ProjectFrameBounds" extendedState="1">
     <option name="x" value="423" />
     <option name="y" value="54" />
     <option name="width" value="1209" />
@@ -302,8 +324,7 @@
             <path>
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
-              <item name="pynets" type="462c0819:PsiDirectoryNode" />
-              <item name="stats" type="462c0819:PsiDirectoryNode" />
+              <item name="tests" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -584,12 +605,12 @@
       <workItem from="1570756648107" duration="16977000" />
       <workItem from="1570862811437" duration="19368000" />
       <workItem from="1571008770262" duration="59711000" />
-      <workItem from="1572530562519" duration="38007000" />
+      <workItem from="1572530562519" duration="38271000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1333014000" />
+    <option name="totallyTimeSpent" value="1333278000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -824,16 +845,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_nodemaker.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="7275">
-          <caret line="485" selection-start-line="485" selection-end-line="487" selection-end-column="7" />
-          <folding>
-            <element signature="e#131#149#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_clustering.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="386">
@@ -915,13 +926,6 @@
           <folding>
             <element signature="e#131#149#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="8" column="18" lean-forward="true" selection-start-line="8" selection-start-column="18" selection-end-line="8" selection-end-column="18" />
         </state>
       </provider>
     </entry>
@@ -1097,6 +1101,26 @@
           <folding>
             <element signature="e#132#163#0" expanded="true" />
             <marker date="1573167385764" expanded="true" signature="49326:49473" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_nodemaker.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="837">
+          <caret line="485" selection-start-line="485" selection-end-line="487" selection-end-column="7" />
+          <folding>
+            <element signature="e#131#149#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="536">
+          <caret line="188" column="52" lean-forward="true" selection-start-line="188" selection-start-column="52" selection-end-line="188" selection-end-column="52" />
+          <folding>
+            <element signature="e#131#149#0" expanded="true" />
           </folding>
         </state>
       </provider>

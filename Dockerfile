@@ -100,6 +100,7 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && git clone -b master https://github.com/dPys/nilearn.git /home/neuro/nilearn && \
     cd /home/neuro/nilearn && \
     python setup.py install \
+    && pip install python-dateutil==2.8.0 \
     && sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     # Precaching fonts, set 'Agg' as default backend for matplotlib

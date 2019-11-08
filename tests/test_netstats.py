@@ -191,12 +191,11 @@ def test_raw_mets():
     in_mat = np.load(est_path)
     G = nx.from_numpy_array(in_mat)
     [G, _] = netstats.prune_disconnected(G)
-    custom_weight = None
     metric_list_glob = [global_efficiency, average_local_efficiency, degree_assortativity_coefficient,
                         average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient,
                         graph_number_of_cliques, transitivity]
     for i in metric_list_glob:
-        net_met_val = netstats.raw_mets(G, i, custom_weight)
+        net_met_val = netstats.raw_mets(G, i)
         print(i)
         print(net_met_val)
         assert net_met_val is not np.nan
