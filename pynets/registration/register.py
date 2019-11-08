@@ -287,16 +287,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     fa_img.uncache()
     atlas_img.uncache()
 
-    del tractogram
-    del streamlines
-    del warped_uatlas_img_res_data
-    del uatlas_mni_data
-    del overlap_mask
-    del stf
-    del streams_final_filt_final
-    del streams_final_filt
-    del streams_in_curr_grid
-    del brain_mask
+    del tractogram, streamlines, warped_uatlas_img_res_data, uatlas_mni_data, overlap_mask, stf, streams_final_filt_final, streams_final_filt, streams_in_curr_grid, brain_mask
 
     return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget, warped_fa
 

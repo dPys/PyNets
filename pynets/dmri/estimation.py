@@ -45,13 +45,14 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
 
     print('Generating simple tensor FA image to use for registrations...')
     nodif_B0_img = nib.load(B0_mask)
-    nodif_B0_affine = nodif_B0_img.affine
     model = TensorModel(gtab)
     mod = model.fit(data, nodif_B0_img.get_fdata().astype('bool'))
     FA = fractional_anisotropy(mod.evals)
     FA[np.isnan(FA)] = 0
     fa_path = "%s%s" % (os.path.dirname(B0_mask), '/tensor_fa.nii.gz')
-    nib.save(nib.Nifti1Image(FA.astype(np.float32), nodif_B0_affine), fa_path)
+    nib.save(nib.Nifti1Image(FA.astype(np.float32), nodif_B0_img.affine), fa_path)
+    nodif_B0_img.uncache()
+    del FA
     return fa_path, B0_mask, gtab_file, dwi_file
 
 
@@ -77,6 +78,7 @@ def csa_mod_est(gtab, data, B0_mask):
     print('Fitting CSA model...')
     model = CsaOdfModel(gtab, sh_order=6)
     csa_mod = model.fit(data, nib.load(B0_mask).get_fdata().astype('bool')).shm_coeff
+    del model
     return csa_mod
 
 
@@ -107,6 +109,7 @@ def csd_mod_est(gtab, data, B0_mask):
     print('CSD Reponse: ' + str(response))
     model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=6)
     csd_mod = model.fit(data, B0_mask_data).shm_coeff
+    del model, response, B0_mask_data
     return csd_mod
 
 

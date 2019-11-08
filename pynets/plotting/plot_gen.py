@@ -88,40 +88,9 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
     #     return label_arr, clust_levels_tmp
 
     if comm == 'nodes' and len(conn_matrix) > 40:
-        import community
+        from pynets.stats.netstats import community_resolution_selection
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
-        resolution = 1
-        node_comm_aff_mat = np.array(list(community.best_partition(G, resolution=resolution).values()))
-        num_comms = len(np.unique(node_comm_aff_mat))
-        if num_comms == 1:
-            resolution = 10
-            tries = 0
-            while num_comms == 1:
-                node_comm_aff_mat = np.array(list(community.best_partition(G, resolution=resolution).values()))
-                num_comms = len(np.unique(node_comm_aff_mat))
-                print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
-                resolution = resolution + 10
-                tries = tries + 1
-                if tries > 100:
-                    print('\nWARNING: Louvain community detection failed. Proceeding with single community affiliation '
-                          'vector...')
-                    break
-        elif num_comms > len(G.edges())/10:
-            resolution = 0.1
-            tries = 0
-            while num_comms == 1:
-                node_comm_aff_mat = np.array(list(community.best_partition(G, resolution=resolution).values()))
-                num_comms = len(np.unique(node_comm_aff_mat))
-                print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
-                resolution = resolution / 10
-                tries = tries + 1
-                if tries > 100:
-                    print('\nWARNING: Louvain community detection failed. Proceeding with single community affiliation '
-                          'vector...')
-                    break
-        else:
-            print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
-        node_comm_aff_mat = np.ones(conn_matrix.shape[0]).astype('int')
+        _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(G)
         clust_levels = len(node_comm_aff_mat)
         clust_levels_tmp = int(clust_levels) - 1
         mask_mat = np.squeeze(np.array([node_comm_aff_mat == 0]).astype('int'))

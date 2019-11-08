@@ -154,7 +154,6 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
     """
     import networkx as nx
     import os.path as op
-    import community
     from pynets.plotting import plot_graphs
 
     out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
@@ -170,38 +169,9 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
 
     # Plot community adj. matrix
     try:
+        from pynets.stats.netstats import community_resolution_selection
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
-        resolution = 1
-        node_comm_aff_mat = np.array(list(community.best_partition(G, resolution=resolution).values()))
-        num_comms = len(np.unique(node_comm_aff_mat))
-        if num_comms == 1:
-            resolution = 10
-            tries = 0
-            while num_comms == 1:
-                node_comm_aff_mat = np.array(list(community.best_partition(G, resolution=resolution).values()))
-                num_comms = len(np.unique(node_comm_aff_mat))
-                print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
-                resolution = resolution + 10
-                tries = tries + 1
-                if tries > 100:
-                    print('\nWARNING: Louvain community detection failed. Proceeding with single community affiliation '
-                          'vector...')
-                    break
-        elif num_comms > len(G.edges())/10:
-            resolution = 0.1
-            tries = 0
-            while num_comms == 1:
-                node_comm_aff_mat = np.array(list(community.best_partition(G, resolution=resolution).values()))
-                num_comms = len(np.unique(node_comm_aff_mat))
-                print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
-                resolution = resolution / 10
-                tries = tries + 1
-                if tries > 100:
-                    print('\nWARNING: Louvain community detection failed. Proceeding with single community affiliation '
-                          'vector...')
-                    break
-        else:
-            print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
+        _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(G)
         out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
                                                                     '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
                                                                     '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
@@ -257,7 +227,6 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, 
     """
     from pynets.plotting import plot_graphs
     import networkx as nx
-    import community
     import os.path as op
     out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
                                                              '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
@@ -272,38 +241,9 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, 
 
     # Plot community adj. matrix
     try:
+        from pynets.stats.netstats import community_resolution_selection
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
-        resolution = 1
-        node_comm_aff_mat = np.array(list(community.best_partition(G, resolution=resolution).values()))
-        num_comms = len(np.unique(node_comm_aff_mat))
-        if num_comms == 1:
-            resolution = 10
-            tries = 0
-            while num_comms == 1:
-                node_comm_aff_mat = np.array(list(community.best_partition(G, resolution=resolution).values()))
-                num_comms = len(np.unique(node_comm_aff_mat))
-                print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
-                resolution = resolution + 10
-                tries = tries + 1
-                if tries > 100:
-                    print('\nWARNING: Louvain community detection failed. Proceeding with single community affiliation '
-                          'vector...')
-                    break
-        elif num_comms > len(G.edges())/10:
-            resolution = 0.1
-            tries = 0
-            while num_comms == 1:
-                node_comm_aff_mat = np.array(list(community.best_partition(G, resolution=resolution).values()))
-                num_comms = len(np.unique(node_comm_aff_mat))
-                print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
-                resolution = resolution / 10
-                tries = tries + 1
-                if tries > 100:
-                    print('\nWARNING: Louvain community detection failed. Proceeding with single community affiliation '
-                          'vector...')
-                    break
-        else:
-            print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
+        _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(G)
         out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
                                                                       '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
                                                                       '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
