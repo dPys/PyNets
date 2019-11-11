@@ -117,7 +117,8 @@ RUN chown -R neuro /opt \
     && chmod a+s -R /opt \
     && chmod 775 -R /opt/conda/lib/python3.6/site-packages \
     && chmod 777 /opt/conda/bin/pynets \
-    && find /opt -type f -iname "*.py" -o "*.yaml" -exec chmod 777 {} \; \
+    && find /opt -type f -iname "*.py" -exec chmod 777 {} \; \
+    && find /opt -type f -iname "*.yaml" -exec chmod 777 {} \; \
     && apt-get purge -y --auto-remove \
 	git \
 	gcc \

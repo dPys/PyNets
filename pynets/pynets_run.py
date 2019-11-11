@@ -305,7 +305,7 @@ def get_parser():
                         metavar='Normalization strategy for resulting graph(s)',
                         default=0,
                         nargs=1,
-                        choices=[0, 1, 2, 3, 4, 5, 6],
+                        choices=['0', '1', '2', '3', '4', '5', '6'],
                         help='Include this flag to normalize the resulting graph by (1) maximum edge weight; '
                              '(2) using log10; (3) using pass-to-ranks for all non-zero edges; '
                              '(4) using pass-to-ranks for all non-zero edges relative to the number of nodes; (5) '
@@ -332,7 +332,7 @@ def get_parser():
                                 'connectomes are provided.',
                         default=0,
                         nargs=1,
-                        choices=[0, 1, 2, 3],
+                        choices=['0', '1', '2', '3'],
                         help='Include this flag to perform multiplex graph analysis across structural-functional '
                              'connectome modalities. Options include level (1) Create and ensemble of multiplex graphs '
                              'using motif-matched adaptive thresholding; (2) Additionally perform multiplex graph '

@@ -276,7 +276,6 @@ def smallworldness(G, niter=10, nrand=100):
     # for an equivalent random graph
     randMetrics = {"C": [], "L": []}
     for i in range(nrand):
-        print('SW random iteration: ', i)
         Gr = random_reference(G, niter=niter, seed=i)
         Gl = lattice_reference(G, niter=niter, seed=i)
         randMetrics["C"].append(weighted_transitivity(Gl))
@@ -764,7 +763,7 @@ def most_important(G):
     return Gt, pruned_nodes
 
 
-@timeout(720)
+@timeout(1200)
 def raw_mets(G, i):
     """
     API that iterates across NetworkX algorithms for a graph G.
