@@ -70,23 +70,23 @@ def test_save_ts_to_file():
     assert os.path.isfile(out_path_ts) is True
 
 
-def test_build_embedded_connectome():
-    """
-    Test build_embedded_connectome functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/dmri'
-    ID = '002'
-    multimodal = False
-    types = ['omni', 'mase']
-    est_path_iterlist = [dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track.npy',
-                         dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.08dens_100000samples_particle_track.npy',
-                         dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.07dens_100000samples_particle_track.npy',
-                         dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.06dens_100000samples_particle_track.npy',
-                         dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.05dens_100000samples_particle_track.npy']
-    for type in types:
-        out_path = utils.build_embedded_connectome(est_path_iterlist, ID, multimodal, type)
-        assert out_path is not None
+# def test_build_embedded_connectome():
+#     """
+#     Test build_embedded_connectome functionality
+#     """
+#     base_dir = str(Path(__file__).parent/"examples")
+#     dir_path = base_dir + '/002/dmri'
+#     ID = '002'
+#     multimodal = False
+#     types = ['omni', 'mase']
+#     est_path_iterlist = [dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track.npy',
+#                          dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.08dens_100000samples_particle_track.npy',
+#                          dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.07dens_100000samples_particle_track.npy',
+#                          dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.06dens_100000samples_particle_track.npy',
+#                          dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.05dens_100000samples_particle_track.npy']
+#     for type in types:
+#         out_path = utils.build_embedded_connectome(est_path_iterlist, ID, multimodal, type)
+#         assert out_path is not None
 
 
 def test_check_est_path_existence():
