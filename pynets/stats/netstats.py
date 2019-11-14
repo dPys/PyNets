@@ -1547,7 +1547,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
         raise UserWarning('Warning! Number of actual models produced less than expected. Some graphs were excluded')
 
     net_mets_csv_list = net_mets_csv_list_exist
-    subject_path = op.dirname(op.dirname(net_mets_csv_list[0]))
+    subject_path = op.dirname(op.dirname(op.dirname(net_mets_csv_list[0])))
 
     if len(net_mets_csv_list) > 1:
         print("%s%s%s" % ('\n\nList of result files to concatenate:\n', str(net_mets_csv_list), '\n\n'))
@@ -1571,7 +1571,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
             meta[thr_set]['dataframes'] = dict()
             for i in models_grouped[thr_set]:
                 thr = non_decimal.sub('', i.split('thr-')[1].split('_')[0])
-                _file = op.dirname(subject_path) + '/' + i
+                _file = subject_path + '/' + i
                 df = pd.read_csv(_file)
                 if nc_collect is False:
                     node_cols = [s for s in list(df.columns) if isinstance(s, int) or any(c.isdigit() for c in s)]
@@ -1579,10 +1579,6 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                 meta[thr_set]['dataframes'][thr] = df
 
         # For each unique threshold set, for each graph measure, extract AUC
-        auc_dir = subject_path + '/netmetrics/auc/'
-        if not os.path.isdir(auc_dir):
-            os.makedirs(auc_dir, exist_ok=True)
-
         for thr_set in meta.keys():
             df_summary = pd.concat(meta[thr_set]['dataframes'].values())
             df_summary['thr'] = meta[thr_set]['dataframes'].keys()
@@ -1596,8 +1592,11 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                 df_summary_nonan = df_summary[pd.notnull(df_summary[measure])]
                 df_summary_auc[measure] = np.trapz(np.array(df_summary_nonan[measure]).astype('float64'),
                                                    np.array(df_summary_nonan['thr']).astype('float64'))
-                print("%s%s%s" % (measure, ': ', df_summary_auc[measure].to_string(index=False, justify='center')))
+                print("%s%s%s" % (measure, ': ', df_summary_auc[measure].to_string(index=False)))
             meta[thr_set]['auc_dataframe'] = df_summary_auc
+            auc_dir = subject_path + '/' + models_grouped[thr_set][0].split('/')[0] + '/netmetrics/auc/'
+            if not os.path.isdir(auc_dir):
+                os.makedirs(auc_dir, exist_ok=True)
             auc_outfile = auc_dir + list(set([re.sub(r'thr\-\d+\.*\d+', '',
                                                      i.split('/netmetrics/')[1]).replace('neat', 'auc') for i in
                                               models_grouped[thr_set]]))[0]
@@ -1606,7 +1605,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
 
         if create_summary is True:
             try:
-                summary_dir = subject_path + '/netmetrics/summary/'
+                summary_dir = subject_path + '/summary'
                 if not os.path.isdir(summary_dir):
                     os.makedirs(summary_dir, exist_ok=True)
 
