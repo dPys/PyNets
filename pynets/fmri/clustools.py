@@ -477,7 +477,7 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
     return region_labels
 
 
-def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, local_corr='tcorr'):
+def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, vox_size, local_corr='tcorr'):
     """
     Meta-API for performing any of several types of fMRI clustering based on NiLearn Parcellations and tcorr/scorr
     spatial constraints.
@@ -497,6 +497,8 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, local_
         Numbers of clusters that will be generated.
     clust_type : str
         Type of clustering to be performed (e.g. 'ward', 'kmeans', 'complete', 'average').
+    vox_size : str
+        Voxel size in mm. (e.g. 2mm).
     local_corr : str
         Type of local connectivity to use as the basis for clustering methods. Options are tcorr or scorr.
         Default is tcorr.
@@ -521,18 +523,19 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, local_
     import gc
     from pynets.core import utils
     from pynets.fmri import clustools
+    from pynets.registration.reg_utils import check_orient_and_dims
 
     nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
     mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
     atlas = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
-    print("%s%s%s%s%s%s%s" % ('\nCreating atlas using ', clust_type, ' at cluster level ', str(k),
-                              ' for ', str(atlas), '...\n'))
+    print("%s%s%s%s%s%s%s" % ('\nCreating atlas using ', clust_type, ' at cluster level ', str(k), ' for ', str(atlas),
+                              '...\n'))
     dir_path = utils.do_dir_path(atlas, func_file)
     uatlas = "%s%s%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
 
     # Ensure mask does not inclue voxels outside of the brain
-    mask_img = nib.load(clust_mask)
+    mask_img = nib.load(check_orient_and_dims(clust_mask, vox_size))
     mask_data = np.asarray(mask_img.dataobj).astype('bool').astype('int')
     mask_data[~np.asarray(nib.load(func_file).dataobj)[:, :, :, 0].astype('bool')] = 0
     clust_mask_corr = "%s%s%s%s" % (dir_path, '/', mask_name, '.nii.gz')

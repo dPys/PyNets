@@ -261,6 +261,46 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
     return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass
 
 
+def timeseries_bootstrap(tseries, block_size):
+    """
+    Generates a bootstrap sample derived from the input time-series.
+    Utilizes Circular-block-bootstrap method described in [1]_.
+
+    Parameters
+    ----------
+    tseries : array_like
+        A matrix of shapes (`M`, `N`) with `M` timepoints and `N` variables
+    block_size : integer
+        Size of the bootstrapped blocks
+
+    Returns
+    -------
+    bseries : array_like
+        Bootstrap sample of the input timeseries
+
+    References
+    ----------
+    .. [1] P. Bellec; G. Marrelec; H. Benali, A bootstrap test to investigate
+       changes in brain connectivity for functional MRI. Statistica Sinica,
+       special issue on Statistical Challenges and Advances in Brain Science,
+       2008, 18: 1253-1268.
+    """
+    np.random.seed(int(42))
+
+    # calculate number of blocks
+    k = int(np.ceil(float(tseries.shape[0]) / block_size))
+
+    # generate random indices of blocks
+    r_ind = np.floor(np.random.rand(1, k) * tseries.shape[0])
+    blocks = np.dot(np.arange(0, block_size)[:, np.newaxis], np.ones([1, k]))
+
+    block_offsets = np.dot(np.ones([block_size, 1]), r_ind)
+    block_mask = (blocks + block_offsets).flatten('F')[:tseries.shape[0]]
+    block_mask = np.mod(block_mask, tseries.shape[0])
+
+    return tseries[block_mask.astype('int'), :], block_mask.astype('int')
+
+
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas,
                     uatlas, labels, c_boot, block_size, hpass, mask):
     """
@@ -331,6 +371,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     import nibabel as nib
     from nilearn import input_data
     from pynets.core import utils
+    from pynets.fmri.estimation import timeseries_bootstrap
     import numbers
 
     if not op.isfile(func_file):
@@ -396,7 +437,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
 
     if float(c_boot) > 0:
         print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))
-        ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
+        ts_within_nodes = timeseries_bootstrap(ts_within_nodes, block_size)[0]
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
                         len(coords), ' volumetric ROI\'s'))
     if smooth:
@@ -492,6 +533,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     import os.path as op
     import nibabel as nib
     from nilearn import input_data
+    from pynets.fmri.estimation import timeseries_bootstrap
     from pynets.core import utils
     import numbers
 
@@ -557,7 +599,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
 
         if float(c_boot) > 0:
             print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))
-            ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
+            ts_within_nodes = timeseries_bootstrap(ts_within_nodes, block_size)[0]
         if ts_within_nodes is None:
             raise RuntimeError('\nERROR: Time-series extraction failed!')
 

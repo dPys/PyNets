@@ -1781,8 +1781,8 @@ def build_workflow(args, retval):
             func_dir = os.path.dirname(func_file)
         if dwi_file:
             dwi_dir = os.path.dirname(dwi_file)
-        os.makedirs("%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname), exist_ok=True)
-        wf.base_dir = "%s%s%s%s%s" % (work_dir, '/', run_uuid, '_', base_dirname)
+        os.makedirs("%s%s%s%s%s%s%s" % (work_dir, '/', ID, '_', run_uuid, '_', base_dirname), exist_ok=True)
+        wf.base_dir = "%s%s%s%s%s%s%s" % (work_dir, '/', ID, '_', run_uuid, '_', base_dirname)
 
         if verbose is True:
             from nipype import config, logging

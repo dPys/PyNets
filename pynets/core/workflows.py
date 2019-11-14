@@ -1740,17 +1740,14 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
     # Clustering
     if float(k_clustering) > 0:
-        clustering_node = pe.Node(niu.Function(input_names=['func_file', 'conf', 'clust_mask', 'ID', 'k', 'clust_type'],
+        clustering_info_node = pe.Node(niu.IdentityInterface(fields=['clust_mask', 'clust_type', 'k']),
+                                       name="clustering_info_node")
+        clustering_node = pe.Node(niu.Function(input_names=['func_file', 'conf', 'clust_mask', 'ID', 'k',
+                                                            'clust_type', 'vox_size'],
                                                output_names=['uatlas', 'atlas', 'clustering',
                                                              'clust_mask', 'k', 'clust_type'],
                                                function=clustools.individual_clustering,
                                                imports=import_list), name="clustering_node")
-
-        check_orient_and_dims_clust_mask_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'],
-                                                                     output_names=['outfile'],
-                                                                     function=regutils.check_orient_and_dims,
-                                                                     imports=import_list),
-                                                        name="check_orient_and_dims_clust_mask_node")
 
         # Don't forget that this setting exists
         clustering_node.synchronize = True
@@ -1769,9 +1766,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         elif k_clustering == 2:
             k_cluster_iterables = []
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
-            k_cluster_iterables.append(("k", k_list[1:]))
-            clustering_node.iterables = k_cluster_iterables
-            clustering_node.inputs.k = k_list[0]
+            k_cluster_iterables.append(("k", k_list))
+            clustering_info_node.iterables = k_cluster_iterables
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for k in k_list:
@@ -1787,8 +1783,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                 user_atlas_list = cluster_atlas_file_list + [uatlas]
             else:
                 user_atlas_list = cluster_atlas_file_list
+            clustering_info_node.inputs.clust_type = clust_type
+            clustering_info_node.inputs.clust_mask = clust_mask
         elif k_clustering == 3:
-            check_orient_and_dims_clust_mask_node.iterables = [("infile", clust_mask_list)]
+            clustering_info_node.iterables = [("clust_mask", clust_mask_list)]
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for clust_mask in clust_mask_list:
@@ -1804,15 +1802,14 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                 user_atlas_list = cluster_atlas_file_list + [uatlas]
             else:
                 user_atlas_list = cluster_atlas_file_list
+            clustering_info_node.inputs.clust_type = clust_type
+            clustering_info_node.inputs.k = k
         elif k_clustering == 4:
             k_cluster_iterables = []
-            clust_mask_iterables = []
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
-            k_cluster_iterables.append(("k", k_list[1:]))
-            clust_mask_iterables.append(("infile", clust_mask_list))
-            clustering_node.iterables = k_cluster_iterables
-            clustering_node.inputs.k = k_list[0]
-            check_orient_and_dims_clust_mask_node.iterables = clust_mask_iterables
+            k_cluster_iterables.append(("k", k_list))
+            k_cluster_iterables.append(("clust_mask", clust_mask_list))
+            clustering_info_node.iterables = k_cluster_iterables
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for clust_mask in clust_mask_list:
@@ -1829,8 +1826,9 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                 user_atlas_list = cluster_atlas_file_list + [uatlas]
             else:
                 user_atlas_list = cluster_atlas_file_list
+            clustering_info_node.inputs.clust_type = clust_type
         elif k_clustering == 5:
-            clustering_node.iterables = [("clust_type", clust_type_list)]
+            clustering_info_node.iterables = [("clust_type", clust_type_list)]
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
@@ -1846,13 +1844,14 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                 user_atlas_list = cluster_atlas_file_list + [uatlas]
             else:
                 user_atlas_list = cluster_atlas_file_list
+            clustering_info_node.inputs.clust_mask = clust_mask
+            clustering_info_node.inputs.k = k
         elif k_clustering == 6:
             k_cluster_iterables = []
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
-            k_cluster_iterables.append(("k", k_list[1:]))
+            k_cluster_iterables.append(("k", k_list))
             k_cluster_iterables.append(("clust_type", clust_type_list))
-            clustering_node.iterables = k_cluster_iterables
-            clustering_node.inputs.k = k_list[0]
+            clustering_info_node.iterables = k_cluster_iterables
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
@@ -1869,9 +1868,9 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                 user_atlas_list = cluster_atlas_file_list + [uatlas]
             else:
                 user_atlas_list = cluster_atlas_file_list
+            clustering_info_node.inputs.clust_mask = clust_mask
         elif k_clustering == 7:
-            clustering_node.iterables = [("clust_type", clust_type_list)]
-            check_orient_and_dims_clust_mask_node.iterables = [("infile", clust_mask_list)]
+            clustering_info_node.iterables = [("clust_type", clust_type_list), ("clust_mask", clust_mask_list)]
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
@@ -1889,16 +1888,14 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                 user_atlas_list = cluster_atlas_file_list + [uatlas]
             else:
                 user_atlas_list = cluster_atlas_file_list
+            clustering_info_node.inputs.k = k
         elif k_clustering == 8:
             k_cluster_iterables = []
-            clust_mask_iterables = []
             k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
-            k_cluster_iterables.append(("k", k_list[1:]))
-            clust_mask_iterables.append(("infile", clust_mask_list))
+            k_cluster_iterables.append(("k", k_list))
+            k_cluster_iterables.append(("clust_mask", clust_mask_list))
             k_cluster_iterables.append(("clust_type", clust_type_list))
-            clustering_node.iterables = k_cluster_iterables
-            clustering_node.inputs.k = k_list[0]
-            check_orient_and_dims_clust_mask_node.iterables = clust_mask_iterables
+            clustering_info_node.iterables = k_cluster_iterables
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
@@ -1930,48 +1927,23 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
     # Connect clustering solutions to node definition Node
     if float(k_clustering) > 0:
-        fmri_connectometry_wf.add_nodes([clustering_node])
         fmri_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('conf', 'conf')]),
                                        (check_orient_and_dims_func_node, clustering_node,
                                         [('outfile', 'func_file')]),
-                                       (check_orient_and_dims_clust_mask_node, clustering_node,
-                                        [('outfile', 'clust_mask')]),
-                                       (inputnode, check_orient_and_dims_clust_mask_node,
+                                       (inputnode, clustering_node,
                                         [('vox_size', 'vox_size')]),
                                        (clustering_node, fetch_nodes_and_labels_node,
                                         [('uatlas', 'uatlas'),
                                          ('atlas', 'atlas'),
                                          ('clustering', 'clustering')])
                                        ])
-
-        if k_clustering == 1:
-            fmri_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k'), ('clust_type', 'clust_type')]),
-                                           (inputnode, check_orient_and_dims_clust_mask_node,
-                                            [('clust_mask', 'infile')])
+        if float(k_clustering) > 1:
+            fmri_connectometry_wf.connect([(clustering_info_node, clustering_node,
+                                            [('clust_mask', 'clust_mask'), ('clust_type', 'clust_type'), ('k', 'k')]),
                                            ])
-        elif k_clustering == 2:
-            fmri_connectometry_wf.connect([(inputnode, clustering_node, [('clust_type', 'clust_type')]),
-                                           (inputnode, check_orient_and_dims_clust_mask_node,
-                                            [('clust_mask', 'infile')])
-                                           ])
-        elif k_clustering == 3:
-            fmri_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k'),
-                                                                         ('clust_type', 'clust_type')])
-                                           ])
-        elif k_clustering == 4:
-            fmri_connectometry_wf.connect([(inputnode, clustering_node, [('clust_type', 'clust_type')])
-                                           ])
-        elif k_clustering == 5:
-            fmri_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k')]),
-                                           (inputnode, check_orient_and_dims_clust_mask_node,
-                                            [('clust_mask', 'infile')])
-                                           ])
-        elif k_clustering == 6:
-            fmri_connectometry_wf.connect([(inputnode, check_orient_and_dims_clust_mask_node,
-                                            [('clust_mask', 'infile')])
-                                           ])
-        elif k_clustering == 7:
-            fmri_connectometry_wf.connect([(inputnode, clustering_node, [('k', 'k')])
+        else:
+            fmri_connectometry_wf.connect([(inputnode, clustering_node,
+                                            [('clust_mask', 'clust_mask'), ('clust_type', 'clust_type'), ('k', 'k')]),
                                            ])
     else:
         # Connect atlas input vars to node definition Node
@@ -2052,8 +2024,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                 clust_join_node = pe.JoinNode(niu.IdentityInterface(fields=['clustering', 'k', 'clust_mask',
                                                                             'clust_type']),
                                               name='clust_join_node',
-                                              joinsource=clustering_node,
-                                              joinfield=['clustering', 'k', 'clust_mask', 'clust_type'])
+                                              joinsource=clustering_info_node,
+                                              joinfield=['k', 'clust_mask', 'clust_type'])
                 fmri_connectometry_wf.connect([(clustering_node, clust_join_node,
                                                 [('clustering', 'clustering'),
                                                  ('k', 'k'),
@@ -2247,7 +2219,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         if flexi_atlas is True:
             atlas_join_source = flexi_atlas_source
         elif float(k_clustering) > 1 and flexi_atlas is False:
-            atlas_join_source = clustering_node
+            atlas_join_source = clustering_info_node
         else:
             atlas_join_source = fetch_nodes_and_labels_node
     else:
