@@ -871,7 +871,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                              function=track.run_track,
                                              imports=import_list),
                                 name="run_tracking_node")
-    run_tracking_node.synchronize = True
+    # run_tracking_node.synchronize = True
 
     # Set reconstruction model iterables
     if conn_model_list or multi_directget:
@@ -902,7 +902,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                   'atlas_mni', 'directget', 'warped_fa'],
                                     function=register.direct_streamline_norm,
                                     imports=import_list), name="dsn_node")
-    dsn_node.synchronize = True
+    # dsn_node.synchronize = True
 
     streams2graph_node = pe.Node(niu.Function(input_names=['atlas_mni', 'streams', 'overlap_thr', 'dir_path',
                                                            'track_type', 'target_samples', 'conn_model',
@@ -917,7 +917,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                             'coords', 'norm', 'binary', 'directget'],
                                               function=estimation.streams2graph,
                                               imports=import_list), name="streams2graph_node")
-    streams2graph_node.synchronize = True
+    # streams2graph_node.synchronize = True
 
     # Set streams2graph_node iterables
     streams2graph_node_iterables = []
@@ -949,22 +949,22 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             flexi_atlas_source_iterables = [("atlas", len(user_atlas_list) * [None] + multi_atlas),
                                             ("uatlas", user_atlas_list + len(multi_atlas) * [None])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
-            flexi_atlas_source.synchronize = True
+            # flexi_atlas_source.synchronize = True
         elif multi_atlas is not None and uatlas is not None and user_atlas_list is None:
             flexi_atlas_source_iterables = [("atlas", multi_atlas + [None]),
                                             ("uatlas", len(multi_atlas) * [None] + [uatlas])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
-            flexi_atlas_source.synchronize = True
+            # flexi_atlas_source.synchronize = True
         elif atlas is not None and user_atlas_list is not None and multi_atlas is None:
             flexi_atlas_source_iterables = [("atlas", len(user_atlas_list) * [None] + [atlas]),
                                             ("uatlas", user_atlas_list + [None])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
-            flexi_atlas_source.synchronize = True
+            # flexi_atlas_source.synchronize = True
         elif atlas is not None and uatlas is not None and user_atlas_list is None and multi_atlas is None:
             flexi_atlas_source_iterables = [("atlas", [atlas, None]),
                                             ("uatlas", [None, uatlas])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
-            flexi_atlas_source.synchronize = True
+            # flexi_atlas_source.synchronize = True
 
     # Begin joinnode chaining
     # Set lists of fields and connect statements for repeated use throughout joins
@@ -1594,12 +1594,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         basedir_path = None
 
     # Create temporary file equivalents
-    if k_clustering > 0:
-        if k_clustering == 3 or k_clustering == 4 or k_clustering == 7 or k_clustering == 8:
-            clust_mask_list = [utils.create_temporary_copy(cl_mask, op.basename(cl_mask).split('.nii.gz')[0], '.nii.gz') for cl_mask in clust_mask_list]
-        else:
-            clust_mask = utils.create_temporary_copy(clust_mask, op.basename(clust_mask).split('.nii.gz')[0], '.nii.gz')
-
     if roi is not None:
         roi = utils.create_temporary_copy(roi, op.basename(roi).split('.nii.gz')[0], '.nii.gz')
 
@@ -1750,7 +1744,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                imports=import_list), name="clustering_node")
 
         # Don't forget that this setting exists
-        clustering_node.synchronize = True
+        # clustering_node.synchronize = True
         # clustering_node iterables and names
         if k_clustering == 1:
             mask_name = op.basename(clust_mask).split('.nii.gz')[0]
@@ -1977,7 +1971,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         flexi_atlas = True
         flexi_atlas_source = pe.Node(niu.IdentityInterface(fields=['atlas', 'uatlas', 'clustering']),
                                      name='flexi_atlas_source')
-        flexi_atlas_source.synchronize = True
+        # flexi_atlas_source.synchronize = True
         if multi_atlas is not None and user_atlas_list is not None:
             # print('\n\n\n\n')
             # print('Flexi-atlas: multiple nilearn atlases + multiple user atlases')
@@ -2132,7 +2126,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     else:
         fmri_connectometry_wf.connect([(inputnode, extract_ts_node, [('hpass', 'hpass')])])
 
-    extract_ts_node.synchronize = True
+    # extract_ts_node.synchronize = True
 
     # Connectivity matrix model fit
     get_conn_matrix_node = pe.Node(niu.Function(input_names=['time_series', 'conn_model', 'dir_path', 'node_size',

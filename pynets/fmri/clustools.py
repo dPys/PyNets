@@ -435,7 +435,9 @@ def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
     from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
 
     start = time.time()
+
     func_img = nib.load(func_file)
+
     clust_mask_img = nib.load(clust_mask)
 
     if local_corr == 'tcorr':
@@ -520,6 +522,7 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, vox_si
         Type of clustering to be performed (e.g. 'ward', 'kmeans', 'complete', 'average').
     """
     import os
+    import os.path as op
     import gc
     from pynets.core import utils
     from pynets.fmri import clustools
@@ -534,9 +537,14 @@ def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, vox_si
     dir_path = utils.do_dir_path(atlas, func_file)
     uatlas = "%s%s%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
 
-    # Ensure mask does not inclue voxels outside of the brain
-    mask_img = nib.load(check_orient_and_dims(clust_mask, vox_size))
+    # reorient and reslice mask
+    clust_mask = check_orient_and_dims(utils.create_temporary_copy(clust_mask,
+                                                                   op.basename(clust_mask).split('.nii.gz')[0],
+                                                                   '.nii.gz'), vox_size)
+    mask_img = nib.load(clust_mask)
     mask_data = np.asarray(mask_img.dataobj).astype('bool').astype('int')
+
+    # Ensure mask does not inclue voxels outside of the brain
     mask_data[~np.asarray(nib.load(func_file).dataobj)[:, :, :, 0].astype('bool')] = 0
     clust_mask_corr = "%s%s%s%s" % (dir_path, '/', mask_name, '.nii.gz')
     nib.save(nib.Nifti1Image(mask_data, affine=mask_img.affine, header=mask_img.header), clust_mask_corr)
