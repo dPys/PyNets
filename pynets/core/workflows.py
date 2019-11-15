@@ -19,7 +19,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                       overlap_thr_list, track_type, max_length, maxcrossing, min_length, directget,
                       tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
-                      template_mask, vox_size, multiplex, waymask, clean=True):
+                      template_mask, vox_size, multiplex, waymask, local_corr, clean=True):
     """A meta-interface for selecting nested workflows to link into a given single-subject workflow"""
     import warnings
     warnings.filterwarnings("ignore")
@@ -127,7 +127,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                    smooth_list, disp_filt, prune, multi_nets, clust_type,
                                                    clust_type_list, plugin_type, c_boot, block_size, mask,
                                                    norm, binary, anat_file, runtime_dict, hpass, hpass_list, template,
-                                                   template_mask, vox_size)
+                                                   template_mask, vox_size, local_corr)
         sub_func_wf.synchronize = True
         if dwi_file is None:
             sub_struct_wf = None
@@ -174,7 +174,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                            'maxcrossing', 'min_length', 'directget',
                                                            'tiss_class', 'embed', 'multi_directget', 'multimodal',
                                                            'hpass', 'hpass_list', 'template', 'template_mask',
-                                                           'vox_size', 'multiplex', 'waymask']),
+                                                           'vox_size', 'multiplex', 'waymask', 'local_corr']),
                              name='meta_inputnode')
     meta_inputnode.inputs.func_file = func_file
     meta_inputnode.inputs.ID = ID
@@ -251,6 +251,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     meta_inputnode.inputs.vox_size = vox_size
     meta_inputnode.inputs.multiplex = multiplex
     meta_inputnode.inputs.waymask = waymask
+    meta_inputnode.inputs.local_corr = local_corr
 
     if multimodal is True:
         # Create input/output nodes
@@ -368,7 +369,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                         ('binary', 'inputnode.binary'),
                                                         ('template', 'inputnode.template'),
                                                         ('template_mask', 'inputnode.template_mask'),
-                                                        ('vox_size', 'inputnode.vox_size')])
+                                                        ('vox_size', 'inputnode.vox_size'),
+                                                        ('local_corr', 'inputnode.local_corr')])
                          ])
 
         # Connect outputs of nested workflow to parent wf
@@ -526,7 +528,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                             ('binary', 'inputnode.binary'),
                                                             ('template', 'inputnode.template'),
                                                             ('template_mask', 'inputnode.template_mask'),
-                                                            ('vox_size', 'inputnode.vox_size')])
+                                                            ('vox_size', 'inputnode.vox_size'),
+                                                            ('local_corr', 'inputnode.local_corr')])
                              ])
 
             # Connect outputs of nested workflow to parent wf
@@ -1569,7 +1572,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                        k_clustering, user_atlas_list, clust_mask_list, node_size_list, conn_model_list,
                        min_span_tree, use_AAL_naming, smooth, smooth_list, disp_filt, prune, multi_nets,
                        clust_type, clust_type_list, plugin_type, c_boot, block_size, mask, norm, binary,
-                       anat_file, runtime_dict, hpass, hpass_list, template, template_mask, vox_size):
+                       anat_file, runtime_dict, hpass, hpass_list, template, template_mask, vox_size, local_corr):
     """A function interface for generating an fMRI nested workflow"""
     import warnings
     warnings.filterwarnings("ignore")
@@ -1609,7 +1612,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                       'disp_filt', 'prune', 'clust_type',
                                                       'c_boot', 'block_size', 'mask', 'norm', 'binary', 'template',
                                                       'template_mask', 'vox_size', 'anat_file', 'basedir_path',
-                                                      'hpass', 'hpass_list']),
+                                                      'hpass', 'hpass_list', 'local_corr']),
                         name='inputnode')
 
     inputnode.inputs.func_file = func_file
@@ -1661,6 +1664,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     inputnode.inputs.basedir_path = basedir_path
     inputnode.inputs.hpass = hpass
     inputnode.inputs.hpass_list = hpass_list
+    inputnode.inputs.local_corr = local_corr
 
     # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
@@ -1709,6 +1713,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     # print("%s%s" % ('vox_size: ', vox_size))
     # print("%s%s" % ('anat_file: ', anat_file))
     # print("%s%s" % ('basedir_path: ', basedir_path))
+    # print("%s%s" % ('local_corr: ', local_corr))
     # print('\n\n\n\n\n')
 
     # Create function nodes
@@ -1734,14 +1739,14 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
     # Clustering
     if float(k_clustering) > 0:
+        from pynets.core.interfaces import IndividualClustering
         clustering_info_node = pe.Node(niu.IdentityInterface(fields=['clust_mask', 'clust_type', 'k']),
                                        name="clustering_info_node")
-        clustering_node = pe.Node(niu.Function(input_names=['func_file', 'conf', 'clust_mask', 'ID', 'k',
-                                                            'clust_type', 'vox_size'],
-                                               output_names=['uatlas', 'atlas', 'clustering',
-                                                             'clust_mask', 'k', 'clust_type'],
-                                               function=clustools.individual_clustering,
-                                               imports=import_list), name="clustering_node")
+        clustering_node = pe.Node(IndividualClustering(),
+                                  input_names=['func_file', 'conf', 'clust_mask', 'ID', 'k', 'clust_type', 'vox_size',
+                                               'local_corr'],
+                                  output_names=['uatlas', 'atlas', 'clustering', 'clust_mask', 'k', 'clust_type'],
+                                  imports=import_list, name="clustering_node")
 
         # Don't forget that this setting exists
         # clustering_node.synchronize = True
@@ -1921,7 +1926,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
     # Connect clustering solutions to node definition Node
     if float(k_clustering) > 0:
-        fmri_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('conf', 'conf')]),
+        fmri_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('conf', 'conf'),
+                                                                     ('local_corr', 'local_corr')]),
                                        (check_orient_and_dims_func_node, clustering_node,
                                         [('outfile', 'func_file')]),
                                        (inputnode, clustering_node,

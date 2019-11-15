@@ -367,12 +367,17 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
+    import os
     import os.path as op
     import nibabel as nib
     from nilearn import input_data
     from pynets.core import utils
     from pynets.fmri.estimation import timeseries_bootstrap
     import numbers
+    import joblib
+    import uuid
+    import shutil
+    from time import strftime
 
     if not op.isfile(func_file):
         raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
@@ -408,10 +413,14 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
         mask_img = nib.load(mask)
     else:
         mask_img = None
+
+    tmp_dir = '%s%s_%s' % ('/tmp/estimation_', strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
+    os.makedirs(tmp_dir, exist_ok=True)
+    memory = joblib.Memory(tmp_dir, verbose=0)
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                  detrend=detrending, t_r=t_r, verbose=2, resampling_target='data',
-                                                 dtype="auto", mask_img=mask_img, memory_level=0)
+                                                 dtype="auto", mask_img=mask_img, memory_level=2, memory=memory)
     if conf is not None:
         import pandas as pd
         confounds = pd.read_csv(conf, sep='\t')
@@ -456,6 +465,8 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     if mask_img is not None:
         mask_img.uncache()
     func_img.uncache()
+    memory.clear(warn=False)
+    shutil.rmtree(tmp_dir)
 
     return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass
 
@@ -530,12 +541,17 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
+    import os
     import os.path as op
     import nibabel as nib
     from nilearn import input_data
     from pynets.fmri.estimation import timeseries_bootstrap
     from pynets.core import utils
     import numbers
+    import joblib
+    import uuid
+    import shutil
+    from time import strftime
 
     if not op.isfile(func_file):
         raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
@@ -573,10 +589,13 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         mask_img = None
 
     if len(coords) > 0:
+        tmp_dir = '%s%s_%s' % ('/tmp/estimation_', strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
+        os.makedirs(tmp_dir, exist_ok=True)
+        memory = joblib.Memory(tmp_dir, verbose=0)
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                        standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                        detrend=detrending, t_r=t_r, verbose=2, dtype="auto",
-                                                       mask_img=mask_img, memory_level=0)
+                                                       mask_img=mask_img, memory_level=2, memory=memory)
         if conf is not None:
             import pandas as pd
             confounds = pd.read_csv(conf, sep='\t')
@@ -626,5 +645,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     if mask_img is not None:
         mask_img.uncache()
     func_img.uncache()
+    memory.clear(warn=False)
+    shutil.rmtree(tmp_dir)
 
     return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass
