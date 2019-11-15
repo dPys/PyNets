@@ -70,7 +70,7 @@ def indx_3dto1d(idx, sz):
     return idx1
 
 
-def make_local_connectivity_scorr(func_file, clust_mask, thresh):
+def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     """
     Constructs a spatially constrained connectivity matrix from a fMRI dataset.
     The weights w_ij of the connectivity matrix W correspond to the
@@ -81,11 +81,10 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
 
     Parameters
     ----------
-    func_file : str
-        File path to a 4D Nifti1Image containing fMRI data.
-    clust_mask : str
-        File path to a 3D NIFTI file containing a mask, which restricts the
-        voxels used in the analysis.
+    func_img : Nifti1Image
+        4D Nifti1Image containing fMRI data.
+    clust_mask_img : Nifti1Image
+        3D NIFTI file containing a mask, which restricts the voxels used in the analysis.
     thresh : str
         Threshold value, correlation coefficients lower than this value
         will be removed from the matrix (set to zero).
@@ -109,11 +108,10 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
                                               key=lambda k: (k[0])), key=lambda k: (k[1])), key=lambda k: (k[2])))
 
     # Read in the mask
-    msk = nib.load(clust_mask)
-    msz = msk.shape
+    msz = clust_mask_img.shape
 
     # Convert the 3D mask array into a 1D vector
-    mskdat = np.reshape(np.asarray(msk.dataobj), prod(msz))
+    mskdat = np.reshape(np.asarray(clust_mask_img.dataobj), prod(msz))
 
     # Determine the 1D coordinates of the non-zero
     # elements of the mask
@@ -122,12 +120,10 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
     # Read in the fmri data
     # NOTE the format of x,y,z axes and time dimension after reading
     # nb.load('x.nii.gz').shape -> (x,y,z,t)
-    nim = nib.load(func_file)
-    sz = nim.shape
+    sz = func_img.shape
 
     # Reshape fmri data to a num_voxels x num_timepoints array
-    imdat = np.reshape(np.asarray(nim.dataobj), (prod(sz[:3]), sz[3]))
-    del nim
+    imdat = np.reshape(np.asarray(func_img.dataobj), (prod(sz[:3]), sz[3]))
 
     # Mask the datset to only the in-mask voxels
     imdat = imdat[iv, :]
@@ -165,18 +161,15 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
     for i in range(0, m):
         if i % 1000 == 0:
             print('voxel #', i)
-        # Convert index into 3D and calculate neighbors
-        ndx3d = indx_1dto3d(iv[i], sz[:-1]) + neighbors
 
-        # Convert resulting 3D indices into 1D
-        ndx1d = indx_3dto1d(ndx3d, sz[:-1])
+        # Convert index into 3D and calculate neighbors, then convert resulting 3D indices into 1D
+        ndx1d = indx_3dto1d(indx_1dto3d(iv[i], sz[:-1]) + neighbors, sz[:-1])
 
         # Convert 1D indices into masked versions
         ondx1d = msk[ndx1d].todense()
 
         # Exclude indices not in the mask
-        ndx1d = ndx1d[np.nonzero(ondx1d)[0]]
-        ndx1d = ndx1d.flatten()
+        ndx1d = ndx1d[np.nonzero(ondx1d)[0]].flatten()
         ondx1d = np.array(ondx1d[np.nonzero(ondx1d)[0]])
         ondx1d = ondx1d.flatten() - 1
 
@@ -193,9 +186,7 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
 
         # Calculate functional connectivity maps for "seed"
         # and 3D neighborhood voxels
-        fc = np.dot(tc, imdat.T) / (sz[3] - 1)
-
-        R = np.corrcoef(fc)
+        R = np.corrcoef(np.dot(tc, imdat.T) / (sz[3] - 1))
 
         if np.linalg.matrix_rank(R) == 1:
             R = np.reshape(R, (1, 1))
@@ -229,7 +220,11 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
 
     # Reshape the 1D vector read in from infile in to a 3xN array
     outlist = np.reshape(outlist, (3, int(n)))
-    m = max(max(outlist[0, :]), max(outlist[1, :])) + 1
+
+    if len(outlist) > 0:
+        m = max(max(outlist[0, :]), max(outlist[1, :])) + 1
+    else:
+        raise ValueError('Outlist is empty. No spatially-constrained voxels found.')
 
     # Make the sparse matrix, CSC format is supposedly efficient for matrix arithmetic
     W = csc_matrix((outlist[2, :], (outlist[0, :], outlist[1, :])), shape=(int(m), int(m)))
@@ -246,7 +241,7 @@ def make_local_connectivity_scorr(func_file, clust_mask, thresh):
     return W
 
 
-def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
+def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     """
     Constructs a spatially constrained connectivity matrix from a fMRI dataset.
     The weights w_ij of the connectivity matrix W correspond to the
@@ -260,10 +255,10 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
 
     Parameters
     ----------
-    func_file : str
-        File path to a 4D Nifti1Image containing fMRI data.
-    clust_mask : str
-        File path to a 3D NIFTI file containing a mask, which restricts the
+    func_img : Nifti1Image
+        4D Nifti1Image containing fMRI data.
+    clust_mask_img : Nifti1Image
+        3D NIFTI file containing a mask, which restricts the
         voxels used in the analysis.
     thresh : str
         Threshold value, correlation coefficients lower than this value
@@ -285,11 +280,10 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
                                               key=lambda k: (k[0])), key=lambda k: (k[1])), key=lambda k: (k[2])))
 
     # Read in the mask
-    msk = nib.load(clust_mask)
-    msz = np.shape(np.asarray(msk.dataobj))
+    msz = np.shape(np.asarray(clust_mask_img.dataobj))
 
     # Convert the 3D mask array into a 1D vector
-    mskdat = np.reshape(np.asarray(msk.dataobj), prod(msz))
+    mskdat = np.reshape(np.asarray(clust_mask_img.dataobj), prod(msz))
 
     # Determine the 1D coordinates of the non-zero elements of the mask
     iv = np.nonzero(mskdat)[0]
@@ -298,12 +292,10 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
 
     # Read in the fmri data
     # NOTE the format of x,y,z axes and time dimension after reading
-    nim = nib.load(func_file)
-    sz = nim.shape
+    sz = func_img.shape
 
     # Reshape fmri data to a num_voxels x num_timepoints array
-    imdat = np.reshape(np.asarray(nim.dataobj), (prod(sz[:3]), sz[3]))
-    del nim
+    imdat = np.reshape(np.asarray(func_img.dataobj), (prod(sz[:3]), sz[3]))
 
     # Construct a sparse matrix from the mask
     msk = csc_matrix((list(range(1, m + 1)), (iv, np.zeros(m))), shape=(prod(sz[:-1]), 1))
@@ -319,15 +311,12 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
         if i % 1000 == 0:
             print(str(i))
         # Calculate the voxels that are in the 3D neighborhood of the center voxel
-        ndx3d = indx_1dto3d(iv[i], sz[:-1]) + neighbors
-        ndx1d = indx_3dto1d(ndx3d, sz[:-1])
+        ndx1d = indx_3dto1d(indx_1dto3d(iv[i], sz[:-1]) + neighbors, sz[:-1])
 
         # Restrict the neigborhood using the mask
         ondx1d = msk[ndx1d].todense()
-        ndx1d = ndx1d[np.nonzero(ondx1d)[0]]
-        ndx1d = ndx1d.flatten()
-        ondx1d = np.array(ondx1d[np.nonzero(ondx1d)[0]])
-        ondx1d = ondx1d.flatten()
+        ndx1d = ndx1d[np.nonzero(ondx1d)[0]].flatten()
+        ondx1d = np.array(ondx1d[np.nonzero(ondx1d)[0]]).flatten()
 
         # Determine the index of the seed voxel in the neighborhood
         nndx = np.nonzero(ndx1d == iv[i])[0]
@@ -377,7 +366,11 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
 
     # Reshape the 1D vector read in from infile in to a 3xN array
     outlist = np.reshape(outlist, (3, int(n)))
-    m = max(max(outlist[0, :]), max(outlist[1, :])) + 1
+
+    if len(outlist) > 0:
+        m = max(max(outlist[0, :]), max(outlist[1, :])) + 1
+    else:
+        raise ValueError('Outlist is empty. No spatially-constrained voxels found.')
 
     # Make the sparse matrix
     W = csc_matrix((outlist[2, :], (outlist[0, :], outlist[1, :])), shape=(int(m), int(m)))
@@ -394,164 +387,157 @@ def make_local_connectivity_tcorr(func_file, clust_mask, thresh):
     return W
 
 
-def nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf, local_corr, detrending=True,
-                   standardize=True):
+class NilParcellate(object):
     """
-    API for performing any of a variety of clustering routines available through NiLearn.
-
-    Parameters
-    ----------
-    func_file : str
-        File path to a 4D Nifti1Image containing fMRI data.
-    clust_mask : str
-        File path to a 3D NIFTI file containing a mask, which restricts the
-        voxels used in the analysis.
-    k : int
-        Numbers of clusters that will be generated.
-    clust_type : str
-        Type of clustering to be performed (e.g. 'ward', 'kmeans', 'complete', 'average').
-    uatlas : str
-        File path to atlas parcellation Nifti1Image in MNI template space.
-    dir_path : str
-        Path to directory containing subject derivative data for given run.
-    conf : str
-        File path to a confound regressor file for reduce noise in the time-series when extracting from ROI's.
-    local_corr : str
-        Type of local connectivity estimation ('tcorr' or 'scorr').
-    detrending : bool
-        Indicates whether to remove linear trends from time-series when extracting across nodes. Default is True.
-    standardize : bool
-        If standardize is True, the time-series are centered and normed: their mean is put to 0 and their variance to 1
-        in the time dimension.
-
-    Returns
-    -------
-    region_labels : Nifti1Image
-        A parcellation image.
+    Class for implementing various clustering routines.
     """
-    import time
-    import os
-    from nilearn.regions import Parcellations, connected_label_regions
-    from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
+    def __init__(self, func_file, clust_mask, k, clust_type, conf, vox_size, local_corr):
+        """
+        Parameters
+        ----------
+        func_file : str
+            File path to a 4D Nifti1Image containing fMRI data.
+        clust_mask : str
+            File path to a 3D NIFTI file containing a mask, which restricts the
+            voxels used in the analysis.
+        k : int
+            Numbers of clusters that will be generated.
+        clust_type : str
+            Type of clustering to be performed (e.g. 'ward', 'kmeans', 'complete', 'average').
+        conf : str
+            File path to a confound regressor file for reduce noise in the time-series when extracting from ROI's.
+        vox_size : str
+            Voxel size in mm. (e.g. 2mm).
+        local_corr : str
+            Type of local connectivity to use as the basis for clustering methods. Options are tcorr or scorr.
+            Default is tcorr.
+        """
+        self.func_file = func_file
+        self.clust_mask = clust_mask
+        self.k = k
+        self.clust_type = clust_type
+        self.conf = conf
+        self.detrending = True
+        self.standardize = True
+        self.func_img = nib.load(self.func_file)
+        self.clust_mask_img = nib.load(self.clust_mask)
+        self.vox_size = vox_size
+        self.local_corr = local_corr
+        self.local_conn_mat_path = None
+        self.uatlas = None
+        self.dir_path = None
+        self.clust_mask_corr = None
+        self.clust_mask_corr_img = None
+        self.clust_est = None
+        self.local_conn = None
+        self.atlas = None
 
-    start = time.time()
-    func_img = nib.load(func_file)
-    clust_mask_img = nib.load(clust_mask)
+    def create_clean_mask(self):
+        """
+        Create a subject-refined version of the clustering mask.
+        """
+        import os
+        import os.path as op
+        from pynets.core import utils
+        from pynets.registration.reg_utils import check_orient_and_dims
 
-    if local_corr == 'tcorr':
-        local_conn = make_local_connectivity_tcorr(func_file, clust_mask, thresh=0.5)
-    elif local_corr == 'scorr':
-        local_conn = make_local_connectivity_scorr(func_file, clust_mask, thresh=0.5)
-    else:
-        raise ValueError('Local connectivity type not available')
+        mask_name = os.path.basename(self.clust_mask).split('.nii.gz')[0]
+        self.atlas = "%s%s%s%s%s" % (mask_name, '_', self.clust_type, '_k', str(self.k))
+        print("%s%s%s%s%s%s%s" % ('\nCreating atlas using ', self.clust_type, ' at cluster level ', str(self.k),
+                                  ' for ', str(self.atlas), '...\n'))
+        self.dir_path = utils.do_dir_path(self.atlas, self.func_file)
+        self.uatlas = "%s%s%s%s%s%s%s%s" % (self.dir_path, '/', mask_name, '_', self.clust_type, '_k', str(self.k),
+                                            '.nii.gz')
 
-    clust_est = Parcellations(method=clust_type, standardize=standardize, detrend=detrending, n_parcels=int(k),
-                              mask=clust_mask_img, connectivity=local_conn)
-    if conf is not None:
-        import pandas as pd
-        confounds = pd.read_csv(conf, sep='\t')
-        if confounds.isnull().values.any():
-            import uuid
-            from time import strftime
-            run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
-            print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
-                  'regressor file should be checked manually.')
-            confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-            os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
-            conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
-            confounds_nonan.to_csv(conf_corr, sep='\t')
-            clust_est.fit(func_img, confounds=conf_corr)
+        # reorient and reslice mask
+        self.clust_mask = check_orient_and_dims(utils.create_temporary_copy(self.clust_mask,
+                                                                            op.basename(self.clust_mask).split('.nii.gz')[0],
+                                                                            '.nii.gz'), self.vox_size)
+
+        mask_data = np.asarray(self.clust_mask_img.dataobj).astype('bool').astype('int')
+
+        # Ensure mask does not inclue voxels outside of the brain
+        mask_data[~np.asarray(self.func_img.dataobj)[:, :, :, 0].astype('bool')] = 0
+        self.clust_mask_corr = "%s%s%s%s" % (self.dir_path, '/', mask_name, '.nii.gz')
+        self.clust_mask_corr_img = nib.Nifti1Image(mask_data, affine=self.clust_mask_img.affine,
+                                                   header=self.clust_mask_img.header)
+        nib.save(self.clust_mask_corr_img, self.clust_mask_corr)
+        del mask_data
+        return self.uatlas, self.atlas
+
+    def create_local_clustering(self, overwrite=False, r_thresh=0.3):
+        """
+        API for performing any of a variety of clustering routines available through NiLearn.
+        """
+        import os.path as op
+        from scipy.sparse import save_npz, load_npz
+        from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
+
+        self.local_conn_mat_path = "%s%s%s%s" % (self.uatlas.split('.nii.gz')[0], '_', self.local_corr, '_conn.npz')
+
+        if (not op.isfile(self.local_conn_mat_path)) or (overwrite is True):
+            if self.local_corr == 'tcorr':
+                self.local_conn = make_local_connectivity_tcorr(self.func_img, self.clust_mask_corr_img,
+                                                                thresh=r_thresh)
+            elif self.local_corr == 'scorr':
+                self.local_conn = make_local_connectivity_scorr(self.func_img, self.clust_mask_corr_img,
+                                                                thresh=r_thresh)
+            else:
+                raise ValueError('Local connectivity type not available')
+
+            print("%s%s" % ('Saving spatially constrained connectivity structure to: ', self.local_conn_mat_path))
+            save_npz(self.local_conn_mat_path, self.local_conn)
+        elif op.isfile(self.local_conn_mat_path):
+            self.local_conn = load_npz(self.local_conn_mat_path)
+
+        return
+
+    def parcellate(self):
+        """
+        API for performing any of a variety of clustering routines available through NiLearn.
+        """
+        import time
+        import os
+        import joblib
+        from nilearn.regions import Parcellations, connected_label_regions
+        import uuid
+        import shutil
+        from time import strftime
+
+        start = time.time()
+
+        if not os.path.isfile(self.local_conn_mat_path):
+            raise FileNotFoundError('File containing sparse matrix of local connectivity structure not found.')
+
+        tmp_dir = '%s%s_%s' % ('/tmp/clustering_', strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
+        os.makedirs(tmp_dir, exist_ok=True)
+        memory = joblib.Memory(tmp_dir, verbose=0)
+
+        self.clust_est = Parcellations(method=self.clust_type, standardize=self.standardize, detrend=self.detrending,
+                                       n_parcels=int(self.k), mask=self.clust_mask_corr_img,
+                                       connectivity=self.local_conn, n_jobs=1, memory_level=3, memory=memory)
+
+        if self.conf is not None:
+            import pandas as pd
+            confounds = pd.read_csv(self.conf, sep='\t')
+            if confounds.isnull().values.any():
+                run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
+                print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
+                      'regressor file should be checked manually.')
+                confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
+                os.makedirs("%s%s" % (self.dir_path, '/confounds_tmp'), exist_ok=True)
+                conf_corr = "%s%s%s%s" % (self.dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
+                confounds_nonan.to_csv(conf_corr, sep='\t')
+                self.clust_est.fit(self.func_img, confounds=conf_corr)
+            else:
+                self.clust_est.fit(self.func_img, confounds=self.conf)
         else:
-            clust_est.fit(func_img, confounds=conf)
-    else:
-        clust_est.fit(func_img)
-    region_labels = connected_label_regions(clust_est.labels_img_)
-    nib.save(region_labels, uatlas)
+            self.clust_est.fit(self.func_img)
 
-    print("%s%s%s" % (clust_type, k, " clusters: %.2fs" % (time.time() - start)))
+        nib.save(connected_label_regions(self.clust_est.labels_img_), self.uatlas)
 
-    del clust_est
-    func_img.uncache()
-    clust_mask_img.uncache()
+        print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
 
-    return region_labels
-
-
-def individual_clustering(func_file, conf, clust_mask, ID, k, clust_type, vox_size, local_corr='tcorr'):
-    """
-    Meta-API for performing any of several types of fMRI clustering based on NiLearn Parcellations and tcorr/scorr
-    spatial constraints.
-
-    Parameters
-    ----------
-    func_file : str
-        File path to a 4D Nifti1Image containing fMRI data.
-    conf : str
-        File path to a confound regressor file for reduce noise in the time-series when extracting from ROI's.
-    clust_mask : str
-        File path to a 3D NIFTI file containing a mask, which restricts the
-        voxels used in the analysis.
-    ID : str
-        A subject id or other unique identifier.
-    k : int
-        Numbers of clusters that will be generated.
-    clust_type : str
-        Type of clustering to be performed (e.g. 'ward', 'kmeans', 'complete', 'average').
-    vox_size : str
-        Voxel size in mm. (e.g. 2mm).
-    local_corr : str
-        Type of local connectivity to use as the basis for clustering methods. Options are tcorr or scorr.
-        Default is tcorr.
-
-    Returns
-    -------
-    uatlas : str
-        File path to atlas parcellation Nifti1Image in MNI template space.
-    atlas : str
-        Name of the atlas based on `clust_type`, `k`, and `clust_mask`
-    clustering : bool
-        A variable indicating that clustering was performed successfully.
-    clust_mask : str
-        File path to a 3D NIFTI file containing a mask, which restricted the
-        voxels used in the analysis.
-    k : int
-        Numbers of clusters that were generated.
-    clust_type : str
-        Type of clustering to be performed (e.g. 'ward', 'kmeans', 'complete', 'average').
-    """
-    import os
-    import gc
-    from pynets.core import utils
-    from pynets.fmri import clustools
-    from pynets.registration.reg_utils import check_orient_and_dims
-
-    nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
-
-    mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-    atlas = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', str(k))
-    print("%s%s%s%s%s%s%s" % ('\nCreating atlas using ', clust_type, ' at cluster level ', str(k), ' for ', str(atlas),
-                              '...\n'))
-    dir_path = utils.do_dir_path(atlas, func_file)
-    uatlas = "%s%s%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
-
-    # Ensure mask does not inclue voxels outside of the brain
-    mask_img = nib.load(check_orient_and_dims(clust_mask, vox_size))
-    mask_data = np.asarray(mask_img.dataobj).astype('bool').astype('int')
-    mask_data[~np.asarray(nib.load(func_file).dataobj)[:, :, :, 0].astype('bool')] = 0
-    clust_mask_corr = "%s%s%s%s" % (dir_path, '/', mask_name, '.nii.gz')
-    nib.save(nib.Nifti1Image(mask_data, affine=mask_img.affine, header=mask_img.header), clust_mask_corr)
-    del mask_data
-    mask_img.uncache()
-    gc.collect()
-
-    if clust_type in nilearn_clust_list:
-        clustools.nil_parcellate(func_file, clust_mask_corr, k, clust_type, uatlas, dir_path, conf,
-                                 local_corr=local_corr)
-        clustering = True
-        del clust_mask_corr
-    else:
-        raise ValueError('Clustering method not recognized. '
-                         'See: https://nilearn.github.io/modules/generated/nilearn.regions.Parcellations.html#nilearn.'
-                         'regions.Parcellations')
-
-    return uatlas, atlas, clustering, clust_mask, k, clust_type
+        memory.clear(warn=False)
+        shutil.rmtree(tmp_dir)
+        return

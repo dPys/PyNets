@@ -97,3 +97,58 @@ class CombinePandasDfs(SimpleInterface):
 
     def _list_outputs(self):
         return {'combination_complete': getattr(self, '_combination_complete')}
+
+
+class _IndividualClusteringInputSpec(BaseInterfaceInputSpec):
+    func_file = File(exists=True, mandatory=True)
+    conf = File(exists=False, mandatory=False)
+    clust_mask = File(exists=True, mandatory=True)
+    ID = traits.Any(mandatory=True)
+    k = traits.Any(mandatory=True)
+    clust_type = traits.Str(mandatory=True)
+    vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
+    local_corr = traits.Str('tcorr', mandatory=True, usedefault=True)
+
+
+class _IndividualClusteringOutputSpec(TraitedSpec):
+    uatlas = File(exists=True)
+    atlas = traits.Str(mandatory=True)
+    clustering = traits.Bool(True, usedefault=True)
+    clust_mask = File(exists=True, mandatory=True)
+    k = traits.Any(mandatory=True)
+    clust_type = traits.Str(mandatory=True)
+
+
+class IndividualClustering(SimpleInterface):
+    input_spec = _IndividualClusteringInputSpec
+    output_spec = _IndividualClusteringOutputSpec
+
+    def _run_interface(self, runtime):
+        from pynets.fmri import clustools
+        nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
+
+        nip = clustools.NilParcellate(self.inputs.func_file,
+                                      self.inputs.clust_mask,
+                                      self.inputs.k,
+                                      self.inputs.clust_type,
+                                      self.inputs.conf,
+                                      self.inputs.vox_size,
+                                      self.inputs.local_corr)
+
+        uatlas, atlas = nip.create_clean_mask()
+        nip.create_local_clustering()
+
+        if self.inputs.clust_type in nilearn_clust_list:
+            nip.parcellate()
+        else:
+            raise ValueError('Clustering method not recognized. '
+                             'See: https://nilearn.github.io/modules/generated/nilearn.regions.Parcellations.html#nilearn.'
+                             'regions.Parcellations')
+
+        self._results['atlas'] = atlas
+        self._results['uatlas'] = uatlas
+        self._results['clust_mask'] = self.inputs.clust_mask
+        self._results['k'] = self.inputs.k
+        self._results['clust_type'] = self.inputs.clust_type
+        self._results['clustering'] = True
+        return runtime

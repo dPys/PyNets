@@ -191,12 +191,19 @@ def get_parser():
                         help='Specify the step size of k cluster iterables.\n')
     parser.add_argument('-ct',
                         metavar='Clustering type',
-                        default='ncut',
+                        default='ward',
                         nargs='+',
                         choices=['ward', 'kmeans', 'complete', 'average'],
                         help='Specify the types of clustering to use. Recommended options are: '
                              'ward, kmeans, or average. If specifying a list of '
                              'clustering types, separate them by space.\n')
+    parser.add_argument('-cc',
+                        metavar='Clustering connectivity type',
+                        default='tcorr',
+                        nargs=1,
+                        choices=['tcorr', 'scorr'],
+                        help='Include this flag if you are running clustering and wish to specift a spatially '
+                             'constrained connectivity method based on scorr. Default is tcorr.\n')
     parser.add_argument('-n',
                         metavar='Resting-state network',
                         default=None,
@@ -514,6 +521,9 @@ def build_workflow(args, retval):
             clust_type_list = None
     else:
         clust_type_list = None
+    local_corr = args.cc
+    if type(local_corr) is list:
+        local_corr = local_corr[0]
     # adapt_thresh=args.at
     adapt_thresh = False
     plot_switch = args.plt
@@ -1252,6 +1262,7 @@ def build_workflow(args, retval):
         clust_mask_list = None
         hpass = None
         clust_type = None
+        local_corr = None
         clust_type_list = None
         c_boot = None
         block_size = None
@@ -1309,6 +1320,7 @@ def build_workflow(args, retval):
     # print("%s%s" % ('user_atlas_list: ', user_atlas_list))
     # print("%s%s" % ('clust_mask_list: ', clust_mask_list))
     # print("%s%s" % ('clust_type: ', clust_type))
+    # print("%s%s" % ('local_corr: ', local_corr))
     # print("%s%s" % ('clust_type_list: ', clust_type_list))
     # print("%s%s" % ('prune: ', prune))
     # print("%s%s" % ('node_size_list: ', node_size_list))
@@ -1361,7 +1373,7 @@ def build_workflow(args, retval):
                                curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
                                maxcrossing, min_length, directget, tiss_class, runtime_dict, embed,
                                multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
-                               multiplex, waymask):
+                               multiplex, waymask, local_corr):
         """A function interface for generating a single-subject workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1422,7 +1434,7 @@ def build_workflow(args, retval):
                                     target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
                                     max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict,
                                     embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
-                                    vox_size, multiplex, waymask)
+                                    vox_size, multiplex, waymask, local_corr)
 
         meta_wf._n_procs = procmem[0]
         meta_wf._mem_gb = procmem[1]
@@ -1545,7 +1557,7 @@ def build_workflow(args, retval):
                          binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list,
                          track_type, max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict, embed,
                          multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex,
-                         waymask):
+                         waymask, local_corr):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1603,7 +1615,8 @@ def build_workflow(args, retval):
                 max_length=max_length, maxcrossing=maxcrossing, min_length=min_length,
                 directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, embed=embed,
                 multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
-                template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex, waymask=waymask)
+                template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex,
+                waymask=waymask, local_corr=local_corr)
             wf_single_subject.synchronize = True
             wf_single_subject._n_procs = procmem[0]
             wf_single_subject._mem_gb = procmem[1]
@@ -1677,7 +1690,7 @@ def build_workflow(args, retval):
                                     step_list, overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing,
                                     min_length, directget, tiss_class, runtime_dict, embed, multi_directget,
                                     multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex,
-                                    waymask)
+                                    waymask, local_corr)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1762,7 +1775,7 @@ def build_workflow(args, retval):
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     overlap_thr_list, track_type, max_length, maxcrossing, min_length,
                                     directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass,
-                                    hpass_list, template, template_mask, vox_size, multiplex, waymask)
+                                    hpass_list, template, template_mask, vox_size, multiplex, waymask, local_corr)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
