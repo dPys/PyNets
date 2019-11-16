@@ -124,6 +124,7 @@ class IndividualClustering(SimpleInterface):
     output_spec = _IndividualClusteringOutputSpec
 
     def _run_interface(self, runtime):
+        import gc
         from pynets.fmri import clustools
         nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
@@ -135,15 +136,18 @@ class IndividualClustering(SimpleInterface):
                                       self.inputs.vox_size,
                                       self.inputs.local_corr)
 
-        uatlas, atlas = nip.create_clean_mask()
+        atlas = nip.create_clean_mask()
         nip.create_local_clustering()
 
         if self.inputs.clust_type in nilearn_clust_list:
-            nip.parcellate()
+            uatlas = nip.parcellate()
         else:
             raise ValueError('Clustering method not recognized. '
                              'See: https://nilearn.github.io/modules/generated/nilearn.regions.Parcellations.html#nilearn.'
                              'regions.Parcellations')
+
+        del nip
+        gc.collect()
 
         self._results['atlas'] = atlas
         self._results['uatlas'] = uatlas

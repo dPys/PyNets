@@ -221,10 +221,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     # Reshape the 1D vector read in from infile in to a 3xN array
     outlist = np.reshape(outlist, (3, int(n)))
 
-    if len(outlist) > 0:
-        m = max(max(outlist[0, :]), max(outlist[1, :])) + 1
-    else:
-        raise ValueError('Outlist is empty. No spatially-constrained voxels found.')
+    m = max(max(outlist[0, :]), max(outlist[1, :])) + 1
 
     # Make the sparse matrix, CSC format is supposedly efficient for matrix arithmetic
     W = csc_matrix((outlist[2, :], (outlist[0, :], outlist[1, :])), shape=(int(m), int(m)))
@@ -367,10 +364,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     # Reshape the 1D vector read in from infile in to a 3xN array
     outlist = np.reshape(outlist, (3, int(n)))
 
-    if len(outlist) > 0:
-        m = max(max(outlist[0, :]), max(outlist[1, :])) + 1
-    else:
-        raise ValueError('Outlist is empty. No spatially-constrained voxels found.')
+    m = max(max(outlist[0, :]), max(outlist[1, :])) + 1
 
     # Make the sparse matrix
     W = csc_matrix((outlist[2, :], (outlist[0, :], outlist[1, :])), shape=(int(m), int(m)))
@@ -420,7 +414,6 @@ class NilParcellate(object):
         self.detrending = True
         self.standardize = True
         self.func_img = nib.load(self.func_file)
-        self.clust_mask_img = nib.load(self.clust_mask)
         self.vox_size = vox_size
         self.local_corr = local_corr
         self.local_conn_mat_path = None
@@ -431,6 +424,7 @@ class NilParcellate(object):
         self.clust_est = None
         self.local_conn = None
         self.atlas = None
+        self.clust_mask_img = None
 
     def create_clean_mask(self):
         """
@@ -450,10 +444,10 @@ class NilParcellate(object):
                                             '.nii.gz')
 
         # reorient and reslice mask
-        self.clust_mask = check_orient_and_dims(utils.create_temporary_copy(self.clust_mask,
-                                                                            op.basename(self.clust_mask).split('.nii.gz')[0],
-                                                                            '.nii.gz'), self.vox_size)
-
+        self.clust_mask = check_orient_and_dims(
+            utils.create_temporary_copy(self.clust_mask, op.basename(self.clust_mask).split('.nii.gz')[0],
+                                        '.nii.gz'), self.vox_size)
+        self.clust_mask_img = nib.load(self.clust_mask)
         mask_data = np.asarray(self.clust_mask_img.dataobj).astype('bool').astype('int')
 
         # Ensure mask does not inclue voxels outside of the brain
@@ -463,9 +457,9 @@ class NilParcellate(object):
                                                    header=self.clust_mask_img.header)
         nib.save(self.clust_mask_corr_img, self.clust_mask_corr)
         del mask_data
-        return self.uatlas, self.atlas
+        return self.atlas
 
-    def create_local_clustering(self, overwrite=False, r_thresh=0.3):
+    def create_local_clustering(self, overwrite=True, r_thresh=0.5):
         """
         API for performing any of a variety of clustering routines available through NiLearn.
         """
@@ -498,10 +492,8 @@ class NilParcellate(object):
         """
         import time
         import os
-        import joblib
         from nilearn.regions import Parcellations, connected_label_regions
         import uuid
-        import shutil
         from time import strftime
 
         start = time.time()
@@ -509,13 +501,9 @@ class NilParcellate(object):
         if not os.path.isfile(self.local_conn_mat_path):
             raise FileNotFoundError('File containing sparse matrix of local connectivity structure not found.')
 
-        tmp_dir = '%s%s_%s' % ('/tmp/clustering_', strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
-        os.makedirs(tmp_dir, exist_ok=True)
-        memory = joblib.Memory(tmp_dir, verbose=0)
-
         self.clust_est = Parcellations(method=self.clust_type, standardize=self.standardize, detrend=self.detrending,
                                        n_parcels=int(self.k), mask=self.clust_mask_corr_img,
-                                       connectivity=self.local_conn, n_jobs=1, memory_level=3, memory=memory)
+                                       connectivity=self.local_conn)
 
         if self.conf is not None:
             import pandas as pd
@@ -538,6 +526,6 @@ class NilParcellate(object):
 
         print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
 
-        memory.clear(warn=False)
-        shutil.rmtree(tmp_dir)
-        return
+        del self.clust_est
+
+        return self.uatlas
