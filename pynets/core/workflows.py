@@ -628,6 +628,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
     from pynets.dmri import estimation, track
+    from pynets.dmri import dmri_utils as dmriutils
     from pynets.plotting import plot_gen
     import os.path as op
 
@@ -821,7 +822,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
 
     gtab_node = pe.Node(niu.Function(input_names=['fbval', 'fbvec', 'dwi_file', 'network', 'node_size', 'atlas'],
                                      output_names=['gtab_file', 'B0_bet', 'B0_mask', 'dwi_file'],
-                                     function=utils.make_gtab_and_bmask, imports=import_list), name="gtab_node")
+                                     function=dmriutils.make_gtab_and_bmask, imports=import_list), name="gtab_node")
 
     get_fa_node = pe.Node(niu.Function(input_names=['gtab_file', 'dwi_file', 'B0_mask'],
                                        output_names=['fa_path', 'B0_mask', 'gtab_file', 'dwi_file'],
