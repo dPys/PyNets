@@ -815,7 +815,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
             print('Ignoring -dt flag since local density thresholding is not currently supporting.')
         thr_type = 'MST_thr'
         edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
-        [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, thr, coords, labels)
+        [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, coords, labels, thr)
     elif disp_filt is True:
         thr_type = 'DISP_alpha'
         edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
@@ -990,7 +990,7 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
             print('Ignoring -dt flag since local density thresholding is not currently supporting.')
         thr_type = 'MST_thr'
         edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
-        [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, thr, coords, labels)
+        [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, coords, labels, thr)
     elif disp_filt is True:
         thr_type = 'DISP_alpha'
         edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
