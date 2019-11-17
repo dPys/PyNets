@@ -185,7 +185,7 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
             density = nx.density(nx.from_numpy_matrix(thresholding.threshold_absolute(conn_matrix, work_thr)))
             print("%s%d%s%.2f%s%.2f%s" % ('Iteration ', i, ' -- with Thresh: ', float(work_thr), ' and Density: ',
                                           float(density), '...'))
-            if float(thr) > float(density):
+            if float(thr) >= float(density):
                 conn_matrix = thresholding.threshold_absolute(conn_matrix, work_thr)
                 break
             i = i + 1
