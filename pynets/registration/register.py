@@ -180,6 +180,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     template_path = pkg_resources.resource_filename("pynets", "%s%s%s" % ('templates/FA_', int(vox_size), 'mm.nii.gz'))
     template_img = nib.load(template_path)
     brain_mask = np.asarray(template_img.dataobj).astype('bool')
+    template_img.uncache()
 
     streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_',
                                                   '%s' % (network + '_' if network is not None else ''),
@@ -209,10 +210,13 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     [mapping, affine_map, warped_fa] = regutils.wm_syn(template_path, fa_path, dsn_dir)
 
     tractogram = load_tractogram(streams, fa_img, to_space=Space.RASMM, shifted_origin=True, bbox_valid_check=False)
+    fa_img.uncache()
     streamlines = tractogram.streamlines
     warped_fa_img = nib.load(warped_fa)
+    warped_fa_affine = warped_fa_img.affine
+    warped_fa_shape = warped_fa_img.shape
 
-    streams_in_curr_grid = transform_streamlines(streamlines, warped_fa_img.affine)
+    streams_in_curr_grid = transform_streamlines(streamlines, warped_fa_affine)
 
     ref_grid_aff = vox_size*np.eye(4)
     ref_grid_aff[3][3] = 1
@@ -242,7 +246,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                                                           zip(values_from_volume(mapping.get_forward_field(),
                                                                                  streams_in_curr_grid, ref_grid_aff),
                                                               streams_in_curr_grid)]), np.linalg.inv(adjusted_affine)),
-        np.linalg.inv(warped_fa_img.affine)), np.eye(4), brain_mask, include=True))
+        np.linalg.inv(warped_fa_affine)), np.eye(4), brain_mask, include=True))
 
     # Remove streamlines with negative voxel indices
     lin_T, offset = _mapping_to_voxel(np.eye(4))
@@ -258,13 +262,14 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     stf.remove_invalid_streamlines()
     streams_final_filt_final = stf.streamlines
     save_tractogram(stf, streams_mni, bbox_valid_check=True)
+    warped_fa_img.uncache()
 
     # DSN QC plotting
     plot_gen.show_template_bundles(streams_final_filt_final, template_path, streams_warp_png)
 
     # Create and save MNI density map
     nib.save(nib.Nifti1Image(utils.density_map(streams_final_filt_final, affine=np.eye(4),
-                                               vol_dims=warped_fa_img.shape), warped_fa_img.affine), density_mni)
+                                               vol_dims=warped_fa_shape), warped_fa_affine), density_mni)
 
     # Map parcellation from native space back to MNI-space and create an 'uncertainty-union' parcellation
     # with original mni-space uatlas
@@ -272,20 +277,14 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     warped_uatlas = affine_map.transform_inverse(mapping.transform(np.asarray(atlas_img.dataobj).astype('int16'),
                                                                    interpolation='nearestneighbour'), interp='nearest')
-
-    warped_uatlas_img_res_data = np.asarray(resample_to_img(nib.Nifti1Image(warped_uatlas, affine=warped_fa_img.affine), uatlas_mni_img, interpolation='nearest', clip=False).dataobj)
+    atlas_img.uncache()
+    warped_uatlas_img_res_data = np.asarray(resample_to_img(nib.Nifti1Image(warped_uatlas, affine=warped_fa_affine), uatlas_mni_img, interpolation='nearest', clip=False).dataobj)
     uatlas_mni_data = np.asarray(uatlas_mni_img.dataobj)
+    uatlas_mni_img.uncache()
     overlap_mask = np.invert(warped_uatlas_img_res_data.astype('bool') * uatlas_mni_data.astype('bool'))
     atlas_mni = "%s%s%s%s" % (dir_path, '/parcellations/', os.path.basename(uatlas).split('.nii.gz')[0],
                               '_UNION.nii.gz')
-    nib.save(nib.Nifti1Image(warped_uatlas_img_res_data * overlap_mask.astype('int') + uatlas_mni_data * overlap_mask.astype('int') + np.invert(overlap_mask).astype('int') * warped_uatlas_img_res_data, affine=warped_fa_img.affine), atlas_mni)
-
-    # Cleanup
-    uatlas_mni_img.uncache()
-    warped_fa_img.uncache()
-    template_img.uncache()
-    fa_img.uncache()
-    atlas_img.uncache()
+    nib.save(nib.Nifti1Image(warped_uatlas_img_res_data * overlap_mask.astype('int') + uatlas_mni_data * overlap_mask.astype('int') + np.invert(overlap_mask).astype('int') * warped_uatlas_img_res_data, affine=warped_fa_affine), atlas_mni)
 
     del tractogram, streamlines, warped_uatlas_img_res_data, uatlas_mni_data, overlap_mask, stf, streams_final_filt_final, streams_final_filt, streams_in_curr_grid, brain_mask
 

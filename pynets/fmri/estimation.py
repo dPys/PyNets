@@ -367,7 +367,6 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
-    import os
     import time
     import os.path as op
     import nibabel as nib
