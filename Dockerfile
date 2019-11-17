@@ -82,7 +82,7 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && conda install -yq python=3.6 ipython \
     && pip install --upgrade pip \
     && conda clean -tipsy \
-    && pip install awscli requests \
+    && pip install awscli requests psutil \
     # Install pynets
     && git clone -b master https://github.com/dPys/PyNets /home/neuro/PyNets && \
     cd /home/neuro/PyNets && \

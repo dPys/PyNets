@@ -112,6 +112,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
 
     # Convert the 3D mask array into a 1D vector
     mskdat = np.reshape(np.asarray(clust_mask_img.dataobj), prod(msz))
+    clust_mask_img.uncache()
 
     # Determine the 1D coordinates of the non-zero
     # elements of the mask
@@ -124,6 +125,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
 
     # Reshape fmri data to a num_voxels x num_timepoints array
     imdat = np.reshape(np.asarray(func_img.dataobj), (prod(sz[:3]), sz[3]))
+    func_img.uncache()
 
     # Mask the datset to only the in-mask voxels
     imdat = imdat[iv, :]
@@ -281,6 +283,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
 
     # Convert the 3D mask array into a 1D vector
     mskdat = np.reshape(np.asarray(clust_mask_img.dataobj), prod(msz))
+    clust_mask_img.uncache()
 
     # Determine the 1D coordinates of the non-zero elements of the mask
     iv = np.nonzero(mskdat)[0]
@@ -293,6 +296,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
 
     # Reshape fmri data to a num_voxels x num_timepoints array
     imdat = np.reshape(np.asarray(func_img.dataobj), (prod(sz[:3]), sz[3]))
+    func_img.uncache()
 
     # Construct a sparse matrix from the mask
     msk = csc_matrix((list(range(1, m + 1)), (iv, np.zeros(m))), shape=(prod(sz[:-1]), 1))
@@ -406,6 +410,8 @@ class NilParcellate(object):
             Type of local connectivity to use as the basis for clustering methods. Options are tcorr or scorr.
             Default is tcorr.
         """
+        from pynets.core.utils import has_handle
+        import time
         self.func_file = func_file
         self.clust_mask = clust_mask
         self.k = k
@@ -413,6 +419,8 @@ class NilParcellate(object):
         self.conf = conf
         self.detrending = True
         self.standardize = True
+        while has_handle(self.func_file) is True:
+            time.sleep(5)
         self.func_img = nib.load(self.func_file)
         self.vox_size = vox_size
         self.local_corr = local_corr
@@ -527,5 +535,7 @@ class NilParcellate(object):
         print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
 
         del self.clust_est
+        self.func_img.uncache()
+        self.clust_mask_corr_img.uncache()
 
         return self.uatlas
