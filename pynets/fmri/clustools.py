@@ -112,7 +112,6 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
 
     # Convert the 3D mask array into a 1D vector
     mskdat = np.reshape(np.asarray(clust_mask_img.dataobj), prod(msz))
-    clust_mask_img.uncache()
 
     # Determine the 1D coordinates of the non-zero
     # elements of the mask
@@ -125,7 +124,6 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
 
     # Reshape fmri data to a num_voxels x num_timepoints array
     imdat = np.reshape(np.asarray(func_img.dataobj), (prod(sz[:3]), sz[3]))
-    func_img.uncache()
 
     # Mask the datset to only the in-mask voxels
     imdat = imdat[iv, :]
@@ -228,14 +226,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     # Make the sparse matrix, CSC format is supposedly efficient for matrix arithmetic
     W = csc_matrix((outlist[2, :], (outlist[0, :], outlist[1, :])), shape=(int(m), int(m)))
 
-    del imdat
-    del msk
-    del mskdat
-    del outlist
-    del m
-    del sparse_i
-    del sparse_j
-    del sparse_w
+    del imdat, msk, mskdat, outlist, m, sparse_i, sparse_j, sparse_w
 
     return W
 
@@ -283,7 +274,6 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
 
     # Convert the 3D mask array into a 1D vector
     mskdat = np.reshape(np.asarray(clust_mask_img.dataobj), prod(msz))
-    clust_mask_img.uncache()
 
     # Determine the 1D coordinates of the non-zero elements of the mask
     iv = np.nonzero(mskdat)[0]
@@ -296,7 +286,6 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
 
     # Reshape fmri data to a num_voxels x num_timepoints array
     imdat = np.reshape(np.asarray(func_img.dataobj), (prod(sz[:3]), sz[3]))
-    func_img.uncache()
 
     # Construct a sparse matrix from the mask
     msk = csc_matrix((list(range(1, m + 1)), (iv, np.zeros(m))), shape=(prod(sz[:-1]), 1))
@@ -373,14 +362,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     # Make the sparse matrix
     W = csc_matrix((outlist[2, :], (outlist[0, :], outlist[1, :])), shape=(int(m), int(m)))
 
-    del imdat
-    del msk
-    del mskdat
-    del outlist
-    del m
-    del sparse_i
-    del sparse_j
-    del sparse_w
+    del imdat, msk, mskdat, outlist, m, sparse_i, sparse_j, sparse_w
 
     return W
 
@@ -421,7 +403,7 @@ class NilParcellate(object):
         self.standardize = True
         while has_handle(self.func_file) is True:
             time.sleep(5)
-        self.func_img = nib.load(self.func_file)
+        self.func_img = nib.load(self.func_file, keep_file_open=False)
         self.vox_size = vox_size
         self.local_corr = local_corr
         self.local_conn_mat_path = None
@@ -433,6 +415,9 @@ class NilParcellate(object):
         self.local_conn = None
         self.atlas = None
         self.clust_mask_img = None
+        self.mask_data = None
+        self.func_img_data = None
+        self.masked_fmri_vol = None
 
     def create_clean_mask(self):
         """
@@ -455,16 +440,19 @@ class NilParcellate(object):
         self.clust_mask = check_orient_and_dims(
             utils.create_temporary_copy(self.clust_mask, op.basename(self.clust_mask).split('.nii.gz')[0],
                                         '.nii.gz'), self.vox_size)
-        self.clust_mask_img = nib.load(self.clust_mask)
-        mask_data = np.asarray(self.clust_mask_img.dataobj).astype('bool').astype('int')
+        self.clust_mask_img = nib.load(self.clust_mask, keep_file_open=False)
+        self.mask_data = np.asarray(self.clust_mask_img.dataobj).astype('bool').astype('int')
 
         # Ensure mask does not inclue voxels outside of the brain
-        mask_data[~np.asarray(self.func_img.dataobj)[:, :, :, 0].astype('bool')] = 0
+        self.func_img_data = np.asarray(self.func_img.dataobj)
+        self.masked_fmri_vol = self.func_img_data[:, :, :, 0].astype('bool')
+        self.mask_data[~self.masked_fmri_vol] = 0
+        del self.masked_fmri_vol, self.func_img_data
         self.clust_mask_corr = "%s%s%s%s" % (self.dir_path, '/', mask_name, '.nii.gz')
-        self.clust_mask_corr_img = nib.Nifti1Image(mask_data, affine=self.clust_mask_img.affine,
+        self.clust_mask_corr_img = nib.Nifti1Image(self.mask_data, affine=self.clust_mask_img.affine,
                                                    header=self.clust_mask_img.header)
         nib.save(self.clust_mask_corr_img, self.clust_mask_corr)
-        del mask_data
+        del self.mask_data
         return self.atlas
 
     def create_local_clustering(self, overwrite=True, r_thresh=0.5):

@@ -389,7 +389,6 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
 
     func_img = nib.load(func_file)
     hdr = func_img.header
-    func_img.uncache()
 
     if hpass:
         if len(hdr.get_zooms()) == 4:
@@ -411,7 +410,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
         detrending = True
 
     if mask is not None:
-        mask_img = nib.load(mask)
+        mask_img = nib.load(mask, keep_file_open=False)
     else:
         mask_img = None
 
@@ -433,17 +432,12 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
             os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
             conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
             confounds_nonan.to_csv(conf_corr, sep='\t')
-            while utils.has_handle(func_file) is True:
-                time.sleep(5)
-            ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf_corr)
+            ts_within_nodes = parcel_masker.fit_transform(func_img, confounds=conf_corr)
         else:
-            while utils.has_handle(func_file) is True:
-                time.sleep(5)
-            ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
+            ts_within_nodes = parcel_masker.fit_transform(func_img, confounds=conf)
     else:
-        while utils.has_handle(func_file) is True:
-            time.sleep(5)
-        ts_within_nodes = parcel_masker.fit_transform(func_file)
+        ts_within_nodes = parcel_masker.fit_transform(func_img)
+    func_img.uncache()
 
     if ts_within_nodes is None:
         raise RuntimeError('\nERROR: Time-series extraction failed!')
@@ -468,7 +462,6 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     net_parcels_map_nifti.uncache()
     if mask_img is not None:
         mask_img.uncache()
-    func_img.uncache()
 
     return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass
 
@@ -563,9 +556,8 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     while utils.has_handle(func_file) is True:
         time.sleep(5)
 
-    func_img = nib.load(func_file)
+    func_img = nib.load(func_file, keep_file_open=False)
     hdr = func_img.header
-    func_img.uncache()
 
     if hpass:
         if len(hdr.get_zooms()) == 4:
@@ -587,7 +579,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         detrending = True
 
     if mask is not None:
-        mask_img = nib.load(mask)
+        mask_img = nib.load(mask, keep_file_open=False)
     else:
         mask_img = None
 
@@ -610,17 +602,12 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
                 os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
                 conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
                 confounds_nonan.to_csv(conf_corr, sep='\t')
-                while utils.has_handle(func_file) is True:
-                    time.sleep(5)
-                ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf_corr)
+                ts_within_nodes = spheres_masker.fit_transform(func_img, confounds=conf_corr)
             else:
-                while utils.has_handle(func_file) is True:
-                    time.sleep(5)
-                ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
+                ts_within_nodes = spheres_masker.fit_transform(func_img, confounds=conf)
         else:
-            while utils.has_handle(func_file) is True:
-                time.sleep(5)
-            ts_within_nodes = spheres_masker.fit_transform(func_file)
+            ts_within_nodes = spheres_masker.fit_transform(func_img)
+        func_img.uncache()
 
         if float(c_boot) > 0:
             print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))
