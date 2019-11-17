@@ -18,6 +18,19 @@ def get_file():
     return base_path
 
 
+def has_handle(fpath):
+    import psutil
+    for proc in psutil.process_iter():
+        try:
+            for item in proc.open_files():
+                if fpath == item.path:
+                    return True
+        except Exception:
+            pass
+
+    return False
+
+
 def do_dir_path(atlas, in_file):
     """
     Creates an atlas subdirectory from the base directory of the given subject's input file.

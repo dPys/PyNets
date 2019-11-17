@@ -368,6 +368,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
     import os
+    import time
     import os.path as op
     import nibabel as nib
     from nilearn import input_data
@@ -384,8 +385,13 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
             raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the '
                              '-conf flag exist(s)')
 
+    while utils.has_handle(func_file) is True:
+        time.sleep(5)
+
     func_img = nib.load(func_file)
     hdr = func_img.header
+    func_img.uncache()
+
     if hpass:
         if len(hdr.get_zooms()) == 4:
             t_r = float(hdr.get_zooms()[-1])
@@ -428,10 +434,16 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
             os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
             conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
             confounds_nonan.to_csv(conf_corr, sep='\t')
+            while utils.has_handle(func_file) is True:
+                time.sleep(5)
             ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf_corr)
         else:
+            while utils.has_handle(func_file) is True:
+                time.sleep(5)
             ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
     else:
+        while utils.has_handle(func_file) is True:
+            time.sleep(5)
         ts_within_nodes = parcel_masker.fit_transform(func_file)
 
     if ts_within_nodes is None:
@@ -538,6 +550,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     from pynets.fmri.estimation import timeseries_bootstrap
     from pynets.core import utils
     import numbers
+    import time
 
     if not op.isfile(func_file):
         raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
@@ -548,8 +561,13 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
             raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the '
                              '-conf flag exist(s)')
 
+    while utils.has_handle(func_file) is True:
+        time.sleep(5)
+
     func_img = nib.load(func_file)
     hdr = func_img.header
+    func_img.uncache()
+
     if hpass:
         if len(hdr.get_zooms()) == 4:
             t_r = float(hdr.get_zooms()[-1])
@@ -593,10 +611,16 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
                 os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
                 conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
                 confounds_nonan.to_csv(conf_corr, sep='\t')
+                while utils.has_handle(func_file) is True:
+                    time.sleep(5)
                 ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf_corr)
             else:
+                while utils.has_handle(func_file) is True:
+                    time.sleep(5)
                 ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
         else:
+            while utils.has_handle(func_file) is True:
+                time.sleep(5)
             ts_within_nodes = spheres_masker.fit_transform(func_file)
 
         if float(c_boot) > 0:
@@ -627,6 +651,5 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     del spheres_masker
     if mask_img is not None:
         mask_img.uncache()
-    func_img.uncache()
 
     return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass
