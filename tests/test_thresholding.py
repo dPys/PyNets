@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Created on Wed Dec 27 16:19:14 2017
@@ -15,286 +15,337 @@ except ImportError:
 from pathlib import Path
 from pynets.core import thresholding
 import networkx as nx
+import pytest
 
 
-def test_binarize():
+@pytest.mark.parametrize("cp", [True, False])
+@pytest.mark.parametrize("thr", [pytest.param(-0.2, marks=pytest.mark.xfail), 0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+def test_conn_mat_operations(cp, thr):
+    """ Includes original tests using .npy and new tests from randomly generate arrays, as
+        well as additional assert statements.
     """
-    Test binarize functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
-    s = thresholding.binarize(thresholding.threshold_proportional(x, .41))
-    assert np.sum(s) == 2.0
+    def test_binarize(x, thr, cp):
+        y = thresholding.threshold_proportional(x, thr, copy=cp)
+        s = thresholding.binarize(y)
+        assert np.sum(s) == np.count_nonzero(y)
+    
+    
+    def test_normalize(x, thr, cp):
+        x = thresholding.threshold_proportional(x, 1, copy=True) # remove diagonal
+        s = thresholding.normalize(x)
+        assert np.max(s) <= 1 and np.min(s) >= 0
+        assert np.max(s) == 1 and np.min(s) == round(min(x.flatten())/max(x.flatten()), 1)
+    
+        
+    def test_threshold_absolute(x, thr, cp):
+        s = thresholding.threshold_absolute(x, thr, copy=cp)
+        s_test = [val for arr in s for val in arr if val >= thr] # search for value > thr
+        assert round(np.sum(s), 10) == round(np.sum(s_test), 10)
+        
+    
+    def test_invert(x, thr, cp):
+        x_cp = x.copy() # invert modifies array in place and need orig to assert.
+        x_cp = thresholding.threshold_proportional(x_cp, thr, copy=cp)
+        s = thresholding.invert(x_cp)
+        x = x.flatten() # flatten arrays to more easily check s > x.
+        s = s.flatten()
+        s_gt_x = [inv_val > x[idx] for idx, inv_val in enumerate(s) if inv_val > 0]
+        assert False not in s_gt_x
+        
+        
+    def test_autofix(x, thr, cp):
+        x[1][1] = np.inf
+        x[2][1] = np.nan
+        s = thresholding.autofix(x)
+        assert (np.nan not in s) and (np.inf not in s)
+        
+    
+    def test_density(x, thr):
+        # Prevent redundent tests
+        if cp == True: 
+            d_known = thresholding.est_density(thresholding.threshold_absolute(x, thr, copy=True))
+            x = thresholding.density_thresholding(x, d_known)
+            d_test = thresholding.est_density(x)
+            assert np.equal(np.round(d_known, 1), np.round(d_test, 1))
+    
+    
+    def test_thr2prob(x, thr):
+        # Prevent redundent tests
+        if cp == True: 
+            s = thresholding.threshold_absolute(thresholding.normalize(x), thr)
+            s[0][0] = 0.0000001
+            t = thresholding.thr2prob(s)
+            assert float(len(t[np.logical_and(t < 0.001, t > 0)])) == float(0.0)
+        
+        
+    def test_local_thresholding_prop(x, thr):
+        coords = []
+        labels = []
+        for idx, val in enumerate(x):
+            coords.append(idx)
+            labels.append('ROI_' + str(idx))
+        
+        # Disconnect graph for edge case.
+        x_undir = nx.from_numpy_matrix(x).to_undirected()
+        for i in range(1, 10):
+            x_undir.remove_edge(0, i)
+        x_undir = nx.to_numpy_matrix(x_undir)
 
-
-def test_normalize():
-    """
-    Test normalize functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
-    s = thresholding.normalize(thresholding.threshold_proportional(x, .79))
-    assert np.max(s) <= 1
-    assert np.min(s) >= 0
-
-
-def test_threshold_absolute():
-    """
-    Test threshold_absolute functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
-    s = thresholding.threshold_absolute(x, 0.1)
-    assert np.round(np.sum(s), 1) <= np.sum(x)
-
-
-def test_invert():
-    """
-    Test invert functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
-    s = thresholding.invert(thresholding.threshold_proportional(x, .9))
-    assert np.round(np.sum(s), 1) >= np.sum(x)
-
-
-def test_autofix():
-    """
-    Test autofix functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
-    x[1][1] = np.inf
-    x[2][1] = np.nan
-    s = thresholding.autofix(x)
-    assert (np.nan not in s) and (np.inf not in s)
-
-
-def test_density_thresholding():
-    """
-    Test density_thresholding functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    x = np.genfromtxt(
-        base_dir + '/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_raw_mat.txt')
-    l = thresholding.est_density((thresholding.density_thresholding(x, 0.01)))
-    h = thresholding.est_density((thresholding.density_thresholding(x, 0.04)))
-    assert np.equal(l, 0.009748743718592965)
-    assert np.equal(h, 0.037487437185929645)
-
-
-def test_est_density():
-    """
-    Test est_density functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    x = np.genfromtxt(
-        base_dir + '/002/fmri/whole_brain_cluster_labels_PCA200/002_est_sps_raw_mat.txt')
-    d = thresholding.est_density(x)
-    assert np.round(d, 1) == 0.1
-
-
-def test_thr2prob():
-    """
-    Test thr2prob functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    x = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')
-    s = thresholding.normalize(x)
-    s[0][0] = 0.0000001
-    t = thresholding.thr2prob(s)
-    assert float(len(t[np.logical_and(t < 0.001, t > 0)])) == float(0.0)
-
-
-def test_thresh_func():
-    """
-    Test thresh_func functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    dens_thresh = False
-    thr = 0.95
-    smooth = 2
-    c_boot = 3
-    conn_matrix = np.random.rand(3, 3)
-    conn_model = 'cov'
-    network = 'Default'
-    min_span_tree = False
-    ID = '002'
-    disp_filt = False
-    roi = None
-    parc = False
-    node_size = 'TEST'
-    hpass = 0.10
-    prune = 1
-    norm = 1
-    binary = False
-    atlas = 'whole_brain_cluster_labels_PCA200'
-    uatlas = None
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
-    labels_file = open(labels_file_path, 'rb')
-    labels = pickle.load(labels_file)
-    coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
-    coord_file = open(coord_file_path, 'rb')
-    coords = pickle.load(coord_file)
-
-    start_time = time.time()
-    [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _, _, _, _, _, _,
-     _, _, _, _, _, _, _] = thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model,
-                                                     network, ID, dir_path, roi, node_size, min_span_tree, smooth, disp_filt,
-                                                     parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass)
-    print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
-                      np.round(time.time() - start_time, 1), 's'))
-
-    assert conn_matrix_thr is not None
-    assert edge_threshold is not None
-    assert est_path is not None
-
-
-# def test_thresh_diff():
-#     # Set example inputs
-#     base_dir = str(Path(__file__).parent/"examples")
-#
-#     dir_path = base_dir + '/002/fmri'
-#     dens_thresh = False
-#     thr = 0.95
-#     conn_matrix=np.random.rand(3,3)
-#     conn_model = 'cov'
-#     network = 'Default'
-#     min_span_tree = False
-#     ID = '997'
-#     roi = None
-#     node_size = 'parc'
-#     parc = True
-#     disp_filt = False
-#     atlas = 'whole_brain_cluster_labels_PCA200'
-#     uatlas = None
-#     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
-#     labels_file = open(labels_file_path, 'rb')
-#     labels = pickle.load(labels_file)
-#     coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
-#     coord_file = open(coord_file_path, 'rb')
-#     coords = pickle.load(coord_file)
-#
-#     start_time = time.time()
-#     [conn_matrix_thr, edge_threshold, est_path, _, _, _, _, _, _, _, _, _] = thresholding.thresh_diff(dens_thresh, thr, conn_model, network, ID, dir_path,
-#     roi, node_size, conn_matrix, parc, min_span_tree, disp_filt, atlas,
-#     uatlas, labels, coords)
-#     print("%s%s%s" %
-#     ('thresh_and_fit (Functional, density thresholding) --> finished: ',
-#     str(np.round(time.time() - start_time, 1)), 's'))
-#
-#     assert conn_matrix_thr is not None
-#     assert est_path is not None
-#     assert edge_threshold is not None
-
-def test_disparity_filter():
-    """
-    Test disparity_filter functionality
-    """
-    import random
-
-    G = nx.gnm_random_graph(10, 10)
-    for (u, v, w) in G.edges(data=True):
-        w['weight'] = random.randint(0, 10)
-
-    # Test undirected graphs
-    N = thresholding.disparity_filter(G, weight='weight')
-
-    assert N is not None
-
-
-def test_disparity_filter_alpha_cut():
-    """
-    Test disparity_filter_alpha_cut functionality
-    """
-    import random
-
-    G = nx.gnm_random_graph(10, 10)
-    for (u, v, w) in G.edges(data=True):
-        w['weight'] = random.randint(0, 10)
-
-    # Test undirected graphs
-    N = thresholding.disparity_filter_alpha_cut(G, weight='weight')
-
-    assert N is not None
-
-
-def test_knn():
-    """
-    Test knn functionality
-    """
-    # Generate connectivity matrix with 100 nodes and random weights
-    conn_matrix = np.random.rand(100, 100)
-
-    # NaN's across diagonal of connectivity matrix
-    for idx, val in enumerate(conn_matrix):
-        conn_matrix[idx][idx] = np.nan
-
-    # Test range of nearest neighbors, k
-    for k in range(1, 11):
-        gra = thresholding.knn(conn_matrix, k)
-        assert gra is not None
-
-
-def test_local_thresholding_prop():
-    """
-    Test local_thresholding_prop functionality
-    """
-    # Generate connectivity matrix with 10 nodes and random weights
-    conn_matrix = np.random.rand(10, 10)
-
-    # NaN's across diagonal of connectivity matrix
-    # Create list of coords = nodes
-    coords = []
-    labels = []
-    for idx, val in enumerate(conn_matrix):
-        conn_matrix[idx][idx] = np.nan
-        coords.append(idx)
-        labels.append('ROI_' + str(idx))
-
-    # Test range of thresholds
-    for val in range(0, 11):
-        thr = round(val*0.1, 1)
-        conn_matrix_thr = thresholding.local_thresholding_prop(conn_matrix, coords, labels, thr)
+        conn_matrix_thr = thresholding.local_thresholding_prop(x, coords, labels, thr)
         assert conn_matrix_thr is not None
+        conn_matrix_thr_undir = thresholding.local_thresholding_prop(x_undir, coords, labels, thr)
+        assert conn_matrix_thr_undir is not None    
+    
+    
+    def test_knn(x, thr):
+        k = int(thr * 10)
+        gra = thresholding.knn(x, k)
 
+          
+    def test_disparity_filter(x, thr):
+        G_undir = nx.from_numpy_matrix(x)
+        G_dir = G_undir.to_directed()
+        
+        # Test edge case where {in,out}_degree are 0.
+        for e in [0, 2, 3, 4, 5, 6, 7, 8, 9]:
+            G_dir.remove_edge(0, e)    
+        for e in range(1, 10):
+            G_dir.remove_edge(e, 1)
+        for e in range(1, 10):
+            G_undir.remove_edge(0, e)
+    
+        N = thresholding.disparity_filter(G_dir, weight='weight')
+        assert N is not None
+        N = thresholding.disparity_filter(G_undir, weight='weight')
+        assert N is not None
 
-def test_weight_conversion():
-    """
-    Test weight_conversion functionality
-    """
-    # Note: wcm='Normalize' is listed as option in input but not implemented.
-
-    # Generate connectivity matrix with 10 nodes and random weights
-    W = np.random.rand(10, 10)
-
-    # NaN's across diagonal of connectivity matrix
-    for idx, val in enumerate(W):
-        W[idx][idx] = np.nan
-
-    # Cross test all wcm and copy combinations
-    for wcm in ['binarize', 'lengths']:
-        for copy in [True, False]:
-            w = thresholding.weight_conversion(W, wcm, copy)
+    def test_disparity_filter_alpha_cut(x):
+        G_undir = nx.from_numpy_matrix(x)
+        G_dir = G_undir.to_directed()
+        G_dir.add_edge(0, 1, alpha_in=0.1, alpha_out=0.1)
+        G_undir.add_edge(0, 1, alpha=0.1, weight=0.5)
+        
+        for mode in ['or', 'and']:
+            N = thresholding.disparity_filter_alpha_cut(G_dir, weight='weight', cut_mode = mode)
+            assert N is not None
+            N = thresholding.disparity_filter_alpha_cut(G_undir, weight='weight', cut_mode = mode)
+            assert N is not None
+                
+                
+    def test_weight_conversion(x, cp):
+        # Cross test all wcm and copy combinations
+        for wcm in ['binarize', 'lengths']:
+            w = thresholding.weight_conversion(x, wcm, cp)
             assert w is not None
 
+    
+    def test_weight_to_distance(x):
+        G = nx.from_numpy_matrix(x)
+        w = thresholding.weight_to_distance(G)
+        assert w is not None
+        
+    
+    def test_standardize(x):
+        w = thresholding.standardize(x)
+        assert w is not None
+        
+        
+    base_dir = str(Path(__file__).parent/"examples")
+    W = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')    
+        
+    x_orig = W.copy()
+    x_rand = x = np.random.rand(10, 10)
+    test_binarize(x_orig, thr, cp)
+    test_binarize(x_rand, thr, cp)
+    
+    x_orig = W.copy()
+    x_rand = np.random.rand(10, 10)
+    test_normalize(x_orig, thr, cp)
+    test_normalize(x_rand, thr, cp)
+    
+    x_orig = W.copy()
+    x_rand = np.random.rand(10, 10)
+    test_threshold_absolute(x_orig, thr, cp)
+    test_threshold_absolute(x_rand, thr, cp)
+    
+    x_orig = W.copy()
+    x_rand = np.random.rand(10, 10)
+    test_invert(x_orig, thr, cp)
+    test_invert(x, thr, cp)
+    
+    x_orig = W.copy()
+    x_rand = np.random.rand(10, 10)
+    test_autofix(x_orig, thr, cp)
+    test_autofix(x, thr, cp)
+    
+    # Prevent redundant testing.
+    if cp == True: 
+        x_orig = W.copy() 
+        x_rand = np.random.rand(100, 100)
+        test_density(x_orig, thr) 
+        test_density(x_orig, thr)
+    
+        x_orig = W.copy()
+        x_rand = np.random.rand(10, 10)
+        test_thr2prob(x_orig, thr)
+        test_thr2prob(x_rand, thr)
+    
+        x_orig = W.copy()
+        x_rand = np.random.rand(10,10)
+        test_local_thresholding_prop(x_rand, thr)
+        test_knn(x_rand, thr)
+        test_disparity_filter(x_rand, thr)
+    
+    if thr == 0.2 and cp == True:
+        test_disparity_filter_alpha_cut(x_rand)
+        test_weight_to_distance(x_rand)
+        test_standardize(x_rand)
+    
+    if thr == 0.2:
+        test_weight_conversion(x_rand, cp)
+    
+@pytest.mark.parametrize("thr", [0.0, 0.2, 0.4, 0.6, 0.8, 1.0])    
+def test_edge_cases(thr):
+    # local_thresholding_prop: nng.number_of_edges() == 0 and number_before >= maximum_edges
+    x = np.zeros((10,10))
+    x = nx.to_numpy_array(nx.from_numpy_matrix(x).to_directed())
+    coords = [idx for idx, val in enumerate(x)]
+    labels = ['ROI_' + str(idx) for idx, val in enumerate(x)]
+        
+    for idx, i in enumerate(range(0, 10)):
+        if idx < 9:
+            x[i][idx+1] = 1
+        if idx < 10 and idx > 0:
+            x[i][idx-1] = 1
+            
+    conn_mat_edge_one = thresholding.local_thresholding_prop(x, coords, labels, thr)
+    assert conn_mat_edge_one is not None
 
-def test_weight_to_distance():
-    """
-    Test weight_to_distance functionality
-    """
-    # Generate connectivity matrix with 10 nodes and random weights
-    conn_matrix = np.random.rand(10, 10)
 
-    # NaN's across diagonal of connectivity matrix
-    for idx, val in enumerate(conn_matrix):
-        conn_matrix[idx][idx] = np.nan
+@pytest.mark.parametrize("type,parc,all_zero,frag_g",
+    [
+        pytest.param('func', True, True, True, marks=pytest.mark.xfail),
+        pytest.param('struct', True, True, True, marks=pytest.mark.xfail),
+        ('either', True, False, True),
+        ('either', False, False, False)
+    ]
+)
+@pytest.mark.parametrize("min_span_tree", [True, False])
+@pytest.mark.parametrize("disp_filt", [True, False])
+@pytest.mark.parametrize("dens_thresh", [True, False])
+def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh, frag_g):
+    base_dir = str(Path(__file__).parent/"examples")
+    dir_path = base_dir + '/002/fmri'
 
-    # Create graph using knn
-    k = 10
-    G = thresholding.knn(conn_matrix, k)
-    G = nx.from_numpy_matrix(conn_matrix)
+    if all_zero == True and type == 'func':
+        conn_matrix = np.zeros((10,10))
+    elif frag_g == True:
+        conn_matrix = np.random.rand(10,10)
+        for i in range(1, 10):
+            conn_matrix[0][i] = 0
+            conn_matrix[i][0] = 0
+    else:
+        conn_matrix = np.random.rand(10, 10)
+    
+    ID = '002'
+    network = 'Default'
+    conn_model = 'sps'
+    thr = 0.5
+    node_size = 6
+    smooth = 2
+    c_boot = 3
+    roi = base_dir + dir_path + \
+        '/fmri/whole_brain_cluster_labels_PCA200/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz'
+    coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
+    coord_file = open(coord_file_path, 'rb')
+    coords = pickle.load(coord_file)    
+    labels_file_path = dir_path +'/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+    labels_file = open(labels_file_path, 'rb')
+    labels = pickle.load(labels_file)
+    # The arguments below arr never used in the thresholding.tresh_func, but are returned.
+    prune = True 
+    atlas = 'whole_brain_cluster_labels_PCA200'
+    uatlas = None
+    norm = 1
+    binary = False
+    hpass = False 
+                                               
+    conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, \
+        prune, ID, dir_path, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass = \
+        thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, 
+                                 roi, node_size, min_span_tree, smooth, disp_filt, parc, prune, 
+                                 atlas, uatlas, labels, coords, c_boot, norm, binary, hpass)    
+                                 
+    assert conn_matrix_thr is not None
+    if min_span_tree is False and disp_filt is False and dens_thresh is True:
+        assert edge_threshold is None # edge_threshold will be none in one case
+    else:
+        assert edge_threshold is not None
+    assert est_path is not None
+    assert thr is not None
+    assert node_size is not None
+    assert network is not None
+    assert conn_model is not None
+    assert roi is not None
+    assert smooth is not None
+    assert prune is not None
+    assert ID is not None
+    assert dir_path is not None
+    assert atlas is not None
+    assert uatlas is None # Set to none above
+    assert labels is not None
+    assert coords is not None
+    assert c_boot is not None
+    assert norm is not None
+    assert binary is not None
+    assert hpass is not None
+    
+    
+    # Additional arguments for thresh_struc
+    if all_zero == True and type == 'struct':
+        conn_matrix = np.zeros((10,10))
+        
+    target_samples = 2
+    track_type = 'local'
+    atlas_mni = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
+    streams = base_dir + dir_path + '/test_streamline_array_sequence.trk'
+    directget = 'prob'
+    
+    conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, \
+        ID, dir_path, atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, \
+        atlas_mni, streams, directget = thresholding.thresh_struct(dens_thresh, thr, conn_matrix, 
+                                                                   conn_model, network, ID, 
+                                                                   dir_path, roi, node_size, 
+                                                                   min_span_tree, disp_filt, parc, 
+                                                                   prune, atlas, uatlas, labels, 
+                                                                   coords, norm, binary, 
+                                                                   target_samples, track_type, 
+                                                                   atlas_mni, streams, directget)
+                                 
+    assert dens_thresh is not None
+    assert thr is not None
+    assert conn_matrix is not None
+    assert conn_model is not None
+    assert network is not None
+    assert ID is not None
+    assert dir_path is not None
+    assert roi is not None
+    assert node_size is not None
+    assert min_span_tree is not None
+    assert disp_filt is not None
+    assert parc is not None
+    assert prune is not None
+    assert atlas is not None
+    assert uatlas is None # Set to none above
+    assert labels is not None
+    assert coords is not None
+    assert norm is not None
+    assert binary is not None
+    assert target_samples is not None
+    assert track_type is not None
+    assert atlas_mni is not None
+    assert streams is not None
+    assert directget is not None
 
-    g = thresholding.weight_to_distance(G)
-    assert g is not None
+
+        
