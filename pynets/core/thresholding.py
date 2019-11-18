@@ -673,9 +673,6 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
         k += 1
 
     conn_matrix_thr = nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64)
-    if len(min_t.nodes()) < conn_matrix.shape[0]:
-        raise RuntimeWarning("%s%s%s" % ('Cannot apply local thresholding to achieve threshold of: ', thr,
-                                         '. Try a higher -thr or -min_thr'))
 
     return conn_matrix_thr, coords, labels
 
