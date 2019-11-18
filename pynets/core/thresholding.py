@@ -433,9 +433,9 @@ def disparity_filter(G, weight='weight'):
                     alpha_ij_out = 1 - (k_out - 1) * integrate.quad(lambda x: (1 - x) ** (k_out - 2), 0, p_ij_out)[0]
                     N.add_edge(u, v, weight=w, alpha_out=float('%.4f' % alpha_ij_out))
 
-            elif k_out == 1 and G.in_degree(G.successors(u)[0]) == 1:
+            elif k_out == 1 and G.in_degree(list(G.successors(u))[0]) == 1:
                 # we need to keep the connection as it is the only way to maintain the connectivity of the network
-                v = G.successors(u)[0]
+                v = list(G.successors(u))[0]
                 w = G[u][v][weight]
                 N.add_edge(u, v, weight=w, alpha_out=0., alpha_in=0.)
                 # there is no need to do the same for the k_in, since the link is built already from the tail
