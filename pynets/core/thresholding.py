@@ -670,11 +670,6 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
             if len_edges >= edgenum:
                 # print(len_edges)
                 break
-
-        if (len(len_edge_list[-fail_tol:]) - len(set(len_edge_list[-fail_tol:]))) >= (fail_tol - 1):
-            print("%s%s%s" % ('Cannot apply local thresholding to achieve threshold of: ', thr,
-                              '. Using maximally saturated connected matrix instead...'))
-
         k += 1
 
     conn_matrix_thr = nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64)
