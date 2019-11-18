@@ -19,7 +19,9 @@ import pytest
 
 
 @pytest.mark.parametrize("cp", [True, False])
-@pytest.mark.parametrize("thr", [pytest.param(-0.2, marks=pytest.mark.xfail), 0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+@pytest.mark.parametrize("thr", 
+    [pytest.param(-0.2, marks=pytest.mark.xfail), 0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+)
 def test_conn_mat_operations(cp, thr):
     """ Includes original tests using .npy and new tests from randomly generate arrays, as
         well as additional assert statements.
@@ -61,21 +63,17 @@ def test_conn_mat_operations(cp, thr):
         
     
     def test_density(x, thr):
-        # Prevent redundent tests
-        if cp == True: 
-            d_known = thresholding.est_density(thresholding.threshold_absolute(x, thr, copy=True))
-            x = thresholding.density_thresholding(x, d_known)
-            d_test = thresholding.est_density(x)
-            assert np.equal(np.round(d_known, 1), np.round(d_test, 1))
+        d_known = thresholding.est_density(thresholding.threshold_absolute(x, thr, copy=True))
+        x = thresholding.density_thresholding(x, d_known)
+        d_test = thresholding.est_density(x)
+        assert np.equal(np.round(d_known, 1), np.round(d_test, 1))
     
     
     def test_thr2prob(x, thr):
-        # Prevent redundent tests
-        if cp == True: 
-            s = thresholding.threshold_absolute(thresholding.normalize(x), thr)
-            s[0][0] = 0.0000001
-            t = thresholding.thr2prob(s)
-            assert float(len(t[np.logical_and(t < 0.001, t > 0)])) == float(0.0)
+        s = thresholding.threshold_absolute(thresholding.normalize(x), thr)
+        s[0][0] = 0.0000001
+        t = thresholding.thr2prob(s)
+        assert float(len(t[np.logical_and(t < 0.001, t > 0)])) == float(0.0)
         
         
     def test_local_thresholding_prop(x, thr):
@@ -181,7 +179,7 @@ def test_conn_mat_operations(cp, thr):
     # Prevent redundant testing.
     if cp == True: 
         x_orig = W.copy() 
-        x_rand = np.random.rand(100, 100)
+        x_rand = np.random.rand(10, 10)
         test_density(x_orig, thr) 
         test_density(x_orig, thr)
     
