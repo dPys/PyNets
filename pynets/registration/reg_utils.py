@@ -347,12 +347,16 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
         File path to corresponding reoriented bvecs file if outfile is a dwi.
     """
     import os
+    import time
     import os.path as op
+    from pynets.core.utils import has_handle
     from pynets.registration.reg_utils import reorient_dwi, reorient_img, match_target_vox_res
 
+    while has_handle(infile) is True:
+        time.sleep(5)
+
     outdir = op.dirname(infile)
-    img = nib.load(infile)
-    vols = img.shape[-1]
+    vols = nib.load(infile).shape[-1]
 
     # Check orientation
     if (vols > 1) and (bvecs is not None):
@@ -504,8 +508,7 @@ def reorient_img(img, out_dir):
 
     # Load image, orient as RAS
     orig_img = nib.load(img)
-    reoriented = nib.as_closest_canonical(orig_img)
-    normalized = normalize_xform(reoriented)
+    normalized = normalize_xform(nib.as_closest_canonical(orig_img))
 
     # Image may be reoriented
     if normalized is not orig_img:
@@ -515,6 +518,7 @@ def reorient_img(img, out_dir):
         out_name = "%s%s%s%s" % (out_dir, '/', img.split('/')[-1].split('.nii.gz')[0], '_noreor_RAS.nii.gz')
 
     normalized.to_filename(out_name)
+    del orig_img
 
     return out_name
 
@@ -541,8 +545,6 @@ def match_target_vox_res(img_file, vox_size, out_dir):
 
     # Check dimensions
     img = nib.load(img_file)
-    data = img.get_fdata()
-    affine = img.affine
     hdr = img.header
     zooms = hdr.get_zooms()[:3]
     if vox_size == '1mm':
@@ -554,14 +556,15 @@ def match_target_vox_res(img_file, vox_size, out_dir):
         print('Reslicing image ' + img_file + ' to ' + vox_size + '...')
         img_file_res = "%s%s%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii.gz')[0], '_res',
                                          vox_size, '.nii.gz')
-        data2, affine2 = reslice(data, affine, zooms, new_zooms)
-        img2 = nib.Nifti1Image(data2, affine=affine2)
-        nib.save(img2, img_file_res)
+        data2, affine2 = reslice(np.asarray(img.dataobj), img.affine, zooms, new_zooms)
+        nib.save(nib.Nifti1Image(data2, affine=affine2), img_file_res)
         img_file = img_file_res
+        del data2
     else:
         img_file_nores = "%s%s%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii.gz')[0], '_nores',
                                            vox_size, '.nii.gz')
         nib.save(img, img_file_nores)
         img_file = img_file_nores
 
+    del img
     return img_file

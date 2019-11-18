@@ -99,10 +99,11 @@ def test_individual_clustering():
     func_file = dir_path + '/002.nii.gz'
     ID = '002'
     k = 50
+    vox_size = '2mm'
     conf = None
     clust_type = 'ward'
     [uatlas, atlas, clustering, _, _, _] = clustools.individual_clustering(func_file, conf, clust_mask, ID, k,
-                                                                           clust_type)
+                                                                           clust_type, vox_size)
 
     assert uatlas is not None
     assert atlas is not None

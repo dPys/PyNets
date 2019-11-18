@@ -262,6 +262,7 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
     from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm
     import pkg_resources
     import pandas as pd
+    import time
 
     # Determine whether input is from 17-networks or 7-networks
     seven_nets = ['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default']
@@ -881,7 +882,7 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
         print('WARNING: No labels available since atlas name is not specified!')
 
     print("%s%s" % ('Labels:\n', labels))
-    dir_path = utils.do_dir_path(atlas, in_file)
+    dir_path = utils.do_dir_path(atlas.replace('reor_RAS_nores2mm_', ''), in_file)
 
     if len(coords) != len(labels):
         labels = len(coords) * [np.nan]

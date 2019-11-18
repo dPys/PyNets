@@ -82,7 +82,7 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && conda install -yq python=3.6 ipython \
     && pip install --upgrade pip \
     && conda clean -tipsy \
-    && pip install awscli requests \
+    && pip install awscli requests psutil \
     # Install pynets
     && git clone -b master https://github.com/dPys/PyNets /home/neuro/PyNets && \
     cd /home/neuro/PyNets && \
@@ -117,7 +117,8 @@ RUN chown -R neuro /opt \
     && chmod a+s -R /opt \
     && chmod 775 -R /opt/conda/lib/python3.6/site-packages \
     && chmod 777 /opt/conda/bin/pynets \
-    && find /opt -type f -iname "*.py" -o "*.yaml" -exec chmod 777 {} \; \
+    && find /opt -type f -iname "*.py" -exec chmod 777 {} \; \
+    && find /opt -type f -iname "*.yaml" -exec chmod 777 {} \; \
     && apt-get purge -y --auto-remove \
 	git \
 	gcc \

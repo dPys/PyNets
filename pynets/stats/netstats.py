@@ -5,7 +5,6 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner
 """
-from __future__ import division
 import numpy as np
 import warnings
 import networkx as nx
@@ -276,7 +275,6 @@ def smallworldness(G, niter=10, nrand=100):
     # for an equivalent random graph
     randMetrics = {"C": [], "L": []}
     for i in range(nrand):
-        print('SW random iteration: ', i)
         Gr = random_reference(G, niter=niter, seed=i)
         Gl = lattice_reference(G, niter=niter, seed=i)
         randMetrics["C"].append(weighted_transitivity(Gl))
@@ -764,7 +762,7 @@ def most_important(G):
     return Gt, pruned_nodes
 
 
-@timeout(720)
+@timeout(1200)
 def raw_mets(G, i):
     """
     API that iterates across NetworkX algorithms for a graph G.
@@ -1352,6 +1350,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
 
     # Load netstats config and parse graph algorithms as objects
     with open("%s%s" % (str(Path(__file__).parent), '/global_graph_measures.yaml'), 'r') as stream:
+#    with open('/Users/derekpisner/Applications/PyNets/pynets/stats/global_graph_measures.yaml', 'r') as stream:
         try:
             nx_algs = ['degree_assortativity_coefficient', 'average_clustering', 'average_shortest_path_length',
                        'graph_number_of_cliques']
@@ -1373,6 +1372,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
             print('Failed to parse global_graph_measures.yaml')
 
     with open("%s%s" % (str(Path(__file__).parent), '/nodal_graph_measures.yaml'), 'r') as stream:
+#    with open('/Users/derekpisner/Applications/PyNets/pynets/stats/nodal_graph_measures.yaml', 'r') as stream:
         try:
             metric_dict_nodal = yaml.load(stream)
             metric_list_nodal = metric_dict_nodal['metric_list_nodal']
@@ -1506,3 +1506,141 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     del net_met_val_list_final, metric_list_names, metric_list_global
 
     return out_path_neat
+
+
+def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_collect=False, create_summary=True):
+    """
+    Summarize list of pickled pandas dataframes of graph metrics unique to eacho unique combination of hyperparameters.
+
+    Parameters
+    ----------
+    net_mets_csv_list : list
+        List of file paths to pickled pandas dataframes as themselves.
+    ID : str
+        A subject id or other unique identifier.
+    network : str
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
+        study of brain subgraphs.
+    plot_switch : bool
+        Activate summary plotting (histograms, central tendency, AUC, etc.)
+
+    Returns
+    -------
+    combination_complete : bool
+        If True, then data integration completed successfully.
+    """
+    import os
+    import os.path as op
+    import pandas as pd
+    import matplotlib
+    matplotlib.use('Agg')
+    from itertools import groupby
+    import re
+
+    # Check for existence of net_mets csv files, condensing final list to only those that were actually produced.
+    net_mets_csv_list_exist = []
+    for net_mets_csv in list(net_mets_csv_list):
+        if op.isfile(net_mets_csv) is True:
+            net_mets_csv_list_exist.append(net_mets_csv)
+
+    if len(list(net_mets_csv_list)) > len(net_mets_csv_list_exist):
+        raise UserWarning('Warning! Number of actual models produced less than expected. Some graphs were excluded')
+
+    net_mets_csv_list = net_mets_csv_list_exist
+    subject_path = op.dirname(op.dirname(op.dirname(net_mets_csv_list[0])))
+
+    if len(net_mets_csv_list) > 1:
+        print("%s%s%s" % ('\n\nList of result files to concatenate:\n', str(net_mets_csv_list), '\n\n'))
+
+        models = []
+        for file_ in net_mets_csv_list:
+            models.append(op.basename(op.dirname(op.dirname(file_))) + '/netmetrics/' + op.basename(file_))
+
+        def sort_thr(model_name):
+            return model_name.split('thr-')[1].split('_')[0]
+
+        models.sort(key=sort_thr)
+
+        # Group by secondary attributes
+        models_grouped = [list(x) for x in zip(*[list(g) for k, g in groupby(models, lambda s: s.split('thr-')[1].split('_')[0])])]
+
+        meta = dict()
+        non_decimal = re.compile(r'[^\d.]+')
+        for thr_set in range(len(models_grouped)):
+            meta[thr_set] = dict()
+            meta[thr_set]['dataframes'] = dict()
+            for i in models_grouped[thr_set]:
+                thr = non_decimal.sub('', i.split('thr-')[1].split('_')[0])
+                _file = subject_path + '/' + i
+                df = pd.read_csv(_file)
+                if nc_collect is False:
+                    node_cols = [s for s in list(df.columns) if isinstance(s, int) or any(c.isdigit() for c in s)]
+                    df = df.drop(node_cols, axis=1)
+                meta[thr_set]['dataframes'][thr] = df
+
+        # For each unique threshold set, for each graph measure, extract AUC
+        for thr_set in meta.keys():
+            df_summary = pd.concat(meta[thr_set]['dataframes'].values())
+            df_summary['thr'] = meta[thr_set]['dataframes'].keys()
+            meta[thr_set]['summary_dataframe'] = df_summary
+            df_summary_auc = df_summary.iloc[[0]]
+            df_summary_auc.columns = [col + '_auc' for col in df_summary.columns]
+
+            print("%s%s" % ('\nCalculating AUC for threshold group: ', models_grouped[thr_set]))
+            for measure in df_summary.columns[:-1]:
+                # Get Area Under the Curve
+                df_summary_nonan = df_summary[pd.notnull(df_summary[measure])]
+                df_summary_auc[measure] = np.trapz(np.array(df_summary_nonan[measure]).astype('float64'),
+                                                   np.array(df_summary_nonan['thr']).astype('float64'))
+                print("%s%s%s" % (measure, ': ', df_summary_auc[measure].to_string(index=False)))
+            meta[thr_set]['auc_dataframe'] = df_summary_auc
+            auc_dir = subject_path + '/' + models_grouped[thr_set][0].split('/')[0] + '/netmetrics/auc/'
+            if not os.path.isdir(auc_dir):
+                os.makedirs(auc_dir, exist_ok=True)
+            auc_outfile = auc_dir + list(set([re.sub(r'thr\-\d+\.*\d+', '',
+                                                     i.split('/netmetrics/')[1]).replace('neat', 'auc') for i in
+                                              models_grouped[thr_set]]))[0]
+            df_summary_auc.to_csv(auc_outfile, header=True, index=False, chunksize=100000, compression='gzip',
+                                  encoding='utf-8')
+
+        if create_summary is True:
+            try:
+                summary_dir = subject_path + '/summary'
+                if not os.path.isdir(summary_dir):
+                    os.makedirs(summary_dir, exist_ok=True)
+
+                # Concatenate and find mean across dataframes
+                print('Concatenating frames...')
+                df_concat = pd.concat([meta[thr_set]['auc_dataframe'] for thr_set in meta.keys()])
+                measures = list(df_concat.columns)
+                if plot_switch is True:
+                    from pynets.plotting import plot_gen
+                    plot_gen.plot_graph_measure_hists(df_concat, measures, file_)
+                df_concatted_mean = df_concat.loc[:, measures].mean(skipna=True).to_frame().transpose()
+                df_concatted_median = df_concat.loc[:, measures].median(skipna=True).to_frame().transpose()
+                df_concatted_mode = pd.DataFrame(df_concat.loc[:, measures].mode(axis=0, dropna=True).max()).transpose()
+                df_concatted_mean.columns = [str(col) + '_mean' for col in df_concatted_mean.columns]
+                df_concatted_median.columns = [str(col) + '_median' for col in df_concatted_median.columns]
+                df_concatted_mode.columns = [str(col) + '_maxmode' for col in df_concatted_mode.columns]
+                result = pd.concat([df_concatted_mean, df_concatted_median, df_concatted_mode], axis=1)
+                df_concatted_final = result.reindex(sorted(result.columns), axis=1)
+                print('\nConcatenating dataframes for ' + str(ID) + '...\n')
+                net_csv_summary_out_path = "%s%s%s%s%s%s" % (summary_dir, '/', str(ID), '_net_mets',
+                                                             '%s' % ('_' + network if network is not None else ''),
+                                                             '_mean.csv')
+                df_concatted_final.to_csv(net_csv_summary_out_path, index=False)
+                combination_complete = True
+            except RuntimeWarning:
+                combination_complete = False
+                print("%s%s%s" % ('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ', str(ID), '!\n'))
+                pass
+        else:
+            combination_complete = True
+    else:
+        if network is not None:
+            print("%s%s%s%s%s" % ('\nSingle dataframe for the ', network, ' network for subject ', ID, '\n'))
+        else:
+            print("%s%s%s" % ('\nSingle dataframe for subject ', ID, '\n'))
+        combination_complete = True
+
+    return combination_complete

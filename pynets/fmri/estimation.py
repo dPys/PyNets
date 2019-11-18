@@ -261,6 +261,46 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
     return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass
 
 
+def timeseries_bootstrap(tseries, block_size):
+    """
+    Generates a bootstrap sample derived from the input time-series.
+    Utilizes Circular-block-bootstrap method described in [1]_.
+
+    Parameters
+    ----------
+    tseries : array_like
+        A matrix of shapes (`M`, `N`) with `M` timepoints and `N` variables
+    block_size : integer
+        Size of the bootstrapped blocks
+
+    Returns
+    -------
+    bseries : array_like
+        Bootstrap sample of the input timeseries
+
+    References
+    ----------
+    .. [1] P. Bellec; G. Marrelec; H. Benali, A bootstrap test to investigate
+       changes in brain connectivity for functional MRI. Statistica Sinica,
+       special issue on Statistical Challenges and Advances in Brain Science,
+       2008, 18: 1253-1268.
+    """
+    np.random.seed(int(42))
+
+    # calculate number of blocks
+    k = int(np.ceil(float(tseries.shape[0]) / block_size))
+
+    # generate random indices of blocks
+    r_ind = np.floor(np.random.rand(1, k) * tseries.shape[0])
+    blocks = np.dot(np.arange(0, block_size)[:, np.newaxis], np.ones([1, k]))
+
+    block_offsets = np.dot(np.ones([block_size, 1]), r_ind)
+    block_mask = (blocks + block_offsets).flatten('F')[:tseries.shape[0]]
+    block_mask = np.mod(block_mask, tseries.shape[0])
+
+    return tseries[block_mask.astype('int'), :], block_mask.astype('int')
+
+
 def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas,
                     uatlas, labels, c_boot, block_size, hpass, mask):
     """
@@ -327,10 +367,12 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
+    import time
     import os.path as op
     import nibabel as nib
     from nilearn import input_data
     from pynets.core import utils
+    from pynets.fmri.estimation import timeseries_bootstrap
     import numbers
 
     if not op.isfile(func_file):
@@ -342,8 +384,12 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
             raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the '
                              '-conf flag exist(s)')
 
+    while utils.has_handle(func_file) is True:
+        time.sleep(5)
+
     func_img = nib.load(func_file)
     hdr = func_img.header
+
     if hpass:
         if len(hdr.get_zooms()) == 4:
             t_r = float(hdr.get_zooms()[-1])
@@ -364,13 +410,14 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
         detrending = True
 
     if mask is not None:
-        mask_img = nib.load(mask)
+        mask_img = nib.load(mask, keep_file_open=False)
     else:
         mask_img = None
+
     parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                  detrend=detrending, t_r=t_r, verbose=2, resampling_target='data',
-                                                 dtype="auto", mask_img=mask_img, memory_level=0)
+                                                 dtype="auto", mask_img=mask_img)
     if conf is not None:
         import pandas as pd
         confounds = pd.read_csv(conf, sep='\t')
@@ -385,18 +432,19 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
             os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
             conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
             confounds_nonan.to_csv(conf_corr, sep='\t')
-            ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf_corr)
+            ts_within_nodes = parcel_masker.fit_transform(func_img, confounds=conf_corr)
         else:
-            ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
+            ts_within_nodes = parcel_masker.fit_transform(func_img, confounds=conf)
     else:
-        ts_within_nodes = parcel_masker.fit_transform(func_file)
+        ts_within_nodes = parcel_masker.fit_transform(func_img)
+    func_img.uncache()
 
     if ts_within_nodes is None:
         raise RuntimeError('\nERROR: Time-series extraction failed!')
 
     if float(c_boot) > 0:
         print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))
-        ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
+        ts_within_nodes = timeseries_bootstrap(ts_within_nodes, block_size)[0]
     print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
                         len(coords), ' volumetric ROI\'s'))
     if smooth:
@@ -414,7 +462,6 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     net_parcels_map_nifti.uncache()
     if mask_img is not None:
         mask_img.uncache()
-    func_img.uncache()
 
     return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass
 
@@ -492,8 +539,10 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     import os.path as op
     import nibabel as nib
     from nilearn import input_data
+    from pynets.fmri.estimation import timeseries_bootstrap
     from pynets.core import utils
     import numbers
+    import time
 
     if not op.isfile(func_file):
         raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
@@ -504,8 +553,12 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
             raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the '
                              '-conf flag exist(s)')
 
-    func_img = nib.load(func_file)
+    while utils.has_handle(func_file) is True:
+        time.sleep(5)
+
+    func_img = nib.load(func_file, keep_file_open=False)
     hdr = func_img.header
+
     if hpass:
         if len(hdr.get_zooms()) == 4:
             t_r = float(hdr.get_zooms()[-1])
@@ -526,7 +579,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         detrending = True
 
     if mask is not None:
-        mask_img = nib.load(mask)
+        mask_img = nib.load(mask, keep_file_open=False)
     else:
         mask_img = None
 
@@ -534,7 +587,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                        standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                        detrend=detrending, t_r=t_r, verbose=2, dtype="auto",
-                                                       mask_img=mask_img, memory_level=0)
+                                                       mask_img=mask_img)
         if conf is not None:
             import pandas as pd
             confounds = pd.read_csv(conf, sep='\t')
@@ -549,15 +602,16 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
                 os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
                 conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
                 confounds_nonan.to_csv(conf_corr, sep='\t')
-                ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf_corr)
+                ts_within_nodes = spheres_masker.fit_transform(func_img, confounds=conf_corr)
             else:
-                ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
+                ts_within_nodes = spheres_masker.fit_transform(func_img, confounds=conf)
         else:
-            ts_within_nodes = spheres_masker.fit_transform(func_file)
+            ts_within_nodes = spheres_masker.fit_transform(func_img)
+        func_img.uncache()
 
         if float(c_boot) > 0:
             print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))
-            ts_within_nodes = utils.timeseries_bootstrap(ts_within_nodes, block_size)[0]
+            ts_within_nodes = timeseries_bootstrap(ts_within_nodes, block_size)[0]
         if ts_within_nodes is None:
             raise RuntimeError('\nERROR: Time-series extraction failed!')
 
@@ -583,6 +637,5 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     del spheres_masker
     if mask_img is not None:
         mask_img.uncache()
-    func_img.uncache()
 
     return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass
