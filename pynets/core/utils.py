@@ -900,7 +900,7 @@ def merge_dicts(x, y):
     return z
 
 
-def create_temporary_copy(path, temp_file_name, fmt):
+def create_temporary_copy(path, temp_file_name, fmt, tmp_dir='auto'):
     """
     A function to create temporary file equivalents
     """
@@ -908,8 +908,20 @@ def create_temporary_copy(path, temp_file_name, fmt):
     from time import strftime
     import uuid
     run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
-    temp_dir = tempfile.gettempdir() + '/' + run_uuid
+    if tmp_dir == 'auto':
+        temp_dir = "%s%s%s" % (tempfile.gettempdir(), '/', run_uuid)
+    else:
+        temp_dir = "%s%s%s" % (tmp_dir, '/', run_uuid)
     os.makedirs(temp_dir, exist_ok=True)
     temp_path = "%s%s%s%s" % (temp_dir, '/', temp_file_name, fmt)
-    shutil.copy2(path, temp_path)
+    if (path.endswith('.gz') is True) and (fmt.endswith('.gz') is False):
+        import gzip
+        decomp_func = gzip.open(path)
+        with open(temp_path, 'wb') as outfile:
+            outfile.write(decomp_func.read())
+        decomp_func.close()
+        outfile.close()
+    else:
+        shutil.copy2(path, temp_path)
     return temp_path
+

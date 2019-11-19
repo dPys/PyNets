@@ -31,6 +31,7 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
     mod : obj
         Connectivity reconstruction model.
     '''
+    import gc
     try:
         import cPickle as pickle
     except ImportError:
@@ -43,6 +44,8 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
     else:
         raise ValueError('Error: Either no seeds supplied, or no valid seeds found in white-matter interface')
 
+    del dwi_data
+    gc.collect()
     return mod
 
 
@@ -70,6 +73,7 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     tiss_classifier : obj
         Tissue classifier object.
     '''
+    import gc
     try:
         import cPickle as pickle
     except ImportError:
@@ -102,7 +106,7 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
 
     del gm_mask_data, wm_mask_data, vent_csf_in_dwi_data
     mask_img.uncache()
-
+    gc.collect()
     return tiss_classifier
 
 
@@ -145,6 +149,7 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
     dm_path : str
         File path to fiber density map Nifti1Image.
     '''
+    import gc
     import os
     import os.path as op
     from dipy.tracking import utils
@@ -182,12 +187,17 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
     save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, shifted_origin=True),
                     streams, bbox_valid_check=False)
 
+    del streamlines
+    dm_img.uncache()
+    gc.collect()
+
     return streams, dir_path, dm_path
 
 
 def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere, directget,
-                   curv_thr_list, step_list, track_type, maxcrossing, max_length, roi_neighborhood_tol, min_length, waymask,
-                   n_seeds_per_iter=100, pft_back_tracking_dist=2, pft_front_tracking_dist=1, particle_count=15):
+                   curv_thr_list, step_list, track_type, maxcrossing, max_length, roi_neighborhood_tol, min_length,
+                   waymask, n_seeds_per_iter=100, pft_back_tracking_dist=2, pft_front_tracking_dist=1,
+                   particle_count=15):
     """
     Perform native-space ensemble tractography, restricted to a vector of ROI masks.
 
@@ -251,13 +261,18 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
     """
+    import gc
     from colorama import Fore, Style
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
     from dipy.tracking.local_tracking import LocalTracking, ParticleFilteringTracking
     from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
+    import time
+    from pynets.core.utils import has_handle
 
     if waymask:
+        while has_handle(waymask) is True:
+            time.sleep(5)
         waymask_data = nib.load(waymask).get_fdata().astype('bool')
 
     # Commence Ensemble Tractography
@@ -342,10 +357,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                         continue
 
                 # Cleanup memory
-                del dg
-                del seeds
-                del roi_proximal_streamlines
-                del streamline_generator
+                del dg, seeds, roi_proximal_streamlines, streamline_generator
 
         circuit_ix = circuit_ix + 1
         print("%s%s%s%s%s" % ('Completed hyperparameter circuit: ', circuit_ix, '...\nCumulative Streamline Count: ',
@@ -356,6 +368,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
 
     # Final cleanup
     del waymask_data, stream_counter, parcel_vec, parcels
+    gc.collect()
 
     return streamlines
 
@@ -520,6 +533,7 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     '''
+    import gc
     try:
         import cPickle as pickle
     except ImportError:
@@ -529,8 +543,12 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     from dipy.data import get_sphere
     from pynets.core import utils
     from pynets.dmri.track import prep_tissues, reconstruction, create_density_map, track_ensemble
+    import time
 
     # Load diffusion data
+    while utils.has_handle(dwi_file) is True:
+        time.sleep(5)
+
     dwi_img = nib.load(dwi_file)
     dwi_data = dwi_img.get_fdata()
 
@@ -538,6 +556,8 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     mod_fit = reconstruction(conn_model, load_pickle(gtab_file), dwi_data, B0_mask)
 
     # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
+    while utils.has_handle(labels_im_file) is True:
+        time.sleep(5)
     atlas_data = nib.load(labels_im_file).get_fdata().astype('int')
     atlas_data_wm_gm_int = nib.load(labels_im_file_wm_gm_int).get_fdata().astype('int')
 
@@ -585,5 +605,6 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
 
     del streamlines, dwi_data, atlas_data_wm_gm_int, atlas_data, mod_fit
     dwi_img.uncache()
+    gc.collect()
 
     return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path, directget, labels_im_file, roi_neighborhood_tol

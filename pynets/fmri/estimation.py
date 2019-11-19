@@ -301,7 +301,7 @@ def timeseries_bootstrap(tseries, block_size):
     return tseries[block_mask.astype('int'), :], block_mask.astype('int')
 
 
-def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas,
+def extract_ts_parc(net_parcels_nii_path, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas,
                     uatlas, labels, c_boot, block_size, hpass, mask):
     """
     API for employing Nilearn's NiftiLabelsMasker to extract fMRI time-series data from spherical ROI's based on a
@@ -310,8 +310,8 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
 
     Parameters
     ----------
-    net_parcels_map_nifti : Nifti1Image
-        A nibabel-based nifti image consisting of a 3D array with integer voxel intensities corresponding to ROI
+    net_parcels_nii_path : str
+        Path to a nifti image file consisting of a 3D array with integer voxel intensities corresponding to ROI
         membership.
     conf : str
         File path to a confound regressor file for reduce noise in the time-series when extracting from ROI's.
@@ -367,8 +367,9 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
-    import os
     import time
+    import gc
+    import os
     import os.path as op
     import nibabel as nib
     from nilearn import input_data
@@ -386,9 +387,10 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
                              '-conf flag exist(s)')
 
     while utils.has_handle(func_file) is True:
-        time.sleep(5)
+        time.sleep(1)
 
-    func_img = nib.load(func_file)
+    func_temp_path = utils.create_temporary_copy(func_file, op.basename(func_file).split('.nii')[0], '.nii')
+    func_img = nib.load(func_temp_path)
     hdr = func_img.header
     func_img.uncache()
 
@@ -412,14 +414,17 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
         detrending = True
 
     if mask is not None:
-        mask_img = nib.load(mask)
+        mask_path = utils.create_temporary_copy(mask, op.basename(mask).split('.nii')[0], '.nii')
     else:
-        mask_img = None
+        mask_path = None
 
-    parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
+    net_parcels_nii_temp_path = utils.create_temporary_copy(net_parcels_nii_path,
+                                                            op.basename(net_parcels_nii_path).split('.nii')[0], '.nii')
+
+    parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_nii_temp_path, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                  detrend=detrending, t_r=t_r, verbose=2, resampling_target='data',
-                                                 dtype="auto", mask_img=mask_img)
+                                                 dtype='auto', mask_img=mask_path)
     if conf is not None:
         import pandas as pd
         confounds = pd.read_csv(conf, sep='\t')
@@ -434,17 +439,17 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
             os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
             conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
             confounds_nonan.to_csv(conf_corr, sep='\t')
-            while utils.has_handle(func_file) is True:
-                time.sleep(5)
-            ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf_corr)
+            ts_within_nodes = parcel_masker.fit_transform(func_temp_path, confounds=conf_corr)
         else:
-            while utils.has_handle(func_file) is True:
-                time.sleep(5)
-            ts_within_nodes = parcel_masker.fit_transform(func_file, confounds=conf)
+            ts_within_nodes = parcel_masker.fit_transform(func_temp_path, confounds=conf)
     else:
-        while utils.has_handle(func_file) is True:
-            time.sleep(5)
-        ts_within_nodes = parcel_masker.fit_transform(func_file)
+        ts_within_nodes = parcel_masker.fit_transform(func_temp_path)
+    os.remove(func_temp_path)
+    os.remove(net_parcels_nii_temp_path)
+
+    if mask_path is not None:
+        if os.path.isfile(mask_path):
+            os.remove(mask_path)
 
     if ts_within_nodes is None:
         raise RuntimeError('\nERROR: Time-series extraction failed!')
@@ -466,10 +471,7 @@ def extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords, roi, dir_pat
     node_size = None
 
     del parcel_masker
-    net_parcels_map_nifti.uncache()
-    if mask_img is not None:
-        mask_img.uncache()
-    func_img.uncache()
+    gc.collect()
 
     return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass
 
@@ -544,6 +546,8 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
+    import gc
+    import os
     import os.path as op
     import nibabel as nib
     from nilearn import input_data
@@ -562,11 +566,11 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
                              '-conf flag exist(s)')
 
     while utils.has_handle(func_file) is True:
-        time.sleep(5)
+        time.sleep(1)
 
-    func_img = nib.load(func_file)
+    func_temp_path = utils.create_temporary_copy(func_file, op.basename(func_file).split('.nii')[0], '.nii')
+    func_img = nib.load(func_temp_path)
     hdr = func_img.header
-    func_img.uncache()
 
     if hpass:
         if len(hdr.get_zooms()) == 4:
@@ -588,15 +592,15 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         detrending = True
 
     if mask is not None:
-        mask_img = nib.load(mask)
+        mask_path = utils.create_temporary_copy(mask, op.basename(mask).split('.nii')[0], '.nii')
     else:
-        mask_img = None
+        mask_path = None
 
     if len(coords) > 0:
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                        standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
-                                                       detrend=detrending, t_r=t_r, verbose=2, dtype="auto",
-                                                       mask_img=mask_img)
+                                                       detrend=detrending, t_r=t_r, verbose=2, dtype='auto',
+                                                       mask_img=mask_path)
         if conf is not None:
             import pandas as pd
             confounds = pd.read_csv(conf, sep='\t')
@@ -611,17 +615,16 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
                 os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
                 conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
                 confounds_nonan.to_csv(conf_corr, sep='\t')
-                while utils.has_handle(func_file) is True:
-                    time.sleep(5)
-                ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf_corr)
+                ts_within_nodes = spheres_masker.fit_transform(func_img, confounds=conf_corr)
             else:
-                while utils.has_handle(func_file) is True:
-                    time.sleep(5)
-                ts_within_nodes = spheres_masker.fit_transform(func_file, confounds=conf)
+                ts_within_nodes = spheres_masker.fit_transform(func_img, confounds=conf)
         else:
-            while utils.has_handle(func_file) is True:
-                time.sleep(5)
-            ts_within_nodes = spheres_masker.fit_transform(func_file)
+            ts_within_nodes = spheres_masker.fit_transform(func_img)
+        func_img.uncache()
+        os.remove(func_temp_path)
+        if mask_path is not None:
+            if os.path.isfile(mask_path):
+                os.remove(mask_path)
 
         if float(c_boot) > 0:
             print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))
@@ -649,7 +652,6 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass, node_size)
 
     del spheres_masker
-    if mask_img is not None:
-        mask_img.uncache()
+    gc.collect()
 
     return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass

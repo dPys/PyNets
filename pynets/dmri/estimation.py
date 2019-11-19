@@ -39,6 +39,11 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
     from dipy.io import load_pickle
     from dipy.reconst.dti import TensorModel
     from dipy.reconst.dti import fractional_anisotropy
+    from pynets.core import utils
+    import time
+
+    while utils.has_handle(dwi_file) is True:
+        time.sleep(5)
 
     data = nib.load(dwi_file).get_fdata()
     gtab = load_pickle(gtab_file)
@@ -100,6 +105,7 @@ def csd_mod_est(gtab, data, B0_mask):
     csd_mod : obj
         Spherical harmonics coefficients of the CSD-estimated reconstruction model.
     '''
+    import gc
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     print('Fitting CSD model...')
     B0_mask_data = nib.load(B0_mask).get_fdata().astype('bool')
@@ -110,6 +116,7 @@ def csd_mod_est(gtab, data, B0_mask):
     model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=6)
     csd_mod = model.fit(data, B0_mask_data).shm_coeff
     del model, response, B0_mask_data
+    gc.collect()
     return csd_mod
 
 
@@ -253,12 +260,18 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     # Load parcellation
     roi_img = nib.load(atlas_mni)
     atlas_data = np.around(roi_img.get_fdata())
+    roi_zooms = roi_img.header.get_zooms()
+    roi_shape = roi_img.shape
 
     # Read Streamlines
+    while utils.has_handle(streams) is True:
+        time.sleep(5)
+
     streamlines = Streamlines(load_tractogram(streams, roi_img, to_space=Space.RASMM, shifted_origin=True,
                                               bbox_valid_check=False).streamlines)
+    roi_img.uncache()
 
-    fa_weights = values_from_volume(nib.load(warped_fa).get_data(), streamlines, np.eye(4))
+    fa_weights = values_from_volume(nib.load(warped_fa).get_fdata(), streamlines, np.eye(4))
     global_fa_weights = list(utils.flatten(fa_weights))
     min_global_fa_wei = min(global_fa_weights)
     max_global_fa_wei = max(global_fa_weights)
@@ -283,8 +296,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     ix = 0
     for s in streamlines:
         # Map the streamlines coordinates to voxel coordinates and get labels for label_volume
-        i, j, k = np.vstack(np.array([nodemaker.get_sphere(coord, error_margin, roi_img.header.get_zooms(),
-                                                           roi_img.shape) for coord in
+        i, j, k = np.vstack(np.array([nodemaker.get_sphere(coord, error_margin, roi_zooms,
+                                                           roi_shape) for coord in
                                       _to_voxel_coordinates(s, lin_T, offset)])).T
 
         # get labels for label_volume
@@ -313,6 +326,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         ix = ix + 1
 
     print("%s%s%s" % ('Graph construction runtime: ', np.round(time.time() - start_time, 1), 's'))
+    del streamlines
 
     if fa_wei is True:
         # Add average fa weights to streamline counts

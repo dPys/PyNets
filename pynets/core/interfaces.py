@@ -124,20 +124,40 @@ class IndividualClustering(SimpleInterface):
     output_spec = _IndividualClusteringOutputSpec
 
     def _run_interface(self, runtime):
-        import gc
         from pynets.fmri import clustools
+        from pynets.core import utils
+        import time
+        import gc
+        import os
+        import os.path as op
+        from pynets.registration.reg_utils import check_orient_and_dims
+        from pathlib import Path
+
         nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
-        nip = clustools.NilParcellate(self.inputs.func_file,
-                                      self.inputs.clust_mask,
-                                      self.inputs.k,
-                                      self.inputs.clust_type,
-                                      self.inputs.conf,
-                                      self.inputs.vox_size,
-                                      self.inputs.local_corr)
+        while utils.has_handle(self.inputs.func_file) is True:
+            time.sleep(1)
+
+        cwd = Path(runtime.cwd).absolute()
+
+        func_temp_path = utils.create_temporary_copy(self.inputs.func_file,
+                                                     op.basename(self.inputs.func_file).split('.nii')[0],
+                                                     '.nii', cwd)
+
+        clust_mask_temp_path = utils.create_temporary_copy(check_orient_and_dims(self.inputs.clust_mask,
+                                                                                 self.inputs.vox_size),
+                                                           op.basename(self.inputs.clust_mask).split('.nii')[0],
+                                                           '.nii', cwd)
+
+        nip = clustools.NilParcellate(func_file=func_temp_path,
+                                      clust_mask=clust_mask_temp_path,
+                                      k=self.inputs.k,
+                                      clust_type=self.inputs.clust_type,
+                                      local_corr=self.inputs.local_corr,
+                                      conf=self.inputs.conf)
 
         atlas = nip.create_clean_mask()
-        nip.create_local_clustering()
+        nip.create_local_clustering(overwrite=True, r_thresh=0.4)
 
         if self.inputs.clust_type in nilearn_clust_list:
             uatlas = nip.parcellate()
@@ -145,8 +165,9 @@ class IndividualClustering(SimpleInterface):
             raise ValueError('Clustering method not recognized. '
                              'See: https://nilearn.github.io/modules/generated/nilearn.regions.Parcellations.html#nilearn.'
                              'regions.Parcellations')
-
         del nip
+        os.remove(func_temp_path)
+        os.remove(clust_mask_temp_path)
         gc.collect()
 
         self._results['atlas'] = atlas
