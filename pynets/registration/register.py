@@ -282,7 +282,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     uatlas_mni_data = np.asarray(uatlas_mni_img.dataobj)
     uatlas_mni_img.uncache()
     overlap_mask = np.invert(warped_uatlas_img_res_data.astype('bool') * uatlas_mni_data.astype('bool'))
-    atlas_mni = "%s%s%s%s" % (dir_path, '/parcellations/', os.path.basename(uatlas).split('.nii.gz')[0],
+    atlas_mni = "%s%s%s%s" % (dir_path, '/parcellations/', os.path.basename(uatlas).split('.nii')[0],
                               '_UNION.nii.gz')
     nib.save(nib.Nifti1Image(warped_uatlas_img_res_data * overlap_mask.astype('int') + uatlas_mni_data * overlap_mask.astype('int') + np.invert(overlap_mask).astype('int') * warped_uatlas_img_res_data, affine=warped_fa_affine), atlas_mni)
 
@@ -773,7 +773,9 @@ class FmriReg(object):
         uatlas_img = nib.load(uatlas)
         if len(uatlas_img.shape) == 4:
             uatlas_filled = uatlas.split('.nii')[0] + '_firstvol.nii.gz'
-            nib.save(index_img(uatlas_img, 1), uatlas_filled)
+            first_vol = index_img(uatlas_img, 1)
+            nib.save(first_vol, uatlas_filled)
+            del first_vol
         else:
             uatlas_filled = "%s%s%s%s" % (self.anat_path, '/', atlas, "_filled.nii.gz")
             os.system("fslmaths {} -add {} -mas {} {}".format(self.input_mni_brain, uatlas, self.input_mni_mask,

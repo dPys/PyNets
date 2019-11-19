@@ -105,6 +105,7 @@ def csd_mod_est(gtab, data, B0_mask):
     csd_mod : obj
         Spherical harmonics coefficients of the CSD-estimated reconstruction model.
     '''
+    import gc
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     print('Fitting CSD model...')
     B0_mask_data = nib.load(B0_mask).get_fdata().astype('bool')
@@ -115,6 +116,7 @@ def csd_mod_est(gtab, data, B0_mask):
     model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=6)
     csd_mod = model.fit(data, B0_mask_data).shm_coeff
     del model, response, B0_mask_data
+    gc.collect()
     return csd_mod
 
 

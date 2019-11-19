@@ -262,7 +262,6 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
     from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm
     import pkg_resources
     import pandas as pd
-    import time
 
     # Determine whether input is from 17-networks or 7-networks
     seven_nets = ['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default']
