@@ -185,7 +185,7 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
             density = nx.density(nx.from_numpy_matrix(thresholding.threshold_absolute(conn_matrix, work_thr)))
             print("%s%d%s%.2f%s%.2f%s" % ('Iteration ', i, ' -- with Thresh: ', float(work_thr), ' and Density: ',
                                           float(density), '...'))
-            if float(thr) > float(density):
+            if float(thr) >= float(density):
                 conn_matrix = thresholding.threshold_absolute(conn_matrix, work_thr)
                 break
             i = i + 1
@@ -433,9 +433,9 @@ def disparity_filter(G, weight='weight'):
                     alpha_ij_out = 1 - (k_out - 1) * integrate.quad(lambda x: (1 - x) ** (k_out - 2), 0, p_ij_out)[0]
                     N.add_edge(u, v, weight=w, alpha_out=float('%.4f' % alpha_ij_out))
 
-            elif k_out == 1 and G.in_degree(G.successors(u)[0]) == 1:
+            elif k_out == 1 and G.in_degree(list(G.successors(u))[0]) == 1:
                 # we need to keep the connection as it is the only way to maintain the connectivity of the network
-                v = G.successors(u)[0]
+                v = list(G.successors(u))[0]
                 w = G[u][v][weight]
                 N.add_edge(u, v, weight=w, alpha_out=0., alpha_in=0.)
                 # there is no need to do the same for the k_in, since the link is built already from the tail
@@ -670,17 +670,9 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
             if len_edges >= edgenum:
                 # print(len_edges)
                 break
-
-        if (len(len_edge_list[-fail_tol:]) - len(set(len_edge_list[-fail_tol:]))) >= (fail_tol - 1):
-            print("%s%s%s" % ('Cannot apply local thresholding to achieve threshold of: ', thr,
-                              '. Using maximally saturated connected matrix instead...'))
-
         k += 1
 
     conn_matrix_thr = nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64)
-    if len(min_t.nodes()) < conn_matrix.shape[0]:
-        raise RuntimeWarning("%s%s%s" % ('Cannot apply local thresholding to achieve threshold of: ', thr,
-                                         '. Try a higher -thr or -min_thr'))
 
     return conn_matrix_thr, coords, labels
 
@@ -815,7 +807,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
             print('Ignoring -dt flag since local density thresholding is not currently supporting.')
         thr_type = 'MST_thr'
         edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
-        [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, thr, coords, labels)
+        [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, coords, labels, thr)
     elif disp_filt is True:
         thr_type = 'DISP_alpha'
         edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
@@ -990,7 +982,7 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
             print('Ignoring -dt flag since local density thresholding is not currently supporting.')
         thr_type = 'MST_thr'
         edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
-        [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, thr, coords, labels)
+        [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, coords, labels, thr)
     elif disp_filt is True:
         thr_type = 'DISP_alpha'
         edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
