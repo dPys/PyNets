@@ -10,9 +10,7 @@ from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, Traite
 
 
 class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
-    """
-    Input interface wrapper for ExtractNetStats
-    """
+    """Input interface wrapper for ExtractNetStats"""
     ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=False)
     thr = traits.Any(mandatory=True)
@@ -25,16 +23,12 @@ class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
 
 
 class ExtractNetStatsOutputSpec(TraitedSpec):
-    """
-    Output interface wrapper for ExtractNetStats
-    """
+    """Output interface wrapper for ExtractNetStats"""
     out_path_neat = File(exists=True, mandatory=True)
 
 
 class ExtractNetStats(BaseInterface):
-    """
-    Interface wrapper for ExtractNetStats
-    """
+    """Interface wrapper for ExtractNetStats"""
     input_spec = ExtractNetStatsInputSpec
     output_spec = ExtractNetStatsOutputSpec
 
@@ -58,9 +52,7 @@ class ExtractNetStats(BaseInterface):
 
 
 class CombinePandasDfsInputSpec(BaseInterfaceInputSpec):
-    """
-    Input interface wrapper for CombinePandasDfs
-    """
+    """Input interface wrapper for CombinePandasDfs"""
     ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=True)
     net_mets_csv_list = traits.List(mandatory=True)
@@ -70,16 +62,12 @@ class CombinePandasDfsInputSpec(BaseInterfaceInputSpec):
 
 
 class CombinePandasDfsOutputSpec(TraitedSpec):
-    """
-    Output interface wrapper for CombinePandasDfs
-    """
+    """Output interface wrapper for CombinePandasDfs"""
     combination_complete = traits.Bool()
 
 
 class CombinePandasDfs(SimpleInterface):
-    """
-    Interface wrapper for CombinePandasDfs
-    """
+    """Interface wrapper for CombinePandasDfs"""
     input_spec = CombinePandasDfsInputSpec
     output_spec = CombinePandasDfsOutputSpec
 
@@ -100,6 +88,7 @@ class CombinePandasDfs(SimpleInterface):
 
 
 class _IndividualClusteringInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for IndividualClustering"""
     func_file = File(exists=True, mandatory=True)
     conf = File(exists=False, mandatory=False)
     clust_mask = File(exists=True, mandatory=True)
@@ -111,6 +100,7 @@ class _IndividualClusteringInputSpec(BaseInterfaceInputSpec):
 
 
 class _IndividualClusteringOutputSpec(TraitedSpec):
+    """Output interface wrapper for IndividualClustering"""
     uatlas = File(exists=True)
     atlas = traits.Str(mandatory=True)
     clustering = traits.Bool(True, usedefault=True)
@@ -120,6 +110,7 @@ class _IndividualClusteringOutputSpec(TraitedSpec):
 
 
 class IndividualClustering(SimpleInterface):
+    """Interface wrapper for IndividualClustering"""
     input_spec = _IndividualClusteringInputSpec
     output_spec = _IndividualClusteringOutputSpec
 

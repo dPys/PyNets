@@ -152,6 +152,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different spatial normalization approaches on
            tractography and structural brain networks. Network Neuroscience, 1-19.
     """
+    import gc
     from dipy.tracking import utils
     from dipy.tracking.streamline import values_from_volume, transform_streamlines, Streamlines
     from pynets.registration import reg_utils as regutils
@@ -184,25 +185,32 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_',
                                                   '%s' % (network + '_' if network is not None else ''),
-                                                  '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                  '%s' % (op.basename(roi).split('.')[0] + '_' if
+                                                          roi is not None else ''),
                                                   conn_model, '_', target_samples,
-                                                  '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_'),
+                                                  '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if
+                                                          ((node_size != 'parc') and (node_size is not None)) else '_'),
                                                   'curv', str(curv_thr_list).replace(', ', '_'),
                                                   'step', str(step_list).replace(', ', '_'), '.trk')
 
     density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/density_map_mni_',
                                                   '%s' % (network + '_' if network is not None else ''),
-                                                  '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                  '%s' % (op.basename(roi).split('.')[0] + '_' if
+                                                          roi is not None else ''),
                                                   conn_model, '_', target_samples,
-                                                  '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_'),
+                                                  '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if
+                                                          ((node_size != 'parc') and (node_size is not None)) else '_'),
                                                   'curv', str(curv_thr_list).replace(', ', '_'),
                                                   'step', str(step_list).replace(', ', '_'), '.nii.gz')
 
     streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
                                                        '%s' % (network + '_' if network is not None else ''),
-                                                       '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                       '%s' % (op.basename(roi).split('.')[0] + '_' if
+                                                               roi is not None else ''),
                                                        conn_model, '_', target_samples,
-                                                       '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if ((node_size != 'parc') and (node_size is not None)) else '_'),
+                                                       '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if
+                                                               ((node_size != 'parc') and (node_size is not None)) else
+                                                               '_'),
                                                        'curv', str(curv_thr_list).replace(', ', '_'),
                                                        'step', str(step_list).replace(', ', '_'), '.png')
 
@@ -278,15 +286,21 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     warped_uatlas = affine_map.transform_inverse(mapping.transform(np.asarray(atlas_img.dataobj).astype('int16'),
                                                                    interpolation='nearestneighbour'), interp='nearest')
     atlas_img.uncache()
-    warped_uatlas_img_res_data = np.asarray(resample_to_img(nib.Nifti1Image(warped_uatlas, affine=warped_fa_affine), uatlas_mni_img, interpolation='nearest', clip=False).dataobj)
+    warped_uatlas_img_res_data = np.asarray(resample_to_img(nib.Nifti1Image(warped_uatlas, affine=warped_fa_affine),
+                                                            uatlas_mni_img, interpolation='nearest',
+                                                            clip=False).dataobj)
     uatlas_mni_data = np.asarray(uatlas_mni_img.dataobj)
     uatlas_mni_img.uncache()
     overlap_mask = np.invert(warped_uatlas_img_res_data.astype('bool') * uatlas_mni_data.astype('bool'))
     atlas_mni = "%s%s%s%s" % (dir_path, '/parcellations/', os.path.basename(uatlas).split('.nii')[0],
                               '_UNION.nii.gz')
-    nib.save(nib.Nifti1Image(warped_uatlas_img_res_data * overlap_mask.astype('int') + uatlas_mni_data * overlap_mask.astype('int') + np.invert(overlap_mask).astype('int') * warped_uatlas_img_res_data, affine=warped_fa_affine), atlas_mni)
+    nib.save(nib.Nifti1Image(warped_uatlas_img_res_data * overlap_mask.astype('int') +
+                             uatlas_mni_data * overlap_mask.astype('int') +
+                             np.invert(overlap_mask).astype('int') *
+                             warped_uatlas_img_res_data, affine=warped_fa_affine), atlas_mni)
 
     del tractogram, streamlines, warped_uatlas_img_res_data, uatlas_mni_data, overlap_mask, stf, streams_final_filt_final, streams_final_filt, streams_in_curr_grid, brain_mask
+    gc.collect()
 
     return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget, warped_fa
 

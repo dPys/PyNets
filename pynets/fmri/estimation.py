@@ -392,7 +392,6 @@ def extract_ts_parc(net_parcels_nii_path, conf, func_file, coords, roi, dir_path
     func_temp_path = utils.create_temporary_copy(func_file, op.basename(func_file).split('.nii')[0], '.nii')
     func_img = nib.load(func_temp_path)
     hdr = func_img.header
-    func_img.uncache()
 
     if hpass:
         if len(hdr.get_zooms()) == 4:
@@ -415,16 +414,17 @@ def extract_ts_parc(net_parcels_nii_path, conf, func_file, coords, roi, dir_path
 
     if mask is not None:
         mask_path = utils.create_temporary_copy(mask, op.basename(mask).split('.nii')[0], '.nii')
+        mask_img = nib.load(mask_path)
     else:
-        mask_path = None
+        mask_img = None
 
     net_parcels_nii_temp_path = utils.create_temporary_copy(net_parcels_nii_path,
                                                             op.basename(net_parcels_nii_path).split('.nii')[0], '.nii')
-
-    parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_nii_temp_path, background_label=0,
+    net_parcels_map_nifti = nib.load(net_parcels_nii_temp_path)
+    parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
                                                  standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                  detrend=detrending, t_r=t_r, verbose=2, resampling_target='data',
-                                                 dtype='auto', mask_img=mask_path)
+                                                 dtype='auto', mask_img=mask_img)
     if conf is not None:
         import pandas as pd
         confounds = pd.read_csv(conf, sep='\t')
@@ -439,17 +439,19 @@ def extract_ts_parc(net_parcels_nii_path, conf, func_file, coords, roi, dir_path
             os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
             conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
             confounds_nonan.to_csv(conf_corr, sep='\t')
-            ts_within_nodes = parcel_masker.fit_transform(func_temp_path, confounds=conf_corr)
+            ts_within_nodes = parcel_masker.fit_transform(func_img, confounds=conf_corr)
         else:
-            ts_within_nodes = parcel_masker.fit_transform(func_temp_path, confounds=conf)
+            ts_within_nodes = parcel_masker.fit_transform(func_img, confounds=conf)
     else:
-        ts_within_nodes = parcel_masker.fit_transform(func_temp_path)
+        ts_within_nodes = parcel_masker.fit_transform(func_img)
+    func_img.uncache()
     os.remove(func_temp_path)
+    net_parcels_map_nifti.uncache()
     os.remove(net_parcels_nii_temp_path)
 
     if mask_path is not None:
-        if os.path.isfile(mask_path):
-            os.remove(mask_path)
+        mask_img.uncache()
+        os.remove(mask_path)
 
     if ts_within_nodes is None:
         raise RuntimeError('\nERROR: Time-series extraction failed!')
@@ -593,14 +595,15 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
 
     if mask is not None:
         mask_path = utils.create_temporary_copy(mask, op.basename(mask).split('.nii')[0], '.nii')
+        mask_img = nib.load(mask_path)
     else:
-        mask_path = None
+        mask_img = None
 
     if len(coords) > 0:
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
                                                        standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
                                                        detrend=detrending, t_r=t_r, verbose=2, dtype='auto',
-                                                       mask_img=mask_path)
+                                                       mask_img=mask_img)
         if conf is not None:
             import pandas as pd
             confounds = pd.read_csv(conf, sep='\t')
@@ -623,8 +626,8 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
         func_img.uncache()
         os.remove(func_temp_path)
         if mask_path is not None:
-            if os.path.isfile(mask_path):
-                os.remove(mask_path)
+            mask_img.uncache()
+            os.remove(mask_path)
 
         if float(c_boot) > 0:
             print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))

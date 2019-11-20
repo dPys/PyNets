@@ -643,7 +643,9 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
 
     k = 1
     len_edge_list = []
-    while len_edges < edgenum and k <= np.shape(conn_matrix)[0] and (len(len_edge_list[-fail_tol:]) - len(set(len_edge_list[-fail_tol:]))) < (fail_tol - 1):
+    while len_edges < edgenum and k <= np.shape(conn_matrix)[0] and (len(len_edge_list[-fail_tol:]) -
+                                                                     len(set(len_edge_list[-fail_tol:]))) < (fail_tol -
+                                                                                                             1):
         print(k)
         print(len_edges)
         len_edge_list.append(len_edges)
@@ -821,7 +823,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     else:
         if dens_thresh is False:
             thr_type = 'prop'
-            edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
+            edge_threshold = "%s%s" % (str(np.abs(thr_perc)), '%')
             print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         else:
@@ -996,7 +998,7 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     else:
         if dens_thresh is False:
             thr_type = 'prop'
-            edge_threshold = None
+            edge_threshold = "%s%s" % (str(np.abs(thr_perc)), '%')
             print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         else:

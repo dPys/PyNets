@@ -201,7 +201,8 @@ def test_conn_mat_operations(cp, thr):
     
     if thr == 0.2:
         test_weight_conversion(x_rand, cp)
-    
+
+
 @pytest.mark.parametrize("thr", [0.0, 0.2, 0.4, 0.6, 0.8, 1.0])    
 def test_edge_cases(thr):
     # local_thresholding_prop: nng.number_of_edges() == 0 and number_before >= maximum_edges
@@ -345,5 +346,3 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     assert streams is not None
     assert directget is not None
 
-
-        
