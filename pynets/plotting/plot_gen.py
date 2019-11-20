@@ -430,12 +430,17 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         if roi:
             out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
                                                                      '_', op.basename(roi).split('.')[0],
-                                                                     "%s" % ("%s%s%s" % ('_', network, '_thr-') if network else "_thr-"),
+                                                                     "%s" % ("%s%s%s" % ('_', network, '_thr-') if
+                                                                             network else "_thr-"),
                                                                      thr, '_', node_size,
-                                                                     '%s' % ("mm_" if node_size != 'parc' else "_"),
-                                                                     "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
-                                                                     "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''),
-                                                                     "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None else ''),
+                                                                     '%s' % ("mm_" if node_size != 'parc' else
+                                                                             "_"),
+                                                                     "%s" % ("%s%s" % (int(c_boot), 'nb_') if
+                                                                             float(c_boot) > 0 else 'nb_'),
+                                                                     "%s" % ("%s%s" % (smooth, 'fwhm_') if
+                                                                             float(smooth) > 0 else ''),
+                                                                     "%s" % ("%s%s" % (hpass, 'Hz_') if
+                                                                             hpass is not None else ''),
                                                                      'func_glass_viz.png')
 
             # Save coords to pickle
@@ -448,11 +453,17 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
                 pickle.dump(labels, f, protocol=2)
         else:
             out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
-                                                                 "%s" % ("%s%s%s" % ('_', network, '_thr-') if network else "_thr-"),
-                                                                 thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"),
-                                                                 "%s" % ("%s%s" % (int(c_boot), 'nb_') if float(c_boot) > 0 else 'nb_'),
-                                                                 "%s" % ("%s%s" % (smooth, 'fwhm_') if float(smooth) > 0 else ''),
-                                                                 "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None else ''),
+                                                                 "%s" % ("%s%s%s" % ('_', network, '_thr-') if
+                                                                         network else "_thr-"),
+                                                                 thr, '_', node_size, '%s' % ("mm_" if
+                                                                                              node_size != 'parc' else
+                                                                                              "_"),
+                                                                 "%s" % ("%s%s" % (int(c_boot), 'nb_') if
+                                                                         float(c_boot) > 0 else 'nb_'),
+                                                                 "%s" % ("%s%s" % (smooth, 'fwhm_') if
+                                                                         float(smooth) > 0 else ''),
+                                                                 "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None
+                                                                         else ''),
                                                                  'func_glass_viz.png')
             # Save coords to pickle
             coord_path = "%s%s" % (namer_dir, '/coords_plotting.pkl')
@@ -619,9 +630,12 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         if roi:
             out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
                                                                      '_', op.basename(roi).split('.')[0],
-                                                                     "%s" % ("%s%s%s" % ('_', network, '_thr-') if network else "_thr-"), thr, '_', node_size,
+                                                                     "%s" % ("%s%s%s" % ('_', network, '_thr-') if
+                                                                             network else "_thr-"), thr, '_', node_size,
                                                                      '%s' % ("mm_" if node_size != 'parc' else "_"),
-                                                                     "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
+                                                                     "%s" % ("%s%s" %
+                                                                             (int(target_samples), '_samples') if
+                                                                             float(target_samples) > 0 else ''),
                                                                      "%s%s%s" % ('_', track_type, '_track'),
                                                                      "%s%s" % ('_', directget),
                                                                      'struct_glass_viz.png')
@@ -636,9 +650,13 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
                 pickle.dump(labels, f, protocol=2)
         else:
             out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
-                                                                 "%s" % ("%s%s%s" % ('_', network, '_thr-') if network else "_thr-"),
-                                                                 thr, '_', node_size, '%s' % ("mm_" if node_size != 'parc' else "_"),
-                                                                 "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
+                                                                 "%s" % ("%s%s%s" % ('_', network, '_thr-') if
+                                                                         network else "_thr-"),
+                                                                 thr, '_', node_size, '%s' % ("mm_" if
+                                                                                              node_size != 'parc' else
+                                                                                              "_"),
+                                                                 "%s" % ("%s%s" % (int(target_samples), '_samples') if
+                                                                         float(target_samples) > 0 else ''),
                                                                  "%s%s%s" % ('_', track_type, '_track'),
                                                                  "%s%s" % ('_', directget),
                                                                  'struct_glass_viz.png')

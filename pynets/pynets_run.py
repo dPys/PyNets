@@ -11,8 +11,6 @@ warnings.filterwarnings("ignore")
 
 def get_parser():
     """Parse command-line inputs"""
-    import warnings
-    warnings.filterwarnings("ignore")
     import argparse
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
@@ -869,21 +867,29 @@ def build_workflow(args, retval):
         max_thr = None
         step_thr = None
 
-    if (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is not None) and (clust_type_list is not None):
+    if (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is not
+                                                                        None) and (clust_type_list is not None):
         k_clustering = 8
-    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is not None) and (clust_type_list is not None):
+    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is not
+                                                                      None) and (clust_type_list is not None):
         k_clustering = 7
-    elif (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is None) and (clust_type_list is not None):
+    elif (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is
+                                                                          None) and (clust_type_list is not None):
         k_clustering = 6
-    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is None) and (clust_type_list is not None):
+    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is
+                                                                      None) and (clust_type_list is not None):
         k_clustering = 5
-    elif (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is not None) and (clust_type_list is None):
+    elif (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is not
+                                                                          None) and (clust_type_list is None):
         k_clustering = 4
-    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is not None) and (clust_type_list is None):
+    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is not
+                                                                      None) and (clust_type_list is None):
         k_clustering = 3
-    elif (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is None) and (clust_type_list is None):
+    elif (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is
+                                                                          None) and (clust_type_list is None):
         k_clustering = 2
-    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is None) and (clust_type_list is None):
+    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is
+                                                                      None) and (clust_type_list is None):
         k_clustering = 1
     else:
         k_clustering = 0
@@ -1635,12 +1641,8 @@ def build_workflow(args, retval):
                 meta_wf_name = "%s%s" % ('meta_wf_', ID[i])
                 for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
-                        if node_name == 'clustering_node' or node_name == 'extract_ts_node' or node_name == 'register_atlas_node':
-                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
-                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
-                        else:
-                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
-                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
+                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._n_procs = procmem[0]
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._mem_gb = procmem[1]
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).n_procs = procmem[0]
@@ -1856,10 +1858,8 @@ def build_workflow(args, retval):
 
 def main():
     """Initializes main script from command-line call to generate single-subject or multi-subject workflow(s)"""
-    import warnings
     import gc
     import sys
-    warnings.filterwarnings("ignore")
     try:
         from pynets.core.utils import do_dir_path
     except ImportError:

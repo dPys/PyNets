@@ -386,6 +386,8 @@ class NilParcellate(object):
         conf : str
             File path to a confound regressor file for reduce noise in the time-series when extracting from ROI's.
         """
+        import time
+        from pynets.core.utils import has_handle
         self.func_file = func_file
         self.clust_mask = clust_mask
         self.k = k
@@ -393,6 +395,8 @@ class NilParcellate(object):
         self.conf = conf
         self.detrending = True
         self.standardize = True
+        while has_handle(self.func_file) is True:
+            time.sleep(5)
         self.func_img = nib.load(self.func_file)
         self.local_corr = local_corr
         self.local_conn_mat_path = None
@@ -429,9 +433,8 @@ class NilParcellate(object):
         self.mask_data = np.asarray(self.clust_mask_img.dataobj).astype('bool').astype('int')
 
         # Ensure mask does not inclue voxels outside of the brain
-        self.func_img_data = np.asarray(self.func_img.dataobj)
-        self.masked_fmri_vol = self.func_img_data[:, :, :, 0].astype('bool')
-        del self.func_img_data
+        self.masked_fmri_vol = np.asarray(self.func_img.dataobj)[:, :, :, 0]
+        self.masked_fmri_vol = self.masked_fmri_vol.astype('bool')
         self.mask_data[~self.masked_fmri_vol] = 0
         del self.masked_fmri_vol
         self.clust_mask_corr = "%s%s%s%s" % (self.dir_path, '/', mask_name, '.nii')
@@ -444,16 +447,15 @@ class NilParcellate(object):
 
         return self.atlas
 
-    def create_local_clustering(self, overwrite, r_thresh):
+    def create_local_clustering(self, overwrite=True, r_thresh=0.5):
         """
         API for performing any of a variety of clustering routines available through NiLearn.
         """
-        import gc
         import os.path as op
         from scipy.sparse import save_npz, load_npz
         from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
 
-        self.local_conn_mat_path = "%s%s%s%s" % (self.uatlas.split('.nii')[0], '_', self.local_corr, '_conn.npz')
+        self.local_conn_mat_path = "%s%s%s%s" % (self.uatlas.split('.nii.gz')[0], '_', self.local_corr, '_conn.npz')
 
         if (not op.isfile(self.local_conn_mat_path)) or (overwrite is True):
             if self.local_corr == 'tcorr':
@@ -469,10 +471,6 @@ class NilParcellate(object):
             save_npz(self.local_conn_mat_path, self.local_conn)
         elif op.isfile(self.local_conn_mat_path):
             self.local_conn = load_npz(self.local_conn_mat_path)
-
-        self.clust_mask_corr_img.uncache()
-        self.func_img.uncache()
-        gc.collect()
 
         return
 
@@ -493,7 +491,7 @@ class NilParcellate(object):
             raise FileNotFoundError('File containing sparse matrix of local connectivity structure not found.')
 
         self.clust_est = Parcellations(method=self.clust_type, standardize=self.standardize, detrend=self.detrending,
-                                       n_parcels=int(self.k), mask=self.clust_mask_corr,
+                                       n_parcels=int(self.k), mask=self.clust_mask_corr_img,
                                        connectivity=self.local_conn)
 
         if self.conf is not None:
@@ -507,17 +505,19 @@ class NilParcellate(object):
                 os.makedirs("%s%s" % (self.dir_path, '/confounds_tmp'), exist_ok=True)
                 conf_corr = "%s%s%s%s" % (self.dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
                 confounds_nonan.to_csv(conf_corr, sep='\t')
-                self.clust_est.fit_transform(self.func_file, confounds=conf_corr)
+                self.clust_est.fit(self.func_img, confounds=conf_corr)
             else:
-                self.clust_est.fit_transform(self.func_file, confounds=self.conf)
+                self.clust_est.fit(self.func_img, confounds=self.conf)
         else:
-            self.clust_est.fit_transform(self.func_file)
+            self.clust_est.fit(self.func_img)
 
         nib.save(connected_label_regions(self.clust_est.labels_img_), self.uatlas)
 
         print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
 
         del self.clust_est
+        self.func_img.uncache()
+        self.clust_mask_corr_img.uncache()
         gc.collect()
 
         return self.uatlas

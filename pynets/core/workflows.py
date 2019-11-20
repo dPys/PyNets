@@ -942,7 +942,9 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             fetch_nodes_and_labels_node.iterables = [("atlas", multi_atlas)]
         elif multi_atlas is None and user_atlas_list is not None:
             fetch_nodes_and_labels_node.iterables = [("uatlas", user_atlas_list)]
-    elif ((atlas is not None and uatlas is None) or (atlas is None and uatlas is not None)) and (multi_atlas is None and user_atlas_list is None):
+    elif ((atlas is not None and uatlas is None) or (atlas is None and uatlas is not None)) and (multi_atlas is None
+                                                                                                 and user_atlas_list is
+                                                                                                 None):
         flexi_atlas = False
         pass
     else:

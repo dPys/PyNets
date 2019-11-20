@@ -14,11 +14,13 @@ warnings.filterwarnings("ignore")
 
 
 def get_file():
+    """Get a file's base directory path."""
     base_path = str(__file__)
     return base_path
 
 
 def has_handle(fpath):
+    """Test whether a path has an open handle."""
     import psutil
     for proc in psutil.process_iter():
         try:
@@ -57,7 +59,7 @@ def do_dir_path(atlas, in_file):
 
 def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type, hpass, parc):
     """
-    Name the thresholded functional connectivity matrix file based on relevant graph-generating parameters
+    Name the thresholded functional connectivity matrix file based on relevant graph-generating parameters.
 
     Parameters
     ----------
@@ -105,12 +107,18 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
 
     est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
                                                        '%s' % (network + '_' if network is not None else ''),
-                                                       '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                       '%s' % (op.basename(roi).split('.')[0] + '_' if
+                                                               roi is not None else ''),
                                                        'est-', conn_model, '_thr-', thr, thr_type, '_',
-                                                       '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
-                                                       "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if float(c_boot) > 0 else ''),
-                                                       "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if float(smooth) > 0 else ''),
-                                                       "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if hpass is not None else ''),
+                                                       '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
+                                                               ((node_size != 'parc') and (node_size is not None)) else
+                                                               'parc_'),
+                                                       "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
+                                                               float(c_boot) > 0 else ''),
+                                                       "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                               float(smooth) > 0 else ''),
+                                                       "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                               hpass is not None else ''),
                                                        'func.npy')
 
     return est_path
@@ -119,7 +127,7 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
 def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples, track_type, thr_type,
                          parc):
     """
-    Name the thresholded structural connectivity matrix file based on relevant graph-generating parameters
+    Name the thresholded structural connectivity matrix file based on relevant graph-generating parameters.
 
     Parameters
     ----------
@@ -165,17 +173,22 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
 
     est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
                                                      '%s' % (network + '_' if network is not None else ''),
-                                                     '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                     '%s' % (op.basename(roi).split('.')[0] + '_' if
+                                                             roi is not None else ''),
                                                      'est-', conn_model, '_thr-', thr, thr_type, '_',
-                                                     '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
-                                                     "%s" % ("%s%s%s" % ('samples-', int(target_samples), 'streams_') if float(target_samples) > 0 else '_'),
+                                                     '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
+                                                             ((node_size != 'parc') and (node_size is not None)) else
+                                                             'parc_'),
+                                                     "%s" % ("%s%s%s" % ('samples-', int(target_samples),
+                                                                         'streams_') if float(target_samples) > 0 else
+                                                             '_'),
                                                      track_type, '_dwi.npy')
     return est_path
 
 
 def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth, c_boot, hpass, parc):
     """
-    Name the raw functional connectivity matrix file based on relevant graph-generating parameters
+    Name the raw functional connectivity matrix file based on relevant graph-generating parameters.
 
     Parameters
     ----------
@@ -218,12 +231,18 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
 
     est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
                                                  '%s' % (network + '_' if network is not None else ''),
-                                                 '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                 '%s' % (op.basename(roi).split('.')[0] + '_' if
+                                                         roi is not None else ''),
                                                  'raw_', conn_model, '_',
-                                                 '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
-                                                 "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if float(c_boot) > 0 else ''),
-                                                 "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if float(smooth) > 0 else ''),
-                                                 "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if hpass is not None else ''),
+                                                 '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
+                                                         ((node_size != 'parc') and (node_size is not None)) else
+                                                         'parc_'),
+                                                 "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
+                                                         float(c_boot) > 0 else ''),
+                                                 "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                         float(smooth) > 0 else ''),
+                                                 "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                         hpass is not None else ''),
                                                  'func.npy')
 
     return est_path
@@ -231,7 +250,7 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
 
 def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, target_samples, track_type, parc):
     """
-    Name the raw structural connectivity matrix file based on relevant graph-generating parameters
+    Name the raw structural connectivity matrix file based on relevant graph-generating parameters.
 
     Parameters
     ----------
@@ -274,8 +293,11 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
                                                '%s' % (network + '_' if network is not None else ''),
                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
                                                'raw_', conn_model, '_',
-                                               '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
-                                               "%s" % ("%s%s%s" % ('samples-', int(target_samples), 'streams_') if float(target_samples) > 0 else '_'),
+                                               '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
+                                                       ((node_size != 'parc') and (node_size is not None)) else
+                                                       'parc_'),
+                                               "%s" % ("%s%s%s" % ('samples-', int(target_samples), 'streams_') if
+                                                       float(target_samples) > 0 else '_'),
                                                track_type, '_dwi.npy')
     return est_path
 
@@ -866,12 +888,18 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth,
         os.makedirs(namer_dir, exist_ok=True)
 
     # Save time series as npy file
-    out_path_ts = "%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if network is not None else ''),
-                                              '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                              '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
-                                              '%s' % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if float(c_boot) > 0 else ''),
-                                              "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if float(smooth) > 0 else ''),
-                                              "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if hpass is not None else ''),
+    out_path_ts = "%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if
+                                                                               network is not None else ''),
+                                              '%s' % (op.basename(roi).split('.')[0] + '_' if
+                                                      roi is not None else ''),
+                                              '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
+                                                      ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                              '%s' % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
+                                                      float(c_boot) > 0 else ''),
+                                              "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                      float(smooth) > 0 else ''),
+                                              "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                      hpass is not None else ''),
                                               'ts_from_nodes.npy')
 
     np.save(out_path_ts, ts_within_nodes)
@@ -902,14 +930,31 @@ def merge_dicts(x, y):
 
 def create_temporary_copy(path, temp_file_name, fmt, tmp_dir='auto'):
     """
-    A function to create temporary file equivalents
+    A function to create temporary file equivalents.
+
+    Parameters
+    ----------
+    path : str
+        Path to a file.
+    temp_file_name : str
+        Name of the intended temporary file.
+    fmt : str
+        Format of the intended temporary file.
+    tmp_dir : str
+        Temporary directory path. Default option is 'auto'
+        which finds local /tmp.
+
+    Returns
+    -------
+    temp_path : str
+        Path to temporary file.
     """
     import tempfile, shutil
     from time import strftime
     import uuid
     run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
     if tmp_dir == 'auto':
-        temp_dir = "%s%s%s" % (tempfile.gettempdir(), '/', run_uuid)
+        temp_dir = "%s%s%s" % (tempfile.mkdtemp(), '/', run_uuid)
     else:
         temp_dir = "%s%s%s" % (tmp_dir, '/', run_uuid)
     os.makedirs(temp_dir, exist_ok=True)
@@ -924,4 +969,3 @@ def create_temporary_copy(path, temp_file_name, fmt, tmp_dir='auto'):
     else:
         shutil.copy2(path, temp_path)
     return temp_path
-
