@@ -3,8 +3,9 @@
 
 language: python
 python:
+  - 3.8
+  - 3.7
   - 3.6
-  - 3.5
 
 before_install:
   - sudo bash -c "echo 'Acquire::ForceIPv4 \"true\";' > /etc/apt/apt.conf.d/99force-ipv4"
@@ -28,7 +29,7 @@ env:
 
 # command to run tests, e.g. python setup.py test
 script:
-   - pytest -vv tests/* --cov pynets --cov-config .coveragerc --cov-report xml:cov.xml pynets
+   - travis_wait 60 pytest -vvv --cov pynets --cov-config .coveragerc --cov-report xml:cov.xml pynets
 
 after_script:
   - codecov

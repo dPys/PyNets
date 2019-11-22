@@ -30,7 +30,6 @@ RUN apt-get update -qq \
         libgomp1 \
         libmpich-dev \
         mpich \
-        unzip \
         git \
         g++ \
         zip \
@@ -82,7 +81,7 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && conda install -yq python=3.6 ipython \
     && pip install --upgrade pip \
     && conda clean -tipsy \
-    && pip install awscli requests psutil \
+    && pip install requests psutil \
     # Install pynets
     && git clone -b master https://github.com/dPys/PyNets /home/neuro/PyNets && \
     cd /home/neuro/PyNets && \
@@ -126,10 +125,21 @@ RUN chown -R neuro /opt \
 	curl \
 	libc6-dev \
 	build-essential \
+	ca-certificates \
+	gnupg \
+	g++ \
+	openssl \
+	git-lfs \
+	apt-transport-https \
+	debian-archive-keyring \
+	software-properties-common \
     && apt-get clean \
+    && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && rm -rf /home/neuro/PyNets \
     && rm -rf /home/neuro/nilearn \
+    && conda remove --quiet --yes --force cython \
+    && conda clean -tipsy \
     && mkdir /inputs && \
     chmod -R 777 /inputs \
     && mkdir /outputs && \
