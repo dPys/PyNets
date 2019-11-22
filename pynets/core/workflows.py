@@ -21,8 +21,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
                       template_mask, vox_size, multiplex, waymask, local_corr, clean=True):
     """A meta-interface for selecting nested workflows to link into a given single-subject workflow"""
-    import warnings
-    warnings.filterwarnings("ignore")
     import yaml
     from pathlib import Path
     import pkg_resources
@@ -620,8 +618,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                        track_type, max_length, maxcrossing, min_length, directget, tiss_class,
                        runtime_dict, multi_directget, template, template_mask, vox_size, waymask):
     """A function interface for generating a dMRI nested workflow"""
-    import warnings
-    warnings.filterwarnings("ignore")
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core import nodemaker, thresholding, utils
@@ -1371,15 +1367,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         ])
 
     # Handle masking scenarios (brain mask and/or roi)
-    if mask and (op.isfile(template_mask) is True):
-        dmri_connectometry_wf.connect([
-            (inputnode, node_gen_node, [('template_mask', 'roi')]),
-        ])
-    else:
-        dmri_connectometry_wf.connect([
-            (inputnode, node_gen_node, [('mask', 'roi')]),
-        ])
-
     if (mask is not None) and (roi is None):
         check_orient_and_dims_mask_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'],
                                                                output_names=['outfile'],
@@ -1576,11 +1563,12 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             dmri_connectometry_wf.get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
     plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
-    cfg = dict(execution={'stop_on_first_crash': True, 'hash_method': 'content', 'crashfile_format': 'txt',
+    cfg = dict(execution={'stop_on_first_crash': False, 'hash_method': 'content', 'crashfile_format': 'txt',
                           'display_variable': ':0', 'job_finished_timeout': 65, 'matplotlib_backend': 'Agg',
-                          'plugin': str(plugin_type), 'use_relative_paths': True, 'parameterize_dirs': True,
+                          'plugin': str(plugin_type), 'use_relative_paths': False, 'parameterize_dirs': True,
                           'remove_unnecessary_outputs': False, 'remove_node_directories': False,
-                          'raise_insufficient': False, 'plugin_args': plugin_args, 'maxtasksperchild': 1})
+                          'raise_insufficient': False, 'plugin_args': plugin_args, 'maxtasksperchild': 1,
+                          'poll_sleep_duration': 60})
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             dmri_connectometry_wf.config[key][setting] = value
@@ -1596,14 +1584,12 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                        clust_type, clust_type_list, plugin_type, c_boot, block_size, mask, norm, binary,
                        anat_file, runtime_dict, hpass, hpass_list, template, template_mask, vox_size, local_corr):
     """A function interface for generating an fMRI nested workflow"""
-    import warnings
-    warnings.filterwarnings("ignore")
     import os.path as op
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core import nodemaker, utils, thresholding
     from pynets.plotting import plot_gen
-    from pynets.fmri import estimation, clustools
+    from pynets.fmri import estimation
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
 
@@ -1764,9 +1750,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         from pynets.core.interfaces import IndividualClustering
         clustering_info_node = pe.Node(niu.IdentityInterface(fields=['clust_mask', 'clust_type', 'k']),
                                        name="clustering_info_node")
-        clustering_info_node.inputs.clust_type = clust_type
-        clustering_info_node.inputs.clust_mask = clust_mask
-        clustering_info_node.inputs.k = k
 
         clustering_node = pe.Node(IndividualClustering(),
                                   input_names=['func_file', 'conf', 'clust_mask', 'ID', 'k', 'clust_type', 'vox_size',
@@ -1775,10 +1758,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                   imports=import_list, name="clustering_node")
 
         # Don't forget that this setting exists
-        clustering_info_node.synchronize = True
+        clustering_node.synchronize = True
         # clustering_node iterables and names
         if k_clustering == 1:
-            mask_name = op.basename(clust_mask).split('.nii')[0]
+            mask_name = op.basename(clust_mask).split('.nii.gz')[0]
             cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
             cluster_atlas_file = "%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/',
                                                        mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
@@ -1796,7 +1779,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for k in k_list:
-                mask_name = op.basename(clust_mask).split('.nii')[0]
+                mask_name = op.basename(clust_mask).split('.nii.gz')[0]
                 cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file),
@@ -1813,7 +1796,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for clust_mask in clust_mask_list:
-                mask_name = op.basename(clust_mask).split('.nii')[0]
+                mask_name = op.basename(clust_mask).split('.nii.gz')[0]
                 cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file),
@@ -1835,7 +1818,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for clust_mask in clust_mask_list:
                 for k in k_list:
-                    mask_name = op.basename(clust_mask).split('.nii')[0]
+                    mask_name = op.basename(clust_mask).split('.nii.gz')[0]
                     cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name,
@@ -1852,7 +1835,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
-                mask_name = op.basename(clust_mask).split('.nii')[0]
+                mask_name = op.basename(clust_mask).split('.nii.gz')[0]
                 cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file),
@@ -1874,7 +1857,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
                 for k in k_list:
-                    mask_name = op.basename(clust_mask).split('.nii')[0]
+                    mask_name = op.basename(clust_mask).split('.nii.gz')[0]
                     cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name,
@@ -1892,7 +1875,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
                 for clust_mask in clust_mask_list:
-                    mask_name = op.basename(clust_mask).split('.nii')[0]
+                    mask_name = op.basename(clust_mask).split('.nii.gz')[0]
                     cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name,
@@ -1917,7 +1900,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             for clust_type in clust_type_list:
                 for clust_mask in clust_mask_list:
                     for k in k_list:
-                        mask_name = op.basename(clust_mask).split('.nii')[0]
+                        mask_name = op.basename(clust_mask).split('.nii.gz')[0]
                         cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                         cluster_atlas_name_list.append(cluster_atlas_name)
                         cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name,
@@ -1953,17 +1936,11 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                         [('uatlas', 'uatlas'),
                                          ('atlas', 'atlas'),
                                          ('clustering', 'clustering')]),
+                                       (inputnode, clustering_info_node,
+                                        [('clust_mask', 'clust_mask'), ('clust_type', 'clust_type'), ('k', 'k')]),
                                        (clustering_info_node, clustering_node,
                                         [('clust_mask', 'clust_mask'), ('clust_type', 'clust_type'), ('k', 'k')])
                                        ])
-        # if float(k_clustering) > 1:
-        #     fmri_connectometry_wf.connect([(clustering_info_node, clustering_node,
-        #                                     [('clust_mask', 'clust_mask'), ('clust_type', 'clust_type'), ('k', 'k')]),
-        #                                    ])
-        # else:
-        #     fmri_connectometry_wf.connect([(inputnode, clustering_node,
-        #                                     [('clust_mask', 'clust_mask'), ('clust_type', 'clust_type'), ('k', 'k')]),
-        #                                    ])
     else:
         # Connect atlas input vars to node definition Node
         fmri_connectometry_wf.connect([(inputnode, fetch_nodes_and_labels_node,
@@ -2171,7 +2148,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         get_conn_matrix_node.iterables = [("conn_model", conn_model_list)]
     else:
         fmri_connectometry_wf.connect([(inputnode, get_conn_matrix_node, [('conn_model', 'conn_model')])])
-
 
     # RSN case
     if network or multi_nets:
@@ -2594,11 +2570,12 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
     # Set runtime/logging configurations
     plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
-    cfg = dict(execution={'stop_on_first_crash': True, 'hash_method': 'content', 'crashfile_format': 'txt',
+    cfg = dict(execution={'stop_on_first_crash': False, 'hash_method': 'content', 'crashfile_format': 'txt',
                           'display_variable': ':0', 'job_finished_timeout': 65, 'matplotlib_backend': 'Agg',
-                          'plugin': str(plugin_type), 'use_relative_paths': True, 'parameterize_dirs': True,
+                          'plugin': str(plugin_type), 'use_relative_paths': False, 'parameterize_dirs': True,
                           'remove_unnecessary_outputs': False, 'remove_node_directories': False,
-                          'raise_insufficient': False, 'plugin_args': plugin_args, 'maxtasksperchild': 1})
+                          'raise_insufficient': False, 'plugin_args': plugin_args, 'maxtasksperchild': 1,
+                          'poll_sleep_duration': 60})
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             fmri_connectometry_wf.config[key][setting] = value

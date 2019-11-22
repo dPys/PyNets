@@ -6,8 +6,8 @@ Created on Wed Dec 27 16:19:14 2017
 @authors: Derek Pisner & Ryan Hammonds
 
 """
+import pytest
 import numpy as np
-import nibabel as nib
 import time
 try:
     import cPickle as pickle
@@ -18,7 +18,8 @@ from pynets.dmri import estimation as dmri_estimation
 from pathlib import Path
 
 
-def test_get_conn_matrix_cov():
+@pytest.mark.parametrize("conn_model", ['corr', 'sps', 'cov', 'partcorr'])
+def test_get_conn_matrix_cov(conn_model):
     """
     Test for get_conn_matrix functionality
     """
@@ -26,7 +27,6 @@ def test_get_conn_matrix_cov():
     dir_path = base_dir + '/002/fmri'
     time_series_file = dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_rsn_net_ts.npy'
     time_series = np.load(time_series_file)
-    conn_model = 'cov'
     node_size = 2
     smooth = 2
     c_boot = 0
@@ -106,10 +106,9 @@ def test_extract_ts_rsn_parc():
     mask = None
     hpass = None
     start_time = time.time()
-    net_parcels_map_nifti = nib.load(net_parcels_map_nifti_file)
     [ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas,
-    labels, coords, c_boot, hpass] = fmri_estimation.extract_ts_parc(net_parcels_map_nifti, conf, func_file, coords,
-                                                                     roi, dir_path, ID, network, smooth, atlas,
+    labels, coords, c_boot, hpass] = fmri_estimation.extract_ts_parc(net_parcels_map_nifti_file, conf, func_file,
+                                                                     coords, roi, dir_path, ID, network, smooth, atlas,
                                                                      uatlas, labels, c_boot, boot_size, hpass, mask)
     print("%s%s%s" % ('extract_ts_parc --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
@@ -118,7 +117,10 @@ def test_extract_ts_rsn_parc():
     #node_size is none
 
 
-def test_extract_ts_rsn_coords():
+@pytest.mark.parametrize("node_size", [pytest.param(0, marks=pytest.mark.xfail), '2', '8'])
+@pytest.mark.parametrize("smooth", ['0', '2'])
+@pytest.mark.parametrize("c_boot", ['0', '2'])
+def test_extract_ts_rsn_coords(node_size, smooth, c_boot):
     """
     Test for extract_ts_coords functionality
     """

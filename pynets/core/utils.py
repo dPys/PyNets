@@ -101,7 +101,7 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
     if (node_size is None) and (parc is True):
         node_size = '_parc'
 
-    namer_dir = dir_path + '/graphs'
+    namer_dir = '{}/graphs'.format(dir_path)
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -167,7 +167,7 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
     if (node_size is None) and (parc is True):
         node_size = '_parc'
 
-    namer_dir = dir_path + '/graphs'
+    namer_dir = '{}/graphs'.format(dir_path)
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -225,7 +225,7 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
     if (node_size is None) and (parc is True):
         node_size = '_parc'
 
-    namer_dir = dir_path + '/graphs'
+    namer_dir = '{}/graphs'.format(dir_path)
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -285,7 +285,7 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
     if (node_size is None) and (parc is True):
         node_size = '_parc'
 
-    namer_dir = dir_path + '/graphs'
+    namer_dir = '{}/graphs'.format(dir_path)
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -322,7 +322,7 @@ def create_csv_path(dir_path, est_path):
     import os
     from pathlib import Path
 
-    namer_dir = str(Path(dir_path).parent) + '/netmetrics'
+    namer_dir = '{}/netmetrics'.format(str(Path(dir_path).parent))
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -794,7 +794,7 @@ def save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network):
         import _pickle as pickle
     import os
 
-    namer_dir = dir_path + '/nodes'
+    namer_dir = '{}/nodes'.format(dir_path)
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -836,7 +836,7 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
     """
     import os
 
-    namer_dir = dir_path + '/parcellations'
+    namer_dir = '{}/parcellations'.format(dir_path)
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -883,7 +883,7 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth,
         Path to .npy file containing array of fMRI time-series extracted from nodes.
     """
     import os
-    namer_dir = dir_path + '/timeseries'
+    namer_dir = '{}/timeseries'.format(dir_path)
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 

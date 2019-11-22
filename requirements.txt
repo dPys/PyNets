@@ -10,7 +10,7 @@ seaborn>=0.7.1
 matplotlib>=2.2.0
 pytest>=3.3.1
 networkx>=2.0
-git+https://github.com/dPys/nilearn.git
+git+https://github.com/dPys/nilearn.git@enh/parc_conn
 nipype==1.2.0
 scikit_learn>=0.19.1
 dipy>=1.0.0

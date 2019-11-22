@@ -96,7 +96,7 @@ class _IndividualClusteringInputSpec(BaseInterfaceInputSpec):
     k = traits.Any(mandatory=True)
     clust_type = traits.Str(mandatory=True)
     vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
-    local_corr = traits.Str('tcorr', mandatory=True, usedefault=True)
+    local_corr = traits.Str('allcorr', mandatory=True, usedefault=True)
 
 
 class _IndividualClusteringOutputSpec(TraitedSpec):

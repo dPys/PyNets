@@ -188,7 +188,8 @@ def test_create_est_path_func():
             thr = round(val*0.1, 1)
             for thr_type in ['prop', 'abs', 'dens', 'mst', 'disp']:
                 for parc in [True, False]:
-                    est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot,
+                    est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
+                                                          smooth, c_boot,
                                                thr_type, hpass, parc)
                     assert est_path is not None
 
@@ -242,7 +243,8 @@ def test_create_csv_path():
             thr = round(val*0.1, 1)
             for thr_type in ['prop', 'abs', 'dens', 'mst', 'disp']:
                 for parc in [True, False]:
-                    est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot,
+                    est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
+                                                          smooth, c_boot,
                                                thr_type, hpass, parc)
                     out_path = utils.create_csv_path(dir_path, est_path)
                     assert out_path is not None
@@ -285,7 +287,8 @@ def test_create_unthr_path():
     roi = None
     for conn_model in models:
         for parc in parc_types:
-            unthr_path_func = utils.create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth, c_boot, hpass, parc)
+            unthr_path_func = utils.create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth,
+                                                         c_boot, hpass, parc)
             assert unthr_path_func is not None
 
     dir_path = base_dir + '/002/dmri'
@@ -299,7 +302,8 @@ def test_create_unthr_path():
     roi = None
     for conn_model in models:
         for parc in parc_types:
-            unthr_path_diff = utils.create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, target_samples, track_type, parc)
+            unthr_path_diff = utils.create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size,
+                                                         target_samples, track_type, parc)
             assert unthr_path_diff is not None
 
 
@@ -343,29 +347,6 @@ def test_get_file():
     assert base_path is not None
 
 
-def test_make_gtab_and_bmask():
-    """
-    Test make_gtab_and_bmask functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    dwi_path = base_dir + '/002/dmri'
-    fbval = dwi_path + '/bval.bval'
-    fbvec = dwi_path + '/bvec.bvec'
-    dwi_file = dwi_path + '/iso_eddy_corrected_data_denoised.nii.gz'
-    network = 'Default'
-    node_size = 6
-    atlases = ['Power', 'Shirer', 'Shen', 'Smith']
-
-    for atlas in atlases:
-        [gtab_file, B0_bet, B0_mask, dwi_file] = utils.make_gtab_and_bmask(
-            fbval, fbvec, dwi_file, network, node_size, atlas)
-
-    assert gtab_file is not None
-    assert B0_bet is not None
-    assert B0_mask is not None
-    assert dwi_file is not None
-
-
 def test_merge_dicts():
     """
     Test merge_dicts functionality
@@ -403,7 +384,8 @@ def test_pass_meta_ins():
     binary = True
 
     [conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist,
-        norm_iterlist, binary_iterlist] = utils.pass_meta_ins(conn_model, est_path, network, thr, prune, ID, roi, norm, binary)
+        norm_iterlist, binary_iterlist] = utils.pass_meta_ins(conn_model, est_path, network, thr, prune, ID, roi, norm,
+                                                              binary)
 
     assert conn_model_iterlist is not None
     assert est_path_iterlist is not None
@@ -443,8 +425,11 @@ def test_pass_meta_ins_multi():
     binary_func = False
     binary_struct = True
 
-    [conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist] = utils.pass_meta_ins_multi(
-        conn_model_func, est_path_func, network_func, thr_func, prune_func, ID_func, roi_func, norm_func, binary_func, conn_model_struct, est_path_struct, network_struct, thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct)
+    [conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist,
+     norm_iterlist, binary_iterlist] = utils.pass_meta_ins_multi(
+        conn_model_func, est_path_func, network_func, thr_func, prune_func, ID_func, roi_func, norm_func, binary_func,
+        conn_model_struct, est_path_struct, network_struct, thr_struct, prune_struct, ID_struct, roi_struct,
+        norm_struct, binary_struct)
 
     assert len(conn_model_iterlist) == 2
     assert len(est_path_iterlist) == 2
@@ -484,11 +469,16 @@ def test_pass_meta_outs():
     binary_func = False
     binary_struct = True
 
-    [conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist] = utils.pass_meta_ins_multi(
-        conn_model_func, est_path_func, network_func, thr_func, prune_func, ID_func, roi_func, norm_func, binary_func, conn_model_struct, est_path_struct, network_struct, thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct)
+    [conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist,
+     norm_iterlist, binary_iterlist] = utils.pass_meta_ins_multi(
+        conn_model_func, est_path_func, network_func, thr_func, prune_func, ID_func, roi_func, norm_func, binary_func,
+        conn_model_struct, est_path_struct, network_struct, thr_struct, prune_struct, ID_struct, roi_struct,
+        norm_struct, binary_struct)
 
-    [conn_model_iterlist_out, est_path_iterlist_out, network_iterlist_out, thr_iterlist_out, prune_iterlist_out, ID_iterlist_out, roi_iterlist_out, norm_iterlist_out, binary_iterlist_out] = utils.pass_meta_outs(
-        conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed=None, multimodal=False, multiplex=False)
+    [conn_model_iterlist_out, est_path_iterlist_out, network_iterlist_out, thr_iterlist_out, prune_iterlist_out,
+     ID_iterlist_out, roi_iterlist_out, norm_iterlist_out, binary_iterlist_out] = utils.pass_meta_outs(
+        conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
+        roi_iterlist, norm_iterlist, binary_iterlist, embed=None, multimodal=False, multiplex=False)
 
     assert conn_model_iterlist_out is not None
     assert est_path_iterlist_out is not None

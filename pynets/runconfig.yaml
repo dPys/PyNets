@@ -67,11 +67,11 @@ resource_dict:
       - 'register_node':
         - (2, 6)
       - 'register_atlas_node':
-        - (2, 6)
+        - (1, 4)
       - 'get_fa_node':
         - (1, 1)
       - 'run_tracking_node':
-        - (2, 6)
+        - (2, 8)
       - 'thresh_diff_node':
         - (1, 1)
       - 'dsn_node':

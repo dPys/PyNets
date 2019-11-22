@@ -29,8 +29,8 @@ def test_align():
     out = anat_dir + '/highres2standard.nii.gz'
     xfm_out = anat_dir + '/highres2standard.mat'
 
-    reg_utils.align(inp, ref, xfm=xfm_out, out=out, dof=12, searchrad=True, bins=256, interp=None, cost="mutualinfo", sch=None,
-              wmseg=None, init=None)
+    reg_utils.align(inp, ref, xfm=xfm_out, out=out, dof=12, searchrad=True, bins=256, interp=None, cost="mutualinfo",
+                    sch=None, wmseg=None, init=None)
     
     highres2standard_linear = nib.load(out)
     assert highres2standard_linear is not None

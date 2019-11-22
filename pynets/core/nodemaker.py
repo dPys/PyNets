@@ -111,7 +111,7 @@ def fetch_nilearn_atlas_coords(atlas):
     try:
         labels = np.array([s.strip('b\'') for s in atlas.labels.astype('U')]).tolist()
     except:
-        labels = None
+        labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
     if len(coords) <= 1:
         raise ValueError('\nERROR: No coords returned for specified atlas! Ensure an active internet connection.')
@@ -175,7 +175,7 @@ def nilearn_atlas_helper(atlas, parc):
             except:
                 labels = [i for i in atlas_fetch_obj.labels]
         else:
-            labels = None
+            raise ValueError('No labels found.')
         if 'networks' in list(atlas_fetch_obj.keys()):
             try:
                 networks_list = [i.decode("utf-8") for i in atlas_fetch_obj.networks]

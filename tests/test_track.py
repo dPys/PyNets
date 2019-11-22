@@ -5,6 +5,7 @@ Created on Thur July 18 20:19:14 2019
 @authors: Derek Pisner & Ryan Hammonds
 
 """
+import pytest
 try:
     import cPickle as pickle
 except ImportError:
@@ -46,7 +47,8 @@ def test_create_density_map():
     assert dm_path is not None
 
 
-def test_prep_tissues():
+@pytest.mark.parametrize("tiss_class", ['act', 'bin', 'cmc', 'wb'])
+def test_prep_tissues(tiss_class):
     """
     Test for prep_tissues functionality
     """
@@ -57,14 +59,14 @@ def test_prep_tissues():
     gm_in_dwi = dir_path + '/gm_mask_dmri.nii.gz'
     vent_csf_in_dwi = dir_path + '/csf_mask_dmri.nii.gz'
     wm_in_dwi = dir_path + '/wm_mask_dmri.nii.gz'
-    
-    for tiss_class in ['act', 'bin', 'cmc', 'wb']:
-        tiss_classifier = track.prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
-                                             cmc_step_size=0.2)
-        assert tiss_classifier is not None
-        
-        
-def test_reconstruction():
+
+    tiss_classifier = track.prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
+                                         cmc_step_size=0.2)
+    assert tiss_classifier is not None
+
+
+@pytest.mark.parametrize("conn_model", ['csa', 'csd'])
+def test_reconstruction(conn_model):
     """
     Test for reconstruction functionality
     """
@@ -82,6 +84,5 @@ def test_reconstruction():
     dwi_img = nib.load(dwi_file)
     dwi_data = dwi_img.get_fdata()
 
-    for conn_model in ['csa', 'csd']:
-        mod = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
-        assert mod is not None
+    mod = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
+    assert mod is not None

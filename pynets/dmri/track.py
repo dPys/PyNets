@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 
 
 def reconstruction(conn_model, gtab, dwi_data, B0_mask):
-    '''
+    """
     Estimate a tensor model from dwi data.
 
     Parameters
@@ -30,7 +30,7 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
     -------
     mod : obj
         Connectivity reconstruction model.
-    '''
+    """
     import gc
     try:
         import cPickle as pickle
@@ -50,7 +50,7 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
 
 
 def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc_step_size=0.2):
-    '''
+    """
     Estimate a tissue classifier for tractography.
 
     Parameters
@@ -72,7 +72,7 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     -------
     tiss_classifier : obj
         Tissue classifier object.
-    '''
+    """
     import gc
     try:
         import cPickle as pickle
@@ -112,7 +112,7 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
 
 def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_samples,
                        node_size, curv_thr_list, step_list, network, roi):
-    '''
+    """
     Create a density map of the list of streamlines.
 
     Parameters
@@ -148,7 +148,7 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
         Path to directory containing subject derivative data for a given pynets run.
     dm_path : str
         File path to fiber density map Nifti1Image.
-    '''
+    """
     import gc
     import os
     import os.path as op
@@ -162,7 +162,7 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
     # Save density map
     dm_img = nib.Nifti1Image(dm.astype('int16'), dwi_img.affine)
 
-    namer_dir = dir_path + '/tractography'
+    namer_dir = '{}/tractography'.format(dir_path)
     if not os.path.isdir(namer_dir):
         os.mkdir(namer_dir)
 
@@ -357,7 +357,8 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                         continue
 
                 # Cleanup memory
-                del dg, seeds, roi_proximal_streamlines, streamline_generator
+                del seeds, roi_proximal_streamlines, streamline_generator
+            del dg
 
         circuit_ix = circuit_ix + 1
         print("%s%s%s%s%s" % ('Completed hyperparameter circuit: ', circuit_ix, '...\nCumulative Streamline Count: ',
@@ -366,8 +367,6 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
 
     print('\n')
 
-    # Final cleanup
-    del waymask_data, stream_counter, parcel_vec, parcels
     gc.collect()
 
     return streamlines
@@ -378,7 +377,7 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
               conn_model, gtab_file, dwi_file, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
               prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, min_length,
               fa_path, waymask, roi_neighborhood_tol=8):
-    '''
+    """
     Run all ensemble tractography and filtering routines.
 
     Parameters
@@ -532,7 +531,7 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
-    '''
+    """
     import gc
     try:
         import cPickle as pickle

@@ -8,7 +8,7 @@ About
 -----
 A Fully-Automated Workflow for Reproducible Ensemble Graph Analysis of Functional and Structural Connectomes
 
-PyNets harnesses the power of Nipype, Nilearn, Dipy, and Networkx packages to automatically generate graphical ensembles on a subject-by-subject basis, using any combination of graph-generating hyperparameters. PyNets utilities can be integrated with any existing preprocessing workflow, and a docker container is provided to facilitate complete reproducibility of executions.
+PyNets harnesses the power of Nipype, Nilearn, Dipy, and Networkx packages to automatically generate graphical ensembles on a subject-by-subject basis, using any combination of graph-generating hyperparameters. PyNets utilities can be integrated with any existing preprocessing workflow, and a docker container is provided to facilitate reproducibility of executions.
 
 Documentation
 -------------
@@ -23,3 +23,4 @@ to the github repository: https://github.com/dPys/PyNets
 .. image:: /_static/structural_adj_mat.png
 .. image:: /_static/pynets_diffusion.png
 .. image:: /_static/link_communities.png
+.. image:: /_static/perspectivism.png

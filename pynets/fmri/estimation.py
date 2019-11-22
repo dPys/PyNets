@@ -301,6 +301,72 @@ def timeseries_bootstrap(tseries, block_size):
     return tseries[block_mask.astype('int'), :], block_mask.astype('int')
 
 
+def fill_confound_nans(confounds, dir_path):
+    """Fill the NaN values of a confounds dataframe with mean values"""
+    import uuid
+    import os
+    from time import strftime
+    run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
+    print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
+          'regressor file should be checked manually.')
+    confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
+    os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
+    conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
+    confounds_nonan.to_csv(conf_corr, sep='\t')
+    return conf_corr
+
+
+def prepare_inputs(func_file, conf, hpass, mask):
+    """Helper function to creating temporary nii's and prepare inputs from time-series extraction"""
+    import os.path as op
+    import nibabel as nib
+    from pynets.core import utils
+    import numbers
+    import time
+    if not op.isfile(func_file):
+        raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
+                         'exist(s)')
+
+    if conf:
+        if not op.isfile(conf):
+            raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the '
+                             '-conf flag exist(s)')
+
+    while utils.has_handle(func_file) is True:
+        time.sleep(1)
+
+    func_temp_path = utils.create_temporary_copy(func_file, op.basename(func_file).split('.nii')[0], '.nii')
+    func_img = nib.load(func_temp_path)
+    hdr = func_img.header
+
+    if hpass:
+        if len(hdr.get_zooms()) == 4:
+            t_r = float(hdr.get_zooms()[-1])
+        else:
+            t_r = None
+    else:
+        t_r = None
+
+    if (hpass is not None) and isinstance(hpass, numbers.Number):
+        if float(hpass) > 0:
+            hpass = float(hpass)
+            detrending = False
+        else:
+            hpass = None
+            detrending = True
+    else:
+        hpass = None
+        detrending = True
+
+    if mask is not None:
+        mask_path = utils.create_temporary_copy(mask, op.basename(mask).split('.nii')[0], '.nii')
+        mask_img = nib.load(mask_path)
+    else:
+        mask_path = None
+        mask_img = None
+    return t_r, hpass, detrending, mask_img, mask_path, func_img, func_temp_path
+
+
 def extract_ts_parc(net_parcels_nii_path, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas,
                     uatlas, labels, c_boot, block_size, hpass, mask):
     """
@@ -367,56 +433,15 @@ def extract_ts_parc(net_parcels_nii_path, conf, func_file, coords, roi, dir_path
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
-    import time
     import gc
     import os
     import os.path as op
     import nibabel as nib
     from nilearn import input_data
     from pynets.core import utils
-    from pynets.fmri.estimation import timeseries_bootstrap
-    import numbers
+    from pynets.fmri.estimation import timeseries_bootstrap, fill_confound_nans, prepare_inputs
 
-    if not op.isfile(func_file):
-        raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
-                         'exist(s)')
-
-    if conf:
-        if not op.isfile(conf):
-            raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the '
-                             '-conf flag exist(s)')
-
-    while utils.has_handle(func_file) is True:
-        time.sleep(1)
-
-    func_temp_path = utils.create_temporary_copy(func_file, op.basename(func_file).split('.nii')[0], '.nii')
-    func_img = nib.load(func_temp_path)
-    hdr = func_img.header
-
-    if hpass:
-        if len(hdr.get_zooms()) == 4:
-            t_r = float(hdr.get_zooms()[-1])
-        else:
-            t_r = None
-    else:
-        t_r = None
-
-    if (hpass is not None) and isinstance(hpass, numbers.Number):
-        if float(hpass) > 0:
-            hpass = float(hpass)
-            detrending = False
-        else:
-            hpass = None
-            detrending = True
-    else:
-        hpass = None
-        detrending = True
-
-    if mask is not None:
-        mask_path = utils.create_temporary_copy(mask, op.basename(mask).split('.nii')[0], '.nii')
-        mask_img = nib.load(mask_path)
-    else:
-        mask_img = None
+    t_r, hpass, detrending, mask_img, mask_path, func_img, func_temp_path = prepare_inputs(func_file, conf, hpass, mask)
 
     net_parcels_nii_temp_path = utils.create_temporary_copy(net_parcels_nii_path,
                                                             op.basename(net_parcels_nii_path).split('.nii')[0], '.nii')
@@ -429,16 +454,7 @@ def extract_ts_parc(net_parcels_nii_path, conf, func_file, coords, roi, dir_path
         import pandas as pd
         confounds = pd.read_csv(conf, sep='\t')
         if confounds.isnull().values.any():
-            import uuid
-            import os
-            from time import strftime
-            run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
-            print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but these '
-                  'should be checked manually')
-            confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-            os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
-            conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
-            confounds_nonan.to_csv(conf_corr, sep='\t')
+            conf_corr = fill_confound_nans(confounds, dir_path)
             ts_within_nodes = parcel_masker.fit_transform(func_img, confounds=conf_corr)
         else:
             ts_within_nodes = parcel_masker.fit_transform(func_img, confounds=conf)
@@ -550,54 +566,11 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
     """
     import gc
     import os
-    import os.path as op
-    import nibabel as nib
     from nilearn import input_data
-    from pynets.fmri.estimation import timeseries_bootstrap
+    from pynets.fmri.estimation import timeseries_bootstrap, fill_confound_nans, prepare_inputs
     from pynets.core import utils
-    import numbers
-    import time
 
-    if not op.isfile(func_file):
-        raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
-                         'exist(s)')
-
-    if conf:
-        if not op.isfile(conf):
-            raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the '
-                             '-conf flag exist(s)')
-
-    while utils.has_handle(func_file) is True:
-        time.sleep(1)
-
-    func_temp_path = utils.create_temporary_copy(func_file, op.basename(func_file).split('.nii')[0], '.nii')
-    func_img = nib.load(func_temp_path)
-    hdr = func_img.header
-
-    if hpass:
-        if len(hdr.get_zooms()) == 4:
-            t_r = float(hdr.get_zooms()[-1])
-        else:
-            t_r = None
-    else:
-        t_r = None
-
-    if (hpass is not None) and isinstance(hpass, numbers.Number):
-        if float(hpass) > 0:
-            hpass = float(hpass)
-            detrending = False
-        else:
-            hpass = None
-            detrending = True
-    else:
-        hpass = None
-        detrending = True
-
-    if mask is not None:
-        mask_path = utils.create_temporary_copy(mask, op.basename(mask).split('.nii')[0], '.nii')
-        mask_img = nib.load(mask_path)
-    else:
-        mask_img = None
+    t_r, hpass, detrending, mask_img, mask_path, func_img, func_temp_path = prepare_inputs(func_file, conf, hpass, mask)
 
     if len(coords) > 0:
         spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
@@ -608,16 +581,7 @@ def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, net
             import pandas as pd
             confounds = pd.read_csv(conf, sep='\t')
             if confounds.isnull().values.any():
-                import uuid
-                import os
-                from time import strftime
-                run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
-                print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
-                      'regressor file should be checked manually.')
-                confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-                os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
-                conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
-                confounds_nonan.to_csv(conf_corr, sep='\t')
+                conf_corr = fill_confound_nans(confounds, dir_path)
                 ts_within_nodes = spheres_masker.fit_transform(func_img, confounds=conf_corr)
             else:
                 ts_within_nodes = spheres_masker.fit_transform(func_img, confounds=conf)

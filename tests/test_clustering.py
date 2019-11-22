@@ -5,8 +5,9 @@ Created on Wed Dec 27 16:19:14 2017
 @authors: Derek Pisner & Ryan Hammonds
 
 """
-import os
+import pytest
 import numpy as np
+import nibabel as nib
 from pathlib import Path
 try:
     import cPickle as pickle
@@ -50,7 +51,9 @@ def test_make_local_connectivity_tcorr():
     dir_path = base_dir + '/002/fmri'
     mask_file = base_dir + '/triple_net_ICA_overlap_3_sig_bin.nii.gz'
     image_file = dir_path + '/002.nii.gz'
-    W = clustools.make_local_connectivity_tcorr(image_file, mask_file, thresh=0.50)
+    func_img = nib.load(image_file)
+    mask_img = nib.load(mask_file)
+    W = clustools.make_local_connectivity_tcorr(func_img, mask_img, thresh=0.50)
 
     assert W is not None
 
@@ -64,12 +67,17 @@ def test_make_local_connectivity_scorr():
     dir_path = base_dir + '/002/fmri'
     mask_file = base_dir + '/triple_net_ICA_overlap_3_sig_bin.nii.gz'
     image_file = dir_path + '/002.nii.gz'
-    W = clustools.make_local_connectivity_scorr(image_file, mask_file, thresh=0.50)
+    func_img = nib.load(image_file)
+    mask_img = nib.load(mask_file)
+    W = clustools.make_local_connectivity_scorr(func_img, mask_img, thresh=0.50)
 
     assert W is not None
 
 
-def test_nil_parcellate():
+@pytest.mark.parametrize("local_corr", ['scorr', 'tcorr', 'allcorr'])
+@pytest.mark.parametrize("clust_type", ['kmeans', 'ward', 'complete', 'average'])
+@pytest.mark.parametrize("k", [pytest.param(0, marks=pytest.mark.xfail), 1, 100])
+def test_nil_parcellate(local_corr, clust_type, k):
     """
     Test for nil_parcellate
     """
@@ -77,34 +85,11 @@ def test_nil_parcellate():
     dir_path = base_dir + '/002/fmri'
     clust_mask = base_dir + '/triple_net_ICA_overlap_3_sig_bin.nii.gz'
     func_file = dir_path + '/002.nii.gz'
-    local_corr = 'tcorr'
     conf = None
-    nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
-    k = 50
-    mask_name = os.path.basename(clust_mask).split('.nii.gz')[0]
-    for clust_type in nilearn_clust_list:
-        uatlas = "%s%s%s%s%s%s%s%s" % (dir_path, '/', mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
-        region_labels = clustools.nil_parcellate(func_file, clust_mask, k, clust_type, uatlas, dir_path, conf,
-                                                 local_corr, detrending=True, standardize=True)
-        assert region_labels is not None
-
-
-def test_individual_clustering():
-    """
-    Test for individual_clustering
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    clust_mask = base_dir + '/triple_net_ICA_overlap_3_sig_bin.nii.gz'
-    func_file = dir_path + '/002.nii.gz'
-    ID = '002'
-    k = 50
-    vox_size = '2mm'
-    conf = None
-    clust_type = 'ward'
-    [uatlas, atlas, clustering, _, _, _] = clustools.individual_clustering(func_file, conf, clust_mask, ID, k,
-                                                                           clust_type, vox_size)
-
-    assert uatlas is not None
+    nip = clustools.NilParcellate(func_file=func_file, clust_mask=clust_mask, k=k, clust_type=clust_type,
+                                  local_corr=local_corr, conf=conf)
+    atlas = nip.create_clean_mask()
+    nip.create_local_clustering(overwrite=True, r_thresh=0.4)
+    uatlas = nip.parcellate()
     assert atlas is not None
-    assert clustering is True
+    assert uatlas is not None

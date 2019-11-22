@@ -310,7 +310,7 @@ def wm_syn(template_path, fa_path, working_dir):
     warped_moving = mapping.transform(moving)
 
     # Save warped FA image
-    warped_fa = working_dir + '/warped_fa.nii.gz'
+    warped_fa = '{}/warped_fa.nii.gz'.format(working_dir)
     nib.save(nib.Nifti1Image(warped_moving, affine=static_affine), warped_fa)
 
     # We show the registration result with:
@@ -346,7 +346,6 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
     bvecs : str
         File path to corresponding reoriented bvecs file if outfile is a dwi.
     """
-    import os
     import time
     import os.path as op
     from pynets.core.utils import has_handle
@@ -367,8 +366,6 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
         # Check dimensions
         if ('reor' not in infile) or (overwrite is True):
             outfile = match_target_vox_res(infile, vox_size, outdir)
-            if op.exists(infile):
-                os.remove(infile)
             print(outfile)
     elif (vols > 1) and (bvecs is None):
         # func case
@@ -378,8 +375,6 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
         # Check dimensions
         if ('reor' not in infile) or (overwrite is True):
             outfile = match_target_vox_res(infile, vox_size, outdir)
-            if op.exists(infile):
-                os.remove(infile)
             print(outfile)
     else:
         # t1w case
@@ -389,8 +384,6 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
         # Check dimensions
         if ('reor' not in infile) or (overwrite is True):
             outfile = match_target_vox_res(infile, vox_size, outdir)
-            if op.exists(infile):
-                os.remove(infile)
             print(outfile)
 
     if bvecs is None:
@@ -467,9 +460,8 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
         print("%s%s%s" % ('Reorienting ', dwi_prep, ' to RAS+...'))
 
         # Flip the bvecs
-        input_orientation = nib.orientations.axcodes2ornt(input_axcodes)
-        desired_orientation = nib.orientations.axcodes2ornt(new_axcodes)
-        transform_orientation = nib.orientations.ornt_transform(input_orientation, desired_orientation)
+        transform_orientation = nib.orientations.ornt_transform(nib.orientations.axcodes2ornt(input_axcodes),
+                                                                nib.orientations.axcodes2ornt(new_axcodes))
         bvec_array = np.loadtxt(bvec_fname)
         if bvec_array.shape[0] != 3:
             bvec_array = bvec_array.T
@@ -484,7 +476,9 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
         out_bvec_fname = bvec_fname
 
     normalized.to_filename(out_fname)
-
+    normalized.uncache()
+    input_img.uncache()
+    del normalized, input_img
     return out_fname, out_bvec_fname
 
 
@@ -518,6 +512,8 @@ def reorient_img(img, out_dir):
         out_name = "%s%s%s%s" % (out_dir, '/', img.split('/')[-1].split('.nii')[0], '_noreor_RAS.nii.gz')
 
     normalized.to_filename(out_name)
+    orig_img.uncache()
+    normalized.uncache()
     del orig_img
 
     return out_name
@@ -566,5 +562,6 @@ def match_target_vox_res(img_file, vox_size, out_dir):
         nib.save(img, img_file_nores)
         img_file = img_file_nores
 
+    img.uncache()
     del img
     return img_file
