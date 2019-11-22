@@ -39,7 +39,7 @@ script:
    - travis_wait 60 pytest tests/test_reg_utils.py -s
    - travis_wait 60 pytest tests/test_dmri_utils.py -s
    - pytest tests/test_refs.py -s
-   - pytest -vv --cov pynets --cov-config .coveragerc --cov-report xml:cov.xml pynets
 
 after_script:
   - codecov
+      token: d62ad7b3-39a6-4657-a2e3-6acf2362d36d

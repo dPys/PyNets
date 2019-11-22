@@ -124,7 +124,7 @@ class IndividualClustering(SimpleInterface):
         from pynets.registration.reg_utils import check_orient_and_dims
         from pathlib import Path
 
-        time.sleep(30)
+        time.sleep(60)
 
         nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
@@ -162,7 +162,7 @@ class IndividualClustering(SimpleInterface):
         os.remove(func_temp_path)
         os.remove(clust_mask_temp_path)
         gc.collect()
-        time.sleep(30)
+        time.sleep(60)
 
         self._results['atlas'] = atlas
         self._results['uatlas'] = uatlas
@@ -223,7 +223,7 @@ class ExtractTimeseries(SimpleInterface):
         import os.path as op
         from pathlib import Path
 
-        time.sleep(30)
+        time.sleep(60)
 
         while utils.has_handle(self.inputs.func_file) is True:
             time.sleep(1)
@@ -246,7 +246,7 @@ class ExtractTimeseries(SimpleInterface):
         te = estimation.TimeseriesExtraction(net_parcels_nii_path=net_parcels_nii_temp_path,
                                              node_size=self.inputs.node_size,
                                              conf=self.inputs.conf,
-                                             func_file=self.inputs.func_temp_path,
+                                             func_file=func_temp_path,
                                              coords=self.inputs.coords,
                                              roi=self.inputs.roi,
                                              dir_path=self.inputs.dir_path,
@@ -259,7 +259,7 @@ class ExtractTimeseries(SimpleInterface):
                                              c_boot=self.inputs.c_boot,
                                              block_size=self.inputs.block_size,
                                              hpass=self.inputs.hpass,
-                                             mask=self.inputs.mask_path)
+                                             mask=mask_path)
 
         te.prepare_inputs()
         if self.inputs.parc is False:
@@ -286,7 +286,7 @@ class ExtractTimeseries(SimpleInterface):
             os.remove(net_parcels_nii_temp_path)
 
         gc.collect()
-        time.sleep(30)
+        time.sleep(60)
 
         self._results['ts_within_nodes'] = te.ts_within_nodes
         self._results['node_size'] = te.node_size
