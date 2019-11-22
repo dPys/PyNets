@@ -952,7 +952,7 @@ def create_temporary_copy(path, temp_file_name, fmt, tmp_dir='auto'):
     import tempfile, shutil
     from time import strftime
     import uuid
-    run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
+    run_uuid = '%s_%s' % (strftime('%Y%m%d_%H%M%S'), uuid.uuid4())
     if tmp_dir == 'auto':
         temp_dir = "%s%s%s" % (tempfile.mkdtemp(), '/', run_uuid)
     else:

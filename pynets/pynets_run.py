@@ -1392,11 +1392,11 @@ def build_workflow(args, retval):
         from time import strftime
 
         if (func_file is not None) and (dwi_file is None):
-            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_fmri_', strftime('%Y%m%d-%H%M%S')))
+            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_fmri_', strftime('%Y%m%d_%H%M%S')))
         elif (dwi_file is not None) and (func_file is None):
-            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_dmri_', strftime('%Y%m%d-%H%M%S')))
+            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_dmri_', strftime('%Y%m%d_%H%M%S')))
         else:
-            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_', strftime('%Y%m%d-%H%M%S')))
+            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_', strftime('%Y%m%d_%H%M%S')))
         import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx",
                        "import nibabel as nib", "import warnings", "warnings.filterwarnings(\"ignore\")",
                        "np.warnings.filterwarnings(\"ignore\")", "warnings.simplefilter(\"ignore\")"]
@@ -1477,7 +1477,14 @@ def build_workflow(args, retval):
                                               'roi', 'prune', 'norm', 'binary'], nested=True,
                                    imports=import_list)
 
+        net_mets_node._n_procs = 1
+        net_mets_node._mem_gb = 1
+
         # Aggregate list of paths to pandas dataframe pickles
+        join_net_mets = pe.JoinNode(niu.IdentityInterface(fields=['out_path_neat']),
+                                    name='join_net_mets', joinsource=net_mets_node,
+                                    joinfield=['out_path_neat'])
+
         collect_pd_list_net_csv_node = pe.Node(niu.Function(input_names=['net_mets_csv'],
                                                             output_names=['net_mets_csv_out'],
                                                             function=collectpandasjoin),
@@ -1513,6 +1520,7 @@ def build_workflow(args, retval):
                                                   ('plot_switch', 'plot_switch'),
                                                   ('multi_nets', 'multi_nets'),
                                                   ('multimodal', 'multimodal')]),
+            (net_mets_node, join_net_mets, [('out_path_neat', 'out_path_neat')]),
             (net_mets_node, collect_pd_list_net_csv_node, [('out_path_neat', 'net_mets_csv')]),
             (collect_pd_list_net_csv_node, combine_pandas_dfs_node, [('net_mets_csv_out', 'net_mets_csv_list')]),
             (combine_pandas_dfs_node, final_outputnode, [('combination_complete', 'combination_complete')])
@@ -1575,7 +1583,7 @@ def build_workflow(args, retval):
         warnings.filterwarnings("ignore")
         from time import strftime
 
-        wf_multi = pe.Workflow(name="%s%s" % ('wf_multisub_', strftime('%Y%m%d-%H%M%S')))
+        wf_multi = pe.Workflow(name="%s%s" % ('wf_multisub_', strftime('%Y%m%d_%H%M%S')))
 
         if (func_file_list is None) and dwi_file_list:
             func_file_list = len(dwi_file_list) * [None]
@@ -1674,6 +1682,8 @@ def build_workflow(args, retval):
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).n_procs = procmem[0]
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
+            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._n_procs = 1
+            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 1
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._n_procs = 1
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._mem_gb = 2
 
@@ -1741,7 +1751,7 @@ def build_workflow(args, retval):
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
                               'use_relative_paths': False, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
                               'remove_node_directories': False, 'raise_insufficient': False, 'maxtasksperchild': 1,
-                              'poll_sleep_duration': 30})
+                              'poll_sleep_duration': 10})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf_multi.config[key][setting] = value
@@ -1797,7 +1807,7 @@ def build_workflow(args, retval):
         else:
             base_dirname = "%s%s" % ('wf_single_subject_', str(ID))
 
-        run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
+        run_uuid = '%s_%s' % (strftime('%Y%m%d_%H%M%S'), uuid.uuid4())
         if func_file:
             func_dir = os.path.dirname(func_file)
         if dwi_file:
@@ -1828,7 +1838,7 @@ def build_workflow(args, retval):
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
                               'use_relative_paths': False, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
                               'remove_node_directories': False, 'raise_insufficient': False, 'maxtasksperchild': 1,
-                              'poll_sleep_duration': 30})
+                              'poll_sleep_duration': 10})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf.config[key][setting] = value

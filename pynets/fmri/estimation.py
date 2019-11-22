@@ -306,7 +306,7 @@ def fill_confound_nans(confounds, dir_path):
     import uuid
     import os
     from time import strftime
-    run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
+    run_uuid = '%s_%s' % (strftime('%Y%m%d_%H%M%S'), uuid.uuid4())
     print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
           'regressor file should be checked manually.')
     confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
