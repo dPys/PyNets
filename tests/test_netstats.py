@@ -6,6 +6,7 @@ Created on Wed Dec 27 16:19:14 2017
 @authors: Derek Pisner & Ryan Hammonds
 
 """
+import pytest
 import numpy as np
 import networkx as nx
 import time
@@ -158,7 +159,10 @@ def test_most_important():
     assert pruned_nodes is not None
 
 
-def test_extractnetstats():
+@pytest.mark.parametrize("binary", ['True', 'False'])
+@pytest.mark.parametrize("prune", ['0', '1', '2'])
+@pytest.mark.parametrize("norm", ['0', '1', '2', '3', '4', '5', '6'])
+def test_extractnetstats(binary, prune, norm):
     """
     Test extractnetstats functionality
     """

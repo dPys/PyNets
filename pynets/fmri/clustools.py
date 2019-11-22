@@ -455,23 +455,28 @@ class NilParcellate(object):
         from scipy.sparse import save_npz, load_npz
         from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
 
-        self.local_conn_mat_path = "%s%s%s%s" % (self.uatlas.split('.nii.gz')[0], '_', self.local_corr, '_conn.npz')
+        if self.local_corr == 'tcorr' or self.local_corr == 'scorr':
+            self.local_conn_mat_path = "%s%s%s%s" % (self.uatlas.split('.nii.gz')[0], '_', self.local_corr, '_conn.npz')
 
-        if (not op.isfile(self.local_conn_mat_path)) or (overwrite is True):
-            if self.local_corr == 'tcorr':
-                self.local_conn = make_local_connectivity_tcorr(self.func_img, self.clust_mask_corr_img,
-                                                                thresh=r_thresh)
-            elif self.local_corr == 'scorr':
-                self.local_conn = make_local_connectivity_scorr(self.func_img, self.clust_mask_corr_img,
-                                                                thresh=r_thresh)
-            else:
-                raise ValueError('Local connectivity type not available')
+            if (not op.isfile(self.local_conn_mat_path)) or (overwrite is True):
+                if self.local_corr == 'tcorr':
+                    self.local_conn = make_local_connectivity_tcorr(self.func_img, self.clust_mask_corr_img,
+                                                                    thresh=r_thresh)
+                elif self.local_corr == 'scorr':
+                    self.local_conn = make_local_connectivity_scorr(self.func_img, self.clust_mask_corr_img,
+                                                                    thresh=r_thresh)
+                else:
+                    raise ValueError('Local connectivity type not available')
 
-            print("%s%s" % ('Saving spatially constrained connectivity structure to: ', self.local_conn_mat_path))
-            save_npz(self.local_conn_mat_path, self.local_conn)
-        elif op.isfile(self.local_conn_mat_path):
-            self.local_conn = load_npz(self.local_conn_mat_path)
-
+                print("%s%s" % ('Saving spatially constrained connectivity structure to: ', self.local_conn_mat_path))
+                save_npz(self.local_conn_mat_path, self.local_conn)
+            elif op.isfile(self.local_conn_mat_path):
+                self.local_conn = load_npz(self.local_conn_mat_path)
+        elif self.local_corr == 'allcorr':
+            self.local_conn = 'auto'
+        else:
+            raise ValueError('Local connectivity method not recognized. Only tcorr, scorr, and auto are currently '
+                             'supported')
         return
 
     def parcellate(self):
@@ -482,13 +487,13 @@ class NilParcellate(object):
         import time
         import os
         from nilearn.regions import Parcellations, connected_label_regions
-        import uuid
-        from time import strftime
+        from pynets.fmri.estimation import fill_confound_nans
 
         start = time.time()
 
-        if not os.path.isfile(self.local_conn_mat_path):
-            raise FileNotFoundError('File containing sparse matrix of local connectivity structure not found.')
+        if self.local_corr != 'allcorr':
+            if not os.path.isfile(self.local_conn_mat_path):
+                raise FileNotFoundError('File containing sparse matrix of local connectivity structure not found.')
 
         self.clust_est = Parcellations(method=self.clust_type, standardize=self.standardize, detrend=self.detrending,
                                        n_parcels=int(self.k), mask=self.clust_mask_corr_img,
@@ -498,13 +503,7 @@ class NilParcellate(object):
             import pandas as pd
             confounds = pd.read_csv(self.conf, sep='\t')
             if confounds.isnull().values.any():
-                run_uuid = '%s_%s' % (strftime('%Y%m%d-%H%M%S'), uuid.uuid4())
-                print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
-                      'regressor file should be checked manually.')
-                confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-                os.makedirs("%s%s" % (self.dir_path, '/confounds_tmp'), exist_ok=True)
-                conf_corr = "%s%s%s%s" % (self.dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
-                confounds_nonan.to_csv(conf_corr, sep='\t')
+                conf_corr = fill_confound_nans(confounds, self.dir_path)
                 self.clust_est.fit(self.func_img, confounds=conf_corr)
             else:
                 self.clust_est.fit(self.func_img, confounds=self.conf)

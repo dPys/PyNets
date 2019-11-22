@@ -11,44 +11,11 @@ cmdclass = versioneer.get_cmdclass()
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
+    readme_file.close()
 
-requirements = [
-    'Click>=6.0',
-    'Sphinx>=1.4.8',
-    'sphinx-argparse>=0.2.5',
-    'sphinx-rtd-theme>=0.4.3',
-    'numpydoc>=0.8.0',
-    'scipy>=0.19.0',
-    'nipype>=1.1.0',
-    'numpy>=1.12.1',
-    'seaborn>=0.7.1',
-    'matplotlib>=2.0.0',
-    'nilearn>=0.5.0',
-    'pandas>=0.24.2',
-    'networkx>=2.0',
-    'nibabel>=2.1.0',
-    'scikit_learn>=0.18.2',
-    'pathlib>=1.0.1',
-    'setuptools>=39.0.1',
-    'configparser>=3.5.0',
-    'PyYAML>=3.12',
-    'boto3>=1.9.111',
-    'colorama>=0.3.9',
-    'pybids>=0.6.4',
-    'graspy>=0.0.2',
-    'python-louvain>=0.13',
-    #'py3plex>=0.67',
-]
-
-setup_requirements = [
-    'pytest-runner',
-    # TODO(dpisner453): put setup requirements (distutils extensions, etc.) here
-]
-
-test_requirements = [
-    'pytest',
-    # TODO: put package test requirements here
-]
+with open('requirements.txt') as f:
+    requirements = [r for r in f.read().splitlines() if 'git+' not in r]
+    f.close()
 
 setup(
     name='pynets',
@@ -65,7 +32,8 @@ setup(
         ]
     },
     include_package_data=True,
-    install_requires=requirements,
+    install_requires=['nilearn==0.6.0b0'] + requirements,
+    dependency_links=['git+https://github.com/dPys/nilearn.git@enh/parc_conn#egg=nilearn-0.6.0b0'],
     license="GNU General Public License v3",
     zip_safe=False,
     keywords='pynets',
@@ -77,7 +45,5 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6'
     ],
-    test_suite='tests',
-    tests_require=test_requirements,
-    setup_requires=setup_requirements
+    test_suite='tests'
 )

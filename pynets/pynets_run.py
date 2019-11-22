@@ -197,11 +197,12 @@ def get_parser():
                              'clustering types, separate them by space.\n')
     parser.add_argument('-cc',
                         metavar='Clustering connectivity type',
-                        default='tcorr',
+                        default='allcorr',
                         nargs=1,
-                        choices=['tcorr', 'scorr'],
+                        choices=['tcorr', 'scorr', 'allcorr'],
                         help='Include this flag if you are running clustering and wish to specift a spatially '
-                             'constrained connectivity method based on scorr. Default is tcorr.\n')
+                             'constrained connectivity method based on tcorr or scorr. Default is allcorr which has no '
+                             'spatial constraints.\n')
     parser.add_argument('-n',
                         metavar='Resting-state network',
                         default=None,
@@ -247,8 +248,11 @@ def get_parser():
     parser.add_argument('-p',
                         metavar='Pruning strategy',
                         default=1,
-                        help='Include this flag to prune the resulting graph of any isolated (1) or isolated + fully '
-                             'disconnected (2) nodes. Default pruning=1. Include -p 0 to disable pruning.\n')
+                        nargs=1,
+                        choices=['0', '1', '2'],
+                        help='Include this flag to prune the resulting graph of (1) any isolated + fully '
+                             'disconnected nodes or (2) any isolated + fully disconnected + non-important nodes. '
+                             'Default pruning=1. Include -p 0 to disable pruning.\n')
     parser.add_argument('-bin',
                         default=False,
                         action='store_true',
@@ -552,6 +556,8 @@ def build_workflow(args, retval):
     k_max = args.k_max
     k_step = args.k_step
     prune = args.p
+    if type(prune) is list:
+        prune = prune[0]
     norm = args.norm
     if type(norm) is list:
         norm = norm[0]
@@ -683,7 +689,7 @@ def build_workflow(args, retval):
     if (func_file is None) and (dwi_file is None) and (graph is None) and (multi_graph is None):
         raise ValueError("\nError: You must include a file path to either an MNI152-normalized space functional image "
                          "in .nii or .nii.gz format with the -func flag.")
-    
+
     if func_file:
         if isinstance(func_file, list) and len(func_file) > 1:
             func_file_list = func_file
@@ -1733,7 +1739,7 @@ def build_workflow(args, retval):
         cfg = dict(execution={'stop_on_first_crash': False, 'crashdump_dir': str(wf_multi.base_dir),
                               'crashfile_format': 'txt', 'parameterize_dirs': False, 'display_variable': ':0',
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
-                              'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
+                              'use_relative_paths': False, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
                               'remove_node_directories': False, 'raise_insufficient': False, 'maxtasksperchild': 1,
                               'poll_sleep_duration': 30})
         for key in cfg.keys():
@@ -1820,8 +1826,9 @@ def build_workflow(args, retval):
         cfg = dict(execution={'stop_on_first_crash': False, 'crashdump_dir': str(wf.base_dir),
                               'parameterize_dirs': False, 'crashfile_format': 'txt', 'display_variable': ':0',
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
-                              'use_relative_paths': True, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
-                              'remove_node_directories': False, 'raise_insufficient': False, 'maxtasksperchild': 1})
+                              'use_relative_paths': False, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
+                              'remove_node_directories': False, 'raise_insufficient': False, 'maxtasksperchild': 1,
+                              'poll_sleep_duration': 30})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf.config[key][setting] = value

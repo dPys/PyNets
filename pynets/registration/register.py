@@ -169,7 +169,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     if not os.path.isdir(dsn_dir):
         os.mkdir(dsn_dir)
 
-    namer_dir = dir_path + '/tractography'
+    namer_dir = '{}/tractography'.format(dir_path)
     if not os.path.isdir(namer_dir):
         os.mkdir(namer_dir)
 
@@ -248,13 +248,11 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     adjusted_affine[2][3] = -adjusted_affine[2][3]*z_mul
 
     # Deform streamlines, isocenter, and remove streamlines outside brain
-    streams_final_filt = Streamlines(utils.target_line_based(transform_streamlines(
-        transform_streamlines(
-            nib.streamlines.array_sequence.ArraySequence([(d, s) for d, s in
-                                                          zip(values_from_volume(mapping.get_forward_field(),
-                                                                                 streams_in_curr_grid, ref_grid_aff),
-                                                              streams_in_curr_grid)]), np.linalg.inv(adjusted_affine)),
-        np.linalg.inv(warped_fa_affine)), np.eye(4), brain_mask, include=True))
+    streams_final_filt = Streamlines(utils.target_line_based(
+        transform_streamlines(transform_streamlines(
+            [sum(d, s) for d, s in zip(values_from_volume(mapping.get_forward_field(), streams_in_curr_grid,
+                                                                     ref_grid_aff), streams_in_curr_grid)],
+            np.linalg.inv(adjusted_affine)), np.linalg.inv(warped_fa_img.affine)), np.eye(4), brain_mask, include=True))
 
     # Remove streamlines with negative voxel indices
     lin_T, offset = _mapping_to_voxel(np.eye(4))

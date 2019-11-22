@@ -806,7 +806,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     if min_span_tree is True:
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
-            print('Ignoring -dt flag since local density thresholding is not currently supporting.')
+            print('Ignoring -dt flag since local density thresholding is not currently supported.')
         thr_type = 'MST_thr'
         edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
         [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, coords, labels, thr)
@@ -981,7 +981,7 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     if min_span_tree is True:
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is False:
-            print('Ignoring -dt flag since local density thresholding is not currently supporting.')
+            print('Ignoring -dt flag since local density thresholding is not currently supported.')
         thr_type = 'MST_thr'
         edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
         [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, coords, labels, thr)
