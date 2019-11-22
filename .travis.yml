@@ -28,7 +28,7 @@ env:
 
 # command to run tests, e.g. python setup.py test
 script:
-   - travis_wait 240 pytest -vv --cov pynets --cov-config .coveragerc --cov-report xml:cov.xml pynets
+   - travis_wait 240 pytest -vv tests/* --cov pynets --cov-config .coveragerc --cov-report xml:cov.xml pynets
 
 after_script:
   - codecov
