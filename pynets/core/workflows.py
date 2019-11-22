@@ -148,7 +148,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                           'display_variable': ':0', 'job_finished_timeout': 120, 'matplotlib_backend': 'Agg',
                           'plugin': str(plugin_type), 'use_relative_paths': True, 'remove_unnecessary_outputs': False,
                           'raise_insufficient': False, 'remove_node_directories': False, 'plugin_args': plugin_args,
-                          'maxtasksperchild': 1})
+                          'maxtasksperchild': 1, 'poll_sleep_duration': 60})
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             meta_wf.config[key][setting] = value
