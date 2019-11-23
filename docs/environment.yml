@@ -1,0 +1,22 @@
+name: pynets_docs
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+- numpy>=1.11.0
+- scipy=0.18.1
+- scikit-learn=0.18.1
+- matplotlib=2.0.0
+- traits=4.6
+- jinja2=2.8
+- sphinx>=1.5.1
+- sphinx_rtd_theme
+- mock
+- future
+- funcsigs
+- pydotplus
+
+- pip:
+    - sphinx-argparse
+    - doctest-ignore-unicode
+    - svgutils
