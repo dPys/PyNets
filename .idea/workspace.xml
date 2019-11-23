@@ -8,13 +8,7 @@
     <bookmark url="file://$PROJECT_DIR$/pynets/registration/register.py" description="        # Create linear transform/ initializer T1w..." line="743" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/=8.1.0" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/core/interfaces.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/interfaces.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/core/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/fmri/estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/fmri/estimation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
-    </list>
+    <list default="true" id="469a6c41-3c64-45f0-bd9a-fecc1629241d" name="Default" comment="" />
     <ignored path="$PROJECT_DIR$/.tox/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -46,17 +40,7 @@
     <favorites_list name="PyNets" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="255">
-              <caret line="17" column="30" lean-forward="true" selection-start-line="17" selection-start-column="30" selection-end-line="17" selection-end-column="30" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -504,12 +488,12 @@
       <workItem from="1570756648107" duration="16977000" />
       <workItem from="1570862811437" duration="19368000" />
       <workItem from="1571008770262" duration="59711000" />
-      <workItem from="1572530562519" duration="169304000" />
+      <workItem from="1572530562519" duration="169706000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1464311000" />
+    <option name="totallyTimeSpent" value="1464713000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -522,7 +506,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="304" y="23" width="1434" height="984" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.48318386" visible="true" weight="0.1487069" />
       <window_info id="Structure" order="1" sideWeight="0.51681614" side_tool="true" weight="0.1764706" />
@@ -1029,7 +1012,7 @@
     <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="255">
-          <caret line="17" column="30" lean-forward="true" selection-start-line="17" selection-start-column="30" selection-end-line="17" selection-end-column="30" />
+          <caret line="17" column="30" selection-start-line="17" selection-start-column="30" selection-end-line="17" selection-end-column="30" />
         </state>
       </provider>
     </entry>
