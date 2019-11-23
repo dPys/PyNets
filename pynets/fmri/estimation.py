@@ -316,309 +316,185 @@ def fill_confound_nans(confounds, dir_path):
     return conf_corr
 
 
-def prepare_inputs(func_file, conf, hpass, mask):
-    """Helper function to creating temporary nii's and prepare inputs from time-series extraction"""
-    import os.path as op
-    import nibabel as nib
-    from pynets.core import utils
-    import numbers
-    import time
-    if not op.isfile(func_file):
-        raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i flag '
-                         'exist(s)')
-
-    if conf:
-        if not op.isfile(conf):
-            raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with the '
-                             '-conf flag exist(s)')
-
-    while utils.has_handle(func_file) is True:
-        time.sleep(1)
-
-    func_temp_path = utils.create_temporary_copy(func_file, op.basename(func_file).split('.nii')[0], '.nii')
-    func_img = nib.load(func_temp_path)
-    hdr = func_img.header
-
-    if hpass:
-        if len(hdr.get_zooms()) == 4:
-            t_r = float(hdr.get_zooms()[-1])
-        else:
-            t_r = None
-    else:
-        t_r = None
-
-    if (hpass is not None) and isinstance(hpass, numbers.Number):
-        if float(hpass) > 0:
-            hpass = float(hpass)
-            detrending = False
-        else:
-            hpass = None
-            detrending = True
-    else:
-        hpass = None
-        detrending = True
-
-    if mask is not None:
-        mask_path = utils.create_temporary_copy(mask, op.basename(mask).split('.nii')[0], '.nii')
-        mask_img = nib.load(mask_path)
-    else:
-        mask_path = None
-        mask_img = None
-    return t_r, hpass, detrending, mask_img, mask_path, func_img, func_temp_path
-
-
-def extract_ts_parc(net_parcels_nii_path, conf, func_file, coords, roi, dir_path, ID, network, smooth, atlas,
-                    uatlas, labels, c_boot, block_size, hpass, mask):
+class TimeseriesExtraction(object):
     """
-    API for employing Nilearn's NiftiLabelsMasker to extract fMRI time-series data from spherical ROI's based on a
-    given 3D atlas image of integer-based voxel intensities. The resulting time-series can then optionally be resampled
-    using circular-block bootrapping. The final 2D m x n array is ultimately saved to file in .npy format
-
-    Parameters
-    ----------
-    net_parcels_nii_path : str
-        Path to a nifti image file consisting of a 3D array with integer voxel intensities corresponding to ROI
-        membership.
-    conf : str
-        File path to a confound regressor file for reduce noise in the time-series when extracting from ROI's.
-    func_file : str
-        File path to a preprocessed functional Nifti1Image in standard space.
-    coords : list
-        List of (x, y, z) tuples corresponding to the center-of-mass of each parcellation node.
-    dir_path : str
-        Path to directory containing subject derivative data for given run.
-    ID : str
-        A subject id or other unique identifier.
-    roi : str
-        File path to binarized/boolean region-of-interest Nifti1Image file.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
-        used to filter nodes in the study of brain subgraphs.
-    smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
-    atlas : str
-        Name of atlas parcellation used.
-    uatlas : str
-        File path to atlas parcellation Nifti1Image in MNI template space.
-    labels : list
-        List of string labels corresponding to graph nodes.
-    c_boot : int
-        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
-    block_size : int
-        Size bootstrap blocks if bootstrapping (c_boot) is performed.
-    hpass : bool
-        High-pass filter values (Hz) to apply to node-extracted time-series.
-    mask : str
-        File path to binarized/boolean brain mask Nifti1Image file.
-
-    Returns
-    -------
-    ts_within_nodes : array
-        2D m x n array consisting of the time-series signal for each ROI node where m = number of scans and
-        n = number of ROI's, where ROI's are parcel volumes.
-    smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
-    dir_path : str
-        Path to directory containing subject derivative data for given run.
-    atlas : str
-        Name of atlas parcellation used.
-    uatlas : str
-        File path to atlas parcellation Nifti1Image in MNI template space.
-    labels : list
-        List of string labels corresponding to ROI nodes.
-    coords : list
-        List of (x, y, z) tuples corresponding to the center-of-mass of each parcellation node.
-    c_boot : int
-        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
-    hpass : bool
-        High-pass filter values (Hz) to apply to node-extracted time-series.
+    Class for implementing various time-series extracting routines.
     """
-    import gc
-    import os
-    import os.path as op
-    import nibabel as nib
-    from nilearn import input_data
-    from pynets.core import utils
-    from pynets.fmri.estimation import timeseries_bootstrap, fill_confound_nans, prepare_inputs
+    def __init__(self, net_parcels_nii_path, node_size, conf, func_file, coords, roi, dir_path, ID, network, smooth,
+                 atlas, uatlas, labels, c_boot, block_size, hpass, mask):
+        self.net_parcels_nii_path = net_parcels_nii_path
+        self.node_size = node_size
+        self.conf = conf
+        self.func_file = func_file
+        self.coords = coords
+        self.roi = roi
+        self.dir_path = dir_path
+        self.ID = ID
+        self.network = network
+        self.smooth = smooth
+        self.atlas = atlas
+        self.uatlas = uatlas
+        self.labels = labels
+        self.c_boot = c_boot
+        self.block_size = block_size
+        self.mask = mask
+        self.hpass = hpass
+        self.mask_img = None
+        self.mask_path = None
+        self.func_img = None
+        self.t_r = None
+        self.hpass = None
+        self.detrending = True
+        self.net_parcels_nii_temp_path = None
+        self.net_parcels_map_nifti = None
+        self.ts_within_nodes = None
+        self.spheres_masker = None
+        self.parcel_masker = None
 
-    t_r, hpass, detrending, mask_img, mask_path, func_img, func_temp_path = prepare_inputs(func_file, conf, hpass, mask)
+    def prepare_inputs(self):
+        """Helper function to creating temporary nii's and prepare inputs from time-series extraction"""
+        import os.path as op
+        import nibabel as nib
+        import numbers
+        if not op.isfile(self.func_file):
+            raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i '
+                             'flag exist(s)')
 
-    net_parcels_nii_temp_path = utils.create_temporary_copy(net_parcels_nii_path,
-                                                            op.basename(net_parcels_nii_path).split('.nii')[0], '.nii')
-    net_parcels_map_nifti = nib.load(net_parcels_nii_temp_path)
-    parcel_masker = input_data.NiftiLabelsMasker(labels_img=net_parcels_map_nifti, background_label=0,
-                                                 standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
-                                                 detrend=detrending, t_r=t_r, verbose=2, resampling_target='data',
-                                                 dtype='auto', mask_img=mask_img)
-    if conf is not None:
-        import pandas as pd
-        confounds = pd.read_csv(conf, sep='\t')
-        if confounds.isnull().values.any():
-            conf_corr = fill_confound_nans(confounds, dir_path)
-            ts_within_nodes = parcel_masker.fit_transform(func_img, confounds=conf_corr)
-        else:
-            ts_within_nodes = parcel_masker.fit_transform(func_img, confounds=conf)
-    else:
-        ts_within_nodes = parcel_masker.fit_transform(func_img)
-    func_img.uncache()
-    os.remove(func_temp_path)
-    net_parcels_map_nifti.uncache()
-    os.remove(net_parcels_nii_temp_path)
+        if self.conf:
+            if not op.isfile(self.conf):
+                raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with '
+                                 'the -conf flag exist(s)')
 
-    if mask_path is not None:
-        mask_img.uncache()
-        os.remove(mask_path)
+        self.func_img = nib.load(self.func_file)
+        hdr = self.func_img.header
 
-    if ts_within_nodes is None:
-        raise RuntimeError('\nERROR: Time-series extraction failed!')
-
-    if float(c_boot) > 0:
-        print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))
-        ts_within_nodes = timeseries_bootstrap(ts_within_nodes, block_size)[0]
-    print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]), ' mean extracted from ',
-                        len(coords), ' volumetric ROI\'s'))
-    if smooth:
-        if float(smooth) > 0:
-            print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
-
-    if hpass:
-        print("%s%s%s" % ('Applying high-pass filter: ', hpass, ' Hz\n'))
-
-    # Save time series as file
-    utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass, node_size='parc')
-    node_size = None
-
-    del parcel_masker
-    gc.collect()
-
-    return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass
-
-
-def extract_ts_coords(node_size, conf, func_file, coords, dir_path, ID, roi, network, smooth, atlas,
-                      uatlas, labels, c_boot, block_size, hpass, mask):
-    """
-    API for employing Nilearn's NiftiSpheresMasker to extract fMRI time-series data from spherical ROI's based on a
-    given list of seed coordinates. The resulting time-series can then optionally be resampled using circular-block
-    bootrapping. The final 2D m x n array is ultimately saved to file in .npy format
-
-    Parameters
-    ----------
-    node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for time-series extraction.
-    conf : str
-        File path to a confound regressor file for reduce noise in the time-series when extracting from ROI's.
-    func_file : str
-        File path to a preprocessed functional Nifti1Image in standard space.
-    coords : list
-        List of (x, y, z) tuples corresponding to an a-priori defined set (e.g. a coordinate atlas).
-    dir_path : str
-        Path to directory containing subject derivative data for given run.
-    ID : str
-        A subject id or other unique identifier.
-    roi : str
-        File path to binarized/boolean region-of-interest Nifti1Image file.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
-        used to filter nodes in the study of brain subgraphs.
-    smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
-    atlas : str
-        Name of atlas parcellation used.
-    uatlas : str
-        File path to atlas parcellation Nifti1Image in MNI template space.
-    labels : list
-        List of string labels corresponding to graph nodes.
-    c_boot : int
-        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
-    block_size : int
-        Size bootstrap blocks if bootstrapping (c_boot) is performed.
-    hpass : bool
-        High-pass filter values (Hz) to apply to node-extracted time-series.
-    mask : str
-        File path to binarized/boolean brain mask Nifti1Image file.
-
-    Returns
-    -------
-    ts_within_nodes : array
-        2D m x n array consisting of the time-series signal for each ROI node where m = number of scans and
-        n = number of ROI's, where ROI's are spheres.
-    node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for tracking.
-    smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
-    dir_path : str
-        Path to directory containing subject derivative data for given run.
-    atlas : str
-        Name of atlas parcellation used.
-    uatlas : str
-        File path to atlas parcellation Nifti1Image in MNI template space.
-    labels : list
-        List of string labels corresponding to ROI nodes.
-    coords : list
-        List of (x, y, z) tuples corresponding to a coordinate atlas used or
-        which represent the center-of-mass of each parcellation node.
-    c_boot : int
-        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
-    hpass : bool
-        High-pass filter values (Hz) to apply to node-extracted time-series.
-    """
-    import gc
-    import os
-    from nilearn import input_data
-    from pynets.fmri.estimation import timeseries_bootstrap, fill_confound_nans, prepare_inputs
-    from pynets.core import utils
-
-    t_r, hpass, detrending, mask_img, mask_path, func_img, func_temp_path = prepare_inputs(func_file, conf, hpass, mask)
-
-    if len(coords) > 0:
-        spheres_masker = input_data.NiftiSpheresMasker(seeds=coords, radius=float(node_size), allow_overlap=True,
-                                                       standardize=True, smoothing_fwhm=float(smooth), high_pass=hpass,
-                                                       detrend=detrending, t_r=t_r, verbose=2, dtype='auto',
-                                                       mask_img=mask_img)
-        if conf is not None:
-            import pandas as pd
-            confounds = pd.read_csv(conf, sep='\t')
-            if confounds.isnull().values.any():
-                conf_corr = fill_confound_nans(confounds, dir_path)
-                ts_within_nodes = spheres_masker.fit_transform(func_img, confounds=conf_corr)
+        if self.hpass:
+            if len(hdr.get_zooms()) == 4:
+                self.t_r = float(hdr.get_zooms()[-1])
             else:
-                ts_within_nodes = spheres_masker.fit_transform(func_img, confounds=conf)
+                self.t_r = None
         else:
-            ts_within_nodes = spheres_masker.fit_transform(func_img)
-        func_img.uncache()
-        os.remove(func_temp_path)
-        if mask_path is not None:
-            mask_img.uncache()
-            os.remove(mask_path)
+            self.t_r = None
 
-        if float(c_boot) > 0:
-            print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))
-            ts_within_nodes = timeseries_bootstrap(ts_within_nodes, block_size)[0]
-        if ts_within_nodes is None:
+        if (self.hpass is not None) and isinstance(self.hpass, numbers.Number):
+            if float(self.hpass) > 0:
+                self.hpass = float(self.hpass)
+                self.detrending = False
+            else:
+                self.hpass = None
+                self.detrending = True
+        else:
+            self.hpass = None
+            self.detrending = True
+
+        if self.mask is not None:
+            self.mask_img = nib.load(self.mask)
+        else:
+            self.mask_img = None
+
+        if self.smooth:
+            if float(self.smooth) > 0:
+                print("%s%s%s" % ('Smoothing FWHM: ', self.smooth, ' mm\n'))
+
+        if self.hpass:
+            print("%s%s%s" % ('Applying high-pass filter: ', self.hpass, ' Hz\n'))
+
+        return
+
+    def extract_ts_coords(self):
+        """
+        API for employing Nilearn's NiftiSpheresMasker to extract fMRI time-series data from spherical ROI's based on a
+        given list of seed coordinates. The resulting time-series can then optionally be resampled using circular-block
+        bootrapping. The final 2D m x n array is ultimately saved to file in .npy format.
+        """
+        from nilearn import input_data
+        from pynets.fmri.estimation import fill_confound_nans
+
+        print("%s%s%s" % ('Using node radius: ', self.node_size, ' mm'))
+        self.spheres_masker = input_data.NiftiSpheresMasker(seeds=self.coords, radius=float(self.node_size),
+                                                            allow_overlap=True, standardize=True,
+                                                            smoothing_fwhm=float(self.smooth),
+                                                            high_pass=self.hpass, detrend=self.detrending,
+                                                            t_r=self.t_r, verbose=2, dtype='auto',
+                                                            mask_img=self.mask_img)
+        if self.conf is not None:
+            import pandas as pd
+            confounds = pd.read_csv(self.conf, sep='\t')
+            if confounds.isnull().values.any():
+                conf_corr = fill_confound_nans(confounds, self.dir_path)
+                self.ts_within_nodes = self.spheres_masker.fit_transform(self.func_img, confounds=conf_corr)
+            else:
+                self.ts_within_nodes = self.spheres_masker.fit_transform(self.func_img, confounds=self.conf)
+        else:
+            self.ts_within_nodes = self.spheres_masker.fit_transform(self.func_img)
+
+        if self.ts_within_nodes is None:
             raise RuntimeError('\nERROR: Time-series extraction failed!')
+        else:
+            print("%s%s%d%s" % ('\nTime series has {0} samples'.format(self.ts_within_nodes.shape[0]),
+                                ' mean extracted from ', len(self.coords), ' coordinate ROI\'s'))
+        return
 
-        print("%s%s%d%s" % ('\nTime series has {0} samples'.format(ts_within_nodes.shape[0]),
-                            ' mean extracted from ', len(coords), ' coordinate ROI\'s'))
-    else:
-        raise RuntimeError(
-            '\nERROR: Cannot extract time-series from an empty list of coordinates. \nThis usually means '
-            'that no nodes were generated based on the specified conditions at runtime (e.g. atlas was '
-            'overly restricted by an RSN or some user-defined mask.')
+    def extract_ts_parc(self):
+        """
+        API for employing Nilearn's NiftiLabelsMasker to extract fMRI time-series data from spherical ROI's based on a
+        given 3D atlas image of integer-based voxel intensities. The resulting time-series can then optionally be
+        resampled using circular-block bootrapping. The final 2D m x n array is ultimately saved to file in .npy format.
+        """
+        import nibabel as nib
+        from nilearn import input_data
+        from pynets.fmri.estimation import fill_confound_nans
 
-    print("%s%s%s" % ('Using node radius: ', node_size, ' mm'))
-    if smooth:
-        if float(smooth) > 0:
-            print("%s%s%s" % ('Smoothing FWHM: ', smooth, ' mm\n'))
+        self.net_parcels_map_nifti = nib.load(self.net_parcels_nii_path)
+        self.parcel_masker = input_data.NiftiLabelsMasker(labels_img=self.net_parcels_map_nifti, background_label=0,
+                                                          standardize=True, smoothing_fwhm=float(self.smooth),
+                                                          high_pass=self.hpass, detrend=self.detrending, t_r=self.t_r,
+                                                          verbose=2, resampling_target='data', dtype='auto',
+                                                          mask_img=self.mask_img)
+        if self.conf is not None:
+            import pandas as pd
+            confounds = pd.read_csv(self.conf, sep='\t')
+            if confounds.isnull().values.any():
+                conf_corr = fill_confound_nans(confounds, self.dir_path)
+                self.ts_within_nodes = self.parcel_masker.fit_transform(self.func_img, confounds=conf_corr)
+            else:
+                self.ts_within_nodes = self.parcel_masker.fit_transform(self.func_img, confounds=self.conf)
+        else:
+            self.ts_within_nodes = self.parcel_masker.fit_transform(self.func_img)
 
-    if hpass:
-        print("%s%s%s" % ('Applying high-pass filter: ', hpass, ' Hz\n'))
+        if self.ts_within_nodes is None:
+            raise RuntimeError('\nERROR: Time-series extraction failed!')
+        else:
+            self.node_size = 'parc'
 
-    # Save time series as file
-    utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass, node_size)
+        return
 
-    del spheres_masker
-    gc.collect()
+    def bootstrap_timeseries(self):
+        """Perform circular-block bootstrapping of the extracted time-series"""
+        print("%s%s%s" % ('Performing circular block bootstrapping with ', self.c_boot, ' iterations...'))
+        self.ts_within_nodes = timeseries_bootstrap(self.ts_within_nodes, self.block_size)[0]
+        return
 
-    return ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas, labels, coords, c_boot, hpass
+    def save_and_cleanup(self):
+        """Save the extracted time-series and clean cache"""
+        import gc
+        from pynets.core import utils
+
+        # Save time series as file
+        utils.save_ts_to_file(self.roi, self.network, self.ID, self.dir_path, self.ts_within_nodes, self.c_boot,
+                              self.smooth, self.hpass, self.node_size)
+
+        self.func_img.uncache()
+
+        if self.mask_path is not None:
+            self.mask_img.uncache()
+
+        if self.spheres_masker is not None:
+            del self.spheres_masker
+
+        if self.parcel_masker is not None:
+            del self.parcel_masker
+            self.net_parcels_map_nifti.uncache()
+
+        gc.collect()
+        return

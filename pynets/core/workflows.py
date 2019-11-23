@@ -148,7 +148,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                           'display_variable': ':0', 'job_finished_timeout': 120, 'matplotlib_backend': 'Agg',
                           'plugin': str(plugin_type), 'use_relative_paths': True, 'remove_unnecessary_outputs': False,
                           'raise_insufficient': False, 'remove_node_directories': False, 'plugin_args': plugin_args,
-                          'maxtasksperchild': 1})
+                          'maxtasksperchild': 1, 'poll_sleep_duration': 5})
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             meta_wf.config[key][setting] = value
@@ -1568,7 +1568,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                           'plugin': str(plugin_type), 'use_relative_paths': False, 'parameterize_dirs': True,
                           'remove_unnecessary_outputs': False, 'remove_node_directories': False,
                           'raise_insufficient': False, 'plugin_args': plugin_args, 'maxtasksperchild': 1,
-                          'poll_sleep_duration': 60})
+                          'poll_sleep_duration': 5})
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             dmri_connectometry_wf.config[key][setting] = value
@@ -1592,6 +1592,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     from pynets.fmri import estimation
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
+    from pynets.core.interfaces import ExtractTimeseries
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]
@@ -2067,23 +2068,23 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
     # Extract time-series from nodes
     extract_ts_iterables = []
+    extract_ts_node = pe.Node(ExtractTimeseries(),
+                              input_names=['conf', 'func_file', 'coords', 'dir_path', 'ID', 'roi',
+                                           'network', 'smooth', 'atlas', 'uatlas', 'labels', 'c_boot',
+                                           'block_size', 'hpass', 'mask', 'parc', 'node_size',
+                                           'net_parcels_nii_path'],
+                              output_names=['ts_within_nodes', 'node_size', 'smooth', 'dir_path', 'atlas', 'uatlas',
+                                            'labels', 'coords', 'c_boot', 'hpass'], imports=import_list,
+                              name="extract_ts_node")
     if parc is True:
         # Parcels case
+        extract_ts_node.inputs.parc = True
+        extract_ts_node.inputs.node_size = None
         save_nifti_parcels_node = pe.Node(niu.Function(input_names=['ID', 'dir_path', 'roi', 'network',
                                                                     'net_parcels_map_nifti'],
                                                        output_names=['net_parcels_nii_path'],
                                                        function=utils.save_nifti_parcels_map, imports=import_list),
                                           name="save_nifti_parcels_node")
-        # extract time series from whole brain parcellaions:
-        extract_ts_node = pe.Node(niu.Function(input_names=['net_parcels_nii_path', 'conf', 'func_file', 'coords',
-                                                            'roi', 'dir_path', 'ID', 'network', 'smooth',
-                                                            'atlas', 'uatlas', 'labels', 'coords',
-                                                            'c_boot', 'block_size', 'hpass', 'mask'],
-                                               output_names=['ts_within_nodes', 'node_size', 'smooth', 'dir_path',
-                                                             'atlas', 'uatlas', 'labels', 'coords',
-                                                             'c_boot', 'hpass'],
-                                               function=estimation.extract_ts_parc, imports=import_list),
-                                  name="extract_ts_node")
         fmri_connectometry_wf.add_nodes([save_nifti_parcels_node])
         fmri_connectometry_wf.connect([(inputnode, save_nifti_parcels_node,
                                         [('roi', 'roi')]),
@@ -2099,14 +2100,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                        ])
     else:
         # Coordinate case
-        extract_ts_node = pe.Node(niu.Function(input_names=['node_size', 'conf', 'func_file', 'coords', 'dir_path',
-                                                            'ID', 'roi', 'network', 'smooth', 'atlas', 'uatlas',
-                                                            'labels', 'c_boot', 'block_size', 'hpass', 'mask'],
-                                               output_names=['ts_within_nodes', 'node_size', 'smooth', 'dir_path',
-                                                             'atlas', 'uatlas', 'labels', 'coords',
-                                                             'c_boot', 'hpass'],
-                                               function=estimation.extract_ts_coords, imports=import_list),
-                                  name="extract_ts_node")
+        extract_ts_node.inputs.parc = False
+        extract_ts_node.inputs.net_parcels_nii_path = None
 
         # Set extract_ts iterables
         if node_size_list:
@@ -2575,7 +2570,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                           'plugin': str(plugin_type), 'use_relative_paths': False, 'parameterize_dirs': True,
                           'remove_unnecessary_outputs': False, 'remove_node_directories': False,
                           'raise_insufficient': False, 'plugin_args': plugin_args, 'maxtasksperchild': 1,
-                          'poll_sleep_duration': 60})
+                          'poll_sleep_duration': 5})
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             fmri_connectometry_wf.config[key][setting] = value

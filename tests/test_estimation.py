@@ -104,15 +104,22 @@ def test_extract_ts_rsn_parc():
     labels_file = open(labels_file_path, 'rb')
     labels = pickle.load(labels_file)
     mask = None
+    node_size = None
     hpass = None
     start_time = time.time()
-    [ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas,
-    labels, coords, c_boot, hpass] = fmri_estimation.extract_ts_parc(net_parcels_map_nifti_file, conf, func_file,
-                                                                     coords, roi, dir_path, ID, network, smooth, atlas,
-                                                                     uatlas, labels, c_boot, boot_size, hpass, mask)
-    print("%s%s%s" % ('extract_ts_parc --> finished: ',
-    str(np.round(time.time() - start_time, 1)), 's'))
-    assert ts_within_nodes is not None
+
+    te = fmri_estimation.TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
+                                              conf=conf, func_file=func_file, coords=coords, roi=roi, dir_path=dir_path,
+                                              ID=ID, network=network, smooth=smooth, atlas=atlas, uatlas=uatlas,
+                                              labels=labels, c_boot=c_boot, block_size=boot_size, hpass=hpass,
+                                              mask=mask)
+
+    te.prepare_inputs()
+
+    te.extract_ts_parc()
+        
+    print("%s%s%s" % ('extract_ts_parc --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
+    assert te.ts_within_nodes is not None
     #assert node_size is not None
     #node_size is none
 
@@ -147,14 +154,19 @@ def test_extract_ts_rsn_coords(node_size, smooth, c_boot):
     labels = pickle.load(labels_file)
     hpass = None
     start_time = time.time()
-    [ts_within_nodes, node_size, smooth, dir_path, atlas, uatlas,
-     labels, coords, c_boot, hpass] = fmri_estimation.extract_ts_coords(node_size, conf, func_file, coords, dir_path,
-                                                                        ID, roi, network, smooth, atlas, uatlas,
-                                                                        labels, c_boot, boot_size, hpass, mask)
-    print("%s%s%s" % ('extract_ts_coords --> finished: ',
-    str(np.round(time.time() - start_time, 1)), 's'))
-    assert ts_within_nodes is not None
-    assert node_size is not None
-    assert smooth is not None
-    assert dir_path is not None
-    assert c_boot is not None
+    te = fmri_estimation.TimeseriesExtraction(net_parcels_nii_path=None, node_size=node_size,
+                                              conf=conf, func_file=func_file, coords=coords, roi=roi, dir_path=dir_path,
+                                              ID=ID, network=network, smooth=smooth, atlas=atlas, uatlas=uatlas,
+                                              labels=labels, c_boot=c_boot, block_size=boot_size, hpass=hpass,
+                                              mask=mask)
+
+    te.prepare_inputs()
+
+    te.extract_ts_coords()
+
+    print("%s%s%s" % ('extract_ts_coords --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
+    assert te.ts_within_nodes is not None
+    assert te.node_size is not None
+    assert te.smooth is not None
+    assert te.dir_path is not None
+    assert te.c_boot is not None
