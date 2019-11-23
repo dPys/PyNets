@@ -124,12 +124,12 @@ class IndividualClustering(SimpleInterface):
         from pynets.registration.reg_utils import check_orient_and_dims
         from pathlib import Path
 
-        time.sleep(60)
-
         nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
         while utils.has_handle(self.inputs.func_file) is True:
             time.sleep(1)
+
+        time.sleep(60)
 
         cwd = Path(runtime.cwd).absolute()
 
@@ -223,10 +223,10 @@ class ExtractTimeseries(SimpleInterface):
         import os.path as op
         from pathlib import Path
 
-        time.sleep(60)
-
         while utils.has_handle(self.inputs.func_file) is True:
             time.sleep(1)
+
+        time.sleep(60)
 
         cwd = Path(runtime.cwd).absolute()
 
@@ -285,9 +285,6 @@ class ExtractTimeseries(SimpleInterface):
         if self.inputs.net_parcels_nii_path is not None and os.path.isfile(net_parcels_nii_temp_path):
             os.remove(net_parcels_nii_temp_path)
 
-        gc.collect()
-        time.sleep(60)
-
         self._results['ts_within_nodes'] = te.ts_within_nodes
         self._results['node_size'] = te.node_size
         self._results['smooth'] = te.smooth
@@ -298,5 +295,10 @@ class ExtractTimeseries(SimpleInterface):
         self._results['coords'] = te.coords
         self._results['c_boot'] = te.c_boot
         self._results['hpass'] = te.hpass
+
+        del te
+        gc.collect()
+        time.sleep(60)
+
         return runtime
 
