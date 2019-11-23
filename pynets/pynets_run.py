@@ -1751,7 +1751,7 @@ def build_workflow(args, retval):
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
                               'use_relative_paths': False, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
                               'remove_node_directories': False, 'raise_insufficient': False, 'maxtasksperchild': 1,
-                              'poll_sleep_duration': 5})
+                              'poll_sleep_duration': 30})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf_multi.config[key][setting] = value
@@ -1838,7 +1838,7 @@ def build_workflow(args, retval):
                               'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
                               'use_relative_paths': False, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
                               'remove_node_directories': False, 'raise_insufficient': False, 'maxtasksperchild': 1,
-                              'poll_sleep_duration': 5})
+                              'poll_sleep_duration': 30})
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf.config[key][setting] = value

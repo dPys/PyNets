@@ -428,6 +428,8 @@ class TimeseriesExtraction(object):
         else:
             self.ts_within_nodes = self.spheres_masker.fit_transform(self.func_img)
 
+        self.func_img.uncache()
+
         if self.ts_within_nodes is None:
             raise RuntimeError('\nERROR: Time-series extraction failed!')
         else:
@@ -462,6 +464,8 @@ class TimeseriesExtraction(object):
         else:
             self.ts_within_nodes = self.parcel_masker.fit_transform(self.func_img)
 
+        self.func_img.uncache()
+
         if self.ts_within_nodes is None:
             raise RuntimeError('\nERROR: Time-series extraction failed!')
         else:
@@ -483,8 +487,6 @@ class TimeseriesExtraction(object):
         # Save time series as file
         utils.save_ts_to_file(self.roi, self.network, self.ID, self.dir_path, self.ts_within_nodes, self.c_boot,
                               self.smooth, self.hpass, self.node_size)
-
-        self.func_img.uncache()
 
         if self.mask_path is not None:
             self.mask_img.uncache()

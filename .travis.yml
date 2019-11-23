@@ -42,4 +42,3 @@ script:
 
 after_script:
   - codecov
-      token: d62ad7b3-39a6-4657-a2e3-6acf2362d36d
