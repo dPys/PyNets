@@ -37,6 +37,9 @@ omit =
 	pynets/stats/global_graph_measures.yaml
 	pynets/stats/netmotifs.py
 	pynets/stats/benchmarking.py
+	pynets/stats/embeddings.py
+	pynets/stats/optimeasures.py
+	pynets/core/interfaces.py
 	pynets/registration/register.py
 
 [report]
