@@ -19,20 +19,6 @@ def get_file():
     return base_path
 
 
-def has_handle(fpath):
-    """Test whether a path has an open handle."""
-    import psutil
-    for proc in psutil.process_iter():
-        try:
-            for item in proc.open_files():
-                if fpath == item.path:
-                    return True
-        except Exception:
-            pass
-
-    return False
-
-
 def do_dir_path(atlas, in_file):
     """
     Creates an atlas subdirectory from the base directory of the given subject's input file.
@@ -695,6 +681,7 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
             struct_models = hardcoded_params['available_models']['struct_models']
         except KeyError:
             print('ERROR: available structural models not sucessfully extracted from runconfig.yaml')
+
     net_mets_csv_list = list(flatten(net_mets_csv_list))
 
     if multi_nets is not None:
@@ -802,10 +789,12 @@ def save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network):
     coord_path = "%s%s%s%s" % (namer_dir, '/', network, '_coords_rsn.pkl')
     with open(coord_path, 'wb') as f:
         pickle.dump(coords, f, protocol=2)
+
     # Save labels to pickle
     labels_path = "%s%s%s%s" % (namer_dir, '/', network, '_labels_rsn.pkl')
     with open(labels_path, 'wb') as f:
         pickle.dump(labels, f, protocol=2)
+
     return coord_path, labels_path
 
 
@@ -949,6 +938,7 @@ def create_temporary_copy(path, temp_file_name, fmt, tmp_dir='auto'):
     temp_path : str
         Path to temporary file.
     """
+    import time
     import tempfile, shutil
     from time import strftime
     import uuid
@@ -964,8 +954,8 @@ def create_temporary_copy(path, temp_file_name, fmt, tmp_dir='auto'):
         decomp_func = gzip.open(path)
         with open(temp_path, 'wb') as outfile:
             outfile.write(decomp_func.read())
+            time.sleep(1)
         decomp_func.close()
-        outfile.close()
     else:
         shutil.copy2(path, temp_path)
     return temp_path

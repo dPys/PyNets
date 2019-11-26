@@ -346,13 +346,8 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
     bvecs : str
         File path to corresponding reoriented bvecs file if outfile is a dwi.
     """
-    import time
     import os.path as op
-    from pynets.core.utils import has_handle
     from pynets.registration.reg_utils import reorient_dwi, reorient_img, match_target_vox_res
-
-    while has_handle(infile) is True:
-        time.sleep(5)
 
     outdir = op.dirname(infile)
     vols = nib.load(infile).shape[-1]

@@ -843,10 +843,10 @@ class CleanGraphs(object):
         self.norm = norm
         self.out_fmt = out_fmt
         self.in_mat = None
-        self.est_path_fmt = "%s%s" % ('.', self.est_path.split('.')[-1])
+        self._est_path_fmt = "%s%s" % ('.', self.est_path.split('.')[-1])
 
         # Load and threshold matrix
-        if self.est_path_fmt == '.txt':
+        if self._est_path_fmt == '.txt':
             self.in_mat_raw = np.array(np.genfromtxt(self.est_path))
         else:
             self.in_mat_raw = np.array(np.load(self.est_path))
@@ -888,7 +888,7 @@ class CleanGraphs(object):
 
         self.G = nx.from_numpy_matrix(self.in_mat)
 
-        return
+        return self.G
 
     def prune_graph(self):
         from pynets.core import utils
@@ -917,7 +917,7 @@ class CleanGraphs(object):
             print("%s%s" % ('Source File: ', final_mat_path))
         else:
             print("%s%s" % ('Source File: ', self.est_path))
-        return
+        return self.in_mat, final_mat_path
 
     def print_summary(self):
         print("%s%.2f%s" % ('\n\nThreshold: ', 100 * float(self.thr), '%'))
@@ -1350,7 +1350,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
 
     # Load netstats config and parse graph algorithms as objects
     with open("%s%s" % (str(Path(__file__).parent), '/global_graph_measures.yaml'), 'r') as stream:
-#    with open('/Users/derekpisner/Applications/PyNets/pynets/stats/global_graph_measures.yaml', 'r') as stream:
         try:
             nx_algs = ['degree_assortativity_coefficient', 'average_clustering', 'average_shortest_path_length',
                        'graph_number_of_cliques']
@@ -1372,7 +1371,6 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
             print('Failed to parse global_graph_measures.yaml')
 
     with open("%s%s" % (str(Path(__file__).parent), '/nodal_graph_measures.yaml'), 'r') as stream:
-#    with open('/Users/derekpisner/Applications/PyNets/pynets/stats/nodal_graph_measures.yaml', 'r') as stream:
         try:
             metric_dict_nodal = yaml.load(stream)
             metric_list_nodal = metric_dict_nodal['metric_list_nodal']
@@ -1562,7 +1560,8 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
         models.sort(key=sort_thr)
 
         # Group by secondary attributes
-        models_grouped = [list(x) for x in zip(*[list(g) for k, g in groupby(models, lambda s: s.split('thr-')[1].split('_')[0])])]
+        models_grouped = [list(x) for x in zip(*[list(g) for k, g in
+                                                 groupby(models, lambda s: s.split('thr-')[1].split('_')[0])])]
 
         meta = dict()
         non_decimal = re.compile(r'[^\d.]+')

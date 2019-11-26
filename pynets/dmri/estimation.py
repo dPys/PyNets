@@ -39,11 +39,6 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
     from dipy.io import load_pickle
     from dipy.reconst.dti import TensorModel
     from dipy.reconst.dti import fractional_anisotropy
-    from pynets.core import utils
-    import time
-
-    while utils.has_handle(dwi_file) is True:
-        time.sleep(5)
 
     data = nib.load(dwi_file).get_fdata()
     gtab = load_pickle(gtab_file)
@@ -264,9 +259,6 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     roi_shape = roi_img.shape
 
     # Read Streamlines
-    while utils.has_handle(streams) is True:
-        time.sleep(5)
-
     streamlines = Streamlines(load_tractogram(streams, roi_img, to_space=Space.RASMM, shifted_origin=True,
                                               bbox_valid_check=False).streamlines)
     roi_img.uncache()

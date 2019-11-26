@@ -672,9 +672,13 @@ def build_workflow(args, retval):
             nilearn_coord_atlases = hardcoded_params['nilearn_coord_atlases']
             nilearn_prob_atlases = hardcoded_params['nilearn_prob_atlases']
             runtime_dict = {}
+            execution_dict = {}
             for i in range(len(hardcoded_params['resource_dict'])):
                 runtime_dict[list(hardcoded_params['resource_dict'][i].keys())[0]] = ast.literal_eval(list(
                     hardcoded_params['resource_dict'][i].values())[0][0])
+            for i in range(len(hardcoded_params['execution_dict'])):
+                execution_dict[list(hardcoded_params['execution_dict'][i].keys())[0]] = list(
+                    hardcoded_params['execution_dict'][i].values())[0][0]
         except FileNotFoundError:
             print('Failed to parse runconfig.yaml')
 
@@ -958,7 +962,7 @@ def build_workflow(args, retval):
                         print('ERROR: size of bootstrap blocks indicated with the -bs flag must be an integer > 0.')
                 except ValueError:
                     print('ERROR: number of boostraps indicated with the -b flag must be an integer > 0.')
-                print("%s%s%s%s" % ('Applying circular block bootstrapping to the node-extracted time-series using: ',
+                print("%s%s%s%s" % ('\nApplying circular-block bootstrapping to the node-extracted time-series using: ',
                                     int(c_boot), ' bootstraps with block size ', int(block_size)))
             if (c_boot and not block_size) or (block_size and not c_boot):
                 raise ValueError("Error: Both number of bootstraps (-b) and block size (-bs) must be specified to run "
@@ -1383,7 +1387,7 @@ def build_workflow(args, retval):
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
                                clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples,
                                curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
-                               maxcrossing, min_length, directget, tiss_class, runtime_dict, embed,
+                               maxcrossing, min_length, directget, tiss_class, runtime_dict, execution_dict, embed,
                                multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
                                multiplex, waymask, local_corr):
         """A function interface for generating a single-subject workflow"""
@@ -1414,10 +1418,9 @@ def build_workflow(args, retval):
             config.enable_debug_mode()
             config.enable_resource_monitor()
 
-        cfg = dict(execution={'stop_on_first_crash': False, 'crashfile_format': 'txt', 'parameterize_dirs': False,
-                              'display_variable': ':0', 'matplotlib_backend': 'Agg',
-                              'plugin': str(plugin_type), 'use_relative_paths': True, 'keep_inputs': True,
-                              'remove_unnecessary_outputs': True, 'remove_node_directories': False})
+        execution_dict['crashdump_dir'] = str(wf.base_dir)
+        execution_dict['plugin'] = str(plugin_type)
+        cfg = dict(execution=execution_dict)
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf.config[key][setting] = value
@@ -1445,8 +1448,8 @@ def build_workflow(args, retval):
                                     clust_type, clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec,
                                     target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
                                     max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict,
-                                    embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
-                                    vox_size, multiplex, waymask, local_corr)
+                                    execution_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
+                                    template_mask, vox_size, multiplex, waymask, local_corr)
 
         meta_wf._n_procs = procmem[0]
         meta_wf._mem_gb = procmem[1]
@@ -1575,9 +1578,9 @@ def build_workflow(args, retval):
                          graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
                          smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask, norm,
                          binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list,
-                         track_type, max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict, embed,
-                         multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex,
-                         waymask, local_corr):
+                         track_type, max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict,
+                         execution_dict, embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
+                         vox_size, multiplex, waymask, local_corr):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1633,8 +1636,8 @@ def build_workflow(args, retval):
                 target_samples=target_samples, curv_thr_list=curv_thr_list, step_list=step_list,
                 overlap_thr=overlap_thr, overlap_thr_list=overlap_thr_list, track_type=track_type,
                 max_length=max_length, maxcrossing=maxcrossing, min_length=min_length,
-                directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, embed=embed,
-                multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
+                directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, execution_dict=execution_dict,
+                embed=embed, multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
                 template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex,
                 waymask=waymask, local_corr=local_corr)
             wf_single_subject.synchronize = True
@@ -1706,9 +1709,9 @@ def build_workflow(args, retval):
                                     smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot,
                                     block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list,
                                     step_list, overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing,
-                                    min_length, directget, tiss_class, runtime_dict, embed, multi_directget,
-                                    multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex,
-                                    waymask, local_corr)
+                                    min_length, directget, tiss_class, runtime_dict, execution_dict, embed,
+                                    multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
+                                    multiplex, waymask, local_corr)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1746,12 +1749,9 @@ def build_workflow(args, retval):
             handler = logging.FileHandler(callback_log_path)
             logger.addHandler(handler)
 
-        cfg = dict(execution={'stop_on_first_crash': False, 'crashdump_dir': str(wf_multi.base_dir),
-                              'crashfile_format': 'txt', 'parameterize_dirs': False, 'display_variable': ':0',
-                              'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
-                              'use_relative_paths': False, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
-                              'remove_node_directories': False, 'raise_insufficient': False, 'maxtasksperchild': 1,
-                              'poll_sleep_duration': 30})
+        execution_dict['crashdump_dir'] = str(wf_multi.base_dir)
+        execution_dict['plugin'] = str(plugin_type)
+        cfg = dict(execution=execution_dict)
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf_multi.config[key][setting] = value
@@ -1792,8 +1792,9 @@ def build_workflow(args, retval):
                                     smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask,
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     overlap_thr_list, track_type, max_length, maxcrossing, min_length,
-                                    directget, tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass,
-                                    hpass_list, template, template_mask, vox_size, multiplex, waymask, local_corr)
+                                    directget, tiss_class, runtime_dict, execution_dict, embed, multi_directget,
+                                    multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex,
+                                    waymask, local_corr)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1833,12 +1834,9 @@ def build_workflow(args, retval):
             handler = logging.FileHandler(callback_log_path)
             logger.addHandler(handler)
 
-        cfg = dict(execution={'stop_on_first_crash': False, 'crashdump_dir': str(wf.base_dir),
-                              'parameterize_dirs': False, 'crashfile_format': 'txt', 'display_variable': ':0',
-                              'job_finished_timeout': 120, 'matplotlib_backend': 'Agg', 'plugin': str(plugin_type),
-                              'use_relative_paths': False, 'keep_inputs': True, 'remove_unnecessary_outputs': False,
-                              'remove_node_directories': False, 'raise_insufficient': False, 'maxtasksperchild': 1,
-                              'poll_sleep_duration': 30})
+        execution_dict['crashdump_dir'] = str(wf.base_dir)
+        execution_dict['plugin'] = str(plugin_type)
+        cfg = dict(execution=execution_dict)
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf.config[key][setting] = value
