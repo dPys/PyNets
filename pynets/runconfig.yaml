@@ -78,3 +78,34 @@ resource_dict:
         - (1, 2)
       - 'streams2graph_node':
         - (1, 2)
+execution_dict:
+    - 'stop_on_first_crash':
+        - False
+    - 'crashfile_format':
+        - 'txt'
+    - 'parameterize_dirs':
+        - False
+    - 'display_variable':
+        - ':0'
+    - 'job_finished_timeout':
+        - 120
+    - 'matplotlib_backend':
+        - 'Agg'
+    - 'use_relative_paths':
+        - False
+    - 'keep_inputs':
+        - True
+    - 'remove_unnecessary_outputs':
+        - False
+    - 'remove_node_directories':
+        - False
+    - 'raise_insufficient':
+        - False
+    - 'maxtasksperchild':
+        - 1
+    - 'poll_sleep_duration':
+        - 30
+    - 'hash_method':
+        - 'content'
+    - 'job_finished_timeout':
+        - 240

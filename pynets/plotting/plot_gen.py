@@ -447,10 +447,12 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
             coord_path = "%s%s%s%s" % (namer_dir, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
             with open(coord_path, 'wb') as f:
                 pickle.dump(coords, f, protocol=2)
+
             # Save labels to pickle
             labels_path = "%s%s%s%s" % (namer_dir, '/labelnames_', op.basename(roi).split('.')[0], '_plotting.pkl')
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
+
         else:
             out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
                                                                  "%s" % ("%s%s%s" % ('_', network, '_thr-') if
@@ -469,6 +471,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
             coord_path = "%s%s" % (namer_dir, '/coords_plotting.pkl')
             with open(coord_path, 'wb') as f:
                 pickle.dump(coords, f, protocol=2)
+
             # Save labels to pickle
             labels_path = "%s%s" % (namer_dir, '/labelnames_plotting.pkl')
             with open(labels_path, 'wb') as f:
@@ -644,10 +647,12 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
             coord_path = "%s%s%s%s" % (namer_dir, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
             with open(coord_path, 'wb') as f:
                 pickle.dump(coords, f, protocol=2)
+
             # Save labels to pickle
             labels_path = "%s%s%s%s" % (namer_dir, '/labelnames_', op.basename(roi).split('.')[0], '_plotting.pkl')
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
+
         else:
             out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
                                                                  "%s" % ("%s%s%s" % ('_', network, '_thr-') if
@@ -664,6 +669,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
             coord_path = "%s%s" % (namer_dir, '/coords_plotting.pkl')
             with open(coord_path, 'wb') as f:
                 pickle.dump(coords, f, protocol=2)
+
             # Save labels to pickle
             labels_path = "%s%s" % (namer_dir, '/labelnames_plotting.pkl')
             with open(labels_path, 'wb') as f:

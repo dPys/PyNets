@@ -117,7 +117,7 @@ class IndividualClustering(SimpleInterface):
     def _run_interface(self, runtime):
         from pynets.fmri import clustools
         from pynets.core import utils
-        import time
+        # import time
         import gc
         import os
         import os.path as op
@@ -125,11 +125,6 @@ class IndividualClustering(SimpleInterface):
         from pathlib import Path
 
         nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
-
-        while utils.has_handle(self.inputs.func_file) is True:
-            time.sleep(1)
-
-        time.sleep(60)
 
         cwd = Path(runtime.cwd).absolute()
 
@@ -141,6 +136,8 @@ class IndividualClustering(SimpleInterface):
                                                                                  self.inputs.vox_size),
                                                            op.basename(self.inputs.clust_mask).split('.nii')[0],
                                                            '.nii', cwd)
+
+        # time.sleep(120)
 
         nip = clustools.NilParcellate(func_file=func_temp_path,
                                       clust_mask=clust_mask_temp_path,
@@ -162,7 +159,7 @@ class IndividualClustering(SimpleInterface):
         os.remove(func_temp_path)
         os.remove(clust_mask_temp_path)
         gc.collect()
-        time.sleep(60)
+        # time.sleep(120)
 
         self._results['atlas'] = atlas
         self._results['uatlas'] = uatlas
@@ -217,16 +214,11 @@ class ExtractTimeseries(SimpleInterface):
     def _run_interface(self, runtime):
         from pynets.fmri import estimation
         from pynets.core import utils
-        import time
+        # import time
         import gc
         import os
         import os.path as op
         from pathlib import Path
-
-        while utils.has_handle(self.inputs.func_file) is True:
-            time.sleep(1)
-
-        time.sleep(60)
 
         cwd = Path(runtime.cwd).absolute()
 
@@ -242,6 +234,8 @@ class ExtractTimeseries(SimpleInterface):
                 '.nii')
         else:
             net_parcels_nii_temp_path = None
+
+        # time.sleep(120)
 
         te = estimation.TimeseriesExtraction(net_parcels_nii_path=net_parcels_nii_temp_path,
                                              node_size=self.inputs.node_size,
@@ -298,7 +292,7 @@ class ExtractTimeseries(SimpleInterface):
 
         del te
         gc.collect()
-        time.sleep(60)
+        # time.sleep(120)
 
         return runtime
 

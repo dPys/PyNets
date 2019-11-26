@@ -339,22 +339,23 @@ class TimeseriesExtraction(object):
         self.block_size = block_size
         self.mask = mask
         self.hpass = hpass
-        self.mask_img = None
-        self.mask_path = None
-        self.func_img = None
-        self.t_r = None
         self.hpass = None
-        self.detrending = True
-        self.net_parcels_nii_temp_path = None
-        self.net_parcels_map_nifti = None
         self.ts_within_nodes = None
-        self.spheres_masker = None
-        self.parcel_masker = None
+        self._mask_img = None
+        self._mask_path = None
+        self._func_img = None
+        self._t_r = None
+        self._detrending = True
+        self._net_parcels_nii_temp_path = None
+        self._net_parcels_map_nifti = None
+        self._spheres_masker = None
+        self._parcel_masker = None
 
     def prepare_inputs(self):
         """Helper function to creating temporary nii's and prepare inputs from time-series extraction"""
         import os.path as op
         import nibabel as nib
+        from nilearn.image import math_img
         import numbers
         if not op.isfile(self.func_file):
             raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i '
@@ -365,32 +366,33 @@ class TimeseriesExtraction(object):
                 raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with '
                                  'the -conf flag exist(s)')
 
-        self.func_img = nib.load(self.func_file)
-        hdr = self.func_img.header
+        self._func_img = nib.load(self.func_file)
+        hdr = self._func_img.header
 
         if self.hpass:
             if len(hdr.get_zooms()) == 4:
-                self.t_r = float(hdr.get_zooms()[-1])
+                self._t_r = float(hdr.get_zooms()[-1])
             else:
-                self.t_r = None
+                self._t_r = None
         else:
-            self.t_r = None
+            self._t_r = None
 
         if (self.hpass is not None) and isinstance(self.hpass, numbers.Number):
             if float(self.hpass) > 0:
                 self.hpass = float(self.hpass)
-                self.detrending = False
+                self._detrending = False
             else:
                 self.hpass = None
-                self.detrending = True
+                self._detrending = True
         else:
             self.hpass = None
-            self.detrending = True
+            self._detrending = True
 
         if self.mask is not None:
-            self.mask_img = nib.load(self.mask)
+            # Ensure mask is binary
+            self._mask_img = math_img('img > 0', img=nib.load(self.mask))
         else:
-            self.mask_img = None
+            self._mask_img = None
 
         if self.smooth:
             if float(self.smooth) > 0:
@@ -407,34 +409,37 @@ class TimeseriesExtraction(object):
         given list of seed coordinates. The resulting time-series can then optionally be resampled using circular-block
         bootrapping. The final 2D m x n array is ultimately saved to file in .npy format.
         """
+        import gc
         from nilearn import input_data
         from pynets.fmri.estimation import fill_confound_nans
 
         print("%s%s%s" % ('Using node radius: ', self.node_size, ' mm'))
-        self.spheres_masker = input_data.NiftiSpheresMasker(seeds=self.coords, radius=float(self.node_size),
-                                                            allow_overlap=True, standardize=True,
-                                                            smoothing_fwhm=float(self.smooth),
-                                                            high_pass=self.hpass, detrend=self.detrending,
-                                                            t_r=self.t_r, verbose=2, dtype='auto',
-                                                            mask_img=self.mask_img)
+        self._spheres_masker = input_data.NiftiSpheresMasker(seeds=self.coords, radius=float(self.node_size),
+                                                             allow_overlap=True, standardize=True,
+                                                             smoothing_fwhm=float(self.smooth),
+                                                             high_pass=self.hpass, detrend=self._detrending,
+                                                             t_r=self._t_r, verbose=2, dtype='auto',
+                                                             mask_img=self._mask_img)
         if self.conf is not None:
             import pandas as pd
             confounds = pd.read_csv(self.conf, sep='\t')
             if confounds.isnull().values.any():
                 conf_corr = fill_confound_nans(confounds, self.dir_path)
-                self.ts_within_nodes = self.spheres_masker.fit_transform(self.func_img, confounds=conf_corr)
+                self.ts_within_nodes = self._spheres_masker.fit_transform(self._func_img, confounds=conf_corr)
             else:
-                self.ts_within_nodes = self.spheres_masker.fit_transform(self.func_img, confounds=self.conf)
+                self.ts_within_nodes = self._spheres_masker.fit_transform(self._func_img, confounds=self.conf)
         else:
-            self.ts_within_nodes = self.spheres_masker.fit_transform(self.func_img)
+            self.ts_within_nodes = self._spheres_masker.fit_transform(self._func_img)
 
-        self.func_img.uncache()
+        self._func_img.uncache()
 
         if self.ts_within_nodes is None:
             raise RuntimeError('\nERROR: Time-series extraction failed!')
         else:
             print("%s%s%d%s" % ('\nTime series has {0} samples'.format(self.ts_within_nodes.shape[0]),
                                 ' mean extracted from ', len(self.coords), ' coordinate ROI\'s'))
+
+        gc.collect()
         return
 
     def extract_ts_parc(self):
@@ -443,34 +448,36 @@ class TimeseriesExtraction(object):
         given 3D atlas image of integer-based voxel intensities. The resulting time-series can then optionally be
         resampled using circular-block bootrapping. The final 2D m x n array is ultimately saved to file in .npy format.
         """
+        import gc
         import nibabel as nib
         from nilearn import input_data
         from pynets.fmri.estimation import fill_confound_nans
 
-        self.net_parcels_map_nifti = nib.load(self.net_parcels_nii_path)
-        self.parcel_masker = input_data.NiftiLabelsMasker(labels_img=self.net_parcels_map_nifti, background_label=0,
-                                                          standardize=True, smoothing_fwhm=float(self.smooth),
-                                                          high_pass=self.hpass, detrend=self.detrending, t_r=self.t_r,
-                                                          verbose=2, resampling_target='data', dtype='auto',
-                                                          mask_img=self.mask_img)
+        self._net_parcels_map_nifti = nib.load(self.net_parcels_nii_path)
+        self._parcel_masker = input_data.NiftiLabelsMasker(labels_img=self._net_parcels_map_nifti, background_label=0,
+                                                           standardize=True, smoothing_fwhm=float(self.smooth),
+                                                           high_pass=self.hpass, detrend=self._detrending,
+                                                           t_r=self._t_r, verbose=2, resampling_target='data',
+                                                           dtype='auto', mask_img=self._mask_img)
         if self.conf is not None:
             import pandas as pd
             confounds = pd.read_csv(self.conf, sep='\t')
             if confounds.isnull().values.any():
                 conf_corr = fill_confound_nans(confounds, self.dir_path)
-                self.ts_within_nodes = self.parcel_masker.fit_transform(self.func_img, confounds=conf_corr)
+                self.ts_within_nodes = self._parcel_masker.fit_transform(self._func_img, confounds=conf_corr)
             else:
-                self.ts_within_nodes = self.parcel_masker.fit_transform(self.func_img, confounds=self.conf)
+                self.ts_within_nodes = self._parcel_masker.fit_transform(self._func_img, confounds=self.conf)
         else:
-            self.ts_within_nodes = self.parcel_masker.fit_transform(self.func_img)
+            self.ts_within_nodes = self._parcel_masker.fit_transform(self._func_img)
 
-        self.func_img.uncache()
+        self._func_img.uncache()
 
         if self.ts_within_nodes is None:
             raise RuntimeError('\nERROR: Time-series extraction failed!')
         else:
             self.node_size = 'parc'
 
+        gc.collect()
         return
 
     def bootstrap_timeseries(self):
@@ -488,15 +495,15 @@ class TimeseriesExtraction(object):
         utils.save_ts_to_file(self.roi, self.network, self.ID, self.dir_path, self.ts_within_nodes, self.c_boot,
                               self.smooth, self.hpass, self.node_size)
 
-        if self.mask_path is not None:
-            self.mask_img.uncache()
+        if self._mask_path is not None:
+            self._mask_img.uncache()
 
-        if self.spheres_masker is not None:
-            del self.spheres_masker
+        if self._spheres_masker is not None:
+            del self._spheres_masker
 
-        if self.parcel_masker is not None:
-            del self.parcel_masker
-            self.net_parcels_map_nifti.uncache()
+        if self._parcel_masker is not None:
+            del self._parcel_masker
+            self._net_parcels_map_nifti.uncache()
 
         gc.collect()
         return

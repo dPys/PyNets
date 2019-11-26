@@ -267,12 +267,8 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
     from dipy.tracking.streamline import Streamlines, select_by_rois
     from dipy.tracking.local_tracking import LocalTracking, ParticleFilteringTracking
     from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
-    import time
-    from pynets.core.utils import has_handle
 
     if waymask:
-        while has_handle(waymask) is True:
-            time.sleep(5)
         waymask_data = nib.load(waymask).get_fdata().astype('bool')
 
     # Commence Ensemble Tractography
@@ -542,12 +538,8 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     from dipy.data import get_sphere
     from pynets.core import utils
     from pynets.dmri.track import prep_tissues, reconstruction, create_density_map, track_ensemble
-    import time
 
     # Load diffusion data
-    while utils.has_handle(dwi_file) is True:
-        time.sleep(5)
-
     dwi_img = nib.load(dwi_file)
     dwi_data = dwi_img.get_fdata()
 
@@ -555,8 +547,6 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     mod_fit = reconstruction(conn_model, load_pickle(gtab_file), dwi_data, B0_mask)
 
     # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
-    while utils.has_handle(labels_im_file) is True:
-        time.sleep(5)
     atlas_data = nib.load(labels_im_file).get_fdata().astype('int')
     atlas_data_wm_gm_int = nib.load(labels_im_file_wm_gm_int).get_fdata().astype('int')
 

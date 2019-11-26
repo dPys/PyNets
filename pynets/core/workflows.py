@@ -18,8 +18,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       use_AAL_naming, smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size,
                       mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                       overlap_thr_list, track_type, max_length, maxcrossing, min_length, directget,
-                      tiss_class, runtime_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
-                      template_mask, vox_size, multiplex, waymask, local_corr, clean=True):
+                      tiss_class, runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
+                      template, template_mask, vox_size, multiplex, waymask, local_corr, clean=True):
     """A meta-interface for selecting nested workflows to link into a given single-subject workflow"""
     import yaml
     from pathlib import Path
@@ -107,7 +107,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                      plugin_type, multi_nets, prune, mask, norm, binary,
                                                      target_samples, curv_thr_list, step_list, overlap_thr,
                                                      overlap_thr_list, track_type, max_length, maxcrossing,
-                                                     min_length, directget, tiss_class, runtime_dict,
+                                                     min_length, directget, tiss_class, runtime_dict, execution_dict,
                                                      multi_directget, template, template_mask, vox_size, waymask)
         sub_struct_wf.synchronize = True
         if func_file is None:
@@ -124,8 +124,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                    func_model_list, min_span_tree, use_AAL_naming, smooth,
                                                    smooth_list, disp_filt, prune, multi_nets, clust_type,
                                                    clust_type_list, plugin_type, c_boot, block_size, mask,
-                                                   norm, binary, anat_file, runtime_dict, hpass, hpass_list, template,
-                                                   template_mask, vox_size, local_corr)
+                                                   norm, binary, anat_file, runtime_dict, execution_dict, hpass,
+                                                   hpass_list, template, template_mask, vox_size, local_corr)
         sub_func_wf.synchronize = True
         if dwi_file is None:
             sub_struct_wf = None
@@ -143,12 +143,10 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
         config.update_config(cfg_v)
         config.enable_debug_mode()
         config.enable_resource_monitor()
-    plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
-    cfg = dict(execution={'stop_on_first_crash': False, 'crashfile_format': 'txt', 'parameterize_dirs': False,
-                          'display_variable': ':0', 'job_finished_timeout': 120, 'matplotlib_backend': 'Agg',
-                          'plugin': str(plugin_type), 'use_relative_paths': True, 'remove_unnecessary_outputs': False,
-                          'raise_insufficient': False, 'remove_node_directories': False, 'plugin_args': plugin_args,
-                          'maxtasksperchild': 1, 'poll_sleep_duration': 30})
+    execution_dict['plugin_args'] = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+    execution_dict['plugin'] = str(plugin_type)
+    cfg = dict(execution=execution_dict)
+
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             meta_wf.config[key][setting] = value
@@ -616,7 +614,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                        min_span_tree, use_AAL_naming, disp_filt, plugin_type, multi_nets, prune, mask, norm,
                        binary, target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list,
                        track_type, max_length, maxcrossing, min_length, directget, tiss_class,
-                       runtime_dict, multi_directget, template, template_mask, vox_size, waymask):
+                       runtime_dict, execution_dict, multi_directget, template, template_mask, vox_size, waymask):
     """A function interface for generating a dMRI nested workflow"""
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -1562,13 +1560,9 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             dmri_connectometry_wf.get_node(node_name).n_procs = runtime_dict[node_name][0]
             dmri_connectometry_wf.get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
-    plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
-    cfg = dict(execution={'stop_on_first_crash': False, 'hash_method': 'content', 'crashfile_format': 'txt',
-                          'display_variable': ':0', 'job_finished_timeout': 65, 'matplotlib_backend': 'Agg',
-                          'plugin': str(plugin_type), 'use_relative_paths': False, 'parameterize_dirs': True,
-                          'remove_unnecessary_outputs': False, 'remove_node_directories': False,
-                          'raise_insufficient': False, 'plugin_args': plugin_args, 'maxtasksperchild': 1,
-                          'poll_sleep_duration': 30})
+    execution_dict['plugin_args'] = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+    execution_dict['plugin'] = str(plugin_type)
+    cfg = dict(execution=execution_dict)
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             dmri_connectometry_wf.config[key][setting] = value
@@ -1582,7 +1576,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                        k_clustering, user_atlas_list, clust_mask_list, node_size_list, conn_model_list,
                        min_span_tree, use_AAL_naming, smooth, smooth_list, disp_filt, prune, multi_nets,
                        clust_type, clust_type_list, plugin_type, c_boot, block_size, mask, norm, binary,
-                       anat_file, runtime_dict, hpass, hpass_list, template, template_mask, vox_size, local_corr):
+                       anat_file, runtime_dict, execution_dict, hpass, hpass_list, template, template_mask, vox_size,
+                       local_corr):
     """A function interface for generating an fMRI nested workflow"""
     import os.path as op
     from nipype.pipeline import engine as pe
@@ -2564,13 +2559,9 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             fmri_connectometry_wf.get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
     # Set runtime/logging configurations
-    plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
-    cfg = dict(execution={'stop_on_first_crash': False, 'hash_method': 'content', 'crashfile_format': 'txt',
-                          'display_variable': ':0', 'job_finished_timeout': 65, 'matplotlib_backend': 'Agg',
-                          'plugin': str(plugin_type), 'use_relative_paths': False, 'parameterize_dirs': True,
-                          'remove_unnecessary_outputs': False, 'remove_node_directories': False,
-                          'raise_insufficient': False, 'plugin_args': plugin_args, 'maxtasksperchild': 1,
-                          'poll_sleep_duration': 30})
+    execution_dict['plugin_args'] = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+    execution_dict['plugin'] = str(plugin_type)
+    cfg = dict(execution=execution_dict)
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             fmri_connectometry_wf.config[key][setting] = value
