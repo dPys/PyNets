@@ -1563,44 +1563,46 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
         models_grouped = [list(x) for x in zip(*[list(g) for k, g in
                                                  groupby(models, lambda s: s.split('thr-')[1].split('_')[0])])]
 
-        meta = dict()
-        non_decimal = re.compile(r'[^\d.]+')
-        for thr_set in range(len(models_grouped)):
-            meta[thr_set] = dict()
-            meta[thr_set]['dataframes'] = dict()
-            for i in models_grouped[thr_set]:
-                thr = non_decimal.sub('', i.split('thr-')[1].split('_')[0])
-                _file = subject_path + '/' + i
-                df = pd.read_csv(_file)
-                if nc_collect is False:
-                    node_cols = [s for s in list(df.columns) if isinstance(s, int) or any(c.isdigit() for c in s)]
-                    df = df.drop(node_cols, axis=1)
-                meta[thr_set]['dataframes'][thr] = df
+        if len(models_grouped) > 1:
+            print('Multiple thresholds detected. Computing Area Under the Curve (AUC)...')
+            meta = dict()
+            non_decimal = re.compile(r'[^\d.]+')
+            for thr_set in range(len(models_grouped)):
+                meta[thr_set] = dict()
+                meta[thr_set]['dataframes'] = dict()
+                for i in models_grouped[thr_set]:
+                    thr = non_decimal.sub('', i.split('thr-')[1].split('_')[0])
+                    _file = subject_path + '/' + i
+                    df = pd.read_csv(_file)
+                    if nc_collect is False:
+                        node_cols = [s for s in list(df.columns) if isinstance(s, int) or any(c.isdigit() for c in s)]
+                        df = df.drop(node_cols, axis=1)
+                    meta[thr_set]['dataframes'][thr] = df
 
-        # For each unique threshold set, for each graph measure, extract AUC
-        for thr_set in meta.keys():
-            df_summary = pd.concat(meta[thr_set]['dataframes'].values())
-            df_summary['thr'] = meta[thr_set]['dataframes'].keys()
-            meta[thr_set]['summary_dataframe'] = df_summary
-            df_summary_auc = df_summary.iloc[[0]]
-            df_summary_auc.columns = [col + '_auc' for col in df_summary.columns]
+            # For each unique threshold set, for each graph measure, extract AUC
+            for thr_set in meta.keys():
+                df_summary = pd.concat(meta[thr_set]['dataframes'].values())
+                df_summary['thr'] = meta[thr_set]['dataframes'].keys()
+                meta[thr_set]['summary_dataframe'] = df_summary
+                df_summary_auc = df_summary.iloc[[0]]
+                df_summary_auc.columns = [col + '_auc' for col in df_summary.columns]
 
-            print("%s%s" % ('\nCalculating AUC for threshold group: ', models_grouped[thr_set]))
-            for measure in df_summary.columns[:-1]:
-                # Get Area Under the Curve
-                df_summary_nonan = df_summary[pd.notnull(df_summary[measure])]
-                df_summary_auc[measure] = np.trapz(np.array(df_summary_nonan[measure]).astype('float64'),
-                                                   np.array(df_summary_nonan['thr']).astype('float64'))
-                print("%s%s%s" % (measure, ': ', df_summary_auc[measure].to_string(index=False)))
-            meta[thr_set]['auc_dataframe'] = df_summary_auc
-            auc_dir = subject_path + '/' + models_grouped[thr_set][0].split('/')[0] + '/netmetrics/auc/'
-            if not os.path.isdir(auc_dir):
-                os.makedirs(auc_dir, exist_ok=True)
-            auc_outfile = auc_dir + list(set([re.sub(r'thr\-\d+\.*\d+', '',
-                                                     i.split('/netmetrics/')[1]).replace('neat', 'auc') for i in
-                                              models_grouped[thr_set]]))[0]
-            df_summary_auc.to_csv(auc_outfile, header=True, index=False, chunksize=100000, compression='gzip',
-                                  encoding='utf-8')
+                print("%s%s" % ('\nAUC for threshold group: ', models_grouped[thr_set]))
+                for measure in df_summary.columns[:-1]:
+                    # Get Area Under the Curve
+                    df_summary_nonan = df_summary[pd.notnull(df_summary[measure])]
+                    df_summary_auc[measure] = np.trapz(np.array(df_summary_nonan[measure]).astype('float64'),
+                                                       np.array(df_summary_nonan['thr']).astype('float64'))
+                    print("%s%s%s" % (measure, ': ', df_summary_auc[measure].to_string(index=False)))
+                meta[thr_set]['auc_dataframe'] = df_summary_auc
+                auc_dir = subject_path + '/' + models_grouped[thr_set][0].split('/')[0] + '/netmetrics/auc/'
+                if not os.path.isdir(auc_dir):
+                    os.makedirs(auc_dir, exist_ok=True)
+                auc_outfile = auc_dir + list(set([re.sub(r'thr\-\d+\.*\d+', '',
+                                                         i.split('/netmetrics/')[1]).replace('neat', 'auc') for i in
+                                                  models_grouped[thr_set]]))[0]
+                df_summary_auc.to_csv(auc_outfile, header=True, index=False, chunksize=100000, compression='gzip',
+                                      encoding='utf-8')
 
         if create_summary is True:
             try:

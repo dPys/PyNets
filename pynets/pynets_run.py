@@ -399,6 +399,7 @@ def build_workflow(args, retval):
     import numpy as np
     from pathlib import Path
     import yaml
+    import datetime
     try:
         import pynets
         print("%s%s%s" % ('\n\nPyNets Version:\n', pynets.__version__, '\n\n'))
@@ -406,7 +407,9 @@ def build_workflow(args, retval):
         print('PyNets not installed! Ensure that you are using the correct python version.')
     from pynets.core.utils import do_dir_path
 
-    # Start time clock
+    # Start timer
+    now = datetime.datetime.now()
+    print(now.strftime("%Y-%m-%d %H:%M:%S\n\n"))
     start_time = timeit.default_timer()
 
     # Set Arguments to global variables
