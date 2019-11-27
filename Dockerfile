@@ -130,8 +130,6 @@ RUN chown -R neuro /opt \
 	g++ \
 	openssl \
 	git-lfs \
-	apt-transport-https \
-	debian-archive-keyring \
 	software-properties-common \
     && apt-get clean \
     && apt-get autoremove -y \
