@@ -123,20 +123,15 @@ RUN chown -R neuro /opt \
 	gcc \
 	wget \
 	curl \
-	libc6-dev \
 	build-essential \
 	ca-certificates \
 	gnupg \
 	g++ \
 	openssl \
 	git-lfs \
-	software-properties-common \
-    && apt-get clean \
-    && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && rm -rf /home/neuro/PyNets \
     && rm -rf /home/neuro/nilearn \
-    && conda remove --quiet --yes --force cython \
     && conda clean -tipsy \
     && mkdir /inputs && \
     chmod -R 777 /inputs \

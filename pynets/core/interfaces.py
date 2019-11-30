@@ -128,6 +128,8 @@ class IndividualClustering(SimpleInterface):
 
         cwd = Path(runtime.cwd).absolute()
 
+        # time.sleep(60)
+
         func_temp_path = utils.create_temporary_copy(self.inputs.func_file,
                                                      op.basename(self.inputs.func_file).split('.nii')[0],
                                                      '.nii', cwd)
@@ -137,7 +139,7 @@ class IndividualClustering(SimpleInterface):
                                                            op.basename(self.inputs.clust_mask).split('.nii')[0],
                                                            '.nii', cwd)
 
-        # time.sleep(120)
+        # time.sleep(60)
 
         nip = clustools.NilParcellate(func_file=func_temp_path,
                                       clust_mask=clust_mask_temp_path,
@@ -159,7 +161,8 @@ class IndividualClustering(SimpleInterface):
         os.remove(func_temp_path)
         os.remove(clust_mask_temp_path)
         gc.collect()
-        # time.sleep(120)
+        
+        # time.sleep(60)
 
         self._results['atlas'] = atlas
         self._results['uatlas'] = uatlas
@@ -222,6 +225,8 @@ class ExtractTimeseries(SimpleInterface):
 
         cwd = Path(runtime.cwd).absolute()
 
+        # time.sleep(60)
+
         func_temp_path = utils.create_temporary_copy(
             self.inputs.func_file, op.basename(self.inputs.func_file).split('.nii')[0], '.nii', cwd)
 
@@ -235,7 +240,7 @@ class ExtractTimeseries(SimpleInterface):
         else:
             net_parcels_nii_temp_path = None
 
-        # time.sleep(120)
+        # time.sleep(60)
 
         te = estimation.TimeseriesExtraction(net_parcels_nii_path=net_parcels_nii_temp_path,
                                              node_size=self.inputs.node_size,
