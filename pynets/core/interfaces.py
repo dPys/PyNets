@@ -161,7 +161,7 @@ class IndividualClustering(SimpleInterface):
         os.remove(func_temp_path)
         os.remove(clust_mask_temp_path)
         gc.collect()
-        
+
         # time.sleep(60)
 
         self._results['atlas'] = atlas

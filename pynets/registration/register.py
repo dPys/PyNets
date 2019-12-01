@@ -776,22 +776,13 @@ class FmriReg(object):
         """
         A function to perform atlas alignment from atlas --> T1_MNI.
         """
-        from nilearn.image import index_img
         aligned_atlas_t1mni = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni.nii.gz")
         gm_mask_mni = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_gm_mask_t1w_mni.nii.gz")
         aligned_atlas_t1mni_gm = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni_gm.nii.gz")
 
-        # Test if uatlas is 4D. If it is, then assume clustering was performed and grab the first volume for reg
-        uatlas_img = nib.load(uatlas)
-        if len(uatlas_img.shape) == 4:
-            uatlas_filled = uatlas.split('.nii')[0] + '_firstvol.nii.gz'
-            first_vol = index_img(uatlas_img, 1)
-            nib.save(first_vol, uatlas_filled)
-            del first_vol
-        else:
-            uatlas_filled = "%s%s%s%s" % (self.anat_path, '/', atlas, "_filled.nii.gz")
-            os.system("fslmaths {} -add {} -mas {} {}".format(self.input_mni_brain, uatlas, self.input_mni_mask,
-                                                              uatlas_filled))
+        uatlas_filled = "%s%s%s%s" % (self.anat_path, '/', atlas, "_filled.nii.gz")
+        os.system("fslmaths {} -add {} -mas {} {}".format(self.input_mni_brain, uatlas, self.input_mni_mask,
+                                                          uatlas_filled))
 
         regutils.align(uatlas_filled, self.t1_aligned_mni, init=None, xfm=self.atlas2t1wmni_xfm_init,
                        out=None, dof=12, searchrad=True, interp="nearestneighbour", cost='mutualinfo')
