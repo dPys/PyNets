@@ -426,7 +426,7 @@ class NilParcellate(object):
 
         # Load clustering mask
         self._clust_mask_img = nib.load(self.clust_mask)
-        self._mask_data = np.asarray(self._clust_mask_img.dataobj).astype('bool').astype('int')
+        self._mask_data = np.asarray(self._clust_mask_img.dataobj).astype('bool').astype('uint8')
 
         # Ensure mask does not inclue voxels outside of the brain
         self._masked_fmri_vol = np.asarray(self._func_img.dataobj)[:, :, :, 0]
@@ -443,7 +443,7 @@ class NilParcellate(object):
 
         return self.atlas
 
-    def create_local_clustering(self, overwrite=True, r_thresh=0.5):
+    def create_local_clustering(self, overwrite, r_thresh):
         """
         API for performing any of a variety of clustering routines available through NiLearn.
         """
@@ -483,7 +483,7 @@ class NilParcellate(object):
         import gc
         import time
         import os
-        from nilearn.regions import Parcellations, connected_label_regions
+        from nilearn.regions import Parcellations
         from pynets.fmri.estimation import fill_confound_nans
 
         start = time.time()
@@ -494,7 +494,8 @@ class NilParcellate(object):
 
         self._clust_est = Parcellations(method=self.clust_type, standardize=self._standardize, detrend=self._detrending,
                                         n_parcels=int(self.k), mask=self._clust_mask_corr_img,
-                                        connectivity=self._local_conn)
+                                        connectivity=self._local_conn, mask_strategy='background', memory_level=2,
+                                        smoothing_fwhm=2)
 
         if self.conf is not None:
             import pandas as pd
@@ -507,7 +508,7 @@ class NilParcellate(object):
         else:
             self._clust_est.fit(self._func_img)
 
-        nib.save(connected_label_regions(self._clust_est.labels_img_), self.uatlas)
+        nib.save(self._clust_est.labels_img_, self.uatlas)
 
         print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
 

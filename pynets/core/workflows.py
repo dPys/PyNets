@@ -869,7 +869,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                              function=track.run_track,
                                              imports=import_list),
                                 name="run_tracking_node")
-    # run_tracking_node.synchronize = True
+    run_tracking_node.synchronize = True
 
     # Set reconstruction model iterables
     if conn_model_list or multi_directget:
@@ -900,7 +900,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                   'atlas_mni', 'directget', 'warped_fa'],
                                     function=register.direct_streamline_norm,
                                     imports=import_list), name="dsn_node")
-    # dsn_node.synchronize = True
+    dsn_node.synchronize = True
 
     streams2graph_node = pe.Node(niu.Function(input_names=['atlas_mni', 'streams', 'overlap_thr', 'dir_path',
                                                            'track_type', 'target_samples', 'conn_model',
@@ -915,7 +915,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                             'coords', 'norm', 'binary', 'directget'],
                                               function=estimation.streams2graph,
                                               imports=import_list), name="streams2graph_node")
-    # streams2graph_node.synchronize = True
+    streams2graph_node.synchronize = True
 
     # Set streams2graph_node iterables
     streams2graph_node_iterables = []
@@ -1755,6 +1755,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
         # Don't forget that this setting exists
         clustering_node.synchronize = True
+
         # clustering_node iterables and names
         if k_clustering == 1:
             mask_name = op.basename(clust_mask).split('.nii.gz')[0]
@@ -2541,14 +2542,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             (node_gen_node, register_atlas_node, [('atlas', 'atlas'), ('uatlas', 'uatlas_parcels')]),
             (register_atlas_node, extract_ts_node, [('aligned_atlas_t1mni_gm', 'uatlas')]),
         ])
-
-        if k_clustering > 0:
-            fmri_connectometry_wf.disconnect([
-                (check_orient_and_dims_uatlas_node, register_atlas_node, [('outfile', 'uatlas')])
-            ])
-            fmri_connectometry_wf.connect([
-                (check_orient_and_dims_func_node, register_atlas_node, [('outfile', 'uatlas')]),
-            ])
 
     # Set cpu/memory reqs
     for node_name in fmri_connectometry_wf.list_node_names():

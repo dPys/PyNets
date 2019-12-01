@@ -1563,7 +1563,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
         models_grouped = [list(x) for x in zip(*[list(g) for k, g in
                                                  groupby(models, lambda s: s.split('thr-')[1].split('_')[0])])]
 
-        if len(models_grouped) > 1:
+        if max([len(i) for i in models_grouped]) > 1:
             print('Multiple thresholds detected. Computing Area Under the Curve (AUC)...')
             meta = dict()
             non_decimal = re.compile(r'[^\d.]+')

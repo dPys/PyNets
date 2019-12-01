@@ -298,7 +298,7 @@ def timeseries_bootstrap(tseries, block_size):
     block_mask = (blocks + block_offsets).flatten('F')[:tseries.shape[0]]
     block_mask = np.mod(block_mask, tseries.shape[0])
 
-    return tseries[block_mask.astype('int'), :], block_mask.astype('int')
+    return tseries[block_mask.astype('uint8'), :], block_mask.astype('uint8')
 
 
 def fill_confound_nans(confounds, dir_path):
