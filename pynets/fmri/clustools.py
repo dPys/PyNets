@@ -152,7 +152,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
 
     sparse_i = []
     sparse_j = []
-    sparse_w = [[]]
+    sparse_w = []
 
     for i in range(0, m):
         if i % 1000 == 0:
@@ -367,7 +367,7 @@ class NilParcellate(object):
     """
     Class for implementing various clustering routines.
     """
-    def __init__(self, func_file, clust_mask, k, clust_type, local_corr, conf=None):
+    def __init__(self, func_file, clust_mask, k, clust_type, local_corr, conf=None, mask=None):
         """
         Parameters
         ----------
@@ -375,7 +375,7 @@ class NilParcellate(object):
             File path to a 4D Nifti1Image containing fMRI data.
         clust_mask : str
             File path to a 3D NIFTI file containing a mask, which restricts the
-            voxels used in the analysis.
+            voxels used in the clustering.
         k : int
             Numbers of clusters that will be generated.
         clust_type : str
@@ -385,6 +385,9 @@ class NilParcellate(object):
             Default is tcorr.
         conf : str
             File path to a confound regressor file for reduce noise in the time-series when extracting from ROI's.
+        mask : str
+            File path to a 3D NIFTI file containing a mask, which restricts the
+            voxels used in the analysis.
         """
         self.func_file = func_file
         self.clust_mask = clust_mask
@@ -397,14 +400,16 @@ class NilParcellate(object):
         self._detrending = True
         self._standardize = True
         self._func_img = nib.load(self.func_file)
+        self.mask = mask
+        if self.mask is not None:
+            self._mask_img = nib.load(self.mask)
+        else:
+            self._mask_img = None
         self._local_conn_mat_path = None
         self._dir_path = None
-        self._clust_mask_corr = None
-        self._clust_mask_corr_img = None
         self._clust_est = None
         self._local_conn = None
-        self._clust_mask_img = None
-        self._mask_data = None
+        self._clust_mask_corr_img = None
         self._func_img_data = None
         self._masked_fmri_vol = None
 
@@ -415,7 +420,8 @@ class NilParcellate(object):
         import gc
         import os
         from pynets.core import utils
-
+        from nilearn.masking import intersect_masks, compute_gray_matter_mask
+        from nilearn.image import index_img, math_img, resample_img
         mask_name = os.path.basename(self.clust_mask).split('.nii')[0]
         self.atlas = "%s%s%s%s%s" % (mask_name, '_', self.clust_type, '_k', str(self.k))
         print("%s%s%s%s%s%s%s" % ('\nCreating atlas using ', self.clust_type, ' at cluster level ', str(self.k),
@@ -425,20 +431,27 @@ class NilParcellate(object):
                                             '.nii.gz')
 
         # Load clustering mask
-        self._clust_mask_img = nib.load(self.clust_mask)
-        self._mask_data = np.asarray(self._clust_mask_img.dataobj).astype('bool').astype('uint8')
+        func_vol_img = index_img(self._func_img, 1)
+        clust_mask_res_img = resample_img(nib.load(self.clust_mask), target_affine=func_vol_img.affine,
+                                          target_shape=func_vol_img.shape, interpolation='nearest')
+        if self._mask_img is not None:
+            mask_res_img = compute_gray_matter_mask(resample_img(self._mask_img, target_affine=func_vol_img.affine,
+                                                                 target_shape=func_vol_img.shape,
+                                                                 interpolation='nearest'))
+            self._clust_mask_corr_img = intersect_masks([math_img('img > 0', img=func_vol_img),
+                                                         math_img('img > 0', img=clust_mask_res_img),
+                                                         math_img('img > 0', img=mask_res_img)],
+                                                        threshold=1, connected=False)
+            self._mask_img.uncache()
+            mask_res_img.uncache()
+        else:
+            self._clust_mask_corr_img = intersect_masks([math_img('img > 0', img=func_vol_img),
+                                                         math_img('img > 0', img=clust_mask_res_img)],
+                                                        threshold=1, connected=False)
+        nib.save(self._clust_mask_corr_img, "%s%s%s%s" % (self._dir_path, '/', mask_name, '.nii'))
 
-        # Ensure mask does not inclue voxels outside of the brain
-        self._masked_fmri_vol = np.asarray(self._func_img.dataobj)[:, :, :, 0]
-        self._masked_fmri_vol = self._masked_fmri_vol.astype('bool')
-        self._mask_data[~self._masked_fmri_vol] = 0
-        del self._masked_fmri_vol
-        self._clust_mask_corr = "%s%s%s%s" % (self._dir_path, '/', mask_name, '.nii')
-        self._clust_mask_corr_img = nib.Nifti1Image(self._mask_data, affine=self._clust_mask_img.affine,
-                                                    header=self._clust_mask_img.header)
-        nib.save(self._clust_mask_corr_img, self._clust_mask_corr)
-        self._clust_mask_img.uncache()
-        del self._mask_data
+        func_vol_img.uncache()
+        clust_mask_res_img.uncache()
         gc.collect()
 
         return self.atlas
@@ -450,30 +463,33 @@ class NilParcellate(object):
         import os.path as op
         from scipy.sparse import save_npz, load_npz
         from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
+        if self.clust_type == 'ward' or self.clust_type == 'average' or self.clust_type == 'complete':
+            if self.local_corr == 'tcorr' or self.local_corr == 'scorr':
+                self._local_conn_mat_path = "%s%s%s%s" % (self.uatlas.split('.nii.gz')[0], '_', self.local_corr,
+                                                          '_conn.npz')
 
-        if self.local_corr == 'tcorr' or self.local_corr == 'scorr':
-            self._local_conn_mat_path = "%s%s%s%s" % (self.uatlas.split('.nii.gz')[0], '_', self.local_corr,
-                                                      '_conn.npz')
+                if (not op.isfile(self._local_conn_mat_path)) or (overwrite is True):
+                    if self.local_corr == 'tcorr':
+                        self._local_conn = make_local_connectivity_tcorr(self._func_img, self._clust_mask_corr_img,
+                                                                         thresh=r_thresh)
+                    elif self.local_corr == 'scorr':
+                        self._local_conn = make_local_connectivity_scorr(self._func_img, self._clust_mask_corr_img,
+                                                                         thresh=r_thresh)
+                    else:
+                        raise ValueError('Local connectivity type not available')
 
-            if (not op.isfile(self._local_conn_mat_path)) or (overwrite is True):
-                if self.local_corr == 'tcorr':
-                    self._local_conn = make_local_connectivity_tcorr(self._func_img, self._clust_mask_corr_img,
-                                                                     thresh=r_thresh)
-                elif self.local_corr == 'scorr':
-                    self._local_conn = make_local_connectivity_scorr(self._func_img, self._clust_mask_corr_img,
-                                                                     thresh=r_thresh)
-                else:
-                    raise ValueError('Local connectivity type not available')
-
-                print("%s%s" % ('Saving spatially constrained connectivity structure to: ', self._local_conn_mat_path))
-                save_npz(self._local_conn_mat_path, self._local_conn)
-            elif op.isfile(self._local_conn_mat_path):
-                self._local_conn = load_npz(self._local_conn_mat_path)
-        elif self.local_corr == 'allcorr':
-            self._local_conn = 'auto'
+                    print("%s%s" % ('Saving spatially constrained connectivity structure to: ',
+                                    self._local_conn_mat_path))
+                    save_npz(self._local_conn_mat_path, self._local_conn)
+                elif op.isfile(self._local_conn_mat_path):
+                    self._local_conn = load_npz(self._local_conn_mat_path)
+            elif self.local_corr == 'allcorr':
+                self._local_conn = 'auto'
+            else:
+                raise ValueError('Local connectivity method not recognized. Only tcorr, scorr, and auto are currently '
+                                 'supported')
         else:
-            raise ValueError('Local connectivity method not recognized. Only tcorr, scorr, and auto are currently '
-                             'supported')
+            self._local_conn = 'auto'
         return
 
     def parcellate(self):
@@ -488,8 +504,11 @@ class NilParcellate(object):
 
         start = time.time()
 
-        if self.local_corr != 'allcorr':
-            if not os.path.isfile(self._local_conn_mat_path):
+        if (self.clust_type == 'ward' or self.clust_type == 'average' or self.clust_type == 'complete') and (self.local_corr != 'allcorr'):
+            if self._local_conn_mat_path is not None:
+                if not os.path.isfile(self._local_conn_mat_path):
+                    raise FileNotFoundError('File containing sparse matrix of local connectivity structure not found.')
+            else:
                 raise FileNotFoundError('File containing sparse matrix of local connectivity structure not found.')
 
         self._clust_est = Parcellations(method=self.clust_type, standardize=self._standardize, detrend=self._detrending,

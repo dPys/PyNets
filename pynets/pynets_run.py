@@ -200,9 +200,9 @@ def get_parser():
                         default='allcorr',
                         nargs=1,
                         choices=['tcorr', 'scorr', 'allcorr'],
-                        help='Include this flag if you are running clustering and wish to specift a spatially '
-                             'constrained connectivity method based on tcorr or scorr. Default is allcorr which has no '
-                             'spatial constraints.\n')
+                        help='Include this flag if you are running agglomerative-type clustering and wish to specify a '
+                             'spatially constrained connectivity method based on tcorr or scorr. Default is allcorr '
+                             'which has no spatial constraints.\n')
     parser.add_argument('-n',
                         metavar='Resting-state network',
                         default=None,
