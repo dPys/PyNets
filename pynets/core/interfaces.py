@@ -97,6 +97,7 @@ class _IndividualClusteringInputSpec(BaseInterfaceInputSpec):
     clust_type = traits.Str(mandatory=True)
     vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
     local_corr = traits.Str('allcorr', mandatory=True, usedefault=True)
+    mask = traits.Any(mandatory=False)
 
 
 class _IndividualClusteringOutputSpec(TraitedSpec):
@@ -146,7 +147,8 @@ class IndividualClustering(SimpleInterface):
                                       k=self.inputs.k,
                                       clust_type=self.inputs.clust_type,
                                       local_corr=self.inputs.local_corr,
-                                      conf=self.inputs.conf)
+                                      conf=self.inputs.conf,
+                                      mask=self.inputs.mask)
 
         atlas = nip.create_clean_mask()
         nip.create_local_clustering(overwrite=True, r_thresh=0.4)

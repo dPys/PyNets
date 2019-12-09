@@ -1749,7 +1749,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
         clustering_node = pe.Node(IndividualClustering(),
                                   input_names=['func_file', 'conf', 'clust_mask', 'ID', 'k', 'clust_type', 'vox_size',
-                                               'local_corr'],
+                                               'local_corr', 'mask'],
                                   output_names=['uatlas', 'atlas', 'clustering', 'clust_mask', 'k', 'clust_type'],
                                   imports=import_list, name="clustering_node")
 
@@ -2472,6 +2472,14 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             (check_orient_and_dims_mask_node, node_gen_node, [('outfile', 'roi')]),
             (check_orient_and_dims_mask_node, get_conn_matrix_node, [('outfile', 'roi')]),
         ])
+        if k_clustering > 0:
+            fmri_connectometry_wf.connect([
+                (check_orient_and_dims_mask_node, clustering_node, [('outfile', 'mask')]),
+            ])
+        else:
+            fmri_connectometry_wf.connect([
+                (inputnode, clustering_node, [('mask', 'mask')]),
+            ])
     elif (op.isfile(template_mask) is True) and (roi is None):
         fmri_connectometry_wf.connect([
             (inputnode, node_gen_node, [('template_mask', 'roi')]),
