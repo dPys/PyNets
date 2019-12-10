@@ -5,9 +5,11 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
+import indexed_gzip
 import nibabel as nib
 import numpy as np
 import warnings
+nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 warnings.filterwarnings("ignore")
 
 
@@ -401,10 +403,7 @@ class NilParcellate(object):
         self._standardize = True
         self._func_img = nib.load(self.func_file)
         self.mask = mask
-        if self.mask is not None:
-            self._mask_img = nib.load(self.mask)
-        else:
-            self._mask_img = None
+        self._mask_img = None
         self._local_conn_mat_path = None
         self._dir_path = None
         self._clust_est = None
@@ -413,14 +412,14 @@ class NilParcellate(object):
         self._func_img_data = None
         self._masked_fmri_vol = None
 
-    def create_clean_mask(self):
+    def create_clean_mask(self, num_std_dev=1):
         """
         Create a subject-refined version of the clustering mask.
         """
         import gc
         import os
         from pynets.core import utils
-        from nilearn.masking import intersect_masks, compute_gray_matter_mask
+        from nilearn.masking import intersect_masks
         from nilearn.image import index_img, math_img, resample_img
         mask_name = os.path.basename(self.clust_mask).split('.nii')[0]
         self.atlas = "%s%s%s%s%s" % (mask_name, '_', self.clust_type, '_k', str(self.k))
@@ -434,22 +433,25 @@ class NilParcellate(object):
         func_vol_img = index_img(self._func_img, 1)
         clust_mask_res_img = resample_img(nib.load(self.clust_mask), target_affine=func_vol_img.affine,
                                           target_shape=func_vol_img.shape, interpolation='nearest')
-        if self._mask_img is not None:
-            mask_res_img = compute_gray_matter_mask(resample_img(self._mask_img, target_affine=func_vol_img.affine,
-                                                                 target_shape=func_vol_img.shape,
-                                                                 interpolation='nearest'))
-            self._clust_mask_corr_img = intersect_masks([math_img('img > 0', img=func_vol_img),
-                                                         math_img('img > 0', img=clust_mask_res_img),
-                                                         math_img('img > 0', img=mask_res_img)],
+        func_data = func_vol_img.get_fdata()
+        func_int_thr = np.round(np.mean(func_data[func_data > 0]) - np.std(func_data[func_data > 0]) * num_std_dev, 3)
+        if self.mask is not None:
+            self._mask_img = nib.load(self.mask)
+            mask_res_img = resample_img(self._mask_img, target_affine=func_vol_img.affine,
+                                        target_shape=func_vol_img.shape, interpolation='nearest')
+            self._clust_mask_corr_img = intersect_masks([math_img('img > ' + str(func_int_thr), img=func_vol_img),
+                                                         math_img('img > 0.01', img=clust_mask_res_img),
+                                                         math_img('img > 0.01', img=mask_res_img)],
                                                         threshold=1, connected=False)
             self._mask_img.uncache()
             mask_res_img.uncache()
         else:
-            self._clust_mask_corr_img = intersect_masks([math_img('img > 0', img=func_vol_img),
-                                                         math_img('img > 0', img=clust_mask_res_img)],
+            self._clust_mask_corr_img = intersect_masks([math_img('img > ' + str(func_int_thr), img=func_vol_img),
+                                                         math_img('img > 0.01', img=clust_mask_res_img)],
                                                         threshold=1, connected=False)
         nib.save(self._clust_mask_corr_img, "%s%s%s%s" % (self._dir_path, '/', mask_name, '.nii'))
 
+        del func_data
         func_vol_img.uncache()
         clust_mask_res_img.uncache()
         gc.collect()

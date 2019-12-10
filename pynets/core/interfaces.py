@@ -117,32 +117,15 @@ class IndividualClustering(SimpleInterface):
 
     def _run_interface(self, runtime):
         from pynets.fmri import clustools
-        from pynets.core import utils
-        # import time
+        import time
         import gc
-        import os
-        import os.path as op
         from pynets.registration.reg_utils import check_orient_and_dims
-        from pathlib import Path
 
         nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
-        cwd = Path(runtime.cwd).absolute()
+        clust_mask_temp_path = check_orient_and_dims(self.inputs.clust_mask, self.inputs.vox_size)
 
-        # time.sleep(60)
-
-        func_temp_path = utils.create_temporary_copy(self.inputs.func_file,
-                                                     op.basename(self.inputs.func_file).split('.nii')[0],
-                                                     '.nii', cwd)
-
-        clust_mask_temp_path = utils.create_temporary_copy(check_orient_and_dims(self.inputs.clust_mask,
-                                                                                 self.inputs.vox_size),
-                                                           op.basename(self.inputs.clust_mask).split('.nii')[0],
-                                                           '.nii', cwd)
-
-        # time.sleep(60)
-
-        nip = clustools.NilParcellate(func_file=func_temp_path,
+        nip = clustools.NilParcellate(func_file=self.inputs.func_file,
                                       clust_mask=clust_mask_temp_path,
                                       k=self.inputs.k,
                                       clust_type=self.inputs.clust_type,
@@ -160,11 +143,9 @@ class IndividualClustering(SimpleInterface):
                              'See: https://nilearn.github.io/modules/generated/nilearn.regions.Parcellations.html#nilearn.'
                              'regions.Parcellations')
         del nip
-        os.remove(func_temp_path)
-        os.remove(clust_mask_temp_path)
         gc.collect()
 
-        # time.sleep(60)
+        time.sleep(60)
 
         self._results['atlas'] = atlas
         self._results['uatlas'] = uatlas
@@ -218,36 +199,13 @@ class ExtractTimeseries(SimpleInterface):
 
     def _run_interface(self, runtime):
         from pynets.fmri import estimation
-        from pynets.core import utils
-        # import time
+        import time
         import gc
-        import os
-        import os.path as op
-        from pathlib import Path
 
-        cwd = Path(runtime.cwd).absolute()
-
-        # time.sleep(60)
-
-        func_temp_path = utils.create_temporary_copy(
-            self.inputs.func_file, op.basename(self.inputs.func_file).split('.nii')[0], '.nii', cwd)
-
-        mask_path = utils.create_temporary_copy(self.inputs.mask, op.basename(self.inputs.mask).split('.nii')[0],
-                                                '.nii')
-
-        if self.inputs.parc is True:
-            net_parcels_nii_temp_path = utils.create_temporary_copy(
-                self.inputs.net_parcels_nii_path, op.basename(self.inputs.net_parcels_nii_path).split('.nii')[0],
-                '.nii')
-        else:
-            net_parcels_nii_temp_path = None
-
-        # time.sleep(60)
-
-        te = estimation.TimeseriesExtraction(net_parcels_nii_path=net_parcels_nii_temp_path,
+        te = estimation.TimeseriesExtraction(net_parcels_nii_path=self.inputs.net_parcels_nii_path,
                                              node_size=self.inputs.node_size,
                                              conf=self.inputs.conf,
-                                             func_file=func_temp_path,
+                                             func_file=self.inputs.func_file,
                                              coords=self.inputs.coords,
                                              roi=self.inputs.roi,
                                              dir_path=self.inputs.dir_path,
@@ -260,7 +218,7 @@ class ExtractTimeseries(SimpleInterface):
                                              c_boot=self.inputs.c_boot,
                                              block_size=self.inputs.block_size,
                                              hpass=self.inputs.hpass,
-                                             mask=mask_path)
+                                             mask=self.inputs.mask)
 
         te.prepare_inputs()
         if self.inputs.parc is False:
@@ -279,13 +237,6 @@ class ExtractTimeseries(SimpleInterface):
 
         te.save_and_cleanup()
 
-        os.remove(func_temp_path)
-        if mask_path is not None:
-            os.remove(mask_path)
-
-        if self.inputs.net_parcels_nii_path is not None and os.path.isfile(net_parcels_nii_temp_path):
-            os.remove(net_parcels_nii_temp_path)
-
         self._results['ts_within_nodes'] = te.ts_within_nodes
         self._results['node_size'] = te.node_size
         self._results['smooth'] = te.smooth
@@ -299,7 +250,6 @@ class ExtractTimeseries(SimpleInterface):
 
         del te
         gc.collect()
-        # time.sleep(120)
+        time.sleep(60)
 
         return runtime
-

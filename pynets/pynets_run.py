@@ -1404,7 +1404,7 @@ def build_workflow(args, retval):
             wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_dmri_', strftime('%Y%m%d_%H%M%S')))
         else:
             wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_', strftime('%Y%m%d_%H%M%S')))
-        import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx",
+        import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import indexed_gzip",
                        "import nibabel as nib", "import warnings", "warnings.filterwarnings(\"ignore\")",
                        "np.warnings.filterwarnings(\"ignore\")", "warnings.simplefilter(\"ignore\")"]
         inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'roi', 'multi_nets',

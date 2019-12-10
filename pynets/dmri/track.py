@@ -8,6 +8,7 @@ Copyright (C) 2018
 import warnings
 import numpy as np
 import nibabel as nib
+nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 warnings.filterwarnings("ignore")
 
 
