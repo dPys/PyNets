@@ -627,7 +627,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     import os.path as op
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
-                   "import numpy as np", "import networkx as nx", "import nibabel as nib"]
+                   "import numpy as np", "import networkx as nx", "import indexed_gzip", "import nibabel as nib"]
     base_dirname = "%s%s" % ('dmri_connectometry_', ID)
     dmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
@@ -636,9 +636,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         basedir_path = utils.do_dir_path('reg_dmri', dwi_file)
     else:
         basedir_path = None
-
-    if roi is not None:
-        roi = utils.create_temporary_copy(roi, op.basename(roi).split('.nii')[0], '.nii')
 
     # Create input/output nodes
     inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'atlas', 'network', 'node_size', 'roi',
@@ -1590,7 +1587,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     from pynets.core.interfaces import ExtractTimeseries
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
-                   "import numpy as np", "import networkx as nx", "import nibabel as nib"]
+                   "import numpy as np", "import networkx as nx", "import indexed_gzip", "import nibabel as nib"]
     base_dirname = "%s%s" % ('fmri_connectometry_', ID)
     fmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
@@ -1599,10 +1596,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         basedir_path = utils.do_dir_path('reg_fmri', func_file)
     else:
         basedir_path = None
-
-    # Create temporary file equivalents
-    if roi is not None:
-        roi = utils.create_temporary_copy(roi, op.basename(roi).split('.nii')[0], '.nii')
 
     # Create input/output nodes
     inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID', 'atlas', 'network',

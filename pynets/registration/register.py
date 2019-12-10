@@ -7,11 +7,13 @@ Copyright (C) 2018
 """
 import os
 import warnings
+import indexed_gzip
 import nibabel as nib
 import numpy as np
 from pynets.registration import reg_utils as regutils
 from nilearn.image import load_img, math_img
 warnings.filterwarnings("ignore")
+nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 try:
     FSLDIR = os.environ['FSLDIR']
 except KeyError:
@@ -741,7 +743,7 @@ class FmriReg(object):
         self.t1w_brain = regutils.check_orient_and_dims(self.t1w_brain, self.vox_size)
         self.gm_mask = regutils.check_orient_and_dims(self.gm_mask, self.vox_size)
 
-        # Threshold GM to binary in dwi space
+        # Threshold GM to binary in func space
         t_img = load_img(self.gm_mask)
         mask = math_img('img > 0.05', img=t_img)
         mask.to_filename(self.gm_mask_thr)
@@ -757,7 +759,6 @@ class FmriReg(object):
         """
         A function to perform alignment from T1w --> MNI.
         """
-
         # Create linear transform/ initializer T1w-->MNI
         regutils.align(self.t1w_brain, self.input_mni_brain, xfm=self.t12mni_xfm_init, bins=None, interp="spline",
                        out=None, dof=12, cost='mutualinfo', searchrad=True)

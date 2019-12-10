@@ -7,8 +7,10 @@ Copyright (C) 2018
 """
 import os
 import numpy as np
+import indexed_gzip
 import nibabel as nib
 import warnings
+nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 warnings.filterwarnings("ignore")
 
 try:

@@ -8,8 +8,10 @@ Copyright (C) 2018
 import warnings
 import os
 import os.path as op
+import indexed_gzip
 import nibabel as nib
 import numpy as np
+nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 warnings.filterwarnings("ignore")
 
 
@@ -915,47 +917,3 @@ def merge_dicts(x, y):
     z = x.copy()
     z.update(y)
     return z
-
-
-def create_temporary_copy(path, temp_file_name, fmt, tmp_dir='auto'):
-    """
-    A function to create temporary file equivalents.
-
-    Parameters
-    ----------
-    path : str
-        Path to a file.
-    temp_file_name : str
-        Name of the intended temporary file.
-    fmt : str
-        Format of the intended temporary file.
-    tmp_dir : str
-        Temporary directory path. Default option is 'auto'
-        which finds local /tmp.
-
-    Returns
-    -------
-    temp_path : str
-        Path to temporary file.
-    """
-    import time
-    import tempfile, shutil
-    from time import strftime
-    import uuid
-    run_uuid = '%s_%s' % (strftime('%Y%m%d_%H%M%S'), uuid.uuid4())
-    if tmp_dir == 'auto':
-        temp_dir = "%s%s%s" % (tempfile.mkdtemp(), '/', run_uuid)
-    else:
-        temp_dir = "%s%s%s" % (tmp_dir, '/', run_uuid)
-    os.makedirs(temp_dir, exist_ok=True)
-    temp_path = "%s%s%s%s" % (temp_dir, '/', temp_file_name, fmt)
-    if (path.endswith('.gz') is True) and (fmt.endswith('.gz') is False):
-        import gzip
-        decomp_func = gzip.open(path)
-        with open(temp_path, 'wb') as outfile:
-            outfile.write(decomp_func.read())
-            time.sleep(1)
-        decomp_func.close()
-    else:
-        shutil.copy2(path, temp_path)
-    return temp_path
