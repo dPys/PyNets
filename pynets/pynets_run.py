@@ -1037,7 +1037,7 @@ def build_workflow(args, retval):
                     print(atlas_par)
 
         if k_clustering == 1:
-            cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+            cl_mask_name = op.basename(clust_mask).split('.nii')[0]
             atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
             print("%s%s" % ("\nCluster atlas: ", atlas_clust))
             print("\nClustering within mask at a single resolution...")
@@ -1046,12 +1046,12 @@ def build_workflow(args, retval):
             print("\nClustering within mask at multiple resolutions...")
             if func_file_list:
                 for _k in k_list:
-                    cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                    cl_mask_name = op.basename(clust_mask).split('.nii')[0]
                     atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', _k)
                     print("%s%s" % ("Cluster atlas: ", atlas_clust))
             else:
                 for _k in k_list:
-                    cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                    cl_mask_name = op.basename(clust_mask).split('.nii')[0]
                     atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', _k)
                     print("%s%s" % ("Cluster atlas: ", atlas_clust))
             k = None
@@ -1059,12 +1059,12 @@ def build_workflow(args, retval):
             print("\nClustering within multiple masks at a single resolution...")
             if func_file_list:
                 for _clust_mask in clust_mask_list:
-                    cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
+                    cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
                     atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
                     print("%s%s" % ("Cluster atlas: ", atlas_clust))
             else:
                 for _clust_mask in clust_mask_list:
-                    cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
+                    cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
                     atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
                     print("%s%s" % ("Cluster atlas: ", atlas_clust))
             clust_mask = None
@@ -1074,20 +1074,20 @@ def build_workflow(args, retval):
             if func_file_list:
                 for _clust_mask in clust_mask_list:
                     for _k in k_list:
-                        cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
+                        cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
                         atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', _k)
                         print("%s%s" % ("Cluster atlas: ", atlas_clust))
             else:
                 for _clust_mask in clust_mask_list:
                     for _k in k_list:
-                        cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
+                        cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
                         atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', _k)
                         print("%s%s" % ("Cluster atlas: ", atlas_clust))
             clust_mask = None
             k = None
         elif k_clustering == 5:
             for _clust_type in clust_type_list:
-                cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                cl_mask_name = op.basename(clust_mask).split('.nii')[0]
                 atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', k)
                 print("%s%s" % ("\nCluster atlas: ", atlas_clust))
                 print("\nClustering within mask at a single resolution using multiple clustering methods...")
@@ -1098,13 +1098,13 @@ def build_workflow(args, retval):
             if func_file_list:
                 for _clust_type in clust_type_list:
                     for _k in k_list:
-                        cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                        cl_mask_name = op.basename(clust_mask).split('.nii')[0]
                         atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', _k)
                         print("%s%s" % ("Cluster atlas: ", atlas_clust))
             else:
                 for _clust_type in clust_type_list:
                     for _k in k_list:
-                        cl_mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                        cl_mask_name = op.basename(clust_mask).split('.nii')[0]
                         atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', _k)
                         print("%s%s" % ("Cluster atlas: ", atlas_clust))
             clust_type = None
@@ -1114,13 +1114,13 @@ def build_workflow(args, retval):
             if func_file_list:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
-                        cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
+                        cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
                         atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', k)
                         print("%s%s" % ("Cluster atlas: ", atlas_clust))
             else:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
-                        cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
+                        cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
                         atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', k)
                         print("%s%s" % ("Cluster atlas: ", atlas_clust))
             clust_mask = None
@@ -1132,14 +1132,14 @@ def build_workflow(args, retval):
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
                         for _k in k_list:
-                            cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
+                            cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
                             atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', _k)
                             print("%s%s" % ("Cluster atlas: ", atlas_clust))
             else:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
                         for _k in k_list:
-                            cl_mask_name = op.basename(_clust_mask).split('.nii.gz')[0]
+                            cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
                             atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', _k)
                             print("%s%s" % ("Cluster atlas: ", atlas_clust))
             clust_mask = None

@@ -169,9 +169,12 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
 
     dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/density_map_',
                                                 '%s' % (network + '_' if network is not None else ''),
-                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None
+                                                        else ''),
                                                 conn_model, '_', target_samples, '_',
-                                                '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                                '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and
+                                                                                        (node_size is not None))
+                                                        else 'parc_'),
                                                 'curv', str(curv_thr_list).replace(', ', '_'),
                                                 '_step', str(step_list).replace(', ', '_'), '.nii.gz')
     dm_img.to_filename(dm_path)
@@ -179,9 +182,12 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
     # Save streamlines to trk
     streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_',
                                                 '%s' % (network + '_' if network is not None else ''),
-                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
+                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None
+                                                        else ''),
                                                 conn_model, '_', target_samples, '_',
-                                                '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                                '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and
+                                                                                        (node_size is not None))
+                                                        else 'parc_'),
                                                 'curv', str(curv_thr_list).replace(', ', '_'),
                                                 '_step', str(step_list).replace(', ', '_'), '.trk')
 
