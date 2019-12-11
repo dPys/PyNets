@@ -104,7 +104,7 @@ def make_mean_b0(in_file):
     b0_img_data = b0_img.get_fdata()
     b0_img.uncache()
     mean_b0 = np.mean(b0_img_data, axis=3, dtype=b0_img_data.dtype)
-    mean_file_out = in_file.split(".nii.gz")[0] + "_mean_b0.nii.gz"
+    mean_file_out = in_file.split(".nii")[0] + "_mean_b0.nii.gz"
     nib.save(nib.Nifti1Image(mean_b0, affine=b0_img.affine, header=b0_img.header), mean_file_out)
     while os.path.isfile(mean_file_out) is False:
         time.sleep(1)

@@ -912,7 +912,7 @@ def merge_dicts(x, y):
     """
     A function to merge two dictionaries, making it easier for us to make
     modality specific queries for dwi images (since they have variable
-    extensions due to having an nii.gz, bval, and bvec file).
+    extensions due to having an nii, bval, and bvec file).
     """
     z = x.copy()
     z.update(y)

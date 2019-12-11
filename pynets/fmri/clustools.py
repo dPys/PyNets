@@ -449,7 +449,7 @@ class NilParcellate(object):
             self._clust_mask_corr_img = intersect_masks([math_img('img > ' + str(func_int_thr), img=func_vol_img),
                                                          math_img('img > 0.01', img=clust_mask_res_img)],
                                                         threshold=1, connected=False)
-        nib.save(self._clust_mask_corr_img, "%s%s%s%s" % (self._dir_path, '/', mask_name, '.nii'))
+        nib.save(self._clust_mask_corr_img, "%s%s%s%s" % (self._dir_path, '/', mask_name, '.nii.gz'))
 
         del func_data
         func_vol_img.uncache()
@@ -467,7 +467,7 @@ class NilParcellate(object):
         from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
         if self.clust_type == 'ward' or self.clust_type == 'average' or self.clust_type == 'complete':
             if self.local_corr == 'tcorr' or self.local_corr == 'scorr':
-                self._local_conn_mat_path = "%s%s%s%s" % (self.uatlas.split('.nii.gz')[0], '_', self.local_corr,
+                self._local_conn_mat_path = "%s%s%s%s" % (self.uatlas.split('.nii')[0], '_', self.local_corr,
                                                           '_conn.npz')
 
                 if (not op.isfile(self._local_conn_mat_path)) or (overwrite is True):

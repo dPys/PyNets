@@ -36,11 +36,11 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
         try:
             func_models = hardcoded_params['available_models']['func_models']
         except KeyError:
-            print('ERROR: available functional models not sucessfully extracted from runconfig.yaml')
+            print('ERROR: available functional models not successfully extracted from runconfig.yaml')
         try:
             struct_models = hardcoded_params['available_models']['struct_models']
         except KeyError:
-            print('ERROR: available structural models not sucessfully extracted from runconfig.yaml')
+            print('ERROR: available structural models not successfully extracted from runconfig.yaml')
 
     # Handle modality logic
     if (func_file is not None) and (dwi_file is not None):
@@ -1751,7 +1751,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
         # clustering_node iterables and names
         if k_clustering == 1:
-            mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+            mask_name = op.basename(clust_mask).split('.nii')[0]
             cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
             cluster_atlas_file = "%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file), '/',
                                                        mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
@@ -1769,7 +1769,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for k in k_list:
-                mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                mask_name = op.basename(clust_mask).split('.nii')[0]
                 cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file),
@@ -1786,7 +1786,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for clust_mask in clust_mask_list:
-                mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                mask_name = op.basename(clust_mask).split('.nii')[0]
                 cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file),
@@ -1808,7 +1808,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for clust_mask in clust_mask_list:
                 for k in k_list:
-                    mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                    mask_name = op.basename(clust_mask).split('.nii')[0]
                     cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name,
@@ -1825,7 +1825,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_name_list = []
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
-                mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                mask_name = op.basename(clust_mask).split('.nii')[0]
                 cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, func_file),
@@ -1847,7 +1847,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
                 for k in k_list:
-                    mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                    mask_name = op.basename(clust_mask).split('.nii')[0]
                     cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name,
@@ -1865,7 +1865,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
                 for clust_mask in clust_mask_list:
-                    mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                    mask_name = op.basename(clust_mask).split('.nii')[0]
                     cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name,
@@ -1890,7 +1890,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             for clust_type in clust_type_list:
                 for clust_mask in clust_mask_list:
                     for k in k_list:
-                        mask_name = op.basename(clust_mask).split('.nii.gz')[0]
+                        mask_name = op.basename(clust_mask).split('.nii')[0]
                         cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
                         cluster_atlas_name_list.append(cluster_atlas_name)
                         cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name,
