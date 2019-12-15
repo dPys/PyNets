@@ -658,6 +658,7 @@ def build_workflow(args, retval):
     multiplex = args.mplx
     vox_size = args.vox
     work_dir = args.work
+    os.makedirs(work_dir, exist_ok=True)
 
     print('\n\n\n------------------------------------------------------------------------\n')
 
@@ -1485,6 +1486,7 @@ def build_workflow(args, retval):
 
         net_mets_node._n_procs = 1
         net_mets_node._mem_gb = 1
+        net_mets_node.synchronize = True
 
         # Aggregate list of paths to pandas dataframe pickles
         join_net_mets = pe.JoinNode(niu.IdentityInterface(fields=['out_path_neat']),

@@ -355,7 +355,8 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
     from pynets.registration.reg_utils import reorient_dwi, reorient_img, match_target_vox_res
 
     outdir = op.dirname(infile)
-    vols = nib.load(infile).shape[-1]
+    img = nib.load(infile)
+    vols = img.shape[-1]
 
     # Check orientation
     if (vols > 1) and (bvecs is not None):
