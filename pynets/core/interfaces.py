@@ -121,6 +121,8 @@ class IndividualClustering(SimpleInterface):
         import gc
         from pynets.registration.reg_utils import check_orient_and_dims
 
+        time.sleep(10)
+
         nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
         clust_mask_temp_path = check_orient_and_dims(self.inputs.clust_mask, self.inputs.vox_size)
@@ -144,8 +146,6 @@ class IndividualClustering(SimpleInterface):
                              'regions.Parcellations')
         del nip
         gc.collect()
-
-        time.sleep(60)
 
         self._results['atlas'] = atlas
         self._results['uatlas'] = uatlas
@@ -202,6 +202,8 @@ class ExtractTimeseries(SimpleInterface):
         import time
         import gc
 
+        time.sleep(10)
+
         te = estimation.TimeseriesExtraction(net_parcels_nii_path=self.inputs.net_parcels_nii_path,
                                              node_size=self.inputs.node_size,
                                              conf=self.inputs.conf,
@@ -250,6 +252,5 @@ class ExtractTimeseries(SimpleInterface):
 
         del te
         gc.collect()
-        time.sleep(60)
 
         return runtime

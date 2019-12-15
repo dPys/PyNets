@@ -136,7 +136,9 @@ RUN chown -R neuro /opt \
     && mkdir /inputs && \
     chmod -R 777 /inputs \
     && mkdir /outputs && \
-    chmod -R 777 /outputs
+    chmod -R 777 /outputs \
+    && mkdir /working && \
+    chmod -R 777 /working
 
 USER neuro
 

@@ -759,6 +759,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                        function=nodemaker.fetch_nodes_and_labels,
                                                        imports=import_list), name="fetch_nodes_and_labels_node")
 
+    fetch_nodes_and_labels_node.synchronize = True
+
     if parc is False:
         prep_spherical_nodes_node = pe.Node(niu.Function(input_names=['coords', 'node_size', 'template_mask'],
                                                          output_names=['parcel_list', 'par_max', 'node_size', 'parc'],
@@ -768,6 +770,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
 
         if node_size_list:
             prep_spherical_nodes_node.iterables = [("node_size", node_size_list)]
+
+    prep_spherical_nodes_node.synchronize = True
 
     save_nifti_parcels_node = pe.Node(niu.Function(input_names=['ID', 'dir_path', 'roi', 'network',
                                                                 'net_parcels_map_nifti'],
@@ -810,6 +814,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             network_iterables = ("network", multi_nets)
             get_node_membership_node_iterables.append(network_iterables)
             get_node_membership_node.iterables = get_node_membership_node_iterables
+
+    get_node_membership_node.synchronize = True
 
     gtab_node = pe.Node(niu.Function(input_names=['fbval', 'fbvec', 'dwi_file', 'network', 'node_size', 'atlas'],
                                      output_names=['gtab_file', 'B0_bet', 'B0_mask', 'dwi_file'],
@@ -1159,6 +1165,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                                           'binary', 'target_samples', 'track_type',
                                                                           'atlas_mni', 'streams', 'directget'],
                                       nested=True)
+        thresh_diff_node.synchronize = True
 
     # Set iterables for thr on thresh_diff, else set thr to singular input
     if multi_thr is True:
@@ -1168,6 +1175,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         thr_info_node.iterables = ("thr", iter_thresh)
     else:
         thr_info_node.iterables = ("thr", [thr])
+
+    thr_info_node.synchronize = True
 
     # Plotting
     if plot_switch is True:
@@ -1725,11 +1734,13 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                               name="check_orient_and_dims_anat_node")
 
     register_node = pe.Node(niu.Function(input_names=['basedir_path', 'anat_file', 'vox_size'],
+                                         output_names=['reg_fmri_complete'],
                                          function=register.register_all_fmri, imports=import_list),
                             name="register_node")
 
     register_atlas_node = pe.Node(niu.Function(input_names=['uatlas', 'uatlas_parcels', 'atlas',
-                                                            'basedir_path', 'anat_file', 'vox_size'],
+                                                            'basedir_path', 'anat_file', 'vox_size',
+                                                            'reg_fmri_complete'],
                                                output_names=['aligned_atlas_t1mni_gm'],
                                                function=register.register_atlas_fmri, imports=import_list),
                                   name="register_atlas_node")
@@ -1913,6 +1924,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                                      'uatlas', 'dir_path'],
                                                        function=nodemaker.fetch_nodes_and_labels,
                                                        imports=import_list), name="fetch_nodes_and_labels_node")
+
+    fetch_nodes_and_labels_node.synchronize = True
 
     # Connect clustering solutions to node definition Node
     if float(k_clustering) > 0:
@@ -2132,6 +2145,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         get_conn_matrix_node.iterables = [("conn_model", conn_model_list)]
     else:
         fmri_connectometry_wf.connect([(inputnode, get_conn_matrix_node, [('conn_model', 'conn_model')])])
+
+    get_conn_matrix_node.synchronize = True
 
     # RSN case
     if network or multi_nets:
@@ -2370,6 +2385,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                                           'c_boot', 'norm', 'binary', 'hpass'],
                                       nested=True)
 
+        thresh_func_node.synchronize = True
+
     # Set iterables for thr on thresh_func, else set thr to singular input
     if multi_thr is True:
         iter_thresh = sorted(list(set([str(i) for i in np.round(np.arange(float(min_thr), float(max_thr),
@@ -2378,6 +2395,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         thr_info_node.iterables = ("thr", iter_thresh)
     else:
         thr_info_node.iterables = ("thr", [thr])
+
+    thr_info_node.synchronize = True
 
     # Plotting
     if plot_switch is True:
@@ -2537,6 +2556,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             (inputnode, register_node, [('basedir_path', 'basedir_path'), ('vox_size', 'vox_size')]),
             (inputnode, register_atlas_node, [('basedir_path', 'basedir_path'),
                                               ('vox_size', 'vox_size')]),
+            (register_node, register_atlas_node, [('reg_fmri_complete', 'reg_fmri_complete')]),
             (inputnode, check_orient_and_dims_uatlas_node, [('vox_size', 'vox_size')]),
             (fetch_nodes_and_labels_node, check_orient_and_dims_uatlas_node, [('uatlas', 'infile')]),
             (check_orient_and_dims_uatlas_node, register_atlas_node, [('outfile', 'uatlas')]),

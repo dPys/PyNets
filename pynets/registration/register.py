@@ -6,12 +6,12 @@ Copyright (C) 2018
 @author: Derek Pisner
 """
 import os
-import warnings
 import indexed_gzip
 import nibabel as nib
+import warnings
 import numpy as np
 from pynets.registration import reg_utils as regutils
-from nilearn.image import load_img, math_img
+from nilearn.image import math_img
 warnings.filterwarnings("ignore")
 nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 try:
@@ -403,18 +403,13 @@ class DmriReg(object):
         self.gm_mask = maps['gm_prob']
         self.csf_mask = maps['csf_prob']
 
-        self.t1w_brain = regutils.check_orient_and_dims(self.t1w_brain, self.vox_size)
-        self.wm_mask = regutils.check_orient_and_dims(self.wm_mask, self.vox_size)
-        self.gm_mask = regutils.check_orient_and_dims(self.gm_mask, self.vox_size)
-        self.csf_mask = regutils.check_orient_and_dims(self.csf_mask, self.vox_size)
-
         # Threshold WM to binary in dwi space
-        t_img = load_img(self.wm_mask)
+        t_img = nib.load(self.wm_mask)
         mask = math_img('img > 0.2', img=t_img)
         mask.to_filename(self.wm_mask_thr)
 
         # Threshold T1w brain to binary in anat space
-        t_img = load_img(self.t1w_brain)
+        t_img = nib.load(self.t1w_brain)
         mask = math_img('img > 0.0', img=t_img)
         mask.to_filename(self.t1w_brain_mask)
 
@@ -571,7 +566,7 @@ class DmriReg(object):
 
         # Set intensities to int
         atlas_img = nib.load(dwi_aligned_atlas)
-        t_img = load_img(self.wm_gm_int_in_dwi)
+        t_img = nib.load(self.wm_gm_int_in_dwi)
         mask = math_img('img > 0', img=t_img)
         mask.to_filename(self.wm_gm_int_in_dwi_bin)
         nib.save(nib.Nifti1Image(np.around(np.asarray(atlas_img.dataobj)).astype('int16'),
@@ -636,17 +631,17 @@ class DmriReg(object):
         nib.save(thr_img, self.csf_mask_dwi)
 
         # Threshold WM to binary in dwi space
-        t_img = load_img(self.wm_in_dwi_bin)
+        t_img = nib.load(self.wm_in_dwi_bin)
         mask = math_img('img > 0', img=t_img)
         mask.to_filename(self.wm_in_dwi_bin)
 
         # Threshold GM to binary in dwi space
-        t_img = load_img(self.gm_in_dwi_bin)
+        t_img = nib.load(self.gm_in_dwi_bin)
         mask = math_img('img > 0', img=t_img)
         mask.to_filename(self.gm_in_dwi_bin)
 
         # Threshold CSF to binary in dwi space
-        t_img = load_img(self.csf_mask_dwi)
+        t_img = nib.load(self.csf_mask_dwi)
         mask = math_img('img > 0', img=t_img)
         mask.to_filename(self.csf_mask_dwi_bin)
 
@@ -736,20 +731,18 @@ class FmriReg(object):
         """
         A function to segment and threshold tissue types from T1w.
         """
+
         # Segment the t1w brain into probability maps
         maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
         self.gm_mask = maps['gm_prob']
 
-        self.t1w_brain = regutils.check_orient_and_dims(self.t1w_brain, self.vox_size)
-        self.gm_mask = regutils.check_orient_and_dims(self.gm_mask, self.vox_size)
-
         # Threshold GM to binary in func space
-        t_img = load_img(self.gm_mask)
+        t_img = nib.load(self.gm_mask)
         mask = math_img('img > 0.05', img=t_img)
         mask.to_filename(self.gm_mask_thr)
 
         # Threshold T1w brain to binary in anat space
-        t_img = load_img(self.t1w_brain)
+        t_img = nib.load(self.t1w_brain)
         mask = math_img('img > 0.0', img=t_img)
         mask.to_filename(self.t1w_brain_mask)
 
@@ -777,6 +770,7 @@ class FmriReg(object):
         """
         A function to perform atlas alignment from atlas --> T1_MNI.
         """
+
         aligned_atlas_t1mni = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni.nii.gz")
         gm_mask_mni = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_gm_mask_t1w_mni.nii.gz")
         aligned_atlas_t1mni_gm = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni_gm.nii.gz")
@@ -797,9 +791,10 @@ class FmriReg(object):
 
         try:
             regutils.apply_warp(self.t1_aligned_mni, self.gm_mask_thr, gm_mask_mni, warp=self.warp_t1w2mni,
-                                xfm=self.t12mni_xfm_init)
+                                xfm=self.t12mni_xfm_init, interp='nn', sup=True)
         except:
-            regutils.applyxfm(self.t1_aligned_mni, self.gm_mask_thr, self.t12mni_xfm_init, gm_mask_mni)
+            regutils.applyxfm(self.t1_aligned_mni, self.gm_mask_thr, self.t12mni_xfm_init, gm_mask_mni,
+                              interp="nearestneighbour")
 
         # Set intensities to int
         atlas_img = nib.load(aligned_atlas_t1mni)
@@ -1004,6 +999,11 @@ def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=False, simple
     simple : bool
         Indicates whether to use non-linear registration (True) or entirely linear methods (False).
         Default is False.
+
+    Returns
+    -------
+    reg_fmri_complete : bool
+        Indicates whether initial registration is complete.
     """
     import os.path as op
     from pynets.registration import register
@@ -1018,10 +1018,13 @@ def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=False, simple
         # Align t1w to dwi
         reg.t1w2mni_align()
 
-    return
+    reg_fmri_complete = True
+
+    return reg_fmri_complete
 
 
-def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, vox_size, simple=False):
+def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, vox_size, reg_fmri_complete,
+                        simple=False):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 
@@ -1039,6 +1042,8 @@ def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, 
         Path to a skull-stripped anatomical Nifti1Image.
     vox_size : str
         Voxel size in mm. (e.g. 2mm).
+    reg_fmri_complete : bool
+        Indicates whether initial registration is complete.
     simple : bool
         Indicates whether to use non-linear registration (True) or entirely linear methods (False).
         Default is False.

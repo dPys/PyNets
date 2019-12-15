@@ -69,7 +69,7 @@ def create_parcel_atlas(parcel_list):
     from nilearn.image import new_img_like, concat_imgs
     parcel_list_exp = [new_img_like(parcel_list[0], np.zeros(parcel_list[0].shape, dtype=bool))] + parcel_list
     net_parcels_map_nifti = nib.Nifti1Image(np.sum(np.array(range(len(parcel_list_exp))) *
-                                                   concat_imgs(parcel_list_exp).get_fdata(), axis=3),
+                                                   concat_imgs(parcel_list_exp, dtype=np.float32).get_fdata(), axis=3),
                                             affine=parcel_list[0].affine)
     return net_parcels_map_nifti, parcel_list_exp
 
@@ -465,7 +465,8 @@ def parcel_masker(roi, coords, parcel_list, labels, dir_path, ID, perc_overlap):
     resampled_parcels_nii_path = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_parcels_resampled2roimask_',
                                                    op.basename(roi).split('.')[0], '.nii.gz')
     resampled_parcels_map_nifti = resample_img(nodemaker.create_parcel_atlas(parcel_list_adj)[0],
-                                               target_affine=mask_img.affine, target_shape=mask_data.shape)
+                                               target_affine=mask_img.affine, target_shape=mask_data.shape,
+                                               interpolation='nearest')
     nib.save(resampled_parcels_map_nifti, resampled_parcels_nii_path)
     if mask_img is not None:
         mask_img.uncache()
