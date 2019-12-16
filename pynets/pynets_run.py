@@ -1485,7 +1485,7 @@ def build_workflow(args, retval):
                                    imports=import_list)
 
         net_mets_node._n_procs = 1
-        net_mets_node._mem_gb = 1
+        net_mets_node._mem_gb = 1.5
         net_mets_node.synchronize = True
 
         # Aggregate list of paths to pandas dataframe pickles

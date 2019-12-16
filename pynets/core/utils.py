@@ -11,7 +11,6 @@ import os.path as op
 import indexed_gzip
 import nibabel as nib
 import numpy as np
-nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 warnings.filterwarnings("ignore")
 
 
@@ -93,21 +92,23 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
-                                                       '%s' % (network + '_' if network is not None else ''),
-                                                       '%s' % (op.basename(roi).split('.')[0] + '_' if
-                                                               roi is not None else ''),
-                                                       'est-', conn_model, '_thr-', thr, thr_type, '_',
-                                                       '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
-                                                               ((node_size != 'parc') and (node_size is not None)) else
-                                                               'parc_'),
-                                                       "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
-                                                               float(c_boot) > 0 else ''),
-                                                       "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
-                                                               float(smooth) > 0 else ''),
-                                                       "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
-                                                               hpass is not None else ''),
-                                                       'func.npy')
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
+                                                         '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                 network is not None else ''),
+                                                         '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0],
+                                                                             '_') if roi is not None else ''),
+                                                         'est-', conn_model, '_',
+                                                         '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
+                                                                 ((node_size != 'parc') and (node_size is not None))
+                                                                 else 'nodetype-parc_'),
+                                                         "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
+                                                                 float(c_boot) > 0 else ''),
+                                                         "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                                 float(smooth) > 0 else ''),
+                                                         "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                                 hpass is not None else ''),
+                                                         'thrtype-', thr_type, '_thr-', thr,
+                                                         '.npy')
 
     return est_path
 
@@ -159,18 +160,22 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
-                                                     '%s' % (network + '_' if network is not None else ''),
-                                                     '%s' % (op.basename(roi).split('.')[0] + '_' if
-                                                             roi is not None else ''),
-                                                     'est-', conn_model, '_thr-', thr, thr_type, '_',
-                                                     '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
-                                                             ((node_size != 'parc') and (node_size is not None)) else
-                                                             'parc_'),
-                                                     "%s" % ("%s%s%s" % ('samples-', int(target_samples),
-                                                                         'streams_') if float(target_samples) > 0 else
-                                                             '_'),
-                                                     track_type, '_dwi.npy')
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-dwi_',
+                                                         '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                 network is not None
+                                                                 else ''),
+                                                         '%s' % ("%s%s%s" % ('roi-',
+                                                                             op.basename(roi).split('.')[0], '_') if
+                                                                 roi is not None else ''),
+                                                         'est-', conn_model, '_',
+                                                         '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
+                                                                 ((node_size != 'parc') and (node_size is not None))
+                                                                 else 'nodetype-parc_'),
+                                                         "%s" % ("%s%s%s" % ('samples-', int(target_samples),
+                                                                             'streams_') if float(target_samples) > 0
+                                                                 else '_'),
+                                                         'tt-', track_type, '_thrtype-', thr_type, '_thr-', thr,
+                                                         '.npy')
     return est_path
 
 
@@ -217,21 +222,22 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
-                                                 '%s' % (network + '_' if network is not None else ''),
-                                                 '%s' % (op.basename(roi).split('.')[0] + '_' if
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
+                                                 '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                         network is not None else ''),
+                                                 '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0], '_') if
                                                          roi is not None else ''),
                                                  'raw_', conn_model, '_',
-                                                 '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
+                                                 '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
                                                          ((node_size != 'parc') and (node_size is not None)) else
-                                                         'parc_'),
+                                                         'nodetype-parc_'),
                                                  "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
                                                          float(c_boot) > 0 else ''),
                                                  "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
                                                          float(smooth) > 0 else ''),
                                                  "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
                                                          hpass is not None else ''),
-                                                 'func.npy')
+                                                 '.npy')
 
     return est_path
 
@@ -277,16 +283,16 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
-                                               '%s' % (network + '_' if network is not None else ''),
-                                               '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                               'raw_', conn_model, '_',
-                                               '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
-                                                       ((node_size != 'parc') and (node_size is not None)) else
-                                                       'parc_'),
-                                               "%s" % ("%s%s%s" % ('samples-', int(target_samples), 'streams_') if
-                                                       float(target_samples) > 0 else '_'),
-                                               track_type, '_dwi.npy')
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-dwi_',
+                                                 '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                         network is not None else ''),
+                                                 '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0], '_') if
+                                                         roi is not None else ''), 'raw_', conn_model, '_',
+                                                 '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
+                                                         ((node_size != 'parc') and (node_size is not None)) else
+                                                         'parc_'),
+                                                 "%s" % ("%s%s%s" % ('samples-', int(target_samples), 'streams_') if
+                                                         float(target_samples) > 0 else ''), 'tt-', track_type, '.npy')
     return est_path
 
 
@@ -832,8 +838,9 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
         os.makedirs(namer_dir, exist_ok=True)
 
     net_parcels_nii_path = "%s%s%s%s%s%s%s" % (namer_dir, '/', str(ID), '_parcels_masked',
-                                               '%s' % ('_' + network if network is not None else ''),
-                                               '%s' % ('_' + op.basename(roi).split('.')[0] if roi is not None else ''),
+                                               '%s' % ("%s%s" % ('_rsn-', network) if network is not None else ''),
+                                               '%s' % ("%s%s" % ('_roi-', op.basename(roi).split('.')[0])
+                                                       if roi is not None else ''),
                                                '.nii.gz')
 
     nib.save(net_parcels_map_nifti, net_parcels_nii_path)
@@ -879,19 +886,20 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth,
         os.makedirs(namer_dir, exist_ok=True)
 
     # Save time series as npy file
-    out_path_ts = "%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', '%s' % (network + '_' if
-                                                                               network is not None else ''),
-                                              '%s' % (op.basename(roi).split('.')[0] + '_' if
+    out_path_ts = "%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
+                                              '%s' % ("%s%s%s" % ('rsn-', network, '_') if network is not None else ''),
+                                              '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0], '_') if
                                                       roi is not None else ''),
                                               '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
-                                                      ((node_size != 'parc') and (node_size is not None)) else 'parc_'),
+                                                      ((node_size != 'parc') and (node_size is not None)) else
+                                                      'parc_'),
                                               '%s' % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
                                                       float(c_boot) > 0 else ''),
                                               "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
                                                       float(smooth) > 0 else ''),
                                               "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
                                                       hpass is not None else ''),
-                                              'ts_from_nodes.npy')
+                                              'node_ts.npy')
 
     np.save(out_path_ts, ts_within_nodes)
     return out_path_ts
@@ -917,3 +925,60 @@ def merge_dicts(x, y):
     z = x.copy()
     z.update(y)
     return z
+
+
+def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
+    """
+    A function to build a hyperparameter dictionary by parsing a given net_mets file path.
+    """
+    hyperparam_dict['node_type'] = file_renamed.split('nodetype-')[1].split('_')[0]
+    hyperparam_dict['atlas'] = atlas
+    hyperparam_dict['thrtype'] = file_renamed.split('thrtype-')[1].split('_')[0]
+
+    if modality == 'func':
+        hyperparam_dict['estimator'] = file_renamed.split('est-')[1].split('_')[0]
+        hyperparams.append('estimator')
+        if 'smooth-' in file_renamed:
+            hyperparam_dict['smooth'] = file_renamed.split('smooth-')[1].split('_')[0]
+            hyperparams.append('smooth')
+        if 'hpass-' in file_renamed:
+            hyperparam_dict['hpass'] = file_renamed.split('hpass-')[1].split('_')[0]
+            hyperparams.append('hpass')
+    return hyperparam_dict, hyperparams
+
+
+class build_sql_db(object):
+    """
+    A SQL exporter for AUC metrics.
+    """
+    def __init__(self, dir_path):
+        from sqlalchemy import create_engine
+        self.engine = create_engine('sqlite://' + dir_path + '/auc_db.sql', echo=False)
+        self.hyperparams = None
+        self.modality = None
+        return
+
+    def create_modality_table(self, modality):
+        from sqlalchemy.sql import text
+        self.modality = modality
+        statement = """CREATE TABLE IF NOT EXISTS """ + self.modality + """(id TEXT);"""
+        self.engine.execute(text(statement.replace("'", "")))
+
+    def add_hp_columns(self, hyperparams):
+        from sqlalchemy.sql import text
+        self.hyperparams = hyperparams
+        for hp in self.hyperparams:
+            try:
+                statement = """ALTER TABLE """ + self.modality + """ ADD COLUMN """ + hp + """;"""
+                self.engine.execute(text(statement.replace("'", "")))
+            except:
+                continue
+        return
+
+    def add_row_from_df(self, df_summary_auc, hyperparam_dict):
+        import pandas as pd
+        df_summary_auc_ext = pd.concat([pd.DataFrame.from_dict(hyperparam_dict, orient='index').transpose(),
+                                        df_summary_auc], axis=1)
+        df_summary_auc_ext.to_sql(self.modality, con=self.engine, index=False, chunksize=500, if_exists='append')
+        return
+

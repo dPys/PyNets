@@ -688,8 +688,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     Parameters
     ----------
     dens_thresh : bool
-        Indicates whether a target graph density is to be used as the basis for
-        thresholding.
+        Indicates whether a target graph density is to be used as the basis for thresholding.
     thr : float
         A value, between 0 and 1, to threshold the graph using any variety of methods
         triggered through other options.
@@ -738,7 +737,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
-    hpass : bool
+    hpass : float
         High-pass filter values (Hz) to apply to node-extracted time-series.
 
     Returns
@@ -787,7 +786,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
-    hpass : bool
+    hpass : float
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
     from pynets.core import utils, thresholding
