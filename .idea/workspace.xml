@@ -70,8 +70,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-70">
-              <caret line="201" column="19" selection-start-line="201" selection-start-column="19" selection-end-line="201" selection-end-column="19" />
+            <state relative-caret-position="683">
+              <caret line="224" selection-start-line="224" selection-end-line="224" selection-end-column="27" />
             </state>
           </provider>
         </entry>
@@ -91,8 +91,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-173">
-              <caret line="340" column="26" selection-start-line="340" selection-start-column="26" selection-end-line="340" selection-end-column="26" />
+            <state relative-caret-position="507">
+              <caret line="382" column="17" lean-forward="true" selection-start-line="382" selection-start-column="17" selection-end-line="382" selection-end-column="17" />
               <folding>
                 <element signature="e#139#154#0" expanded="true" />
               </folding>
@@ -128,7 +128,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>work_dir</find>
       <find>matplotlib</find>
       <find>plt</find>
       <find>from pynets.stats.netstats import extractnetstats</find>
@@ -158,6 +157,7 @@
       <find>smooth</find>
       <find>hpass_list</find>
       <find>hpass</find>
+      <find>Smoothing FWHM</find>
     </findStrings>
     <replaceStrings>
       <replace>nii</replace>
@@ -195,8 +195,8 @@
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="142" />
-    <option name="y" value="23" />
+    <option name="x" value="141" />
+    <option name="y" value="24" />
     <option name="width" value="1434" />
     <option name="height" value="984" />
   </component>
@@ -301,12 +301,12 @@
       <workItem from="1575341078618" duration="6400000" />
       <workItem from="1575928701571" duration="12403000" />
       <workItem from="1576012143004" duration="22978000" />
-      <workItem from="1576472413403" duration="14096000" />
+      <workItem from="1576472413403" duration="14899000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="59696000" />
+    <option name="totallyTimeSpent" value="60499000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -318,7 +318,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="142" y="23" width="1434" height="984" extended-state="0" />
+    <frame x="141" y="24" width="1434" height="984" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49887893" visible="true" weight="0.14367816" />
@@ -509,13 +509,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-70">
-          <caret line="201" column="19" selection-start-line="201" selection-start-column="19" selection-end-line="201" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/core/utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="488">
@@ -526,10 +519,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="683">
+          <caret line="224" selection-start-line="224" selection-end-line="224" selection-end-column="27" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/fmri/estimation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-173">
-          <caret line="340" column="26" selection-start-line="340" selection-start-column="26" selection-end-line="340" selection-end-column="26" />
+        <state relative-caret-position="507">
+          <caret line="382" column="17" lean-forward="true" selection-start-line="382" selection-start-column="17" selection-end-line="382" selection-end-column="17" />
           <folding>
             <element signature="e#139#154#0" expanded="true" />
           </folding>
