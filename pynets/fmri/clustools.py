@@ -9,7 +9,6 @@ import indexed_gzip
 import nibabel as nib
 import numpy as np
 import warnings
-nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 warnings.filterwarnings("ignore")
 
 
@@ -412,7 +411,7 @@ class NilParcellate(object):
         self._func_img_data = None
         self._masked_fmri_vol = None
 
-    def create_clean_mask(self, num_std_dev=1):
+    def create_clean_mask(self, num_std_dev=1.5):
         """
         Create a subject-refined version of the clustering mask.
         """

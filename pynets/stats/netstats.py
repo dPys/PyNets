@@ -8,10 +8,7 @@ Copyright (C) 2018
 import numpy as np
 import warnings
 import networkx as nx
-import tkinter
-import matplotlib
 from pynets.core import thresholding
-matplotlib.use('agg')
 warnings.filterwarnings("ignore")
 
 
@@ -62,18 +59,36 @@ def average_shortest_path_length_for_all(G):
     -------
     average_shortest_path_length : float
         The length of the average shortest path for graph G.
-
-    Notes
-    -----
-    A helper function for calculating average shortest path length
-    in the case that a graph is disconnected. Calculation occurs
-    across all subgraphs detected in G.
     """
     import math
     connected_component_subgraphs = [G.subgraph(c) for c in nx.connected_components(G)]
     subgraphs = [sbg for sbg in connected_component_subgraphs if len(sbg) > 1]
 
     return math.fsum(nx.average_shortest_path_length(sg, weight='weight') for sg in subgraphs) / len(subgraphs)
+
+
+@timeout(720)
+def subgraph_number_of_cliques_for_all(G):
+    """
+    Helper function, in the case of graph disconnectedness,
+    that returns the number of cliques, calculated
+    iteratively for each distinct subgraph of the graph G.
+
+    Parameters
+    ----------
+    G : Obj
+        NetworkX graph.
+
+    Returns
+    -------
+    number of cliques : int
+        The average number of cliques for graph G.
+    """
+    import math
+    connected_component_subgraphs = [G.subgraph(c) for c in nx.connected_components(G)]
+    subgraphs = [sbg for sbg in connected_component_subgraphs if len(sbg) > 1]
+
+    return np.rint(math.fsum(nx.graph_number_of_cliques(sg) for sg in subgraphs) / len(subgraphs))
 
 
 @timeout(720)
@@ -793,7 +808,15 @@ def raw_mets(G, i):
         else:
             [H, _] = prune_disconnected(G)
             net_met_val = float(i(H))
-
+    elif 'graph_number_of_cliques' in net_name:
+        if nx.is_connected(G) is True:
+            try:
+                net_met_val = float(i(G))
+            except:
+                net_met_val = float(subgraph_number_of_cliques_for_all(G))
+        else:
+            [H, _] = prune_disconnected(G)
+            net_met_val = float(i(H))
     elif 'smallworldness' in net_name:
         try:
             net_met_val = float(i(G))
@@ -858,13 +881,15 @@ class CleanGraphs(object):
         self.G = nx.from_numpy_matrix(self.in_mat)
 
     def normalize_graph(self):
-        from graspy.utils import pass_to_ranks
 
         # Get hyperbolic tangent (i.e. fischer r-to-z transform) of matrix if non-covariance
         if (self.conn_model == 'corr') or (self.conn_model == 'partcorr'):
             self.in_mat = np.arctanh(self.in_mat)
 
         # Normalize connectivity matrix
+        if self.norm == 3 or self.norm == 4 or self.norm == 5:
+            from graspy.utils import pass_to_ranks
+
         # By maximum edge weight
         if self.norm == 1:
             self.in_mat = thresholding.normalize(self.in_mat)
@@ -946,11 +971,14 @@ class CleanGraphs(object):
 def save_netmets(dir_path, est_path, metric_list_names, net_met_val_list_final):
     from pynets.core import utils
     import pandas as pd
+
     # And save results to csv
     out_path_neat = "%s%s" % (utils.create_csv_path(dir_path, est_path).split('.csv')[0], '_neat.csv')
-    df = pd.DataFrame.from_dict(dict(zip(metric_list_names, net_met_val_list_final)), orient='index').transpose()
+    zipped_dict = dict(zip(metric_list_names, net_met_val_list_final))
+    df = pd.DataFrame.from_dict(zipped_dict, orient='index').transpose()
     df.to_csv(out_path_neat, index=False)
-    del df, net_met_val_list_final, metric_list_names
+
+    del df, zipped_dict, net_met_val_list_final, metric_list_names
     return out_path_neat
 
 
@@ -1506,7 +1534,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     return out_path_neat
 
 
-def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_collect=False, create_summary=True):
+def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_collect=False, create_summary=True,
+                           db_type='sql'):
     """
     Summarize list of pickled pandas dataframes of graph metrics unique to eacho unique combination of hyperparameters.
 
@@ -1521,6 +1550,8 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
         study of brain subgraphs.
     plot_switch : bool
         Activate summary plotting (histograms, central tendency, AUC, etc.)
+    db_type : str
+        Type of database to export auc metrics. Options are: 'sql' or 'csv'.
 
     Returns
     -------
@@ -1530,8 +1561,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
     import os
     import os.path as op
     import pandas as pd
-    import matplotlib
-    matplotlib.use('Agg')
+    from pynets.core import utils
     from itertools import groupby
     import re
 
@@ -1563,6 +1593,9 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
         models_grouped = [list(x) for x in zip(*[list(g) for k, g in
                                                  groupby(models, lambda s: s.split('thr-')[1].split('_')[0])])]
 
+        hyperparam_dict = {}
+        hyperparam_dict['id'] = ID
+        gen_hyperparams = ['node_type', 'atlas', 'thrtype']
         if max([len(i) for i in models_grouped]) > 1:
             print('Multiple thresholds detected. Computing Area Under the Curve (AUC)...')
             meta = dict()
@@ -1580,6 +1613,8 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                     meta[thr_set]['dataframes'][thr] = df
 
             # For each unique threshold set, for each graph measure, extract AUC
+            if db_type == 'sql':
+                sql_db = utils.build_sql_db(subject_path)
             for thr_set in meta.keys():
                 df_summary = pd.concat(meta[thr_set]['dataframes'].values())
                 df_summary['thr'] = meta[thr_set]['dataframes'].keys()
@@ -1588,6 +1623,16 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                 df_summary_auc.columns = [col + '_auc' for col in df_summary.columns]
 
                 print("%s%s" % ('\nAUC for threshold group: ', models_grouped[thr_set]))
+                file_renamed = list(set([re.sub(r'thr\-\d+\.*\d+', '',
+                                                i.split('/netmetrics/')[1]).replace('neat', 'auc') for i in
+                                         models_grouped[thr_set]]))[0]
+                atlas = models_grouped[thr_set][0].split('/')[0]
+                modality = file_renamed.split('modality-')[1].split('_')[0]
+
+                # Build hyperparameter dictionary
+                hyperparam_dict, hyperparams = utils.build_hp_dict(file_renamed, atlas, modality, hyperparam_dict,
+                                                                   gen_hyperparams)
+
                 for measure in df_summary.columns[:-1]:
                     # Get Area Under the Curve
                     df_summary_nonan = df_summary[pd.notnull(df_summary[measure])]
@@ -1595,14 +1640,21 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                                                        np.array(df_summary_nonan['thr']).astype('float64'))
                     print("%s%s%s" % (measure, ': ', df_summary_auc[measure].to_string(index=False)))
                 meta[thr_set]['auc_dataframe'] = df_summary_auc
-                auc_dir = subject_path + '/' + models_grouped[thr_set][0].split('/')[0] + '/netmetrics/auc/'
+                auc_dir = subject_path + '/' + atlas + '/netmetrics/auc/'
                 if not os.path.isdir(auc_dir):
                     os.makedirs(auc_dir, exist_ok=True)
-                auc_outfile = auc_dir + list(set([re.sub(r'thr\-\d+\.*\d+', '',
-                                                         i.split('/netmetrics/')[1]).replace('neat', 'auc') for i in
-                                                  models_grouped[thr_set]]))[0]
-                df_summary_auc.to_csv(auc_outfile, header=True, index=False, chunksize=100000, compression='gzip',
-                                      encoding='utf-8')
+                df_summary_auc = df_summary_auc.drop(columns=['thr_auc'])
+                df_summary_auc = df_summary_auc.loc[:, df_summary_auc.columns.str.endswith('auc')]
+                auc_outfile = auc_dir + file_renamed
+
+                if db_type == 'sql':
+                    sql_db.create_modality_table(modality)
+                    sql_db.add_hp_columns(list(set(hyperparams)) + list(df_summary_auc.columns))
+                    sql_db.add_row_from_df(df_summary_auc, hyperparam_dict)
+                    # sql_db.engine.execute("SELECT * FROM func").fetchall()
+                else:
+                    df_summary_auc.to_csv(auc_outfile, header=True, index=False, chunksize=100000, compression='gzip',
+                                          encoding='utf-8')
 
         if create_summary is True:
             try:

@@ -5,7 +5,6 @@ Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2018
 @author: Derek Pisner (dPys)
 """
-from pynets.stats.netstats import extractnetstats
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface
 
 
@@ -33,6 +32,7 @@ class ExtractNetStats(BaseInterface):
     output_spec = ExtractNetStatsOutputSpec
 
     def _run_interface(self, runtime):
+        from pynets.stats.netstats import extractnetstats
         out = extractnetstats(
             self.inputs.ID,
             self.inputs.network,

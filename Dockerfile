@@ -45,6 +45,8 @@ RUN apt-get update -qq \
         libglib2.0-0 \
         libglw1-mesa \
 	liblapack-dev \
+	sqlite3 \
+	libsqlite3-dev \
     # Add and configure git-lfs
     && apt-get install -y apt-transport-https debian-archive-keyring \
     && curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
@@ -81,7 +83,7 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && conda install -yq python=3.6 ipython \
     && pip install --upgrade pip \
     && conda clean -tipsy \
-    && pip install requests psutil \
+    && pip install requests psutil sqlalchemy \
     # Install pynets
     && git clone -b master https://github.com/dPys/PyNets /home/neuro/PyNets && \
     cd /home/neuro/PyNets && \
@@ -99,7 +101,7 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && git clone -b master https://github.com/dPys/nilearn.git /home/neuro/nilearn && \
     cd /home/neuro/nilearn && \
     python setup.py install \
-    && pip install python-dateutil==2.8.0 \
+    && pip install python-dateutil==2.8.0 pandas>=0.25.3 \
     && sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     # Precaching fonts, set 'Agg' as default backend for matplotlib
@@ -157,7 +159,6 @@ ENV POSSUMDIR=/usr/share/fsl/5.0
 ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
 ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
-ENV FSLOUTPUTTYPE=NIFTI_GZ
 
 # Misc environment vars
 ENV PYTHONWARNINGS ignore

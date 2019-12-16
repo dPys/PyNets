@@ -10,7 +10,6 @@ import os
 import indexed_gzip
 import nibabel as nib
 import numpy as np
-nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 warnings.filterwarnings("ignore")
 
 

@@ -339,7 +339,6 @@ class TimeseriesExtraction(object):
         self.block_size = block_size
         self.mask = mask
         self.hpass = hpass
-        self.hpass = None
         self.ts_within_nodes = None
         self._mask_img = None
         self._mask_path = None
