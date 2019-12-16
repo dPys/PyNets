@@ -355,7 +355,6 @@ class TimeseriesExtraction(object):
         import os.path as op
         import nibabel as nib
         from nilearn.image import math_img
-        import numbers
         if not op.isfile(self.func_file):
             raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i '
                              'flag exist(s)')
@@ -376,7 +375,7 @@ class TimeseriesExtraction(object):
         else:
             self._t_r = None
 
-        if (self.hpass is not None) and isinstance(self.hpass, numbers.Number):
+        if self.hpass is not None:
             if float(self.hpass) > 0:
                 self.hpass = float(self.hpass)
                 self._detrending = False
