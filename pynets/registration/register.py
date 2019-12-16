@@ -13,7 +13,6 @@ import numpy as np
 from pynets.registration import reg_utils as regutils
 from nilearn.image import math_img
 warnings.filterwarnings("ignore")
-nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 try:
     FSLDIR = os.environ['FSLDIR']
 except KeyError:
