@@ -425,8 +425,8 @@ class NilParcellate(object):
         print("%s%s%s%s%s%s%s" % ('\nCreating atlas using ', self.clust_type, ' at cluster level ', str(self.k),
                                   ' for ', str(self.atlas), '...\n'))
         self._dir_path = utils.do_dir_path(self.atlas, self.func_file)
-        self.uatlas = "%s%s%s%s%s%s%s%s" % (self._dir_path, '/', mask_name, '_', self.clust_type, '_k', str(self.k),
-                                            '.nii.gz')
+        self.uatlas = "%s%s%s%s%s%s%s%s" % (self._dir_path, '/', mask_name, '_clust-', self.clust_type, '_k',
+                                            str(self.k), '.nii.gz')
 
         # Load clustering mask
         func_vol_img = index_img(self._func_img, 1)

@@ -953,7 +953,8 @@ class build_sql_db(object):
     """
     def __init__(self, dir_path):
         from sqlalchemy import create_engine
-        self.engine = create_engine('sqlite://' + dir_path + '/auc_db.sql', echo=False)
+        db_file = dir_path + '/auc_db.sql'
+        self.engine = create_engine('sqlite:///' + db_file, echo=False)
         self.hyperparams = None
         self.modality = None
         return
