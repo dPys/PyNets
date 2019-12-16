@@ -2,8 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/pynets/core/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/fmri/clustools.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/fmri/clustools.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/stats/netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/stats/netstats.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -35,7 +33,7 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/fmri/clustools.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="-925">
@@ -80,11 +78,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="665">
-              <caret line="1694" column="109" lean-forward="true" selection-start-line="1694" selection-start-column="109" selection-end-line="1694" selection-end-column="109" />
+            <state relative-caret-position="288">
+              <caret line="1616" column="16" lean-forward="true" selection-start-line="1616" selection-start-column="16" selection-end-line="1616" selection-end-column="16" />
               <folding>
                 <element signature="e#132#150#0" expanded="true" />
               </folding>
@@ -192,9 +190,9 @@
         <option value="$PROJECT_DIR$/pynets/core/thresholding.py" />
         <option value="$PROJECT_DIR$/pynets/fmri/estimation.py" />
         <option value="$PROJECT_DIR$/pynets/core/interfaces.py" />
-        <option value="$PROJECT_DIR$/pynets/stats/netstats.py" />
         <option value="$PROJECT_DIR$/pynets/core/utils.py" />
         <option value="$PROJECT_DIR$/pynets/fmri/clustools.py" />
+        <option value="$PROJECT_DIR$/pynets/stats/netstats.py" />
       </list>
     </option>
   </component>
@@ -282,12 +280,12 @@
       <workItem from="1575341078618" duration="6400000" />
       <workItem from="1575928701571" duration="12403000" />
       <workItem from="1576012143004" duration="22978000" />
-      <workItem from="1576472413403" duration="18004000" />
+      <workItem from="1576472413403" duration="18131000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="63604000" />
+    <option name="totallyTimeSpent" value="63731000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -487,6 +485,16 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/fmri/clustools.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-925">
+          <caret line="428" column="57" selection-start-line="428" selection-start-column="57" selection-end-line="428" selection-end-column="57" />
+          <folding>
+            <element signature="e#139#158#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/core/utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="215">
@@ -499,20 +507,10 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="665">
-          <caret line="1694" column="109" lean-forward="true" selection-start-line="1694" selection-start-column="109" selection-end-line="1694" selection-end-column="109" />
+        <state relative-caret-position="288">
+          <caret line="1616" column="16" lean-forward="true" selection-start-line="1616" selection-start-column="16" selection-end-line="1616" selection-end-column="16" />
           <folding>
             <element signature="e#132#150#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/fmri/clustools.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-925">
-          <caret line="428" column="57" selection-start-line="428" selection-start-column="57" selection-end-line="428" selection-end-column="57" />
-          <folding>
-            <element signature="e#139#158#0" expanded="true" />
           </folding>
         </state>
       </provider>

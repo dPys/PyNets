@@ -1614,8 +1614,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
 
             # For each unique threshold set, for each graph measure, extract AUC
             if db_type == 'sql':
-                # sql_db = utils.build_sql_db(subject_path)
-                sql_db = build_sql_db(subject_path)
+                sql_db = utils.build_sql_db(subject_path)
             for thr_set in meta.keys():
                 df_summary = pd.concat(meta[thr_set]['dataframes'].values())
                 df_summary['thr'] = meta[thr_set]['dataframes'].keys()
