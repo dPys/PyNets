@@ -5,6 +5,7 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner
 """
+import pandas as pd
 import numpy as np
 import warnings
 import networkx as nx
@@ -970,15 +971,14 @@ class CleanGraphs(object):
 
 def save_netmets(dir_path, est_path, metric_list_names, net_met_val_list_final):
     from pynets.core import utils
-    import pandas as pd
 
     # And save results to csv
     out_path_neat = "%s%s" % (utils.create_csv_path(dir_path, est_path).split('.csv')[0], '_neat.csv')
     zipped_dict = dict(zip(metric_list_names, net_met_val_list_final))
     df = pd.DataFrame.from_dict(zipped_dict, orient='index', dtype='float32').transpose()
     df.to_csv(out_path_neat, index=False)
-
     del df, zipped_dict, net_met_val_list_final, metric_list_names
+
     return out_path_neat
 
 

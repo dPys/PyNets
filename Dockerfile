@@ -95,7 +95,6 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
         libgfortran \
         matplotlib \
         openblas \
-	pandas \
     && conda clean -tipsy \
     && pip install skggm \
     # Install forked version of nilearn
@@ -112,6 +111,8 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && mkdir -p ~/.nipype \
     && echo "[monitoring]" > ~/.nipype/nipype.cfg \
     && echo "enabled = true" >> ~/.nipype/nipype.cfg
+    && pip uninstall pandas \
+    && conda install -yq pandas
 
 # Handle permissions, cleanup, and create mountpoints
 USER root

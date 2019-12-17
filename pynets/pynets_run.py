@@ -1692,7 +1692,7 @@ def build_workflow(args, retval):
                 wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
             wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._n_procs = 1
-            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 1
+            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 2
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._n_procs = 1
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._mem_gb = 2
 
