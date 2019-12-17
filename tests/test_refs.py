@@ -6,6 +6,7 @@ Created on Wed Dec 27 16:19:14 2017
 @authors: Derek Pisner & Ryan Hammonds
 
 """
+import indexed_gzip
 import nibabel as nib
 from pathlib import Path
 

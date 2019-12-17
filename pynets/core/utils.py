@@ -29,7 +29,7 @@ def do_dir_path(atlas, in_file):
     atlas : str
         Name of atlas parcellation used.
     in_file : str
-        File path to -dwi or -func Nifti1Image object input.
+        File path to dwi or func Nifti1Image object input.
 
     Returns
     -------
@@ -939,10 +939,10 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
         hyperparam_dict['estimator'] = file_renamed.split('est-')[1].split('_')[0]
         hyperparams.append('estimator')
         if 'smooth-' in file_renamed:
-            hyperparam_dict['smooth'] = file_renamed.split('smooth-')[1].split('_')[0]
+            hyperparam_dict['smooth'] = file_renamed.split('smooth-')[1].split('_')[0].split('fwhm')[0]
             hyperparams.append('smooth')
         if 'hpass-' in file_renamed:
-            hyperparam_dict['hpass'] = file_renamed.split('hpass-')[1].split('_')[0]
+            hyperparam_dict['hpass'] = file_renamed.split('hpass-')[1].split('_')[0].split('Hz')[0]
             hyperparams.append('hpass')
     return hyperparam_dict, hyperparams
 
@@ -951,10 +951,11 @@ class build_sql_db(object):
     """
     A SQL exporter for AUC metrics.
     """
-    def __init__(self, dir_path):
+    def __init__(self, dir_path, ID):
         from sqlalchemy import create_engine
-        db_file = dir_path + '/auc_db.sql'
-        self.engine = create_engine('sqlite:///' + db_file, echo=False)
+        self.ID = ID
+        db_file = dir_path + '/' + self.ID + '_auc_db.sql'
+        self.engine = create_engine('sqlite:///' + db_file, echo=False, encoding='utf-8')
         self.hyperparams = None
         self.modality = None
         return
@@ -980,6 +981,6 @@ class build_sql_db(object):
         import pandas as pd
         df_summary_auc_ext = pd.concat([pd.DataFrame.from_dict(hyperparam_dict, orient='index').transpose(),
                                         df_summary_auc], axis=1)
-        df_summary_auc_ext.to_sql(self.modality, con=self.engine, index=False, chunksize=500, if_exists='append')
+        df_summary_auc_ext.to_sql(self.modality, con=self.engine, index=False, chunksize=1000, if_exists='append')
         return
 

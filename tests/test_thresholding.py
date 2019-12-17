@@ -302,7 +302,7 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     
     # Additional arguments for thresh_struc
     if all_zero == True and type == 'struct':
-        conn_matrix = np.zeros((10,10))
+        conn_matrix = np.zeros((10, 10))
         
     target_samples = 2
     track_type = 'local'

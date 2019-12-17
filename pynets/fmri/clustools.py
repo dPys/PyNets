@@ -100,7 +100,6 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     ----------
     .. Adapted from PyClusterROI
     """
-    import gc
     from scipy.sparse import csc_matrix
     from scipy import prod
     from itertools import product
@@ -113,7 +112,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     msz = clust_mask_img.shape
 
     # Convert the 3D mask array into a 1D vector
-    mskdat = np.reshape(np.asarray(clust_mask_img.dataobj), prod(msz))
+    mskdat = np.reshape(np.asarray(clust_mask_img.dataobj).astype('bool'), prod(msz))
 
     # Determine the 1D coordinates of the non-zero
     # elements of the mask
@@ -121,7 +120,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     sz = func_img.shape
 
     # Reshape fmri data to a num_voxels x num_timepoints array
-    imdat = np.reshape(np.asarray(func_img.dataobj), (prod(sz[:3]), sz[3]))
+    imdat = np.reshape(np.asarray(func_img.dataobj).astype('float32'), (prod(sz[:3]), sz[3]))
 
     # Mask the datset to only the in-mask voxels
     imdat = imdat[iv, :]
@@ -149,11 +148,11 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     print(m, ' # of non-zero valued or non-zero variance voxels in the mask')
 
     # Construct a sparse matrix from the mask
-    msk = csc_matrix((vndx + 1, (iv, np.zeros(m))), shape=(prod(msz), 1))
+    msk = csc_matrix((vndx + 1, (iv, np.zeros(m))), shape=(prod(msz), 1), dtype=np.float32)
 
     sparse_i = []
     sparse_j = []
-    sparse_w = []
+    sparse_w = [[]]
 
     for i in range(0, m):
         if i % 1000 == 0:
@@ -221,10 +220,9 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     m = max(max(outlist[0, :]), max(outlist[1, :])) + 1
 
     # Make the sparse matrix, CSC format is supposedly efficient for matrix arithmetic
-    W = csc_matrix((outlist[2, :], (outlist[0, :], outlist[1, :])), shape=(int(m), int(m)))
+    W = csc_matrix((outlist[2, :], (outlist[0, :], outlist[1, :])), shape=(int(m), int(m)), dtype=np.float32)
 
     del imdat, msk, mskdat, outlist, m, sparse_i, sparse_j, sparse_w
-    gc.collect()
 
     return W
 
@@ -258,7 +256,6 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
         A Scipy sparse matrix, with weights corresponding to the temporal correlation between the time series from
         voxel i and voxel j
     """
-    import gc
     from scipy.sparse import csc_matrix
     from scipy import prod
     from itertools import product
@@ -269,10 +266,10 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
                                               key=lambda k: (k[0])), key=lambda k: (k[1])), key=lambda k: (k[2])))
 
     # Read in the mask
-    msz = np.shape(np.asarray(clust_mask_img.dataobj))
+    msz = np.shape(np.asarray(clust_mask_img.dataobj).astype('bool'))
 
     # Convert the 3D mask array into a 1D vector
-    mskdat = np.reshape(np.asarray(clust_mask_img.dataobj), prod(msz))
+    mskdat = np.reshape(np.asarray(clust_mask_img.dataobj).astype('bool'), prod(msz))
 
     # Determine the 1D coordinates of the non-zero elements of the mask
     iv = np.nonzero(mskdat)[0]
@@ -281,10 +278,10 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     sz = func_img.shape
 
     # Reshape fmri data to a num_voxels x num_timepoints array
-    imdat = np.reshape(np.asarray(func_img.dataobj), (prod(sz[:3]), sz[3]))
+    imdat = np.reshape(np.asarray(func_img.dataobj).astype('float32'), (prod(sz[:3]), sz[3]))
 
     # Construct a sparse matrix from the mask
-    msk = csc_matrix((list(range(1, m + 1)), (iv, np.zeros(m))), shape=(prod(sz[:-1]), 1))
+    msk = csc_matrix((list(range(1, m + 1)), (iv, np.zeros(m))), shape=(prod(sz[:-1]), 1), dtype=np.float32)
     sparse_i = []
     sparse_j = []
     sparse_w = []
@@ -356,10 +353,9 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     m = max(max(outlist[0, :]), max(outlist[1, :])) + 1
 
     # Make the sparse matrix
-    W = csc_matrix((outlist[2, :], (outlist[0, :], outlist[1, :])), shape=(int(m), int(m)))
+    W = csc_matrix((outlist[2, :], (outlist[0, :], outlist[1, :])), shape=(int(m), int(m)), dtype=np.float32)
 
     del imdat, msk, mskdat, outlist, m, sparse_i, sparse_j, sparse_w
-    gc.collect()
 
     return W
 
@@ -415,7 +411,6 @@ class NilParcellate(object):
         """
         Create a subject-refined version of the clustering mask.
         """
-        import gc
         import os
         from pynets.core import utils
         from nilearn.masking import intersect_masks
@@ -429,31 +424,37 @@ class NilParcellate(object):
                                             str(self.k), '.nii.gz')
 
         # Load clustering mask
+        self._func_img.set_data_dtype(np.float32)
         func_vol_img = index_img(self._func_img, 1)
+        func_vol_img.set_data_dtype(np.uint8)
         clust_mask_res_img = resample_img(nib.load(self.clust_mask), target_affine=func_vol_img.affine,
                                           target_shape=func_vol_img.shape, interpolation='nearest')
-        func_data = func_vol_img.get_fdata()
+        clust_mask_res_img.set_data_dtype(np.uint8)
+        func_data = np.asarray(func_vol_img.dataobj).astype('float32')
         func_int_thr = np.round(np.mean(func_data[func_data > 0]) - np.std(func_data[func_data > 0]) * num_std_dev, 3)
         if self.mask is not None:
             self._mask_img = nib.load(self.mask)
+            self._mask_img.set_data_dtype(np.uint8)
             mask_res_img = resample_img(self._mask_img, target_affine=func_vol_img.affine,
                                         target_shape=func_vol_img.shape, interpolation='nearest')
+            mask_res_img.set_data_dtype(np.uint8)
             self._clust_mask_corr_img = intersect_masks([math_img('img > ' + str(func_int_thr), img=func_vol_img),
                                                          math_img('img > 0.01', img=clust_mask_res_img),
                                                          math_img('img > 0.01', img=mask_res_img)],
                                                         threshold=1, connected=False)
+            self._clust_mask_corr_img.set_data_dtype(np.uint8)
             self._mask_img.uncache()
             mask_res_img.uncache()
         else:
             self._clust_mask_corr_img = intersect_masks([math_img('img > ' + str(func_int_thr), img=func_vol_img),
                                                          math_img('img > 0.01', img=clust_mask_res_img)],
                                                         threshold=1, connected=False)
+            self._clust_mask_corr_img.set_data_dtype(np.uint8)
         nib.save(self._clust_mask_corr_img, "%s%s%s%s" % (self._dir_path, '/', mask_name, '.nii.gz'))
 
         del func_data
         func_vol_img.uncache()
         clust_mask_res_img.uncache()
-        gc.collect()
 
         return self.atlas
 
@@ -464,7 +465,7 @@ class NilParcellate(object):
         import os.path as op
         from scipy.sparse import save_npz, load_npz
         from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
-        if self.clust_type == 'ward' or self.clust_type == 'average' or self.clust_type == 'complete':
+        if self.clust_type == 'ward' or self.clust_type != 'average' or self.clust_type != 'complete' or self.clust_type != 'single':
             if self.local_corr == 'tcorr' or self.local_corr == 'scorr':
                 self._local_conn_mat_path = "%s%s%s%s" % (self.uatlas.split('.nii')[0], '_', self.local_corr,
                                                           '_conn.npz')
@@ -505,7 +506,7 @@ class NilParcellate(object):
 
         start = time.time()
 
-        if (self.clust_type == 'ward' or self.clust_type == 'average' or self.clust_type == 'complete') and (self.local_corr != 'allcorr'):
+        if (self.clust_type == 'ward' or self.clust_type != 'average' or self.clust_type != 'complete' or self.clust_type != 'single') and (self.local_corr != 'allcorr'):
             if self._local_conn_mat_path is not None:
                 if not os.path.isfile(self._local_conn_mat_path):
                     raise FileNotFoundError('File containing sparse matrix of local connectivity structure not found.')
@@ -515,7 +516,7 @@ class NilParcellate(object):
         self._clust_est = Parcellations(method=self.clust_type, standardize=self._standardize, detrend=self._detrending,
                                         n_parcels=int(self.k), mask=self._clust_mask_corr_img,
                                         connectivity=self._local_conn, mask_strategy='background', memory_level=2,
-                                        smoothing_fwhm=2)
+                                        smoothing_fwhm=2, random_state=42)
 
         if self.conf is not None:
             import pandas as pd
@@ -528,6 +529,7 @@ class NilParcellate(object):
         else:
             self._clust_est.fit(self._func_img)
 
+        self._clust_est.labels_img_.set_data_dtype(np.uint8)
         nib.save(self._clust_est.labels_img_, self.uatlas)
 
         print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
@@ -536,5 +538,4 @@ class NilParcellate(object):
         self._func_img.uncache()
         self._clust_mask_corr_img.uncache()
         gc.collect()
-
         return self.uatlas

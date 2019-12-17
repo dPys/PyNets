@@ -9,6 +9,7 @@ Created on Wed Dec 27 16:19:14 2017
 import pytest
 import numpy as np
 import time
+import indexed_gzip
 import nibabel as nib
 from pathlib import Path
 from pynets.core import nodemaker

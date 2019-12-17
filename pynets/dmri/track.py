@@ -8,7 +8,6 @@ Copyright (C) 2018
 import warnings
 import numpy as np
 import nibabel as nib
-nib.arrayproxy.KEEP_FILE_OPEN_DEFAULT = 'auto'
 warnings.filterwarnings("ignore")
 
 
@@ -32,7 +31,6 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
     mod : obj
         Connectivity reconstruction model.
     """
-    import gc
     try:
         import cPickle as pickle
     except ImportError:
@@ -46,7 +44,6 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         raise ValueError('Error: Either no seeds supplied, or no valid seeds found in white-matter interface')
 
     del dwi_data
-    gc.collect()
     return mod
 
 
@@ -74,7 +71,6 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     tiss_classifier : obj
         Tissue classifier object.
     """
-    import gc
     try:
         import cPickle as pickle
     except ImportError:
@@ -97,7 +93,7 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     elif tiss_class == 'bin':
         tiss_classifier = BinaryStoppingCriterion(wm_mask_data.astype('bool'))
     elif tiss_class == 'cmc':
-        voxel_size = np.average(mask_img.get_header()['pixdim'][1:4])
+        voxel_size = np.average(mask_img.header['pixdim'][1:4])
         tiss_classifier = CmcStoppingCriterion.from_pve(wm_mask_data, gm_mask_data, vent_csf_in_dwi_data,
                                                         step_size=cmc_step_size, average_voxel_size=voxel_size)
     elif tiss_class == 'wb':
@@ -107,7 +103,6 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
 
     del gm_mask_data, wm_mask_data, vent_csf_in_dwi_data
     mask_img.uncache()
-    gc.collect()
     return tiss_classifier
 
 
@@ -150,7 +145,6 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
     dm_path : str
         File path to fiber density map Nifti1Image.
     """
-    import gc
     import os
     import os.path as op
     from dipy.tracking import utils
@@ -196,7 +190,6 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
 
     del streamlines
     dm_img.uncache()
-    gc.collect()
 
     return streams, dir_path, dm_path
 
@@ -268,7 +261,6 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
     """
-    import gc
     from colorama import Fore, Style
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
@@ -369,8 +361,6 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
         print(Style.RESET_ALL)
 
     print('\n')
-
-    gc.collect()
 
     return streamlines
 
@@ -535,7 +525,6 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     """
-    import gc
     try:
         import cPickle as pickle
     except ImportError:
@@ -601,6 +590,5 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
 
     del streamlines, dwi_data, atlas_data_wm_gm_int, atlas_data, mod_fit
     dwi_img.uncache()
-    gc.collect()
 
     return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path, directget, labels_im_file, roi_neighborhood_tol

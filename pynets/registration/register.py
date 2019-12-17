@@ -153,7 +153,6 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different spatial normalization approaches on
            tractography and structural brain networks. Network Neuroscience, 1-19.
     """
-    import gc
     from dipy.tracking import utils
     from dipy.tracking.streamline import values_from_volume, transform_streamlines, Streamlines
     from pynets.registration import reg_utils as regutils
@@ -299,7 +298,6 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                              warped_uatlas_img_res_data, affine=warped_fa_affine), atlas_mni)
 
     del tractogram, streamlines, warped_uatlas_img_res_data, uatlas_mni_data, overlap_mask, stf, streams_final_filt_final, streams_final_filt, streams_in_curr_grid, brain_mask
-    gc.collect()
 
     return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget, warped_fa
 

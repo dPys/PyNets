@@ -975,7 +975,7 @@ def save_netmets(dir_path, est_path, metric_list_names, net_met_val_list_final):
     # And save results to csv
     out_path_neat = "%s%s" % (utils.create_csv_path(dir_path, est_path).split('.csv')[0], '_neat.csv')
     zipped_dict = dict(zip(metric_list_names, net_met_val_list_final))
-    df = pd.DataFrame.from_dict(zipped_dict, orient='index').transpose()
+    df = pd.DataFrame.from_dict(zipped_dict, orient='index', dtype='float32').transpose()
     df.to_csv(out_path_neat, index=False)
 
     del df, zipped_dict, net_met_val_list_final, metric_list_names
@@ -1535,7 +1535,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
 
 
 def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_collect=False, create_summary=True,
-                           db_type='sql'):
+                           sql_out=True):
     """
     Summarize list of pickled pandas dataframes of graph metrics unique to eacho unique combination of hyperparameters.
 
@@ -1550,8 +1550,8 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
         study of brain subgraphs.
     plot_switch : bool
         Activate summary plotting (histograms, central tendency, AUC, etc.)
-    db_type : str
-        Type of database to export auc metrics. Options are: 'sql' or 'csv'.
+    sql_out : bool
+        Optionally output data to sql.
 
     Returns
     -------
@@ -1613,8 +1613,8 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                     meta[thr_set]['dataframes'][thr] = df
 
             # For each unique threshold set, for each graph measure, extract AUC
-            if db_type == 'sql':
-                sql_db = utils.build_sql_db(subject_path)
+            if sql_out is True:
+                sql_db = utils.build_sql_db(op.dirname(op.dirname(op.dirname(subject_path))), ID)
             for thr_set in meta.keys():
                 df_summary = pd.concat(meta[thr_set]['dataframes'].values())
                 df_summary['thr'] = meta[thr_set]['dataframes'].keys()
@@ -1636,8 +1636,8 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                 for measure in df_summary.columns[:-1]:
                     # Get Area Under the Curve
                     df_summary_nonan = df_summary[pd.notnull(df_summary[measure])]
-                    df_summary_auc[measure] = np.trapz(np.array(df_summary_nonan[measure]).astype('float64'),
-                                                       np.array(df_summary_nonan['thr']).astype('float64'))
+                    df_summary_auc[measure] = np.trapz(np.array(df_summary_nonan[measure]).astype('float32'),
+                                                       np.array(df_summary_nonan['thr']).astype('float32'))
                     print("%s%s%s" % (measure, ': ', df_summary_auc[measure].to_string(index=False)))
                 meta[thr_set]['auc_dataframe'] = df_summary_auc
                 auc_dir = subject_path + '/' + atlas + '/netmetrics/auc/'
@@ -1646,15 +1646,13 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                 df_summary_auc = df_summary_auc.drop(columns=['thr_auc'])
                 df_summary_auc = df_summary_auc.loc[:, df_summary_auc.columns.str.endswith('auc')]
                 auc_outfile = auc_dir + file_renamed
-
-                if db_type == 'sql':
+                df_summary_auc.to_csv(auc_outfile, header=True, index=False, chunksize=100000, compression='gzip',
+                                      encoding='utf-8')
+                if sql_out is True:
                     sql_db.create_modality_table(modality)
                     sql_db.add_hp_columns(list(set(hyperparams)) + list(df_summary_auc.columns))
                     sql_db.add_row_from_df(df_summary_auc, hyperparam_dict)
                     # sql_db.engine.execute("SELECT * FROM func").fetchall()
-                else:
-                    df_summary_auc.to_csv(auc_outfile, header=True, index=False, chunksize=100000, compression='gzip',
-                                          encoding='utf-8')
 
         if create_summary is True:
             try:
