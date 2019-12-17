@@ -69,8 +69,8 @@ def create_parcel_atlas(parcel_list):
     from nilearn.image import new_img_like, concat_imgs
     parcel_list_exp = [new_img_like(parcel_list[0], np.zeros(parcel_list[0].shape, dtype=bool))] + parcel_list
     concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float32)
-    concatted_parcels.set_data_dtype(np.float32)
-    parcel_sum = np.sum(np.array(range(len(parcel_list_exp))) * concatted_parcels, axis=3, dtype=np.uint8)
+    parcel_sum = np.sum(np.array(range(len(parcel_list_exp))) * np.asarray(concatted_parcels.dataobj), axis=3,
+                        dtype=np.uint8)
     net_parcels_map_nifti = nib.Nifti1Image(parcel_sum, affine=parcel_list[0].affine)
     del concatted_parcels, parcel_sum, parcel_list
 
@@ -665,10 +665,12 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     img_list = nodemaker.gen_img_list(uatlas)
     print("%s%s%s" % ('\nExtracting parcels associated with ', network, ' network locations...\n'))
     net_parcels = [i for j, i in enumerate(img_list) if j in labels]
-    net_parcels_sum = np.sum((np.array(range(len(net_parcels))) + 1) * concat_imgs(net_parcels).get_fdata(), axis=3,
-                             dtype=np.uint8)
+    net_parcels_concatted = concat_imgs(net_parcels)
+    net_parcels_sum = np.sum((np.array(range(len(net_parcels))) + 1) * np.asarray(net_parcels_concatted.dataobj),
+                             axis=3, dtype=np.uint8)
     out_path = "%s%s%s%s" % (dir_path, '/', network, '_parcels.nii.gz')
     nib.save(nib.Nifti1Image(net_parcels_sum, affine=np.eye(4)), out_path)
+    del net_parcels_concatted
 
     return out_path
 
