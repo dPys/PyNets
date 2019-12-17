@@ -269,9 +269,9 @@ def wm_syn(template_path, fa_path, working_dir):
     fa_img = nib.load(fa_path)
     template_img = nib.load(template_path)
 
-    static = template_img.get_data()
+    static = np.asarray(template_img.dataobj)
     static_affine = template_img.affine
-    moving = fa_img.get_data().astype(np.float32)
+    moving = np.asarray(fa_img.dataobj).astype(np.float32)
     moving_affine = fa_img.affine
 
     affine_map = transform_origins(static, static_affine, moving, moving_affine)
@@ -416,7 +416,7 @@ def normalize_xform(img):
             int(qform_code) == xform_code, int(sform_code) == xform_code)):
         return img
 
-    new_img = img.__class__(img.get_data(), xform, img.header)
+    new_img = img.__class__(np.asarray(img.dataobj), xform, img.header)
     # Unconditionally set sform/qform
     new_img.set_sform(xform, xform_code)
     new_img.set_qform(xform, xform_code)

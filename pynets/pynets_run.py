@@ -191,9 +191,11 @@ def get_parser():
                         metavar='Clustering type',
                         default='ward',
                         nargs='+',
-                        choices=['ward', 'kmeans', 'complete', 'average'],
+                        choices=['ward', 'kmeans', 'complete', 'average', 'single'],
                         help='Specify the types of clustering to use. Recommended options are: '
-                             'ward, kmeans, or average. If specifying a list of '
+                             'ward or kmeans. Note that imposing spatial constraints with a mask consisting of '
+                             'disconnected components will leading to clustering instability in the case of complete, '
+                             'average, or single clustering. If specifying a list of '
                              'clustering types, separate them by space.\n')
     parser.add_argument('-cc',
                         metavar='Clustering connectivity type',

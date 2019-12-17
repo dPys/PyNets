@@ -7,6 +7,7 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import pytest
 import numpy as np
+import indexed_gzip
 import nibabel as nib
 from pathlib import Path
 try:
@@ -76,7 +77,7 @@ def test_make_local_connectivity_scorr():
 
 @pytest.mark.parametrize("local_corr", ['scorr', 'tcorr', 'allcorr'])
 @pytest.mark.parametrize("clust_type", ['kmeans', 'ward', 'complete', 'average'])
-@pytest.mark.parametrize("k", [pytest.param(0, marks=pytest.mark.xfail), 1, 100])
+@pytest.mark.parametrize("k", [pytest.param(0, marks=pytest.mark.xfail), 100])
 def test_nil_parcellate(local_corr, clust_type, k):
     """
     Test for nil_parcellate
@@ -86,10 +87,11 @@ def test_nil_parcellate(local_corr, clust_type, k):
     clust_mask = base_dir + '/triple_net_ICA_overlap_3_sig_bin.nii.gz'
     func_file = dir_path + '/002.nii.gz'
     conf = None
+    mask = None
     nip = clustools.NilParcellate(func_file=func_file, clust_mask=clust_mask, k=k, clust_type=clust_type,
-                                  local_corr=local_corr, conf=conf)
+                                  local_corr=local_corr, conf=conf, mask=mask)
     atlas = nip.create_clean_mask()
-    nip.create_local_clustering(overwrite=True, r_thresh=0.4)
+    nip.create_local_clustering(overwrite=True, r_thresh=0.5)
     uatlas = nip.parcellate()
     assert atlas is not None
     assert uatlas is not None

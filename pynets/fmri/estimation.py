@@ -365,6 +365,7 @@ class TimeseriesExtraction(object):
                                  'the -conf flag exist(s)')
 
         self._func_img = nib.load(self.func_file)
+        self._func_img.set_data_dtype(np.float32)
         hdr = self._func_img.header
 
         if self.hpass:
@@ -389,6 +390,7 @@ class TimeseriesExtraction(object):
         if self.mask is not None:
             # Ensure mask is binary
             self._mask_img = math_img('img > 0', img=nib.load(self.mask))
+            self._mask_img.set_data_dtype(np.uint8)
         else:
             self._mask_img = None
 
@@ -407,7 +409,6 @@ class TimeseriesExtraction(object):
         given list of seed coordinates. The resulting time-series can then optionally be resampled using circular-block
         bootrapping. The final 2D m x n array is ultimately saved to file in .npy format.
         """
-        import gc
         from nilearn import input_data
         from pynets.fmri.estimation import fill_confound_nans
 
@@ -437,7 +438,6 @@ class TimeseriesExtraction(object):
             print("%s%s%d%s" % ('\nTime series has {0} samples'.format(self.ts_within_nodes.shape[0]),
                                 ' mean extracted from ', len(self.coords), ' coordinate ROI\'s'))
 
-        gc.collect()
         return
 
     def extract_ts_parc(self):
@@ -446,12 +446,12 @@ class TimeseriesExtraction(object):
         given 3D atlas image of integer-based voxel intensities. The resulting time-series can then optionally be
         resampled using circular-block bootrapping. The final 2D m x n array is ultimately saved to file in .npy format.
         """
-        import gc
         import nibabel as nib
         from nilearn import input_data
         from pynets.fmri.estimation import fill_confound_nans
 
         self._net_parcels_map_nifti = nib.load(self.net_parcels_nii_path)
+        self._net_parcels_map_nifti.set_data_dtype(np.uint8)
         self._parcel_masker = input_data.NiftiLabelsMasker(labels_img=self._net_parcels_map_nifti, background_label=0,
                                                            standardize=True, smoothing_fwhm=float(self.smooth),
                                                            high_pass=self.hpass, detrend=self._detrending,
@@ -475,7 +475,6 @@ class TimeseriesExtraction(object):
         else:
             self.node_size = 'parc'
 
-        gc.collect()
         return
 
     def bootstrap_timeseries(self):
@@ -502,6 +501,5 @@ class TimeseriesExtraction(object):
         if self._parcel_masker is not None:
             del self._parcel_masker
             self._net_parcels_map_nifti.uncache()
-
         gc.collect()
         return

@@ -117,11 +117,11 @@ class IndividualClustering(SimpleInterface):
 
     def _run_interface(self, runtime):
         from pynets.fmri import clustools
-        import time
+        # import time
         import gc
         from pynets.registration.reg_utils import check_orient_and_dims
 
-        time.sleep(10)
+        # time.sleep(10)
 
         nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
@@ -199,10 +199,10 @@ class ExtractTimeseries(SimpleInterface):
 
     def _run_interface(self, runtime):
         from pynets.fmri import estimation
-        import time
+        # import time
         import gc
 
-        time.sleep(10)
+        # time.sleep(10)
 
         te = estimation.TimeseriesExtraction(net_parcels_nii_path=self.inputs.net_parcels_nii_path,
                                              node_size=self.inputs.node_size,
