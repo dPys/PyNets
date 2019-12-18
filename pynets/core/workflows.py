@@ -597,6 +597,11 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
             if node_name in runtime_dict:
                 meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._n_procs = runtime_dict[node_name][0]
                 meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._mem_gb = runtime_dict[node_name][1]
+                try:
+                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.n_procs = runtime_dict[node_name][0]
+                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.mem_gb = runtime_dict[node_name][1]
+                except:
+                    continue
 
     if dwi_file:
         wf_selected = "%s%s" % ('dmri_connectometry_', ID)
@@ -604,6 +609,11 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
             if node_name in runtime_dict:
                 meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._n_procs = runtime_dict[node_name][0]
                 meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._mem_gb = runtime_dict[node_name][1]
+                try:
+                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.n_procs = runtime_dict[node_name][0]
+                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.mem_gb = runtime_dict[node_name][1]
+                except:
+                    continue
 
     return meta_wf
 
@@ -1728,6 +1738,9 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                            imports=import_list),
                                               name="check_orient_and_dims_func_node")
 
+    check_orient_and_dims_func_node._n_procs = runtime_dict['check_orient_and_dims_func_node'][0]
+    check_orient_and_dims_func_node._mem_gb = runtime_dict['check_orient_and_dims_func_node'][1]
+
     check_orient_and_dims_anat_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'], output_names=['outfile'],
                                                            function=regutils.check_orient_and_dims,
                                                            imports=import_list),
@@ -1738,12 +1751,18 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                          function=register.register_all_fmri, imports=import_list),
                             name="register_node")
 
+    register_node._n_procs = runtime_dict['register_node'][0]
+    register_node._mem_gb = runtime_dict['register_node'][1]
+
     register_atlas_node = pe.Node(niu.Function(input_names=['uatlas', 'uatlas_parcels', 'atlas',
                                                             'basedir_path', 'anat_file', 'vox_size',
                                                             'reg_fmri_complete'],
                                                output_names=['aligned_atlas_t1mni_gm'],
                                                function=register.register_atlas_fmri, imports=import_list),
                                   name="register_atlas_node")
+
+    register_atlas_node._n_procs = runtime_dict['register_atlas_node'][0]
+    register_atlas_node._mem_gb = runtime_dict['register_atlas_node'][1]
 
     # Clustering
     if float(k_clustering) > 0:
@@ -1756,6 +1775,11 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                'local_corr', 'mask'],
                                   output_names=['uatlas', 'atlas', 'clustering', 'clust_mask', 'k', 'clust_type'],
                                   imports=import_list, name="clustering_node")
+
+        clustering_node.interface.n_procs = runtime_dict['clustering_node'][0]
+        clustering_node.interface.mem_gb = runtime_dict['clustering_node'][1]
+        clustering_node._n_procs = runtime_dict['clustering_node'][0]
+        clustering_node._mem_gb = runtime_dict['clustering_node'][1]
 
         # Don't forget that this setting exists
         clustering_node.synchronize = True
@@ -2078,6 +2102,12 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                               output_names=['ts_within_nodes', 'node_size', 'smooth', 'dir_path', 'atlas', 'uatlas',
                                             'labels', 'coords', 'c_boot', 'hpass'], imports=import_list,
                               name="extract_ts_node")
+
+    extract_ts_node.interface.n_procs = runtime_dict['extract_ts_node'][0]
+    extract_ts_node.interface.mem_gb = runtime_dict['extract_ts_node'][1]
+    extract_ts_node._n_procs = runtime_dict['extract_ts_node'][0]
+    extract_ts_node._mem_gb = runtime_dict['extract_ts_node'][1]
+
     if parc is True:
         # Parcels case
         extract_ts_node.inputs.parc = True

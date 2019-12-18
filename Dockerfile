@@ -110,8 +110,8 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     # Create nipype config for resource monitoring
     && mkdir -p ~/.nipype \
     && echo "[monitoring]" > ~/.nipype/nipype.cfg \
-    && echo "enabled = true" >> ~/.nipype/nipype.cfg
-    && pip uninstall pandas \
+    && echo "enabled = true" >> ~/.nipype/nipype.cfg \
+    && pip uninstall -y pandas \
     && conda install -yq pandas
 
 # Handle permissions, cleanup, and create mountpoints
