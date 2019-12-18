@@ -464,8 +464,13 @@ class NilParcellate(object):
         """
         import os.path as op
         from scipy.sparse import save_npz, load_npz
+        from nilearn.regions import connected_regions
         from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
-        if self.clust_type == 'ward' or self.clust_type != 'average' or self.clust_type != 'complete' or self.clust_type != 'single':
+        if self.clust_type == 'ward':
+            if self.k < len(connected_regions(self._clust_mask_corr_img, extract_type='connected_components',
+                                              min_region_size=1)[1]):
+                raise ValueError('Error k must minimally be greater than the total number of connected components in '
+                                 'the mask.')
             if self.local_corr == 'tcorr' or self.local_corr == 'scorr':
                 self._local_conn_mat_path = "%s%s%s%s" % (self.uatlas.split('.nii')[0], '_', self.local_corr,
                                                           '_conn.npz')
@@ -498,7 +503,6 @@ class NilParcellate(object):
         """
         API for performing any of a variety of clustering routines available through NiLearn.
         """
-        import gc
         import time
         import os
         from nilearn.regions import Parcellations
@@ -506,7 +510,7 @@ class NilParcellate(object):
 
         start = time.time()
 
-        if (self.clust_type == 'ward' or self.clust_type != 'average' or self.clust_type != 'complete' or self.clust_type != 'single') and (self.local_corr != 'allcorr'):
+        if (self.clust_type == 'ward') and (self.local_corr != 'allcorr'):
             if self._local_conn_mat_path is not None:
                 if not os.path.isfile(self._local_conn_mat_path):
                     raise FileNotFoundError('File containing sparse matrix of local connectivity structure not found.')
@@ -537,5 +541,4 @@ class NilParcellate(object):
         del self._clust_est
         self._func_img.uncache()
         self._clust_mask_corr_img.uncache()
-        gc.collect()
         return self.uatlas

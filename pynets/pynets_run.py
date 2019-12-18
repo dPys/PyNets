@@ -1459,6 +1459,8 @@ def build_workflow(args, retval):
 
         meta_wf._n_procs = procmem[0]
         meta_wf._mem_gb = procmem[1]
+        meta_wf.n_procs = procmem[0]
+        meta_wf.mem_gb = procmem[1]
         wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
@@ -1468,8 +1470,6 @@ def build_workflow(args, retval):
                 if node_name in runtime_dict:
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
-            wf.get_node(meta_wf.name)._n_procs = procmem[0]
-            wf.get_node(meta_wf.name)._mem_gb = procmem[1]
 
         if dwi_file:
             wf_selected = "%s%s" % ('dmri_connectometry_', ID)
@@ -1477,8 +1477,15 @@ def build_workflow(args, retval):
                 if node_name in runtime_dict:
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
-            wf.get_node(meta_wf.name)._n_procs = procmem[0]
-            wf.get_node(meta_wf.name)._mem_gb = procmem[1]
+
+        wf.get_node(meta_wf.name)._n_procs = procmem[0]
+        wf.get_node(meta_wf.name)._mem_gb = procmem[1]
+        wf.get_node(meta_wf.name).n_procs = procmem[0]
+        wf.get_node(meta_wf.name).mem_gb = procmem[1]
+        wf.get_node(meta_wf.name).get_node(wf_selected)._n_procs = procmem[0]
+        wf.get_node(meta_wf.name).get_node(wf_selected)._mem_gb = procmem[1]
+        wf.get_node(meta_wf.name).get_node(wf_selected).n_procs = procmem[0]
+        wf.get_node(meta_wf.name).get_node(wf_selected).mem_gb = procmem[1]
 
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
@@ -1603,6 +1610,8 @@ def build_workflow(args, retval):
             fbvec_list = len(func_file_list) * [None]
             fbval_list = len(func_file_list) * [None]
 
+        multi_iter_len = len(list(zip(dwi_file_list, func_file_list)))
+
         i = 0
         for dwi_file, func_file in zip(dwi_file_list, func_file_list):
             if conf_list and func_file:
@@ -1646,13 +1655,11 @@ def build_workflow(args, retval):
                 embed=embed, multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
                 template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex,
                 waymask=waymask, local_corr=local_corr)
-            wf_single_subject.synchronize = True
             wf_single_subject._n_procs = procmem[0]
             wf_single_subject._mem_gb = procmem[1]
             wf_single_subject.n_procs = procmem[0]
             wf_single_subject.mem_gb = procmem[1]
             wf_multi.add_nodes([wf_single_subject])
-            wf_multi.get_node(wf_single_subject.name).synchronize = True
             wf_multi.get_node(wf_single_subject.name)._n_procs = procmem[0]
             wf_multi.get_node(wf_single_subject.name)._mem_gb = procmem[1]
             wf_multi.get_node(wf_single_subject.name).n_procs = procmem[0]
@@ -1666,15 +1673,11 @@ def build_workflow(args, retval):
                     if node_name in runtime_dict:
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._n_procs = procmem[0]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._mem_gb = procmem[1]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).n_procs = procmem[0]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).mem_gb = procmem[1]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._n_procs = procmem[0]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._mem_gb = procmem[1]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).n_procs = procmem[0]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
-
+                        try:
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name).interface.n_procs = runtime_dict[node_name][0]
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name).interface.mem_gb = runtime_dict[node_name][1]
+                        except:
+                            continue
             if dwi_file:
                 wf_selected = "%s%s" % ('dmri_connectometry_', ID[i])
                 meta_wf_name = "%s%s" % ('meta_wf_', ID[i])
@@ -1682,14 +1685,20 @@ def build_workflow(args, retval):
                     if node_name in runtime_dict:
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                         wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._n_procs = procmem[0]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._mem_gb = procmem[1]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).n_procs = procmem[0]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).mem_gb = procmem[1]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._n_procs = procmem[0]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._mem_gb = procmem[1]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).n_procs = procmem[0]
-                wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
+                        try:
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name).interface.n_procs = runtime_dict[node_name][0]
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name).interface.mem_gb = runtime_dict[node_name][1]
+                        except:
+                            continue
+
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._n_procs = procmem[0]
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._mem_gb = procmem[1]
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).n_procs = procmem[0]
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).mem_gb = procmem[1]
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._n_procs = procmem[0]
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._mem_gb = procmem[1]
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).n_procs = procmem[0]
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
             wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._n_procs = 1
             wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 2
