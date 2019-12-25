@@ -109,7 +109,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                      overlap_thr_list, track_type, max_length, maxcrossing,
                                                      min_length, directget, tiss_class, runtime_dict, execution_dict,
                                                      multi_directget, template, template_mask, vox_size, waymask)
-        sub_struct_wf.synchronize = True
+        # sub_struct_wf.synchronize = True
         if func_file is None:
             sub_func_wf = None
 
@@ -126,7 +126,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                    clust_type_list, plugin_type, c_boot, block_size, mask,
                                                    norm, binary, anat_file, runtime_dict, execution_dict, hpass,
                                                    hpass_list, template, template_mask, vox_size, local_corr)
-        sub_func_wf.synchronize = True
+        # sub_func_wf.synchronize = True
         if dwi_file is None:
             sub_struct_wf = None
 
@@ -143,7 +143,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
         config.update_config(cfg_v)
         config.enable_debug_mode()
         config.enable_resource_monitor()
-    execution_dict['plugin_args'] = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+    execution_dict['plugin_args'] = {'n_procs': int(procmem[0])-1, 'memory_gb': int(procmem[1])-1}
     execution_dict['plugin'] = str(plugin_type)
     cfg = dict(execution=execution_dict)
 
@@ -769,7 +769,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                        function=nodemaker.fetch_nodes_and_labels,
                                                        imports=import_list), name="fetch_nodes_and_labels_node")
 
-    fetch_nodes_and_labels_node.synchronize = True
+    # fetch_nodes_and_labels_node.synchronize = True
 
     if parc is False:
         prep_spherical_nodes_node = pe.Node(niu.Function(input_names=['coords', 'node_size', 'template_mask'],
@@ -781,7 +781,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         if node_size_list:
             prep_spherical_nodes_node.iterables = [("node_size", node_size_list)]
 
-    prep_spherical_nodes_node.synchronize = True
+    # prep_spherical_nodes_node.synchronize = True
 
     save_nifti_parcels_node = pe.Node(niu.Function(input_names=['ID', 'dir_path', 'roi', 'network',
                                                                 'net_parcels_map_nifti'],
@@ -825,7 +825,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             get_node_membership_node_iterables.append(network_iterables)
             get_node_membership_node.iterables = get_node_membership_node_iterables
 
-    get_node_membership_node.synchronize = True
+    # get_node_membership_node.synchronize = True
 
     gtab_node = pe.Node(niu.Function(input_names=['fbval', 'fbvec', 'dwi_file', 'network', 'node_size', 'atlas'],
                                      output_names=['gtab_file', 'B0_bet', 'B0_mask', 'dwi_file'],
@@ -882,7 +882,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                              function=track.run_track,
                                              imports=import_list),
                                 name="run_tracking_node")
-    run_tracking_node.synchronize = True
+    # run_tracking_node.synchronize = True
 
     # Set reconstruction model iterables
     if conn_model_list or multi_directget:
@@ -913,7 +913,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                   'atlas_mni', 'directget', 'warped_fa'],
                                     function=register.direct_streamline_norm,
                                     imports=import_list), name="dsn_node")
-    dsn_node.synchronize = True
+    # dsn_node.synchronize = True
 
     streams2graph_node = pe.Node(niu.Function(input_names=['atlas_mni', 'streams', 'overlap_thr', 'dir_path',
                                                            'track_type', 'target_samples', 'conn_model',
@@ -928,7 +928,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                             'coords', 'norm', 'binary', 'directget'],
                                               function=estimation.streams2graph,
                                               imports=import_list), name="streams2graph_node")
-    streams2graph_node.synchronize = True
+    # streams2graph_node.synchronize = True
 
     # Set streams2graph_node iterables
     streams2graph_node_iterables = []
@@ -1175,7 +1175,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                                           'binary', 'target_samples', 'track_type',
                                                                           'atlas_mni', 'streams', 'directget'],
                                       nested=True)
-        thresh_diff_node.synchronize = True
+        # thresh_diff_node.synchronize = True
 
     # Set iterables for thr on thresh_diff, else set thr to singular input
     if multi_thr is True:
@@ -1186,7 +1186,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     else:
         thr_info_node.iterables = ("thr", [thr])
 
-    thr_info_node.synchronize = True
+    # thr_info_node.synchronize = True
 
     # Plotting
     if plot_switch is True:
@@ -1576,7 +1576,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             dmri_connectometry_wf.get_node(node_name).n_procs = runtime_dict[node_name][0]
             dmri_connectometry_wf.get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
-    execution_dict['plugin_args'] = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+    execution_dict['plugin_args'] = {'n_procs': int(procmem[0])-1, 'memory_gb': int(procmem[1])-1}
     execution_dict['plugin'] = str(plugin_type)
     cfg = dict(execution=execution_dict)
     for key in cfg.keys():
@@ -1782,7 +1782,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         clustering_node._mem_gb = runtime_dict['clustering_node'][1]
 
         # Don't forget that this setting exists
-        clustering_node.synchronize = True
+        # clustering_node.synchronize = True
 
         # clustering_node iterables and names
         if k_clustering == 1:
@@ -1949,7 +1949,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                        function=nodemaker.fetch_nodes_and_labels,
                                                        imports=import_list), name="fetch_nodes_and_labels_node")
 
-    fetch_nodes_and_labels_node.synchronize = True
+    # fetch_nodes_and_labels_node.synchronize = True
 
     # Connect clustering solutions to node definition Node
     if float(k_clustering) > 0:
@@ -2154,7 +2154,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     else:
         fmri_connectometry_wf.connect([(inputnode, extract_ts_node, [('hpass', 'hpass')])])
 
-    extract_ts_node.synchronize = True
+    # extract_ts_node.synchronize = True
 
     # Connectivity matrix model fit
     get_conn_matrix_node = pe.Node(niu.Function(input_names=['time_series', 'conn_model', 'dir_path', 'node_size',
@@ -2176,7 +2176,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     else:
         fmri_connectometry_wf.connect([(inputnode, get_conn_matrix_node, [('conn_model', 'conn_model')])])
 
-    get_conn_matrix_node.synchronize = True
+    # get_conn_matrix_node.synchronize = True
 
     # RSN case
     if network or multi_nets:
@@ -2415,7 +2415,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                                           'c_boot', 'norm', 'binary', 'hpass'],
                                       nested=True)
 
-        thresh_func_node.synchronize = True
+        # thresh_func_node.synchronize = True
 
     # Set iterables for thr on thresh_func, else set thr to singular input
     if multi_thr is True:
@@ -2426,7 +2426,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     else:
         thr_info_node.iterables = ("thr", [thr])
 
-    thr_info_node.synchronize = True
+    # thr_info_node.synchronize = True
 
     # Plotting
     if plot_switch is True:
@@ -2603,7 +2603,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             fmri_connectometry_wf.get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
     # Set runtime/logging configurations
-    execution_dict['plugin_args'] = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+    execution_dict['plugin_args'] = {'n_procs': int(procmem[0]-1), 'memory_gb': int(procmem[1])-1}
     execution_dict['plugin'] = str(plugin_type)
     cfg = dict(execution=execution_dict)
     for key in cfg.keys():

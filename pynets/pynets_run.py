@@ -1494,7 +1494,7 @@ def build_workflow(args, retval):
                                    imports=import_list)
 
         net_mets_node._n_procs = 1
-        net_mets_node._mem_gb = 2
+        net_mets_node._mem_gb = 1
 
         # Aggregate list of paths to pandas dataframe pickles
         join_net_mets = pe.JoinNode(niu.IdentityInterface(fields=['out_path_neat']),
@@ -1701,7 +1701,7 @@ def build_workflow(args, retval):
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
             wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._n_procs = 1
-            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 2
+            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 1
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._n_procs = 1
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._mem_gb = 2
 

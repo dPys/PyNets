@@ -272,10 +272,10 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Instantiate empty networkX graph object & dictionary and create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4))
-    mx = len(np.unique(atlas_data.astype('int16'))) - 1
+    mx = len(np.unique(atlas_data.astype('uint8'))) - 1
     g = nx.Graph(ecount=0, vcount=mx)
     edge_dict = defaultdict(int)
-    node_dict = dict(zip(np.unique(atlas_data.astype('int16')) + 1, np.arange(mx) + 1))
+    node_dict = dict(zip(np.unique(atlas_data.astype('uint8')) + 1, np.arange(mx) + 1))
 
     # Add empty vertices
     for node in range(1, mx + 1):
@@ -294,7 +294,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         # get labels for label_volume
         lab_arr = atlas_data[i, j, k]
         endlabels = []
-        for lab in np.unique(lab_arr).astype('int16'):
+        for lab in np.unique(lab_arr).astype('uint8'):
             if (lab > 0) and (np.sum(lab_arr == lab) >= overlap_thr):
                 try:
                     endlabels.append(node_dict[lab])

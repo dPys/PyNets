@@ -55,29 +55,27 @@ resource_dict:
       - 'check_orient_and_dims_dwi_node':
         - (1, 2)
       - 'extract_ts_node':
-        - (4, 8)
-      - 'node_gen_node':
-        - (1, 1)
+        - (2, 6)
       - 'clustering_node':
-        - (4, 8)
+        - (2, 8)
       - 'get_conn_matrix_node':
-        - (1, 1)
+        - (1, 2)
       - 'thresh_func_node':
-        - (1, 1)
+        - (1, 0.5)
       - 'register_node':
         - (2, 6)
       - 'register_atlas_node':
         - (2, 4)
       - 'get_fa_node':
-        - (1, 1)
+        - (1, 2)
       - 'run_tracking_node':
-        - (4, 8)
+        - (2, 8)
       - 'thresh_diff_node':
-        - (1, 1)
+        - (1, 0.5)
       - 'dsn_node':
-        - (1, 2)
+        - (1, 4)
       - 'streams2graph_node':
-        - (1, 2)
+        - (1, 4)
 execution_dict:
     - 'stop_on_first_crash':
         - False
@@ -104,8 +102,6 @@ execution_dict:
     - 'maxtasksperchild':
         - 1
     - 'poll_sleep_duration':
-        - 30
+        - 20
     - 'hash_method':
         - 'content'
-    - 'job_finished_timeout':
-        - 240
