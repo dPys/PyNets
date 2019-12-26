@@ -271,7 +271,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     warped_fa_img.uncache()
 
     # DSN QC plotting
-    plot_gen.show_template_bundles(streams_final_filt_final, template_path, streams_warp_png)
+    # plot_gen.show_template_bundles(streams_final_filt_final, template_path, streams_warp_png)
 
     # Create and save MNI density map
     nib.save(nib.Nifti1Image(utils.density_map(streams_final_filt_final, affine=np.eye(4),
@@ -281,7 +281,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     # with original mni-space uatlas
     uatlas_mni_img = nib.load(uatlas)
 
-    warped_uatlas = affine_map.transform_inverse(mapping.transform(np.asarray(atlas_img.dataobj).astype('int16'),
+    warped_uatlas = affine_map.transform_inverse(mapping.transform(np.asarray(atlas_img.dataobj).astype('int'),
                                                                    interpolation='nearestneighbour'), interp='nearest')
     atlas_img.uncache()
     warped_uatlas_img_res_data = np.asarray(resample_to_img(nib.Nifti1Image(warped_uatlas, affine=warped_fa_affine),

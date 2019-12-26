@@ -276,9 +276,11 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
 
     # Load subject func data
     bna_img = nib.load(infile)
-    x_vox = np.diagonal(bna_img.affine[:3, 0:3])[0]
-    y_vox = np.diagonal(bna_img.affine[:3, 0:3])[1]
-    z_vox = np.diagonal(bna_img.affine[:3, 0:3])[2]
+    bna_aff = bna_img.affine
+    bna_img.uncache()
+    x_vox = np.diagonal(bna_aff[:3, 0:3])[0]
+    y_vox = np.diagonal(bna_aff[:3, 0:3])[1]
+    z_vox = np.diagonal(bna_aff[:3, 0:3])[2]
 
     if network in seventeen_nets:
         if x_vox <= 1 and y_vox <= 1 and z_vox <= 1:
@@ -308,10 +310,8 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
     dict_df.Region.unique().tolist()
     ref_dict = {v: k for v, k in enumerate(dict_df.Region.unique().tolist())}
     par_img = nib.load(par_file)
-    par_data = par_img.get_fdata()
     RSN_ix = list(ref_dict.keys())[list(ref_dict.values()).index(network)]
-    RSNmask = par_data[:, :, :, RSN_ix]
-    bna_aff = bna_img.affine
+    RSNmask = np.asarray(par_img.dataobj)[:, :, :, RSN_ix]
 
     coords_vox = []
     for i in coords:
@@ -352,8 +352,8 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
         net_labels = []
         for parcel in parcel_list:
             parcel_vol = np.zeros(RSNmask.shape, dtype=bool)
-            parcel_vol[resample_img(parcel, target_affine=par_img.affine,
-                                    target_shape=RSNmask.shape).get_fdata() == 1] = 1
+            parcel_vol[np.asarray(resample_img(parcel, target_affine=par_img.affine,
+                                               target_shape=RSNmask.shape).dataobj) == 1] = 1
 
             # Count number of unique voxels where overlap of parcel and mask occurs
             overlap_count = len(np.unique(np.where((RSNmask.astype('uint8') == 1) & (parcel_vol.astype('uint8') == 1))))
@@ -377,7 +377,8 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
             i = i + 1
         coords_mm = list(set(list(tuple(x) for x in coords_with_parc)))
 
-    bna_img.uncache()
+    par_img.uncache()
+
     if len(coords_mm) <= 1:
         raise ValueError("%s%s%s" % ('\nERROR: No coords from the specified atlas found within ', network, ' network.'))
 
@@ -423,14 +424,16 @@ def parcel_masker(roi, coords, parcel_list, labels, dir_path, ID, perc_overlap):
     import os.path as op
 
     mask_img = nib.load(roi)
+    mask_aff = mask_img.affine
     mask_data, _ = masking._load_mask_img(roi)
+    mask_img.uncache()
 
     i = 0
     indices = []
     for parcel in parcel_list:
         parcel_vol = np.zeros(mask_data.shape, dtype=bool)
-        parcel_data_reshaped = resample_img(parcel, target_affine=mask_img.affine,
-                                            target_shape=mask_data.shape).get_fdata()
+        parcel_data_reshaped = np.asarray(resample_img(parcel, target_affine=mask_aff,
+                                                       target_shape=mask_data.shape).dataobj)
         parcel_vol[parcel_data_reshaped == 1] = 1
 
         # Count number of unique voxels where overlap of parcel and mask occurs
@@ -468,11 +471,9 @@ def parcel_masker(roi, coords, parcel_list, labels, dir_path, ID, perc_overlap):
     resampled_parcels_nii_path = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_parcels_resampled2roimask_',
                                                    op.basename(roi).split('.')[0], '.nii.gz')
     resampled_parcels_map_nifti = resample_img(nodemaker.create_parcel_atlas(parcel_list_adj)[0],
-                                               target_affine=mask_img.affine, target_shape=mask_data.shape,
+                                               target_affine=mask_aff, target_shape=mask_data.shape,
                                                interpolation='nearest')
     nib.save(resampled_parcels_map_nifti, resampled_parcels_nii_path)
-    if mask_img is not None:
-        mask_img.uncache()
     resampled_parcels_map_nifti.uncache()
     if not coords_adj:
         raise ValueError('\nERROR: ROI mask was likely too restrictive and yielded < 2 remaining parcels')
@@ -608,27 +609,26 @@ def gen_img_list(uatlas):
                          'flag exist(s)')
 
     bna_img = nib.load(uatlas)
-    bna_data = np.around(bna_img.get_fdata())
+    bna_data = np.around(np.asarray(bna_img.dataobj)).astype('uint8')
 
     # Get an array of unique parcels
     bna_data_for_coords_uniq = np.unique(bna_data)
 
     # Number of parcels:
     par_max = len(bna_data_for_coords_uniq) - 1
-    bna_data = bna_data.astype('uint8')
     img_stack = []
     for idx in range(1, par_max + 1):
         roi_img = bna_data == bna_data_for_coords_uniq[idx].astype('uint8')
-        roi_img = roi_img.astype('uint8')
-        img_stack.append(roi_img)
+        img_stack.append(roi_img.astype('uint8'))
     img_stack = np.array(img_stack).astype('uint8')
+
     img_list = []
     for idy in range(par_max):
-        roi_img_nifti = new_img_like(bna_img, img_stack[idy])
-        img_list.append(roi_img_nifti)
-    bna_img.uncache()
+        img_list.append(new_img_like(bna_img, img_stack[idy]))
+
     del img_stack
 
+    bna_img.uncache()
     return img_list
 
 
@@ -671,6 +671,7 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     out_path = "%s%s%s%s" % (dir_path, '/', network, '_parcels.nii.gz')
     nib.save(nib.Nifti1Image(net_parcels_sum, affine=np.eye(4)), out_path)
     del net_parcels_concatted
+    del img_list
 
     return out_path
 
@@ -1052,7 +1053,6 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
         with open(labels_path, 'wb') as f:
             pickle.dump(labels, f, protocol=2)
 
-
     return net_parcels_map_nifti, coords, labels, atlas, uatlas, dir_path
 
 
@@ -1123,6 +1123,8 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     from pynets.core.nodemaker import get_sphere, mmToVox
     mask_img = nib.load(template_mask)
     mask_aff = mask_img.affine
+    mask_shape = mask_img.shape
+    mask_img.uncache()
 
     print("%s%s" % ('Creating spherical ROI atlas with radius: ', node_size))
 
@@ -1131,15 +1133,15 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
         coords_vox.append(mmToVox(mask_aff, i))
     coords_vox = list(set(list(tuple(x) for x in coords_vox)))
 
-    x_vox = np.diagonal(mask_img.affine[:3, 0:3])[0]
-    y_vox = np.diagonal(mask_img.affine[:3, 0:3])[1]
-    z_vox = np.diagonal(mask_img.affine[:3, 0:3])[2]
-    sphere_vol = np.zeros(mask_img.shape, dtype=bool)
+    x_vox = np.diagonal(mask_aff[:3, 0:3])[0]
+    y_vox = np.diagonal(mask_aff[:3, 0:3])[1]
+    z_vox = np.diagonal(mask_aff[:3, 0:3])[2]
+    sphere_vol = np.zeros(mask_shape, dtype=bool)
     parcel_list = []
     i = 0
     for coord in coords_vox:
-        sphere_vol[tuple(get_sphere(coord, node_size, (np.abs(x_vox), y_vox, z_vox), mask_img.shape).T)] = i * 1
-        parcel_list.append(nib.Nifti1Image(sphere_vol.astype('int'), affine=mask_aff))
+        sphere_vol[tuple(get_sphere(coord, node_size, (np.abs(x_vox), y_vox, z_vox), mask_shape).T)] = i * 1
+        parcel_list.append(nib.Nifti1Image(sphere_vol.astype('uint8'), affine=mask_aff))
         i = i + 1
 
     par_max = len(coords)
@@ -1147,8 +1149,5 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
         parc = True
     else:
         raise ValueError('Number of nodes is zero.')
-
-    if mask_img is not None:
-        mask_img.uncache()
 
     return parcel_list, par_max, node_size, parc

@@ -1492,9 +1492,8 @@ def build_workflow(args, retval):
                                    iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
                                               'roi', 'prune', 'norm', 'binary'], nested=True,
                                    imports=import_list)
-
         net_mets_node._n_procs = 1
-        net_mets_node._mem_gb = 2
+        net_mets_node._mem_gb = 1
 
         # Aggregate list of paths to pandas dataframe pickles
         join_net_mets = pe.JoinNode(niu.IdentityInterface(fields=['out_path_neat']),
@@ -1701,7 +1700,7 @@ def build_workflow(args, retval):
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
             wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._n_procs = 1
-            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 2
+            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 1
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._n_procs = 1
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._mem_gb = 2
 
@@ -1777,9 +1776,9 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype.utils.profiler import log_nodes_cb
             plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]),
-                           'status_callback': log_nodes_cb}
+                           'status_callback': log_nodes_cb, 'scheduler': 'mem_thread'}
         else:
-            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
         if verbose is True:
@@ -1862,9 +1861,9 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype.utils.profiler import log_nodes_cb
             plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]),
-                           'status_callback': log_nodes_cb}
+                           'status_callback': log_nodes_cb, 'scheduler': 'mem_thread'}
         else:
-            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
         wf.run(plugin=plugin_type, plugin_args=plugin_args)
         if verbose is True:

@@ -109,9 +109,12 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                      overlap_thr_list, track_type, max_length, maxcrossing,
                                                      min_length, directget, tiss_class, runtime_dict, execution_dict,
                                                      multi_directget, template, template_mask, vox_size, waymask)
-        sub_struct_wf.synchronize = True
         if func_file is None:
             sub_func_wf = None
+        sub_struct_wf._n_procs = procmem[0]
+        sub_struct_wf._mem_gb = procmem[1]
+        sub_struct_wf.n_procs = procmem[0]
+        sub_struct_wf.mem_gb = procmem[1]
 
     # Workflow 2: Functional connectome
     if func_file is not None:
@@ -126,9 +129,12 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                    clust_type_list, plugin_type, c_boot, block_size, mask,
                                                    norm, binary, anat_file, runtime_dict, execution_dict, hpass,
                                                    hpass_list, template, template_mask, vox_size, local_corr)
-        sub_func_wf.synchronize = True
         if dwi_file is None:
             sub_struct_wf = None
+        sub_func_wf._n_procs = procmem[0]
+        sub_func_wf._mem_gb = procmem[1]
+        sub_func_wf.n_procs = procmem[0]
+        sub_func_wf.mem_gb = procmem[1]
 
     # Create meta-workflow to organize graph simulation sets in prep for analysis
     base_dirname = "%s%s" % ('meta_wf_', ID)
@@ -143,7 +149,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
         config.update_config(cfg_v)
         config.enable_debug_mode()
         config.enable_resource_monitor()
-    execution_dict['plugin_args'] = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+    execution_dict['plugin_args'] = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]),
+                                     'scheduler': 'mem_thread'}
     execution_dict['plugin'] = str(plugin_type)
     cfg = dict(execution=execution_dict)
 
@@ -267,7 +274,15 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                            name='pass_meta_ins_multi_node')
 
         meta_wf.add_nodes([sub_struct_wf])
+        meta_wf.get_node(sub_struct_wf.name)._n_procs = procmem[0]
+        meta_wf.get_node(sub_struct_wf.name)._mem_gb = procmem[1]
+        meta_wf.get_node(sub_struct_wf.name).n_procs = procmem[0]
+        meta_wf.get_node(sub_struct_wf.name).mem_gb = procmem[1]
         meta_wf.add_nodes([sub_func_wf])
+        meta_wf.get_node(sub_func_wf.name)._n_procs = procmem[0]
+        meta_wf.get_node(sub_func_wf.name)._mem_gb = procmem[1]
+        meta_wf.get_node(sub_func_wf.name).n_procs = procmem[0]
+        meta_wf.get_node(sub_func_wf.name).mem_gb = procmem[1]
         meta_wf.connect([(meta_inputnode, sub_struct_wf, [('ID', 'inputnode.ID'),
                                                           ('dwi_file', 'inputnode.dwi_file'),
                                                           ('fbval', 'inputnode.fbval'),
@@ -406,6 +421,11 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                 name='pass_meta_ins_struct_node')
 
             meta_wf.add_nodes([sub_struct_wf])
+            meta_wf.get_node(sub_struct_wf.name)._n_procs = procmem[0]
+            meta_wf.get_node(sub_struct_wf.name)._mem_gb = procmem[1]
+            meta_wf.get_node(sub_struct_wf.name).n_procs = procmem[0]
+            meta_wf.get_node(sub_struct_wf.name).mem_gb = procmem[1]
+
             meta_wf.connect([(meta_inputnode, sub_struct_wf, [('ID', 'inputnode.ID'),
                                                               ('dwi_file', 'inputnode.dwi_file'),
                                                               ('fbval', 'inputnode.fbval'),
@@ -477,6 +497,10 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                            function=pass_meta_ins), name='pass_meta_ins_func_node')
 
             meta_wf.add_nodes([sub_func_wf])
+            meta_wf.get_node(sub_func_wf.name)._n_procs = procmem[0]
+            meta_wf.get_node(sub_func_wf.name)._mem_gb = procmem[1]
+            meta_wf.get_node(sub_func_wf.name).n_procs = procmem[0]
+            meta_wf.get_node(sub_func_wf.name).mem_gb = procmem[1]
             meta_wf.connect([(meta_inputnode, sub_func_wf, [('func_file', 'inputnode.func_file'),
                                                             ('ID', 'inputnode.ID'),
                                                             ('anat_file', 'inputnode.anat_file'),
@@ -958,26 +982,23 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         flexi_atlas = True
         flexi_atlas_source = pe.Node(niu.IdentityInterface(fields=['atlas', 'uatlas']),
                                      name='flexi_atlas_source')
+        flexi_atlas_source.synchronize = True
         if multi_atlas is not None and user_atlas_list is not None:
             flexi_atlas_source_iterables = [("atlas", len(user_atlas_list) * [None] + multi_atlas),
                                             ("uatlas", user_atlas_list + len(multi_atlas) * [None])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
-            # flexi_atlas_source.synchronize = True
         elif multi_atlas is not None and uatlas is not None and user_atlas_list is None:
             flexi_atlas_source_iterables = [("atlas", multi_atlas + [None]),
                                             ("uatlas", len(multi_atlas) * [None] + [uatlas])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
-            # flexi_atlas_source.synchronize = True
         elif atlas is not None and user_atlas_list is not None and multi_atlas is None:
             flexi_atlas_source_iterables = [("atlas", len(user_atlas_list) * [None] + [atlas]),
                                             ("uatlas", user_atlas_list + [None])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
-            # flexi_atlas_source.synchronize = True
         elif atlas is not None and uatlas is not None and user_atlas_list is None and multi_atlas is None:
             flexi_atlas_source_iterables = [("atlas", [atlas, None]),
                                             ("uatlas", [None, uatlas])]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
-            # flexi_atlas_source.synchronize = True
 
     # Begin joinnode chaining
     # Set lists of fields and connect statements for repeated use throughout joins
@@ -1576,7 +1597,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             dmri_connectometry_wf.get_node(node_name).n_procs = runtime_dict[node_name][0]
             dmri_connectometry_wf.get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
-    execution_dict['plugin_args'] = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+    execution_dict['plugin_args'] = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]),
+                                     'scheduler': 'mem_thread'}
     execution_dict['plugin'] = str(plugin_type)
     cfg = dict(execution=execution_dict)
     for key in cfg.keys():
@@ -2000,7 +2022,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         flexi_atlas = True
         flexi_atlas_source = pe.Node(niu.IdentityInterface(fields=['atlas', 'uatlas', 'clustering']),
                                      name='flexi_atlas_source')
-        # flexi_atlas_source.synchronize = True
+        flexi_atlas_source.synchronize = True
         if multi_atlas is not None and user_atlas_list is not None:
             # print('\n\n\n\n')
             # print('Flexi-atlas: multiple nilearn atlases + multiple user atlases')
@@ -2603,7 +2625,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             fmri_connectometry_wf.get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
     # Set runtime/logging configurations
-    execution_dict['plugin_args'] = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1])}
+    execution_dict['plugin_args'] = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]),
+                                     'scheduler': 'mem_thread'}
     execution_dict['plugin'] = str(plugin_type)
     cfg = dict(execution=execution_dict)
     for key in cfg.keys():
