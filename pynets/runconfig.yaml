@@ -92,11 +92,11 @@ execution_dict:
     - 'use_relative_paths':
         - False
     - 'keep_inputs':
-        - True
+        - False
     - 'remove_unnecessary_outputs':
-        - False
+        - True
     - 'remove_node_directories':
-        - False
+        - True
     - 'raise_insufficient':
         - False
     - 'maxtasksperchild':

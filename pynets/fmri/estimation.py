@@ -259,7 +259,7 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
     coords = np.array(coords)
     labels = np.array(labels)
 
-    del model, time_series
+    del time_series
 
     return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass
 
