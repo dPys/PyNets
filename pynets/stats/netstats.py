@@ -1347,6 +1347,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     out_path : str
         Path to .csv file where graph analysis results are saved.
     """
+    import gc
     import os.path as op
     import yaml
 #    import random
@@ -1530,6 +1531,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
 
     # Cleanup
     del net_met_val_list_final, metric_list_names, metric_list_global
+    gc.collect()
 
     return out_path_neat
 
@@ -1558,6 +1560,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
     combination_complete : bool
         If True, then data integration completed successfully.
     """
+    import gc
     import os
     import os.path as op
     import pandas as pd
@@ -1657,6 +1660,9 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                     sql_db.add_hp_columns(list(set(hyperparams)) + list(df_summary_auc.columns))
                     sql_db.add_row_from_df(df_summary_auc, hyperparam_dict)
                     # sql_db.engine.execute("SELECT * FROM func").fetchall()
+                    del sql_db
+                del df_summary_auc
+            del models_grouped
 
         if create_summary is True:
             try:
@@ -1684,6 +1690,8 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                                                              '%s' % ('_' + network if network is not None else ''),
                                                              '_mean.csv')
                 df_concatted_final.to_csv(net_csv_summary_out_path, index=False)
+                del result, df_concat, df_concatted_mean, df_concatted_median, df_concatted_mode, df_concatted_final
+
                 combination_complete = True
             except RuntimeWarning:
                 combination_complete = False
@@ -1691,11 +1699,14 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                 pass
         else:
             combination_complete = True
+        del meta
     else:
         if network is not None:
             print("%s%s%s%s%s" % ('\nSingle dataframe for the ', network, ' network for subject ', ID, '\n'))
         else:
             print("%s%s%s" % ('\nSingle dataframe for subject ', ID, '\n'))
         combination_complete = True
+
+    gc.collect()
 
     return combination_complete

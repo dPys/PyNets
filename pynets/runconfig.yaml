@@ -55,7 +55,7 @@ resource_dict:
       - 'check_orient_and_dims_dwi_node':
         - (1, 2)
       - 'extract_ts_node':
-        - (2, 6)
+        - (1, 6)
       - 'clustering_node':
         - (2, 8)
       - 'get_conn_matrix_node':
@@ -96,12 +96,12 @@ execution_dict:
     - 'remove_unnecessary_outputs':
         - True
     - 'remove_node_directories':
-        - True
+        - False
     - 'raise_insufficient':
         - False
     - 'maxtasksperchild':
         - 1
     - 'poll_sleep_duration':
-        - 20
+        - 6
     - 'hash_method':
         - 'content'

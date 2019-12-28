@@ -1457,9 +1457,9 @@ def build_workflow(args, retval):
                                     execution_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
                                     template_mask, vox_size, multiplex, waymask, local_corr)
 
-        meta_wf._n_procs = procmem[0]
+        meta_wf._n_procs = procmem[0] - 1
         meta_wf._mem_gb = procmem[1]
-        meta_wf.n_procs = procmem[0]
+        meta_wf.n_procs = procmem[0] - 1
         meta_wf.mem_gb = procmem[1]
         wf.add_nodes([meta_wf])
 
@@ -1478,13 +1478,13 @@ def build_workflow(args, retval):
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
-        wf.get_node(meta_wf.name)._n_procs = procmem[0]
+        wf.get_node(meta_wf.name)._n_procs = procmem[0] - 1
         wf.get_node(meta_wf.name)._mem_gb = procmem[1]
-        wf.get_node(meta_wf.name).n_procs = procmem[0]
+        wf.get_node(meta_wf.name).n_procs = procmem[0] - 1
         wf.get_node(meta_wf.name).mem_gb = procmem[1]
-        wf.get_node(meta_wf.name).get_node(wf_selected)._n_procs = procmem[0]
+        wf.get_node(meta_wf.name).get_node(wf_selected)._n_procs = procmem[0] - 1
         wf.get_node(meta_wf.name).get_node(wf_selected)._mem_gb = procmem[1]
-        wf.get_node(meta_wf.name).get_node(wf_selected).n_procs = procmem[0]
+        wf.get_node(meta_wf.name).get_node(wf_selected).n_procs = procmem[0] - 1
         wf.get_node(meta_wf.name).get_node(wf_selected).mem_gb = procmem[1]
 
         # Fully-automated graph analysis
@@ -1494,6 +1494,7 @@ def build_workflow(args, retval):
                                    imports=import_list)
         net_mets_node._n_procs = 1
         net_mets_node._mem_gb = 1
+        net_mets_node.synchronize = True
 
         # Aggregate list of paths to pandas dataframe pickles
         join_net_mets = pe.JoinNode(niu.IdentityInterface(fields=['out_path_neat']),
@@ -1654,14 +1655,14 @@ def build_workflow(args, retval):
                 embed=embed, multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
                 template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex,
                 waymask=waymask, local_corr=local_corr)
-            wf_single_subject._n_procs = procmem[0]
+            wf_single_subject._n_procs = procmem[0] - 1
             wf_single_subject._mem_gb = procmem[1]
-            wf_single_subject.n_procs = procmem[0]
+            wf_single_subject.n_procs = procmem[0] - 1
             wf_single_subject.mem_gb = procmem[1]
             wf_multi.add_nodes([wf_single_subject])
-            wf_multi.get_node(wf_single_subject.name)._n_procs = procmem[0]
+            wf_multi.get_node(wf_single_subject.name)._n_procs = procmem[0] - 1
             wf_multi.get_node(wf_single_subject.name)._mem_gb = procmem[1]
-            wf_multi.get_node(wf_single_subject.name).n_procs = procmem[0]
+            wf_multi.get_node(wf_single_subject.name).n_procs = procmem[0] - 1
             wf_multi.get_node(wf_single_subject.name).mem_gb = procmem[1]
 
             # Restrict nested meta-meta wf resources at the level of the group wf
@@ -1690,13 +1691,13 @@ def build_workflow(args, retval):
                         except:
                             continue
 
-            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._n_procs = procmem[0]
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._n_procs = procmem[0] - 2
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._mem_gb = procmem[1]
-            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).n_procs = procmem[0]
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).n_procs = procmem[0] - 2
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).mem_gb = procmem[1]
-            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._n_procs = procmem[0]
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._n_procs = procmem[0] - 2
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._mem_gb = procmem[1]
-            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).n_procs = procmem[0]
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).n_procs = procmem[0] - 2
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
             wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._n_procs = 1

@@ -503,6 +503,7 @@ class NilParcellate(object):
         """
         API for performing any of a variety of clustering routines available through NiLearn.
         """
+        import gc
         import time
         import os
         from nilearn.regions import Parcellations
@@ -541,4 +542,6 @@ class NilParcellate(object):
         del self._clust_est
         self._func_img.uncache()
         self._clust_mask_corr_img.uncache()
+        gc.collect()
+
         return self.uatlas
