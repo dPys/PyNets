@@ -789,6 +789,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     hpass : float
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
+    import gc
     from pynets.core import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -839,6 +840,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
                                           thr_type, hpass, parc)
 
     utils.save_mat(conn_matrix_thr, est_path)
+    gc.collect()
 
     return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID, dir_path, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass
 
@@ -964,6 +966,7 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     """
+    import gc
     from pynets.core import utils, thresholding
 
     thr_perc = 100 * float(thr)
@@ -1014,5 +1017,6 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
                                           track_type, thr_type, parc)
 
     utils.save_mat(conn_matrix_thr, est_path)
+    gc.collect()
 
     return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, atlas_mni, streams, directget

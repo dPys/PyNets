@@ -565,12 +565,19 @@ class DmriReg(object):
         atlas_img = nib.load(dwi_aligned_atlas)
         t_img = nib.load(self.wm_gm_int_in_dwi)
         mask = math_img('img > 0', img=t_img)
+        if len(mask.header.extensions) != 0:
+            mask.header.extensions.clear()
         mask.to_filename(self.wm_gm_int_in_dwi_bin)
-        nib.save(nib.Nifti1Image(np.around(np.asarray(atlas_img.dataobj)).astype('int16'),
-                                 affine=atlas_img.affine, header=atlas_img.header), dwi_aligned_atlas)
+        img = nib.Nifti1Image(np.around(np.asarray(atlas_img.dataobj)).astype('int16'),
+                              affine=atlas_img.affine, header=atlas_img.header)
+        if len(img.header.extensions) != 0:
+            img.header.extensions.clear()
+        nib.save(img, dwi_aligned_atlas)
         os.system("fslmaths {} -mas {} {}".format(dwi_aligned_atlas, self.wm_gm_int_in_dwi_bin,
                                                   dwi_aligned_atlas_wmgm_int))
         atlas_img.uncache()
+        img.uncache()
+        mask.uncache()
 
         return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni
 
@@ -614,17 +621,17 @@ class DmriReg(object):
 
         # Threshold WM to binary in dwi space
         thr_img = nib.load(self.wm_in_dwi)
-        np.asarray(thr_img.dataobj)[np.asarray(thr_img.dataobj) < 0.1] = 0
+        thr_img = math_img('img > 0.1', img=thr_img)
         nib.save(thr_img, self.wm_in_dwi_bin)
 
         # Threshold GM to binary in dwi space
         thr_img = nib.load(self.gm_in_dwi)
-        np.asarray(thr_img.dataobj)[np.asarray(thr_img.dataobj) < 0.2] = 0
+        thr_img = math_img('img > 0.2', img=thr_img)
         nib.save(thr_img, self.gm_in_dwi_bin)
 
         # Threshold CSF to binary in dwi space
         thr_img = nib.load(self.csf_mask_dwi)
-        np.asarray(thr_img.dataobj)[np.asarray(thr_img.dataobj) < 0.95] = 0
+        thr_img = math_img('img > 0.95', img=thr_img)
         nib.save(thr_img, self.csf_mask_dwi)
 
         # Threshold WM to binary in dwi space
@@ -796,10 +803,20 @@ class FmriReg(object):
         # Set intensities to int
         atlas_img = nib.load(aligned_atlas_t1mni)
         atlas_data = np.around(np.asarray(atlas_img.dataobj)).astype('int16')
-        nib.save(nib.Nifti1Image(atlas_data.astype('int16'), affine=atlas_img.affine,
-                                 header=atlas_img.header), aligned_atlas_t1mni)
+        img = nib.Nifti1Image(atlas_data.astype('int16'), affine=atlas_img.affine,header=atlas_img.header)
+        if len(img.header.extensions) != 0:
+            img.header.extensions.clear()
+        nib.save(img, aligned_atlas_t1mni)
+
+        gm_mask_mni_img = nib.load(gm_mask_mni)
+        if len(gm_mask_mni_img.header.extensions) != 0:
+            gm_mask_mni_img.header.extensions.clear()
+        nib.save(gm_mask_mni_img, gm_mask_mni)
         os.system("fslmaths {} -mas {} {}".format(aligned_atlas_t1mni, gm_mask_mni, aligned_atlas_t1mni_gm))
+
         atlas_img.uncache()
+        img.uncache()
+        gm_mask_mni_img.uncache()
 
         return aligned_atlas_t1mni_gm
 

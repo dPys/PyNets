@@ -488,6 +488,7 @@ class TimeseriesExtraction(object):
 
     def save_and_cleanup(self):
         """Save the extracted time-series and clean cache"""
+        import gc
         from pynets.core import utils
 
         # Save time series as file
@@ -503,4 +504,5 @@ class TimeseriesExtraction(object):
         if self._parcel_masker is not None:
             del self._parcel_masker
             self._net_parcels_map_nifti.uncache()
+        gc.collect()
         return

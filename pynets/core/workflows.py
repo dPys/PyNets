@@ -20,7 +20,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       overlap_thr_list, track_type, max_length, maxcrossing, min_length, directget,
                       tiss_class, runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
                       template, template_mask, vox_size, multiplex, waymask, local_corr, clean=True):
-    """A meta-interface for selecting nested workflows to link into a given single-subject workflow"""
+    """A meta-interface for selecting modality-specific nested workflows that link into a single-subject workflow"""
+    import gc
     import yaml
     from pathlib import Path
     import pkg_resources
@@ -45,6 +46,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     # Handle modality logic
     if (func_file is not None) and (dwi_file is not None):
         print('Parsing multimodal models...')
+        procmem[0] = procmem[0] - 2
         func_model_list = []
         dwi_model_list = []
         if conn_model_list is not None:
@@ -66,12 +68,14 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                'specified.')
     elif (dwi_file is not None) and (func_file is None):
         print('Parsing diffusion models...')
+        procmem[0] = procmem[0] - 1
         conn_model_dwi = conn_model
         dwi_model_list = conn_model_list
         conn_model_func = None
         func_model_list = None
     elif (func_file is not None) and (dwi_file is None):
         print('Parsing functional models...')
+        procmem[0] = procmem[0] - 1
         conn_model_func = conn_model
         func_model_list = conn_model_list
         conn_model_dwi = None
@@ -639,6 +643,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                 except:
                     continue
 
+    gc.collect()
     return meta_wf
 
 

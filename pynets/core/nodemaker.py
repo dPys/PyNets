@@ -66,6 +66,7 @@ def create_parcel_atlas(parcel_list):
         List of 3D boolean numpy arrays or binarized Nifti1Images corresponding to ROI masks, prepended with a
         background image of zeros.
     """
+    import gc
     from nilearn.image import new_img_like, concat_imgs
     parcel_list_exp = [new_img_like(parcel_list[0], np.zeros(parcel_list[0].shape, dtype=bool))] + parcel_list
     concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float32)
@@ -73,6 +74,7 @@ def create_parcel_atlas(parcel_list):
                         dtype=np.uint8)
     net_parcels_map_nifti = nib.Nifti1Image(parcel_sum, affine=parcel_list[0].affine)
     del concatted_parcels, parcel_sum, parcel_list
+    gc.collect()
 
     return net_parcels_map_nifti, parcel_list_exp
 
@@ -602,6 +604,7 @@ def gen_img_list(uatlas):
     img_list : list
         List of binarized Nifti1Images corresponding to ROI masks for each unique atlas label.
     """
+    import gc
     import os.path as op
     from nilearn.image import new_img_like
     if not op.isfile(uatlas):
@@ -629,6 +632,8 @@ def gen_img_list(uatlas):
     del img_stack
 
     bna_img.uncache()
+    gc.collect()
+
     return img_list
 
 
@@ -654,6 +659,7 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     out_path : str
         File path to a new, RSN-filtered atlas parcellation Nifti1Image.
     """
+    import gc
     from nilearn.image import concat_imgs
     from pynets.core import nodemaker
     import os.path as op
@@ -672,6 +678,7 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     nib.save(nib.Nifti1Image(net_parcels_sum, affine=np.eye(4)), out_path)
     del net_parcels_concatted
     del img_list
+    gc.collect()
 
     return out_path
 
