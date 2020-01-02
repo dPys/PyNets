@@ -417,6 +417,7 @@ def normalize_xform(img):
         return img
 
     new_img = img.__class__(np.asarray(img.dataobj), xform, img.header)
+
     # Unconditionally set sform/qform
     new_img.set_sform(xform, xform_code)
     new_img.set_qform(xform, xform_code)

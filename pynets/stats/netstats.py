@@ -1004,7 +1004,7 @@ def iterate_nx_global_measures(G, metric_list_glob):
             net_met_val = np.nan
         net_met_arr[j, 0] = net_met
         net_met_arr[j, 1] = net_met_val
-        print(net_met)
+        print(net_met.replace('_', ' ').title())
         print(str(net_met_val))
         print('\n')
         j = j + 1
@@ -1394,8 +1394,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                 from functools import partial
                 metric_list_global = [partial(i, weight='weight') if 'weight' in i.__code__.co_varnames else i for i in
                                       metric_list_global]
-            print("%s%s%s" % ('\n\nCalculating global measures:\n',
-                              metric_list_global_names, '\n\n'))
+            print("%s%s%s" % ('\n\nGlobal Topographic Metrics:\n',
+                              metric_list_global_names, '\n'))
         except FileNotFoundError:
             print('Failed to parse global_graph_measures.yaml')
 
@@ -1403,7 +1403,8 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
         try:
             metric_dict_nodal = yaml.load(stream)
             metric_list_nodal = metric_dict_nodal['metric_list_nodal']
-            print("%s%s%s" % ('\n\nCalculating nodal measures:\n', metric_list_nodal, '\n\n'))
+            print("%s%s%s" % ('\nNodal Topographic Metrics:\n',
+                              metric_list_nodal, '\n\n'))
         except FileNotFoundError:
             print('Failed to parse nodal_graph_measures.yaml')
 
@@ -1621,7 +1622,10 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                     import sqlalchemy
                     sql_db = utils.build_sql_db(op.dirname(op.dirname(op.dirname(subject_path))), ID)
                 except:
+                    sql_db = None
                     sql_out = False
+            else:
+                sql_db = None
             for thr_set in meta.keys():
                 df_summary = pd.concat(meta[thr_set]['dataframes'].values())
                 df_summary['thr'] = meta[thr_set]['dataframes'].keys()
