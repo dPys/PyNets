@@ -153,13 +153,14 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different spatial normalization approaches on
            tractography and structural brain networks. Network Neuroscience, 1-19.
     """
+    import gc
     from dipy.tracking import utils
     from dipy.tracking.streamline import values_from_volume, transform_streamlines, Streamlines
     from pynets.registration import reg_utils as regutils
     from dipy.tracking._utils import _mapping_to_voxel
     from dipy.io.stateful_tractogram import Space, StatefulTractogram
     from dipy.io.streamline import save_tractogram
-    from pynets.plotting import plot_gen
+    # from pynets.plotting import plot_gen
     import pkg_resources
     import os.path as op
     from nilearn.image import resample_to_img
@@ -251,7 +252,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     streams_final_filt = Streamlines(utils.target_line_based(
         transform_streamlines(transform_streamlines(
             [sum(d, s) for d, s in zip(values_from_volume(mapping.get_forward_field(), streams_in_curr_grid,
-                                                                     ref_grid_aff), streams_in_curr_grid)],
+                                                          ref_grid_aff), streams_in_curr_grid)],
             np.linalg.inv(adjusted_affine)), np.linalg.inv(warped_fa_img.affine)), np.eye(4), brain_mask, include=True))
 
     # Remove streamlines with negative voxel indices
@@ -298,6 +299,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                              warped_uatlas_img_res_data, affine=warped_fa_affine), atlas_mni)
 
     del tractogram, streamlines, warped_uatlas_img_res_data, uatlas_mni_data, overlap_mask, stf, streams_final_filt_final, streams_final_filt, streams_in_curr_grid, brain_mask
+
+    gc.collect()
 
     return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget, warped_fa
 
@@ -565,13 +568,9 @@ class DmriReg(object):
         atlas_img = nib.load(dwi_aligned_atlas)
         t_img = nib.load(self.wm_gm_int_in_dwi)
         mask = math_img('img > 0', img=t_img)
-        if len(mask.header.extensions) != 0:
-            mask.header.extensions.clear()
         mask.to_filename(self.wm_gm_int_in_dwi_bin)
         img = nib.Nifti1Image(np.around(np.asarray(atlas_img.dataobj)).astype('int16'),
                               affine=atlas_img.affine, header=atlas_img.header)
-        if len(img.header.extensions) != 0:
-            img.header.extensions.clear()
         nib.save(img, dwi_aligned_atlas)
         os.system("fslmaths {} -mas {} {}".format(dwi_aligned_atlas, self.wm_gm_int_in_dwi_bin,
                                                   dwi_aligned_atlas_wmgm_int))
@@ -774,9 +773,10 @@ class FmriReg(object):
         """
         A function to perform atlas alignment from atlas --> T1_MNI.
         """
-
+        from nilearn.image import resample_img
         aligned_atlas_t1mni = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni.nii.gz")
         gm_mask_mni = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_gm_mask_t1w_mni.nii.gz")
+        gm_mask_mni_atlas_res = "%s%s%s%s%s" % (self.anat_path, '/', atlas, self.t1w_name, "_gm_mask_t1w_mni.nii.gz")
         aligned_atlas_t1mni_gm = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni_gm.nii.gz")
 
         uatlas_filled = "%s%s%s%s" % (self.anat_path, '/', atlas, "_filled.nii.gz")
@@ -802,21 +802,14 @@ class FmriReg(object):
 
         # Set intensities to int
         atlas_img = nib.load(aligned_atlas_t1mni)
-        atlas_data = np.around(np.asarray(atlas_img.dataobj)).astype('int16')
-        img = nib.Nifti1Image(atlas_data.astype('int16'), affine=atlas_img.affine,header=atlas_img.header)
-        if len(img.header.extensions) != 0:
-            img.header.extensions.clear()
-        nib.save(img, aligned_atlas_t1mni)
+        gm_mask_img_res = resample_img(nib.load(gm_mask_mni), target_affine=atlas_img.affine,
+                                       target_shape=atlas_img.shape)
+        nib.save(gm_mask_img_res, gm_mask_mni_atlas_res)
+        os.system("fslmaths {} -bin {}".format(gm_mask_mni_atlas_res, gm_mask_mni_atlas_res))
+        os.system("fslmaths {} -mas {} {}".format(aligned_atlas_t1mni, gm_mask_mni_atlas_res, aligned_atlas_t1mni_gm))
 
-        gm_mask_mni_img = nib.load(gm_mask_mni)
-        if len(gm_mask_mni_img.header.extensions) != 0:
-            gm_mask_mni_img.header.extensions.clear()
-        nib.save(gm_mask_mni_img, gm_mask_mni)
-        os.system("fslmaths {} -mas {} {}".format(aligned_atlas_t1mni, gm_mask_mni, aligned_atlas_t1mni_gm))
-
+        gm_mask_img_res.uncache()
         atlas_img.uncache()
-        img.uncache()
-        gm_mask_mni_img.uncache()
 
         return aligned_atlas_t1mni_gm
 

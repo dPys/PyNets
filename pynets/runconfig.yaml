@@ -102,6 +102,6 @@ execution_dict:
     - 'maxtasksperchild':
         - 1
     - 'poll_sleep_duration':
-        - 6
+        - 10
     - 'hash_method':
         - 'content'

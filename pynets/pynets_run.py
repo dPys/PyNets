@@ -368,9 +368,9 @@ def get_parser():
                              'connectomes, and time-series.\n')
     parser.add_argument('-pm',
                         metavar='Cores,memory',
-                        default='2,4',
+                        default='4,8',
                         help='Number of cores to use, number of GB of memory to use for single subject run, entered as '
-                             'two integers seperated by a comma.\n')
+                             'two integers seperated by comma.\n')
     parser.add_argument('-plug',
                         metavar='Scheduler type',
                         default='MultiProc',
