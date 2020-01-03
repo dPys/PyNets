@@ -1538,7 +1538,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
 
 
 def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_collect=False, create_summary=True,
-                           sql_out=True):
+                           sql_out=False):
     """
     Summarize list of pickled pandas dataframes of graph metrics unique to eacho unique combination of hyperparameters.
 
@@ -1623,7 +1623,6 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                     sql_db = utils.build_sql_db(op.dirname(op.dirname(op.dirname(subject_path))), ID)
                 except:
                     sql_db = None
-                    sql_out = False
             else:
                 sql_db = None
             for thr_set in meta.keys():

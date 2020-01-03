@@ -6,10 +6,10 @@ Base module variables
 #from ._version import get_versions
 #__version__ = get_versions()['version']
 #del get_versions
-__version__ = '0.9.86'
+__version__ = '0.9.87'
 
 __packagename__ = 'pynets'
-__copyright__ = 'Copyright 2019, Derek Pisner'
+__copyright__ = 'Copyright 2020, Derek Pisner'
 __credits__ = ('Contributors: please check the ``.zenodo.json`` file at the top-level folder'
                'of the repository')
 __url__ = 'https://github.com/dPys/pynets'
