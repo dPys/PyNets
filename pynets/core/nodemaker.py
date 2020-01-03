@@ -71,7 +71,7 @@ def create_parcel_atlas(parcel_list):
     parcel_list_exp = [new_img_like(parcel_list[0], np.zeros(parcel_list[0].shape, dtype=bool))] + parcel_list
     concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float32)
     parcel_sum = np.sum(np.array(range(len(parcel_list_exp))) * np.asarray(concatted_parcels.dataobj), axis=3,
-                        dtype=np.uint8)
+                        dtype=np.uint16)
     net_parcels_map_nifti = nib.Nifti1Image(parcel_sum, affine=parcel_list[0].affine)
     del concatted_parcels, parcel_sum, parcel_list
     gc.collect()
@@ -358,10 +358,10 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
                                                target_shape=RSNmask.shape).dataobj) == 1] = 1
 
             # Count number of unique voxels where overlap of parcel and mask occurs
-            overlap_count = len(np.unique(np.where((RSNmask.astype('uint8') == 1) & (parcel_vol.astype('uint8') == 1))))
+            overlap_count = len(np.unique(np.where((RSNmask.astype('uint16') == 1) & (parcel_vol.astype('uint16') == 1))))
 
             # Count number of total unique voxels within the parcel
-            total_count = len(np.unique(np.where((parcel_vol.astype('uint8') == 1))))
+            total_count = len(np.unique(np.where((parcel_vol.astype('uint16') == 1))))
 
             # Calculate % overlap
             try:
@@ -439,10 +439,10 @@ def parcel_masker(roi, coords, parcel_list, labels, dir_path, ID, perc_overlap):
         parcel_vol[parcel_data_reshaped == 1] = 1
 
         # Count number of unique voxels where overlap of parcel and mask occurs
-        overlap_count = len(np.unique(np.where((mask_data.astype('uint8') == 1) & (parcel_vol.astype('uint8') == 1))))
+        overlap_count = len(np.unique(np.where((mask_data.astype('uint16') == 1) & (parcel_vol.astype('uint16') == 1))))
 
         # Count number of total unique voxels within the parcel
-        total_count = len(np.unique(np.where((parcel_vol.astype('uint8') == 1))))
+        total_count = len(np.unique(np.where((parcel_vol.astype('uint16') == 1))))
 
         # Calculate % overlap
         try:
@@ -612,7 +612,7 @@ def gen_img_list(uatlas):
                          'flag exist(s)')
 
     bna_img = nib.load(uatlas)
-    bna_data = np.around(np.asarray(bna_img.dataobj)).astype('uint8')
+    bna_data = np.around(np.asarray(bna_img.dataobj)).astype('uint16')
 
     # Get an array of unique parcels
     bna_data_for_coords_uniq = np.unique(bna_data)
@@ -621,9 +621,9 @@ def gen_img_list(uatlas):
     par_max = len(bna_data_for_coords_uniq) - 1
     img_stack = []
     for idx in range(1, par_max + 1):
-        roi_img = bna_data == bna_data_for_coords_uniq[idx].astype('uint8')
-        img_stack.append(roi_img.astype('uint8'))
-    img_stack = np.array(img_stack).astype('uint8')
+        roi_img = bna_data == bna_data_for_coords_uniq[idx].astype('uint16')
+        img_stack.append(roi_img.astype('uint16'))
+    img_stack = np.array(img_stack)
 
     img_list = []
     for idy in range(par_max):
@@ -673,7 +673,7 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     net_parcels = [i for j, i in enumerate(img_list) if j in labels]
     net_parcels_concatted = concat_imgs(net_parcels)
     net_parcels_sum = np.sum((np.array(range(len(net_parcels))) + 1) * np.asarray(net_parcels_concatted.dataobj),
-                             axis=3, dtype=np.uint8)
+                             axis=3, dtype=np.uint16)
     out_path = "%s%s%s%s" % (dir_path, '/', network, '_parcels.nii.gz')
     nib.save(nib.Nifti1Image(net_parcels_sum, affine=np.eye(4)), out_path)
     del net_parcels_concatted
@@ -1148,7 +1148,7 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     i = 0
     for coord in coords_vox:
         sphere_vol[tuple(get_sphere(coord, node_size, (np.abs(x_vox), y_vox, z_vox), mask_shape).T)] = i * 1
-        parcel_list.append(nib.Nifti1Image(sphere_vol.astype('uint8'), affine=mask_aff))
+        parcel_list.append(nib.Nifti1Image(sphere_vol.astype('uint16'), affine=mask_aff))
         i = i + 1
 
     par_max = len(coords)

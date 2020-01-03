@@ -775,7 +775,7 @@ class FmriReg(object):
         """
         from nilearn.image import resample_img
         aligned_atlas_t1mni = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni.nii.gz")
-        gm_mask_mni = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_gm_mask_t1w_mni.nii.gz")
+        gm_mask_mni = "%s%s%s%s%s" % (self.anat_path, '/', atlas, self.t1w_name, "_gm_mask_t1w_mni.nii.gz")
         gm_mask_mni_atlas_res = "%s%s%s%s%s" % (self.anat_path, '/', atlas, self.t1w_name, "_gm_mask_t1w_mni.nii.gz")
         aligned_atlas_t1mni_gm = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni_gm.nii.gz")
 
