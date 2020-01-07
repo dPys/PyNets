@@ -252,7 +252,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     from collections import defaultdict
     from pynets.core import utils, nodemaker
     from dipy.io.streamline import load_tractogram
-    from dipy.io.stateful_tractogram import Space
+    from dipy.io.stateful_tractogram import Space, Origin
     import time
 
     # Load parcellation
@@ -262,7 +262,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     roi_shape = roi_img.shape
 
     # Read Streamlines
-    streamlines = Streamlines(load_tractogram(streams, roi_img, to_space=Space.RASMM, shifted_origin=True,
+    streamlines = Streamlines(load_tractogram(streams, roi_img, to_space=Space.RASMM, to_origin=Origin.TRACKVIS,
                                               bbox_valid_check=False).streamlines)
     roi_img.uncache()
 

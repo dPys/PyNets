@@ -163,7 +163,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     from dipy.tracking.streamline import values_from_volume, transform_streamlines, Streamlines
     from pynets.registration import reg_utils as regutils
     from dipy.tracking._utils import _mapping_to_voxel
-    from dipy.io.stateful_tractogram import Space, StatefulTractogram
+    from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
     from dipy.io.streamline import save_tractogram
     # from pynets.plotting import plot_gen
     import pkg_resources
@@ -236,7 +236,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     # SyN FA->Template
     [mapping, affine_map, warped_fa] = regutils.wm_syn(template_path, fa_path, dsn_dir)
 
-    tractogram = load_tractogram(streams, fa_img, to_space=Space.RASMM, shifted_origin=True, bbox_valid_check=False)
+    tractogram = load_tractogram(streams, fa_img, to_space=Space.RASMM, to_origin=Origin.TRACKVIS,
+                                 bbox_valid_check=False)
     fa_img.uncache()
     streamlines = tractogram.streamlines
     warped_fa_img = nib.load(warped_fa)
@@ -283,7 +284,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
             streams_final_filt_final.append(sl)
 
     # Save streamlines
-    stf = StatefulTractogram(streams_final_filt_final, reference=warped_fa_img, space=Space.RASMM, shifted_origin=True)
+    stf = StatefulTractogram(streams_final_filt_final, reference=warped_fa_img, space=Space.RASMM,
+                             origin=Origin.TRACKVIS)
     stf.remove_invalid_streamlines()
     streams_final_filt_final = stf.streamlines
     save_tractogram(stf, streams_mni, bbox_valid_check=True)

@@ -155,7 +155,7 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
     import os
     import os.path as op
     from dipy.tracking import utils
-    from dipy.io.stateful_tractogram import Space, StatefulTractogram
+    from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
     from dipy.io.streamline import save_tractogram
 
     # Create density map
@@ -195,7 +195,7 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
                                                         '_step-', str(step_list).replace(', ', '_'), '_dg-', directget,
                                                         '_ml-', max_length, '.trk')
 
-    save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, shifted_origin=True),
+    save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, origin=Origin.TRACKVIS),
                     streams, bbox_valid_check=False)
 
     del streamlines

@@ -313,14 +313,15 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
 
     conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, \
         ID, dir_path, atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, \
-        atlas_mni, streams, directget = thresholding.thresh_struct(dens_thresh, thr, conn_matrix, 
-                                                                   conn_model, network, ID, 
-                                                                   dir_path, roi, node_size, 
-                                                                   min_span_tree, disp_filt, parc, 
-                                                                   prune, atlas, uatlas, labels, 
-                                                                   coords, norm, binary, 
-                                                                   target_samples, track_type, 
-                                                                   atlas_mni, streams, directget, max_length)
+        atlas_mni, streams, directget, max_length = thresholding.thresh_struct(dens_thresh, thr, conn_matrix,
+                                                                               conn_model, network, ID,
+                                                                               dir_path, roi, node_size,
+                                                                               min_span_tree, disp_filt, parc,
+                                                                               prune, atlas, uatlas, labels,
+                                                                               coords, norm, binary,
+                                                                               target_samples, track_type,
+                                                                               atlas_mni, streams, directget,
+                                                                               max_length)
                                  
     assert dens_thresh is not None
     assert thr is not None
@@ -336,7 +337,7 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     assert parc is not None
     assert prune is not None
     assert atlas is not None
-    assert uatlas is None # Set to none above
+    assert uatlas is None
     assert labels is not None
     assert coords is not None
     assert norm is not None
