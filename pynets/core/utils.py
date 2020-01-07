@@ -946,10 +946,11 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
     """
     A function to build a hyperparameter dictionary by parsing a given net_mets file path.
     """
-    hyperparam_dict['node_type'] = file_renamed.split('nodetype-')[1].split('_')[0]
     hyperparam_dict['atlas'] = atlas
-    hyperparam_dict['thrtype'] = file_renamed.split('thrtype-')[1].split('_')[0]
-    hyperparam_dict['estimator'] = file_renamed.split('est-')[1].split('_')[0]
+
+    for hyperparam in hyperparams:
+        if hyperparam != 'smooth' and hyperparam != 'hpass' and hyperparam != 'track_type' and hyperparam != 'directget' and hyperparam != 'max_length':
+            hyperparam_dict[hyperparam] = file_renamed.split(hyperparam + '-')[1].split('_')[0]
 
     if modality == 'func':
         if 'smooth-' in file_renamed:

@@ -1600,7 +1600,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
         hyperparam_dict = {}
         dfs_non_auc = []
         hyperparam_dict['id'] = ID
-        gen_hyperparams = ['node_type', 'atlas', 'thrtype', 'estimator']
+        gen_hyperparams = ['nodetype', 'est']
         if max([len(i) for i in models_grouped]) > 1:
             print('Multiple thresholds detected. Computing Area Under the Curve (AUC)...')
             meta = dict()
