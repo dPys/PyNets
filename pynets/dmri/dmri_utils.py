@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Nov 10 15:44:46 2017
-Copyright (C) 2018
+Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
 import warnings

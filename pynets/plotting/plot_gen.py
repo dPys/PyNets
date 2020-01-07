@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2018
+Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
 import warnings
@@ -427,22 +427,24 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
                                        node_size, smooth, c_boot, hpass)
 
         # Plot connectome
+        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
+                                                             '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                     network is not None else ''),
+                                                             '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0],
+                                                                                 '_') if roi is not None else ''),
+                                                             'est-', conn_model, '_',
+                                                             '%s' % (
+                                                                 "%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
+                                                                 ((node_size != 'parc') and (node_size is not None))
+                                                                 else 'nodetype-parc_'),
+                                                             "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
+                                                                     float(c_boot) > 0 else ''),
+                                                             "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                                     float(smooth) > 0 else ''),
+                                                             "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                                     hpass is not None else ''),
+                                                             '_thr-', thr, '_glass_viz.png')
         if roi:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
-                                                                     '_', op.basename(roi).split('.')[0],
-                                                                     "%s" % ("%s%s%s" % ('_', network, '_thr-') if
-                                                                             network else "_thr-"),
-                                                                     thr, '_', node_size,
-                                                                     '%s' % ("mm_" if node_size != 'parc' else
-                                                                             "_"),
-                                                                     "%s" % ("%s%s" % (int(c_boot), 'nb_') if
-                                                                             float(c_boot) > 0 else 'nb_'),
-                                                                     "%s" % ("%s%s" % (smooth, 'fwhm_') if
-                                                                             float(smooth) > 0 else ''),
-                                                                     "%s" % ("%s%s" % (hpass, 'Hz_') if
-                                                                             hpass is not None else ''),
-                                                                     'func_glass_viz.png')
-
             # Save coords to pickle
             coord_path = "%s%s%s%s" % (namer_dir, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
             with open(coord_path, 'wb') as f:
@@ -454,19 +456,6 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
                 pickle.dump(labels, f, protocol=2)
 
         else:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
-                                                                 "%s" % ("%s%s%s" % ('_', network, '_thr-') if
-                                                                         network else "_thr-"),
-                                                                 thr, '_', node_size, '%s' % ("mm_" if
-                                                                                              node_size != 'parc' else
-                                                                                              "_"),
-                                                                 "%s" % ("%s%s" % (int(c_boot), 'nb_') if
-                                                                         float(c_boot) > 0 else 'nb_'),
-                                                                 "%s" % ("%s%s" % (smooth, 'fwhm_') if
-                                                                         float(smooth) > 0 else ''),
-                                                                 "%s" % ("%s%s" % (hpass, 'Hz_') if hpass is not None
-                                                                         else ''),
-                                                                 'func_glass_viz.png')
             # Save coords to pickle
             coord_path = "%s%s" % (namer_dir, '/coords_plotting.pkl')
             with open(coord_path, 'wb') as f:
@@ -508,7 +497,8 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
 
 
 def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, coords, thr,
-                    node_size, edge_threshold, prune, uatlas, target_samples, norm, binary, track_type, directget):
+                    node_size, edge_threshold, prune, uatlas, target_samples, norm, binary, track_type, directget,
+                    max_length):
     """
     Plot adjacency matrix, connectogram, and glass brain for functional connectome.
 
@@ -559,6 +549,8 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
+    max_length : int
+        Maximum fiber length threshold in mm to restrict tracking.
     """
     import matplotlib
     matplotlib.use('agg')
@@ -627,22 +619,32 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         if not node_size or node_size == 'None':
             node_size = 'parc'
         plot_graphs.plot_conn_mat_struct(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels, roi, thr,
-                                         node_size, target_samples, track_type, directget)
+                                         node_size, target_samples, track_type, directget, max_length)
 
         # Plot connectome
+        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-dwi_',
+                                                                     '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                             network is not None else ''),
+                                                                     '%s' % ("%s%s%s" % ('roi-',
+                                                                                         op.basename(roi).split(
+                                                                                             '.')[0],
+                                                                                         '_') if roi is not
+                                                                                                 None else ''),
+                                                                     'est-', conn_model, '_',
+                                                                     '%s' % (
+                                                                         "%s%s%s" % ('nodetype-spheres-', node_size,
+                                                                                     'mm_')
+                                                                         if ((node_size != 'parc') and
+                                                                             (node_size is not None))
+                                                                         else 'nodetype-parc_'),
+                                                                     "%s" % ("%s%s%s" % (
+                                                                         'samples-', int(target_samples),
+                                                                         'streams_')
+                                                                             if float(target_samples) > 0 else '_'),
+                                                                     'tt-', track_type, '_dg-', directget,
+                                                                     '_ml-', max_length,
+                                                                     '_thr-', thr, '_glass_viz.png')
         if roi:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
-                                                                     '_', op.basename(roi).split('.')[0],
-                                                                     "%s" % ("%s%s%s" % ('_', network, '_thr-') if
-                                                                             network else "_thr-"), thr, '_', node_size,
-                                                                     '%s' % ("mm_" if node_size != 'parc' else "_"),
-                                                                     "%s" % ("%s%s" %
-                                                                             (int(target_samples), '_samples') if
-                                                                             float(target_samples) > 0 else ''),
-                                                                     "%s%s%s" % ('_', track_type, '_track'),
-                                                                     "%s%s" % ('_', directget),
-                                                                     'struct_glass_viz.png')
-
             # Save coords to pickle
             coord_path = "%s%s%s%s" % (namer_dir, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
             with open(coord_path, 'wb') as f:
@@ -652,19 +654,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
             labels_path = "%s%s%s%s" % (namer_dir, '/labelnames_', op.basename(roi).split('.')[0], '_plotting.pkl')
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
-
         else:
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_', atlas, '_', conn_model,
-                                                                 "%s" % ("%s%s%s" % ('_', network, '_thr-') if
-                                                                         network else "_thr-"),
-                                                                 thr, '_', node_size, '%s' % ("mm_" if
-                                                                                              node_size != 'parc' else
-                                                                                              "_"),
-                                                                 "%s" % ("%s%s" % (int(target_samples), '_samples') if
-                                                                         float(target_samples) > 0 else ''),
-                                                                 "%s%s%s" % ('_', track_type, '_track'),
-                                                                 "%s%s" % ('_', directget),
-                                                                 'struct_glass_viz.png')
             # Save coords to pickle
             coord_path = "%s%s" % (namer_dir, '/coords_plotting.pkl')
             with open(coord_path, 'wb') as f:

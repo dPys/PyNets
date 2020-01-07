@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2018
+Copyright (C) 2017
 @author: Derek Pisner
 """
 import pandas as pd
@@ -1598,8 +1598,9 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                                                  groupby(models, lambda s: s.split('thr-')[1].split('_')[0])])]
 
         hyperparam_dict = {}
+        dfs_non_auc = []
         hyperparam_dict['id'] = ID
-        gen_hyperparams = ['node_type', 'atlas', 'thrtype']
+        gen_hyperparams = ['node_type', 'atlas', 'thrtype', 'estimator']
         if max([len(i) for i in models_grouped]) > 1:
             print('Multiple thresholds detected. Computing Area Under the Curve (AUC)...')
             meta = dict()
@@ -1666,6 +1667,9 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                     del sql_db
                 del df_summary_auc
             del models_grouped
+        else:
+            for file_ in net_mets_csv_list:
+                dfs_non_auc.append(pd.read_csv(file_))
 
         if create_summary is True:
             try:
@@ -1675,7 +1679,11 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
 
                 # Concatenate and find mean across dataframes
                 print('Concatenating frames...')
-                df_concat = pd.concat([meta[thr_set]['auc_dataframe'] for thr_set in meta.keys()])
+                if max([len(i) for i in models_grouped]) > 1:
+                    df_concat = pd.concat([meta[thr_set]['auc_dataframe'] for thr_set in meta.keys()])
+                    del meta
+                else:
+                    df_concat = pd.concat(dfs_non_auc)
                 measures = list(df_concat.columns)
                 if plot_switch is True:
                     from pynets.plotting import plot_gen
@@ -1702,7 +1710,6 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                 pass
         else:
             combination_complete = True
-        del meta
     else:
         if network is not None:
             print("%s%s%s%s%s" % ('\nSingle dataframe for the ', network, ' network for subject ', ID, '\n'))

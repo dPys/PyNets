@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2018
+Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
 import indexed_gzip
@@ -426,30 +426,30 @@ class NilParcellate(object):
         # Load clustering mask
         self._func_img.set_data_dtype(np.float32)
         func_vol_img = index_img(self._func_img, 1)
-        func_vol_img.set_data_dtype(np.uint8)
+        func_vol_img.set_data_dtype(np.uint16)
         clust_mask_res_img = resample_img(nib.load(self.clust_mask), target_affine=func_vol_img.affine,
                                           target_shape=func_vol_img.shape, interpolation='nearest')
-        clust_mask_res_img.set_data_dtype(np.uint8)
+        clust_mask_res_img.set_data_dtype(np.uint16)
         func_data = np.asarray(func_vol_img.dataobj).astype('float32')
         func_int_thr = np.round(np.mean(func_data[func_data > 0]) - np.std(func_data[func_data > 0]) * num_std_dev, 3)
         if self.mask is not None:
             self._mask_img = nib.load(self.mask)
-            self._mask_img.set_data_dtype(np.uint8)
+            self._mask_img.set_data_dtype(np.uint16)
             mask_res_img = resample_img(self._mask_img, target_affine=func_vol_img.affine,
                                         target_shape=func_vol_img.shape, interpolation='nearest')
-            mask_res_img.set_data_dtype(np.uint8)
+            mask_res_img.set_data_dtype(np.uint16)
             self._clust_mask_corr_img = intersect_masks([math_img('img > ' + str(func_int_thr), img=func_vol_img),
                                                          math_img('img > 0.01', img=clust_mask_res_img),
                                                          math_img('img > 0.01', img=mask_res_img)],
                                                         threshold=1, connected=False)
-            self._clust_mask_corr_img.set_data_dtype(np.uint8)
+            self._clust_mask_corr_img.set_data_dtype(np.uint16)
             self._mask_img.uncache()
             mask_res_img.uncache()
         else:
             self._clust_mask_corr_img = intersect_masks([math_img('img > ' + str(func_int_thr), img=func_vol_img),
                                                          math_img('img > 0.01', img=clust_mask_res_img)],
                                                         threshold=1, connected=False)
-            self._clust_mask_corr_img.set_data_dtype(np.uint8)
+            self._clust_mask_corr_img.set_data_dtype(np.uint16)
         nib.save(self._clust_mask_corr_img, "%s%s%s%s" % (self._dir_path, '/', mask_name, '.nii.gz'))
 
         del func_data
@@ -534,7 +534,7 @@ class NilParcellate(object):
         else:
             self._clust_est.fit(self._func_img)
 
-        self._clust_est.labels_img_.set_data_dtype(np.uint8)
+        self._clust_est.labels_img_.set_data_dtype(np.uint16)
         nib.save(self._clust_est.labels_img_, self.uatlas)
 
         print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))

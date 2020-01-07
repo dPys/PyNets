@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2018
+Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
 import warnings
@@ -109,7 +109,7 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
 
 
 def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_samples,
-                       node_size, curv_thr_list, step_list, network, roi):
+                       node_size, curv_thr_list, step_list, network, roi, directget, max_length):
     """
     Create a density map of the list of streamlines.
 
@@ -137,6 +137,11 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
         used to filter nodes in the study of brain subgraphs.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
+    max_length : int
+        Maximum fiber length threshold in mm to restrict tracking.
 
     Returns
     -------
@@ -157,35 +162,38 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
     dm = utils.density_map(streamlines, affine=np.eye(4), vol_dims=dwi_img.shape)
 
     # Save density map
-    dm_img = nib.Nifti1Image(dm.astype('int16'), dwi_img.affine)
+    dm_img = nib.Nifti1Image(dm.astype('int'), dwi_img.affine)
 
     namer_dir = '{}/tractography'.format(dir_path)
     if not os.path.isdir(namer_dir):
         os.mkdir(namer_dir)
 
-    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/density_map_',
-                                                '%s' % (network + '_' if network is not None else ''),
-                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None
-                                                        else ''),
-                                                conn_model, '_', target_samples, '_',
-                                                '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and
-                                                                                        (node_size is not None))
-                                                        else 'parc_'),
-                                                'curv', str(curv_thr_list).replace(', ', '_'),
-                                                '_step', str(step_list).replace(', ', '_'), '.nii.gz')
+    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/density_map_',
+                                                        '%s' % (network + '_' if network is not None else ''),
+                                                        '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None
+                                                                else ''), conn_model, '_', target_samples, '_',
+                                                        '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc')
+                                                                                                and
+                                                                                                (node_size is not None))
+                                                                else 'parc_'),
+                                                        'curv-', str(curv_thr_list).replace(', ', '_'),
+                                                        '_step-', str(step_list).replace(', ', '_'), '_dg-', directget,
+                                                        '_ml-', max_length, '.nii.gz')
     dm_img.to_filename(dm_path)
 
     # Save streamlines to trk
-    streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_',
-                                                '%s' % (network + '_' if network is not None else ''),
-                                                '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None
-                                                        else ''),
-                                                conn_model, '_', target_samples, '_',
-                                                '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc') and
-                                                                                        (node_size is not None))
-                                                        else 'parc_'),
-                                                'curv', str(curv_thr_list).replace(', ', '_'),
-                                                '_step', str(step_list).replace(', ', '_'), '.trk')
+    streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_',
+                                                        '%s' % (network + '_' if network is not None else ''),
+                                                        '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None
+                                                                else ''),
+                                                        conn_model, '_', target_samples, '_',
+                                                        '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc')
+                                                                                                and
+                                                                                                (node_size is not None))
+                                                                else 'parc_'),
+                                                        'curv-', str(curv_thr_list).replace(', ', '_'),
+                                                        '_step-', str(step_list).replace(', ', '_'), '_dg-', directget,
+                                                        '_ml-', max_length, '.trk')
 
     save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, shifted_origin=True),
                     streams, bbox_valid_check=False)
@@ -263,7 +271,6 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
     """
-    import gc
     from colorama import Fore, Style
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
@@ -356,7 +363,6 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
 
                 # Cleanup memory
                 del seeds, roi_proximal_streamlines, streamline_generator
-                gc.collect()
 
             del dg
 
@@ -374,7 +380,7 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
               labels_im_file, target_samples, curv_thr_list, step_list, track_type, max_length, maxcrossing, directget,
               conn_model, gtab_file, dwi_file, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
               prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, min_length,
-              fa_path, waymask, roi_neighborhood_tol=8):
+              fa_path, waymask, roi_neighborhood_tol=8, sphere='repulsion724'):
     """
     Run all ensemble tractography and filtering routines.
 
@@ -466,6 +472,9 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
         of any voxel in the ROI, the filtering criterion is set to True for
         this streamline, otherwise False. Defaults to the distance between
         the center of each voxel and the corner of the voxel. Default is 10 mm.
+    sphere : str
+        Provide triangulated spheres. Default is repulsion724. Options are:
+        `symmetric362`, `symmetric642`, `symmetric724`, `repulsion724`, `repulsion100`, or `repulsion200`
 
     Returns
     -------
@@ -529,7 +538,10 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
+    max_length : int
+        Maximum fiber length threshold in mm to restrict tracking.
     """
+    import gc
     try:
         import cPickle as pickle
     except ImportError:
@@ -548,8 +560,8 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     mod_fit = reconstruction(conn_model, load_pickle(gtab_file), dwi_data, B0_mask)
 
     # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
-    atlas_data = nib.load(labels_im_file).get_fdata().astype('uint8')
-    atlas_data_wm_gm_int = nib.load(labels_im_file_wm_gm_int).get_fdata().astype('uint8')
+    atlas_data = nib.load(labels_im_file).get_fdata().astype('uint16')
+    atlas_data_wm_gm_int = nib.load(labels_im_file_wm_gm_int).get_fdata().astype('uint16')
 
     # Build mask vector from atlas for later roi filtering
     parcels = []
@@ -584,16 +596,18 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
     # Commence Ensemble Tractography
     streamlines = track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_fit,
                                  prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class),
-                                 get_sphere('repulsion724'), directget, curv_thr_list, step_list, track_type,
+                                 get_sphere(sphere), directget, curv_thr_list, step_list, track_type,
                                  maxcrossing, max_length, roi_neighborhood_tol, min_length, waymask)
     print('Tracking Complete')
 
     # Create streamline density map
     [streams, dir_path, dm_path] = create_density_map(dwi_img, utils.do_dir_path(atlas, dwi_file), streamlines,
                                                       conn_model, target_samples, node_size, curv_thr_list, step_list,
-                                                      network, roi)
+                                                      network, roi, directget, max_length)
 
     del streamlines, dwi_data, atlas_data_wm_gm_int, atlas_data, mod_fit, parcels
     dwi_img.uncache()
 
-    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path, directget, labels_im_file, roi_neighborhood_tol
+    gc.collect()
+
+    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path, directget, labels_im_file, roi_neighborhood_tol, max_length

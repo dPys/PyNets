@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2018
+Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
 import warnings
@@ -19,7 +19,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                       overlap_thr_list, track_type, max_length, maxcrossing, min_length, directget,
                       tiss_class, runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
-                      template, template_mask, vox_size, multiplex, waymask, local_corr, clean=True):
+                      template, template_mask, vox_size, multiplex, waymask, local_corr, max_length_list, clean=True):
     """A meta-interface for selecting modality-specific nested workflows that link into a single-subject workflow"""
     import gc
     import yaml
@@ -112,7 +112,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                      target_samples, curv_thr_list, step_list, overlap_thr,
                                                      overlap_thr_list, track_type, max_length, maxcrossing,
                                                      min_length, directget, tiss_class, runtime_dict, execution_dict,
-                                                     multi_directget, template, template_mask, vox_size, waymask)
+                                                     multi_directget, template, template_mask, vox_size, waymask,
+                                                     max_length_list)
         if func_file is None:
             sub_func_wf = None
         sub_struct_wf._n_procs = procmem[0]
@@ -181,7 +182,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                            'maxcrossing', 'min_length', 'directget',
                                                            'tiss_class', 'embed', 'multi_directget', 'multimodal',
                                                            'hpass', 'hpass_list', 'template', 'template_mask',
-                                                           'vox_size', 'multiplex', 'waymask', 'local_corr']),
+                                                           'vox_size', 'multiplex', 'waymask', 'local_corr',
+                                                           'max_length_list']),
                              name='meta_inputnode')
     meta_inputnode.inputs.func_file = func_file
     meta_inputnode.inputs.ID = ID
@@ -259,6 +261,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     meta_inputnode.inputs.multiplex = multiplex
     meta_inputnode.inputs.waymask = waymask
     meta_inputnode.inputs.local_corr = local_corr
+    meta_inputnode.inputs.max_length_list = max_length_list
 
     if multimodal is True:
         # Create input/output nodes
@@ -334,7 +337,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                           ('template', 'inputnode.template'),
                                                           ('template_mask', 'inputnode.template_mask'),
                                                           ('vox_size', 'inputnode.vox_size'),
-                                                          ('waymask', 'inputnode.waymask')
+                                                          ('waymask', 'inputnode.waymask'),
+                                                          ('max_length_list', 'inputnode.max_length_list'),
                                                           ])
                          ])
         meta_wf.connect([(meta_inputnode, sub_func_wf, [('func_file', 'inputnode.func_file'),
@@ -477,7 +481,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                               ('template', 'inputnode.template'),
                                                               ('template_mask', 'inputnode.template_mask'),
                                                               ('vox_size', 'inputnode.vox_size'),
-                                                              ('waymask', 'inputnode.waymask')
+                                                              ('waymask', 'inputnode.waymask'),
+                                                              ('max_length_list', 'inputnode.max_length_list')
                                                               ])
                              ])
 
@@ -653,7 +658,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                        min_span_tree, use_AAL_naming, disp_filt, plugin_type, multi_nets, prune, mask, norm,
                        binary, target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list,
                        track_type, max_length, maxcrossing, min_length, directget, tiss_class,
-                       runtime_dict, execution_dict, multi_directget, template, template_mask, vox_size, waymask):
+                       runtime_dict, execution_dict, multi_directget, template, template_mask, vox_size, waymask,
+                       max_length_list):
     """A function interface for generating a dMRI nested workflow"""
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -687,7 +693,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                       'curv_thr_list', 'step_list', 'overlap_thr', 'overlap_thr_list',
                                                       'track_type', 'max_length', 'maxcrossing',
                                                       'min_length', 'directget', 'tiss_class', 'vox_size',
-                                                      'basedir_path', 'multi_directget', 'waymask']),
+                                                      'basedir_path', 'multi_directget', 'waymask', 'max_length_list']),
                         name='inputnode')
 
     inputnode.inputs.ID = ID
@@ -741,6 +747,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     inputnode.inputs.basedir_path = basedir_path
     inputnode.inputs.multi_directget = multi_directget
     inputnode.inputs.waymask = waymask
+    inputnode.inputs.max_length_list = max_length_list
 
     # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
@@ -777,6 +784,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     # print("%s%s" % ('template_mask: ', template_mask))
     # print("%s%s" % ('basedir_path: ', basedir_path))
     # print("%s%s" % ('multi_directget: ', multi_directget))
+    # print("%s%s" % ('max_length_list: ', max_length_list))
     # print('\n\n\n\n\n')
 
     # Create function nodes
@@ -810,7 +818,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         if node_size_list:
             prep_spherical_nodes_node.iterables = [("node_size", node_size_list)]
 
-    prep_spherical_nodes_node.synchronize = True
+        prep_spherical_nodes_node.synchronize = True
 
     save_nifti_parcels_node = pe.Node(niu.Function(input_names=['ID', 'dir_path', 'roi', 'network',
                                                                 'net_parcels_map_nifti'],
@@ -854,7 +862,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             get_node_membership_node_iterables.append(network_iterables)
             get_node_membership_node.iterables = get_node_membership_node_iterables
 
-    get_node_membership_node.synchronize = True
+        get_node_membership_node.synchronize = True
 
     gtab_node = pe.Node(niu.Function(input_names=['fbval', 'fbvec', 'dwi_file', 'network', 'node_size', 'atlas'],
                                      output_names=['gtab_file', 'B0_bet', 'B0_mask', 'dwi_file'],
@@ -907,14 +915,14 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                            'uatlas', 'labels', 'coords', 'norm', 'binary',
                                                            'atlas_mni', 'curv_thr_list', 'step_list', 'fa_path',
                                                            'dm_path', 'directget', 'labels_im_file',
-                                                           'roi_neighborhood_tol'],
+                                                           'roi_neighborhood_tol', 'max_length'],
                                              function=track.run_track,
                                              imports=import_list),
                                 name="run_tracking_node")
     run_tracking_node.synchronize = True
 
     # Set reconstruction model iterables
-    if conn_model_list or multi_directget:
+    if conn_model_list or multi_directget or max_length_list:
         run_tracking_node_iterables = []
         if conn_model_list:
             run_tracking_node_iterables.append(("conn_model", conn_model_list))
@@ -924,22 +932,28 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             run_tracking_node_iterables.append(("directget", multi_directget))
         else:
             dmri_connectometry_wf.connect([(inputnode, run_tracking_node, [('directget', 'directget')])])
+        if max_length_list:
+            run_tracking_node_iterables.append(("max_length", max_length_list))
+        else:
+            dmri_connectometry_wf.connect([(inputnode, run_tracking_node, [('max_length', 'max_length')])])
         run_tracking_node.iterables = run_tracking_node_iterables
     else:
         dmri_connectometry_wf.connect([(inputnode, run_tracking_node, [('conn_model', 'conn_model'),
-                                                                       ('directget', 'directget')])])
+                                                                       ('directget', 'directget'),
+                                                                       ('max_length', 'max_length')])
+                                       ])
 
     dsn_node = pe.Node(niu.Function(input_names=['streams', 'fa_path', 'dir_path', 'track_type', 'target_samples',
                                                  'conn_model', 'network', 'node_size', 'dens_thresh', 'ID', 'roi',
                                                  'min_span_tree', 'disp_filt', 'parc', 'prune', 'atlas',
                                                  'labels_im_file', 'uatlas', 'labels', 'coords', 'norm', 'binary',
                                                  'atlas_mni', 'basedir_path', 'curv_thr_list', 'step_list',
-                                                 'directget'],
+                                                 'directget', 'max_length'],
                                     output_names=['streams_mni', 'dir_path', 'track_type', 'target_samples',
                                                   'conn_model', 'network', 'node_size', 'dens_thresh', 'ID', 'roi',
                                                   'min_span_tree', 'disp_filt', 'parc', 'prune', 'atlas',
                                                   'uatlas', 'labels', 'coords', 'norm', 'binary',
-                                                  'atlas_mni', 'directget', 'warped_fa'],
+                                                  'atlas_mni', 'directget', 'warped_fa', 'max_length'],
                                     function=register.direct_streamline_norm,
                                     imports=import_list), name="dsn_node")
     dsn_node.synchronize = True
@@ -949,12 +963,13 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                            'network', 'node_size', 'dens_thresh', 'ID', 'roi',
                                                            'min_span_tree', 'disp_filt', 'parc', 'prune',
                                                            'atlas', 'uatlas', 'labels', 'coords',
-                                                           'norm', 'binary', 'directget', 'warped_fa', 'error_margin'],
+                                                           'norm', 'binary', 'directget', 'warped_fa', 'error_margin',
+                                                           'max_length'],
                                               output_names=['atlas_mni', 'streams', 'conn_matrix', 'track_type',
                                                             'target_samples', 'dir_path', 'conn_model', 'network',
                                                             'node_size', 'dens_thresh', 'ID', 'roi', 'min_span_tree',
                                                             'disp_filt', 'parc', 'prune', 'atlas', 'uatlas', 'labels',
-                                                            'coords', 'norm', 'binary', 'directget'],
+                                                            'coords', 'norm', 'binary', 'directget', 'max_length'],
                                               function=estimation.streams2graph,
                                               imports=import_list), name="streams2graph_node")
     streams2graph_node.synchronize = True
@@ -1010,7 +1025,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     map_fields = ['conn_model', 'dir_path', 'conn_matrix', 'node_size', 'dens_thresh', 'network', 'ID',
                   'roi', 'min_span_tree', 'disp_filt', 'parc', 'prune', 'thr', 'atlas', 'uatlas',
                   'labels', 'coords', 'norm', 'binary', 'target_samples', 'track_type', 'atlas_mni', 'streams',
-                  'directget']
+                  'directget', 'max_length']
 
     map_connects = [('conn_model', 'conn_model'), ('dir_path', 'dir_path'), ('conn_matrix', 'conn_matrix'),
                     ('node_size', 'node_size'), ('dens_thresh', 'dens_thresh'), ('ID', 'ID'),
@@ -1019,7 +1034,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                     ('uatlas', 'uatlas'), ('labels', 'labels'), ('coords', 'coords'),
                     ('norm', 'norm'), ('binary', 'binary'), ('target_samples', 'target_samples'),
                     ('track_type', 'track_type'), ('atlas_mni', 'atlas_mni'), ('streams', 'streams'),
-                    ('directget', 'directget')]
+                    ('directget', 'directget'), ('max_length', 'max_length')]
 
     # Create a "thr_info" node for iterating iterfields across thresholds
     thr_info_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='thr_info_node')
@@ -1036,7 +1051,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     dmri_connectometry_wf.connect([(streams2graph_node, thr_info_node,
                                     [x for x in map_connects if x != ('thr', 'thr')])])
     # Begin joinnode chaining logic
-    if conn_model_list or multi_directget or node_size_list or user_atlas_list or multi_atlas or flexi_atlas is True or multi_thr is True:
+    if conn_model_list or multi_directget or node_size_list or user_atlas_list or multi_atlas or flexi_atlas is True or multi_thr is True or max_length_list:
         join_iters_node_thr = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
                                           name='join_iters_node_thr',
                                           joinsource=thr_info_node,
@@ -1045,7 +1060,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                             name='join_iters_node_atlas',
                                             joinsource=atlas_join_source,
                                             joinfield=map_fields)
-        if not conn_model_list and not multi_directget and (node_size_list and parc is False):
+        if not conn_model_list and not multi_directget and not max_length_list and (node_size_list and parc is False):
             # print('Node extraction iterables...')
             join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
                                           name='join_iters_prep_spheres_node',
@@ -1069,7 +1084,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                 else:
                     # print('Single atlas...')
                     dmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
-        elif (conn_model_list or multi_directget) and not node_size_list:
+        elif (conn_model_list or multi_directget or max_length_list) and not node_size_list:
             # print('Multiple connectivity models...')
             join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
                                           name='join_iters_run_track_node',
@@ -1094,7 +1109,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                 else:
                     # print('Single atlas...')
                     dmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
-        elif not conn_model_list and not multi_directget and not node_size_list:
+        elif not conn_model_list and not multi_directget and not max_length_list and not node_size_list:
             # print('No connectivity model or node extraction iterables...')
             if multi_thr:
                 # print('Multiple thresholds...')
@@ -1121,7 +1136,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                     # print('Single atlas...')
                     join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
                     dmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
-        elif (conn_model_list or multi_directget) or (node_size_list and parc is False):
+        elif (conn_model_list or multi_directget or max_length_list) or (node_size_list and parc is False):
             print('Connectivity model and node extraction iterables...')
             join_iters_node_prep_spheres = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
                                                        name='join_iters_node_prep_spheres',
@@ -1170,13 +1185,14 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                              'min_span_tree', 'disp_filt', 'parc', 'prune',
                                                              'atlas', 'uatlas', 'labels', 'coords',
                                                              'norm', 'binary', 'target_samples', 'track_type',
-                                                             'atlas_mni', 'streams', 'directget'],
+                                                             'atlas_mni', 'streams', 'directget', 'max_length'],
                                                 output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr',
                                                               'node_size', 'network', 'conn_model', 'roi',
                                                               'prune', 'ID', 'dir_path', 'atlas',
                                                               'uatlas', 'labels', 'coords',
                                                               'norm', 'binary', 'target_samples',
-                                                              'track_type', 'atlas_mni', 'streams', 'directget'],
+                                                              'track_type', 'atlas_mni', 'streams', 'directget',
+                                                              'max_length'],
                                                 function=thresholding.thresh_struct, imports=import_list),
                                    name="thresh_diff_node")
     else:
@@ -1185,13 +1201,14 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                                 'min_span_tree', 'disp_filt', 'parc', 'prune',
                                                                 'atlas', 'uatlas', 'labels',
                                                                 'coords', 'norm', 'binary', 'target_samples',
-                                                                'track_type', 'atlas_mni', 'streams', 'directget'],
+                                                                'track_type', 'atlas_mni', 'streams', 'directget',
+                                                                'max_length'],
                                                    output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr',
                                                                  'node_size', 'network', 'conn_model', 'roi',
                                                                  'prune', 'ID', 'dir_path', 'atlas',
                                                                  'uatlas', 'labels', 'coords',
                                                                  'norm', 'binary', 'target_samples', 'track_type',
-                                                                 'atlas_mni', 'streams', 'directget'],
+                                                                 'atlas_mni', 'streams', 'directget', 'max_length'],
                                                    function=thresholding.thresh_struct, imports=import_list),
                                       name="thresh_diff_node", iterfield=['dens_thresh', 'thr', 'conn_matrix',
                                                                           'conn_model', 'network', 'ID', 'dir_path',
@@ -1199,7 +1216,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                                           'disp_filt', 'parc', 'prune', 'atlas',
                                                                           'uatlas', 'labels', 'coords', 'norm',
                                                                           'binary', 'target_samples', 'track_type',
-                                                                          'atlas_mni', 'streams', 'directget'],
+                                                                          'atlas_mni', 'streams', 'directget',
+                                                                          'max_length'],
                                       nested=True)
         thresh_diff_node.synchronize = True
 
@@ -1218,13 +1236,12 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     if plot_switch is True:
         plot_fields = ['conn_matrix', 'conn_model', 'atlas', 'dir_path', 'ID', 'network', 'labels', 'roi',
                        'coords', 'thr', 'node_size', 'edge_threshold', 'prune', 'uatlas', 'target_samples', 'norm',
-                       'binary', 'track_type', 'directget']
+                       'binary', 'track_type', 'directget', 'max_length']
 
         # # Plotting iterable graph solutions
-        if conn_model_list or node_size_list or multi_directget or multi_thr or user_atlas_list or multi_atlas or flexi_atlas is True:
+        if conn_model_list or node_size_list or multi_directget or max_length_list or multi_thr or user_atlas_list or multi_atlas or flexi_atlas is True:
             plot_all_node = pe.MapNode(niu.Function(input_names=plot_fields, output_names='None',
                                                     function=plot_gen.plot_all_struct, imports=import_list),
-                                       itersource=thr_info_node,
                                        iterfield=plot_fields,
                                        name="plot_all_node", nested=True)
         else:
@@ -1252,7 +1269,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                                           ('norm', 'norm'),
                                                                           ('binary', 'binary'),
                                                                           ('track_type', 'track_type'),
-                                                                          ('directget', 'directget')])
+                                                                          ('directget', 'directget'),
+                                                                          ('max_length', 'max_length')])
                                        ])
 
     # Connect nodes of workflow
@@ -1324,7 +1342,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                         ('curv_thr_list', 'curv_thr_list'),
                                         ('step_list', 'step_list'),
                                         ('track_type', 'track_type'),
-                                        ('max_length', 'max_length'),
                                         ('maxcrossing', 'maxcrossing'),
                                         ('min_length', 'min_length')]),
         (inputnode, streams2graph_node, [('overlap_thr', 'overlap_thr')]),
@@ -1352,7 +1369,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                        ('binary', 'binary'),
                                        ('atlas_mni', 'atlas_mni'),
                                        ('fa_path', 'fa_path'),
-                                       ('directget', 'directget')]),
+                                       ('directget', 'directget'),
+                                       ('max_length', 'max_length')]),
         (run_tracking_node, streams2graph_node, [('roi_neighborhood_tol', 'error_margin')]),
         (dsn_node, streams2graph_node, [('streams_mni', 'streams'),
                                         ('dir_path', 'dir_path'),
@@ -1375,7 +1393,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                         ('binary', 'binary'),
                                         ('atlas_mni', 'atlas_mni'),
                                         ('directget', 'directget'),
-                                        ('warped_fa', 'warped_fa')]),
+                                        ('warped_fa', 'warped_fa'),
+                                        ('max_length', 'max_length')]),
         (join_iters_node, thresh_diff_node, map_connects)
     ])
 
@@ -1570,11 +1589,11 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                                          'ID', 'roi', 'conn_model', 'node_size',
                                                                          'target_samples', 'track_type', 'norm',
                                                                          'binary', 'atlas_mni', 'streams',
-                                                                         'directget']),
+                                                                         'directget', 'max_length']),
                                            name='join_iters_node_nets', joinsource=get_node_membership_node,
                                            joinfield=['est_path', 'thr', 'network', 'prune', 'ID', 'roi',
                                                       'conn_model', 'node_size', 'target_samples', 'track_type', 'norm',
-                                                      'binary', 'atlas_mni', 'streams', 'directget'])
+                                                      'binary', 'atlas_mni', 'streams', 'directget', 'max_length'])
         dmri_connectometry_wf.connect([
             (thresh_diff_node, join_iters_node_nets, [('thr', 'thr'), ('network', 'network'),
                                                       ('est_path', 'est_path'), ('node_size', 'node_size'),
@@ -1583,7 +1602,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                       ('prune', 'prune'), ('target_samples', 'target_samples'),
                                                       ('norm', 'norm'), ('binary', 'binary'),
                                                       ('atlas_mni', 'atlas_mni'), ('streams', 'streams'),
-                                                      ('directget', 'directget')]),
+                                                      ('directget', 'directget'), ('max_length', 'max_length')]),
             (join_iters_node_nets, outputnode, [('thr', 'thr'), ('network', 'network'), ('est_path', 'est_path'),
                                                 ('roi', 'roi'), ('conn_model', 'conn_model'), ('ID', 'ID'),
                                                 ('prune', 'prune'), ('norm', 'norm'), ('binary', 'binary')])
@@ -2464,7 +2483,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         if conn_model_list or node_size_list or smooth_list or multi_thr or user_atlas_list or multi_atlas or float(k_clustering) > 1 or flexi_atlas is True or hpass_list:
             plot_all_node = pe.MapNode(niu.Function(input_names=plot_fields, output_names='None',
                                                     function=plot_gen.plot_all_func, imports=import_list),
-                                       itersource=thr_info_node,
                                        iterfield=plot_fields,
                                        name="plot_all_node", nested=True)
         else:

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2018
+Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
 import warnings
@@ -116,7 +116,7 @@ def csd_mod_est(gtab, data, B0_mask):
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
                   dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels,
-                  coords, norm, binary, directget, warped_fa, error_margin, fa_wei=True):
+                  coords, norm, binary, directget, warped_fa, error_margin, max_length, fa_wei=True):
     '''
     Use tracked streamlines as a basis for estimating a structural connectome.
 
@@ -181,6 +181,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         File path to MNI-space warped FA Nifti1Image.
     error_margin : int
         Euclidean margin of error for classifying a streamline as a connection to an ROI. Default is 2 voxels.
+    max_length : int
+        Maximum fiber length threshold in mm to restrict tracking.
     fa_wei :  bool
         Scale streamline count edges by fractional anistropy (FA). Default is False.
 
@@ -240,6 +242,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
+    max_length : int
+        Maximum fiber length threshold in mm to restrict tracking.
     '''
     from dipy.tracking.streamline import Streamlines, values_from_volume
     from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
@@ -272,10 +276,10 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Instantiate empty networkX graph object & dictionary and create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4))
-    mx = len(np.unique(atlas_data.astype('uint8'))) - 1
+    mx = len(np.unique(atlas_data.astype('uint16'))) - 1
     g = nx.Graph(ecount=0, vcount=mx)
     edge_dict = defaultdict(int)
-    node_dict = dict(zip(np.unique(atlas_data.astype('uint8')) + 1, np.arange(mx) + 1))
+    node_dict = dict(zip(np.unique(atlas_data.astype('uint16')) + 1, np.arange(mx) + 1))
 
     # Add empty vertices
     for node in range(1, mx + 1):
@@ -294,7 +298,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         # get labels for label_volume
         lab_arr = atlas_data[i, j, k]
         endlabels = []
-        for lab in np.unique(lab_arr).astype('uint8'):
+        for lab in np.unique(lab_arr).astype('uint32'):
             if (lab > 0) and (np.sum(lab_arr == lab) >= overlap_thr):
                 try:
                     endlabels.append(node_dict[lab])
@@ -342,4 +346,4 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     # Enforce symmetry
     conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
 
-    return atlas_mni, streams, conn_matrix, track_type, target_samples, dir_path, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, directget
+    return atlas_mni, streams, conn_matrix, track_type, target_samples, dir_path, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, directget, max_length

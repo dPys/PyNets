@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2018
+Copyright (C) 2017
 @author: Derek Pisner
 """
 import os
@@ -21,7 +21,8 @@ except KeyError:
 
 def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_samples, conn_model, network, node_size,
                            dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, labels_im_file, uatlas,
-                           labels, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list, directget):
+                           labels, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list, directget,
+                           max_length):
     """
     A Function to perform normalization of streamlines tracked in native diffusion space to an
     FA template in MNI space.
@@ -90,6 +91,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
+    max_length : int
+        Maximum fiber length threshold in mm to restrict tracking.
 
     Returns
     -------
@@ -147,6 +150,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
         and prob (probabilistic).
     warped_fa : str
         File path to MNI-space warped FA Nifti1Image.
+    max_length : int
+        Maximum fiber length threshold in mm to restrict tracking.
 
     References
     ----------
@@ -184,36 +189,49 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     brain_mask = np.asarray(template_img.dataobj).astype('bool')
     template_img.uncache()
 
-    streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_',
-                                                  '%s' % (network + '_' if network is not None else ''),
-                                                  '%s' % (op.basename(roi).split('.')[0] + '_' if
-                                                          roi is not None else ''),
-                                                  conn_model, '_', target_samples,
-                                                  '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if
-                                                          ((node_size != 'parc') and (node_size is not None)) else '_'),
-                                                  'curv', str(curv_thr_list).replace(', ', '_'),
-                                                  'step', str(step_list).replace(', ', '_'), '.trk')
+    streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_',
+                                                              '%s' % (network + '_' if network is not
+                                                                                       None else ''),
+                                                              '%s' % (op.basename(roi).split('.')[0] + '_'
+                                                                      if roi is not None else ''),
+                                                              conn_model, '_', target_samples,
+                                                              '%s' % ("%s%s" % ('_' +
+                                                                                str(node_size), 'mm_') if
+                                                                      ((node_size != 'parc') and
+                                                                       (node_size is not None)) else '_'),
+                                                              'curv', str(curv_thr_list).replace(', ', '_'),
+                                                              'step', str(step_list).replace(', ', '_'),
+                                                              'tt-', track_type, '_dg-', directget, '_ml-',
+                                                              max_length, '.trk')
 
-    density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/density_map_mni_',
-                                                  '%s' % (network + '_' if network is not None else ''),
-                                                  '%s' % (op.basename(roi).split('.')[0] + '_' if
-                                                          roi is not None else ''),
-                                                  conn_model, '_', target_samples,
-                                                  '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if
-                                                          ((node_size != 'parc') and (node_size is not None)) else '_'),
-                                                  'curv', str(curv_thr_list).replace(', ', '_'),
-                                                  'step', str(step_list).replace(', ', '_'), '.nii.gz')
+    density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/density_map_mni_',
+                                                              '%s' % (network + '_' if network is not None else ''),
+                                                              '%s' % (op.basename(roi).split('.')[0] + '_' if
+                                                                      roi is not None else ''),
+                                                              conn_model, '_', target_samples,
+                                                              '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if
+                                                                      ((node_size != 'parc') and (node_size is not
+                                                                                                  None)) else '_'),
+                                                              'curv', str(curv_thr_list).replace(', ', '_'),
+                                                              'step', str(step_list).replace(', ', '_'), 'tt-',
+                                                              track_type,
+                                                              '_dg-', directget, '_ml-', max_length, '.nii.gz')
 
-    streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
-                                                       '%s' % (network + '_' if network is not None else ''),
-                                                       '%s' % (op.basename(roi).split('.')[0] + '_' if
-                                                               roi is not None else ''),
-                                                       conn_model, '_', target_samples,
-                                                       '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if
-                                                               ((node_size != 'parc') and (node_size is not None)) else
-                                                               '_'),
-                                                       'curv', str(curv_thr_list).replace(', ', '_'),
-                                                       'step', str(step_list).replace(', ', '_'), '.png')
+    # streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
+    #                                                                '%s' % (network + '_' if network is not
+    #                                                                                         None else ''),
+    #                                                                '%s' % (op.basename(roi).split('.')[0] + '_' if
+    #                                                                        roi is not None else ''),
+    #                                                                conn_model, '_', target_samples,
+    #                                                                '%s' % ("%s%s" %
+    #                                                                        ('_' + str(node_size),
+    #                                                                         'mm_') if ((node_size != 'parc') and
+    #                                                                                    (node_size is not None)) else
+    #                                                                        '_'),
+    #                                                                'curv', str(curv_thr_list).replace(', ', '_'),
+    #                                                                'step', str(step_list).replace(', ', '_'), 'tt-',
+    #                                                                track_type,  '_dg-', directget, '_ml-', max_length,
+    #                                                                '.png')
 
     # SyN FA->Template
     [mapping, affine_map, warped_fa] = regutils.wm_syn(template_path, fa_path, dsn_dir)
@@ -302,7 +320,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     gc.collect()
 
-    return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget, warped_fa
+    return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget, warped_fa, max_length
 
 
 class DmriReg(object):
@@ -515,7 +533,6 @@ class DmriReg(object):
                     aligned_atlas_skull_parcels = None
 
                 # Map atlas in t1w space to dwi space
-
                 if uatlas_parcels is not None:
                     regutils.applyxfm(self.fa_path, aligned_atlas_skull_parcels, self.t1wtissue2dwi_xfm,
                                       dwi_aligned_atlas, interp="nearestneighbour")
@@ -569,7 +586,7 @@ class DmriReg(object):
         t_img = nib.load(self.wm_gm_int_in_dwi)
         mask = math_img('img > 0', img=t_img)
         mask.to_filename(self.wm_gm_int_in_dwi_bin)
-        img = nib.Nifti1Image(np.around(np.asarray(atlas_img.dataobj)).astype('int16'),
+        img = nib.Nifti1Image(np.around(np.asarray(atlas_img.dataobj)).astype('uint16'),
                               affine=atlas_img.affine, header=atlas_img.header)
         nib.save(img, dwi_aligned_atlas)
         os.system("fslmaths {} -mas {} {}".format(dwi_aligned_atlas, self.wm_gm_int_in_dwi_bin,

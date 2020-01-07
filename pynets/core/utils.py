@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Nov 10 15:44:46 2017
-Copyright (C) 2018
+Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
 import warnings
@@ -114,7 +114,7 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
 
 
 def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples, track_type, thr_type,
-                         parc):
+                         parc, directget, max_length):
     """
     Name the thresholded structural connectivity matrix file based on relevant graph-generating parameters.
 
@@ -146,6 +146,11 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
         Type of thresholding performed (e.g. prop, abs, dens, mst, disp)
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
+    max_length : int
+        Maximum fiber length threshold in mm to restrict tracking.
 
     Returns
     -------
@@ -160,22 +165,24 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-dwi_',
-                                                         '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                                 network is not None
-                                                                 else ''),
-                                                         '%s' % ("%s%s%s" % ('roi-',
-                                                                             op.basename(roi).split('.')[0], '_') if
-                                                                 roi is not None else ''),
-                                                         'est-', conn_model, '_',
-                                                         '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
-                                                                 ((node_size != 'parc') and (node_size is not None))
-                                                                 else 'nodetype-parc_'),
-                                                         "%s" % ("%s%s%s" % ('samples-', int(target_samples),
-                                                                             'streams_') if float(target_samples) > 0
-                                                                 else '_'),
-                                                         'tt-', track_type, '_thrtype-', thr_type, '_thr-', thr,
-                                                         '.npy')
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-dwi_',
+                                                                 '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                         network is not None else ''),
+                                                                 '%s' % ("%s%s%s" % ('roi-',
+                                                                                     op.basename(roi).split('.')[0],
+                                                                                     '_') if roi is not None else ''),
+                                                                 'est-', conn_model, '_',
+                                                                 '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size,
+                                                                                     'mm_')
+                                                                         if ((node_size != 'parc') and
+                                                                             (node_size is not None))
+                                                                         else 'nodetype-parc_'),
+                                                                 "%s" % ("%s%s%s" % ('samples-', int(target_samples),
+                                                                                     'streams_')
+                                                                         if float(target_samples) > 0 else '_'),
+                                                                 'tt-', track_type, '_dg-', directget,
+                                                                 '_ml-', max_length,
+                                                                 '_thrtype-', thr_type, '_thr-', thr, '.npy')
     return est_path
 
 
@@ -242,7 +249,7 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
     return est_path
 
 
-def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, target_samples, track_type, parc):
+def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, target_samples, track_type, parc, directget, max_length):
     """
     Name the raw structural connectivity matrix file based on relevant graph-generating parameters.
 
@@ -269,6 +276,11 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
         Tracking algorithm used (e.g. 'local' or 'particle').
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
+    max_length : int
+        Maximum fiber length threshold in mm to restrict tracking.
 
     Returns
     -------
@@ -283,16 +295,19 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-dwi_',
-                                                 '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-dwi_',
+                                                         '%s' % ("%s%s%s" % ('rsn-', network, '_') if
                                                          network is not None else ''),
-                                                 '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0], '_') if
-                                                         roi is not None else ''), 'raw_', conn_model, '_',
-                                                 '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
-                                                         ((node_size != 'parc') and (node_size is not None)) else
-                                                         'parc_'),
-                                                 "%s" % ("%s%s%s" % ('samples-', int(target_samples), 'streams_') if
-                                                         float(target_samples) > 0 else ''), 'tt-', track_type, '.npy')
+                                                         '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0],
+                                                                             '_') if roi is not None else ''),
+                                                         'raw_', conn_model, '_',
+                                                         '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
+                                                                 ((node_size != 'parc') and (node_size is not None))
+                                                                 else 'parc_'),
+                                                         "%s" % ("%s%s%s" % ('samples-', int(target_samples),
+                                                                             'streams_') if float(target_samples) > 0
+                                                                 else ''), 'tt-', track_type, '_dg-', directget,
+                                                         '_ml-', max_length, '.npy')
     return est_path
 
 
@@ -934,16 +949,25 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
     hyperparam_dict['node_type'] = file_renamed.split('nodetype-')[1].split('_')[0]
     hyperparam_dict['atlas'] = atlas
     hyperparam_dict['thrtype'] = file_renamed.split('thrtype-')[1].split('_')[0]
+    hyperparam_dict['estimator'] = file_renamed.split('est-')[1].split('_')[0]
 
     if modality == 'func':
-        hyperparam_dict['estimator'] = file_renamed.split('est-')[1].split('_')[0]
-        hyperparams.append('estimator')
         if 'smooth-' in file_renamed:
             hyperparam_dict['smooth'] = file_renamed.split('smooth-')[1].split('_')[0].split('fwhm')[0]
             hyperparams.append('smooth')
         if 'hpass-' in file_renamed:
             hyperparam_dict['hpass'] = file_renamed.split('hpass-')[1].split('_')[0].split('Hz')[0]
             hyperparams.append('hpass')
+    elif modality == 'dwi':
+        if 'tt-' in file_renamed:
+            hyperparam_dict['track_type'] = file_renamed.split('tt-')[1].split('_')[0]
+            hyperparams.append('track_type')
+        if 'dg-' in file_renamed:
+            hyperparam_dict['directget'] = file_renamed.split('dg-')[1].split('_')[0]
+            hyperparams.append('directget')
+        if 'ml-' in file_renamed:
+            hyperparam_dict['max_length'] = file_renamed.split('ml-')[1].split('_')[0]
+            hyperparams.append('max_length')
     return hyperparam_dict, hyperparams
 
 
