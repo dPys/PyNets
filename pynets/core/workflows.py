@@ -2563,10 +2563,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             fmri_connectometry_wf.connect([
                 (check_orient_and_dims_mask_node, clustering_node, [('outfile', 'mask')]),
             ])
-        else:
-            fmri_connectometry_wf.connect([
-                (inputnode, clustering_node, [('mask', 'mask')]),
-            ])
     elif (op.isfile(template_mask) is True) and (roi is None):
         fmri_connectometry_wf.connect([
             (inputnode, node_gen_node, [('template_mask', 'roi')]),
