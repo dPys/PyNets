@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2018
+Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
 import warnings
@@ -156,14 +156,26 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
     import os.path as op
     from pynets.plotting import plot_graphs
 
-    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
-                                                           '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
-                                                           '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                           'func_adj_mat_', conn_model, '_', thr, '_', node_size,
-                                                           '%s' % ("mm_" if node_size != 'parc' else "_"),
-                                                           '%s' % ("%s%s" % (int(c_boot), 'nb') if float(c_boot) > 0 else 'nb'),
-                                                           '%s' % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''),
-                                                           '%s' % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
+    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_modality-func_',
+                                                         '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                 network is not None else ''),
+                                                         '%s' % ("%s%s%s" % ('roi-',
+                                                                             op.basename(roi).split('.')[0],
+                                                                             '_') if roi is not None else ''),
+                                                         'est-', conn_model, '_',
+                                                         '%s' % (
+                                                             "%s%s%s" % ('nodetype-spheres-',
+                                                                         node_size, 'mm_') if
+                                                             ((node_size != 'parc') and (node_size is not
+                                                                                         None))
+                                                             else 'nodetype-parc_'),
+                                                         "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
+                                                                 float(c_boot) > 0 else ''),
+                                                         "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                                 float(smooth) > 0 else ''),
+                                                         "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                                 hpass is not None else ''),
+                                                         '_thr-', thr, '_adj_mat.png')
 
     plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig)
 
@@ -172,14 +184,26 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
         from pynets.stats.netstats import community_resolution_selection
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
         _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(G)
-        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
-                                                                    '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
-                                                                    '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                                    'func_adj_mat_comm_', conn_model, '_', thr, '_',
-                                                                    node_size, '%s' % ("mm_" if node_size != 'parc' else "_"),
-                                                                    '%s' % ("%s%s" % (int(c_boot), 'nb') if float(c_boot) > 0 else 'nb'),
-                                                                    '%s' % ("%s%s" % (smooth, 'fwhm.png') if float(smooth) > 0 else ''),
-                                                                    '%s' % ("%s%s" % (hpass, 'Hz.png') if hpass is not None else '.png'))
+        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_modality-func_',
+                                                                  '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                          network is not None else ''),
+                                                                  '%s' % ("%s%s%s" % ('roi-',
+                                                                                      op.basename(roi).split('.')[0],
+                                                                                      '_') if roi is not None else ''),
+                                                                  'est-', conn_model, '_',
+                                                                  '%s' % (
+                                                                      "%s%s%s" % ('nodetype-spheres-',
+                                                                                  node_size, 'mm_') if
+                                                                      ((node_size != 'parc') and (node_size is not
+                                                                                                  None))
+                                                                      else 'nodetype-parc_'),
+                                                                  "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
+                                                                          float(c_boot) > 0 else ''),
+                                                                  "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                                          float(smooth) > 0 else ''),
+                                                                  "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                                          hpass is not None else ''),
+                                                                  '_thr-', thr, '_adj_mat_comm.png')
         plot_graphs.plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, node_comm_aff_mat)
     except:
         print('\nWARNING: Louvain community detection failed. Cannot plot community matrix...')
@@ -187,7 +211,7 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
     return
 
 
-def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size, target_samples, track_type, directget):
+def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size, target_samples, track_type, directget, max_length):
     """
     API for selecting among various structural connectivity matrix plotting approaches.
 
@@ -224,19 +248,31 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, 
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
+    max_length : int
+        Maximum fiber length threshold in mm to restrict tracking.
     """
     from pynets.plotting import plot_graphs
     import networkx as nx
     import os.path as op
-    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
-                                                             '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
-                                                             '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                             'struct_adj_mat_', conn_model, '_', thr, '_', node_size,
-                                                             '%s' % ("mm_" if node_size != 'parc' else "_"),
-                                                             "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
-                                                             "%s%s" % (track_type, '_track'),
-                                                             "%s%s" % ('_', directget),
-                                                             '.png')
+    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_modality-dwi_',
+                                                                 '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                         network is not None else ''),
+                                                                 '%s' % ("%s%s%s" % ('roi-',
+                                                                                   op.basename(roi).split(
+                                                                                       '.')[0], '_') if
+                                                                         roi is not None else ''),
+                                                                 'est-', conn_model, '_', '%s' % (
+                                                                   "%s%s%s" % ('nodetype-spheres-',
+                                                                               node_size, 'mm_')
+                                                                   if ((node_size != 'parc') and
+                                                                       (node_size is not None))
+                                                                   else 'nodetype-parc_'),
+                                                                 "%s" % ("%s%s%s" % ('samples-', int(target_samples),
+                                                                                     'streams_')
+                                                                         if float(target_samples) > 0 else '_'),
+                                                                 'tt-', track_type, '_dg-', directget,
+                                                                 '_ml-', max_length,
+                                                                 '_thr-', thr, '_adj_mat.png')
     plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig)
 
     # Plot community adj. matrix
@@ -244,15 +280,28 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, 
         from pynets.stats.netstats import community_resolution_selection
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
         _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(G)
-        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_', atlas,
-                                                                      '%s' % ("%s%s%s" % ('_', network, '_') if network else "_"),
-                                                                      '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None else ''),
-                                                                      'struct_adj_mat_comm_', conn_model, '_', thr, '_', node_size,
-                                                                      '%s' % ("mm_" if node_size != 'parc' else "_"),
-                                                                      "%s" % ("%s%s" % (int(target_samples), '_samples') if float(target_samples) > 0 else ''),
-                                                                      "%s%s" % (track_type, '_track'),
-                                                                      "%s%s" % ('_', directget),
-                                                                      '.png')
+        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_modality-dwi_',
+                                                                          '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                                  network is not None else ''),
+                                                                          '%s' % ("%s%s%s" % ('roi-',
+                                                                                             op.basename(roi).split(
+                                                                                                 '.')[0],
+                                                                                              '_') if roi is not
+                                                                                                      None else ''),
+                                                                          'est-', conn_model, '_', '%s' % (
+                                                                              "%s%s%s" % ('nodetype-spheres-',
+                                                                                          node_size, 'mm_')
+                                                                              if ((node_size != 'parc') and
+                                                                                  (node_size is not None))
+                                                                              else 'nodetype-parc_'),
+                                                                          "%s" % ("%s%s%s" % ('samples-',
+                                                                                              int(target_samples),
+                                                                                              'streams_')
+                                                                                  if float(target_samples) > 0
+                                                                                  else '_'),
+                                                                          'tt-', track_type, '_dg-', directget,
+                                                                          '_ml-', max_length,
+                                                                          '_thr-', thr, '_adj_mat_comm.png')
         plot_graphs.plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, node_comm_aff_mat)
     except:
         print('\nWARNING: Louvain community detection failed. Cannot plot community matrix...')

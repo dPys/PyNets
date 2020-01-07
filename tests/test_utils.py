@@ -206,6 +206,8 @@ def test_create_est_path_diff():
     models = ['corr', 'cov', 'sps', 'partcorr']
     roi = None
     node_size = 6
+    directget = 'prob'
+    max_length = 200
 
     for conn_model in models:
         for val in range(1, 10):
@@ -216,7 +218,7 @@ def test_create_est_path_diff():
                         for parc in [True, False]:
                             est_path = utils.create_est_path_diff(ID, network, conn_model, thr, roi,
                                                                   dir_path, node_size, target_samples,
-                                                                  track_type, thr_type, parc)
+                                                                  track_type, thr_type, parc, directget, max_length)
                             assert est_path is not None
 
 
@@ -237,6 +239,8 @@ def test_create_csv_path():
     c_boot = 100
     hpass = 100
     parc = True
+    directget = 'prob'
+    max_length = 200
 
     # Cross test various connectivity models, thresholds, and parc true/false.
     for conn_model in models:
@@ -266,7 +270,7 @@ def test_create_csv_path():
                         for parc in [True, False]:
                             est_path = utils.create_est_path_diff(ID, network, conn_model, thr, roi,
                                                                   dir_path, node_size, target_samples,
-                                                                  track_type, thr_type, parc)
+                                                                  track_type, thr_type, parc, directget, max_length)
                             out_path = utils.create_csv_path(dir_path, est_path)
                             assert out_path is not None
 
@@ -301,10 +305,13 @@ def test_create_unthr_path():
     parc_types = [True, False]
     models = ['csd', 'csa']
     roi = None
+    directget = 'prob'
+    max_length = 200
+
     for conn_model in models:
         for parc in parc_types:
             unthr_path_diff = utils.create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size,
-                                                         target_samples, track_type, parc)
+                                                         target_samples, track_type, parc, directget, max_length)
             assert unthr_path_diff is not None
 
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2018
+Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
 import warnings
@@ -264,19 +264,22 @@ def get_parser():
                         metavar='Number of samples',
                         default='1000000',
                         help='Include this flag to manually specify a number of cumulative streamline samples for '
-                             'tractography. Default is 1000000.\n')
+                             'tractography. Default is 1000000. Iterable number of samples not currently supported.\n')
     parser.add_argument('-ml',
                         metavar='Maximum fiber length for tracking',
                         default=200,
+                        nargs='+',
                         help='Include this flag to manually specify a maximum tract length (mm) for dmri '
-                             'connectome tracking. Default is 200.\n')
+                             'connectome tracking. Default is 200. If you wish to iterate the pipeline across multiple '
+                             'maximum values, separate the list by space (e.g. 150 200 250).\n')
     parser.add_argument('-tt',
                         metavar='Tracking algorithm',
                         default='local',
                         nargs=1,
                         choices=['local', 'particle'],
                         help='Include this flag to manually specify a tracking algorithm for dmri connectome '
-                             'estimation. Options are: local and particle. Default is local.\n')
+                             'estimation. Options are: local and particle. Default is local. Iterable tracking '
+                             'techniques not currently supported.\n')
     parser.add_argument('-dg',
                         metavar='Direction getter',
                         default='det',
@@ -285,7 +288,9 @@ def get_parser():
                         help='Include this flag to manually specify the statistical approach to tracking for dmri '
                              'connectome estimation. Options are: det (deterministic), closest (clos), '
                              'boot (bootstrapped), and prob (probabilistic). '
-                             'Default is det.\n')
+                             'Default is det. If you wish to iterate the pipeline across multiple '
+                             'direction-getting methods, separate the list by space (e.g. \'det\', \'prob\', \'clos\', '
+                             '\'boot\').\n')
     parser.add_argument('-tc',
                         metavar='Tissue classification method',
                         default='bin',
@@ -293,7 +298,8 @@ def get_parser():
                         choices=['wb', 'cmc', 'act', 'bin'],
                         help='Include this flag to manually specify a tissue classification method for dmri '
                              'connectome estimation. Options are: cmc (continuous), act (anatomically-constrained), '
-                             'wb (whole-brain mask), and bin (binary to white-matter only). Default is bin.\n')
+                             'wb (whole-brain mask), and bin (binary to white-matter only). Default is bin. Iterable '
+                             'selection of tissue classification method is not currently supported.\n')
     parser.add_argument('-thr',
                         metavar='Graph threshold',
                         default=1.00,
@@ -635,6 +641,16 @@ def build_workflow(args, retval):
         multi_atlas = None
     target_samples = args.s
     max_length = args.ml
+    if max_length:
+        if (type(max_length) is list) and (len(max_length) > 1):
+            max_length_list = max_length
+        elif type(max_length) is list:
+            max_length = max_length[0]
+            max_length_list = None
+        else:
+            max_length_list = None
+    else:
+        max_length_list = None
     track_type = args.tt
     if type(track_type) is list:
         track_type = track_type[0]
@@ -1395,7 +1411,7 @@ def build_workflow(args, retval):
                                curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
                                maxcrossing, min_length, directget, tiss_class, runtime_dict, execution_dict, embed,
                                multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
-                               multiplex, waymask, local_corr):
+                               multiplex, waymask, local_corr, max_length_list):
         """A function interface for generating a single-subject workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1455,7 +1471,7 @@ def build_workflow(args, retval):
                                     target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
                                     max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict,
                                     execution_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
-                                    template_mask, vox_size, multiplex, waymask, local_corr)
+                                    template_mask, vox_size, multiplex, waymask, local_corr, max_length_list)
 
         meta_wf._n_procs = procmem[0] - 1
         meta_wf._mem_gb = procmem[1]
@@ -1593,7 +1609,7 @@ def build_workflow(args, retval):
                          binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list,
                          track_type, max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict,
                          execution_dict, embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
-                         vox_size, multiplex, waymask, local_corr):
+                         vox_size, multiplex, waymask, local_corr, max_length_list):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1654,7 +1670,7 @@ def build_workflow(args, retval):
                 directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, execution_dict=execution_dict,
                 embed=embed, multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
                 template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex,
-                waymask=waymask, local_corr=local_corr)
+                waymask=waymask, local_corr=local_corr, max_length_list=max_length_list)
             wf_single_subject._n_procs = procmem[0] - 1
             wf_single_subject._mem_gb = procmem[1]
             wf_single_subject.n_procs = procmem[0] - 1
@@ -1726,7 +1742,7 @@ def build_workflow(args, retval):
                                     step_list, overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing,
                                     min_length, directget, tiss_class, runtime_dict, execution_dict, embed,
                                     multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
-                                    multiplex, waymask, local_corr)
+                                    multiplex, waymask, local_corr, max_length_list)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1809,7 +1825,7 @@ def build_workflow(args, retval):
                                     overlap_thr_list, track_type, max_length, maxcrossing, min_length,
                                     directget, tiss_class, runtime_dict, execution_dict, embed, multi_directget,
                                     multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex,
-                                    waymask, local_corr)
+                                    waymask, local_corr, max_length_list)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1879,7 +1895,7 @@ def build_workflow(args, retval):
             for cnfnd_tmp_dir in glob.glob("%s%s" % (func_dir, '/*/confounds_tmp')):
                 shutil.rmtree(cnfnd_tmp_dir)
 
-    print('\n\n------------NETWORK COMPLETE-----------')
+    print('\n\n------------FINISHED-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)
     print('---------------------------------------')
 

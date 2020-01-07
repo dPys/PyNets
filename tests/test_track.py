@@ -38,10 +38,12 @@ def test_create_density_map():
     step_list = [0.1, 0.2, 0.5]
     network = 'Default'
     roi = None
+    directget = 'prob'
+    max_length = 200
 
     [streams, dir_path, dm_path] = track.create_density_map(dwi_img, dir_path, streamlines, conn_model,
                                                             target_samples, node_size, curv_thr_list, step_list,
-                                                            network, roi)
+                                                            network, roi, directget, max_length)
 
     assert streams is not None
     assert dir_path is not None

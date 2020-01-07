@@ -309,7 +309,8 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     atlas_mni = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
     streams = base_dir + dir_path + '/test_streamline_array_sequence.trk'
     directget = 'prob'
-    
+    max_length = 200
+
     conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, \
         ID, dir_path, atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, \
         atlas_mni, streams, directget = thresholding.thresh_struct(dens_thresh, thr, conn_matrix, 
@@ -319,7 +320,7 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
                                                                    prune, atlas, uatlas, labels, 
                                                                    coords, norm, binary, 
                                                                    target_samples, track_type, 
-                                                                   atlas_mni, streams, directget)
+                                                                   atlas_mni, streams, directget, max_length)
                                  
     assert dens_thresh is not None
     assert thr is not None

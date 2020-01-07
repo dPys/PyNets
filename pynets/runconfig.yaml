@@ -92,7 +92,7 @@ execution_dict:
     - 'use_relative_paths':
         - False
     - 'keep_inputs':
-        - False
+        - True
     - 'remove_unnecessary_outputs':
         - True
     - 'remove_node_directories':
