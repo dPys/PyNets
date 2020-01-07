@@ -92,6 +92,12 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
+    if hpass is None:
+        hpass = 0
+
+    if smooth is None:
+        smooth = 0
+
     est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
                                                          '%s' % ("%s%s%s" % ('rsn-', network, '_') if
                                                                  network is not None else ''),
@@ -103,10 +109,8 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
                                                                  else 'nodetype-parc_'),
                                                          "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
                                                                  float(c_boot) > 0 else ''),
-                                                         "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
-                                                                 float(smooth) > 0 else ''),
-                                                         "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
-                                                                 hpass is not None else ''),
+                                                         "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_')),
+                                                         "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_')),
                                                          'thrtype-', thr_type, '_thr-', thr,
                                                          '.npy')
 
@@ -229,6 +233,12 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
+    if hpass is None:
+        hpass = 0
+
+    if smooth is None:
+        smooth = 0
+
     est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
                                                  '%s' % ("%s%s%s" % ('rsn-', network, '_') if
                                                          network is not None else ''),
@@ -240,10 +250,8 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
                                                          'nodetype-parc_'),
                                                  "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
                                                          float(c_boot) > 0 else ''),
-                                                 "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
-                                                         float(smooth) > 0 else ''),
-                                                 "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
-                                                         hpass is not None else ''),
+                                                 "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_')),
+                                                 "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_')),
                                                  '.npy')
 
     return est_path
@@ -900,6 +908,12 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth,
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
+    if hpass is None:
+        hpass = 0
+
+    if smooth is None:
+        smooth = 0
+
     # Save time series as npy file
     out_path_ts = "%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
                                               '%s' % ("%s%s%s" % ('rsn-', network, '_') if network is not None else ''),
@@ -910,10 +924,8 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth,
                                                       'parc_'),
                                               '%s' % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
                                                       float(c_boot) > 0 else ''),
-                                              "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
-                                                      float(smooth) > 0 else ''),
-                                              "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
-                                                      hpass is not None else ''),
+                                              "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_')),
+                                              "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_')),
                                               'node_ts.npy')
 
     np.save(out_path_ts, ts_within_nodes)
