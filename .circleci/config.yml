@@ -1,0 +1,370 @@
+version: 2
+jobs:
+
+  build:
+    environment:
+      TZ: "/usr/share/zoneinfo/America/Chicago"
+      SCRATCH: "/scratch"
+    docker:
+      - image: docker:18.01.0-ce-git
+    working_directory: /tmp/src/pynets
+    steps:
+      - checkout
+      - run:
+          name: Check whether build should be skipped
+          command: |
+            if [[ "$( git log --format='format:%s' -n 1 $CIRCLE_SHA1 | grep -i -E '^docs?(\(\w+\))?:' )" != "" ]]; then
+              echo "Only docs build"
+              circleci step halt
+            fi
+
+      - run:
+          name: Install parallel gzip and python3
+          command: |
+            apk add --no-cache pigz python3
+      - restore_cache:
+          keys:
+            - docker-v0-{{ .Branch }}-{{ .Revision }}
+            - docker-v0-{{ .Branch }}-
+            - docker-v0-master-
+            - docker-v0-
+          paths:
+            - /tmp/cache/docker.tar.gz
+      - setup_remote_docker
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 30m
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+      - run:
+          name: Build Docker image
+          no_output_timeout: 60m
+          command: |
+            # Get version, update files.
+            THISVERSION=$( python3 get_version.py )
+            if [[ ${THISVERSION:0:2} == "0+" ]] ; then
+              echo "WARNING: latest git tag could not be found"
+              echo "Please, make sure you fetch all tags from upstream with"
+              echo "the command ``git fetch --tags --verbose`` and push"
+              echo "them to your fork with ``git push origin --tags``"
+            fi
+            # Build docker image
+            e=1 && for i in {1..5}; do
+              docker build \
+                --cache-from=pynets \
+                --rm=false \
+                -t pynets:latest \
+                --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+                --build-arg VCS_REF=`git rev-parse --short HEAD` \
+                --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
+              && e=0 && break || sleep 15
+            done && [ "$e" -eq "0" ]
+            # test if development image should be built
+            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[build[ _]?devel\]' )" != "" ]]; then
+              echo "building development container"
+              docker tag pynets pynets:unstable
+              docker build \
+                --rm=false \
+                -t pynets \
+                -f Dockerfile .
+            fi
+
+      - run:
+          name: Docker save
+          no_output_timeout: 40m
+          command: |
+            mkdir -p /tmp/cache
+            docker save debian:stretch-slim pynets:latest \
+            | pigz -3 > /tmp/cache/docker.tar.gz
+      - save_cache:
+         key: docker-v0-{{ .Branch }}-{{ .Revision }}-{{ epoch }}
+         paths:
+            - /tmp/cache/docker.tar.gz
+
+      - run:
+          name: Smoke test Docker image
+          command: |
+            THISVERSION=$( python3 get_version.py )
+            THISVERSION=${THISVERSION%.dirty*}
+            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
+            DOCKERVERSION=$(docker run --rm -it pynets:latest --version)
+            DOCKERVERSION=${DOCKERVERSION%$'\r'}
+            DOCKERVERSION=${DOCKERVERSION#*"pynets v"}
+            echo "VERSION: \"$THISVERSION\""
+            echo "DOCKERVERSION: \"${DOCKERVERSION}\""
+            test "$DOCKERVERSION" = "$THISVERSION"
+
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - src/pynets
+
+  get_data:
+    machine:
+      # Ubuntu 14.04 with Docker 17.10.0-ce
+      image: circleci/classic:201711-01
+    working_directory: /home/circleci/data
+    steps:
+      - restore_cache:
+          keys:
+            - data-v0-{{ .Revision }}
+            - data-v0-
+      - run:
+          name: Store FreeSurfer license file
+          command: |
+            mkdir -p /tmp/fslicense
+            cd /tmp/fslicense
+            echo "cHJpbnRmICJrcnp5c3p0b2YuZ29yZ29sZXdza2lAZ21haWwuY29tXG41MTcyXG4gKkN2dW12RVYzelRmZ1xuRlM1Si8yYzFhZ2c0RVxuIiA+IGxpY2Vuc2UudHh0Cg==" | base64 -d | sh
+      - run:
+          name: Create Nipype config files
+          command: |
+            mkdir -p /tmp/config
+            printf "[execution]\nstop_on_first_crash = true\n" > /tmp/config/nipype.cfg
+            echo "poll_sleep_duration = 0.01" >> /tmp/config/nipype.cfg
+            echo "hash_method = content" >> /tmp/config/nipype.cfg
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - fslicense
+            - config/nipype.cfg
+      - save_cache:
+         key: data-v0-{{ .Revision }}-{{ epoch }}
+         paths:
+            - /tmp/data
+
+  deploy_docker_patches:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/src/pynets
+    steps:
+
+      - restore_cache:
+          keys:
+            - docker-v0-{{ .Branch }}-{{ .Revision }}
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 30m
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              sudo apt update && sudo apt -y install pigz
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+      - run:
+          name: Deploy to Docker Hub
+          no_output_timeout: 40m
+          command: |
+            if [[ -n "$DOCKER_PASS" ]]; then
+              docker login -u $DOCKER_USER -p $DOCKER_PASS
+              docker tag pynets pynets:${CIRCLE_BRANCH#docker/}
+              docker push pynets:${CIRCLE_BRANCH#docker/}
+            fi
+
+  deploy_docker:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/src/pynets
+    steps:
+      - checkout:
+          path: /home/circleci/src/pynets
+      - run:
+          name: Check whether build should be skipped
+          command: |
+            cd /home/circleci/src/pynets
+            if [[ "$( git log --format='format:%s' -n 1 $CIRCLE_SHA1 | grep -i -E '^docs?(\(\w+\))?:' )" != "" ]]; then
+              echo "Only docs build"
+              circleci step halt
+            fi
+      - restore_cache:
+          keys:
+            - docker-v0-{{ .Branch }}-{{ .Revision }}
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 30m
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              sudo apt update && sudo apt -y install pigz
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+      - run:
+          name: Deploy to Docker Hub
+          no_output_timeout: 40m
+          command: |
+            if [[ -n "$DOCKER_PASS" ]]; then
+              docker login -u $DOCKER_USER -p $DOCKER_PASS
+              docker tag pynets pynets:unstable
+              docker push pynets:unstable
+              if [[ -n "$CIRCLE_TAG" ]]; then
+                docker push pynets:latest
+                docker tag pynets pynets:$CIRCLE_TAG
+                docker push pynets:$CIRCLE_TAG
+              fi
+            fi
+
+  test_deploy_pypi:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/src/pynets
+    steps:
+      - checkout
+      - run:
+          name: Build pynets
+          command: |
+            pyenv local 3.5.2
+            pip install twine  # For use in checking distributions
+            THISVERSION=$( python get_version.py )
+            THISVERSION=${THISVERSION%.dirty*}
+            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
+            virtualenv --python=python build
+            source build/bin/activate
+            pip install --upgrade "pip>=19.1" numpy
+            echo "${CIRCLE_TAG:-$THISVERSION}" > pynets/VERSION
+            python setup.py sdist
+            pip wheel --no-deps -w dist/ .
+      - store_artifacts:
+          path: /tmp/src/pynets/dist
+      - run:
+          name: Check sdist distribution
+          command: |
+            pyenv local 3.5.2
+            THISVERSION=$( python get_version.py )
+            THISVERSION=${THISVERSION%.dirty*}
+            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
+            twine check dist/pynets*.tar.gz
+            virtualenv --python=python sdist
+            source sdist/bin/activate
+            pip install --upgrade "pip>=19.1" numpy
+            pip install dist/pynets*.tar.gz
+            which pynets | grep sdist\\/bin
+            INSTALLED_VERSION=$(pynets --version)
+            INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
+            INSTALLED_VERSION=${INSTALLED_VERSION#*"pynets v"}
+            echo "VERSION: \"$THISVERSION\""
+            echo "INSTALLED: \"$INSTALLED_VERSION\""
+            test "$INSTALLED_VERSION" = "$THISVERSION"
+      - run:
+          name: Check wheel distribution
+          command: |
+            pyenv local 3.5.2
+            THISVERSION=$( python get_version.py )
+            THISVERSION=${THISVERSION%.dirty*}
+            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
+            twine check dist/pynets*.whl
+            virtualenv --python=python wheel
+            source wheel/bin/activate
+            pip install dist/pynets*.whl
+            which pynets | grep wheel\\/bin
+            INSTALLED_VERSION=$(pynets --version)
+            INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
+            INSTALLED_VERSION=${INSTALLED_VERSION#*"pynets v"}
+            echo "VERSION: \"$THISVERSION\""
+            echo "INSTALLED: \"$INSTALLED_VERSION\""
+            test "$INSTALLED_VERSION" = "$THISVERSION"
+      - store_artifacts:
+          path: /tmp/src/pynets/dist
+
+  deploy_pypi:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/src/pynets
+    steps:
+      - checkout
+      - run:
+          name: Build pynets
+          command: |
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/src/pynets
+            sudo setfacl -m group:$(id -gn):rwx /tmp/src/pynets
+            pyenv local 3.5.2
+            THISVERSION=$( python get_version.py )
+            echo "${CIRCLE_TAG:-$THISVERSION}" > pynets/VERSION
+            docker run --rm=false --entrypoint=/bin/bash -v `pwd`:/io -w /io python:3.6.9 -c "pip install numpy && python setup.py sdist"
+            docker run --rm=false -e PLAT='manylinux1_x86_64' -e PKGNAME='pynets' -v `pwd`:/io \
+                quay.io/pypa/manylinux1_x86_64 /io/.circleci/pypi_wheel/build-wheels.sh
+      - run:
+          name: Upload packages to PyPI
+          command: |
+            pyenv local 3.5.2
+            pip install twine
+            twine upload dist/pynets*
+
+  deployable:
+    docker:
+      - image: busybox:latest
+    steps:
+      - run: echo Deploying!
+
+workflows:
+  version: 2
+  build_test_deploy:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+            tags:
+              only: /.*/
+
+      - get_data:
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+                - /tests?\/.*/
+                - /docker\/.*/
+            tags:
+              only: /.*/
+
+      - test_deploy_pypi:
+          filters:
+            branches:
+              ignore:
+                - /docs\/.*/
+                - /docker\/.*/
+            tags:
+              only: /.*/
+
+      - deploy_docker_patches:
+          requires:
+            - build
+          filters:
+            branches:
+              only: /docker\/.*/
+
+      - deployable:
+          requires:
+            - build
+            - test_deploy_pypi
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
+
+      - deploy_docker:
+          requires:
+            - deployable
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
+
+      - deploy_pypi:
+          requires:
+            - deployable
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
