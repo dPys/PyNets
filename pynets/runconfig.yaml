@@ -78,7 +78,7 @@ resource_dict:
         - (1, 4)
 execution_dict:
     - 'stop_on_first_crash':
-        - True
+        - False
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':
@@ -94,9 +94,9 @@ execution_dict:
     - 'keep_inputs':
         - False
     - 'remove_unnecessary_outputs':
-        - False
+        - True
     - 'remove_node_directories':
-        - False
+        - True
     - 'raise_insufficient':
         - False
     - 'maxtasksperchild':

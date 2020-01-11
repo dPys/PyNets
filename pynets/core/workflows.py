@@ -2408,12 +2408,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     thr_func_iter_fields = ['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr', 'node_size', 'network',
                             'conn_model', 'roi', 'smooth', 'prune', 'ID', 'dir_path', 'atlas', 'uatlas', 'labels',
                             'coords', 'c_boot', 'norm', 'binary', 'hpass']
-    thr_func_iter_connects = [('conn_matrix_thr', 'conn_matrix_thr'), ('edge_threshold', 'edge_threshold'),
-                              ('est_path', 'est_path'), ('thr', 'thr'), ('node_size', 'node_size'),
-                              ('network', 'network'), ('conn_model', 'conn_model'), ('roi', 'roi'),
-                              ('smooth', 'smooth'), ('prune', 'prune'), ('ID', 'ID'), ('dir_path', 'dir_path'),
-                              ('atlas', 'atlas'), ('uatlas', 'uatlas'), ('labels', 'labels'), ('coords', 'coords'),
-                              ('c_boot', 'c_boot'), ('norm', 'norm'), ('binary', 'binary'), ('hpass', 'hpass')]
 
     if no_iters is True:
         thresh_func_node = pe.Node(niu.Function(input_names=thr_func_fields,
@@ -2467,7 +2461,16 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                           joinsource=thr_info_node,
                                           joinfield=thr_func_iter_fields)
         fmri_connectometry_wf.connect([
-            (thresh_func_node, join_iters_node_thr, thr_func_iter_connects)
+            (thresh_func_node, join_iters_node_thr, [('conn_matrix_thr', 'conn_matrix_thr'),
+                                                     ('edge_threshold', 'edge_threshold'),
+                                                     ('est_path', 'est_path'), ('thr', 'thr'),
+                                                     ('node_size', 'node_size'), ('network', 'network'),
+                                                     ('conn_model', 'conn_model'), ('roi', 'roi'),
+                                                     ('smooth', 'smooth'), ('prune', 'prune'), ('ID', 'ID'),
+                                                     ('dir_path', 'dir_path'), ('atlas', 'atlas'),
+                                                     ('uatlas', 'uatlas'), ('labels', 'labels'),
+                                                     ('coords', 'coords'), ('c_boot', 'c_boot'), ('norm', 'norm'),
+                                                     ('binary', 'binary'), ('hpass', 'hpass')])
         ])
         thr_out_node = join_iters_node_thr
     else:
