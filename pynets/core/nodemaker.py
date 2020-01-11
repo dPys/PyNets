@@ -881,7 +881,7 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
                                 print('AAL reference labeling failed!')
                                 labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                         else:
-                            print('Using generic numbering labels...')
+                            print('Using generic index labels...')
                             labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                 except:
                     print("Label reference file not found. Attempting AAL naming...")
@@ -892,7 +892,7 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
                             print('AAL reference labeling failed!')
                             labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
                     else:
-                        print('Using generic numbering labels...')
+                        print('Using generic index labels...')
                         labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
     else:
         print('WARNING: No labels available since atlas name is not specified!')

@@ -1666,7 +1666,6 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                     # sql_db.engine.execute("SELECT * FROM func").fetchall()
                     del sql_db
                 del df_summary_auc
-            del models_grouped
         else:
             for file_ in net_mets_csv_list:
                 dfs_non_auc.append(pd.read_csv(file_))
@@ -1679,9 +1678,12 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
 
                 # Concatenate and find mean across dataframes
                 print('Concatenating frames...')
-                if max([len(i) for i in models_grouped]) > 1:
-                    df_concat = pd.concat([meta[thr_set]['auc_dataframe'] for thr_set in meta.keys()])
-                    del meta
+                if models_grouped:
+                    if max([len(i) for i in models_grouped]) > 1:
+                        df_concat = pd.concat([meta[thr_set]['auc_dataframe'] for thr_set in meta.keys()])
+                        del meta
+                    else:
+                        df_concat = pd.concat(dfs_non_auc)
                 else:
                     df_concat = pd.concat(dfs_non_auc)
                 measures = list(df_concat.columns)

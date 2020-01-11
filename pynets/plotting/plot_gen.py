@@ -737,33 +737,55 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    for name in measures:
-        try:
-            x = np.array(df_concat[name][np.isfinite(df_concat[name])])
-        except:
-            pass
-        try:
-            x = np.delete(x, np.argwhere(x == '')).astype('float')
-        except:
-            pass
-        fig, ax = plt.subplots(tight_layout=True)
-        if True in pd.isnull(x):
-            x = x[~pd.isnull(x)]
-            if len(x) > 0:
-                print("%s%s%s" % ('NaNs encountered for ', name,
-                                  '. Plotting and averaging across non-missing values. Checking output is '
-                                  'recommended...'))
-                ax.hist(x)
-            else:
-                print("%s%s" % ('Warning: No numeric data to plot for ', name))
-                continue
-        else:
+    def nearest_square_root(limit):
+        answer = 0
+        while (answer + 1) ** 2 < limit:
+            answer += 1
+        return int(np.sqrt(answer ** 2))
+
+    global_measures = [meas for meas in measures if not meas.split('_')[0].isdigit()]
+
+    if len(global_measures) >= 30:
+        fig, axes = plt.subplots(ncols=nearest_square_root(len(global_measures)) + 1,
+                                 nrows=nearest_square_root(len(global_measures)),
+                                 sharex=True, sharey=True, figsize=(10, 10))
+        for i, ax in enumerate(axes.flatten()):
             try:
-                ax.hist(x)
+                x = np.array(df_concat[global_measures[i]][np.isfinite(df_concat[global_measures[i]])])
             except:
-                print("%s%s" % ('Warning: Inf or NaN values encounterd. No numeric data to plot for ', name))
                 pass
-        out_path_fig = "%s%s%s%s" % (namer_dir, '/', name, '_mean_plot.png')
+            try:
+                x = np.delete(x, np.argwhere(x == '')).astype('float')
+            except:
+                pass
+
+            if True in pd.isnull(x):
+                x = x[~pd.isnull(x)]
+                if len(x) > 0:
+                    print("%s%s%s" % ('NaNs encountered for ', global_measures[i],
+                                      '. Plotting and averaging across non-missing values. Checking output is '
+                                      'recommended...'))
+                    ax.hist(x, density=True, bins='auto', alpha=0.8)
+                    ax.set_title(global_measures[i])
+                else:
+                    print("%s%s" % ('Warning: No numeric data to plot for ', global_measures[i]))
+                    continue
+            else:
+                try:
+                    ax.hist(x, density=True, bins='auto', alpha=0.8)
+                    ax.set_title(global_measures[i])
+                except:
+                    print("%s%s" % ('Warning: Inf or NaN values encounterd. No numeric data to plot for ',
+                                    global_measures[i]))
+                    pass
+
+        plt.tight_layout()
+        out_path_fig = "%s%s" % (namer_dir, '/mean_global_topology_distribution_multiplot.png')
         fig.savefig(out_path_fig)
         plt.close('all')
+    else:
+        print('At least 30 iterations needed to produce multiplot of global graph topology distributions. '
+              'Continuing...')
+        pass
+
     return

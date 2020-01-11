@@ -1433,7 +1433,7 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype import config, logging
             cfg_v = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'DEBUG', 'log_to_file': True,
-                                  'interface_level': 'DEBUG'},
+                                  'interface_level': 'DEBUG', 'filemanip_level': 'DEBUG'},
                          monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True})
             logging.update_logging(config)
             config.update_config(cfg_v)
@@ -1504,18 +1504,18 @@ def build_workflow(args, retval):
         wf.get_node(meta_wf.name).get_node(wf_selected).mem_gb = procmem[1]
 
         # Fully-automated graph analysis
-        net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
-                                   iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
-                                              'roi', 'prune', 'norm', 'binary'], nested=True,
-                                   imports=import_list)
+        if conn_model_list or node_size_list or smooth_list or multi_thr or user_atlas_list or multi_atlas or float(k_clustering) > 1 or (uatlas and atlas) or (uatlas and k_clustering) or (atlas and k_clustering) or hpass_list:
+            net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
+                                       iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
+                                                  'roi', 'prune', 'norm', 'binary'], nested=True,
+                                       imports=import_list)
+            net_mets_node.synchronize = True
+        else:
+            net_mets_node = pe.Node(interface=ExtractNetStats(), name="ExtractNetStats",
+                                    field=['ID', 'network', 'thr', 'conn_model', 'est_path',
+                                           'roi', 'prune', 'norm', 'binary'], imports=import_list)
         net_mets_node._n_procs = 1
         net_mets_node._mem_gb = 1
-        net_mets_node.synchronize = True
-
-        # Aggregate list of paths to pandas dataframe pickles
-        join_net_mets = pe.JoinNode(niu.IdentityInterface(fields=['out_path_neat']),
-                                    name='join_net_mets', joinsource=net_mets_node,
-                                    joinfield=['out_path_neat'])
 
         collect_pd_list_net_csv_node = pe.Node(niu.Function(input_names=['net_mets_csv'],
                                                             output_names=['net_mets_csv_out'],
@@ -1552,7 +1552,6 @@ def build_workflow(args, retval):
                                                   ('plot_switch', 'plot_switch'),
                                                   ('multi_nets', 'multi_nets'),
                                                   ('multimodal', 'multimodal')]),
-            (net_mets_node, join_net_mets, [('out_path_neat', 'out_path_neat')]),
             (net_mets_node, collect_pd_list_net_csv_node, [('out_path_neat', 'net_mets_csv')]),
             (collect_pd_list_net_csv_node, combine_pandas_dfs_node, [('net_mets_csv_out', 'net_mets_csv_list')]),
             (combine_pandas_dfs_node, final_outputnode, [('combination_complete', 'combination_complete')])
@@ -1765,7 +1764,8 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype import config, logging
             cfg_v = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'DEBUG', 'interface_level': 'DEBUG',
-                                  'log_directory': str(wf_multi.base_dir), 'log_to_file': True},
+                                  'filemanip_level': 'DEBUG', 'log_directory': str(wf_multi.base_dir),
+                                  'log_to_file': True},
                          monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True,
                                      'summary_file': str(wf_multi.base_dir)})
             logging.update_logging(config)
@@ -1850,7 +1850,7 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype import config, logging
             cfg_v = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'DEBUG', 'interface_level': 'DEBUG',
-                                  'log_directory': str(wf.base_dir), 'log_to_file': True},
+                                  'filemanip_level': 'DEBUG', 'log_directory': str(wf.base_dir), 'log_to_file': True},
                          monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True,
                                      'summary_file': str(wf.base_dir)})
             logging.update_logging(config)
