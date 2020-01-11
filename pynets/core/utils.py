@@ -252,7 +252,7 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
                                                          float(c_boot) > 0 else ''),
                                                  "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_')),
                                                  "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_')),
-                                                 '.npy')
+                                                 'raw.npy')
 
     return est_path
 
@@ -315,7 +315,7 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
                                                          "%s" % ("%s%s%s" % ('samples-', int(target_samples),
                                                                              'streams_') if float(target_samples) > 0
                                                                  else ''), 'tt-', track_type, '_dg-', directget,
-                                                         '_ml-', max_length, '.npy')
+                                                         '_ml-', max_length, '_raw.npy')
     return est_path
 
 

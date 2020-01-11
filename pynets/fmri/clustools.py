@@ -466,11 +466,24 @@ class NilParcellate(object):
         from scipy.sparse import save_npz, load_npz
         from nilearn.regions import connected_regions
         from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
+
+        if self.clust_type == 'kmeans':
+            if self.k > len(connected_regions(self._clust_mask_corr_img, extract_type='connected_components',
+                                              min_region_size=1)[1]):
+                raise ValueError('k must be less than or equal to the total number of connected components in '
+                                 'the mask in the case of kmeans clustering.')
+
+        if self.clust_type == 'complete' or self.clust_type == 'average' or self.clust_type == 'single':
+            if len(connected_regions(self._clust_mask_corr_img, extract_type='connected_components',
+                                     min_region_size=1)[1]) > 1:
+                raise ValueError('Complete, Average, and Single linkage agglomerative clustering are unstable in the '
+                                 'case of multiple connected components.')
+
         if self.clust_type == 'ward':
             if self.k < len(connected_regions(self._clust_mask_corr_img, extract_type='connected_components',
                                               min_region_size=1)[1]):
-                raise ValueError('Error k must minimally be greater than the total number of connected components in '
-                                 'the mask.')
+                raise ValueError('k must minimally be greater than the total number of connected components in '
+                                 'the mask in the case of agglomerative clustering.')
             if self.local_corr == 'tcorr' or self.local_corr == 'scorr':
                 self._local_conn_mat_path = "%s%s%s%s" % (self.uatlas.split('.nii')[0], '_', self.local_corr,
                                                           '_conn.npz')

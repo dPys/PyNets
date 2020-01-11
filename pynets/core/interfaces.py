@@ -187,6 +187,7 @@ class _ExtractTimeseriesOutputSpec(TraitedSpec):
     coords = traits.Any(mandatory=True)
     c_boot = traits.Any(mandatory=True)
     hpass = traits.Any(mandatory=True)
+    roi = traits.Any(mandatory=True)
 
 
 class ExtractTimeseries(SimpleInterface):
@@ -243,6 +244,7 @@ class ExtractTimeseries(SimpleInterface):
         self._results['coords'] = te.coords
         self._results['c_boot'] = te.c_boot
         self._results['hpass'] = te.hpass
+        self._results['roi'] = self.inputs.roi
 
         del te
         gc.collect()

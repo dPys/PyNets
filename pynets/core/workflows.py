@@ -148,7 +148,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     if verbose is True:
         from nipype import config, logging
         cfg_v = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'DEBUG', 'log_to_file': True,
-                              'interface_level': 'DEBUG'},
+                              'interface_level': 'DEBUG', 'filemanip_level': 'DEBUG'},
                      monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True})
         logging.update_logging(config)
         config.update_config(cfg_v)
@@ -1641,6 +1641,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                        anat_file, runtime_dict, execution_dict, hpass, hpass_list, template, template_mask, vox_size,
                        local_corr):
     """A function interface for generating an fMRI nested workflow"""
+    import itertools
     import os.path as op
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -2028,11 +2029,13 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         # print('\n\n\n\n')
         # print('No flexi-atlas1')
         # print('\n\n\n\n')
+        atlas_iters = []
         flexi_atlas = False
         if multi_atlas:
-            fetch_nodes_and_labels_node.iterables = [("atlas", multi_atlas)]
+            atlas_iters.append(("atlas", multi_atlas))
         elif user_atlas_list:
-            fetch_nodes_and_labels_node.iterables = [("uatlas", user_atlas_list)]
+            atlas_iters.append(("uatlas", user_atlas_list))
+        fetch_nodes_and_labels_node.iterables = atlas_iters
 
     elif (atlas is not None and
           uatlas is None and k_clustering == 0) or (atlas is None and uatlas is not None and
@@ -2139,20 +2142,27 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                              function=nodemaker.node_gen, imports=import_list), name="node_gen_node")
 
     # Extract time-series from nodes
-    extract_ts_iterables = []
+    extract_ts_info_iters = []
+    extract_ts_info_node = pe.Node(name='extract_ts_info_node',
+                                   interface=niu.IdentityInterface(fields=['node_size', 'smooth', 'hpass']))
     extract_ts_node = pe.Node(ExtractTimeseries(),
                               input_names=['conf', 'func_file', 'coords', 'dir_path', 'ID', 'roi',
                                            'network', 'smooth', 'atlas', 'uatlas', 'labels', 'c_boot',
                                            'block_size', 'hpass', 'mask', 'parc', 'node_size',
                                            'net_parcels_nii_path'],
                               output_names=['ts_within_nodes', 'node_size', 'smooth', 'dir_path', 'atlas', 'uatlas',
-                                            'labels', 'coords', 'c_boot', 'hpass'], imports=import_list,
+                                            'labels', 'coords', 'c_boot', 'hpass', 'roi'], imports=import_list,
                               name="extract_ts_node")
 
     extract_ts_node.interface.n_procs = runtime_dict['extract_ts_node'][0]
     extract_ts_node.interface.mem_gb = runtime_dict['extract_ts_node'][1]
     extract_ts_node._n_procs = runtime_dict['extract_ts_node'][0]
     extract_ts_node._mem_gb = runtime_dict['extract_ts_node'][1]
+
+    if smooth_list and hpass_list:
+        smooth_hpass_combo = list(itertools.product(hpass_list, smooth_list))
+        hpass_list = [i[0] for i in smooth_hpass_combo]
+        smooth_list = [i[1] for i in smooth_hpass_combo]
 
     if parc is True:
         # Parcels case
@@ -2183,24 +2193,36 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
         # Set extract_ts iterables
         if node_size_list:
-            extract_ts_iterables.append(("node_size", node_size_list))
-            extract_ts_node.iterables = extract_ts_iterables
+            if not smooth_list and hpass_list:
+                node_size_hpass_combo = list(itertools.product(hpass_list, node_size_list))
+                hpass_list = [i[0] for i in node_size_hpass_combo]
+                node_size_list = [i[1] for i in node_size_hpass_combo]
+            elif smooth_list and not hpass_list:
+                node_size_smooth_combo = list(itertools.product(smooth_list, node_size_list))
+                smooth_list = [i[0] for i in node_size_smooth_combo]
+                node_size_list = [i[1] for i in node_size_smooth_combo]
+            extract_ts_info_iters.append(("node_size", node_size_list))
         else:
-            fmri_connectometry_wf.connect([(inputnode, extract_ts_node, [('node_size', 'node_size')])])
+            fmri_connectometry_wf.connect([(inputnode, extract_ts_info_node, [('node_size', 'node_size')])])
 
     if smooth_list:
-        extract_ts_iterables.append(("smooth", smooth_list))
-        extract_ts_node.iterables = extract_ts_iterables
+        extract_ts_info_iters.append(('smooth', smooth_list))
     else:
-        fmri_connectometry_wf.connect([(inputnode, extract_ts_node, [('smooth', 'smooth')])])
+        fmri_connectometry_wf.connect([(inputnode, extract_ts_info_node, [('smooth', 'smooth')])])
 
     if hpass_list:
-        extract_ts_iterables.append(("hpass", hpass_list))
-        extract_ts_node.iterables = extract_ts_iterables
+        extract_ts_info_iters.append(('hpass', hpass_list))
     else:
-        fmri_connectometry_wf.connect([(inputnode, extract_ts_node, [('hpass', 'hpass')])])
+        fmri_connectometry_wf.connect([(inputnode, extract_ts_info_node, [('hpass', 'hpass')])])
 
-    extract_ts_node.synchronize = True
+    if hpass_list or smooth_list or node_size_list:
+        # print("%s%s" % ('Expanding within-node iterable combos:\n', extract_ts_info_iters))
+        extract_ts_info_node.iterables = extract_ts_info_iters
+
+    extract_ts_info_node.synchronize = True
+
+    fmri_connectometry_wf.connect([(extract_ts_info_node, extract_ts_node, [('hpass', 'hpass'), ('smooth', 'smooth'),
+                                                                            ('node_size', 'node_size')])])
 
     # Connectivity matrix model fit
     get_conn_matrix_node = pe.Node(niu.Function(input_names=['time_series', 'conn_model', 'dir_path', 'node_size',
@@ -2218,7 +2240,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
     # Set get_conn_matrix_node iterables
     if conn_model_list:
-        get_conn_matrix_node.iterables = [("conn_model", conn_model_list)]
+        get_conn_matrix_node.iterables = ("conn_model", conn_model_list)
     else:
         fmri_connectometry_wf.connect([(inputnode, get_conn_matrix_node, [('conn_model', 'conn_model')])])
 
@@ -2236,7 +2258,9 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                            function=utils.save_RSN_coords_and_labels_to_pickle,
                                                            imports=import_list), name="save_coords_and_labels_node")
         if multi_nets:
-            get_node_membership_node.iterables = [("network", multi_nets)]
+            get_node_membership_iterables = []
+            get_node_membership_iterables.append(("network", multi_nets))
+            get_node_membership_node.iterables = get_node_membership_iterables
 
         fmri_connectometry_wf.connect([(inputnode, get_node_membership_node, [('network', 'network'),
                                                                               ('template', 'infile'),
@@ -2271,18 +2295,29 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     # Begin joinnode chaining
     # Set lists of fields and connect statements for repeated use throughout joins
     map_fields = ['conn_model', 'dir_path', 'conn_matrix', 'node_size', 'smooth', 'dens_thresh', 'network', 'ID',
-                  'roi', 'min_span_tree', 'disp_filt', 'parc', 'prune', 'thr', 'atlas', 'uatlas',
-                  'labels', 'coords', 'c_boot', 'norm', 'binary', 'hpass']
+                  'roi', 'min_span_tree', 'disp_filt', 'parc', 'prune', 'atlas', 'uatlas', 'labels', 'coords',
+                  'c_boot', 'norm', 'binary', 'hpass', 'thr']
 
     map_connects = [('conn_model', 'conn_model'), ('dir_path', 'dir_path'), ('conn_matrix', 'conn_matrix'),
                     ('node_size', 'node_size'), ('smooth', 'smooth'), ('dens_thresh', 'dens_thresh'), ('ID', 'ID'),
                     ('roi', 'roi'), ('min_span_tree', 'min_span_tree'), ('disp_filt', 'disp_filt'), ('parc', 'parc'),
-                    ('prune', 'prune'), ('network', 'network'), ('thr', 'thr'), ('atlas', 'atlas'),
+                    ('prune', 'prune'), ('network', 'network'), ('atlas', 'atlas'), ('thr', 'thr'),
                     ('uatlas', 'uatlas'), ('labels', 'labels'), ('coords', 'coords'),
                     ('c_boot', 'c_boot'), ('norm', 'norm'), ('binary', 'binary'), ('hpass', 'hpass')]
 
     # Create a "thr_info" node for iterating iterfields across thresholds
     thr_info_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='thr_info_node')
+
+    # Set iterables for thr on thresh_func, else set thr to singular input
+    if multi_thr is True:
+        iter_thresh = sorted(list(set([str(i) for i in np.round(np.arange(float(min_thr), float(max_thr),
+                                                                          float(step_thr)), decimals=2).tolist()] +
+                                      [str(float(max_thr))])))
+        thr_info_node.iterables = ("thr", iter_thresh)
+        thr_info_node.synchronize = True
+    else:
+        thr_info_node.iterables = ("thr", [thr])
+
     # Joinsource logic for atlas varieties
     if user_atlas_list or multi_atlas or float(k_clustering) > 0 or flexi_atlas is True:
         if flexi_atlas is True:
@@ -2294,128 +2329,67 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     else:
         atlas_join_source = None
 
-    # Connect all get_conn_matrix_node outputs to the "thr_info" node
+    # Connect all get_conn_matrix_node outputs to the "join_info" node
     fmri_connectometry_wf.connect([(get_conn_matrix_node, thr_info_node,
                                     [x for x in map_connects if x != ('thr', 'thr')])])
+
     # Begin joinnode chaining logic
-    if conn_model_list or node_size_list or smooth_list or user_atlas_list or multi_atlas or float(k_clustering) > 1 or flexi_atlas is True or multi_thr is True or hpass is not None:
-        join_iters_node_thr = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                          name='join_iters_node_thr',
-                                          joinsource=thr_info_node,
-                                          joinfield=map_fields)
-        join_iters_node_atlas = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                            name='join_iters_node_atlas',
-                                            joinsource=atlas_join_source,
-                                            joinfield=map_fields)
+    if conn_model_list or node_size_list or smooth_list or user_atlas_list or multi_atlas or float(k_clustering) > 1 or flexi_atlas is True or multi_thr is True or hpass_list is not None:
+        join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
+                                      name='join_iters_node_atlas',
+                                      joinsource=atlas_join_source,
+                                      joinfield=map_fields)
+
         if not conn_model_list and (node_size_list or smooth_list or hpass_list):
             # print('Time-series node extraction iterables...')
-            join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields), name='join_iters_extract_ts_node',
-                                          joinsource=extract_ts_node, joinfield=map_fields)
-            if multi_thr:
-                # print('Multiple thresholds...')
-                fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects)])
-                if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-                    # print('Multiple atlases...')
-                    fmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node_atlas, map_connects),
-                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
-                else:
-                    # print('Single atlas...')
-                    fmri_connectometry_wf.connect([(join_iters_node_thr, join_iters_node, map_connects)])
+            join_iters_node_ext_ts = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
+                                                 name='join_iters_extract_ts_node',
+                                                 joinsource=extract_ts_info_node, joinfield=map_fields)
+            if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
+                # print('Multiple atlases...')
+                fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_ext_ts, map_connects),
+                                               (join_iters_node_ext_ts, join_iters_node, map_connects)])
             else:
-                # print('Single threshold...')
-                if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-                    # print('Multiple atlases...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects),
-                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
-                else:
-                    # print('Single atlas...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
+                # print('Single atlas...')
+                fmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
         elif conn_model_list and (not node_size_list and not smooth_list and not hpass_list):
             # print('Multiple connectivity models...')
-            join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                          name='join_iters_get_conn_matrix_node',
-                                          joinsource=get_conn_matrix_node, joinfield=map_fields)
-            if multi_thr:
-                # print('Multiple thresholds...')
-                if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-                    # print('Multiple atlases...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
-                                                   (join_iters_node_thr, join_iters_node_atlas, map_connects),
-                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
-                else:
-                    # print('Single atlas...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
-                                                   (join_iters_node_thr, join_iters_node, map_connects)])
+            join_iters_node_get_conn_mx = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
+                                                      name='join_iters_get_conn_matrix_node',
+                                                      joinsource=get_conn_matrix_node, joinfield=map_fields)
+            if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
+                # print('Multiple atlases...')
+                fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_get_conn_mx, map_connects),
+                                               (join_iters_node_get_conn_mx, join_iters_node, map_connects)])
             else:
-                # print('Single threshold...')
-                if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-                    # print('Multiple atlases...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_atlas, map_connects),
-                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
-                else:
-                    # print('Single atlas...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
+                # print('Single atlas...')
+                fmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
         elif not conn_model_list and not node_size_list and not smooth_list and not hpass_list:
             # print('No connectivity model or time-series node extraction iterables...')
-            if multi_thr:
-                # print('Multiple thresholds...')
-                if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-                    # print('Multiple atlases...')
-                    join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                                  name='join_iters_iteratlas_node',
-                                                  joinsource=atlas_join_source, joinfield=map_fields)
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
-                                                   (join_iters_node_thr, join_iters_node, map_connects)])
-                else:
-                    # print('Single atlas...')
-                    join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                                  name='join_iters_thr_info_node',
-                                                  joinsource=thr_info_node, joinfield=map_fields)
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
+            if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
+                # print('Multiple atlases...')
+                fmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
             else:
-                # print('Single threshold...')
-                if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-                    # print('Multiple atlases...')
-                    join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                                  name='join_iters_iteratlas_node',
-                                                  joinsource=atlas_join_source, joinfield=map_fields)
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
-                else:
-                    # print('Single atlas...')
-                    join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
+                # print('Single atlas...')
+                join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
+                fmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
         elif conn_model_list and (node_size_list or smooth_list or hpass_list):
             # print('Connectivity model and time-series node extraction iterables...')
             join_iters_node_ext_ts = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                                 name='join_iters_node_ext_ts', joinsource=extract_ts_node,
+                                                 name='join_iters_node_ext_ts', joinsource=extract_ts_info_node,
                                                  joinfield=map_fields)
-            join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                          name='join_iters_get_conn_matrix_node',
-                                          joinsource=get_conn_matrix_node, joinfield=map_fields)
-            if multi_thr:
-                # print('Multiple thresholds...')
-                if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-                    # print('Multiple atlases...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
-                                                   (join_iters_node_thr, join_iters_node_ext_ts, map_connects),
-                                                   (join_iters_node_ext_ts, join_iters_node_atlas, map_connects),
-                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
-                else:
-                    # print('Single atlas...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_thr, map_connects),
-                                                   (join_iters_node_thr, join_iters_node_ext_ts, map_connects),
-                                                   (join_iters_node_ext_ts, join_iters_node, map_connects)])
+            join_iters_node_get_conn_mx = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
+                                                      name='join_iters_get_conn_matrix_node',
+                                                      joinsource=get_conn_matrix_node, joinfield=map_fields)
+            if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
+                # print('Multiple atlases...')
+                fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_get_conn_mx, map_connects),
+                                               (join_iters_node_get_conn_mx, join_iters_node_ext_ts, map_connects),
+                                               (join_iters_node_ext_ts, join_iters_node, map_connects)])
             else:
-                # print('Single threshold...')
-                if user_atlas_list or multi_atlas or flexi_atlas is True or float(k_clustering) > 1:
-                    # print('Multiple atlases...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_ext_ts, map_connects),
-                                                   (join_iters_node_ext_ts, join_iters_node_atlas, map_connects),
-                                                   (join_iters_node_atlas, join_iters_node, map_connects)])
-                else:
-                    # print('Single atlas...')
-                    fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_ext_ts, map_connects),
-                                                   (join_iters_node_ext_ts, join_iters_node, map_connects)])
+                # print('Single atlas...')
+                fmri_connectometry_wf.connect([(thr_info_node, join_iters_node_ext_ts, map_connects),
+                                               (join_iters_node_ext_ts, join_iters_node, map_connects)])
         else:
             raise RuntimeError('\nERROR: Unknown join context.')
 
@@ -2424,16 +2398,25 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         # Minimal case of no iterables
         print('\nNo iterables...\n')
         join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
-        fmri_connectometry_wf.connect([(thr_info_node, join_iters_node, map_connects)])
+        fmri_connectometry_wf.connect([(get_conn_matrix_node, join_iters_node, map_connects)])
         no_iters = True
 
     # Create final thresh_func node that performs the thresholding
+    thr_func_fields = ['dens_thresh', 'thr', 'conn_matrix', 'conn_model', 'network', 'ID', 'dir_path', 'roi',
+                       'node_size', 'min_span_tree', 'smooth', 'disp_filt', 'parc', 'prune', 'atlas', 'uatlas',
+                       'labels', 'coords', 'c_boot', 'norm', 'binary', 'hpass']
+    thr_func_iter_fields = ['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr', 'node_size', 'network',
+                            'conn_model', 'roi', 'smooth', 'prune', 'ID', 'dir_path', 'atlas', 'uatlas', 'labels',
+                            'coords', 'c_boot', 'norm', 'binary', 'hpass']
+    thr_func_iter_connects = [('conn_matrix_thr', 'conn_matrix_thr'), ('edge_threshold', 'edge_threshold'),
+                              ('est_path', 'est_path'), ('thr', 'thr'), ('node_size', 'node_size'),
+                              ('network', 'network'), ('conn_model', 'conn_model'), ('roi', 'roi'),
+                              ('smooth', 'smooth'), ('prune', 'prune'), ('ID', 'ID'), ('dir_path', 'dir_path'),
+                              ('atlas', 'atlas'), ('uatlas', 'uatlas'), ('labels', 'labels'), ('coords', 'coords'),
+                              ('c_boot', 'c_boot'), ('norm', 'norm'), ('binary', 'binary'), ('hpass', 'hpass')]
+
     if no_iters is True:
-        thresh_func_node = pe.Node(niu.Function(input_names=['dens_thresh', 'thr', 'conn_matrix', 'conn_model',
-                                                             'network', 'ID', 'dir_path', 'roi', 'node_size',
-                                                             'min_span_tree', 'smooth', 'disp_filt', 'parc', 'prune',
-                                                             'atlas', 'uatlas', 'labels', 'coords',
-                                                             'c_boot', 'norm', 'binary', 'hpass'],
+        thresh_func_node = pe.Node(niu.Function(input_names=thr_func_fields,
                                                 output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr',
                                                               'node_size', 'network', 'conn_model', 'roi', 'smooth',
                                                               'prune', 'ID', 'dir_path', 'atlas',
@@ -2442,37 +2425,53 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                 function=thresholding.thresh_func, imports=import_list),
                                    name="thresh_func_node")
     else:
-        thresh_func_node = pe.MapNode(niu.Function(input_names=['dens_thresh', 'thr', 'conn_matrix', 'conn_model',
-                                                                'network', 'ID', 'dir_path', 'roi', 'node_size',
-                                                                'min_span_tree', 'smooth', 'disp_filt', 'parc', 'prune',
-                                                                'atlas', 'uatlas', 'labels',
-                                                                'coords', 'c_boot', 'norm', 'binary', 'hpass'],
+        thresh_func_node = pe.MapNode(niu.Function(input_names=thr_func_fields,
                                                    output_names=['conn_matrix_thr', 'edge_threshold', 'est_path', 'thr',
                                                                  'node_size', 'network', 'conn_model', 'roi', 'smooth',
                                                                  'prune', 'ID', 'dir_path', 'atlas',
                                                                  'uatlas', 'labels', 'coords', 'c_boot',
                                                                  'norm', 'binary', 'hpass'],
-                                                   function=thresholding.thresh_func, imports=import_list),
-                                      name="thresh_func_node", iterfield=['dens_thresh', 'thr', 'conn_matrix',
-                                                                          'conn_model', 'network', 'ID', 'dir_path',
-                                                                          'roi', 'node_size', 'min_span_tree', 'smooth',
-                                                                          'disp_filt', 'parc', 'prune', 'atlas',
-                                                                          'uatlas', 'labels', 'coords',
-                                                                          'c_boot', 'norm', 'binary', 'hpass'],
-                                      nested=True)
-
+                                                   function=thresholding.thresh_func,
+                                                   imports=import_list), name="thresh_func_node",
+                                      iterfield=thr_func_fields, nested=True)
         thresh_func_node.synchronize = True
 
-    # Set iterables for thr on thresh_func, else set thr to singular input
-    if multi_thr is True:
-        iter_thresh = sorted(list(set([str(i) for i in np.round(np.arange(float(min_thr), float(max_thr),
-                                                                          float(step_thr)), decimals=2).tolist()] +
-                                      [str(float(max_thr))])))
-        thr_info_node.iterables = ("thr", iter_thresh)
-    else:
-        thr_info_node.iterables = ("thr", [thr])
+    fmri_connectometry_wf.connect([
+        (join_iters_node, thresh_func_node, [('dens_thresh', 'dens_thresh'),
+                                             ('thr', 'thr'),
+                                             ('conn_matrix', 'conn_matrix'),
+                                             ('conn_model', 'conn_model'),
+                                             ('network', 'network'),
+                                             ('ID', 'ID'),
+                                             ('dir_path', 'dir_path'),
+                                             ('roi', 'roi'),
+                                             ('node_size', 'node_size'),
+                                             ('min_span_tree', 'min_span_tree'),
+                                             ('smooth', 'smooth'),
+                                             ('disp_filt', 'disp_filt'),
+                                             ('parc', 'parc'),
+                                             ('prune', 'prune'),
+                                             ('atlas', 'atlas'),
+                                             ('uatlas', 'uatlas'),
+                                             ('labels', 'labels'),
+                                             ('coords', 'coords'),
+                                             ('c_boot', 'c_boot'),
+                                             ('norm', 'norm'),
+                                             ('binary', 'binary'),
+                                             ('hpass', 'hpass')])
+    ])
 
-    thr_info_node.synchronize = True
+    if multi_thr is True:
+        join_iters_node_thr = pe.JoinNode(niu.IdentityInterface(fields=thr_func_iter_fields),
+                                          name='join_iters_node_thr',
+                                          joinsource=thr_info_node,
+                                          joinfield=thr_func_iter_fields)
+        fmri_connectometry_wf.connect([
+            (thresh_func_node, join_iters_node_thr, thr_func_iter_connects)
+        ])
+        thr_out_node = join_iters_node_thr
+    else:
+        thr_out_node = thresh_func_node
 
     # Plotting
     if plot_switch is True:
@@ -2491,27 +2490,28 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                  function=plot_gen.plot_all_func, imports=import_list),
                                     name="plot_all_node")
 
-        # Connect thresh_func_node outputs to plotting node
-        fmri_connectometry_wf.connect([(thresh_func_node, plot_all_node, [('ID', 'ID'),
-                                                                          ('roi', 'roi'),
-                                                                          ('network', 'network'),
-                                                                          ('prune', 'prune'),
-                                                                          ('node_size', 'node_size'),
-                                                                          ('smooth', 'smooth'),
-                                                                          ('dir_path', 'dir_path'),
-                                                                          ('conn_matrix_thr', 'conn_matrix'),
-                                                                          ('edge_threshold', 'edge_threshold'),
-                                                                          ('thr', 'thr'),
-                                                                          ('conn_model', 'conn_model'),
-                                                                          ('atlas', 'atlas'),
-                                                                          ('uatlas', 'uatlas'),
-                                                                          ('labels', 'labels'),
-                                                                          ('coords', 'coords'),
-                                                                          ('c_boot', 'c_boot'),
-                                                                          ('norm', 'norm'),
-                                                                          ('binary', 'binary'),
-                                                                          ('hpass', 'hpass')])
+        # Connect thr_out_node outputs to plotting node
+        fmri_connectometry_wf.connect([(thr_out_node, plot_all_node, [('ID', 'ID'),
+                                                                      ('roi', 'roi'),
+                                                                      ('network', 'network'),
+                                                                      ('prune', 'prune'),
+                                                                      ('node_size', 'node_size'),
+                                                                      ('smooth', 'smooth'),
+                                                                      ('dir_path', 'dir_path'),
+                                                                      ('conn_matrix_thr', 'conn_matrix'),
+                                                                      ('edge_threshold', 'edge_threshold'),
+                                                                      ('thr', 'thr'),
+                                                                      ('conn_model', 'conn_model'),
+                                                                      ('atlas', 'atlas'),
+                                                                      ('uatlas', 'uatlas'),
+                                                                      ('labels', 'labels'),
+                                                                      ('coords', 'coords'),
+                                                                      ('c_boot', 'c_boot'),
+                                                                      ('norm', 'norm'),
+                                                                      ('binary', 'binary'),
+                                                                      ('hpass', 'hpass')])
                                        ])
+
     # Create outputnode to capture results of nested workflow
     outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'network', 'prune', 'ID', 'roi',
                                                        'conn_model', 'norm', 'binary']),
@@ -2528,21 +2528,21 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                       'conn_model', 'node_size', 'smooth', 'c_boot', 'norm',
                                                       'binary', 'hpass'])
         fmri_connectometry_wf.connect([
-            (thresh_func_node, join_iters_node_nets, [('thr', 'thr'), ('network', 'network'),
-                                                      ('est_path', 'est_path'), ('node_size', 'node_size'),
-                                                      ('smooth', 'smooth'), ('roi', 'roi'),
-                                                      ('conn_model', 'conn_model'), ('ID', 'ID'),
-                                                      ('prune', 'prune'), ('c_boot', 'c_boot'),
-                                                      ('norm', 'norm'), ('binary', 'binary'), ('hpass', 'hpass')]),
+            (thr_out_node, join_iters_node_nets, [('thr', 'thr'), ('network', 'network'),
+                                                  ('est_path', 'est_path'), ('node_size', 'node_size'),
+                                                  ('smooth', 'smooth'), ('roi', 'roi'),
+                                                  ('conn_model', 'conn_model'), ('ID', 'ID'),
+                                                  ('prune', 'prune'), ('c_boot', 'c_boot'),
+                                                  ('norm', 'norm'), ('binary', 'binary'), ('hpass', 'hpass')]),
             (join_iters_node_nets, outputnode, [('thr', 'thr'), ('network', 'network'), ('est_path', 'est_path'),
                                                 ('roi', 'roi'), ('conn_model', 'conn_model'), ('ID', 'ID'),
                                                 ('prune', 'prune'), ('norm', 'norm'), ('binary', 'binary')])
         ])
     else:
         fmri_connectometry_wf.connect([
-            (thresh_func_node, outputnode, [('thr', 'thr'), ('network', 'network'), ('est_path', 'est_path'),
-                                            ('roi', 'roi'), ('conn_model', 'conn_model'), ('ID', 'ID'),
-                                            ('prune', 'prune'), ('norm', 'norm'), ('binary', 'binary')])
+            (thr_out_node, outputnode, [('thr', 'thr'), ('network', 'network'), ('est_path', 'est_path'),
+                                        ('roi', 'roi'), ('conn_model', 'conn_model'), ('ID', 'ID'),
+                                        ('prune', 'prune'), ('norm', 'norm'), ('binary', 'binary')])
         ])
 
     # Handle masking scenarios (brain mask and/or roi)
@@ -2553,11 +2553,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                                imports=import_list),
                                                   name="check_orient_and_dims_mask_node")
         fmri_connectometry_wf.connect([
-            (inputnode, extract_ts_node, [('roi', 'roi')]),
             (inputnode, check_orient_and_dims_mask_node, [('mask', 'infile'), ('vox_size', 'vox_size')]),
-            (check_orient_and_dims_mask_node, extract_ts_node, [('outfile', 'mask')]),
-            (check_orient_and_dims_mask_node, node_gen_node, [('outfile', 'roi')]),
-            (check_orient_and_dims_mask_node, get_conn_matrix_node, [('outfile', 'roi')]),
+            (check_orient_and_dims_mask_node, extract_ts_node, [('outfile', 'mask'), ('outfile', 'roi')]),
+            (extract_ts_node, get_conn_matrix_node, [('roi', 'roi')]),
+            (check_orient_and_dims_mask_node, node_gen_node, [('outfile', 'roi')])
         ])
         if k_clustering > 0:
             fmri_connectometry_wf.connect([
@@ -2604,8 +2603,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                  ('node_size', 'node_size'), ('smooth', 'smooth'),
                                                  ('coords', 'coords'), ('labels', 'labels'),
                                                  ('atlas', 'atlas'), ('uatlas', 'uatlas'),
-                                                 ('c_boot', 'c_boot'), ('hpass', 'hpass')]),
-        (join_iters_node, thresh_func_node, map_connects)
+                                                 ('c_boot', 'c_boot'), ('hpass', 'hpass')])
     ])
 
     # Handle case that t1w image is available to refine parcellation
@@ -2625,8 +2623,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_file')]),
             (check_orient_and_dims_anat_node, register_atlas_node, [('outfile', 'anat_file')]),
             (inputnode, register_node, [('basedir_path', 'basedir_path'), ('vox_size', 'vox_size')]),
-            (inputnode, register_atlas_node, [('basedir_path', 'basedir_path'),
-                                              ('vox_size', 'vox_size')]),
+            (inputnode, register_atlas_node, [('basedir_path', 'basedir_path'), ('vox_size', 'vox_size')]),
             (register_node, register_atlas_node, [('reg_fmri_complete', 'reg_fmri_complete')]),
             (inputnode, check_orient_and_dims_uatlas_node, [('vox_size', 'vox_size')]),
             (fetch_nodes_and_labels_node, check_orient_and_dims_uatlas_node, [('uatlas', 'infile')]),
