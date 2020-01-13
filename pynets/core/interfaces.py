@@ -117,20 +117,31 @@ class IndividualClustering(SimpleInterface):
 
     def _run_interface(self, runtime):
         import gc
+        from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import clustools
         from pynets.registration.reg_utils import check_orient_and_dims
 
         nilearn_clust_list = ['kmeans', 'ward', 'complete', 'average']
 
-        clust_mask_temp_path = check_orient_and_dims(self.inputs.clust_mask, self.inputs.vox_size)
+        clust_mask_temp_path = check_orient_and_dims(self.inputs.clust_mask, self.inputs.vox_size,
+                                                     outdir=runtime.cwd)
 
-        nip = clustools.NilParcellate(func_file=self.inputs.func_file,
+        out_name_mask = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.mask, out_name_mask, copy=True, use_hardlink=False)
+
+        out_name_func_file = fname_presuffix(self.inputs.func_file, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.func_file, out_name_func_file, copy=True, use_hardlink=False)
+
+        out_name_conf = fname_presuffix(self.inputs.conf, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.conf, out_name_conf, copy=True, use_hardlink=False)
+
+        nip = clustools.NilParcellate(func_file=out_name_func_file,
                                       clust_mask=clust_mask_temp_path,
                                       k=self.inputs.k,
                                       clust_type=self.inputs.clust_type,
                                       local_corr=self.inputs.local_corr,
-                                      conf=self.inputs.conf,
-                                      mask=self.inputs.mask)
+                                      conf=out_name_conf,
+                                      mask=out_name_mask)
 
         atlas = nip.create_clean_mask()
         nip.create_local_clustering(overwrite=True, r_thresh=0.4)
@@ -197,12 +208,26 @@ class ExtractTimeseries(SimpleInterface):
 
     def _run_interface(self, runtime):
         import gc
+        from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import estimation
 
-        te = estimation.TimeseriesExtraction(net_parcels_nii_path=self.inputs.net_parcels_nii_path,
+        out_name_net_parcels_nii_path = fname_presuffix(self.inputs.net_parcels_nii_path, suffix='_tmp',
+                                                        newpath=runtime.cwd)
+        copyfile(self.inputs.net_parcels_nii_path, out_name_net_parcels_nii_path, copy=True, use_hardlink=False)
+
+        out_name_mask = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.mask, out_name_mask, copy=True, use_hardlink=False)
+
+        out_name_func_file = fname_presuffix(self.inputs.func_file, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.func_file, out_name_func_file, copy=True, use_hardlink=False)
+
+        out_name_conf = fname_presuffix(self.inputs.conf, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.conf, out_name_conf, copy=True, use_hardlink=False)
+
+        te = estimation.TimeseriesExtraction(net_parcels_nii_path=out_name_net_parcels_nii_path,
                                              node_size=self.inputs.node_size,
-                                             conf=self.inputs.conf,
-                                             func_file=self.inputs.func_file,
+                                             conf=out_name_conf,
+                                             func_file=out_name_func_file,
                                              coords=self.inputs.coords,
                                              roi=self.inputs.roi,
                                              dir_path=self.inputs.dir_path,
@@ -215,7 +240,7 @@ class ExtractTimeseries(SimpleInterface):
                                              c_boot=self.inputs.c_boot,
                                              block_size=self.inputs.block_size,
                                              hpass=self.inputs.hpass,
-                                             mask=self.inputs.mask)
+                                             mask=out_name_mask)
 
         te.prepare_inputs()
         if self.inputs.parc is False:
