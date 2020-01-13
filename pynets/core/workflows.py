@@ -2335,10 +2335,13 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
     # Begin joinnode chaining logic
     if conn_model_list or node_size_list or smooth_list or user_atlas_list or multi_atlas or float(k_clustering) > 1 or flexi_atlas is True or multi_thr is True or hpass_list is not None:
-        join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
-                                      name='join_iters_node_atlas',
-                                      joinsource=atlas_join_source,
-                                      joinfield=map_fields)
+        if user_atlas_list or multi_atlas or float(k_clustering) > 1 or flexi_atlas is True:
+            join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
+                                          name='join_iters_node_atlas',
+                                          joinsource=atlas_join_source,
+                                          joinfield=map_fields)
+        else:
+            join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
 
         if not conn_model_list and (node_size_list or smooth_list or hpass_list):
             # print('Time-series node extraction iterables...')

@@ -328,7 +328,7 @@ def wm_syn(template_path, fa_path, working_dir):
     return mapping, affine_map, warped_fa
 
 
-def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
+def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True, outdir=None):
     """
     An API to reorient any image to RAS+ and resample any image to a given voxel resolution.
 
@@ -342,6 +342,8 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
         File path to corresponding bvecs file if infile is a dwi.
     overwrite : bool
         Boolean indicating whether to overwrite existing outputs. Default is True.
+    outdir : str
+        Path to output directory. Default is working directory of infile.
 
     Returns
     -------
@@ -353,7 +355,8 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True):
     import os.path as op
     from pynets.registration.reg_utils import reorient_dwi, reorient_img, match_target_vox_res
 
-    outdir = op.dirname(infile)
+    if outdir is None:
+        outdir = op.dirname(infile)
     img = nib.load(infile)
     vols = img.shape[-1]
 

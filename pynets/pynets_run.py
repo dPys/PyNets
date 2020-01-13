@@ -1811,6 +1811,9 @@ def build_workflow(args, retval):
                 for cnfnd_tmp_dir in glob.glob("%s%s" % (func_dir, '/*/confounds_tmp')):
                     shutil.rmtree(cnfnd_tmp_dir)
 
+        # print('Cleaning up...')
+        # shutil.rmtree(work_dir, ignore_errors=True)
+
     # Single-subject workflow generator
     else:
         # Single-subject pipeline
@@ -1895,9 +1898,12 @@ def build_workflow(args, retval):
             for cnfnd_tmp_dir in glob.glob("%s%s" % (func_dir, '/*/confounds_tmp')):
                 shutil.rmtree(cnfnd_tmp_dir)
 
+    # print('Cleaning up...')
+    # shutil.rmtree(work_dir, ignore_errors=True)
+
     print('\n\n------------FINISHED-----------')
     print('Execution Time: ', timeit.default_timer() - start_time)
-    print('---------------------------------------')
+    print('------------------------')
 
     return
 
