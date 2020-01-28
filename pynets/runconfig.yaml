@@ -48,9 +48,9 @@ resource_dict:
         - (1, 1)
       - 'check_orient_and_dims_func_node':
         - (1, 2)
-      - check_orient_and_dims_mask_node:
+      - 'check_orient_and_dims_mask_node':
         - (1, 1)
-      - node_gen_node:
+      - 'node_gen_node':
         - (1, 1)
       - 'check_orient_and_dims_dwi_node':
         - (1, 2)
@@ -94,16 +94,16 @@ execution_dict:
     - 'keep_inputs':
         - False
     - 'remove_unnecessary_outputs':
-        - True
+        - False
     - 'remove_node_directories':
-        - True
+        - False
     - 'raise_insufficient':
         - False
     - 'maxtasksperchild':
         - 1
     - 'poll_sleep_duration':
-        - 10
+        - 2
     - 'hash_method':
-        - 'content'
+        - 'timestamp'
     - 'local_hash_check':
-        - True
+        - False
