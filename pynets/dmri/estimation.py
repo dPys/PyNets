@@ -57,6 +57,61 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
     return fa_path, B0_mask, gtab_file, dwi_file
 
 
+def create_anisopowermap(gtab_file, dwi_file, B0_mask):
+    '''
+    Estimate an anisotropic power map image to use for registrations.
+
+    Parameters
+    ----------
+    gtab_file : str
+        File path to pickled DiPy gradient table object.
+    dwi_file : str
+        File path to diffusion weighted image.
+    B0_mask : str
+        File path to B0 brain mask.
+
+    Returns
+    -------
+    anisopwr_path : str
+        File path to the anisotropic power Nifti1Image.
+    B0_mask : str
+        File path to B0 brain mask Nifti1Image.
+    gtab_file : str
+        File path to pickled DiPy gradient table object.
+    dwi_file : str
+        File path to diffusion weighted Nifti1Image.
+    '''
+    import os
+    from dipy.io import load_pickle
+    from dipy.reconst.shm import anisotropic_power
+    from dipy.core.sphere import HemiSphere
+    from dipy.reconst.shm import sf_to_sh
+
+    gtab = load_pickle(gtab_file)
+    gtab_hemisphere = HemiSphere(xyz=gtab.bvecs[np.where(gtab.b0s_mask==False)])
+
+    img = nib.load(dwi_file)
+    aff = img.affine
+
+    print('Generating anisotropic power map to use for registrations...')
+    nodif_B0_img = nib.load(B0_mask)
+
+    dwi_data = np.asarray(img.dataobj)
+    for b0 in sorted(list(np.where(gtab.b0s_mask==True)[0]), reverse=True):
+        dwi_data = np.delete(dwi_data, b0, 3)
+
+    anisomap = anisotropic_power(sf_to_sh(dwi_data, gtab_hemisphere, sh_order=2))
+    anisomap[np.isnan(anisomap)] = 0
+    masked_data = anisomap * np.asarray(nodif_B0_img.dataobj).astype('bool')
+    anisopwr_path = "%s%s" % (os.path.dirname(B0_mask), '/aniso_power.nii.gz')
+    img = nib.Nifti1Image(masked_data.astype(np.float32), aff)
+    img.to_filename(anisopwr_path)
+    nodif_B0_img.uncache()
+    del anisomap
+
+    return anisopwr_path, B0_mask, gtab_file, dwi_file
+
+
 def csa_mod_est(gtab, data, B0_mask):
     '''
     Estimate a Constant Solid Angle (CSA) model from dwi data.
@@ -115,8 +170,8 @@ def csd_mod_est(gtab, data, B0_mask):
 
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
-                  dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels,
-                  coords, norm, binary, directget, warped_fa, error_margin, max_length, fa_wei=True):
+                  dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm,
+                  binary, directget, warped_fa, error_margin, max_length, fa_wei=True):
     '''
     Use tracked streamlines as a basis for estimating a structural connectome.
 

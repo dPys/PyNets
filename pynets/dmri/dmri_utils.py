@@ -98,15 +98,12 @@ def normalize_gradients(bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_sca
 
 
 def make_mean_b0(in_file):
-    import time
     b0_img = nib.load(in_file)
     b0_img_data = b0_img.get_fdata()
     b0_img.uncache()
     mean_b0 = np.mean(b0_img_data, axis=3, dtype=b0_img_data.dtype)
     mean_file_out = in_file.split(".nii")[0] + "_mean_b0.nii.gz"
     nib.save(nib.Nifti1Image(mean_b0, affine=b0_img.affine, header=b0_img.header), mean_file_out)
-    while os.path.isfile(mean_file_out) is False:
-        time.sleep(1)
     del b0_img_data
     return mean_file_out
 

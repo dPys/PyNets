@@ -4,8 +4,6 @@ min_length:
     - 20
 overlap_thr:
     - 1
-overlap_thr_list:
-    - null
 step_list:
     - 0.2
     - 0.2
@@ -94,7 +92,7 @@ execution_dict:
     - 'keep_inputs':
         - False
     - 'remove_unnecessary_outputs':
-        - False
+        - True
     - 'remove_node_directories':
         - False
     - 'raise_insufficient':
