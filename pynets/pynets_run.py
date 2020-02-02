@@ -12,6 +12,9 @@ warnings.filterwarnings("ignore")
 def get_parser():
     """Parse command-line inputs"""
     import argparse
+    from pynets.__about__ import __version__
+    verstr = 'pynets v{}'.format(__version__)
+
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
                                                  'Graph Analysis of Functional and Structural Connectomes')
@@ -392,6 +395,7 @@ def get_parser():
                         metavar='Working directory',
                         default='/tmp/work',
                         help='Specify the path to a working directory for pynets to run. Default is /tmp/work.\n')
+    parser.add_argument('--version', action='version', version=verstr)
     return parser
 
 

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.circleci/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.circleci/config.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/pynets_run.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -65,7 +65,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="319">
+            <state relative-caret-position="1491">
               <caret line="339" column="29" selection-start-line="339" selection-start-column="29" selection-end-line="339" selection-end-column="29" />
               <folding>
                 <element signature="e#132#141#0" expanded="true" />
@@ -110,8 +110,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="454">
-              <caret line="1899" column="13" lean-forward="true" selection-start-line="1899" selection-start-column="13" selection-end-line="1899" selection-end-column="13" />
+            <state relative-caret-position="552">
+              <caret line="393" column="32" lean-forward="true" selection-start-line="393" selection-start-column="32" selection-end-line="393" selection-end-column="32" />
             </state>
           </provider>
         </entry>
@@ -226,13 +226,13 @@
         <option value="$PROJECT_DIR$/pynets/fmri/clustools.py" />
         <option value="$PROJECT_DIR$/pynets/core/interfaces.py" />
         <option value="$PROJECT_DIR$/pynets/runconfig.yaml" />
-        <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
         <option value="$PROJECT_DIR$/pynets/dmri/estimation.py" />
         <option value="$PROJECT_DIR$/pynets/dmri/dmri_utils.py" />
         <option value="$PROJECT_DIR$/pynets/dmri/track.py" />
         <option value="$PROJECT_DIR$/pynets/registration/reg_utils.py" />
         <option value="$PROJECT_DIR$/pynets/core/workflows.py" />
         <option value="$PROJECT_DIR$/pynets/registration/register.py" />
+        <option value="$PROJECT_DIR$/pynets/pynets_run.py" />
       </list>
     </option>
   </component>
@@ -380,12 +380,12 @@
       <workItem from="1578888360502" duration="6000000" />
       <workItem from="1579201519963" duration="597000" />
       <workItem from="1579233228614" duration="5503000" />
-      <workItem from="1580458794548" duration="27248000" />
+      <workItem from="1580458794548" duration="27831000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="258188000" />
+    <option name="totallyTimeSpent" value="258771000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -754,7 +754,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="319">
+        <state relative-caret-position="1491">
           <caret line="339" column="29" selection-start-line="339" selection-start-column="29" selection-end-line="339" selection-end-column="29" />
           <folding>
             <element signature="e#132#141#0" expanded="true" />
@@ -764,8 +764,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="454">
-          <caret line="1899" column="13" lean-forward="true" selection-start-line="1899" selection-start-column="13" selection-end-line="1899" selection-end-column="13" />
+        <state relative-caret-position="552">
+          <caret line="393" column="32" lean-forward="true" selection-start-line="393" selection-start-column="32" selection-end-line="393" selection-end-column="32" />
         </state>
       </provider>
     </entry>
