@@ -4,6 +4,7 @@ include LICENSE
 include README.rst
 include versioneer.py
 include pynets/_version.py
+include requirements.txt
 
 recursive-include * *.nii.gz
 recursive-include * *.html
