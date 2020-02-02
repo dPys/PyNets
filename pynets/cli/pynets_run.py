@@ -686,7 +686,7 @@ def build_workflow(args, retval):
     print('\n\n\n------------------------------------------------------------------------\n')
 
     # Hard-coded:
-    with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
+    with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
         try:
             hardcoded_params = yaml.load(stream)
             maxcrossing = hardcoded_params['maxcrossing'][0]
