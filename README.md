@@ -19,6 +19,3 @@ to the github repository: https://github.com/dPys/PyNets
 
 ![](docs/_static/graph.png)
 ![](docs/_static/triple.png)
-#![](docs/_static/structural_adj_mat.png)
-#![](docs/_static/pynets_diffusion.png)
-#![](docs/_static/link_communities.png)
