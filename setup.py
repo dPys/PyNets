@@ -28,7 +28,7 @@ setup(
     packages=['pynets'],
     entry_points={
         'console_scripts': [
-            'pynets=pynets.pynets_run:main'
+            'pynets=pynets.cli.pynets_run:main'
         ]
     },
     include_package_data=True,

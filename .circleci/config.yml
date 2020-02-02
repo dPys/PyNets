@@ -228,6 +228,8 @@ jobs:
             pip install dist/pynets*.tar.gz
             which pynets | grep sdist\\/bin
             INSTALLED_VERSION=$(pynets --version)
+            INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
+            INSTALLED_VERSION=${INSTALLED_VERSION#*"pynets v"}
             echo "VERSION: \"$THISVERSION\""
             echo "INSTALLED: \"$INSTALLED_VERSION\""
             test "$INSTALLED_VERSION" = "$THISVERSION"
