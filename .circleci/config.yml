@@ -220,7 +220,7 @@ jobs:
       - run:
           name: Build pynets
           command: |
-            pyenv local 3.5.2
+            pyenv local 3.7.2
             pip install twine  # For use in checking distributions
             THISVERSION=$( python get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
@@ -236,7 +236,7 @@ jobs:
       - run:
           name: Check sdist distribution
           command: |
-            pyenv local 3.5.2
+            pyenv local 3.7.2
             THISVERSION=$( python get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
@@ -255,7 +255,7 @@ jobs:
       - run:
           name: Check wheel distribution
           command: |
-            pyenv local 3.5.2
+            pyenv local 3.7.2
             THISVERSION=$( python get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
@@ -284,7 +284,7 @@ jobs:
           command: |
             sudo setfacl -d -m group:$(id -gn):rwx /tmp/src/pynets
             sudo setfacl -m group:$(id -gn):rwx /tmp/src/pynets
-            pyenv local 3.5.2
+            pyenv local 3.7.2
             THISVERSION=$( python get_version.py )
             echo "${CIRCLE_TAG:-$THISVERSION}" > pynets/VERSION
             docker run --rm=false --entrypoint=/bin/bash -v `pwd`:/io -w /io python:3.6.9 -c "pip install numpy && python setup.py sdist"
@@ -293,7 +293,7 @@ jobs:
       - run:
           name: Upload packages to PyPI
           command: |
-            pyenv local 3.5.2
+            pyenv local 3.7.2
             pip install twine
             twine upload dist/pynets*
 
