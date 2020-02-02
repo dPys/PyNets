@@ -93,8 +93,6 @@ jobs:
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
             DOCKERVERSION=$(docker run --rm -it pynets:latest --version)
-            DOCKERVERSION=${DOCKERVERSION%$'\r'}
-            DOCKERVERSION=${DOCKERVERSION#*"pynets v"}
             echo "VERSION: \"$THISVERSION\""
             echo "DOCKERVERSION: \"${DOCKERVERSION}\""
             test "$DOCKERVERSION" = "$THISVERSION"
@@ -115,23 +113,21 @@ jobs:
             - data-v0-{{ .Revision }}
             - data-v0-
       - run:
-          name: Store FreeSurfer license file
+          name: Install FSL components
           command: |
-            mkdir -p /tmp/fslicense
-            cd /tmp/fslicense
-            echo "cHJpbnRmICJrcnp5c3p0b2YuZ29yZ29sZXdza2lAZ21haWwuY29tXG41MTcyXG4gKkN2dW12RVYzelRmZ1xuRlM1Si8yYzFhZ2c0RVxuIiA+IGxpY2Vuc2UudHh0Cg==" | base64 -d | sh
+            bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates
+            echo "export FSLDIR=/usr/share/fsl/5.0" >> $BASH_ENV
       - run:
-          name: Create Nipype config files
+          name: Download OSF test data
           command: |
-            mkdir -p /tmp/config
-            printf "[execution]\nstop_on_first_crash = true\n" > /tmp/config/nipype.cfg
-            echo "poll_sleep_duration = 0.01" >> /tmp/config/nipype.cfg
-            echo "hash_method = content" >> /tmp/config/nipype.cfg
+            wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O examples.tar.gz "https://osf.io/aq8ur/download"
+            tar -xvzf examples.tar.gz -C /home/circleci/data/tests
       - persist_to_workspace:
           root: /tmp
           paths:
             - fslicense
-            - config/nipype.cfg
       - save_cache:
          key: data-v0-{{ .Revision }}-{{ epoch }}
          paths:
