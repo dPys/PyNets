@@ -107,7 +107,7 @@ jobs:
   get_data:
     machine:
       # Ubuntu 14.04 with Docker 17.10.0-ce
-      image: circleci/classic:201711-01
+      image: circleci/classic:201808-01
     working_directory: /home/circleci/data
     steps:
       - restore_cache:
@@ -139,7 +139,7 @@ jobs:
 
   deploy_docker_patches:
     machine:
-      image: circleci/classic:201711-01
+      image: circleci/classic:201808-01
     working_directory: /tmp/src/pynets
     steps:
 
@@ -169,7 +169,7 @@ jobs:
 
   deploy_docker:
     machine:
-      image: circleci/classic:201711-01
+      image: circleci/classic:201808-01
     working_directory: /tmp/src/pynets
     steps:
       - checkout:
@@ -213,14 +213,14 @@ jobs:
 
   test_deploy_pypi:
     machine:
-      image: circleci/classic:201711-01
+      image: circleci/classic:201808-01
     working_directory: /tmp/src/pynets
     steps:
       - checkout
       - run:
           name: Build pynets
           command: |
-            pyenv local 3.5.2
+            pyenv local 3.6.5
             pip install twine  # For use in checking distributions
             THISVERSION=$( python get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
@@ -236,7 +236,7 @@ jobs:
       - run:
           name: Check sdist distribution
           command: |
-            pyenv local 3.5.2
+            pyenv local 3.6.5
             THISVERSION=$( python get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
@@ -255,7 +255,7 @@ jobs:
       - run:
           name: Check wheel distribution
           command: |
-            pyenv local 3.5.2
+            pyenv local 3.6.5
             THISVERSION=$( python get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
@@ -275,7 +275,7 @@ jobs:
 
   deploy_pypi:
     machine:
-      image: circleci/classic:201711-01
+      image: circleci/classic:201808-01
     working_directory: /tmp/src/pynets
     steps:
       - checkout
@@ -284,7 +284,7 @@ jobs:
           command: |
             sudo setfacl -d -m group:$(id -gn):rwx /tmp/src/pynets
             sudo setfacl -m group:$(id -gn):rwx /tmp/src/pynets
-            pyenv local 3.5.2
+            pyenv local 3.6.5
             THISVERSION=$( python get_version.py )
             echo "${CIRCLE_TAG:-$THISVERSION}" > pynets/VERSION
             docker run --rm=false --entrypoint=/bin/bash -v `pwd`:/io -w /io python:3.6.9 -c "pip install numpy && python setup.py sdist"
@@ -293,7 +293,7 @@ jobs:
       - run:
           name: Upload packages to PyPI
           command: |
-            pyenv local 3.5.2
+            pyenv local 3.6.5
             pip install twine
             twine upload dist/pynets*
 
