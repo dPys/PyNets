@@ -404,6 +404,7 @@ def build_workflow(args, retval):
     import os.path as op
     import sys
     import timeit
+    from datetime import timedelta
     import numpy as np
     from pathlib import Path
     import yaml
@@ -687,7 +688,6 @@ def build_workflow(args, retval):
             maxcrossing = hardcoded_params['maxcrossing'][0]
             min_length = hardcoded_params['min_length'][0]
             overlap_thr = hardcoded_params['overlap_thr'][0]
-            overlap_thr_list = hardcoded_params['overlap_thr_list'][0]
             step_list = hardcoded_params['step_list']
             curv_thr_list = hardcoded_params['curv_thr_list']
             nilearn_parc_atlases = hardcoded_params['nilearn_parc_atlases']
@@ -1226,11 +1226,6 @@ def build_workflow(args, retval):
                 for _uatlas in user_atlas_list:
                     atlas_par = _uatlas.split('/')[-1].split('.')[0]
                     print(atlas_par)
-        elif (uatlas is not None) and (user_atlas_list is None):
-            atlas_par = uatlas.split('/')[-1].split('.')[0]
-            print(atlas_par)
-            ref_txt = "%s%s" % (uatlas.split('/')[-1:][0].split('.')[0], '.txt')
-            print("%s%s" % ('Using label reference: ', ref_txt))
         if multi_atlas:
             print('\nIterating across multiple predefined atlases...')
             if dwi_file_list:
@@ -1408,10 +1403,10 @@ def build_workflow(args, retval):
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
                                clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples,
-                               curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type, max_length,
-                               maxcrossing, min_length, directget, tiss_class, runtime_dict, execution_dict, embed,
-                               multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
-                               multiplex, waymask, local_corr, max_length_list):
+                               curv_thr_list, step_list, overlap_thr, track_type, max_length, maxcrossing, min_length,
+                               directget, tiss_class, runtime_dict, execution_dict, embed, multi_directget, multimodal,
+                               hpass, hpass_list, template, template_mask, vox_size, multiplex, waymask, local_corr,
+                               max_length_list):
         """A function interface for generating a single-subject workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1468,14 +1463,14 @@ def build_workflow(args, retval):
                                     clust_mask_list, prune, node_size_list, num_total_samples, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list, disp_filt,
                                     clust_type, clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec,
-                                    target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list, track_type,
-                                    max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict,
-                                    execution_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
-                                    template_mask, vox_size, multiplex, waymask, local_corr, max_length_list)
+                                    target_samples, curv_thr_list, step_list, overlap_thr, track_type, max_length,
+                                    maxcrossing, min_length, directget, tiss_class, runtime_dict, execution_dict,
+                                    embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
+                                    vox_size, multiplex, waymask, local_corr, max_length_list)
 
-        meta_wf._n_procs = procmem[0] - 1
+        meta_wf._n_procs = procmem[0]
         meta_wf._mem_gb = procmem[1]
-        meta_wf.n_procs = procmem[0] - 1
+        meta_wf.n_procs = procmem[0]
         meta_wf.mem_gb = procmem[1]
         wf.add_nodes([meta_wf])
 
@@ -1494,28 +1489,24 @@ def build_workflow(args, retval):
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
 
-        wf.get_node(meta_wf.name)._n_procs = procmem[0] - 1
+        wf.get_node(meta_wf.name)._n_procs = procmem[0]
         wf.get_node(meta_wf.name)._mem_gb = procmem[1]
-        wf.get_node(meta_wf.name).n_procs = procmem[0] - 1
+        wf.get_node(meta_wf.name).n_procs = procmem[0]
         wf.get_node(meta_wf.name).mem_gb = procmem[1]
-        wf.get_node(meta_wf.name).get_node(wf_selected)._n_procs = procmem[0] - 1
+        wf.get_node(meta_wf.name).get_node(wf_selected)._n_procs = procmem[0]
         wf.get_node(meta_wf.name).get_node(wf_selected)._mem_gb = procmem[1]
-        wf.get_node(meta_wf.name).get_node(wf_selected).n_procs = procmem[0] - 1
+        wf.get_node(meta_wf.name).get_node(wf_selected).n_procs = procmem[0]
         wf.get_node(meta_wf.name).get_node(wf_selected).mem_gb = procmem[1]
 
         # Fully-automated graph analysis
-        if conn_model_list or node_size_list or smooth_list or multi_thr or user_atlas_list or multi_atlas or float(k_clustering) > 1 or (uatlas and atlas) or (uatlas and k_clustering) or (atlas and k_clustering) or hpass_list:
-            net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
-                                       iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
-                                                  'roi', 'prune', 'norm', 'binary'], nested=True,
-                                       imports=import_list)
-            net_mets_node.synchronize = True
-        else:
-            net_mets_node = pe.Node(interface=ExtractNetStats(), name="ExtractNetStats",
-                                    field=['ID', 'network', 'thr', 'conn_model', 'est_path',
-                                           'roi', 'prune', 'norm', 'binary'], imports=import_list)
-        net_mets_node._n_procs = 1
-        net_mets_node._mem_gb = 1
+        net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
+                                   iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
+                                              'roi', 'prune', 'norm', 'binary'], nested=True,
+                                   imports=import_list)
+        net_mets_node.synchronize = True
+
+        net_mets_node._n_procs = 0.5
+        net_mets_node._mem_gb = 0.75
 
         collect_pd_list_net_csv_node = pe.Node(niu.Function(input_names=['net_mets_csv'],
                                                             output_names=['net_mets_csv_out'],
@@ -1605,10 +1596,10 @@ def build_workflow(args, retval):
                          k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, num_total_samples,
                          graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
                          smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask, norm,
-                         binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr, overlap_thr_list,
-                         track_type, max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict,
-                         execution_dict, embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
-                         vox_size, multiplex, waymask, local_corr, max_length_list):
+                         binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr, track_type,
+                         max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict, execution_dict,
+                         embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
+                         multiplex, waymask, local_corr, max_length_list):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1624,8 +1615,6 @@ def build_workflow(args, retval):
             dwi_file_list = len(func_file_list) * [None]
             fbvec_list = len(func_file_list) * [None]
             fbval_list = len(func_file_list) * [None]
-
-        multi_iter_len = len(list(zip(dwi_file_list, func_file_list)))
 
         i = 0
         for dwi_file, func_file in zip(dwi_file_list, func_file_list):
@@ -1664,20 +1653,19 @@ def build_workflow(args, retval):
                 clust_type=clust_type, clust_type_list=clust_type_list, c_boot=c_boot, block_size=block_size,
                 mask=mask_sub, norm=norm, binary=binary, fbval=fbval_sub, fbvec=fbvec_sub,
                 target_samples=target_samples, curv_thr_list=curv_thr_list, step_list=step_list,
-                overlap_thr=overlap_thr, overlap_thr_list=overlap_thr_list, track_type=track_type,
-                max_length=max_length, maxcrossing=maxcrossing, min_length=min_length,
-                directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, execution_dict=execution_dict,
-                embed=embed, multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
-                template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex,
-                waymask=waymask, local_corr=local_corr, max_length_list=max_length_list)
-            wf_single_subject._n_procs = procmem[0] - 1
+                overlap_thr=overlap_thr, track_type=track_type, max_length=max_length, maxcrossing=maxcrossing,
+                min_length=min_length, directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict,
+                execution_dict=execution_dict, embed=embed, multi_directget=multi_directget, multimodal=multimodal,
+                hpass=hpass, hpass_list=hpass_list, template=template, template_mask=template_mask, vox_size=vox_size,
+                multiplex=multiplex, waymask=waymask, local_corr=local_corr, max_length_list=max_length_list)
+            wf_single_subject._n_procs = procmem[0]
             wf_single_subject._mem_gb = procmem[1]
-            wf_single_subject.n_procs = procmem[0] - 1
+            wf_single_subject.n_procs = procmem[0]
             wf_single_subject.mem_gb = procmem[1]
             wf_multi.add_nodes([wf_single_subject])
-            wf_multi.get_node(wf_single_subject.name)._n_procs = procmem[0] - 1
+            wf_multi.get_node(wf_single_subject.name)._n_procs = procmem[0]
             wf_multi.get_node(wf_single_subject.name)._mem_gb = procmem[1]
-            wf_multi.get_node(wf_single_subject.name).n_procs = procmem[0] - 1
+            wf_multi.get_node(wf_single_subject.name).n_procs = procmem[0]
             wf_multi.get_node(wf_single_subject.name).mem_gb = procmem[1]
 
             # Restrict nested meta-meta wf resources at the level of the group wf
@@ -1706,17 +1694,17 @@ def build_workflow(args, retval):
                         except:
                             continue
 
-            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._n_procs = procmem[0] - 2
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._n_procs = procmem[0]
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected)._mem_gb = procmem[1]
-            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).n_procs = procmem[0] - 2
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).n_procs = procmem[0]
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).mem_gb = procmem[1]
-            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._n_procs = procmem[0] - 2
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._n_procs = procmem[0]
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name)._mem_gb = procmem[1]
-            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).n_procs = procmem[0] - 2
+            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).n_procs = procmem[0]
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
-            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._n_procs = 1
-            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 1
+            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._n_procs = 0.5
+            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 0.75
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._n_procs = 1
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._mem_gb = 2
 
@@ -1738,7 +1726,7 @@ def build_workflow(args, retval):
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
                                     smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot,
                                     block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list,
-                                    step_list, overlap_thr, overlap_thr_list, track_type, max_length, maxcrossing,
+                                    step_list, overlap_thr, track_type, max_length, maxcrossing,
                                     min_length, directget, tiss_class, runtime_dict, execution_dict, embed,
                                     multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
                                     multiplex, waymask, local_corr, max_length_list)
@@ -1825,10 +1813,10 @@ def build_workflow(args, retval):
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
                                     smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask,
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
-                                    overlap_thr_list, track_type, max_length, maxcrossing, min_length,
-                                    directget, tiss_class, runtime_dict, execution_dict, embed, multi_directget,
-                                    multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex,
-                                    waymask, local_corr, max_length_list)
+                                    track_type, max_length, maxcrossing, min_length, directget, tiss_class,
+                                    runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass,
+                                    hpass_list, template, template_mask, vox_size, multiplex, waymask, local_corr,
+                                    max_length_list)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1902,9 +1890,8 @@ def build_workflow(args, retval):
     # shutil.rmtree(work_dir, ignore_errors=True)
 
     print('\n\n------------FINISHED-----------')
-    print('Execution Time: ', timeit.default_timer() - start_time)
-    print('------------------------')
-
+    print('Execution Time: ', str(timedelta(seconds=timeit.default_timer() - start_time)))
+    print('-------------------------------')
     return
 
 
