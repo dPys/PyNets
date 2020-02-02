@@ -75,27 +75,24 @@ jobs:
             fi
 
       - run:
-          name: Docker save
-          no_output_timeout: 40m
-          command: |
-            mkdir -p /tmp/cache
-            docker save debian:stretch-slim pynets:latest \
-            | pigz -3 > /tmp/cache/docker.tar.gz
-      - save_cache:
-         key: docker-v0-{{ .Branch }}-{{ .Revision }}-{{ epoch }}
-         paths:
-            - /tmp/cache/docker.tar.gz
-
-      - run:
           name: Smoke test Docker image
           command: |
             THISVERSION=$( python3 get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            DOCKERVERSION=$(docker run --rm -it pynets:latest --version)
+            DOCKERVERSION=$(docker run --rm -it dpys/pynets:latest --version)
+            DOCKERVERSION=${DOCKERVERSION%$'\r'}
+            DOCKERVERSION=${DOCKERVERSION#*"pynets v"}
             echo "VERSION: \"$THISVERSION\""
             echo "DOCKERVERSION: \"${DOCKERVERSION}\""
             test "$DOCKERVERSION" = "$THISVERSION"
+      - run:
+          name: Docker save
+          no_output_timeout: 40m
+          command: |
+            mkdir -p /tmp/cache
+            docker save debian:stretch-slim dpys/pynets:latest \
+            | pigz -3 > /tmp/cache/docker.tar.gz
 
       - persist_to_workspace:
           root: /tmp
@@ -104,7 +101,6 @@ jobs:
 
   get_data:
     machine:
-      # Ubuntu 14.04 with Docker 17.10.0-ce
       image: circleci/classic:201808-01
     working_directory: /home/circleci/data
     steps:
@@ -232,8 +228,6 @@ jobs:
             pip install dist/pynets*.tar.gz
             which pynets | grep sdist\\/bin
             INSTALLED_VERSION=$(pynets --version)
-            INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
-            INSTALLED_VERSION=${INSTALLED_VERSION#*"pynets v"}
             echo "VERSION: \"$THISVERSION\""
             echo "INSTALLED: \"$INSTALLED_VERSION\""
             test "$INSTALLED_VERSION" = "$THISVERSION"
