@@ -116,7 +116,7 @@ jobs:
           name: Download OSF test data
           command: |
             wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O examples.tar.gz "https://osf.io/aq8ur/download"
-            tar -xvzf examples.tar.gz -C /home/circleci/data/tests
+            tar -xvzf examples.tar.gz -C /home/circleci/data
       - save_cache:
          key: data-v0-{{ .Revision }}-{{ epoch }}
          paths:
