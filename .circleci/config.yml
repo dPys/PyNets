@@ -99,6 +99,43 @@ jobs:
           paths:
             - src/pynets
 
+  build_docs:
+    docker:
+      - image: python:3.7.4
+    working_directory: /tmp/src/pynets
+    environment:
+      - FSLOUTPUTTYPE: 'NIFTI'
+    steps:
+      - checkout
+      - run:
+          name: Check whether build should be skipped
+          command: |
+            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[skip[ _]?docs\]' )" != "" ]]; then
+              echo "Skipping doc building job"
+              circleci step halt
+            fi
+      - run:
+          name: Check Python version and upgrade pip
+          command: |
+            python --version
+            python -m pip install -U pip
+      - run:
+          name: Install graphviz
+          command: |
+              apt-get update
+              apt-get install -y graphviz
+      - run:
+          name: Install Requirements (may contain pinned versions)
+          command: python -m pip install -r requirements.txt
+      - run:
+          name: Install pynets
+          command: python setup.py install
+      - run:
+          name: Build documentation
+          command: make SPHINXOPTS="-W" -C docs html
+      - store_artifacts:
+          path: /tmp/src/pynets/docs/_build/html
+
   get_data:
     machine:
       image: circleci/classic:201808-01
