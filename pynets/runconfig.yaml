@@ -90,9 +90,9 @@ execution_dict:
     - 'use_relative_paths':
         - False
     - 'keep_inputs':
-        - False
-    - 'remove_unnecessary_outputs':
         - True
+    - 'remove_unnecessary_outputs':
+        - False
     - 'remove_node_directories':
         - False
     - 'raise_insufficient':
@@ -100,7 +100,7 @@ execution_dict:
     - 'maxtasksperchild':
         - 1
     - 'poll_sleep_duration':
-        - 2
+        - 1
     - 'hash_method':
         - 'timestamp'
     - 'local_hash_check':

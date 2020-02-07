@@ -37,7 +37,7 @@ def get_credentials():
         SECRET = os.getenv("AWS_SECRET_ACCESS_KEY")
     if not ACCESS and SECRET:
         raise AttributeError("No AWS credentials found.")
-    return (ACCESS, SECRET)
+    return ACCESS, SECRET
 
 
 def s3_client(service="s3"):
