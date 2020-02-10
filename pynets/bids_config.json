@@ -1,6 +1,5 @@
 {
     "dwi": {
-            "bin": "False",
             "dg": "['prob']",
             "dt": "False",
             "ml": 200,
@@ -14,7 +13,6 @@
             "b": "['100']",
             "bs": "['12']",
             "cc": "['tcorr']",
-            "cm": "['/Users/derekpisner/Downloads/HNU_preprocessed/masks/0025435_triple_network_masks_1/triple_net_ICA_overlap_3_sig_bin.nii.gz']",
             "ct": "['ward']",
             "hp": "['0', '0.028', '0.080']",
             "k": "None",
@@ -51,7 +49,6 @@
             "templ":  "None",
             "templm":  "None",
             "thr":  1.0,
-            "ua":  "['/Users/derekpisner/Applications/neuroparc/atlases/label/Human/desikan_space-MNI152NLin6_res-2x2x2.nii.gz']",
             "v":  "False",
             "vox":  "'2mm'",
             "work":  "'/tmp'"

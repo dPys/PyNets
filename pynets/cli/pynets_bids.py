@@ -8,9 +8,12 @@ from pynets.core.utils import as_list, merge_dicts
 def sweep_directory(derivatives_path, modality, space='MNI152NLin6Asym', func_desc='smoothAROMAnonaggr', subj=None,
                     sesh=None):
     """
-    Given a BIDs formatted directory, crawls the BIDs dir and prepares the
-    necessary inputs for the PyNets pipeline. Uses regexes to check matches for
-    BIDs compliance.
+    Given a BIDS derivatives directory containing preprocessed functional MRI or diffusion MRI data
+    (e.g. fMRIprep or dMRIprep), crawls the outputs and prepares necessary inputs for the PyNets pipeline.
+
+    *Note: Since this function searches for derivative file inputs, it does not impose strict BIDS compliance, which
+    can therefore create errors in the case that files are missing or redundant. Please ensure that there redundant
+    files are removed and that BIDS naming conventions are followed closely.
     """
 
     if modality == 'dwi':
@@ -82,12 +85,13 @@ def sweep_directory(derivatives_path, modality, space='MNI152NLin6Asym', func_de
             anat_keys = ['subject', 'session']  # the keys for our modality img
             # our query for the anatomical image
             anat_query = {'datatype': 'anat', 'suffix': 'T1w',
-                          'extensions': ['.nii', '.nii.gz'], 'space': space}
+                          'extensions': ['.nii', '.nii.gz']}
             for attr, key in zip(anat_attributes, anat_keys):
                 if attr:
                     anat_query[key] = attr
             # make a query to fine the desired files from the BIDSLayout
             anat = layout.get(**anat_query)
+            anat = [i for i in anat if 'MNI' not in i.filename and 'space' not in i.filename]
 
             if anat:
                 for an in anat:
@@ -95,8 +99,8 @@ def sweep_directory(derivatives_path, modality, space='MNI152NLin6Asym', func_de
 
             if modality == 'dwi':
                 dwi = layout.get(**merge_dicts(mod_query, {'extensions': ['.nii', '.nii.gz'], 'suffix': 'dwi'}))
-                bval = layout.get(**merge_dicts(mod_query, {'extensions': 'bval', 'suffix': 'dwi'}))
-                bvec = layout.get(**merge_dicts(mod_query, {'extensions': 'bvec', 'suffix': 'dwi'}))
+                bval = layout.get(**merge_dicts(mod_query, {'extensions': 'bval'}))
+                bvec = layout.get(**merge_dicts(mod_query, {'extensions': 'bvec'}))
                 mask = layout.get(**merge_dicts(mod_query, {'extensions': ['.nii', '.nii.gz'],
                                                             'suffix': 'mask',
                                                             'desc': 'brain', 'space': space}))
@@ -114,12 +118,13 @@ def sweep_directory(derivatives_path, modality, space='MNI152NLin6Asym', func_de
                                 bvals.append(bva.path)
                                 bvecs.append(bve.path)
                                 masks.append(mas.path)
+
             elif modality == 'func':
                 func = layout.get(**merge_dicts(mod_query, {'extensions': ['.nii', '.nii.gz'], 'suffix': 'bold',
                                                             'space': space}))
-                func = [i for i in func if func_desc in i.path]
+                func = [i for i in func if func_desc in i.filename]
                 conf = layout.get(**merge_dicts(mod_query, {'extensions': ['.tsv', '.tsv.gz']}))
-                conf = [i for i in conf if 'confounds_regressors' in i.path]
+                conf = [i for i in conf if 'confounds_regressors' in i.filename]
                 mask = layout.get(**merge_dicts(mod_query, {'extensions': ['.nii', '.nii.gz'],
                                                             'suffix': 'mask',
                                                             'desc': 'brain', 'space': space}))
@@ -145,25 +150,25 @@ def sweep_directory(derivatives_path, modality, space='MNI152NLin6Asym', func_de
                                 masks.append(mas.path)
                                 confs.append(con.path)
 
+    if len(anats) == 0:
+        anats = None
+
+    if len(masks) == 0:
+        masks = None
+
     if modality == 'dwi':
         if not len(dwis) or not len(bvals) or not len(bvecs):
             print("No dMRI files found in BIDs spec. Skipping...")
             return None, None, None, None, None, None, subjs, seshs
         else:
-            if anats:
-                return None, None, dwis, bvals, bvecs, anats, masks, subjs, seshs
-            else:
-                return None, None, dwis, bvals, bvecs, None, masks, subjs, seshs
+            return None, None, dwis, bvals, bvecs, anats, masks, subjs, seshs
 
     elif modality == 'func':
         if not len(funcs):
             print("No fMRI files found in BIDs spec. Skipping...")
             return None, None, None, None, None, None, subjs, seshs
         else:
-            if anats:
-                return funcs, confs, None, None, None, anats, masks, subjs, seshs
-            else:
-                return funcs, confs, None, None, None, None, masks, subjs, seshs
+            return funcs, confs, None, None, None, anats, masks, subjs, seshs
     else:
         raise ValueError('Incorrect modality passed. Choices are \'func\' and \'dwi\'.')
 
@@ -173,8 +178,8 @@ def get_bids_parser():
     import argparse
 
     # Parse args
-    parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
-                                                 'Graph Analysis of Functional and Structural Connectomes')
+    parser = argparse.ArgumentParser(description='PyNets BIDS CLI: A Fully-Automated Workflow for Reproducible '
+                                                 'Ensemble Graph Analysis of Functional and Structural Connectomes')
     parser.add_argument(
         "input_dir",
         help="""The directory with the input dataset
@@ -213,6 +218,21 @@ def get_bids_parser():
         nargs="+",
         default=None,
     )
+    parser.add_argument('-ua',
+                        metavar='Path to parcellation file in MNI-space',
+                        default=None,
+                        nargs='+',
+                        help='Optionally specify a path to a parcellation/atlas Nifti1Image file in MNI152 space. '
+                             'Labels should be spatially distinct across hemispheres and ordered with consecutive '
+                             'integers with a value of 0 as the background label. If specifying a list of paths to '
+                             'multiple user atlases, separate them by space.\n')
+    parser.add_argument('-cm',
+                        metavar='Cluster mask',
+                        default=None,
+                        nargs='+',
+                        help='Optionally specify the path to a Nifti1Image mask file to constrained functional '
+                             'clustering. If specifying a list of paths to multiple cluster masks, separate '
+                             'them by space.\n')
     return parser
 
 
@@ -284,6 +304,11 @@ def main():
     args_dict_all['anat'] = anats
     args_dict_all['m'] = masks
     args_dict_all['id'] = id_list
+    args_dict_all['ua'] = bids_args.ua
+    if modality == 'func':
+        args_dict_all['cm'] = bids_args.cm
+    else:
+        args_dict_all['cm'] = None
 
     # Mimic argparse with SimpleNamespace object
     args = SimpleNamespace(**args_dict_all)

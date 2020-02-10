@@ -7,6 +7,7 @@ Copyright (C) 2017
 """
 import warnings
 import numpy as np
+import nibabel as nib
 import networkx as nx
 import os.path as op
 import tkinter
@@ -783,14 +784,6 @@ def qa_fast_png(csf, gm, wm, outdir):
     plt.xticks([])
     plt.yticks([])
     plt.axis('off')
-
-    # Determine whether the input data types are consistent. If they are inconsistent, an error is reported.
-    if gm_data.shape != csf_data.shape:
-        raise ValueError("GM and CSF are not the same shape.")
-    elif gm_data.shape != wm_data.shape:
-        raise ValueError("GM and WM are not the same shape.")
-    elif wm_data.shape != csf_data.shape:
-        raise ValueError("WM and CSF are not the same shape.")
 
     # Set the 3D matrix cutting position in three directions
     shape = csf_data.shape

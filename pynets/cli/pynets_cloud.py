@@ -26,6 +26,7 @@ def batch_submit(
     jobdir,
     credentials=None,
     dataset=None,
+    modif=None
 ):
     """Searches through an S3 bucket, gets all subject-ids, creates json files for each,
     submits batch jobs, and returns list of job ids to query status upon later
@@ -42,6 +43,8 @@ def batch_submit(
         AWS formatted csv of credentials, by default None
     dataset : str, optional
         Name given to the output directory containing analyzed data set "pynets-<version>-<dataset>", by default None
+    modif : str, optional
+        Name of folder on s3 to push to. If empty, push to a folder with pynets's version number, by default ""
     """
 
     print(f"Getting list from s3://{bucket}/{path}/...")
@@ -54,7 +57,8 @@ def batch_submit(
         threads,
         jobdir,
         credentials=credentials,
-        dataset=dataset
+        dataset=dataset,
+        modif=modif
     )
 
     print("Submitting jobs to the queue...")
@@ -134,7 +138,7 @@ def create_json(
     jobdir,
     credentials=None,
     dataset=None,
-    modif="",
+    modif=""
 ):
     """Creates the json files for each of the jobs
 
@@ -181,7 +185,6 @@ def create_json(
     cmd = template["containerOverrides"]["command"]
     env = template["containerOverrides"]["environment"]
 
-    # TODO : This checks for any credentials csv file, rather than `/.aws/credentials`.
     # modify template
     if credentials is not None:
         env[0]["value"], env[1]["value"] = get_credentials()
@@ -295,16 +298,9 @@ def kill_jobs(jobdir, reason='"Killing job"'):
 
 
 def main():
-    parser = ArgumentParser(
-        description="This is a pipeline for running BIDs-formatted diffusion MRI datasets through AWS S3 to produce "
-                    "connectomes."
-    )
-    parser.add_argument(
-        "--state",
-        choices=["participant", "status", "kill"],
-        default="participant",
-        help="determines the function to be performed by pynets_cloud.",
-    )
+    parser = ArgumentParser(description='PyNets AWS Cloud CLI: A Fully-Automated Workflow for Reproducible '
+                                        'Ensemble Graph Analysis of Functional and Structural Connectomes')
+
     parser.add_argument(
         "--bucket",
         help="""The S3 bucket with the input dataset
@@ -341,7 +337,6 @@ def main():
     path = result.bidsdir
     path = path.strip("/") if path is not None else path
     dset = path.split("/")[-1] if path is not None else None
-    state = result.state
     creds = result.credentials
     jobdir = result.jobdir
     modif = result.modif
@@ -349,29 +344,18 @@ def main():
     if jobdir is None:
         jobdir = "./"
 
-    if (bucket is None or path is None) and (state != "status" and state != "kill"):
-        sys.exit(
-            "Requires either path to bucket and data, or the status flag"
-            " and job IDs to query.\n  Try:\n    pynets_cloud --help"
-        )
-    if state == "kill":
-        print("Killing jobs...")
-        kill_jobs(jobdir)
-    elif state == "participant":
-        print("Beginning batch submission process...")
-        if not os.path.exists(jobdir):
-            print("job directory not found. Creating...")
-            Path(jobdir).mkdir(parents=True)
-        batch_submit(
-            bucket,
-            path,
-            jobdir,
-            credentials=creds,
-            state=state,
-            dataset=dset,
-            modif=modif
-        )
-
+    print("Beginning batch submission process...")
+    if not os.path.exists(jobdir):
+        print("job directory not found. Creating...")
+        Path(jobdir).mkdir(parents=True)
+    batch_submit(
+        bucket,
+        path,
+        jobdir,
+        credentials=creds,
+        dataset=dset,
+        modif=modif
+    )
     sys.exit(0)
 
 

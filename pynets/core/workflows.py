@@ -786,7 +786,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     check_orient_and_dims_dwi_node._n_procs = runtime_dict['check_orient_and_dims_dwi_node'][0]
     check_orient_and_dims_dwi_node._mem_gb = runtime_dict['check_orient_and_dims_dwi_node'][1]
 
-    check_orient_and_dims_anat_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'], output_names=['outfile'],
+    check_orient_and_dims_anat_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'],
+                                                           output_names=['outfile'],
                                                            function=regutils.check_orient_and_dims,
                                                            imports=import_list),
                                               name="check_orient_and_dims_anat_node")
@@ -850,7 +851,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                              function=estimation.create_anisopowermap, imports=import_list),
                                 name="get_anisopwr_node")
 
-    register_node = pe.Node(niu.Function(input_names=['basedir_path', 'ap_path', 'B0_mask', 'anat_file',
+    register_node = pe.Node(niu.Function(input_names=['basedir_path', 'fa_path', 'ap_path', 'B0_mask', 'anat_file',
                                                       'gtab_file', 'dwi_file', 'vox_size', 'waymask'],
                                          output_names=['wm_in_dwi', 'gm_in_dwi', 'vent_csf_in_dwi',
                                                        'csf_mask_dwi', 'anat_file', 'B0_mask', 'ap_path',
@@ -869,9 +870,10 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                 name="check_orient_and_dims_uatlas_node")
 
     register_atlas_node = pe.Node(niu.Function(input_names=['uatlas', 'uatlas_parcels', 'atlas', 'node_size',
-                                                            'basedir_path', 'ap_path', 'B0_mask', 'anat_file',
-                                                            'coords', 'labels', 'gm_in_dwi', 'vent_csf_in_dwi',
-                                                            'wm_in_dwi', 'gtab_file', 'dwi_file', 'vox_size'],
+                                                            'basedir_path', 'fa_path', 'ap_path', 'B0_mask',
+                                                            'anat_file', 'coords', 'labels', 'gm_in_dwi',
+                                                            'vent_csf_in_dwi', 'wm_in_dwi', 'gtab_file', 'dwi_file',
+                                                            'vox_size'],
                                                output_names=['dwi_aligned_atlas_wmgm_int', 'dwi_aligned_atlas',
                                                              'aligned_atlas_t1mni', 'uatlas', 'atlas',
                                                              'coords', 'labels', 'node_size', 'gm_in_dwi',
@@ -1409,6 +1411,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                             ('B0_mask', 'B0_mask'),
                                             ('gtab_file', 'gtab_file'),
                                             ('dwi_file', 'dwi_file')]),
+        (get_fa_node, register_node, [('fa_path', 'fa_path')]),
+        (get_fa_node, register_atlas_node, [('fa_path', 'fa_path')]),
         (get_fa_node, run_tracking_node, [('fa_path', 'fa_path')]),
         (register_atlas_node, run_tracking_node, [('dwi_aligned_atlas_wmgm_int', 'labels_im_file_wm_gm_int'),
                                                   ('dwi_aligned_atlas', 'labels_im_file'),
@@ -1728,7 +1732,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     # print('\n\n\n\n\n')
 
     # Create function nodes
-    check_orient_and_dims_func_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'], output_names=['outfile'],
+    check_orient_and_dims_func_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'],
+                                                           output_names=['outfile'],
                                                            function=regutils.check_orient_and_dims,
                                                            imports=import_list),
                                               name="check_orient_and_dims_func_node")
@@ -1736,7 +1741,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     check_orient_and_dims_func_node._n_procs = runtime_dict['check_orient_and_dims_func_node'][0]
     check_orient_and_dims_func_node._mem_gb = runtime_dict['check_orient_and_dims_func_node'][1]
 
-    check_orient_and_dims_anat_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'], output_names=['outfile'],
+    check_orient_and_dims_anat_node = pe.Node(niu.Function(input_names=['infile', 'vox_size'],
+                                                           output_names=['outfile'],
                                                            function=regutils.check_orient_and_dims,
                                                            imports=import_list),
                                               name="check_orient_and_dims_anat_node")
