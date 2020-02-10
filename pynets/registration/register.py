@@ -417,11 +417,15 @@ class DmriReg(object):
         """
         A function to segment and threshold tissue types from T1w.
         """
+        from pynets.plotting.plot_gen import qa_fast_png
         # Segment the t1w brain into probability maps
         maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
         self.wm_mask = maps['wm_prob']
         self.gm_mask = maps['gm_prob']
         self.csf_mask = maps['csf_prob']
+
+        # qa the segmentation
+        qa_fast_png(self.csf_mask, self.gm_mask, self.wm_mask, self.map_path)
 
         # Threshold WM to binary in dwi space
         t_img = nib.load(self.wm_mask)

@@ -120,7 +120,9 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     sz = func_img.shape
 
     # Reshape fmri data to a num_voxels x num_timepoints array
-    imdat = np.reshape(np.asarray(func_img.dataobj).astype('float32'), (prod(sz[:3]), sz[3]))
+    func_data = func_img.get_fdata(dtype=np.float32)
+    imdat = np.reshape(func_data, (prod(sz[:3]), sz[3]))
+    del func_data
 
     # Mask the datset to only the in-mask voxels
     imdat = imdat[iv, :]
@@ -278,7 +280,9 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     sz = func_img.shape
 
     # Reshape fmri data to a num_voxels x num_timepoints array
-    imdat = np.reshape(np.asarray(func_img.dataobj).astype('float32'), (prod(sz[:3]), sz[3]))
+    func_data = func_img.get_fdata(dtype=np.float32)
+    imdat = np.reshape(func_data, (prod(sz[:3]), sz[3]))
+    del func_data
 
     # Construct a sparse matrix from the mask
     msk = csc_matrix((list(range(1, m + 1)), (iv, np.zeros(m))), shape=(prod(sz[:-1]), 1), dtype=np.float32)

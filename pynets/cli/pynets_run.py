@@ -420,6 +420,8 @@ def build_workflow(args, retval):
         print('PyNets not installed! Ensure that you are using the correct python version.')
     from pynets.core.utils import do_dir_path
 
+    print(args)
+
     # Start timer
     now = datetime.datetime.now()
     print(now.strftime("%Y-%m-%d %H:%M:%S\n\n"))

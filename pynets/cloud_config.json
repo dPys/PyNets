@@ -40,7 +40,7 @@
     "-norm",
     "6",
     "-cc",
-    "'tcorr'"
+    "'tcorr'",
     "-cm",
     "'/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' '/outputs/triple_net_ICA_overlap_6_sig_bin.nii.gz' '/outputs/triple_net_ICA_overlap_9_sig_bin.nii.gz'", 
     "-anat",
@@ -56,7 +56,7 @@
     "-plug",
     "'MultiProc'",
     "-work",
-    "'/working'"
+    "'/tmp'"
   ],
   "environment": [
     {
