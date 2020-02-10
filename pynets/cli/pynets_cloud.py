@@ -20,20 +20,13 @@ from pynets.core.cloud_utils import get_matching_s3_objects
 from pynets.core.cloud_utils import s3_client
 
 
-
 def batch_submit(
     bucket,
     path,
     jobdir,
-    mod_func="csa",
-    track_type="local",
     credentials=None,
-    state="participant",
     dataset=None,
-    modif="",
-    reg_style="native",
-    voxel_size="2mm",
-    mod_type="det",
+    modif=None
 ):
     """Searches through an S3 bucket, gets all subject-ids, creates json files for each,
     submits batch jobs, and returns list of job ids to query status upon later
@@ -48,17 +41,10 @@ def batch_submit(
         Directory of batch jobs to generate/check up on
     credentials : [type], optional
         AWS formatted csv of credentials, by default None
-    state : str, optional
-        determines the function to be performed by this function ("participant", "status", "kill"), by default
-        "participant"
     dataset : str, optional
         Name given to the output directory containing analyzed data set "pynets-<version>-<dataset>", by default None
     modif : str, optional
         Name of folder on s3 to push to. If empty, push to a folder with pynets's version number, by default ""
-    reg_style : str, optional
-        Space for tractography, by default "native"
-    mod_type : str, optional
-        Determinstic (det) or probabilistic (prob) tracking, by default "det"
     """
 
     print(f"Getting list from s3://{bucket}/{path}/...")
@@ -70,14 +56,9 @@ def batch_submit(
         path,
         threads,
         jobdir,
-        mod_func=mod_func,
         credentials=credentials,
         dataset=dataset,
-        track_type=track_type,
-        modif=modif,
-        reg_style=reg_style,
-        voxel_size=voxel_size,
-        mod_type=mod_type,
+        modif=modif
     )
 
     print("Submitting jobs to the queue...")
@@ -155,14 +136,9 @@ def create_json(
     path,
     threads,
     jobdir,
-    mod_func="csa",
-    track_type="local",
     credentials=None,
     dataset=None,
-    modif="",
-    reg_style="native",
-    voxel_size="2mm",
-    mod_type="det",
+    modif=""
 ):
     """Creates the json files for each of the jobs
 
@@ -182,10 +158,6 @@ def create_json(
         Name added to the generated json job files "pynets_<version>_<dataset>_sub-<sub>_ses-<ses>", by default None
     modif : str, optional
         Name of folder on s3 to push to. If empty, push to a folder with pynets's version number, by default ""
-    reg_style : str, optional
-        Space for tractography, by default ""
-    mod_type : str, optional
-        Determinstic (det) or probabilistic (prob) tracking, by default "det"
 
     Returns
     -------
@@ -213,7 +185,6 @@ def create_json(
     cmd = template["containerOverrides"]["command"]
     env = template["containerOverrides"]["environment"]
 
-    # TODO : This checks for any credentials csv file, rather than `/.aws/credentials`.
     # modify template
     if credentials is not None:
         env[0]["value"], env[1]["value"] = get_credentials()
@@ -225,11 +196,6 @@ def create_json(
     jobs = []
     cmd[cmd.index("<INPUT>")]=f's3://{bucket}/{path}'
     cmd[cmd.index("<PUSH>")] = f's3://{bucket}/{path}/{modif}'
-    cmd[cmd.index("<VOX>")] = voxel_size
-    cmd[cmd.index("<MOD>")] = mod_type
-    cmd[cmd.index("<FILTER>")]=track_type
-    cmd[cmd.index("<DIFF>")]=mod_func
-    cmd[cmd.index("<SPACE>")] = reg_style
 
     # edit participant-specific values ()
     # loop over every session of every participant
@@ -331,17 +297,10 @@ def kill_jobs(jobdir, reason='"Killing job"'):
         batch.terminate_job(jobId=jid, reason=reason)
 
 
-#%%
 def main():
-    parser = ArgumentParser(
-        description="This is a pipeline for running BIDs-formatted diffusion MRI datasets through AWS S3 to produce connectomes."
-    )
-    parser.add_argument(
-        "--state",
-        choices=["participant", "status", "kill"],
-        default="participant",
-        help="determines the function to be performed by pynets_cloud.",
-    )
+    parser = ArgumentParser(description='PyNets AWS Cloud CLI: A Fully-Automated Workflow for Reproducible '
+                                        'Ensemble Graph Analysis of Functional and Structural Connectomes')
+
     parser.add_argument(
         "--bucket",
         help="""The S3 bucket with the input dataset
@@ -363,43 +322,13 @@ def main():
         action="store",
         help="csv formatted AWS credentials."
     )
-    #parser.add_argument("--dataset", action="store", help="Dataset name")
+    parser.add_argument("--dataset", action="store", help="Dataset name")
     parser.add_argument(
         "--modif",
         action="store",
         help="""Name of folder on s3 to push to. Data will be saved at '<bucket>/<bidsdir>/<modif>' on the s3 bucket
         If empty, push to a folder with pynets's version number.""",
         default="",
-    )
-    parser.add_argument(
-        "--space",
-        action="store",
-        help="Space for tractography. Default is native.",
-        default="native",
-    )
-    parser.add_argument(
-        "--voxelsize",
-        action="store",
-        default="2mm",
-        help="Voxel size : 2mm, 1mm. Voxel size to use for template registrations.",
-    )
-    parser.add_argument(
-        "--mod",
-        action="store",
-        help="Determinstic (det) or probabilistic (prob) tracking. Default is det.",
-        default="det",
-    )
-    parser.add_argument(
-        "--diffusion_model",
-        action="store",
-        help="Diffusion model: csd, csa. Default is csa.",
-        default="csa",
-    )
-    parser.add_argument(
-        "--filtering_type",
-        action="store",
-        help="Tracking approach: local, particle. Default is local.",
-        default="local",
     )
 
     result = parser.parse_args()
@@ -408,47 +337,25 @@ def main():
     path = result.bidsdir
     path = path.strip("/") if path is not None else path
     dset = path.split("/")[-1] if path is not None else None
-    state = result.state
     creds = result.credentials
     jobdir = result.jobdir
     modif = result.modif
-    reg_style = result.space
-    vox = result.voxelsize
-    mod_type = result.mod
-    track_type = result.filtering_type
-    mod_func = result.diffusion_model
 
     if jobdir is None:
         jobdir = "./"
 
-    if (bucket is None or path is None) and (state != "status" and state != "kill"):
-        sys.exit(
-            "Requires either path to bucket and data, or the status flag"
-            " and job IDs to query.\n  Try:\n    pynets_cloud --help"
-        )
-    if state == "kill":
-        print("Killing jobs...")
-        kill_jobs(jobdir)
-    elif state == "participant":
-        print("Beginning batch submission process...")
-        if not os.path.exists(jobdir):
-            print("job directory not found. Creating...")
-            Path(jobdir).mkdir(parents=True)
-        batch_submit(
-            bucket,
-            path,
-            jobdir,
-            credentials=creds,
-            state=state,
-            dataset=dset,
-            mod_func=mod_func,
-            track_type=track_type,
-            modif=modif,
-            reg_style=reg_style,
-            voxel_size=vox,
-            mod_type=mod_type,
-        )
-
+    print("Beginning batch submission process...")
+    if not os.path.exists(jobdir):
+        print("job directory not found. Creating...")
+        Path(jobdir).mkdir(parents=True)
+    batch_submit(
+        bucket,
+        path,
+        jobdir,
+        credentials=creds,
+        dataset=dset,
+        modif=modif
+    )
     sys.exit(0)
 
 

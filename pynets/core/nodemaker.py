@@ -70,8 +70,8 @@ def create_parcel_atlas(parcel_list):
     from nilearn.image import new_img_like, concat_imgs
     parcel_list_exp = [new_img_like(parcel_list[0], np.zeros(parcel_list[0].shape, dtype=bool))] + parcel_list
     concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float32)
-    parcel_sum = np.sum(np.array(range(len(parcel_list_exp))) * np.asarray(concatted_parcels.dataobj), axis=3,
-                        dtype=np.uint16)
+    parcel_list_exp = np.array(range(len(parcel_list_exp))).astype('float32')
+    parcel_sum = np.sum(parcel_list_exp * np.asarray(concatted_parcels.dataobj), axis=3, dtype=np.uint16)
     net_parcels_map_nifti = nib.Nifti1Image(parcel_sum, affine=parcel_list[0].affine)
     del concatted_parcels, parcel_sum, parcel_list
     gc.collect()

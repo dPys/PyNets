@@ -420,6 +420,8 @@ def build_workflow(args, retval):
         print('PyNets not installed! Ensure that you are using the correct python version.')
     from pynets.core.utils import do_dir_path
 
+    print(args)
+
     # Start timer
     now = datetime.datetime.now()
     print(now.strftime("%Y-%m-%d %H:%M:%S\n\n"))
@@ -1275,7 +1277,8 @@ def build_workflow(args, retval):
     if (dwi_file or dwi_file_list) and not (func_file or func_file_list):
         print('\nRunning dmri connectometry only...')
         if dwi_file_list:
-            for (_dwi_file, _fbval, _fbvec, _anat_file) in dwi_file_list:
+            for (_dwi_file, _fbval, _fbvec, _anat_file) in list(zip(dwi_file_list, fbval_list, fbvec_list,
+                                                                    anat_file_list)):
                 print("%s%s" % ('Diffusion-Weighted Image:\n', _dwi_file))
                 print("%s%s" % ('B-Values:\n', _fbval))
                 print("%s%s" % ('B-Vectors:\n', _fbvec))
@@ -1509,8 +1512,8 @@ def build_workflow(args, retval):
                                    imports=import_list)
         net_mets_node.synchronize = True
 
-        net_mets_node._n_procs = 0.5
-        net_mets_node._mem_gb = 0.75
+        net_mets_node._n_procs = 1
+        net_mets_node._mem_gb = 1
 
         collect_pd_list_net_csv_node = pe.Node(niu.Function(input_names=['net_mets_csv'],
                                                             output_names=['net_mets_csv_out'],
@@ -1707,8 +1710,8 @@ def build_workflow(args, retval):
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).n_procs = procmem[0]
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
-            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._n_procs = 0.5
-            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 0.75
+            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._n_procs = 1
+            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 1
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._n_procs = 1
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._mem_gb = 2
 

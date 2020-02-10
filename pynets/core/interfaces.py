@@ -5,7 +5,11 @@ Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
-from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface
+from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, \
+    TraitedSpec, File, traits, SimpleInterface, InputMultiPath, OutputMultiPath, \
+    Directory
+
+ENTITY_WHITELIST = {'subject', 'session', 'modality'}
 
 
 class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
@@ -150,8 +154,8 @@ class IndividualClustering(SimpleInterface):
             uatlas = nip.parcellate()
         else:
             raise ValueError('Clustering method not recognized. '
-                             'See: https://nilearn.github.io/modules/generated/nilearn.regions.Parcellations.html#nilearn.'
-                             'regions.Parcellations')
+                             'See: https://nilearn.github.io/modules/generated/nilearn.regions.Parcellations.'
+                             'html#nilearn.regions.Parcellations')
         del nip
         gc.collect()
 
@@ -275,3 +279,4 @@ class ExtractTimeseries(SimpleInterface):
         gc.collect()
 
         return runtime
+
