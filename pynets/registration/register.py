@@ -330,13 +330,14 @@ class DmriReg(object):
     A Class for Registering an atlas to a subject's MNI-aligned T1w image in native diffusion space.
     """
 
-    def __init__(self, basedir_path, fa_path, ap_path, B0_mask, anat_file, vox_size, simple):
+    def __init__(self, basedir_path, fa_path, ap_path, B0_mask, anat_file, mask, vox_size, simple):
         import pkg_resources
         self.simple = simple
         self.ap_path = ap_path
         self.fa_path = fa_path
         self.B0_mask = B0_mask
         self.t1w = anat_file
+        self.mask = mask
         self.vox_size = vox_size
         self.t1w_name = 't1w'
         self.dwi_name = 'dwi'
@@ -423,7 +424,8 @@ class DmriReg(object):
 
         # Apply brain mask if detected as a separate file
         anat_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
-        if os.path.isfile(anat_mask_existing):
+        if os.path.isfile(anat_mask_existing) and not self.mask:
+            anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.vox_size)
             os.system("fslmaths {} -mas {} {}".format(self.t1w_brain, anat_mask_existing, self.t1w_brain))
 
         # Segment the t1w brain into probability maps
@@ -439,9 +441,9 @@ class DmriReg(object):
             self.gm_mask = maps['gm_prob']
             self.csf_mask = maps['csf_prob']
         else:
-            self.wm_mask = wm_mask_existing
-            self.gm_mask = gm_mask_existing
-            self.csf_mask = csf_mask_existing
+            self.wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.vox_size)
+            self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size)
+            self.csf_mask = regutils.check_orient_and_dims(csf_mask_existing, self.vox_size)
 
         qa_fast_png(self.csf_mask, self.gm_mask, self.wm_mask, self.map_path)
 
@@ -727,9 +729,10 @@ class FmriReg(object):
     A Class for Registering an atlas to a subject's MNI-aligned T1w image.
     """
 
-    def __init__(self, basedir_path, anat_file, vox_size, simple):
+    def __init__(self, basedir_path, anat_file, mask, vox_size, simple):
         import pkg_resources
         self.t1w = anat_file
+        self.mask = mask
         self.vox_size = vox_size
         self.t1w_name = 't1w'
         self.simple = simple
@@ -779,7 +782,8 @@ class FmriReg(object):
 
         # Apply brain mask if detected as a separate file
         anat_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
-        if os.path.isfile(anat_mask_existing):
+        if os.path.isfile(anat_mask_existing) and not self.mask:
+            anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.vox_size)
             os.system("fslmaths {} -mas {} {}".format(self.t1w_brain, anat_mask_existing, self.t1w_brain))
 
         # Segment the t1w brain into probability maps
@@ -791,7 +795,7 @@ class FmriReg(object):
                 print('Segmentation failed. Does the input anatomical image still contained skull?')
             self.gm_mask = maps['gm_prob']
         else:
-            self.gm_mask = gm_mask_existing
+            self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size)
 
         # Threshold GM to binary in func space
         t_img = nib.load(self.gm_mask)
@@ -869,7 +873,7 @@ class FmriReg(object):
 
 
 def register_all_dwi(basedir_path, fa_path, ap_path, B0_mask, anat_file, gtab_file, dwi_file, vox_size, waymask,
-                     simple=False, overwrite=False):
+                     mask, simple=False, overwrite=False):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 
@@ -893,6 +897,8 @@ def register_all_dwi(basedir_path, fa_path, ap_path, B0_mask, anat_file, gtab_fi
         Voxel size in mm. (e.g. 2mm).
     waymask : str
         Path to a Nifti1Image in MNI-space to constrain tractography.
+    mask : str
+        Path to a brain mask to apply to the anatomical Nifti1Image.
     simple : bool
         Indicates whether to use non-linear registration and BBR (True) or entirely linear methods (False).
         Default is False.
@@ -924,7 +930,7 @@ def register_all_dwi(basedir_path, fa_path, ap_path, B0_mask, anat_file, gtab_fi
     """
     import os.path as op
     from pynets.registration import register
-    reg = register.DmriReg(basedir_path, fa_path, ap_path, B0_mask, anat_file, vox_size, simple)
+    reg = register.DmriReg(basedir_path, fa_path, ap_path, B0_mask, anat_file, mask, vox_size, simple)
 
     if (overwrite is True) or (op.isfile(reg.map_path) is False):
         # Perform anatomical segmentation
@@ -949,7 +955,7 @@ def register_all_dwi(basedir_path, fa_path, ap_path, B0_mask, anat_file, gtab_fi
 
 
 def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, fa_path, ap_path, B0_mask, anat_file,
-                       coords, labels, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, gtab_file, dwi_file,
+                       coords, labels, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, gtab_file, dwi_file, mask,
                        vox_size, simple=False):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
@@ -989,6 +995,8 @@ def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, f
         File path to pickled DiPy gradient table object.
     dwi_file : str
         File path to diffusion weighted image.
+    mask : str
+        Path to a brain mask to apply to the anatomical Nifti1Image.
     vox_size : str
         Voxel size in mm. (e.g. 2mm).
     simple : bool
@@ -1032,7 +1040,7 @@ def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, f
     """
     from pynets.registration import register
 
-    reg = register.DmriReg(basedir_path, fa_path, ap_path, B0_mask, anat_file, vox_size, simple)
+    reg = register.DmriReg(basedir_path, fa_path, ap_path, B0_mask, anat_file, mask, vox_size, simple)
 
     if node_size is not None:
         atlas = "%s%s%s" % (atlas, '_', node_size)
@@ -1047,7 +1055,7 @@ def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, f
     return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni, uatlas, atlas, coords, labels, node_size, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, ap_path, gtab_file, B0_mask, dwi_file
 
 
-def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=False, simple=False):
+def register_all_fmri(basedir_path, anat_file, mask, vox_size, overwrite=False, simple=False):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 
@@ -1057,6 +1065,8 @@ def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=False, simple
         Path to directory to output direct-streamline normalized temp files and outputs.
     anat_file : str
         Path to a skull-stripped anatomical Nifti1Image.
+    mask : str
+        Path to a brain mask to apply to the anatomical Nifti1Image.
     vox_size : str
         Voxel size in mm. (e.g. 2mm).
     overwrite : bool
@@ -1073,7 +1083,7 @@ def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=False, simple
     import os.path as op
     from pynets.registration import register
 
-    reg = register.FmriReg(basedir_path, anat_file, vox_size, simple)
+    reg = register.FmriReg(basedir_path, anat_file, mask, vox_size, simple)
 
     if (overwrite is True) or (op.isfile(reg.map_path) is False):
         # Perform anatomical segmentation
@@ -1088,7 +1098,7 @@ def register_all_fmri(basedir_path, anat_file, vox_size, overwrite=False, simple
     return reg_fmri_complete
 
 
-def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, vox_size, reg_fmri_complete,
+def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, vox_size, mask, reg_fmri_complete,
                         simple=False):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
@@ -1107,6 +1117,8 @@ def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, 
         Path to a skull-stripped anatomical Nifti1Image.
     vox_size : str
         Voxel size in mm. (e.g. 2mm).
+    mask : str
+        Path to a brain mask to apply to the anatomical Nifti1Image.
     reg_fmri_complete : bool
         Indicates whether initial registration is complete.
     simple : bool
@@ -1120,7 +1132,7 @@ def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, 
     """
     from pynets.registration import register
 
-    reg = register.FmriReg(basedir_path, anat_file, vox_size, simple)
+    reg = register.FmriReg(basedir_path, anat_file, mask, vox_size, simple)
 
     # Apply warps/coregister atlas to t1w_mni
     if uatlas == uatlas_parcels:
