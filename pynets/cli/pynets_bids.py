@@ -179,7 +179,7 @@ def get_bids_parser():
 
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets BIDS CLI: A Fully-Automated Workflow for Reproducible '
-                                                 'Ensemble Graph Analysis of Functional and Structural Connectomes')
+                                                 'Ensemble Sampling of Functional and Structural Connectomes')
     parser.add_argument(
         "input_dir",
         help="""The directory with the input dataset
@@ -259,8 +259,8 @@ def main():
     bids_args = get_bids_parser().parse_args()
     modality = bids_args.modality
 
-    # with open("%s%s" % (str(Path(__file__).parent.parent), '/bids_config.json'), 'r') as stream:
-    with open('/Users/derekpisner/Applications/PyNets/pynets/bids_config.json') as stream:
+    with open("%s%s" % (str(Path(__file__).parent.parent), '/bids_config.json'), 'r') as stream:
+    # with open('/Users/derekpisner/Applications/PyNets/pynets/bids_config.json') as stream:
         arg_dict = json.load(stream)
 
     if len(modality) > 1:

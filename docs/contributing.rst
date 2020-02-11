@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/dpisner453/pynets/issues.
+Report bugs at https://github.com/dpys/pynets/issues.
 
 If you are reporting a bug, please include:
 
@@ -45,7 +45,7 @@ articles, and such.
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/dpisner453/pynets/issues.
+The best way to send feedback is to file an issue at https://github.com/dpys/pynets/issues.
 
 If you are proposing a feature:
 
@@ -101,8 +101,8 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 2.6, 2.7, 3.3, 3.4 and 3.5, and for PyPy. Check
-   https://travis-ci.org/dpisner453/pynets/pull_requests
+3. The pull request should work for Python 3.5, 3.6, and for PyPy. Check
+   https://travis-ci.org/dpys/pynets/pull_requests
    and make sure that the tests pass for all supported Python versions.
 
 Tips
@@ -111,4 +111,3 @@ Tips
 To run a subset of tests::
 
 $ py.test tests.test_pynets
-

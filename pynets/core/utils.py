@@ -954,6 +954,37 @@ def merge_dicts(x, y):
     return z
 
 
+def timeout(seconds):
+    """
+    Timeout function for hung calculations.
+    """
+    from functools import wraps
+    import errno
+    import os
+    import signal
+
+    class TimeoutError(Exception):
+        pass
+
+    def decorator(func):
+        def _handle_timeout(signum, frame):
+            error_message = os.strerror(errno.ETIME)
+            raise TimeoutError(error_message)
+
+        def wrapper(*args, **kwargs):
+            signal.signal(signal.SIGALRM, _handle_timeout)
+            signal.alarm(seconds)
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                signal.alarm(0)
+            return result
+
+        return wraps(func)(wrapper)
+
+    return decorator
+
+
 def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
     """
     A function to build a hyperparameter dictionary by parsing a given net_mets file path.

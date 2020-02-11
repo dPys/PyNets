@@ -17,7 +17,7 @@ def get_parser():
 
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
-                                                 'Graph Analysis of Functional and Structural Connectomes')
+                                                 'Sampling of Functional and Structural Connectomes')
     parser.add_argument('-id',
                         metavar='A subject id or other unique identifier',
                         default=None,
@@ -35,9 +35,9 @@ def get_parser():
                         nargs='+',
                         choices=['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
                                  'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso', 'csa', 'csd'],
-                        help='Specify connectivity estimation model. For fMRI, possible models include: '
-                             'corr for correlation, cov for covariance, sps for precision covariance, partcorr for '
-                             'partial correlation. sps type is used by default. '
+                        help='(Hyperparameter): Specify connectivity estimation model. For fMRI, possible models '
+                             'include: corr for correlation, cov for covariance, sps for precision covariance, '
+                             'partcorr for partial correlation. sps type is used by default. '
                              'If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, '
                              'QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. '
                              'Default is partcorr for fMRI. For dMRI, models include csa and csd.\n')
@@ -119,17 +119,17 @@ def get_parser():
                         metavar='Cluster mask',
                         default=None,
                         nargs='+',
-                        help='Specify the path to a Nifti1Image mask file to constrained functional clustering. '
-                             'If specifying a list of paths to multiple cluster masks, separate '
+                        help='(Hyperparameter): Specify the path to a Nifti1Image mask file to constrained functional '
+                             'clustering. If specifying a list of paths to multiple cluster masks, separate '
                              'them by space.\n')
     parser.add_argument('-ua',
                         metavar='Path to parcellation file in MNI-space',
                         default=None,
                         nargs='+',
-                        help='Optionally specify a path to a parcellation/atlas Nifti1Image file in MNI152 space. '
-                             'Labels should be spatially distinct across hemispheres and ordered with consecutive '
-                             'integers with a value of 0 as the background label. If specifying a list of paths to '
-                             'multiple user atlases, separate them by space.\n')
+                        help='(Hyperparameter): Optionally specify a path to a parcellation/atlas Nifti1Image file in '
+                             'MNI152 space. Labels should be spatially distinct across hemispheres and ordered with '
+                             'consecutive integers with a value of 0 as the background label. If specifying a list of '
+                             'paths to multiple user atlases, separate them by space.\n')
     parser.add_argument('-templ',
                         metavar='Path to template file',
                         default=None,
@@ -152,9 +152,9 @@ def get_parser():
                         choices=['atlas_aal', 'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe',
                                  'atlas_harvard_oxford', 'atlas_destrieux_2009', 'atlas_msdl', 'coords_dosenbach_2010',
                                  'coords_power_2011', 'atlas_pauli_2017'],
-                        help='Specify a coordinate atlas parcellation from those made publically available in nilearn. '
-                             'If you wish to iterate your pynets run over multiple nilearn atlases, separate them by '
-                             'space. Available nilearn atlases are:'
+                        help='(Hyperparameter): Specify a coordinate atlas parcellation from those made publically '
+                             'available in nilearn. If you wish to iterate your pynets run over multiple nilearn '
+                             'atlases, separate them by space. Available nilearn atlases are:'
                              '\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\n'
                              'atlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl\ncoords_dosenbach_2010\n'
                              'coords_power_2011\natlas_pauli_2017.\n')
@@ -171,31 +171,31 @@ def get_parser():
                         metavar='Spherical centroid node size',
                         default=4,
                         nargs='+',
-                        help='Optionally specify coordinate-based node radius size(s). Default is 4 mm for fMRI and '
-                             '8mm for dMRI. If you wish to iterate the pipeline across multiple node sizes, separate '
-                             'the list by space (e.g. 2 4 6).\n')
+                        help='(Hyperparameter): Optionally specify coordinate-based node radius size(s). Default is 4 '
+                             'mm for fMRI and 8mm for dMRI. If you wish to iterate the pipeline across multiple '
+                             'node sizes, separate the list by space (e.g. 2 4 6).\n')
     parser.add_argument('-k',
                         metavar='Number of k clusters',
                         default=None,
-                        help='Specify a number of clusters to produce.\n')
+                        help='(Hyperparameter): Specify a number of clusters to produce.\n')
     parser.add_argument('-k_min',
                         metavar='Min k clusters',
                         default=None,
-                        help='Specify the minimum k clusters.\n')
+                        help='(Hyperparameter): Specify the minimum k clusters.\n')
     parser.add_argument('-k_max',
                         metavar='Max k clusters',
                         default=None,
-                        help='Specify the maximum k clusters.\n')
+                        help='(Hyperparameter): Specify the maximum k clusters.\n')
     parser.add_argument('-k_step',
                         metavar='K cluster step size',
                         default=None,
-                        help='Specify the step size of k cluster iterables.\n')
+                        help='(Hyperparameter): Specify the step size of k cluster iterables.\n')
     parser.add_argument('-ct',
                         metavar='Clustering type',
                         default='ward',
                         nargs='+',
                         choices=['ward', 'kmeans', 'complete', 'average', 'single'],
-                        help='Specify the types of clustering to use. Recommended options are: '
+                        help='(Hyperparameter): Specify the types of clustering to use. Recommended options are: '
                              'ward or kmeans. Note that imposing spatial constraints with a mask consisting of '
                              'disconnected components will leading to clustering instability in the case of complete, '
                              'average, or single clustering. If specifying a list of '
@@ -226,16 +226,17 @@ def get_parser():
                         metavar='Smoothing value (mm fwhm)',
                         default=0,
                         nargs='+',
-                        help='Optionally specify smoothing width(s). Default is 0 / no smoothing. '
+                        help='(Hyperparameter): Optionally specify smoothing width(s). Default is 0 / no smoothing. '
                              'If you wish to iterate the pipeline across multiple smoothing '
                              'separate the list by space (e.g. 2 4 6).\n')
     parser.add_argument('-hp',
                         metavar='High-pass filter (Hz)',
                         default=None,
                         nargs='+',
-                        help='Optionally specify high-pass filter values to apply to node-extracted time-series '
-                             'for fMRI. Default is None. If you wish to iterate the pipeline across multiple high-pass '
-                             'filter thresholds, values, separate the list by space (e.g. 0.008 0.01).\n')
+                        help='(Hyperparameter): Optionally specify high-pass filter values to apply to node-extracted '
+                             'time-series for fMRI. Default is None. If you wish to iterate the pipeline across '
+                             'multiple high-pass filter thresholds, values, separate the list by space '
+                             '(e.g. 0.008 0.01).\n')
     parser.add_argument('-b',
                         metavar='Number of bootstraps (integer)',
                         default=0,
@@ -272,9 +273,9 @@ def get_parser():
                         metavar='Maximum fiber length for tracking',
                         default=200,
                         nargs='+',
-                        help='Include this flag to manually specify a maximum tract length (mm) for dmri '
-                             'connectome tracking. Default is 200. If you wish to iterate the pipeline across multiple '
-                             'maximum values, separate the list by space (e.g. 150 200 250).\n')
+                        help='(Hyperparameter): Include this flag to manually specify a maximum tract length (mm) for '
+                             'dmri connectome tracking. Default is 200. If you wish to iterate the pipeline across '
+                             'multiple maximum values, separate the list by space (e.g. 150 200 250).\n')
     parser.add_argument('-tt',
                         metavar='Tracking algorithm',
                         default='local',
@@ -288,9 +289,9 @@ def get_parser():
                         default='det',
                         nargs='+',
                         choices=['det', 'prob', 'clos', 'boot'],
-                        help='Include this flag to manually specify the statistical approach to tracking for dmri '
-                             'connectome estimation. Options are: det (deterministic), closest (clos), '
-                             'boot (bootstrapped), and prob (probabilistic). '
+                        help='(Hyperparameter): Include this flag to manually specify the statistical approach to '
+                             'tracking for dmri connectome estimation. Options are: det (deterministic), '
+                             'closest (clos), boot (bootstrapped), and prob (probabilistic). '
                              'Default is det. If you wish to iterate the pipeline across multiple '
                              'direction-getting methods, separate the list by space (e.g. \'det\', \'prob\', \'clos\', '
                              '\'boot\').\n')
@@ -312,15 +313,15 @@ def get_parser():
     parser.add_argument('-min_thr',
                         metavar='Multi-thresholding minimum threshold',
                         default=None,
-                        help='Minimum threshold for multi-thresholding.\n')
+                        help='(Hyperparameter): Minimum threshold for multi-thresholding.\n')
     parser.add_argument('-max_thr',
                         metavar='Multi-thresholding maximum threshold',
                         default=None,
-                        help='Maximum threshold for multi-thresholding.')
+                        help='(Hyperparameter): Maximum threshold for multi-thresholding.')
     parser.add_argument('-step_thr',
                         metavar='Multi-thresholding step size',
                         default=None,
-                        help='Threshold step value for multi-thresholding. Default is 0.01.\n')
+                        help='(Hyperparameter): Threshold step value for multi-thresholding. Default is 0.01.\n')
     parser.add_argument('-norm',
                         metavar='Normalization strategy for resulting graph(s)',
                         default=0,

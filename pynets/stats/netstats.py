@@ -10,38 +10,8 @@ import numpy as np
 import warnings
 import networkx as nx
 from pynets.core import thresholding
+from pynets.core.utils import timeout
 warnings.filterwarnings("ignore")
-
-
-def timeout(seconds):
-    """
-    Timeout function for hung calculations during automated graph analysis.
-    """
-    from functools import wraps
-    import errno
-    import os
-    import signal
-
-    class TimeoutError(Exception):
-        pass
-
-    def decorator(func):
-        def _handle_timeout(signum, frame):
-            error_message = os.strerror(errno.ETIME)
-            raise TimeoutError(error_message)
-
-        def wrapper(*args, **kwargs):
-            signal.signal(signal.SIGALRM, _handle_timeout)
-            signal.alarm(seconds)
-            try:
-                result = func(*args, **kwargs)
-            finally:
-                signal.alarm(0)
-            return result
-
-        return wraps(func)(wrapper)
-
-    return decorator
 
 
 @timeout(720)
@@ -425,6 +395,7 @@ def participation_coef_sign(W, ci):
         Pneg = pcoef(-W * (W < 0))
 
     return Ppos, Pneg
+
 
 @timeout(360)
 def diversity_coef_sign(W, ci):
