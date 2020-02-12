@@ -823,7 +823,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     else:
         if dens_thresh is False:
             thr_type = 'prop'
-            edge_threshold = "%s%s" % (str(np.abs(thr_perc)), '%')
+            edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
             print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         else:
@@ -1004,12 +1004,12 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     else:
         if dens_thresh is False:
             thr_type = 'prop'
-            edge_threshold = "%s%s" % (str(np.abs(thr_perc)), '%')
+            edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
             print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         else:
             thr_type = 'dens'
-            edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
+            edge_threshold = None
             print("%s%.2f%s" % ('\nThresholding to achieve density of: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
 

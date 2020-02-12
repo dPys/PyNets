@@ -17,7 +17,7 @@ def get_parser():
 
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
-                                                 'Graph Analysis of Functional and Structural Connectomes')
+                                                 'Sampling of Functional and Structural Connectomes')
     parser.add_argument('-id',
                         metavar='A subject id or other unique identifier',
                         default=None,
@@ -28,25 +28,8 @@ def get_parser():
                              'parameter must be an alphanumeric string and can be arbitrarily chosen. If functional '
                              'and dmri connectomes are being generated simultaneously, then space-separated id\'s '
                              'need to be repeated to match the total input file count.\n')
-    parser.add_argument('-mod',
-                        metavar='Connectivity estimation/reconstruction method',
-                        default='partcorr',
-                        required=True,
-                        nargs='+',
-                        choices=['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
-                                 'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso', 'csa', 'csd'],
-                        help='Specify connectivity estimation model. For fMRI, possible models include: '
-                             'corr for correlation, cov for covariance, sps for precision covariance, partcorr for '
-                             'partial correlation. sps type is used by default. '
-                             'If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, '
-                             'QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. '
-                             'Default is partcorr for fMRI. For dMRI, models include csa and csd.\n')
-    parser.add_argument('-g',
-                        metavar='Path to graph file input.',
-                        default=None,
-                        nargs='+',
-                        help='In either .txt or .npy format. This skips fMRI and dMRI graph estimation workflows and '
-                             'begins at the graph analysis stage. Multiple graph files should be separated by space.\n')
+
+    # Primary file inputs
     parser.add_argument('-func',
                         metavar='Path to input functional file (required for functional connectomes)',
                         default=None,
@@ -56,14 +39,6 @@ def get_parser():
                              'Nifti1Image files in MNI152 space and in .nii or .nii.gz format, '
                              'OR the path to a text file containing a list of paths '
                              'to subject files.\n')
-    parser.add_argument('-conf',
-                        metavar='Confound regressor file (.tsv/.csv format)',
-                        default=None,
-                        nargs='+',
-                        help='Optionally specify a path to a confound regressor file to reduce noise in the '
-                             'time-series estimation for the graph. This can also be a list of paths in the case of '
-                             'running multiple subjects, which requires separation by space and of equivalent length '
-                             'to the list of input files indicated with the -func flag.\n')
     parser.add_argument('-dwi',
                         metavar='Path to diffusion-weighted imaging data file (required for dmri connectomes)',
                         default=None,
@@ -86,6 +61,8 @@ def get_parser():
                         help='Specify either a path to a b-vectors text file containing gradient directions (x,y,z) '
                              'per diffusion direction OR multiple space-separated paths to multiple b-vectors text '
                              'files in the order of accompanying b-values and dwi files.\n')
+
+    # Secondary file inputs
     parser.add_argument('-anat',
                         metavar='Path to a skull-stripped anatomical Nifti1Image',
                         default=None,
@@ -103,33 +80,26 @@ def get_parser():
                              'OR multiple paths to multiple brain mask Nifti1Image files in the case of running '
                              'multiple participants, in which case paths should be separated by a space. If no brain '
                              'mask is supplied, a default MNI152 template mask will be used\n')
+    parser.add_argument('-conf',
+                        metavar='Confound regressor file (.tsv/.csv format)',
+                        default=None,
+                        nargs='+',
+                        help='Optionally specify a path to a confound regressor file to reduce noise in the '
+                             'time-series estimation for the graph. This can also be a list of paths in the case of '
+                             'running multiple subjects, which requires separation by space and of equivalent length '
+                             'to the list of input files indicated with the -func flag.\n')
+    parser.add_argument('-g',
+                        metavar='Path to graph file input.',
+                        default=None,
+                        nargs='+',
+                        help='In either .txt or .npy format. This skips fMRI and dMRI graph estimation workflows and '
+                             'begins at the graph analysis stage. Multiple graph files should be separated by space.\n')
     parser.add_argument('-roi',
                         metavar='Path to binarized Region-of-Interest (ROI) Nifti1Image',
                         default=None,
                         nargs='+',
                         help='Optionally specify a binarized ROI mask and retain only those nodes '
                              'of a parcellation contained within that mask for connectome estimation.\n')
-    parser.add_argument('-way',
-                        metavar='Path to binarized Nifti1Image to constrain tractography',
-                        default=None,
-                        nargs='+',
-                        help='Optionally specify a binarized ROI mask in MNI-space to constrain tractography in the '
-                             'case of dmri connectome estimation.\n')
-    parser.add_argument('-cm',
-                        metavar='Cluster mask',
-                        default=None,
-                        nargs='+',
-                        help='Specify the path to a Nifti1Image mask file to constrained functional clustering. '
-                             'If specifying a list of paths to multiple cluster masks, separate '
-                             'them by space.\n')
-    parser.add_argument('-ua',
-                        metavar='Path to parcellation file in MNI-space',
-                        default=None,
-                        nargs='+',
-                        help='Optionally specify a path to a parcellation/atlas Nifti1Image file in MNI152 space. '
-                             'Labels should be spatially distinct across hemispheres and ordered with consecutive '
-                             'integers with a value of 0 as the background label. If specifying a list of paths to '
-                             'multiple user atlases, separate them by space.\n')
     parser.add_argument('-templ',
                         metavar='Path to template file',
                         default=None,
@@ -145,6 +115,29 @@ def get_parser():
                         default=None,
                         help='Specify the path to the atlas reference .txt file that maps labels to '
                              'intensities corresponding to the atlas parcellation file specified with the -ua flag.\n')
+
+    # Modality-independent hyperparameters
+    parser.add_argument('-mod',
+                        metavar='Connectivity estimation/reconstruction method',
+                        default='partcorr',
+                        required=True,
+                        nargs='+',
+                        choices=['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
+                                 'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso', 'csa', 'csd'],
+                        help='(Hyperparameter): Specify connectivity estimation model. For fMRI, possible models '
+                             'include: corr for correlation, cov for covariance, sps for precision covariance, '
+                             'partcorr for partial correlation. sps type is used by default. '
+                             'If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, '
+                             'QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. '
+                             'Default is partcorr for fMRI. For dMRI, models include csa and csd.\n')
+    parser.add_argument('-ua',
+                        metavar='Path to parcellation file in MNI-space',
+                        default=None,
+                        nargs='+',
+                        help='(Hyperparameter): Optionally specify a path to a parcellation/atlas Nifti1Image file in '
+                             'MNI152 space. Labels should be spatially distinct across hemispheres and ordered with '
+                             'consecutive integers with a value of 0 as the background label. If specifying a list of '
+                             'paths to multiple user atlases, separate them by space.\n')
     parser.add_argument('-a',
                         metavar='Atlas',
                         default=None,
@@ -152,50 +145,66 @@ def get_parser():
                         choices=['atlas_aal', 'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe',
                                  'atlas_harvard_oxford', 'atlas_destrieux_2009', 'atlas_msdl', 'coords_dosenbach_2010',
                                  'coords_power_2011', 'atlas_pauli_2017'],
-                        help='Specify a coordinate atlas parcellation from those made publically available in nilearn. '
-                             'If you wish to iterate your pynets run over multiple nilearn atlases, separate them by '
-                             'space. Available nilearn atlases are:'
+                        help='(Hyperparameter): Specify a coordinate atlas parcellation from those made publically '
+                             'available in nilearn. If you wish to iterate your pynets run over multiple nilearn '
+                             'atlases, separate them by space. Available nilearn atlases are:'
                              '\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\n'
                              'atlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl\ncoords_dosenbach_2010\n'
                              'coords_power_2011\natlas_pauli_2017.\n')
-    parser.add_argument('-spheres',
-                        default=False,
-                        action='store_true',
-                        help='Include this flag to use spheres instead of parcels as nodes.\n')
-    parser.add_argument('-names',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to perform automated anatomical labeling of '
-                             'nodes.\n')
     parser.add_argument('-ns',
                         metavar='Spherical centroid node size',
                         default=4,
                         nargs='+',
-                        help='Optionally specify coordinate-based node radius size(s). Default is 4 mm for fMRI and '
-                             '8mm for dMRI. If you wish to iterate the pipeline across multiple node sizes, separate '
-                             'the list by space (e.g. 2 4 6).\n')
+                        help='(Hyperparameter): Optionally specify coordinate-based node radius size(s). Default is 4 '
+                             'mm for fMRI and 8mm for dMRI. If you wish to iterate the pipeline across multiple '
+                             'node sizes, separate the list by space (e.g. 2 4 6).\n')
+    parser.add_argument('-thr',
+                        metavar='Graph threshold',
+                        default=1.00,
+                        help='Optionally specify a threshold indicating a proportion of weights to preserve in the '
+                             'graph. Default is proportional thresholding. If omitted, no thresholding will be applied.'
+                             '\n')
+    parser.add_argument('-min_thr',
+                        metavar='Multi-thresholding minimum threshold',
+                        default=None,
+                        help='(Hyperparameter): Minimum threshold for multi-thresholding.\n')
+    parser.add_argument('-max_thr',
+                        metavar='Multi-thresholding maximum threshold',
+                        default=None,
+                        help='(Hyperparameter): Maximum threshold for multi-thresholding.')
+    parser.add_argument('-step_thr',
+                        metavar='Multi-thresholding step size',
+                        default=None,
+                        help='(Hyperparameter): Threshold step value for multi-thresholding. Default is 0.01.\n')
+
+    # fMRI hyperparameters
+    parser.add_argument('-sm',
+                        metavar='Smoothing value (mm fwhm)',
+                        default=0,
+                        nargs='+',
+                        help='(Hyperparameter): Optionally specify smoothing width(s). Default is 0 / no smoothing. '
+                             'If you wish to iterate the pipeline across multiple smoothing '
+                             'separate the list by space (e.g. 2 4 6).\n')
+    parser.add_argument('-hp',
+                        metavar='High-pass filter (Hz)',
+                        default=None,
+                        nargs='+',
+                        help='(Hyperparameter): Optionally specify high-pass filter values to apply to node-extracted '
+                             'time-series for fMRI. Default is None. If you wish to iterate the pipeline across '
+                             'multiple high-pass filter thresholds, values, separate the list by space '
+                             '(e.g. 0.008 0.01).\n')
     parser.add_argument('-k',
                         metavar='Number of k clusters',
                         default=None,
-                        help='Specify a number of clusters to produce.\n')
-    parser.add_argument('-k_min',
-                        metavar='Min k clusters',
-                        default=None,
-                        help='Specify the minimum k clusters.\n')
-    parser.add_argument('-k_max',
-                        metavar='Max k clusters',
-                        default=None,
-                        help='Specify the maximum k clusters.\n')
-    parser.add_argument('-k_step',
-                        metavar='K cluster step size',
-                        default=None,
-                        help='Specify the step size of k cluster iterables.\n')
+                        nargs='+',
+                        help='(Hyperparameter): Specify a number of clusters to produce. If you wish to iterate the '
+                             'pipeline across multiple values of k, separate the list by space (e.g. 100 150 200).\n')
     parser.add_argument('-ct',
                         metavar='Clustering type',
                         default='ward',
                         nargs='+',
                         choices=['ward', 'kmeans', 'complete', 'average', 'single'],
-                        help='Specify the types of clustering to use. Recommended options are: '
+                        help='(Hyperparameter): Specify the types of clustering to use. Recommended options are: '
                              'ward or kmeans. Note that imposing spatial constraints with a mask consisting of '
                              'disconnected components will leading to clustering instability in the case of complete, '
                              'average, or single clustering. If specifying a list of '
@@ -208,34 +217,35 @@ def get_parser():
                         help='Include this flag if you are running agglomerative-type clustering and wish to specify a '
                              'spatially constrained connectivity method based on tcorr or scorr. Default is allcorr '
                              'which has no spatial constraints.\n')
-    parser.add_argument('-n',
-                        metavar='Resting-state network',
+    parser.add_argument('-cm',
+                        metavar='Cluster mask',
                         default=None,
                         nargs='+',
-                        choices=['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default', 'VisCent',
-                                 'VisPeri', 'SomMotA', 'SomMotB', 'DorsAttnA', 'DorsAttnB', 'SalVentAttnA',
-                                 'SalVentAttnB', 'LimbicOFC', 'LimbicTempPole', 'ContA', 'ContB', 'ContC', 'DefaultA',
-                                 'DefaultB', 'DefaultC', 'TempPar'],
-                        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or '
-                             '17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, '
-                             'VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, '
-                             'LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing '
-                             'multiple RSNs, separate them by space. (e.g. -n \'Default\' \'Cont\' \'SalVentAttn\')\'.'
-                             '\n')
-    parser.add_argument('-sm',
-                        metavar='Smoothing value (mm fwhm)',
-                        default=0,
+                        help='(Hyperparameter): Specify the path to a Nifti1Image mask file to constrained functional '
+                             'clustering. If specifying a list of paths to multiple cluster masks, separate '
+                             'them by space.\n')
+
+    # dMRI hyperparameters
+    parser.add_argument('-ml',
+                        metavar='Maximum fiber length for tracking',
+                        default=200,
                         nargs='+',
-                        help='Optionally specify smoothing width(s). Default is 0 / no smoothing. '
-                             'If you wish to iterate the pipeline across multiple smoothing '
-                             'separate the list by space (e.g. 2 4 6).\n')
-    parser.add_argument('-hp',
-                        metavar='High-pass filter (Hz)',
-                        default=None,
+                        help='(Hyperparameter): Include this flag to manually specify a maximum tract length (mm) for '
+                             'dmri connectome tracking. Default is 200. If you wish to iterate the pipeline across '
+                             'multiple maximum values, separate the list by space (e.g. 150 200 250).\n')
+    parser.add_argument('-dg',
+                        metavar='Direction getter',
+                        default='det',
                         nargs='+',
-                        help='Optionally specify high-pass filter values to apply to node-extracted time-series '
-                             'for fMRI. Default is None. If you wish to iterate the pipeline across multiple high-pass '
-                             'filter thresholds, values, separate the list by space (e.g. 0.008 0.01).\n')
+                        choices=['det', 'prob', 'clos', 'boot'],
+                        help='(Hyperparameter): Include this flag to manually specify the statistical approach to '
+                             'tracking for dmri connectome estimation. Options are: det (deterministic), '
+                             'closest (clos), boot (bootstrapped), and prob (probabilistic). '
+                             'Default is det. If you wish to iterate the pipeline across multiple '
+                             'direction-getting methods, separate the list by space (e.g. \'det\', \'prob\', \'clos\', '
+                             '\'boot\').\n')
+
+    # fMRI settings (non-hyperparameter)
     parser.add_argument('-b',
                         metavar='Number of bootstraps (integer)',
                         default=0,
@@ -250,31 +260,8 @@ def get_parser():
                         help='If using the -b flag, you may manually specify a bootstrap block size for circular-block '
                              'resampling of the node-extracted time-series. sqrt(TR) rounded to the nearest integer is '
                              'recommended\n')
-    parser.add_argument('-p',
-                        metavar='Pruning strategy',
-                        default=1,
-                        nargs=1,
-                        choices=['0', '1', '2'],
-                        help='Include this flag to prune the resulting graph of (1) any isolated + fully '
-                             'disconnected nodes or (2) any isolated + fully disconnected + non-important nodes. '
-                             'Default pruning=1. Include -p 0 to disable pruning.\n')
-    parser.add_argument('-bin',
-                        default=False,
-                        action='store_true',
-                        help='Include this flag to binarize the resulting graph such that edges are boolean and not '
-                             'weighted.\n')
-    parser.add_argument('-s',
-                        metavar='Number of samples',
-                        default='1000000',
-                        help='Include this flag to manually specify a number of cumulative streamline samples for '
-                             'tractography. Default is 1000000. Iterable number of samples not currently supported.\n')
-    parser.add_argument('-ml',
-                        metavar='Maximum fiber length for tracking',
-                        default=200,
-                        nargs='+',
-                        help='Include this flag to manually specify a maximum tract length (mm) for dmri '
-                             'connectome tracking. Default is 200. If you wish to iterate the pipeline across multiple '
-                             'maximum values, separate the list by space (e.g. 150 200 250).\n')
+
+    # dMRI settings (non-hyperparameter)
     parser.add_argument('-tt',
                         metavar='Tracking algorithm',
                         default='local',
@@ -283,17 +270,6 @@ def get_parser():
                         help='Include this flag to manually specify a tracking algorithm for dmri connectome '
                              'estimation. Options are: local and particle. Default is local. Iterable tracking '
                              'techniques not currently supported.\n')
-    parser.add_argument('-dg',
-                        metavar='Direction getter',
-                        default='det',
-                        nargs='+',
-                        choices=['det', 'prob', 'clos', 'boot'],
-                        help='Include this flag to manually specify the statistical approach to tracking for dmri '
-                             'connectome estimation. Options are: det (deterministic), closest (clos), '
-                             'boot (bootstrapped), and prob (probabilistic). '
-                             'Default is det. If you wish to iterate the pipeline across multiple '
-                             'direction-getting methods, separate the list by space (e.g. \'det\', \'prob\', \'clos\', '
-                             '\'boot\').\n')
     parser.add_argument('-tc',
                         metavar='Tissue classification method',
                         default='bin',
@@ -303,24 +279,19 @@ def get_parser():
                              'connectome estimation. Options are: cmc (continuous), act (anatomically-constrained), '
                              'wb (whole-brain mask), and bin (binary to white-matter only). Default is bin. Iterable '
                              'selection of tissue classification method is not currently supported.\n')
-    parser.add_argument('-thr',
-                        metavar='Graph threshold',
-                        default=1.00,
-                        help='Optionally specify a threshold indicating a proportion of weights to preserve in the '
-                             'graph. Default is proportional thresholding. If omitted, no thresholding will be applied.'
-                             '\n')
-    parser.add_argument('-min_thr',
-                        metavar='Multi-thresholding minimum threshold',
+    parser.add_argument('-s',
+                        metavar='Number of samples',
+                        default='1000000',
+                        help='Include this flag to manually specify a number of cumulative streamline samples for '
+                             'tractography. Default is 1000000. Iterable number of samples not currently supported.\n')
+    parser.add_argument('-way',
+                        metavar='Path to binarized Nifti1Image to constrain tractography',
                         default=None,
-                        help='Minimum threshold for multi-thresholding.\n')
-    parser.add_argument('-max_thr',
-                        metavar='Multi-thresholding maximum threshold',
-                        default=None,
-                        help='Maximum threshold for multi-thresholding.')
-    parser.add_argument('-step_thr',
-                        metavar='Multi-thresholding step size',
-                        default=None,
-                        help='Threshold step value for multi-thresholding. Default is 0.01.\n')
+                        nargs='+',
+                        help='Optionally specify a binarized ROI mask in MNI-space to constrain tractography in the '
+                             'case of dmri connectome estimation.\n')
+
+    # General settings
     parser.add_argument('-norm',
                         metavar='Normalization strategy for resulting graph(s)',
                         default=0,
@@ -331,6 +302,11 @@ def get_parser():
                              '(4) using pass-to-ranks for all non-zero edges relative to the number of nodes; (5) '
                              'using pass-to-ranks with zero-edge boost; and (6) which standardizes the matrix to '
                              'values [0, 1]. Default is (0) which is no normalization.\n')
+    parser.add_argument('-bin',
+                        default=False,
+                        action='store_true',
+                        help='Include this flag to binarize the resulting graph such that edges are boolean and not '
+                             'weighted.\n')
     parser.add_argument('-dt',
                         default=False,
                         action='store_true',
@@ -342,6 +318,14 @@ def get_parser():
                         help='Optionally use this flag if you wish to apply local thresholding via the Minimum '
                              'Spanning Tree approach. -thr values in this case correspond to a target density (if the '
                              '-dt flag is also included), otherwise a target proportional threshold.\n')
+    parser.add_argument('-p',
+                        metavar='Pruning strategy',
+                        default=1,
+                        nargs=1,
+                        choices=['0', '1', '2'],
+                        help='Include this flag to prune the resulting graph of (1) any isolated + fully '
+                             'disconnected nodes or (2) any isolated + fully disconnected + non-important nodes. '
+                             'Default pruning=1. Include -p 0 to disable pruning.\n')
     parser.add_argument('-df',
                         default=False,
                         action='store_true',
@@ -364,6 +348,29 @@ def get_parser():
                         choices=[None, 'omni', 'mase'],
                         help='Optionally use this flag if you wish to embed the ensemble(s) produced into '
                              'feature vector(s). Options include: omni or mase. Default is None.\n')
+    parser.add_argument('-spheres',
+                        default=False,
+                        action='store_true',
+                        help='Include this flag to use spheres instead of parcels as nodes.\n')
+    parser.add_argument('-n',
+                        metavar='Resting-state network',
+                        default=None,
+                        nargs='+',
+                        choices=['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default', 'VisCent',
+                                 'VisPeri', 'SomMotA', 'SomMotB', 'DorsAttnA', 'DorsAttnB', 'SalVentAttnA',
+                                 'SalVentAttnB', 'LimbicOFC', 'LimbicTempPole', 'ContA', 'ContB', 'ContC', 'DefaultA',
+                                 'DefaultB', 'DefaultC', 'TempPar'],
+                        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or '
+                             '17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, '
+                             'VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, '
+                             'LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing '
+                             'multiple RSNs, separate them by space. (e.g. -n \'Default\' \'Cont\' \'SalVentAttn\')\'.'
+                             '\n')
+    parser.add_argument('-names',
+                        default=False,
+                        action='store_true',
+                        help='Optionally use this flag if you wish to perform automated anatomical labeling of '
+                             'nodes.\n')
     parser.add_argument('-vox',
                         default='2mm',
                         nargs=1,
@@ -375,6 +382,8 @@ def get_parser():
                         action='store_true',
                         help='Optionally use this flag if you wish to activate plotting of adjacency matrices, '
                              'connectomes, and time-series.\n')
+
+    # Debug/Runtime settings
     parser.add_argument('-pm',
                         metavar='Cores,memory',
                         default='4,8',
@@ -409,7 +418,6 @@ def build_workflow(args, retval):
     import sys
     import timeit
     from datetime import timedelta
-    import numpy as np
     from pathlib import Path
     import yaml
     import datetime
@@ -419,8 +427,6 @@ def build_workflow(args, retval):
     except ImportError:
         print('PyNets not installed! Ensure that you are using the correct python version.')
     from pynets.core.utils import do_dir_path
-
-    print(args)
 
     # Start timer
     now = datetime.datetime.now()
@@ -570,9 +576,17 @@ def build_workflow(args, retval):
                     node_size = 8
     ref_txt = args.ref
     k = args.k
-    k_min = args.k_min
-    k_max = args.k_max
-    k_step = args.k_step
+    if k:
+        if (type(k) is list) and (len(k) > 1):
+            k_list = [int(i) for i in k]
+            k = None
+        elif type(k) is list:
+            k = k[0]
+            k_list = None
+        else:
+            k_list = None
+    else:
+        k_list = None
     prune = args.p
     if type(prune) is list:
         prune = prune[0]
@@ -905,29 +919,21 @@ def build_workflow(args, retval):
         max_thr = None
         step_thr = None
 
-    if (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is not
-                                                                        None) and (clust_type_list is not None):
+    if (k_list is not None) and (k is None) and (clust_mask_list is not None) and (clust_type_list is not None):
         k_clustering = 8
-    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is not
-                                                                      None) and (clust_type_list is not None):
+    elif (k is not None) and (k_list is None) and (clust_mask_list is not None) and (clust_type_list is not None):
         k_clustering = 7
-    elif (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is
-                                                                          None) and (clust_type_list is not None):
+    elif (k_list is not None) and (k is None) and (clust_mask_list is None) and (clust_type_list is not None):
         k_clustering = 6
-    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is
-                                                                      None) and (clust_type_list is not None):
+    elif (k is not None) and (k_list is None) and (clust_mask_list is None) and (clust_type_list is not None):
         k_clustering = 5
-    elif (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is not
-                                                                          None) and (clust_type_list is None):
+    elif (k_list is not None) and (k is None) and (clust_mask_list is not None) and (clust_type_list is None):
         k_clustering = 4
-    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is not
-                                                                      None) and (clust_type_list is None):
+    elif (k is not None) and (k_list is None) and (clust_mask_list is not None) and (clust_type_list is None):
         k_clustering = 3
-    elif (k_min is not None) and (k_max is not None) and (k is None) and (clust_mask_list is
-                                                                          None) and (clust_type_list is None):
+    elif (k_list is not None) and (k is None) and (clust_mask_list is None) and (clust_type_list is None):
         k_clustering = 2
-    elif (k is not None) and (k_min is None) and (k_max is None) and (clust_mask_list is
-                                                                      None) and (clust_type_list is None):
+    elif (k is not None) and (k_list is None) and (clust_mask_list is None) and (clust_type_list is None):
         k_clustering = 1
     else:
         k_clustering = 0
@@ -1067,7 +1073,6 @@ def build_workflow(args, retval):
             print("%s%s" % ("\nCluster atlas: ", atlas_clust))
             print("\nClustering within mask at a single resolution...")
         elif k_clustering == 2:
-            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             print("\nClustering within mask at multiple resolutions...")
             if func_file_list:
                 for _k in k_list:
@@ -1095,7 +1100,6 @@ def build_workflow(args, retval):
             clust_mask = None
         elif k_clustering == 4:
             print("\nClustering within multiple masks at multiple resolutions...")
-            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             if func_file_list:
                 for _clust_mask in clust_mask_list:
                     for _k in k_list:
@@ -1118,7 +1122,6 @@ def build_workflow(args, retval):
                 print("\nClustering within mask at a single resolution using multiple clustering methods...")
             clust_type = None
         elif k_clustering == 6:
-            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             print("\nClustering within mask at multiple resolutions using multiple clustering methods...")
             if func_file_list:
                 for _clust_type in clust_type_list:
@@ -1152,7 +1155,6 @@ def build_workflow(args, retval):
             clust_type = None
         elif k_clustering == 8:
             print("\nClustering within multiple masks at multiple resolutions using multiple clustering methods...")
-            k_list = np.round(np.arange(int(k_min), int(k_max), int(k_step)), decimals=0).tolist() + [int(k_max)]
             if func_file_list:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
@@ -1212,7 +1214,7 @@ def build_workflow(args, retval):
                 else:
                     do_dir_path(atlas, func_file)
         else:
-            if (uatlas is None) and (k == 0):
+            if (uatlas is None) and (k == 0) and user_atlas_list is None and k_list is None and atlas is None and multi_atlas is None:
                 raise KeyError('\nERROR: No atlas specified!')
             else:
                 pass
@@ -1264,11 +1266,7 @@ def build_workflow(args, retval):
                         do_dir_path(atlas, _dwi_file)
                 else:
                     do_dir_path(atlas, dwi_file)
-        else:
-            if uatlas is None:
-                raise KeyError('\nERROR: No atlas specified!')
-            else:
-                pass
+
         if target_samples:
             print("%s%s%s" % ('Using ', target_samples, ' samples...'))
         if max_length:
@@ -1295,9 +1293,7 @@ def build_workflow(args, retval):
         conf = None
         k = None
         clust_mask = None
-        k_min = None
-        k_max = None
-        k_step = None
+        k_list = None
         k_clustering = None
         clust_mask_list = None
         hpass = None
@@ -1353,9 +1349,7 @@ def build_workflow(args, retval):
     # print("%s%s" % ('waymask: ', waymask))
     # print("%s%s" % ('k: ', k))
     # print("%s%s" % ('clust_mask: ', clust_mask))
-    # print("%s%s" % ('k_min: ', k_min))
-    # print("%s%s" % ('k_max: ', k_max))
-    # print("%s%s" % ('k_step: ', k_step))
+    # print("%s%s" % ('k_list: ', k_list))
     # print("%s%s" % ('k_clustering: ', k_clustering))
     # print("%s%s" % ('user_atlas_list: ', user_atlas_list))
     # print("%s%s" % ('clust_mask_list: ', clust_mask_list))
@@ -1406,7 +1400,7 @@ def build_workflow(args, retval):
     def init_wf_single_subject(ID, func_file, atlas, network, node_size, roi, thr, uatlas,
                                multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
                                multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_file, parc, ref_txt, procmem, k,
-                               clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list, clust_mask_list, prune,
+                               clust_mask, k_list, k_clustering, user_atlas_list, clust_mask_list, prune,
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
                                clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples,
@@ -1466,7 +1460,7 @@ def build_workflow(args, retval):
         meta_wf = workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas,
                                     multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
                                     anat_file, parc, ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr,
-                                    step_thr, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
+                                    step_thr, k, clust_mask, k_list, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list, disp_filt,
                                     clust_type, clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec,
@@ -1599,7 +1593,7 @@ def build_workflow(args, retval):
     def wf_multi_subject(ID, func_file_list, dwi_file_list, mask_list, fbvec_list, fbval_list, conf_list,
                          anat_file_list, atlas, network, node_size, roi, thr, uatlas, multi_nets, conn_model,
                          dens_thresh, conf, adapt_thresh, plot_switch, dwi_file, multi_thr, multi_atlas, min_thr,
-                         max_thr, step_thr, anat_file, parc, ref_txt, procmem, k, clust_mask, k_min, k_max, k_step,
+                         max_thr, step_thr, anat_file, parc, ref_txt, procmem, k, clust_mask, k_list,
                          k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, num_total_samples,
                          graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
                          smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask, norm,
@@ -1651,8 +1645,8 @@ def build_workflow(args, retval):
                 multi_nets=multi_nets, conn_model=conn_model, dens_thresh=dens_thresh, conf=conf_sub,
                 adapt_thresh=adapt_thresh, plot_switch=plot_switch, dwi_file=dwi_file, multi_thr=multi_thr,
                 multi_atlas=multi_atlas, min_thr=min_thr, max_thr=max_thr, step_thr=step_thr, anat_file=anat_file,
-                parc=parc, ref_txt=ref_txt, procmem=procmem, k=k, clust_mask=clust_mask, k_min=k_min, k_max=k_max,
-                k_step=k_step, k_clustering=k_clustering, user_atlas_list=user_atlas_list,
+                parc=parc, ref_txt=ref_txt, procmem=procmem, k=k, clust_mask=clust_mask, k_list=k_list,
+                k_clustering=k_clustering, user_atlas_list=user_atlas_list,
                 clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
                 min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type, use_AAL_naming=use_AAL_naming,
@@ -1727,7 +1721,7 @@ def build_workflow(args, retval):
                                     thr, uatlas, multi_nets, conn_model, dens_thresh,
                                     conf, adapt_thresh, plot_switch, dwi_file, multi_thr,
                                     multi_atlas, min_thr, max_thr, step_thr, anat_file, parc,
-                                    ref_txt, procmem, k, clust_mask, k_min, k_max, k_step,
+                                    ref_txt, procmem, k, clust_mask, k_list,
                                     k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
@@ -1815,7 +1809,7 @@ def build_workflow(args, retval):
         wf = init_wf_single_subject(ID, func_file, atlas, network, node_size, roi, thr, uatlas,
                                     multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
                                     multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_file, parc, ref_txt,
-                                    procmem, k, clust_mask, k_min, k_max, k_step, k_clustering, user_atlas_list,
+                                    procmem, k, clust_mask, k_list, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
                                     smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask,

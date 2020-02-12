@@ -82,6 +82,7 @@ def crawl_bucket(bucket, path, jobdir):
     OrderedDict
         dictionary containing all subjects and sessions from the path location
     """
+    from pynets.core.utils import flatten
 
     # if jobdir has seshs info file in it, use that instead
     sesh_path = f"{jobdir}/seshs.json"
@@ -96,14 +97,19 @@ def crawl_bucket(bucket, path, jobdir):
     subj_pattern = r"(?<=sub-)(\w*)(?=/ses)"
     sesh_pattern = r"(?<=ses-)(\d*)"
     all_subfiles = get_matching_s3_objects(bucket, path + "/sub-")
-    subjs = list(set(re.findall(subj_pattern, obj)[0] for obj in all_subfiles))
+    all_subfiles = [obj for obj in all_subfiles]
+    all_subs = [re.findall(subj_pattern, obj) for obj in all_subfiles]
+    subjs = list(set([i for i in flatten(all_subs)]))
     seshs = OrderedDict()
 
     # populate seshs
     for subj in subjs:
         prefix = f"{path}/sub-{subj}/"
         all_seshfiles = get_matching_s3_objects(bucket, prefix)
-        sesh = list(set([re.findall(sesh_pattern, obj)[0] for obj in all_seshfiles]))
+        all_seshfiles = [obj for obj in all_seshfiles]
+        all_seshs = [re.findall(sesh_pattern, obj) for obj in all_seshfiles]
+        sesh = list(set([i for i in flatten(all_seshs)]))
+
         if sesh != []:
             seshs[subj] = sesh
             print(f"{subj} added to seshs.")
@@ -164,6 +170,7 @@ def create_json(
     list
         list of job jsons
     """
+    from pathlib import Path
     jobsjson = f"{jobdir}/jobs.json"
     if os.path.isfile(jobsjson):
         with open(jobsjson, "r") as f:
@@ -177,9 +184,8 @@ def create_json(
     seshs = threads
 
     templ = os.path.dirname(__file__)
-    tpath=templ[: templ.find("/pynets/scripts")]
 
-    with open(f'{tpath}/cloud_config.json', "r") as inf:
+    with open("%s%s" % (str(Path(__file__).parent.parent), '/cloud_config.json'), 'r') as inf:
         template = json.load(inf)
 
     cmd = template["containerOverrides"]["command"]
@@ -194,7 +200,7 @@ def create_json(
 
     # edit non-defaults
     jobs = []
-    cmd[cmd.index("<INPUT>")]=f's3://{bucket}/{path}'
+    cmd[cmd.index("<INPUT>")] = f's3://{bucket}/{path}'
     cmd[cmd.index("<PUSH>")] = f's3://{bucket}/{path}/{modif}'
 
     # edit participant-specific values ()
@@ -299,7 +305,7 @@ def kill_jobs(jobdir, reason='"Killing job"'):
 
 def main():
     parser = ArgumentParser(description='PyNets AWS Cloud CLI: A Fully-Automated Workflow for Reproducible '
-                                        'Ensemble Graph Analysis of Functional and Structural Connectomes')
+                                        'Ensemble Sampling of Functional and Structural Connectomes')
 
     parser.add_argument(
         "--bucket",

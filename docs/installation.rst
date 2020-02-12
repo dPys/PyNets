@@ -19,12 +19,12 @@ Once Docker is installed, you can build a container as follows: ::
 
     BUILDIR=$(pwd)
     mkdir -p ${BUILDIR}/pynets_images
-    docker build -t pynets_docker .
+    docker build -t pynets .
 
     docker run -ti --rm --privileged \
         -v /tmp:/tmp \
         -v /var/tmp:/var/tmp \
-        pynets_docker
+        pynets
 
 See `External Dependencies`_ for more information (e.g., specific versions) on
 what is included in the latest Docker images.
@@ -83,7 +83,7 @@ Running a Singularity Image
 
 If the data to be preprocessed is also on the HPC, you are ready to run pynets. ::
 
-    $ singularity run --cleanenv /my_images/pynets-0.7.4.simg \
+    $ singularity run --cleanenv /my_images/pynets-0.9.90d.simg \
         path/to/data/dir/bids_derivative_root \
         participant \
         -id {label}

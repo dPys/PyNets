@@ -10,38 +10,8 @@ import numpy as np
 import warnings
 import networkx as nx
 from pynets.core import thresholding
+from pynets.core.utils import timeout
 warnings.filterwarnings("ignore")
-
-
-def timeout(seconds):
-    """
-    Timeout function for hung calculations during automated graph analysis.
-    """
-    from functools import wraps
-    import errno
-    import os
-    import signal
-
-    class TimeoutError(Exception):
-        pass
-
-    def decorator(func):
-        def _handle_timeout(signum, frame):
-            error_message = os.strerror(errno.ETIME)
-            raise TimeoutError(error_message)
-
-        def wrapper(*args, **kwargs):
-            signal.signal(signal.SIGALRM, _handle_timeout)
-            signal.alarm(seconds)
-            try:
-                result = func(*args, **kwargs)
-            finally:
-                signal.alarm(0)
-            return result
-
-        return wraps(func)(wrapper)
-
-    return decorator
 
 
 @timeout(720)
@@ -426,6 +396,7 @@ def participation_coef_sign(W, ci):
 
     return Ppos, Pneg
 
+
 @timeout(360)
 def diversity_coef_sign(W, ci):
     '''
@@ -795,6 +766,7 @@ def raw_mets(G, i):
     net_met_val : float
         Value of the graph metric i that was calculated from G.
     """
+    import random
     from functools import partial
     if isinstance(i, partial):
         net_name = str(i.func)
@@ -807,8 +779,12 @@ def raw_mets(G, i):
             except:
                 net_met_val = float(average_shortest_path_length_for_all(G))
         else:
-            [H, _] = prune_disconnected(G)
-            net_met_val = float(i(H))
+            try:
+                [H, _] = prune_disconnected(G)
+                net_met_val = float(i(H))
+            except:
+                np.save("%s%s%s" % ('/tmp/average_shortest_path_length', random.randint(1, 400), '.npy'),
+                        np.array(nx.to_numpy_matrix(H)))
     elif 'graph_number_of_cliques' in net_name:
         if nx.is_connected(G) is True:
             try:
@@ -816,19 +792,35 @@ def raw_mets(G, i):
             except:
                 net_met_val = float(subgraph_number_of_cliques_for_all(G))
         else:
-            [H, _] = prune_disconnected(G)
-            net_met_val = float(i(H))
+            try:
+                [H, _] = prune_disconnected(G)
+                net_met_val = float(i(H))
+            except:
+                np.save("%s%s%s" % ('/tmp/graph_num_cliques', random.randint(1, 400), '.npy'),
+                        np.array(nx.to_numpy_matrix(H)))
     elif 'smallworldness' in net_name:
         try:
             net_met_val = float(i(G))
         except:
-            [H, _] = prune_disconnected(G)
-            net_met_val = float(i(H))
+            try:
+                [H, _] = prune_disconnected(G)
+                net_met_val = float(i(H))
+            except:
+                np.save("%s%s%s" % ('/tmp/smallworldness', random.randint(1, 400), '.npy'),
+                        np.array(nx.to_numpy_matrix(H)))
     elif 'degree_assortativity_coefficient' in net_name:
             H = G.copy()
             for u, v, d in H.edges(data=True):
                 H[u][v]['weight'] = int(np.round(100*H[u][v]['weight'], 1))
-            net_met_val = float(i(H))
+            try:
+                net_met_val = float(i(H))
+            except:
+                try:
+                    [H, _] = prune_disconnected(H)
+                    net_met_val = float(i(H))
+                except:
+                    np.save("%s%s%s" % ('/tmp/degree_assortativity_coefficient', random.randint(1, 400), '.npy'),
+                            np.array(nx.to_numpy_matrix(H)))
     else:
         net_met_val = float(i(G))
 
@@ -1350,7 +1342,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     import gc
     import os.path as op
     import yaml
-#    import random
+    import random
     import networkx
     import pynets.stats.netstats
     try:

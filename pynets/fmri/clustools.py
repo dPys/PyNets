@@ -392,7 +392,7 @@ class NilParcellate(object):
         """
         self.func_file = func_file
         self.clust_mask = clust_mask
-        self.k = k
+        self.k = int(k)
         self.clust_type = clust_type
         self.conf = conf
         self.local_corr = local_corr
