@@ -335,13 +335,13 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                                                       mode='any',
                                                                       tol=roi_neighborhood_tol))
 
-                print("%s%s" % ('Qualifying Streamlines by node intersection: ', len(roi_proximal_streamlines)))
+                print("%s%s" % ('Qualifying streamlines by node intersection: ', len(roi_proximal_streamlines)))
 
                 roi_proximal_streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in
                                                                                          roi_proximal_streamlines if
                                                                                          len(s) > float(min_length)])
 
-                print("%s%s" % ('Qualifying Streamlines by minimum length criterion: ', len(roi_proximal_streamlines)))
+                print("%s%s" % ('Qualifying streamlines by minimum length criterion: ', len(roi_proximal_streamlines)))
 
                 if waymask:
                     roi_proximal_streamlines = roi_proximal_streamlines[utils.near_roi(roi_proximal_streamlines,
@@ -349,7 +349,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                                                                        waymask_data,
                                                                                        tol=roi_neighborhood_tol,
                                                                                        mode='any')]
-                    print("%s%s" % ('Qualifying Streamlines by waymask proximity: ', len(roi_proximal_streamlines)))
+                    print("%s%s" % ('Qualifying streamlines by waymask proximity: ', len(roi_proximal_streamlines)))
 
                 # Repeat process until target samples condition is met
                 ix = ix + 1

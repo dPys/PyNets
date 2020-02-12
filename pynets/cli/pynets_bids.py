@@ -233,6 +233,28 @@ def get_bids_parser():
                         help='Optionally specify the path to a Nifti1Image mask file to constrained functional '
                              'clustering. If specifying a list of paths to multiple cluster masks, separate '
                              'them by space.\n')
+    parser.add_argument('-roi',
+                        metavar='Path to binarized Region-of-Interest (ROI) Nifti1Image',
+                        default=None,
+                        nargs='+',
+                        help='Optionally specify a binarized ROI mask and retain only those nodes '
+                             'of a parcellation contained within that mask for connectome estimation.\n')
+    parser.add_argument('-templ',
+                        metavar='Path to template file',
+                        default=None,
+                        help='Optionally specify a path to a template Nifti1Image file. If none is specified, then '
+                             'will use the MNI152 template by default.\n')
+    parser.add_argument('-templm',
+                        metavar='Path to template mask file',
+                        default=None,
+                        help='Optionally specify a path to a template mask Nifti1Image file. If none is specified, '
+                             'then will use the MNI152 template mask by default.\n')
+    parser.add_argument('-ref',
+                        metavar='Atlas reference file path',
+                        default=None,
+                        help='Specify the path to the atlas reference .txt file that maps labels to '
+                             'intensities corresponding to the atlas parcellation file specified with the -ua flag.\n')
+
     return parser
 
 
@@ -305,6 +327,10 @@ def main():
     args_dict_all['m'] = masks
     args_dict_all['id'] = id_list
     args_dict_all['ua'] = bids_args.ua
+    args_dict_all['ref'] = bids_args.ref
+    args_dict_all['roi'] = bids_args.roi
+    args_dict_all['templ'] = bids_args.templ
+    args_dict_all['templm'] = bids_args.templm
     if modality == 'func':
         args_dict_all['cm'] = bids_args.cm
     else:

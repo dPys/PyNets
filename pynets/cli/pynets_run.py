@@ -1214,7 +1214,7 @@ def build_workflow(args, retval):
                 else:
                     do_dir_path(atlas, func_file)
         else:
-            if (uatlas is None) and (k == 0):
+            if (uatlas is None) and (k == 0) and user_atlas_list is None and k_list is None and atlas is None and multi_atlas is None:
                 raise KeyError('\nERROR: No atlas specified!')
             else:
                 pass
@@ -1266,11 +1266,7 @@ def build_workflow(args, retval):
                         do_dir_path(atlas, _dwi_file)
                 else:
                     do_dir_path(atlas, dwi_file)
-        else:
-            if uatlas is None:
-                raise KeyError('\nERROR: No atlas specified!')
-            else:
-                pass
+
         if target_samples:
             print("%s%s%s" % ('Using ', target_samples, ' samples...'))
         if max_length:

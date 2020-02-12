@@ -22,7 +22,7 @@ except KeyError:
 def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_samples, conn_model, network, node_size,
                            dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, labels_im_file, uatlas,
                            labels, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list, directget,
-                           max_length):
+                           max_length, error_margin):
     """
     A Function to perform normalization of streamlines tracked in native diffusion space to an
     FA template in MNI space.
@@ -93,6 +93,12 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
         and prob (probabilistic).
     max_length : int
         Maximum fiber length threshold in mm to restrict tracking.
+    error_margin : int
+        Distance (in the units of the streamlines, usually mm). If any
+        coordinate in the streamline is within this distance from the center
+        of any voxel in the ROI, the filtering criterion is set to True for
+        this streamline, otherwise False. Defaults to the distance between
+        the center of each voxel and the corner of the voxel.
 
     Returns
     -------
@@ -152,7 +158,12 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
         File path to MNI-space warped FA Nifti1Image.
     max_length : int
         Maximum fiber length threshold in mm to restrict tracking.
-
+    error_margin : int
+        Distance (in the units of the streamlines, usually mm). If any
+        coordinate in the streamline is within this distance from the center
+        of any voxel in the ROI, the filtering criterion is set to True for
+        this streamline, otherwise False. Defaults to the distance between
+        the center of each voxel and the corner of the voxel.
     References
     ----------
     .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different spatial normalization approaches on
@@ -322,7 +333,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     gc.collect()
 
-    return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget, warped_fa, max_length
+    return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget, warped_fa, max_length, error_margin
 
 
 class DmriReg(object):

@@ -2,7 +2,8 @@
 GNU GENERAL PUBLIC LICENSE
                       Version 3, 29 June 2007
 
-    A Python-Powered Workflow for Network Analysis of rsfMRI and dMRI
+    A Fully-Automated Workflow for Reproducible Ensemble Sampling of 
+    Functional and Structural Connectomes
     Copyright (C) 2017  Derek Pisner
 
     This program is free software: you can redistribute it and/or modify
