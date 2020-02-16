@@ -20,9 +20,9 @@ Data Assumptions
 (2) ALL input image data should be skull-stripped, EXCEPT in the case that a binary brain mask image is also supplied via the `-m` flag.
 
 (3) Image space matters.
-    (a) fMRI: Inputs should be normalized to Montreal Neurological Institute (MNI) space. In functional BOLD imaging, normalization helps to stabilize the underlying connectivity time-series and thereby morphologically standardize functional connectome estimates for optimal discriminability of individual differences.
-    (b) dMRI: Inputs should be left in native diffusion/scanner space and NOT normalized using a T1w image or template. This is because tractography, upon which structural connectome estimates are based is most reliably performed in native space -- with limited resampling or geometric distortion of spatial information beyond that which is minimally needed in preprocessing (e.g. to correct for head motion or eddy currents). To nevertheless ensure comparability across individuals, PyNets will still perform normalization, but at a later stage in the connectome estimation process. That is, after reconstructio with tractography, resulting streamlines will be directly mapped into MNI-space via a rigid transformation of streamline points.
-    (c) T1w: Should be in native anatomical space, as it will be segmented (a native-space operation) and subsequently re-normalized to MNI-space automatically.
+    :(a) fMRI: Inputs should be normalized to Montreal Neurological Institute (MNI) space. In functional BOLD imaging, normalization helps to stabilize the underlying connectivity time-series and thereby morphologically standardize functional connectome estimates for optimal discriminability of individual differences.
+    :(b) dMRI: Inputs should be left in native diffusion/scanner space and NOT normalized using a T1w image or template. This is because tractography, upon which structural connectome estimates are based is most reliably performed in native space -- with limited resampling or geometric distortion of spatial information beyond that which is minimally needed in preprocessing (e.g. to correct for head motion or eddy currents). To nevertheless ensure comparability across individuals, PyNets will still perform normalization, but at a later stage in the connectome estimation process. That is, after reconstructio with tractography, resulting streamlines will be directly mapped into MNI-space via a rigid transformation of streamline points.
+    :(c) T1w: Should be in native anatomical space, as it will be segmented (a native-space operation) and subsequently re-normalized to MNI-space automatically.
 
 
 ***********
@@ -33,10 +33,10 @@ Subject File Inputs
 ===================
 
 In the case of a single subject, several combinations of input files can be used:
-:fMRI: `-func` (required); `-conf`, `-m`, `-anat` (optional)
-:dMRI: `-dwi`, `-bval`, `-bvec` (required); `-m`, `-anat` (optional)
-:dMRI + fMRI: all of the above flags still apply, but should be used simultaneoously. `-m`, `-anat` only need to be specified once.
-:Raw Graph: `-g`
+* fMRI: `-func` (required); `-conf`, `-m`, `-anat` (optional)
+* dMRI: `-dwi`, `-bval`, `-bvec` (required); `-m`, `-anat` (optional)
+* dMRI + fMRI: all of the above flags still apply, but should be used simultaneoously. `-m`, `-anat` only need to be specified once.
+* Raw Graph: `-g`
 
 .. note::
     All formats are assumed to be Nifti1Image (i.e. .nii or .nii.gz file suffix), except for a raw graph which can be in .txt, .npy, .csv, .tsv, or .ssv.
@@ -47,12 +47,17 @@ In the case of a single subject, several combinations of input files can be used
 General File Inputs
 ===================
 
-`-way`: (*dMRI*) A binarized mask used to constrain tractography such that streamlines are retained only if they pass within the vicinity of the mask.
-`-roi`: (*fMRI + dMRI*) A binarized mask used to constrain connectome node-making to restricted brain regions of interest (ROI's).
-`-ua`: (*fMRI + dMRI*) A parcellation/atlas image used to define nodes of a connectome. Labels should be spatially distinct across hemispheres and ordered with consecutive integers with a value of 0 as the background label. This flag can uniquely be listed with multiple, space-separated file inputs.
-`-ref`: (*fMRI + dMRI*) An atlas reference .txt file that indices intensities corresponding to atlas labels of the parcellation specified with the `-ua` flag. This label map is used only to delineate node labels manually. Automated node labeling via AAL can alternatively be used by including the `-names` flag. Otherwise, sequential numeric labels will be used by default.
-`templ`: (*fMRI + dMRI*) A template image to override normalization in place of the MNI152 template.
-`templm`: (*fMRI + dMRI*) A template image mask to override mask normalization in place of the MNI152 mask template.
+:`-way`: (*dMRI*) A binarized mask used to constrain tractography such that streamlines are retained only if they pass within the vicinity of the mask.
+
+:`-roi`: (*fMRI + dMRI*) A binarized mask used to constrain connectome node-making to restricted brain regions of interest (ROI's).
+
+:`-ua`: (*fMRI + dMRI*) A parcellation/atlas image used to define nodes of a connectome. Labels should be spatially distinct across hemispheres and ordered with consecutive integers with a value of 0 as the background label. This flag can uniquely be listed with multiple, space-separated file inputs.
+
+:`-ref`: (*fMRI + dMRI*) An atlas reference .txt file that indices intensities corresponding to atlas labels of the parcellation specified with the `-ua` flag. This label map is used only to delineate node labels manually. Automated node labeling via AAL can alternatively be used by including the `-names` flag. Otherwise, sequential numeric labels will be used by default.
+
+:`templ`: (*fMRI + dMRI*) A template image to override normalization in place of the MNI152 template.
+
+:`templm`: (*fMRI + dMRI*) A template image mask to override mask normalization in place of the MNI152 mask template.
 
 .. note::
     All general image inputs are assumed to be normalized to MNI space. Image orientation and voxel resolution are not relevant, as PyNets will create necessary working copies with standardized RAS+ orientations and either 1mm or 2mm voxel resolution reslicing, depending on that which is specified with the `-vox`.
@@ -134,35 +139,43 @@ Alternatively, more comprehensive solutions such as `Datalad <http://www.datalad
 **********
 Quickstart
 **********
-Example A) You have a preprocessed (minimally -- normalized and skull stripped) functional fMRI dataset called "002.nii.gz" where you assign an arbitrary subject id of 002, you wish to analyze a whole-brain network, using the nilearn atlas 'coords_dosenbach_2010', thresholding the connectivity graph proportionally to retain 0.20% of the strongest connections, and you wish to use partial correlation model estimation: ::
+
+EXAMPLES
+========
+
+:(A) You have a preprocessed (minimally -- normalized and skull stripped) functional fMRI dataset called "002.nii.gz" where you assign an arbitrary subject id of 002, you wish to analyze a whole-brain network, using the nilearn atlas 'coords_dosenbach_2010', thresholding the connectivity graph proportionally to retain 0.20% of the strongest connections, and you wish to use partial correlation model estimation: ::
 
     pynets -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' -id '002' -a 'coords_dosenbach_2010' -mod 'partcorr' -thr 0.20 -m '/Users/dPys/PyNets/tests/examples/002/fmri/002_mask.nii.gz'
 
-Example B) Building upon the previous example, let's say you now wish to analyze the Default network for this same subject's data, but now also using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011', you wish to threshold the graph to achieve a target density of 0.3, and you define your nodes based on spheres with radii at two resolutions (2 and 4 mm), you wish to fit a sparse inverse covariance model in addition to partial correlation, and you wish to plot the results: ::
+:
+:(B) Building upon the previous example, let's say you now wish to analyze the Default network for this same subject's data, but now also using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011', you wish to threshold the graph to achieve a target density of 0.3, and you define your nodes based on spheres with radii at two resolutions (2 and 4 mm), you wish to fit a sparse inverse covariance model in addition to partial correlation, and you wish to plot the results: ::
 
     pynets -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' -id '002' -a 'coords_dosenbach_2010' 'coords_power_2011' -n 'Default' -dt -thr 0.3 -ns 2 4 -mod 'partcorr' 'sps' -plt
 
-Example C) Building upon the previous examples, let's say you now wish to analyze the Default and Executive Control Networks for this subject, but this time based on a custom atlas (DesikanKlein2012.nii.gz), this time defining your nodes as parcels (as opposed to spheres), you wish to fit a partial correlation model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), and you wish to prune disconnected nodes: ::
+:
+:(C) Building upon the previous examples, let's say you now wish to analyze the Default and Executive Control Networks for this subject, but this time based on a custom atlas (DesikanKlein2012.nii.gz), this time defining your nodes as parcels (as opposed to spheres), you wish to fit a partial correlation model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), and you wish to prune disconnected nodes: ::
 
     pynets -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' -id '002' -ua '/Users/dPys/PyNets/pynets/atlases/DesikanKlein2012.nii.gz' -n 'Default' 'Cont' -mod 'partcorr' -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -parc -p 1
 
 .. note::
     In general, parcels are preferable to spheres as nodes because parcels more closely respect atlas or cluster topology.
 
-Example D) Building upon the previous examples, let's say you now wish to create a subject-specific atlas based on the subject's unique spatial-temporal profile. In this case, you can specify the path to a binarized mask within which to performed spatially-constrained spectral clustering, and you want to try this at multiple resolutions of k clusters/nodes (i.e. k=50,100,150). You again also wish to define your nodes spherically with radii at both 2 and 4 mm, fitting a partial correlation and sparse inverse covariance model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), you wish to prune disconnected nodes, and you wish to plot your results: ::
+:(D) Building upon the previous examples, let's say you now wish to create a subject-specific atlas based on the subject's unique spatial-temporal profile. In this case, you can specify the path to a binarized mask within which to performed spatially-constrained spectral clustering, and you want to try this at multiple resolutions of k clusters/nodes (i.e. k=50,100,150). You again also wish to define your nodes spherically with radii at both 2 and 4 mm, fitting a partial correlation and sparse inverse covariance model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), you wish to prune disconnected nodes, and you wish to plot your results: ::
 
     pynets -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' -id '002' -cm '/Users/dPys/PyNets/tests/examples/pDMN_3_bin.nii.gz' -ns 2 4 -mod 'partcorr' 'sps' -k_min 50 -k_max 150 -k_step 50 -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 -plt
 
-Example E) You wish to generate a structural connectome, using probabilistic ensemble tractography with 1,000,000 streamlines, based on both constrained-spherical deconvolution (csd) and tensor models, bootstrapped tracking, and direct normalization of streamlines. You wish to use atlas parcels as defined by both DesikanKlein2012, and AALTzourioMazoyer2002, exploring only those nodes belonging to the Default Mode Network, and iterate over a range of densities (i.e. 0.05-0.10 with 1% step), and prune disconnected nodes: ::
+:
+:(E) You wish to generate a structural connectome, using probabilistic ensemble tractography with 1,000,000 streamlines, based on both constrained-spherical deconvolution (csd) and tensor models, bootstrapped tracking, and direct normalization of streamlines. You wish to use atlas parcels as defined by both DesikanKlein2012, and AALTzourioMazoyer2002, exploring only those nodes belonging to the Default Mode Network, and iterate over a range of densities (i.e. 0.05-0.10 with 1% step), and prune disconnected nodes: ::
 
     pynets -dwi '/Users/dPys/PyNets/tests/examples/002/dmri/iso_eddy_corrected_data_denoised.nii.gz' -bval '/Users/dPys/PyNets/tests/examples/002/dmri/bval.bval' -bvec '/Users/dPys/PyNets/tests/examples/002/dmri/bvec.bvec' -id 0021001 -ua '/Users/dPys/PyNets/pynets/atlases/DesikanKlein2012.nii.gz' '/Users/dPys/PyNets/pynets/atlases/AALTzourioMazoyer2002.nii.gz' -parc -dg 'prob' 'det' -mod 'csd' 'tensor' -anat '/Users/dPys/PyNets/tests/examples/002/anat/s002_anat_brain.nii.gz' -s 1000000 -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 -n 'Default'
 
 .. note::
-    Spherical nodes are possible but **not** recommended from dmri connectometry in pynets.
+    Spherical nodes can be used by triggering the `-spheres` flag, but this approach is **not** recommended for dMRI connectometry.
 
-Iterable sampling parameters specified at runtime should always be space-delimited and, to be safe, contained within single quotes.
+.. note::
+    Iterable sampling parameters specified at runtime should always be space-delimited and, to be safe, contained within single quotes.
 
-There are many other runtime options than these examples demonstrate. To explore all of the possible hyperparameter combinations that pynets has to offer, see pynets_run.py -h. A full set of tutorials and python notebooks will be available Fall 2019.
+There are many other runtime options than these examples demonstrate. To explore all of the possible hyperparameter combinations that pynets has to offer, see `pynets -h`. A full set of tutorials and python notebooks are coming soon.
 
 
 ********************
