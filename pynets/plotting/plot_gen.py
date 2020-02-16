@@ -377,8 +377,12 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
 
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
 
-    coords = list(coords)
-    labels = list(labels)
+    if not isinstance(coords, list):
+        coords = list(coords)
+
+    if not isinstance(labels, list):
+        labels = list(labels)
+
     if len(coords) > 0:
         dpi_resolution = 500
         if '\'b' in atlas:
@@ -573,8 +577,12 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
 
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
 
-    coords = list(coords)
-    labels = list(labels)
+    if not isinstance(coords, list):
+        coords = list(coords)
+
+    if not isinstance(labels, list):
+        labels = list(labels)
+
     if len(coords) > 0:
         dpi_resolution = 500
         if '\'b' in atlas:

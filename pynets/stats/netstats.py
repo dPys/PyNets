@@ -14,7 +14,7 @@ from pynets.core.utils import timeout
 warnings.filterwarnings("ignore")
 
 
-@timeout(720)
+@timeout(360)
 def average_shortest_path_length_for_all(G):
     """
     Helper function, in the case of graph disconnectedness,
@@ -38,7 +38,7 @@ def average_shortest_path_length_for_all(G):
     return math.fsum(nx.average_shortest_path_length(sg, weight='weight') for sg in subgraphs) / len(subgraphs)
 
 
-@timeout(720)
+@timeout(360)
 def subgraph_number_of_cliques_for_all(G):
     """
     Helper function, in the case of graph disconnectedness,
@@ -62,7 +62,7 @@ def subgraph_number_of_cliques_for_all(G):
     return np.rint(math.fsum(nx.graph_number_of_cliques(sg) for sg in subgraphs) / len(subgraphs))
 
 
-@timeout(720)
+@timeout(360)
 def global_efficiency(G, weight='weight'):
     """
     Return the global efficiency of the graph G
@@ -177,7 +177,7 @@ def local_efficiency(G, weight='weight'):
     return efficiencies
 
 
-@timeout(720)
+@timeout(360)
 def average_local_efficiency(G, weight='weight'):
     """
     Return the average local efficiency of all of the nodes in the graph G
@@ -217,7 +217,7 @@ def average_local_efficiency(G, weight='weight'):
     return total / N
 
 
-@timeout(720)
+@timeout(360)
 def smallworldness(G, niter=10, nrand=100):
     """Returns the small-world coefficient (omega) of a graph
 
