@@ -4,9 +4,12 @@
 Usage
 #####
 
-The exact command to run ``PyNets`` depends on several factors: 1) the Installation_ method (i.e. pip, docker,
-singularity, AWS), along with the environment resources available for computing; 2) the types and modalities of
-available data inputs; 3) the objective of execution (e.g. ensemble connectome sampling, unitary connectome sampling,
+The exact command to run ``PyNets`` depends on several factors:
+1) the Installation_ method (i.e. pip, docker,
+singularity, AWS), along with the environment resources available for computing;
+2) the types and modalities of
+available data inputs;
+3) the objective of execution (e.g. ensemble connectome sampling, unitary connectome sampling,
 plotting, graph-analysis, embedding, optimization, or other, derivative applications).
 
 ****************
@@ -21,18 +24,17 @@ a noise confound regressor file can optionally be supplied via the `-conf` flag)
 2) ALL input image data should be skull-stripped, EXCEPT in the case that a binary brain mask image is also
 supplied via the `-m` flag.
 3) Image space matters.
-    a) fMRI: In the case of fMRI, inputs should be normalized to Montreal Neurological
+    a) fMRI: Inputs should be normalized to Montreal Neurological
        Institute (MNI) space. In functional BOLD imaging, normalization helps to stabilize
        the underlying connectivity time-series and thereby morphologically standardize
        functional connectome estimates for optimal discriminability of individual differences.
-    b) dMRI: In the case of dMRI, by contrast, inputs should be left in native diffusion/scanner
-       space and NOT normalized using a T1w image or template. This is because tractography,
-       upon which structural connectome estimates are based is most reliably performed in native space --
-       with limited resampling or geometric distortion of spatial information beyond that which is
-       minimally needed in preprocessing (e.g. to correct for head motion or eddy currents).
-       To nevertheless ensure comparability across individuals, PyNets will still perform normalization,
-       but at a later stage in the connectome estimation process. That is, after reconstruction with
-       tractography, resulting streamlines will be directly mapped into MNI-space via a rigid transformation
+    b) dMRI: Inputs should be left in native diffusion/scanner space and NOT normalized using a T1w image or
+       template. This is because tractography, upon which structural connectome estimates are based is most
+       reliably performed in native space -- with limited resampling or geometric distortion of spatial
+       information beyond that which is minimally needed in preprocessing (e.g. to correct for head motion
+       or eddy currents). To nevertheless ensure comparability across individuals, PyNets will still perform
+       normalization, but at a later stage in the connectome estimation process. That is, after reconstruction
+       with tractography, resulting streamlines will be directly mapped into MNI-space via a rigid transformation
        of streamline points.
     c) T1w: Should be in native anatomical space, as it will be segmented (a native-space operation) and
        subsequently re-normalized to MNI-space automatically.
