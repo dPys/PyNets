@@ -401,4 +401,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     # Enforce symmetry
     conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
 
+    coords = np.array(coords)
+    labels = np.array(labels)
+
     return atlas_mni, streams, conn_matrix, track_type, target_samples, dir_path, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, directget, max_length

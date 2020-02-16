@@ -679,6 +679,39 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
     return conn_matrix_thr, coords, labels
 
 
+def perform_thresholding(conn_matrix, coords, labels, thr, thr_perc, min_span_tree, dens_thresh, disp_filt):
+    from pynets.core import thresholding
+    if min_span_tree is True:
+        print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
+        if dens_thresh is False:
+            print('Ignoring -dt flag since local density thresholding is not currently supported.')
+        thr_type = 'MST_thr'
+        edge_threshold = "%s%s" % (str(np.abs(thr_perc)), '%')
+        [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, coords, labels, thr)
+    elif disp_filt is True:
+        thr_type = 'DISP_alpha'
+        edge_threshold = "%s%s" % (str(np.abs(thr_perc)), '%')
+        G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
+        # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
+        print('Computing edge disparity significance with alpha = %s' % thr)
+        print('Filtered graph: nodes = %s, edges = %s' % (G1.number_of_nodes(), G1.number_of_edges()))
+        # print('Backbone graph: nodes = %s, edges = %s' % (G2.number_of_nodes(), G2.number_of_edges()))
+        # print(G2.edges(data=True))
+        conn_matrix_thr = nx.to_numpy_array(G1)
+    else:
+        if dens_thresh is False:
+            thr_type = 'prop'
+            edge_threshold = "%s%s" % (str(np.abs(thr_perc)), '%')
+            print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
+            conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
+        else:
+            thr_type = 'dens'
+            edge_threshold = None
+            print("%s%.2f%s" % ('\nThresholding to achieve density of: ', thr_perc, '% ...\n'))
+            conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
+    return thr_type, edge_threshold, conn_matrix_thr, coords, labels
+
+
 def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
                 smooth, disp_filt, parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary,
                 hpass):
@@ -803,34 +836,12 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     utils.save_mat(conn_matrix, utils.create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth,
                                                            c_boot, hpass, parc))
 
-    if min_span_tree is True:
-        print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
-        if dens_thresh is False:
-            print('Ignoring -dt flag since local density thresholding is not currently supported.')
-        thr_type = 'MST_thr'
-        edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
-        [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, coords, labels, thr)
-    elif disp_filt is True:
-        thr_type = 'DISP_alpha'
-        edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
-        G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
-        # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
-        print('Computing edge disparity significance with alpha = %s' % thr)
-        print('Filtered graph: nodes = %s, edges = %s' % (G1.number_of_nodes(), G1.number_of_edges()))
-        # print('Backbone graph: nodes = %s, edges = %s' % (G2.number_of_nodes(), G2.number_of_edges()))
-        # print(G2.edges(data=True))
-        conn_matrix_thr = nx.to_numpy_array(G1)
-    else:
-        if dens_thresh is False:
-            thr_type = 'prop'
-            edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
-            print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
-            conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
-        else:
-            thr_type = 'dens'
-            edge_threshold = None
-            print("%s%.2f%s" % ('\nThresholding to achieve density of: ', thr_perc, '% ...\n'))
-            conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
+    [thr_type, edge_threshold, conn_matrix_thr, coords, labels] = thresholding.perform_thresholding(conn_matrix, coords,
+                                                                                                    labels, thr,
+                                                                                                    thr_perc,
+                                                                                                    min_span_tree,
+                                                                                                    dens_thresh,
+                                                                                                    disp_filt)
 
     if not nx.is_connected(nx.from_numpy_matrix(conn_matrix_thr)):
         print('Warning: Fragmented graph')
@@ -984,34 +995,12 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     utils.save_mat(conn_matrix, utils.create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size,
                                                            target_samples, track_type, parc, directget, max_length))
 
-    if min_span_tree is True:
-        print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
-        if dens_thresh is False:
-            print('Ignoring -dt flag since local density thresholding is not currently supported.')
-        thr_type = 'MST_thr'
-        edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
-        [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, coords, labels, thr)
-    elif disp_filt is True:
-        thr_type = 'DISP_alpha'
-        edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
-        G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
-        # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
-        print('Computing edge disparity significance with alpha = %s' % thr)
-        print('Filtered graph: nodes = %s, edges = %s' % (G1.number_of_nodes(), G1.number_of_edges()))
-        # print('Backbone graph: nodes = %s, edges = %s' % (G2.number_of_nodes(), G2.number_of_edges()))
-        # print(G2.edges(data=True))
-        conn_matrix_thr = nx.to_numpy_array(G1)
-    else:
-        if dens_thresh is False:
-            thr_type = 'prop'
-            edge_threshold = "%s%s" % (str(np.abs(1 - thr_perc)), '%')
-            print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
-            conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
-        else:
-            thr_type = 'dens'
-            edge_threshold = None
-            print("%s%.2f%s" % ('\nThresholding to achieve density of: ', thr_perc, '% ...\n'))
-            conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
+    [thr_type, edge_threshold, conn_matrix_thr, coords, labels] = thresholding.perform_thresholding(conn_matrix,
+                                                                                                    coords, labels,
+                                                                                                    thr, thr_perc,
+                                                                                                    min_span_tree,
+                                                                                                    dens_thresh,
+                                                                                                    disp_filt)
 
     if not nx.is_connected(nx.from_numpy_matrix(conn_matrix_thr)):
         print('Warning: Fragmented graph')

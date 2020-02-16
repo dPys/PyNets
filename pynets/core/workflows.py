@@ -20,7 +20,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       track_type, max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict,
                       execution_dict, embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
                       vox_size, multiplex, waymask, local_corr, max_length_list, clean=True):
-    """A meta-interface for selecting modality-specific nested workflows that link into a single-subject workflow"""
+    """A meta-interface for selecting modality-specific nested workflows to nest into a single-subject workflow"""
     import gc
     import yaml
     from pathlib import Path
@@ -654,7 +654,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     from pynets.registration import reg_utils as regutils
     from pynets.dmri import estimation, track
     from pynets.dmri import dmri_utils as dmriutils
-    from pynets.plotting import plot_gen
+    from pynets.core.interfaces import PlotStruct
     import os.path as op
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
@@ -1283,7 +1283,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                                  'max_length'],
                                                    function=thresholding.thresh_struct, imports=import_list),
                                       name="thresh_diff_node", iterfield=thr_struct_fields,
-                                      nested=False)
+                                      nested=True)
         thresh_diff_node.synchronize = True
 
     dmri_connectometry_wf.connect([
@@ -1330,7 +1330,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                      ('uatlas', 'uatlas'), ('labels', 'labels'),
                                                      ('coords', 'coords'), ('norm', 'norm'),
                                                      ('binary', 'binary'), ('target_samples', 'target_samples'),
-                                                     ('track_type', 'track_type'), ('directget', 'directget'),
+                                                     ('track_type', 'track_type'), ('atlas_mni', 'atlas_mni'),
+                                                     ('streams', 'streams'), ('directget', 'directget'),
                                                      ('max_length', 'max_length')])
         ])
         thr_out_node = join_iters_node_thr
@@ -1345,15 +1346,10 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
 
         # # Plotting iterable graph solutions
         if conn_model_list or node_size_list or multi_directget or max_length_list or multi_thr or user_atlas_list or multi_atlas or flexi_atlas is True:
-            plot_all_node = pe.MapNode(niu.Function(input_names=plot_fields, output_names='None',
-                                                    function=plot_gen.plot_all_struct, imports=import_list),
-                                       iterfield=plot_fields,
-                                       name="plot_all_node", nested=False)
+            plot_all_node = pe.MapNode(PlotStruct(), iterfield=plot_fields, name="plot_all_node", nested=True)
         else:
             # Plotting singular graph solution
-            plot_all_node = pe.Node(niu.Function(input_names=plot_fields, output_names='None',
-                                                 function=plot_gen.plot_all_struct, imports=import_list),
-                                    name="plot_all_node")
+            plot_all_node = pe.Node(PlotStruct(), name="plot_all_node")
 
         # Connect thresh_diff_node outputs to plotting node
         dmri_connectometry_wf.connect([(thr_out_node, plot_all_node, [('conn_matrix_thr', 'conn_matrix'),
@@ -1623,11 +1619,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core import nodemaker, utils, thresholding
-    from pynets.plotting import plot_gen
     from pynets.fmri import estimation
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
-    from pynets.core.interfaces import ExtractTimeseries
+    from pynets.core.interfaces import ExtractTimeseries, PlotFunc
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
                    "import numpy as np", "import networkx as nx", "import indexed_gzip", "import nibabel as nib"]
@@ -2380,7 +2375,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                                  'norm', 'binary', 'hpass'],
                                                    function=thresholding.thresh_func,
                                                    imports=import_list), name="thresh_func_node",
-                                      iterfield=thr_func_fields, nested=False)
+                                      iterfield=thr_func_fields, nested=True)
         thresh_func_node.synchronize = True
 
     fmri_connectometry_wf.connect([
@@ -2436,15 +2431,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                        'norm', 'binary', 'hpass']
         # Plotting iterable graph solutions
         if conn_model_list or node_size_list or smooth_list or multi_thr or user_atlas_list or multi_atlas or float(k_clustering) > 1 or flexi_atlas is True or hpass_list:
-            plot_all_node = pe.MapNode(niu.Function(input_names=plot_fields, output_names='None',
-                                                    function=plot_gen.plot_all_func, imports=import_list),
-                                       iterfield=plot_fields,
-                                       name="plot_all_node", nested=False)
+            plot_all_node = pe.MapNode(PlotFunc(), iterfield=plot_fields, name="plot_all_node", nested=True)
         else:
             # Plotting singular graph solution
-            plot_all_node = pe.Node(niu.Function(input_names=plot_fields, output_names='None',
-                                                 function=plot_gen.plot_all_func, imports=import_list),
-                                    name="plot_all_node")
+            plot_all_node = pe.Node(PlotFunc(), name="plot_all_node")
 
         # Connect thr_out_node outputs to plotting node
         fmri_connectometry_wf.connect([(thr_out_node, plot_all_node, [('ID', 'ID'),

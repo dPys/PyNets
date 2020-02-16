@@ -5,11 +5,7 @@ Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
-from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, \
-    TraitedSpec, File, traits, SimpleInterface, InputMultiPath, OutputMultiPath, \
-    Directory
-
-ENTITY_WHITELIST = {'subject', 'session', 'modality'}
+from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface, Directory
 
 
 class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
@@ -280,3 +276,131 @@ class ExtractTimeseries(SimpleInterface):
 
         return runtime
 
+
+class _PlotStructInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for PlotStruct"""
+    conn_matrix = traits.Array(mandatory=True)
+    conn_model = traits.Str(mandatory=True)
+    atlas = traits.Any()
+    dir_path = Directory(exists=True, mandatory=True)
+    ID = traits.Any(mandatory=True)
+    network = traits.Any()
+    labels = traits.Array(mandatory=True)
+    roi = traits.Any()
+    coords = traits.Array(mandatory=True)
+    thr = traits.Any()
+    node_size = traits.Any()
+    edge_threshold = traits.Any()
+    prune = traits.Any()
+    uatlas = traits.Any()
+    target_samples = traits.Any()
+    norm = traits.Any()
+    binary = traits.Bool()
+    track_type = traits.Any()
+    directget = traits.Any()
+    max_length = traits.Any()
+
+
+class _PlotStructOutputSpec(BaseInterfaceInputSpec):
+    """Output interface wrapper for PlotStruct"""
+    out = traits.Str
+
+
+class PlotStruct(SimpleInterface):
+    """Interface wrapper for PlotStruct"""
+    input_spec = _PlotStructInputSpec
+    output_spec = _PlotStructOutputSpec
+
+    def _run_interface(self, runtime):
+        from pynets.plotting import plot_gen
+        if self.inputs.coords.ndim == 1:
+            print('Only 1 node detected. Plotting is not applicable...')
+        else:
+            plot_gen.plot_all_struct(self.inputs.conn_matrix,
+                                     self.inputs.conn_model,
+                                     self.inputs.atlas,
+                                     self.inputs.dir_path,
+                                     self.inputs.ID,
+                                     self.inputs.network,
+                                     self.inputs.labels.tolist(),
+                                     self.inputs.roi,
+                                     [tuple(coord) for coord in self.inputs.coords.tolist()],
+                                     self.inputs.thr,
+                                     self.inputs.node_size,
+                                     self.inputs.edge_threshold,
+                                     self.inputs.prune,
+                                     self.inputs.uatlas,
+                                     self.inputs.target_samples,
+                                     self.inputs.norm,
+                                     self.inputs.binary,
+                                     self.inputs.track_type,
+                                     self.inputs.directget,
+                                     self.inputs.max_length)
+
+        self._results['out'] = 'None'
+
+        return runtime
+
+
+class _PlotFuncInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for PlotFunc"""
+    conn_matrix = traits.Array(mandatory=True)
+    conn_model = traits.Str(mandatory=True)
+    atlas = traits.Any()
+    dir_path = Directory(exists=True, mandatory=True)
+    ID = traits.Any(mandatory=True)
+    network = traits.Any()
+    labels = traits.Array(mandatory=True)
+    roi = traits.Any()
+    coords = traits.Array(mandatory=True)
+    thr = traits.Any()
+    node_size = traits.Any()
+    edge_threshold = traits.Any()
+    smooth = traits.Any()
+    prune = traits.Any()
+    uatlas = traits.Any()
+    c_boot = traits.Any()
+    norm = traits.Any()
+    binary = traits.Bool()
+    hpass = traits.Any()
+
+
+class _PlotFuncOutputSpec(BaseInterfaceInputSpec):
+    """Output interface wrapper for PlotFunc"""
+    out = traits.Str
+
+
+class PlotFunc(SimpleInterface):
+    """Interface wrapper for PlotFunc"""
+    input_spec = _PlotFuncInputSpec
+    output_spec = _PlotFuncOutputSpec
+
+    def _run_interface(self, runtime):
+        from pynets.plotting import plot_gen
+
+        if self.inputs.coords.ndim == 1:
+            print('Only 1 node detected. Plotting is not applicable...')
+        else:
+            plot_gen.plot_all_func(self.inputs.conn_matrix,
+                                   self.inputs.conn_model,
+                                   self.inputs.atlas,
+                                   self.inputs.dir_path,
+                                   self.inputs.ID,
+                                   self.inputs.network,
+                                   self.inputs.labels.tolist(),
+                                   self.inputs.roi,
+                                   [tuple(coord) for coord in self.inputs.coords.tolist()],
+                                   self.inputs.thr,
+                                   self.inputs.node_size,
+                                   self.inputs.edge_threshold,
+                                   self.inputs.smooth,
+                                   self.inputs.prune,
+                                   self.inputs.uatlas,
+                                   self.inputs.c_boot,
+                                   self.inputs.norm,
+                                   self.inputs.binary,
+                                   self.inputs.hpass)
+
+        self._results['out'] = 'None'
+
+        return runtime
