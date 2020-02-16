@@ -24,10 +24,10 @@ Once Docker is installed, you can build a container as follows: ::
     docker run -ti --rm --privileged \
         -v /tmp:/tmp \
         -v /var/tmp:/var/tmp \
+        -v /input_files_local:/inputs \
         pynets
 
-See `External Dependencies`_ for more information (e.g., specific versions) on
-what is included in the latest Docker images.
+See `External Dependencies`_ for more information (e.g., specific versions) on what is included in the latest Docker images.
 
 
 Singularity Container
