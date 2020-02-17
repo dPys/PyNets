@@ -30,7 +30,8 @@ setup(
         'console_scripts': [
             'pynets=pynets.cli.pynets_run:main',
 	    'pynets_cloud=pynets.cli.pynets_cloud:main',
-	    'pynets_bids=pynets.cli.pynets_bids:main'
+	    'pynets_bids=pynets.cli.pynets_bids:main',
+	    'pynets_collect=pynets.cli.pynets_collect:main'
         ]
     },
     include_package_data=True,

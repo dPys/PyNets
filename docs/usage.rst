@@ -17,12 +17,15 @@ Data Assumptions
 
 (1) Pre-scrubbed for common sources of noise (mandatory, albeit a noise confound regressor file can optionally be supplied via the `-conf` flag).
 
-(2) ALL input image data should be skull-stripped, EXCEPT in the case that a binary brain mask image is also supplied via the `-m` flag.
+(2) **All** input image data should be skull-stripped, *except* in the case that a binary brain mask image is also supplied via the `-m` flag.
 
-(3) Image space matters.
-    :(a) fMRI: Inputs should be normalized to Montreal Neurological Institute (MNI) space. In functional BOLD imaging, normalization helps to stabilize the underlying connectivity time-series and thereby morphologically standardize functional connectome estimates for optimal discriminability of individual differences.
-    :(b) dMRI: Inputs should be left in native diffusion/scanner space and NOT normalized using a T1w image or template. This is because tractography, upon which structural connectome estimates are based is most reliably performed in native space -- with limited resampling or geometric distortion of spatial information beyond that which is minimally needed in preprocessing (e.g. to correct for head motion or eddy currents). To nevertheless ensure comparability across individuals, PyNets will still perform normalization, but at a later stage in the connectome estimation process. That is, after reconstructio with tractography, resulting streamlines will be directly mapped into MNI-space via a rigid transformation of streamline points.
-    :(c) T1w: Should be in native anatomical space, as it will be segmented (a native-space operation) and subsequently re-normalized to MNI-space automatically.
+(3) Image space matters:
+
+    :fMRI: Inputs should be normalized to Montreal Neurological Institute (MNI) space. In functional BOLD imaging, normalization helps to stabilize the underlying connectivity time-series and thereby morphologically standardize functional connectome estimates for optimal discriminability of individual differences.
+
+    :dMRI: Inputs should be left in native diffusion/scanner space and **not** normalized using a T1w image or template. This is because tractography, upon which structural connectome estimates are based is most reliably performed in native space -- with limited resampling or geometric distortion of spatial information beyond that which is minimally needed in preprocessing (e.g. to correct for head motion or eddy currents). To nevertheless ensure comparability across individuals, PyNets will still perform normalization, but at a later stage in the connectome estimation process. That is, after reconstructio with tractography, resulting streamlines will be directly mapped into MNI-space via a rigid transformation of streamline points.
+
+    :T1w: Should be in native anatomical space, as it will be segmented (a native-space operation) and subsequently re-normalized to MNI-space automatically.
 
 
 ***********
@@ -33,10 +36,14 @@ Subject File Inputs
 ===================
 
 In the case of a single subject, several combinations of input files can be used:
-* fMRI: `-func` (required); `-conf`, `-m`, `-anat` (optional)
-* dMRI: `-dwi`, `-bval`, `-bvec` (required); `-m`, `-anat` (optional)
-* dMRI + fMRI: all of the above flags still apply, but should be used simultaneoously. `-m`, `-anat` only need to be specified once.
-* Raw Graph: `-g`
+
+:fMRI: `-func` (required); `-conf`, `-m`, `-anat` (optional)
+
+:dMRI: `-dwi`, `-bval`, `-bvec` (required); `-m`, `-anat` (optional)
+
+:dMRI + fMRI: all of the above flags still apply, but should be used simultaneoously. `-m`, `-anat` only need to be specified once.
+
+:Raw Graph: `-g`
 
 .. note::
     All formats are assumed to be Nifti1Image (i.e. .nii or .nii.gz file suffix), except for a raw graph which can be in .txt, .npy, .csv, .tsv, or .ssv.
@@ -143,6 +150,7 @@ Quickstart
 EXAMPLES
 ========
 
+ ::
 :(A) You have a preprocessed (minimally -- normalized and skull stripped) functional fMRI dataset called "002.nii.gz" where you assign an arbitrary subject id of 002, you wish to analyze a whole-brain network, using the nilearn atlas 'coords_dosenbach_2010', thresholding the connectivity graph proportionally to retain 0.20% of the strongest connections, and you wish to use partial correlation model estimation: ::
 
     pynets -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' -id '002' -a 'coords_dosenbach_2010' -mod 'partcorr' -thr 0.20 -m '/Users/dPys/PyNets/tests/examples/002/fmri/002_mask.nii.gz'
@@ -167,7 +175,15 @@ EXAMPLES
 :
 :(E) You wish to generate a structural connectome, using probabilistic ensemble tractography with 1,000,000 streamlines, based on both constrained-spherical deconvolution (csd) and tensor models, bootstrapped tracking, and direct normalization of streamlines. You wish to use atlas parcels as defined by both DesikanKlein2012, and AALTzourioMazoyer2002, exploring only those nodes belonging to the Default Mode Network, and iterate over a range of densities (i.e. 0.05-0.10 with 1% step), and prune disconnected nodes: ::
 
-    pynets -dwi '/Users/dPys/PyNets/tests/examples/002/dmri/iso_eddy_corrected_data_denoised.nii.gz' -bval '/Users/dPys/PyNets/tests/examples/002/dmri/bval.bval' -bvec '/Users/dPys/PyNets/tests/examples/002/dmri/bvec.bvec' -id 0021001 -ua '/Users/dPys/PyNets/pynets/atlases/DesikanKlein2012.nii.gz' '/Users/dPys/PyNets/pynets/atlases/AALTzourioMazoyer2002.nii.gz' -parc -dg 'prob' 'det' -mod 'csd' 'tensor' -anat '/Users/dPys/PyNets/tests/examples/002/anat/s002_anat_brain.nii.gz' -s 1000000 -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 -n 'Default'
+    pynets -id 0021001 \
+    -dwi '/Users/dPys/PyNets/tests/examples/002/dmri/iso_eddy_corrected_data_denoised.nii.gz' \
+    -bval '/Users/dPys/PyNets/tests/examples/002/dmri/bval.bval' \
+    -bvec '/Users/dPys/PyNets/tests/examples/002/dmri/bvec.bvec' \
+    -ua '~/atlases/DesikanKlein2012.nii.gz' '~/atlases/AALTzourioMazoyer2002.nii.gz' \
+    -parc -dg 'prob' 'det' -mod 'csd' 'tensor' -s 1000000  \
+    -anat '/Users/dPys/PyNets/tests/examples/002/anat/s002_anat_brain.nii.gz' \
+    -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \
+    -n 'Default'
 
 .. note::
     Spherical nodes can be used by triggering the `-spheres` flag, but this approach is **not** recommended for dMRI connectometry.
