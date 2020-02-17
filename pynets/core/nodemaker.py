@@ -898,7 +898,7 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
         print('WARNING: No labels available since atlas name is not specified!')
 
     print("%s%s" % ('Labels:\n', labels))
-    dir_path = utils.do_dir_path(atlas.replace('reor_RAS_nores2mm_', ''), in_file)
+    dir_path = utils.do_dir_path(atlas, in_file)
 
     if len(coords) != len(labels):
         labels = len(coords) * [np.nan]

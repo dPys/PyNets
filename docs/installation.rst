@@ -15,13 +15,14 @@ Docker Container
 
 In order to run pynets in a Docker container, Docker must be `installed
 <https://docs.docker.com/engine/installation/>`_.
-Once Docker is installed, you can build a container as follows: ::
+Once Docker is installed, you can build a container and test it interactively as follows: ::
 
     BUILDIR=$(pwd)
     mkdir -p ${BUILDIR}/pynets_images
     docker build -t pynets .
 
     docker run -ti --rm --privileged \
+        --entrypoint /bin/bash
         -v /tmp:/tmp \
         -v /var/tmp:/var/tmp \
         -v /input_files_local:/inputs \
@@ -59,6 +60,15 @@ You will need an active internet connection and some time. ::
         -v D:\host\path\where\to\output\singularity\image:/output \
         singularityware/docker2singularity \
         dpys/pynets:<version>
+        -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
+        -k 100 200 -pm "24,48" \
+        -b 100 -bs 12 -norm 6 -cc 'tcorr' \
+        -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
+        -anat "/inputs/sub-"$PARTIC"/ses-"$ses"/anat/sub-"$PARTIC"_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz" \
+        -func "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz" \
+        -conf "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_desc-confounds_regressors.tsv" \
+        -m "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz" \
+        -id ""$PARTIC"_run"$ses"" -plug 'MultiProc' -work '/tmp'
 
 Where ``<version>`` should be replaced with the desired version of PyNets that you want
 to download.
@@ -67,26 +77,40 @@ Beware of the back slashes, expected for Windows systems.
 For \*nix users the command translates as follows: ::
 
     $ docker run --privileged -t --rm \
-        -v /var/run/docker.sock:/var/run/docker.sock \
+        -V /var/run/docker.sock:/var/run/docker.sock \
         -v /absolute/path/to/output/folder:/output \
         singularityware/docker2singularity \
-        dpys/pynets:<version>
-
+        dpys/pynets:<version> \
+        -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
+        -k 100 200 -pm "24,48" \
+        -b 100 -bs 12 -norm 6 -cc 'tcorr' \
+        -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
+        -anat "/inputs/sub-"$PARTIC"/ses-"$ses"/anat/sub-"$PARTIC"_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz" \
+        -func "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz" \
+        -conf "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_desc-confounds_regressors.tsv" \
+        -m "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz" \
+        -id ""$PARTIC"_run"$ses"" -plug 'MultiProc' -work '/tmp'
 
 Transfer the resulting Singularity image to the HPC, for example, using ``scp``. ::
 
     $ scp pynets*.img user@hcpserver.edu:/my_images
-
 
 Running a Singularity Image
 ---------------------------
 
 If the data to be preprocessed is also on the HPC, you are ready to run pynets. ::
 
-    $ singularity run --cleanenv /my_images/pynets-0.9.90d.simg \
-        path/to/data/dir/bids_derivative_root \
-        participant \
-        -id {label}
+    $ singularity run -w \
+     /scratch/04171/dpisner/pynets_singularity_latest-2020-02-07-eccf145ea766.img \
+     -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
+     -k 100 200 -pm "24,48" \
+     -b 100 -bs 12 -norm 6 -cc 'tcorr' \
+     -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
+     -anat "/inputs/sub-"$PARTIC"/ses-"$ses"/anat/sub-"$PARTIC"_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz" \
+     -func "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz" \
+     -conf "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_desc-confounds_regressors.tsv" \
+     -m "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz" \
+     -id ""$PARTIC"_run"$ses"" -plug 'MultiProc' -work '/tmp'
 
 .. note::
 
@@ -97,19 +121,29 @@ If the data to be preprocessed is also on the HPC, you are ready to run pynets. 
    To avoid such situation we recommend using the ``--cleanenv`` singularity flag
    in production use. For example: ::
 
-      $ singularity run --cleanenv ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
-        /work/04168/asdf/lonestar/ $WORK/lonestar/output \
-        participant \
-        -id 387 -w $WORK/lonestar/work -pm '10,20'
-
+      $ singularity run --no-home --cleanenv ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
+        -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
+        -k 100 200 -pm "24,48" \
+        -b 100 -bs 12 -norm 6 -cc 'tcorr' \
+        -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
+        -anat "/inputs/sub-"$PARTIC"/ses-"$ses"/anat/sub-"$PARTIC"_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz" \
+        -func "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz" \
+        -conf "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_desc-confounds_regressors.tsv" \
+        -m "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz" \
+        -id ""$PARTIC"_run"$ses"" -plug 'MultiProc' -work '/tmp'
 
    or, unset the ``PYTHONPATH`` variable before running: ::
 
       $ unset PYTHONPATH; singularity run ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
-        /work/04168/asdf/lonestar/ $WORK/lonestar/output \
-        participant \
-        -id 387 -w $WORK/lonestar/work -pm '10,20'
-
+        -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
+        -k 100 200 -pm "24,48" \
+        -b 100 -bs 12 -norm 6 -cc 'tcorr' \
+        -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
+        -anat "/inputs/sub-"$PARTIC"/ses-"$ses"/anat/sub-"$PARTIC"_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz" \
+        -func "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz" \
+        -conf "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_desc-confounds_regressors.tsv" \
+        -m "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz" \
+        -id ""$PARTIC"_run"$ses"" -plug 'MultiProc' -work '/tmp'
 
 .. note::
 
@@ -119,11 +153,17 @@ If the data to be preprocessed is also on the HPC, you are ready to run pynets. 
    the ``-B <host_folder>:<container_folder>`` Singularity argument.
    For example: ::
 
-      $ singularity run --cleanenv -B /work:/work ~/pynets_latest-2016-12-04-5b74ad9a4c4d.simg \
-        /work/my_dataset/derivatives/fmriprep \
-        participant \
-        --participant-label 387 -pm '4,8'
-
+      $ singularity run --cleanenv -B /work:/work ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
+        -B /scratch/04171/dpisner/pynets_out:/inputs,/scratch/04171/dpisner/masks/"$PARTIC"_triple_network_masks_"$ses":/outputs \
+        -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
+        -k 100 200 -pm "24,48" \
+        -b 100 -bs 12 -norm 6 -cc 'tcorr' \
+        -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
+        -anat "/inputs/sub-"$PARTIC"/ses-"$ses"/anat/sub-"$PARTIC"_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz" \
+        -func "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz" \
+        -conf "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_desc-confounds_regressors.tsv" \
+        -m "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz" \
+        -id ""$PARTIC"_run"$ses"" -plug 'MultiProc' -work '/tmp'
 
 Manually Prepared Environment (Python 3.5+)
 ===========================================
@@ -155,5 +195,4 @@ PyNets requires some other neuroimaging software tools that are
 not handled by the Python's packaging system (Pypi) used to deploy
 the ``pynets`` package:
 
-- FSL_ (version 5.0.9)
-- ANTs_ (version 2.2.0 - NeuroDocker build)
+- FSL_ (version >=5.0.9)
