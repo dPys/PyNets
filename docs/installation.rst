@@ -60,15 +60,6 @@ You will need an active internet connection and some time. ::
         -v D:\host\path\where\to\output\singularity\image:/output \
         singularityware/docker2singularity \
         dpys/pynets:<version>
-        -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
-        -k 100 200 -pm "24,48" \
-        -b 100 -bs 12 -norm 6 -cc 'tcorr' \
-        -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
-        -anat "/inputs/sub-"$PARTIC"/ses-"$ses"/anat/sub-"$PARTIC"_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz" \
-        -func "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz" \
-        -conf "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_desc-confounds_regressors.tsv" \
-        -m "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz" \
-        -id ""$PARTIC"_run"$ses"" -plug 'MultiProc' -work '/tmp'
 
 Where ``<version>`` should be replaced with the desired version of PyNets that you want
 to download.
@@ -80,16 +71,7 @@ For \*nix users the command translates as follows: ::
         -V /var/run/docker.sock:/var/run/docker.sock \
         -v /absolute/path/to/output/folder:/output \
         singularityware/docker2singularity \
-        dpys/pynets:<version> \
-        -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
-        -k 100 200 -pm "24,48" \
-        -b 100 -bs 12 -norm 6 -cc 'tcorr' \
-        -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
-        -anat "/inputs/sub-"$PARTIC"/ses-"$ses"/anat/sub-"$PARTIC"_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz" \
-        -func "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz" \
-        -conf "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_desc-confounds_regressors.tsv" \
-        -m "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz" \
-        -id ""$PARTIC"_run"$ses"" -plug 'MultiProc' -work '/tmp'
+        dpys/pynets:<version>
 
 Transfer the resulting Singularity image to the HPC, for example, using ``scp``. ::
 
