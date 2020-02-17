@@ -5,9 +5,12 @@ Usage
 #####
 
 The exact command to run ``PyNets`` depends on several factors:
-(1) the Installation_ method (i.e. pip, docker, singularity, AWS), along with the environment resources available for computing;
-(2) the types and modalities of available data inputs;
-(3) the objective of execution (e.g. ensemble connectome sampling, unitary connectome sampling, plotting, graph-analysis, embedding, optimization, or other, derivative applications).
+
+:(1): The Installation_ method (i.e. pip, docker, singularity, AWS), along with the environment resources available for computing;
+
+:(2): The types and modalities of available data inputs;
+
+:(3): The execution objective (e.g. ensemble connectome sampling, unitary connectome sampling, plotting, graph-analysis, embedding, optimization, or other, derivative applications).
 
 ****************
 Data Assumptions
@@ -150,40 +153,65 @@ Quickstart
 EXAMPLES
 ========
 
- ::
+..
+
 :(A) You have a preprocessed (minimally -- normalized and skull stripped) functional fMRI dataset called "002.nii.gz" where you assign an arbitrary subject id of 002, you wish to analyze a whole-brain network, using the nilearn atlas 'coords_dosenbach_2010', thresholding the connectivity graph proportionally to retain 0.20% of the strongest connections, and you wish to use partial correlation model estimation: ::
 
-    pynets -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' -id '002' -a 'coords_dosenbach_2010' -mod 'partcorr' -thr 0.20 -m '/Users/dPys/PyNets/tests/examples/002/fmri/002_mask.nii.gz'
+    pynets -id '002' \
+    -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' \ # The fMRI BOLD image data.
+    -a 'coords_dosenbach_2010' \ # A spherical atlas.
+    -mod 'partcorr' \ # The connectivity model.
+    -spheres # Node-making specification.
+    -thr 0.20 \ # A single proportional threshold to apply post-hoc.
+    -m '/Users/dPys/PyNets/tests/examples/002/fmri/002_mask.nii.gz' # A brain mask for the fMRI BOLD image data.
 
 :
 :(B) Building upon the previous example, let's say you now wish to analyze the Default network for this same subject's data, but now also using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011', you wish to threshold the graph to achieve a target density of 0.3, and you define your nodes based on spheres with radii at two resolutions (2 and 4 mm), you wish to fit a sparse inverse covariance model in addition to partial correlation, and you wish to plot the results: ::
 
-    pynets -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' -id '002' -a 'coords_dosenbach_2010' 'coords_power_2011' -n 'Default' -dt -thr 0.3 -ns 2 4 -mod 'partcorr' 'sps' -plt
+    pynets -id '002' \
+    -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' \ # The fMRI BOLD image data.
+    -a 'coords_dosenbach_2010' 'coords_power_2011' # Multiple spherical atlases.
+    -mod 'partcorr' 'sps' \ # The connectivity models.
+    -ns 2 4 -spheres \ # Node-making specification.
+    -dt -thr 0.3 \ # The thresholding settings
+    -n 'Default' \ # The resting-state network definition to restrict node-making from each of the input atlas.
+    -plt # Activate plotting.
 
 :
 :(C) Building upon the previous examples, let's say you now wish to analyze the Default and Executive Control Networks for this subject, but this time based on a custom atlas (DesikanKlein2012.nii.gz), this time defining your nodes as parcels (as opposed to spheres), you wish to fit a partial correlation model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), and you wish to prune disconnected nodes: ::
 
-    pynets -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' -id '002' -ua '/Users/dPys/PyNets/pynets/atlases/DesikanKlein2012.nii.gz' -n 'Default' 'Cont' -mod 'partcorr' -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -parc -p 1
+    pynets -id '002' \
+    -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' \ # The fMRI BOLD image data
+    -ua '/Users/dPys/PyNets/pynets/atlases/DesikanKlein2012.nii.gz' \ # A user-supplied atlas parcellation
+    -mod 'partcorr' \ # The connectivity model
+    -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings
+    -n 'Default' 'Cont' # The resting-state network definitions to restrict node-making from each of the input atlas.
 
 .. note::
     In general, parcels are preferable to spheres as nodes because parcels more closely respect atlas or cluster topology.
 
 :(D) Building upon the previous examples, let's say you now wish to create a subject-specific atlas based on the subject's unique spatial-temporal profile. In this case, you can specify the path to a binarized mask within which to performed spatially-constrained spectral clustering, and you want to try this at multiple resolutions of k clusters/nodes (i.e. k=50,100,150). You again also wish to define your nodes spherically with radii at both 2 and 4 mm, fitting a partial correlation and sparse inverse covariance model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), you wish to prune disconnected nodes, and you wish to plot your results: ::
 
-    pynets -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' -id '002' -cm '/Users/dPys/PyNets/tests/examples/pDMN_3_bin.nii.gz' -ns 2 4 -mod 'partcorr' 'sps' -k_min 50 -k_max 150 -k_step 50 -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 -plt
+    pynets -id '002' \
+    -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' \ # The fMRI BOLD image data
+    -mod 'partcorr' 'sps' \ # The connectivity models
+    -cm '/Users/dPys/PyNets/tests/examples/pDMN_3_bin.nii.gz' -k 50 100 150 -ct 'ward' \ # Node-making specification with spatially-constrained clustering.
+    -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings
+    -plt -names # Activate plotting with automated node labeling by coordinate reference
 
 :
 :(E) You wish to generate a structural connectome, using probabilistic ensemble tractography with 1,000,000 streamlines, based on both constrained-spherical deconvolution (csd) and tensor models, bootstrapped tracking, and direct normalization of streamlines. You wish to use atlas parcels as defined by both DesikanKlein2012, and AALTzourioMazoyer2002, exploring only those nodes belonging to the Default Mode Network, and iterate over a range of densities (i.e. 0.05-0.10 with 1% step), and prune disconnected nodes: ::
 
     pynets -id 0021001 \
-    -dwi '/Users/dPys/PyNets/tests/examples/002/dmri/iso_eddy_corrected_data_denoised.nii.gz' \
-    -bval '/Users/dPys/PyNets/tests/examples/002/dmri/bval.bval' \
-    -bvec '/Users/dPys/PyNets/tests/examples/002/dmri/bvec.bvec' \
-    -ua '~/atlases/DesikanKlein2012.nii.gz' '~/atlases/AALTzourioMazoyer2002.nii.gz' \
-    -parc -dg 'prob' 'det' -mod 'csd' 'tensor' -s 1000000  \
-    -anat '/Users/dPys/PyNets/tests/examples/002/anat/s002_anat_brain.nii.gz' \
-    -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \
-    -n 'Default'
+    -dwi '/Users/dPys/PyNets/tests/examples/002/dmri/iso_eddy_corrected_data_denoised.nii.gz' \ # The dMRI diffusion-weighted image data
+    -bval '/Users/dPys/PyNets/tests/examples/002/dmri/bval.bval' \ # The b-values
+    -bvec '/Users/dPys/PyNets/tests/examples/002/dmri/bvec.bvec' \ # The b-vectors
+    -ua '~/.atlases/DesikanKlein2012.nii.gz' '~/.atlases/AALTzourioMazoyer2002.nii.gz' \ # The atlases
+    -mod 'csd' \ # The connectivity model
+    -parc -dg 'prob' 'det' 'tensor' -s 1000000  \ # The tractography settings
+    -anat '/Users/dPys/PyNets/tests/examples/002/anat/s002_anat_brain.nii.gz' \ # The T1w anatomical image
+    -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings
+    -n 'Default' # The resting-state network definition to restrict node-making from each of the input atlases.
 
 .. note::
     Spherical nodes can be used by triggering the `-spheres` flag, but this approach is **not** recommended for dMRI connectometry.
