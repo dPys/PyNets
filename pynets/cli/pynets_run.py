@@ -203,11 +203,9 @@ def get_parser():
                         metavar='Clustering type',
                         default='ward',
                         nargs='+',
-                        choices=['ward', 'kmeans', 'complete', 'average', 'single'],
+                        choices=['ward', 'kmeans', 'complete', 'average', 'single', 'ncut', 'rena'],
                         help='(Hyperparameter): Specify the types of clustering to use. Recommended options are: '
-                             'ward or kmeans. Note that imposing spatial constraints with a mask consisting of '
-                             'disconnected components will leading to clustering instability in the case of complete, '
-                             'average, or single clustering. If specifying a list of '
+                             'ward or ncut in the case of multiple connected components. If specifying a list of '
                              'clustering types, separate them by space.\n')
     parser.add_argument('-cc',
                         metavar='Clustering connectivity type',
@@ -665,6 +663,9 @@ def build_workflow(args, retval):
     if max_length:
         if (type(max_length) is list) and (len(max_length) > 1):
             max_length_list = max_length
+            max_length = None
+        elif max_length == ['None']:
+            max_length_list = None
         elif type(max_length) is list:
             max_length = max_length[0]
             max_length_list = None
@@ -684,6 +685,9 @@ def build_workflow(args, retval):
     if directget:
         if (type(directget) is list) and (len(directget) > 1):
             multi_directget = directget
+            directget = None
+        elif directget == ['None']:
+            directget_list = None
         elif type(directget) is list:
             directget = directget[0]
             multi_directget = None

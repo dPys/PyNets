@@ -939,6 +939,17 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             run_tracking_node_iterables.append(("directget", multi_directget))
             dmri_connectometry_wf.connect([(inputnode, run_tracking_node, [('conn_model', 'conn_model')])])
             dmri_connectometry_wf.connect([(inputnode, run_tracking_node, [('max_length', 'max_length')])])
+        elif conn_model_list and multi_directget and max_length_list:
+            all_combo = list(itertools.product(multi_directget, max_length_list, conn_model_list))
+            multi_directget = [i[0] for i in all_combo]
+            max_length_list = [i[1] for i in all_combo]
+            conn_model_list = [i[2] for i in all_combo]
+            run_tracking_node_iterables.append(("max_length", max_length_list))
+            run_tracking_node_iterables.append(("directget", multi_directget))
+            run_tracking_node_iterables.append(("conn_model", conn_model_list))
+            dmri_connectometry_wf.connect([(inputnode, run_tracking_node, [('directget', 'directget')])])
+            dmri_connectometry_wf.connect([(inputnode, run_tracking_node, [('conn_model', 'conn_model')])])
+            dmri_connectometry_wf.connect([(inputnode, run_tracking_node, [('max_length', 'max_length')])])
 
         run_tracking_node.iterables = run_tracking_node_iterables
     else:

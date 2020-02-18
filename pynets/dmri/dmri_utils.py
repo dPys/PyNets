@@ -100,11 +100,11 @@ def normalize_gradients(bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_sca
 def make_mean_b0(in_file):
     b0_img = nib.load(in_file)
     b0_img_data = b0_img.get_fdata()
-    b0_img.uncache()
     mean_b0 = np.mean(b0_img_data, axis=3, dtype=b0_img_data.dtype)
     mean_file_out = in_file.split(".nii")[0] + "_mean_b0.nii.gz"
     nib.save(nib.Nifti1Image(mean_b0, affine=b0_img.affine, header=b0_img.header), mean_file_out)
     del b0_img_data
+    b0_img.uncache()
     return mean_file_out
 
 
@@ -141,6 +141,7 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas, b0_th
     dwi_file : str
         File path to diffusion weighted image.
     """
+    import time
     import os
     from dipy.io import save_pickle
     import os.path as op
@@ -210,6 +211,8 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas, b0_th
     # Create mean b0 brain mask
     cmd = 'bet ' + mean_b0_file + ' ' + B0_bet + ' -m -f 0.2'
     os.system(cmd)
+    while not os.path.exists(B0_bet):
+        time.sleep(1)
 
     del dwi_data
 
