@@ -76,7 +76,9 @@ def test_make_local_connectivity_scorr():
 
 
 @pytest.mark.parametrize("local_corr", ['scorr', 'tcorr', 'allcorr'])
-@pytest.mark.parametrize("clust_type", ['kmeans', 'ward', 'complete', 'average'])
+@pytest.mark.parametrize("clust_type", ['kmeans', 'ward', 'rena', pytest.param('single', marks=pytest.mark.xfail),
+                                        pytest.param('average', marks=pytest.mark.xfail),
+                                        pytest.param('complete', marks=pytest.mark.xfail)])
 @pytest.mark.parametrize("k", [pytest.param(0, marks=pytest.mark.xfail), 100])
 def test_ni_parcellate(local_corr, clust_type, k):
     """
