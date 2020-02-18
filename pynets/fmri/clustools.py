@@ -71,6 +71,251 @@ def indx_3dto1d(idx, sz):
     return idx1
 
 
+def ncut(W, nbEigenValues):
+    """
+    This function performs the first step of normalized cut spectral clustering.
+    The normalized LaPlacian is calculated on the similarity matrix W, and top
+    nbEigenValues eigenvectors are calculated. The number of eigenvectors
+    corresponds to the maximum number of classes (K) that will be produced by the
+    clustering algorithm.
+
+    Parameters
+    ----------
+    W : array
+        Numpy array containing a symmetric #feature x #feature sparse matrix representing the
+        similarity between voxels, traditionally this matrix should be positive semidefinite,
+        but regularization is employed to allow negative matrix entries (Yu 2001).
+    nbEigenValues : int
+        Number of eigenvectors that should be calculated, this determines the maximum number
+        of clusters (K) that can be derived from the result.
+
+    Returns
+    -------
+    eigen_val :  array
+        Eigenvalues from the eigen decomposition of the LaPlacian of W.
+    eigen_vec :  array
+        Eigenvectors from the eigen decomposition of the LaPlacian of W.
+
+    References
+    ----------
+    .. Adapted from PyClusterROI
+    .. [1] Stella Yu and Jianbo Shi, "Understanding Popout through Repulsion," Computer
+       Vision and Pattern Recognition, December, 2001.
+    .. [2] Shi, J., & Malik, J. (2000).  Normalized cuts and image segmentation. IEEE
+       Transactions on Pattern Analysis and Machine Intelligence, 22(8), 888-905.
+       doi: 10.1109/34.868688.
+    .. [3] Yu, S. X., & Shi, J. (2003). Multiclass spectral clustering. Proceedings Ninth
+       IEEE International Conference on Computer Vision, (1), 313-319 vol.1. Ieee.
+       doi: 10.1109/ICCV.2003.1238361
+    """
+    from scipy.sparse.linalg import eigsh
+    from scipy.sparse import spdiags
+    from numpy.linalg import norm
+
+    # Parameters
+    offset = 0.5
+    maxiterations = 100
+    eigsErrorTolerence = 1e-6
+    eps = 2.2204e-16
+
+    m = np.shape(W)[1]
+
+    d = abs(W).sum(0)
+    dr = 0.5 * (d - W.sum(0))
+    d = d + offset * 2
+    dr = dr + offset
+
+    # Calculation of the normalized LaPlacian
+    W = W + spdiags(dr, [0], m, m, "csc")
+    Dinvsqrt = spdiags((1.0 / np.sqrt(d + eps)), [0], m, m, "csc")
+    P = Dinvsqrt * (W * Dinvsqrt)
+
+    # Perform the eigen decomposition
+    eigen_val, eigen_vec = eigsh(P, nbEigenValues, maxiter=maxiterations, tol=eigsErrorTolerence, which='LA')
+
+    # Sort the eigen_vals so that the first is the largest
+    i = np.argsort(-eigen_val)
+    eigen_val = eigen_val[i]
+    eigen_vec = eigen_vec[:, i]
+
+    # Normalize the returned eigenvectors
+    eigen_vec = Dinvsqrt * np.array(eigen_vec)
+    norm_ones = norm(np.ones((m, 1)))
+    for i in range(0, np.shape(eigen_vec)[1]):
+        eigen_vec[:, i] = (eigen_vec[:, i] / norm(eigen_vec[:, i])) * norm_ones
+        if eigen_vec[0, i] != 0:
+            eigen_vec[:, i] = -1 * eigen_vec[:, i] * np.sign(eigen_vec[0, i])
+
+    return eigen_val, eigen_vec
+
+
+def discretisation(eigen_vec):
+    """
+    This function performs the second step of normalized cut clustering which
+    assigns features to clusters based on the eigen vectors from the LaPlacian of
+    a similarity matrix. There are a few different ways to perform this task. Shi
+    and Malik (2000) iteratively bisect the features based on the positive and
+    negative loadings of the eigenvectors. Ng, Jordan and Weiss (2001) proposed to
+    perform K-means clustering on the rows of the eigenvectors. The method
+    implemented here was proposed by Yu and Shi (2003) and it finds a discrete
+    solution by iteratively rotating a binarised set of vectors until they are
+    maximally similar to the the eigenvectors. An advantage of this method over K-means
+    is that it is _more_ deterministic, i.e. you should get very similar results
+    every time you run the algorithm on the same data.
+
+    The number of clusters that the features are clustered into is determined by
+    the number of eignevectors (number of columns) in the input array eigen_vec. A
+    caveat of this method, is that number of resulting clusters is bound by the
+    number of eignevectors, but it may contain less.
+
+    Parameters
+    ----------
+    eigen_vec : array
+        Eigenvectors of the normalized LaPlacian calculated from the
+        similarity matrix for the corresponding clustering problem.
+
+    Returns
+    -------
+    eigen_vec_discrete : array
+        Discretised eigenvector outputs, i.e. vectors of 0
+        and 1 which indicate whether or not a feature belongs
+        to the cluster defined by the eigen vector. e.g. a one
+        in the 10th row of the 4th eigenvector (column) means
+        that feature 10 belongs to cluster #4.
+
+    References
+    ----------
+    .. Adapted from PyClusterROI
+    .. [1] Stella Yu and Jianbo Shi, "Understanding Popout through Repulsion," Computer
+       Vision and Pattern Recognition, December, 2001.
+    .. [2] Shi, J., & Malik, J. (2000).  Normalized cuts and image segmentation. IEEE
+       Transactions on Pattern Analysis and Machine Intelligence, 22(8), 888-905.
+       doi: 10.1109/34.868688.
+    .. [3] Yu, S. X., & Shi, J. (2003). Multiclass spectral clustering. Proceedings Ninth
+       IEEE International Conference on Computer Vision, (1), 313-319 vol.1. Ieee.
+       doi: 10.1109/ICCV.2003.1238361
+    """
+    import scipy as sp
+    from scipy.sparse import csc_matrix
+    from scipy.linalg import LinAlgError, svd
+    from scipy import divide
+    eps = 2.2204e-16
+
+    # normalize the eigenvectors
+    [n, k] = np.shape(eigen_vec)
+    vm = np.kron(np.ones((1, k)), np.sqrt(np.multiply(eigen_vec, eigen_vec).sum(1)))
+    eigen_vec = divide(eigen_vec, vm)
+
+    svd_restarts = 0
+    exitLoop = 0
+
+    # if there is an exception we try to randomize and rerun SVD again and do this 30 times
+    while (svd_restarts < 30) and (exitLoop == 0):
+        # initialize algorithm with a random ordering of eigenvectors
+        c = np.zeros((n, 1))
+        R = np.matrix(np.zeros((k, k)))
+        R[:, 0] = eigen_vec[int(sp.rand(1) * (n - 1)), :].transpose()
+
+        for j in range(1, k):
+            c = c + abs(eigen_vec * R[:, j - 1])
+            R[:, j] = eigen_vec[c.argmin(), :].transpose()
+
+        lastObjectiveValue = 0
+        nbIterationsDiscretisation = 0
+        nbIterationsDiscretisationMax = 20
+
+        # Iteratively rotate the discretised eigenvectors until they are maximally similar to the input eignevectors,
+        # this converges when the differences between the current solution and the previous solution differs by less
+        # than eps or we have reached the maximum number of itarations
+        while exitLoop == 0:
+            nbIterationsDiscretisation = nbIterationsDiscretisation + 1
+
+            # Rotate the original eigen_vectors
+            tDiscrete = eigen_vec * R
+
+            # Discretise the result by setting the max of each row=1 and other values to 0
+            j = np.reshape(np.asarray(tDiscrete.argmax(1)), n)
+            eigenvec_discrete = csc_matrix((np.ones(len(j)), (list(range(0, n)), np.array(j))), shape=(n, k))
+
+            # Calculate a rotation to bring the discrete eigenvectors cluster to the original eigenvectors
+            tSVD = eigenvec_discrete.transpose() * eigen_vec
+
+            # Catch a SVD convergence error and restart
+            try:
+                [U, S, Vh] = svd(tSVD)
+            except LinAlgError:
+                # Catch exception and go back to the beginning of the loop
+                print("SVD did not converge. Randomizing and trying again...")
+                break
+
+            # Test for convergence
+            NcutValue = 2 * (n - S.sum())
+            if (abs(NcutValue - lastObjectiveValue) < eps) or (
+                nbIterationsDiscretisation > nbIterationsDiscretisationMax):
+                exitLoop = 1
+            else:
+                # Otherwise calculate rotation and continue
+                lastObjectiveValue = NcutValue
+                R = np.matrix(Vh).transpose() * np.matrix(U).transpose()
+
+    if exitLoop == 0:
+        raise ValueError("SVD did not converge after 30 retries")
+    else:
+        return eigenvec_discrete
+
+
+def parcellate_ncut(W, k, mask_img):
+    """
+    Converts a connectivity matrix into a nifti file where each voxel
+    intensity corresponds to the number of the cluster to which it belongs.
+    Clusters are renumberd to be contiguous.
+
+    Parameters
+    ----------
+    W : Compressed Sparse Matrix
+        A Scipy sparse matrix, with weights corresponding to the temporal/spatial
+        correlation between the time series from voxel i and voxel j.
+    k : int
+        Numbers of clusters that will be generated.
+    mask_img : Nifti1Image
+        3D NIFTI file containing a mask, which restricts the voxels used in the analysis.
+
+    References
+    ----------
+    .. Adapted from PyClusterROI
+    """
+    # We only have to calculate the eigendecomposition of the LaPlacian once,
+    # for the largest number of clusters provided. This provides a significant
+    # speedup, without any difference to the results.
+    [_, eigenvec] = ncut(W, k)
+
+    # Calculate each desired clustering result
+    eigenvec_discrete = discretisation(eigenvec[:, :k])
+
+    # Transform the discretised eigenvectors into a single vector where the
+    # value corresponds to the cluster # of the corresponding ROI
+    a = eigenvec_discrete[:, 0].todense()
+
+    for i in range(1, k):
+        a = a + (i + 1) * eigenvec_discrete[:, i]
+
+    unique_a = list(set(a.flatten()))
+    unique_a.sort()
+
+    # Renumber clusters to make the contiguous
+    b = np.zeros((len(a), 1))
+    for i in range(0, len(unique_a)):
+        b[a == unique_a[i]] = i + 1
+
+    imdat = mask_img.get_fdata()
+    imdat[imdat > 0] = 1
+    imdat[imdat > 0] = np.short(b[0:int(np.sum(imdat))].flatten())
+
+    del a, W
+
+    return nib.Nifti1Image(imdat.astype('uint16'), mask_img.get_affine(), mask_img.get_header())
+
+
 def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     """
     Constructs a spatially constrained connectivity matrix from a fMRI dataset.
@@ -221,7 +466,6 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
 
     m = max(max(outlist[0, :]), max(outlist[1, :])) + 1
 
-    # Make the sparse matrix, CSC format is supposedly efficient for matrix arithmetic
     W = csc_matrix((outlist[2, :], (outlist[0, :], outlist[1, :])), shape=(int(m), int(m)), dtype=np.float32)
 
     del imdat, msk, mskdat, outlist, m, sparse_i, sparse_j, sparse_w
@@ -356,7 +600,6 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
 
     m = max(max(outlist[0, :]), max(outlist[1, :])) + 1
 
-    # Make the sparse matrix
     W = csc_matrix((outlist[2, :], (outlist[0, :], outlist[1, :])), shape=(int(m), int(m)), dtype=np.float32)
 
     del imdat, msk, mskdat, outlist, m, sparse_i, sparse_j, sparse_w
@@ -364,7 +607,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     return W
 
 
-class NilParcellate(object):
+class NiParcellate(object):
     """
     Class for implementing various clustering routines.
     """
@@ -410,6 +653,8 @@ class NilParcellate(object):
         self._clust_mask_corr_img = None
         self._func_img_data = None
         self._masked_fmri_vol = None
+        self._conn_comps = None
+        self.num_conn_comps = None
 
     def create_clean_mask(self, num_std_dev=1.5):
         """
@@ -462,30 +707,26 @@ class NilParcellate(object):
 
         return self.atlas
 
-    def create_local_clustering(self, overwrite, r_thresh):
+    def create_local_clustering(self, overwrite, r_thresh, min_region_size=80):
         """
         API for performing any of a variety of clustering routines available through NiLearn.
         """
         import os.path as op
         from scipy.sparse import save_npz, load_npz
         from nilearn.regions import connected_regions
-        from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
 
-        conn_comps = len(connected_regions(self._clust_mask_corr_img, extract_type='connected_components',
-                                           min_region_size=1)[1])
-        if self.clust_type == 'kmeans':
-            if self.k > conn_comps:
-                if conn_comps != 1:
-                    raise ValueError('k must be less than or equal to the total number of connected components in '
-                                     'the mask in the case of kmeans clustering.')
+        conn_comps = connected_regions(self._clust_mask_corr_img, extract_type='connected_components',
+                                       min_region_size=min_region_size)
+        self._conn_comps = conn_comps[0]
+        self.num_conn_comps = len(conn_comps[1])
 
         if self.clust_type == 'complete' or self.clust_type == 'average' or self.clust_type == 'single':
-            if conn_comps > 1:
-                raise ValueError('Complete, Average, and Single linkage agglomerative clustering are unstable in the '
-                                 'case of multiple connected components.')
+            if self.num_conn_comps > 1:
+                raise ValueError('Clustering method unstable with spatial constrainsts applied to multiple '
+                                 'connected components.')
 
-        if self.clust_type == 'ward':
-            if self.k < conn_comps:
+        if self.clust_type == 'ward' or self.clust_type == 'ncut':
+            if self.k < self.num_conn_comps:
                 raise ValueError('k must minimally be greater than the total number of connected components in '
                                  'the mask in the case of agglomerative clustering.')
             if self.local_corr == 'tcorr' or self.local_corr == 'scorr':
@@ -493,6 +734,7 @@ class NilParcellate(object):
                                                           '_conn.npz')
 
                 if (not op.isfile(self._local_conn_mat_path)) or (overwrite is True):
+                    from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
                     if self.local_corr == 'tcorr':
                         self._local_conn = make_local_connectivity_tcorr(self._func_img, self._clust_mask_corr_img,
                                                                          thresh=r_thresh)
@@ -535,24 +777,119 @@ class NilParcellate(object):
             else:
                 raise FileNotFoundError('File containing sparse matrix of local connectivity structure not found.')
 
-        self._clust_est = Parcellations(method=self.clust_type, standardize=self._standardize, detrend=self._detrending,
-                                        n_parcels=int(self.k), mask=self._clust_mask_corr_img,
-                                        connectivity=self._local_conn, mask_strategy='background', memory_level=2,
-                                        smoothing_fwhm=2, random_state=42)
+        if self.clust_type == 'complete' or self.clust_type == 'average' or self.clust_type == 'single' or self.clust_type == 'ward' or (self.clust_type == 'rena' and self.num_conn_comps == 1) or (self.clust_type == 'kmeans' and self.num_conn_comps == 1):
+            self._clust_est = Parcellations(method=self.clust_type, standardize=self._standardize,
+                                            detrend=self._detrending,
+                                            n_parcels=self.k, mask=self._clust_mask_corr_img,
+                                            connectivity=self._local_conn, mask_strategy='background', memory_level=2,
+                                            random_state=42)
 
-        if self.conf is not None:
-            import pandas as pd
-            confounds = pd.read_csv(self.conf, sep='\t')
-            if confounds.isnull().values.any():
-                conf_corr = fill_confound_nans(confounds, self._dir_path)
-                self._clust_est.fit(self._func_img, confounds=conf_corr)
+            if self.conf is not None:
+                import pandas as pd
+                confounds = pd.read_csv(self.conf, sep='\t')
+                if confounds.isnull().values.any():
+                    conf_corr = fill_confound_nans(confounds, self._dir_path)
+                    self._clust_est.fit(self._func_img, confounds=conf_corr)
+                else:
+                    self._clust_est.fit(self._func_img, confounds=self.conf)
             else:
-                self._clust_est.fit(self._func_img, confounds=self.conf)
-        else:
-            self._clust_est.fit(self._func_img)
+                self._clust_est.fit(self._func_img)
 
-        self._clust_est.labels_img_.set_data_dtype(np.uint16)
-        nib.save(self._clust_est.labels_img_, self.uatlas)
+            self._clust_est.labels_img_.set_data_dtype(np.uint16)
+            nib.save(self._clust_est.labels_img_, self.uatlas)
+        elif self.clust_type == 'ncut':
+            out_img = parcellate_ncut(self._local_conn, self.k, self._clust_mask_corr_img)
+            out_img.set_data_dtype(np.uint16)
+            nib.save(out_img, self.uatlas)
+        elif self.clust_type == 'rena' or self.clust_type == 'kmeans' and self.num_conn_comps > 1:
+            from pynets.core import nodemaker
+            from nilearn.regions import connected_regions, Parcellations, connected_label_regions
+            from nilearn.image import iter_img, new_img_like
+            from pynets.core.utils import flatten
+
+            conn_comp_list = iter_img(self._conn_comps)
+
+            def proportional(k, voxels_list):
+                """Hagenbach-Bischoff Quota"""
+                quota = sum(voxels_list) / (1. + k)
+                frac = [voxels / quota for voxels in voxels_list]
+                res = [int(f) for f in frac]
+                n = k - sum(res)
+                if n == 0: return res
+                if n < 0: return [min(x, k) for x in res]
+                remainders = [ai - bi for ai, bi in zip(frac, res)]
+                limit = sorted(remainders, reverse=True)[n - 1]
+                for i, r in enumerate(remainders):
+                    if r >= limit:
+                        res[i] += 1
+                        n -= 1
+                        if n == 0:
+                            return res
+                raise
+
+            mask_img_list = []
+            mask_voxels_dict = dict()
+            for i, mask_img in enumerate(iter_img(conn_comp_list)):
+                mask_voxels_dict[i] = np.int(np.sum(mask_img.get_data()))
+                mask_img_list.append(mask_img)
+
+            k_list = proportional(self.k, list(mask_voxels_dict.values()))
+
+            conn_comp_atlases = []
+            i = 0
+            print("%s%s%s" % ('Building ', len(mask_img_list), ' separate atlases with voxel-proportional nclusters '
+                                                               'for each connected component...'))
+            for mask_img in mask_img_list:
+                if k_list[i] == 0:
+                    continue
+                self._clust_est = Parcellations(method=self.clust_type, standardize=self._standardize,
+                                                detrend=self._detrending,
+                                                n_parcels=k_list[i], mask=mask_img,
+                                                mask_strategy='background',
+                                                memory_level=2,
+                                                random_state=42)
+                if self.conf is not None:
+                    import pandas as pd
+                    confounds = pd.read_csv(self.conf, sep='\t')
+                    if confounds.isnull().values.any():
+                        conf_corr = fill_confound_nans(confounds, self._dir_path)
+                        self._clust_est.fit(self._func_img, confounds=conf_corr)
+                    else:
+                        self._clust_est.fit(self._func_img, confounds=self.conf)
+                else:
+                    self._clust_est.fit(self._func_img)
+                conn_comp_atlases.append(connected_label_regions(self._clust_est.labels_img_))
+                i = i + 1
+
+            # Then combine the multiple atlases, corresponding to each connected component, into a single atlas
+            atlas_of_atlases = []
+            for atlas in conn_comp_atlases:
+                bna_data = np.around(np.asarray(atlas.dataobj)).astype('uint16')
+
+                # Get an array of unique parcels
+                bna_data_for_coords_uniq = np.unique(bna_data)
+
+                # Number of parcels:
+                par_max = len(bna_data_for_coords_uniq) - 1
+                img_stack = []
+                for idx in range(1, par_max + 1):
+                    roi_img = bna_data == bna_data_for_coords_uniq[idx].astype('uint16')
+                    img_stack.append(roi_img.astype('uint16'))
+                img_stack = np.array(img_stack)
+
+                img_list = []
+                for idy in range(par_max):
+                    img_list.append(new_img_like(atlas, img_stack[idy]))
+                atlas_of_atlases.append(img_list)
+                del img_list, img_stack, bna_data
+
+            atlas_of_atlases = list(flatten(atlas_of_atlases))
+
+            [super_atlas_ward, _] = nodemaker.create_parcel_atlas(atlas_of_atlases)
+            super_atlas_ward.set_data_dtype(np.uint16)
+
+            nib.save(super_atlas_ward, self.uatlas)
+            del atlas_of_atlases, super_atlas_ward, conn_comp_atlases, mask_img_list, mask_voxels_dict, conn_comp_list
 
         print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
 

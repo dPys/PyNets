@@ -78,9 +78,9 @@ def test_make_local_connectivity_scorr():
 @pytest.mark.parametrize("local_corr", ['scorr', 'tcorr', 'allcorr'])
 @pytest.mark.parametrize("clust_type", ['kmeans', 'ward', 'complete', 'average'])
 @pytest.mark.parametrize("k", [pytest.param(0, marks=pytest.mark.xfail), 100])
-def test_nil_parcellate(local_corr, clust_type, k):
+def test_ni_parcellate(local_corr, clust_type, k):
     """
-    Test for nil_parcellate
+    Test for ni_parcellate
     """
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = base_dir + '/002/fmri'
@@ -88,8 +88,8 @@ def test_nil_parcellate(local_corr, clust_type, k):
     func_file = dir_path + '/002.nii.gz'
     conf = None
     mask = None
-    nip = clustools.NilParcellate(func_file=func_file, clust_mask=clust_mask, k=k, clust_type=clust_type,
-                                  local_corr=local_corr, conf=conf, mask=mask)
+    nip = clustools.NiParcellate(func_file=func_file, clust_mask=clust_mask, k=k, clust_type=clust_type,
+                                 local_corr=local_corr, conf=conf, mask=mask)
     atlas = nip.create_clean_mask()
     nip.create_local_clustering(overwrite=True, r_thresh=0.5)
     uatlas = nip.parcellate()
