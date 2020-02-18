@@ -247,7 +247,7 @@ def combine_xfms(xfm1, xfm2, xfmout):
 
 def wm_syn(template_path, fa_path, working_dir):
     """
-    A function to perform ANTS SyN registration
+    A function to perform SyN registration
 
     Parameters
     ----------
