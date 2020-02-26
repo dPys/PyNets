@@ -258,7 +258,7 @@ def build_multigraphs(est_path_iterlist, ID):
     import os
     from pathlib import Path
     # Available functional and structural connectivity models
-    with open("%s%s" % (str(Path(__file__).parent), '/runconfig.yaml'), 'r') as stream:
+    with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
             func_models = hardcoded_params['available_models']['func_models']
