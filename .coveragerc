@@ -18,8 +18,7 @@ omit =
 	AUTHORS.rst
 	docker/*
 	pynets/__about__.py
-	pynets/pynets_run.py
-	pynets/pynets_bids.py
+	pynets/cli/*
 	pynets/_version.py
 	get_version.py
 	versioneer.py
@@ -33,6 +32,7 @@ omit =
 	pynets/core/labelcharts/*
 	pynets/core/runconfig.yaml
 	pynets/core/workflows.py
+	pynets/core/cloud_utils.py
 	pynets/stats/nodal_graph_measures.yaml
 	pynets/stats/global_graph_measures.yaml
 	pynets/stats/netmotifs.py
