@@ -1195,7 +1195,6 @@ def build_workflow(args, retval):
                                                          'flag.'))
                         else:
                             print(_atlas)
-                            do_dir_path(_atlas, _func_file)
             else:
                 for _atlas in multi_atlas:
                     if (parc is True) and (_atlas in nilearn_coord_atlases or _atlas in
@@ -1205,18 +1204,12 @@ def build_workflow(args, retval):
                                                      'flag.'))
                     else:
                         print(_atlas)
-                        do_dir_path(_atlas, func_file)
         elif atlas is not None:
             if (parc is True) and (atlas in nilearn_coord_atlases or atlas in nilearn_prob_atlases):
                 raise ValueError("%s%s%s" % ('\nERROR: ', atlas,
                                              ' is a coordinate atlas and must be used with the -spheres flag.'))
             else:
                 print("%s%s" % ("\nPredefined atlas: ", atlas))
-                if func_file_list:
-                    for _func_file in func_file_list:
-                        do_dir_path(atlas, _func_file)
-                else:
-                    do_dir_path(atlas, func_file)
         else:
             if (uatlas is None) and (k == 0) and user_atlas_list is None and k_list is None and atlas is None and multi_atlas is None:
                 raise KeyError('\nERROR: No atlas specified!')
@@ -1249,7 +1242,6 @@ def build_workflow(args, retval):
                                                          'flag.'))
                         else:
                             print(_atlas)
-                            do_dir_path(_atlas, _dwi_file)
             else:
                 for _atlas in multi_atlas:
                     if (parc is True) and (_atlas in nilearn_coord_atlases):
@@ -1258,18 +1250,12 @@ def build_workflow(args, retval):
                                                      'flag.'))
                     else:
                         print(_atlas)
-                        do_dir_path(_atlas, dwi_file)
         elif atlas:
             if (parc is True) and (atlas in nilearn_coord_atlases):
                 raise ValueError("%s%s%s" % ('\nERROR: ', atlas,
                                              ' is a coordinate atlas and must be used with the -spheres flag.'))
             else:
                 print("%s%s" % ("\nNilearn atlas: ", atlas))
-                if dwi_file_list:
-                    for _dwi_file in dwi_file_list:
-                        do_dir_path(atlas, _dwi_file)
-                else:
-                    do_dir_path(atlas, dwi_file)
 
         if target_samples:
             print("%s%s%s" % ('Using ', target_samples, ' samples...'))
@@ -1511,7 +1497,7 @@ def build_workflow(args, retval):
         net_mets_node.synchronize = True
 
         net_mets_node._n_procs = 1
-        net_mets_node._mem_gb = 1
+        net_mets_node._mem_gb = 2
 
         collect_pd_list_net_csv_node = pe.Node(niu.Function(input_names=['net_mets_csv'],
                                                             output_names=['net_mets_csv_out'],
@@ -1709,7 +1695,7 @@ def build_workflow(args, retval):
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
             wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._n_procs = 1
-            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 1
+            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 2
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._n_procs = 1
             wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._mem_gb = 2
 

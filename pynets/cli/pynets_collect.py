@@ -92,7 +92,7 @@ def load_pd_dfs(file_):
                 df = df.loc[:, ~df.columns.duplicated()]
             except:
                 pass
-            df.to_csv(file_.split('.csv')[0] + '_clean.csv', index=True)
+            df.to_csv("%s%s" % (file_.split('.csv')[0], '_clean.csv'), index=True)
             del bad_cols2
             del bad_cols1
             del id
@@ -127,12 +127,11 @@ def df_concat(dfs, working_path):
             except:
                 pass
 
-    out_path = working_path + '/all_subs_neat.csv'
     frame = frame.drop_duplicates(subset='id')
     frame = frame.loc[:, ~frame.columns.str.contains(r'thr_auc$', regex=True)]
     frame = frame.loc[:, (frame == 0).mean() < .5]
     frame = frame.loc[:, frame.isnull().mean() <= 0.1]
-    frame.to_csv(out_path, index=False)
+    frame.to_csv("%s%s" % (working_path, '/all_subs_neat.csv'), index=False)
     return frame
 
 
@@ -155,10 +154,10 @@ def build_subject_dict(sub, working_path, modality='func'):
     subject_dict = {}
     print(sub)
     subject_dict[sub] = {}
-    sessions = sorted([i for i in os.listdir(working_path + '/' + sub) if i.startswith('ses-')],
+    sessions = sorted([i for i in os.listdir("%s%s%s" % (working_path, '/', sub)) if i.startswith('ses-')],
                       key = lambda x: int(x.split("-")[1]))
     atlases = list(set([os.path.basename(str(Path(i).parent.parent)) for i in
-                        glob.glob(working_path + '/' + sub + '/*/*/*/netmetrics/*')]))
+                        glob.glob("%s%s%s%s" % (working_path, '/', sub, '/*/*/*/netmetrics/*'))]))
 
     print(atlases)
 
@@ -169,11 +168,11 @@ def build_subject_dict(sub, working_path, modality='func'):
         for atlas in atlases:
             #atlas_name = atlas.replace('reor-RAS_nores-2mm_', '')
             atlas_name = atlas
-            auc_csvs = glob.glob(working_path + '/' + sub + '/' + ses + '/' + modality + '/' + atlas +
-                                 '/netmetrics/auc/*')
+            auc_csvs = glob.glob("%s%s%s%s%s%s%s%s%s%s" % (working_path, '/', sub, '/', ses, '/', modality, '/', atlas,
+                                 '/netmetrics/auc/*'))
             for auc_file in auc_csvs:
-                prefix = os.path.basename(auc_file).split('.csv')[0].split('est-')[1].split('_' + modality +
-                                                                                            'net_mets_auc')[0]
+                prefix = os.path.basename(auc_file).split('.csv')[0].split('est-')[1].split("%s%s%s" % ('_', modality,
+                                                                                            'net_mets_auc'))[0]
                 try:
                     subject_dict[sub][ses].append(load_pd_dfs_auc(atlas_name, prefix, auc_file))
                 except:
@@ -186,10 +185,12 @@ def build_subject_dict(sub, working_path, modality='func'):
             for m in range(len(list_))[1:]:
                 df_base = df_base.merge(list_[m][[c for c in list_[m].columns if c.endswith('auc')]], how='right',
                                         right_index=True, left_index=True)
-            if os.path.isdir(working_path + '/' + sub + '/' + ses + '/' + modality):
-                out_path = working_path + '/' + sub + '/' + ses + '/' + modality + '/all_combinations_auc.csv'
+            if os.path.isdir("%s%s%s%s%s%s%s" % (working_path, '/', sub, '/', ses, '/', modality)):
+                out_path = "%s%s%s%s%s%s%s%s" % (working_path, '/', sub, '/', ses, '/', modality,
+                                                 '/all_combinations_auc.csv')
                 df_base.to_csv(out_path)
-                out_path_new = str(Path(working_path).parent) + '/all_visits_netmets_auc/' + sub + '_' + ses + '_netmets_auc.csv'
+                out_path_new = "%s%s%s%s%s%s" % (str(Path(working_path).parent), '/all_visits_netmets_auc/', sub, '_',
+                                                 ses, '_netmets_auc.csv')
                 files_.append(out_path_new)
                 shutil.copyfile(out_path, out_path_new)
 
@@ -264,7 +265,7 @@ def build_workflow(args):
     working_path = args.basedir
     work_dir = args.work
 
-    os.makedirs(str(Path(working_path).parent) + '/all_visits_netmets_auc', exist_ok=True)
+    os.makedirs("%s%s" % (str(Path(working_path).parent), '/all_visits_netmets_auc'), exist_ok=True)
 
     wf = collect_all(working_path)
 
@@ -329,7 +330,7 @@ def build_workflow(args):
         handler.close()
         logger.removeHandler(handler)
 
-    files_ = glob.glob(str(Path(working_path).parent) + '/all_visits_netmets_auc/*clean.csv')
+    files_ = glob.glob("%s%s" % (str(Path(working_path).parent), '/all_visits_netmets_auc/*clean.csv'))
 
     dfs = []
     for file_ in files_:
@@ -351,12 +352,11 @@ def build_workflow(args):
             except:
                 pass
 
-    out_path = working_path + '/all_subs_neat.csv'
     frame = frame.drop_duplicates(subset='id')
     frame = frame.loc[:, ~frame.columns.str.contains(r'thr_auc$', regex=True)]
     frame = frame.loc[:, (frame == 0).mean() < .5]
     frame = frame.loc[:, frame.isnull().mean() <= 0.1]
-    frame.to_csv(out_path, index=False)
+    frame.to_csv("%s%s" % (working_path, '/all_subs_neat.csv'), index=False)
 
     return
 

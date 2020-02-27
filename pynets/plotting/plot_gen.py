@@ -12,6 +12,7 @@ import networkx as nx
 import os.path as op
 import tkinter
 import matplotlib
+import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore")
 matplotlib.use('agg')
 
@@ -70,24 +71,6 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
         for j in pruned_nodes:
             del labels[labels.index(labels[j])]
 
-    # def _doClust(X, clust_levels):
-    #     """
-    #     Create Ward cluster linkages.
-    #     """
-    #     # get the linkage diagram
-    #     Z = linkage(X, 'ward')
-    #     # choose # cluster levels
-    #     cluster_levels = range(1, int(clust_levels))
-    #     # init array to store labels for each level
-    #     clust_levels_tmp = int(clust_levels) - 1
-    #     label_arr = np.zeros((int(clust_levels_tmp), int(X.shape[0])))
-    #     # iterate thru levels
-    #     for c in cluster_levels:
-    #         fl = fcluster(Z, c, criterion='maxclust')
-    #         #print(fl)
-    #         label_arr[c-1, :] = fl
-    #     return label_arr, clust_levels_tmp
-
     if comm == 'nodes' and len(conn_matrix) > 40:
         from pynets.stats.netstats import community_resolution_selection
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
@@ -107,21 +90,6 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
         label_arr = link_comm_aff_mat * np.expand_dims(np.arange(1, clust_levels+1), axis=1) + mask_mat
     else:
         return
-    # elif len(conn_matrix) > 20:
-    #     print('Graph too small for reliable plotting of communities. Plotting by fcluster instead...')
-    #     if len(conn_matrix) >= 250:
-    #         clust_levels = 7
-    #     elif len(conn_matrix) >= 200:
-    #         clust_levels = 6
-    #     elif len(conn_matrix) >= 150:
-    #         clust_levels = 5
-    #     elif len(conn_matrix) >= 100:
-    #         clust_levels = 4
-    #     elif len(conn_matrix) >= 50:
-    #         clust_levels = 3
-    #     else:
-    #         clust_levels = 2
-    #     [label_arr, clust_levels_tmp] = _doClust(conn_matrix, clust_levels)
 
     def _get_node_label(node_idx, labels, clust_levels_tmp):
         """
@@ -304,6 +272,75 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas, labels):
         out_path_fig = "%s%s%s%s" % (dir_path, '/', ID, '_wb_ts_plot.png')
     plt.savefig(out_path_fig)
     plt.close('all')
+    return
+
+
+def plot_network_clusters(graph, communities, out_path, figsize=(8, 8), node_size=50, plot_overlaps=False,
+                          plot_labels=False):
+    """
+    Plot a graph with node color coding for communities.
+
+    Parameters
+    ----------
+    graph : NetworkX graph
+    communities : array
+        Community affiliation vector
+    out_path : str
+        Path to save figure.
+    figsize : Tuple of integers
+        The figure size; it is a pair of float, default (8, 8).
+    node_size: int
+        Default 200.
+    plot_overlaps : bool
+        Flag to control if multiple algorithms memberships are plotted. Default is False.
+    plot_labels : bool
+        Flag to control if node labels are plotted. Default is False.
+    """
+
+    COLOR = ['r', 'b', 'g', 'c', 'm', 'y', 'k',
+             '0.8', '0.2', '0.6', '0.4', '0.7', '0.3', '0.9', '0.1', '0.5']
+
+    def getIndexPositions(listOfElements, element):
+        ''' Returns the indexes of all occurrences of give element in
+        the list- listOfElements '''
+        indexPosList = []
+        indexPos = 0
+        while True:
+            try:
+                indexPos = listOfElements.index(element, indexPos)
+                indexPosList.append(indexPos)
+                indexPos += 1
+            except ValueError as e:
+                break
+
+        return indexPosList
+
+    partition = [getIndexPositions(communities.tolist(), i) for i in set(communities.tolist())]
+
+    n_communities = min(len(partition), len(COLOR))
+    plt.figure(figsize=figsize)
+    plt.axis('off')
+
+    position = nx.fruchterman_reingold_layout(graph)
+
+    fig = nx.draw_networkx_nodes(graph, position, node_size=node_size, node_color='w')
+    fig.set_edgecolor('k')
+    nx.draw_networkx_edges(graph, position, alpha=.5)
+    for i in range(n_communities):
+        if len(partition[i]) > 0:
+            if plot_overlaps:
+                size = (n_communities - i) * node_size
+            else:
+                size = node_size
+            fig = nx.draw_networkx_nodes(graph, position, node_size=size,
+                                         nodelist=partition[i], node_color=COLOR[i])
+            fig.set_edgecolor('k')
+    if plot_labels:
+        nx.draw_networkx_labels(graph, position, labels={node: str(node) for node in graph.nodes()})
+
+    fig.savefig(out_path)
+    fig.close('all')
+
     return
 
 
@@ -898,7 +935,8 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
             answer += 1
         return int(np.sqrt(answer ** 2))
 
-    global_measures = [meas for meas in measures if not meas.split('_')[0].isdigit() and meas.endswith('_auc') and not meas.startswith('thr_')]
+    global_measures = [meas for meas in measures if not meas.split('_')[0].isdigit() and
+                       meas.endswith('_auc') and not meas.startswith('thr_')]
 
     if len(df_concat) >= 30:
         fig, axes = plt.subplots(ncols=nearest_square_root(len(global_measures)),

@@ -1560,6 +1560,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
     from pynets.core import utils
     from itertools import groupby
     import re
+    from sklearn.decomposition import PCA
 
     # Check for existence of net_mets csv files, condensing final list to only those that were actually produced.
     net_mets_csv_list_exist = []
@@ -1578,7 +1579,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
 
         models = []
         for file_ in net_mets_csv_list:
-            models.append(op.basename(op.dirname(op.dirname(file_))) + '/netmetrics/' + op.basename(file_))
+            models.append("%s%s%s" % (op.basename(op.dirname(op.dirname(file_))), '/netmetrics/', op.basename(file_)))
 
         def sort_thr(model_name):
             return model_name.split('thr-')[1].split('_')[0]
@@ -1604,8 +1605,8 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                     thr = non_decimal.sub('', i.split('thr-')[1].split('_')[0])
                     _file = subject_path + '/' + i
                     df = pd.read_csv(_file)
+                    node_cols = [s for s in list(df.columns) if isinstance(s, int) or any(c.isdigit() for c in s)]
                     if nc_collect is False:
-                        node_cols = [s for s in list(df.columns) if isinstance(s, int) or any(c.isdigit() for c in s)]
                         df = df.drop(node_cols, axis=1)
                     meta[thr_set]['dataframes'][thr] = df
 
@@ -1643,7 +1644,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                                                        np.array(df_summary_nonan['thr']).astype('float32'))
                     print("%s%s%s" % (measure, ': ', df_summary_auc[measure].to_string(index=False)))
                 meta[thr_set]['auc_dataframe'] = df_summary_auc
-                auc_dir = subject_path + '/' + atlas + '/netmetrics/auc/'
+                auc_dir = "%s%s%s%s" % (subject_path, '/', atlas, '/netmetrics/auc/')
                 if not os.path.isdir(auc_dir):
                     os.makedirs(auc_dir, exist_ok=True)
                 df_summary_auc = df_summary_auc.drop(columns=['thr_auc'])
@@ -1685,12 +1686,19 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                 df_concatted_mean = df_concat.loc[:, measures].mean(skipna=True).to_frame().transpose()
                 df_concatted_median = df_concat.loc[:, measures].median(skipna=True).to_frame().transpose()
                 df_concatted_mode = pd.DataFrame(df_concat.loc[:, measures].mode(axis=0, dropna=True).max()).transpose()
+
+                # PCA across AUC node measures
+                # node_measures_grouped = [list(y) for x, y in groupby(node_cols, lambda s: s.split('_')[1])]
+                # for node_measures in node_measures_grouped:
+                #     pca = PCA(n_components=2)
+                #     df_concatted_pca = pd.Series(pca.fit_transform(df_concat.loc[:, node_measures])[1]).to_frame().transpose()
+                #     df_concatted_pca.columns = [str(col) + '_PCA' for col in df_concatted_pca.columns]
                 df_concatted_mean.columns = [str(col) + '_mean' for col in df_concatted_mean.columns]
                 df_concatted_median.columns = [str(col) + '_median' for col in df_concatted_median.columns]
                 df_concatted_mode.columns = [str(col) + '_maxmode' for col in df_concatted_mode.columns]
                 result = pd.concat([df_concatted_mean, df_concatted_median, df_concatted_mode], axis=1)
                 df_concatted_final = result.reindex(sorted(result.columns), axis=1)
-                print('\nConcatenating dataframes for ' + str(ID) + '...\n')
+                print("%s%s%s" % ('\nConcatenating dataframes for ', str(ID), '...\n'))
                 net_csv_summary_out_path = "%s%s%s%s%s%s" % (summary_dir, '/', str(ID), '_net_mets',
                                                              '%s' % ('_' + network if network is not None else ''),
                                                              '_mean.csv')
