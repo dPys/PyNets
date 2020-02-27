@@ -35,8 +35,11 @@ coverage:
     - "pynets/stats/benchmarking.py"
     - "pynets/core/atlases/*"
     - "pynets/core/labelcharts/*"
-    - "pynets/core/runconfig.yaml"
+    - "pynets/runconfig.yaml"
+    - "pynets/cloudconfig.json"
+    - "pynets/bidsconfig.json"
     - "pynets/stats/nodal_graph_measures.yaml"
+    - "pynets/stats/global_graph_measures.yaml"
     - "docs/*"
     - "tests/*"
     - "pynets/__about__.py"
@@ -44,6 +47,9 @@ coverage:
     - "get_version.py"
     - "versioneer.py"
     - "setup.py"
+
+codecov:
+  max_report_age: off
 
 codecov:
   token: d62ad7b3-39a6-4657-a2e3-6acf2362d36d

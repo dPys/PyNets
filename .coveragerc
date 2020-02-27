@@ -4,6 +4,7 @@ omit =
 	*__pycache__*
 	tests/*
 	docs/*
+	*.json
 	setup.py
 	setup.cfg
 	tox.ini
@@ -30,7 +31,7 @@ omit =
 	pynets/rsnrefs/*
 	pynets/core/atlases/*
 	pynets/core/labelcharts/*
-	pynets/core/runconfig.yaml
+	pynets/runconfig.yaml
 	pynets/core/workflows.py
 	pynets/core/cloud_utils.py
 	pynets/stats/nodal_graph_measures.yaml

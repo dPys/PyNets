@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="" />
+    <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.codecov.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.codecov.yml" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -140,7 +142,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>group_img</find>
       <find>eigk</find>
       <find>b0_img</find>
       <find>b0_img_data</find>
@@ -170,6 +171,7 @@
       <find>df_concatted_mode</find>
       <find>start</find>
       <find>node_cols</find>
+      <find>raise</find>
     </findStrings>
     <replaceStrings>
       <replace>nii</replace>
@@ -266,6 +268,17 @@
             <path>
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="pynets" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="pynets" type="462c0819:PsiDirectoryNode" />
+              <item name="stats" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
@@ -383,12 +396,12 @@
       <workItem from="1580675582797" duration="1751000" />
       <workItem from="1580746222651" duration="62905000" />
       <workItem from="1581447576189" duration="101897000" />
-      <workItem from="1582671869947" duration="1382000" />
+      <workItem from="1582671869947" duration="1972000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="428287000" />
+    <option name="totallyTimeSpent" value="428877000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -401,11 +414,10 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="342" y="23" width="1251" height="984" extended-state="0" />
-    <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.4959724" visible="true" weight="0.35401157" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.4959724" visible="true" weight="0.16790736" />
       <window_info id="Structure" order="1" sideWeight="0.50224215" side_tool="true" weight="0.17651632" />
-      <window_info id="aws.explorer" order="2" sideWeight="0.5040276" side_tool="true" visible="true" weight="0.35401157" />
+      <window_info id="aws.explorer" order="2" sideWeight="0.5040276" side_tool="true" visible="true" weight="0.16790736" />
       <window_info id="Favorites" order="3" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
