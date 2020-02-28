@@ -23,16 +23,8 @@ coverage:
         flags:
           - "smoketests"
   ignore:
-    - "pynets/cli/*"
     - "pynets/templates/*"
     - "pynets/rsnrefs/*"
-    - "pynets/core/workflows.py"
-    - "pynets/core/cloud_utils.py"
-    - "pynets/registration/register.py"
-    - "pynets/core/interfaces.py"
-    - "pynets/stats/netmotifs.py"
-    - "pynets/stats/embeddings.py"
-    - "pynets/stats/benchmarking.py"
     - "pynets/core/atlases/*"
     - "pynets/core/labelcharts/*"
     - "pynets/runconfig.yaml"

@@ -688,13 +688,13 @@ def prune_disconnected(G):
     # List because it returns a generator
     components = list(nx.connected_components(G))
     components.sort(key=len, reverse=True)
-    components_isolated = list(components[0])
+    components_connected = list(components[0])
 
     # Remove disconnected nodes
     pruned_nodes = []
     s = 0
     for node in list(G.nodes()):
-        if node not in components_isolated:
+        if node not in components_connected:
             G.remove_node(node)
             pruned_nodes.append(s)
         s = s + 1
@@ -736,12 +736,12 @@ def most_important(G):
     # List because it returns a generator
     components = list(nx.connected_components(Gt))
     components.sort(key=len, reverse=True)
-    components_isolated = list(components[0])
+    components_connected = list(components[0])
 
     # Remove disconnected nodes
     s = 0
     for node in list(Gt.nodes()):
-        if node not in components_isolated:
+        if node not in components_connected:
             Gt.remove_node(node)
             pruned_nodes.append(s)
         s = s + 1
@@ -1640,8 +1640,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                 for measure in df_summary.columns[:-1]:
                     # Get Area Under the Curve
                     df_summary_nonan = df_summary[pd.notnull(df_summary[measure])]
-                    df_summary_auc[measure] = np.trapz(np.array(df_summary_nonan[measure]).astype('float32'),
-                                                       np.array(df_summary_nonan['thr']).astype('float32'))
+                    df_summary_auc[measure] = np.trapz(np.array(df_summary_nonan[measure]).astype('float32'))
                     print("%s%s%s" % (measure, ': ', df_summary_auc[measure].to_string(index=False)))
                 meta[thr_set]['auc_dataframe'] = df_summary_auc
                 auc_dir = "%s%s%s%s" % (subject_path, '/', atlas, '/netmetrics/auc/')

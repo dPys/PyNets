@@ -610,9 +610,9 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
     from pynets.core import thresholding
     from pynets.stats import netstats
 
-    fail_tol = 10
+    fail_tol = 100
     conn_matrix = np.nan_to_num(conn_matrix)
-    G = nx.from_numpy_matrix(conn_matrix)
+    G = nx.from_numpy_matrix(np.abs(conn_matrix))
     if not nx.is_connected(G):
         [G, pruned_nodes] = netstats.prune_disconnected(G)
         pruned_nodes.sort(reverse=True)
@@ -627,13 +627,12 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
             coords = coords_pre
 
     maximum_edges = G.number_of_edges()
-    G = thresholding.weight_to_distance(G)
-    min_t = nx.minimum_spanning_tree(G, weight="distance")
+    min_t = nx.minimum_spanning_tree(thresholding.weight_to_distance(G), weight="distance")
     len_edges = min_t.number_of_edges()
     upper_values = np.triu_indices(np.shape(conn_matrix)[0], k=1)
     weights = np.array(conn_matrix[upper_values])
-    weights = weights[~np.isnan(weights)]
-    edgenum = int(float(thr) * float(len(weights)))
+    edgenum = int(float(thr) * float(len(weights[~np.isnan(weights)])))
+
     if len_edges > edgenum:
         print("%s%s%s" % ('Warning: The minimum spanning tree already has: ', len_edges,
                           ' edges, select more edges. Local Threshold will be applied by just retaining the Minimum '
@@ -646,14 +645,16 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
     while len_edges < edgenum and k <= np.shape(conn_matrix)[0] and (len(len_edge_list[-fail_tol:]) -
                                                                      len(set(len_edge_list[-fail_tol:]))) < (fail_tol -
                                                                                                              1):
-        print(k)
-        print(len_edges)
+        # print(k)
+        # print(len_edges)
         len_edge_list.append(len_edges)
         # Create nearest neighbour graph
         nng = thresholding.knn(conn_matrix, k)
-        number_before = nng.number_of_edges()
+
         # Remove edges from the NNG that exist already in the new graph/MST
         nng.remove_edges_from(min_t.edges())
+
+        number_before = nng.number_of_edges()
         if nng.number_of_edges() == 0 and number_before >= maximum_edges:
             break
 
@@ -663,18 +664,20 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
 
         # Obtain list of edges from the NNG in order of weight
         edge_list = sorted(nng.edges(data=True), key=lambda t: t[2]['weight'], reverse=True)
+
         # Add edges in order of connectivity strength
         for edge in edge_list:
             # print("%s%s" % ('Adding edge to mst: ', edge))
             min_t.add_edges_from([edge])
-            min_t_mx = nx.to_numpy_array(min_t)
-            len_edges = nx.from_numpy_matrix(min_t_mx).number_of_edges()
+            len_edges = min_t.number_of_edges()
             if len_edges >= edgenum:
-                # print(len_edges)
+                print(len_edges)
                 break
         k += 1
 
-    conn_matrix_thr = nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64)
+    conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64))
+
+    conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
 
     return conn_matrix_thr, coords, labels
 
@@ -683,7 +686,7 @@ def perform_thresholding(conn_matrix, coords, labels, thr, thr_perc, min_span_tr
     from pynets.core import thresholding
     if min_span_tree is True:
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
-        if dens_thresh is False:
+        if dens_thresh is True:
             print('Ignoring -dt flag since local density thresholding is not currently supported.')
         thr_type = 'MST_thr'
         edge_threshold = "%s%s" % (str(np.abs(thr_perc)), '%')
@@ -691,13 +694,15 @@ def perform_thresholding(conn_matrix, coords, labels, thr, thr_perc, min_span_tr
     elif disp_filt is True:
         thr_type = 'DISP_alpha'
         edge_threshold = "%s%s" % (str(np.abs(thr_perc)), '%')
-        G1 = thresholding.disparity_filter(nx.from_numpy_array(conn_matrix))
+        G1 = thresholding.disparity_filter(nx.from_numpy_array(np.abs(conn_matrix)))
         # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
         print('Computing edge disparity significance with alpha = %s' % thr)
         print('Filtered graph: nodes = %s, edges = %s' % (G1.number_of_nodes(), G1.number_of_edges()))
         # print('Backbone graph: nodes = %s, edges = %s' % (G2.number_of_nodes(), G2.number_of_edges()))
         # print(G2.edges(data=True))
-        conn_matrix_thr = nx.to_numpy_array(G1)
+        conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(G1, nodelist=sorted(G1.nodes()), dtype=np.float64))
+        conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
+
     else:
         if dens_thresh is False:
             thr_type = 'prop'
