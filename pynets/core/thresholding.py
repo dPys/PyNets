@@ -677,7 +677,11 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
 
     conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64))
 
-    conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
+    result = np.zeros(conn_matrix.shape)
+
+    result[:conn_matrix_bin.shape[0], :conn_matrix_bin.shape[1]] = conn_matrix_bin
+
+    conn_matrix_thr = np.multiply(conn_matrix, result)
 
     return conn_matrix_thr, coords, labels
 
@@ -701,7 +705,9 @@ def perform_thresholding(conn_matrix, coords, labels, thr, thr_perc, min_span_tr
         # print('Backbone graph: nodes = %s, edges = %s' % (G2.number_of_nodes(), G2.number_of_edges()))
         # print(G2.edges(data=True))
         conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(G1, nodelist=sorted(G1.nodes()), dtype=np.float64))
-        conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
+        result = np.zeros(conn_matrix.shape)
+        result[:conn_matrix_bin.shape[0], :conn_matrix_bin.shape[1]] = conn_matrix_bin
+        conn_matrix_thr = np.multiply(conn_matrix, result)
 
     else:
         if dens_thresh is False:
