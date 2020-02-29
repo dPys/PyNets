@@ -62,8 +62,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/core/thresholding.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="433">
-              <caret line="702" column="52" selection-start-line="702" selection-start-column="52" selection-end-line="702" selection-end-column="52" />
+            <state relative-caret-position="386">
+              <caret line="723" column="71" selection-start-line="723" selection-start-column="71" selection-end-line="723" selection-end-column="71" />
               <folding>
                 <element signature="e#139#154#0" expanded="true" />
               </folding>
@@ -394,12 +394,12 @@
       <workItem from="1580746222651" duration="62905000" />
       <workItem from="1581447576189" duration="101897000" />
       <workItem from="1582671869947" duration="2278000" />
-      <workItem from="1582783890247" duration="10194000" />
+      <workItem from="1582783890247" duration="11042000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="439377000" />
+    <option name="totallyTimeSpent" value="440225000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -855,8 +855,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/core/thresholding.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="433">
-          <caret line="702" column="52" selection-start-line="702" selection-start-column="52" selection-end-line="702" selection-end-column="52" />
+        <state relative-caret-position="386">
+          <caret line="723" column="71" selection-start-line="723" selection-start-column="71" selection-end-line="723" selection-end-column="71" />
           <folding>
             <element signature="e#139#154#0" expanded="true" />
           </folding>
