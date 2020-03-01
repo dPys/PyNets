@@ -14,7 +14,7 @@ from pynets.core.utils import timeout
 warnings.filterwarnings("ignore")
 
 
-@timeout(360)
+@timeout(720)
 def average_shortest_path_length_for_all(G):
     """
     Helper function, in the case of graph disconnectedness,
@@ -38,7 +38,7 @@ def average_shortest_path_length_for_all(G):
     return math.fsum(nx.average_shortest_path_length(sg, weight='weight') for sg in subgraphs) / len(subgraphs)
 
 
-@timeout(360)
+@timeout(720)
 def subgraph_number_of_cliques_for_all(G):
     """
     Helper function, in the case of graph disconnectedness,
@@ -62,7 +62,7 @@ def subgraph_number_of_cliques_for_all(G):
     return np.rint(math.fsum(nx.graph_number_of_cliques(sg) for sg in subgraphs) / len(subgraphs))
 
 
-@timeout(360)
+@timeout(720)
 def global_efficiency(G, weight='weight'):
     """
     Return the global efficiency of the G
@@ -118,7 +118,7 @@ def global_efficiency(G, weight='weight'):
     return sum(inv_lengths) / (N * (N - 1))
 
 
-@timeout(360)
+@timeout(720)
 def local_efficiency(G, weight='weight'):
     """
     Return the local efficiency of each node in the G
@@ -177,7 +177,7 @@ def local_efficiency(G, weight='weight'):
     return efficiencies
 
 
-@timeout(360)
+@timeout(720)
 def average_local_efficiency(G, weight='weight'):
     """
     Return the average local efficiency of all of the nodes in the G
@@ -217,7 +217,7 @@ def average_local_efficiency(G, weight='weight'):
     return total / N
 
 
-@timeout(360)
+@timeout(720)
 def smallworldness(G, niter=10, nrand=100):
     """Returns the small-world coefficient (omega) of a graph
 
@@ -304,7 +304,7 @@ def create_communities(node_comm_aff_mat, node_num):
     return com_assign
 
 
-@timeout(360)
+@timeout(720)
 def participation_coef(W, ci, degree='undirected'):
     '''
     Participation coefficient is a measure of diversity of intermodular
@@ -346,7 +346,7 @@ def participation_coef(W, ci, degree='undirected'):
 
     return P
 
-@timeout(360)
+@timeout(720)
 def participation_coef_sign(W, ci):
     '''
     Participation coefficient is a measure of diversity of intermodular
@@ -397,7 +397,7 @@ def participation_coef_sign(W, ci):
     return Ppos, Pneg
 
 
-@timeout(360)
+@timeout(720)
 def diversity_coef_sign(W, ci):
     '''
     The Shannon-entropy based diversity coefficient measures the diversity
@@ -638,7 +638,7 @@ def link_communities(W, type_clustering='single'):
     return M
 
 
-@timeout(360)
+@timeout(720)
 def weighted_transitivity(G):
     r"""Compute weighted graph transitivity, the fraction of all possible weighted triangles
     present in G.
@@ -1279,7 +1279,7 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
-@timeout(360)
+@timeout(720)
 def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import rich_club_coefficient
     rc_vector = rich_club_coefficient(G, normalized=True, seed=42, Q=100)
