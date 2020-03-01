@@ -9,7 +9,7 @@ ENV LANG="C.UTF-8" \
     LC_ALL="C.UTF-8"
 
 RUN apt-get update -qq \
-    && apt-get install -y --no-install-recommends software-properties-common apt-util dirmngr \
+    && apt-get install -y --no-install-recommends software-properties-common apt-utils dirmngr \
     # Install system dependencies.
     && apt-get install -y --no-install-recommends \
         bzip2 \
