@@ -76,7 +76,7 @@ resource_dict:
         - (1, 4)
 execution_dict:
     - 'stop_on_first_crash':
-        - True
+        - False
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':

@@ -19,7 +19,7 @@ def average_shortest_path_length_for_all(G):
     """
     Helper function, in the case of graph disconnectedness,
     that returns the average shortest path length, calculated
-    iteratively for each distinct subgraph of the graph G.
+    iteratively for each distinct subgraph of the G.
 
     Parameters
     ----------
@@ -29,7 +29,7 @@ def average_shortest_path_length_for_all(G):
     Returns
     -------
     average_shortest_path_length : float
-        The length of the average shortest path for graph G.
+        The length of the average shortest path for G.
     """
     import math
     connected_component_subgraphs = [G.subgraph(c) for c in nx.connected_components(G)]
@@ -43,7 +43,7 @@ def subgraph_number_of_cliques_for_all(G):
     """
     Helper function, in the case of graph disconnectedness,
     that returns the number of cliques, calculated
-    iteratively for each distinct subgraph of the graph G.
+    iteratively for each distinct subgraph of the G.
 
     Parameters
     ----------
@@ -53,7 +53,7 @@ def subgraph_number_of_cliques_for_all(G):
     Returns
     -------
     number of cliques : int
-        The average number of cliques for graph G.
+        The average number of cliques for G.
     """
     import math
     connected_component_subgraphs = [G.subgraph(c) for c in nx.connected_components(G)]
@@ -65,7 +65,7 @@ def subgraph_number_of_cliques_for_all(G):
 @timeout(360)
 def global_efficiency(G, weight='weight'):
     """
-    Return the global efficiency of the graph G
+    Return the global efficiency of the G
 
     Parameters
     ----------
@@ -121,7 +121,7 @@ def global_efficiency(G, weight='weight'):
 @timeout(360)
 def local_efficiency(G, weight='weight'):
     """
-    Return the local efficiency of each node in the graph G
+    Return the local efficiency of each node in the G
 
     Parameters
     ----------
@@ -131,7 +131,7 @@ def local_efficiency(G, weight='weight'):
     Returns
     -------
     local_efficiency : dict
-       The keys of the dict are the nodes in the graph G and the corresponding
+       The keys of the dict are the nodes in the G and the corresponding
        values are local efficiencies of each node
 
     Notes
@@ -180,7 +180,7 @@ def local_efficiency(G, weight='weight'):
 @timeout(360)
 def average_local_efficiency(G, weight='weight'):
     """
-    Return the average local efficiency of all of the nodes in the graph G
+    Return the average local efficiency of all of the nodes in the G
 
     Parameters
     ----------
@@ -190,7 +190,7 @@ def average_local_efficiency(G, weight='weight'):
     Returns
     -------
     average_local_efficiency : float
-        Average local efficiency of graph G.
+        Average local efficiency of G.
 
     Notes
     -----
@@ -221,7 +221,7 @@ def average_local_efficiency(G, weight='weight'):
 def smallworldness(G, niter=10, nrand=100):
     """Returns the small-world coefficient (omega) of a graph
 
-    The small-world coefficient of a graph G is:
+    The small-world coefficient of a G is:
 
     omega = Lr/L - C/Cl
 
@@ -688,13 +688,13 @@ def prune_disconnected(G):
     # List because it returns a generator
     components = list(nx.connected_components(G))
     components.sort(key=len, reverse=True)
-    components_isolated = list(components[0])
+    components_connected = list(components[0])
 
     # Remove disconnected nodes
     pruned_nodes = []
     s = 0
     for node in list(G.nodes()):
-        if node not in components_isolated:
+        if node not in components_connected:
             G.remove_node(node)
             pruned_nodes.append(s)
         s = s + 1
@@ -736,12 +736,12 @@ def most_important(G):
     # List because it returns a generator
     components = list(nx.connected_components(Gt))
     components.sort(key=len, reverse=True)
-    components_isolated = list(components[0])
+    components_connected = list(components[0])
 
     # Remove disconnected nodes
     s = 0
     for node in list(Gt.nodes()):
-        if node not in components_isolated:
+        if node not in components_connected:
             Gt.remove_node(node)
             pruned_nodes.append(s)
         s = s + 1
@@ -752,7 +752,7 @@ def most_important(G):
 @timeout(1200)
 def raw_mets(G, i):
     """
-    API that iterates across NetworkX algorithms for a graph G.
+    API that iterates across NetworkX algorithms for a G.
 
     Parameters
     ----------
@@ -917,10 +917,10 @@ class CleanGraphs(object):
         # centrality are > 3 standard deviations below the mean)
         if (self.prune == 1) or (nx.is_connected(self.G) is True):
             if nx.is_connected(self.G) is False:
-                print('Warning: Graph is fragmented...\n')
+                print('Warning: Fragmented graph...\n')
             [self.G, _] = prune_disconnected(self.G)
         elif self.prune == 2:
-            print('Pruning to retain only most important nodes...')
+            print('Pruning by node centrality...')
             [self.G, _] = most_important(self.G)
         else:
             print('Graph is connected...')
@@ -975,22 +975,24 @@ def save_netmets(dir_path, est_path, metric_list_names, net_met_val_list_final):
 
 
 def iterate_nx_global_measures(G, metric_list_glob):
+    import time
     # import random
     num_mets = len(metric_list_glob)
     net_met_arr = np.zeros([num_mets, 2], dtype='object')
     j = 0
     for i in metric_list_glob:
+        start_time = time.time()
         net_met = str(i).split('<function ')[1].split(' at')[0]
         try:
             try:
                 net_met_val = raw_mets(G, i)
             except:
-                print("%s%s%s" % ('WARNING: ', net_met, ' failed for graph G.'))
+                print("%s%s%s" % ('WARNING: ', net_met, ' failed for G.'))
                 # np.save("%s%s%s%s" % ('/tmp/', net_met, random.randint(1, 400), '.npy'),
                 #         np.array(nx.to_numpy_matrix(G)))
                 net_met_val = np.nan
         except:
-            print("%s%s%s" % ('WARNING: ', str(i), ' is undefined for graph G'))
+            print("%s%s%s" % ('WARNING: ', str(i), ' is undefined for G'))
             # np.save("%s%s%s%s" % ('/tmp/', net_met, random.randint(1, 400), '.npy'),
             #         np.array(nx.to_numpy_matrix(G)))
             net_met_val = np.nan
@@ -998,6 +1000,7 @@ def iterate_nx_global_measures(G, metric_list_glob):
         net_met_arr[j, 1] = net_met_val
         print(net_met.replace('_', ' ').title())
         print(str(net_met_val))
+        print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
         print('\n')
         j = j + 1
     net_met_val_list = list(net_met_arr[:, 1])
@@ -1052,7 +1055,7 @@ def get_community(G, net_met_val_list_final, metric_list_names):
     metric_list_names.append('modularity')
     if modularity == 1.0:
         modularity = np.nan
-        print('Louvain modularity calculation is undefined for graph G')
+        print('Louvain modularity is undefined for G')
     net_met_val_list_final.append(modularity)
     return net_met_val_list_final, metric_list_names, ci
 
@@ -1062,7 +1065,7 @@ def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
         pc_vector = participation_coef_sign(in_mat, ci)[0]
     else:
         pc_vector = participation_coef(in_mat, ci)
-    print('\nExtracting Participation Coefficient vector for all network nodes...')
+    print('\nCalculating Participation Coefficients...')
     pc_vals = list(pc_vector)
     pc_edges = list(range(len(pc_vector)))
     num_edges = len(pc_edges)
@@ -1073,14 +1076,14 @@ def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
         try:
             pc_arr[j, 1] = pc_vals[j]
         except:
-            print("%s%s%s" % ('Participation coefficient is undefined for node ', str(j), ' of graph G'))
+            print("%s%s%s" % ('Participation coefficient is undefined for node ', str(j), ' of G'))
             pc_arr[j, 1] = np.nan
         j = j + 1
     # Add mean
     pc_arr[num_edges, 0] = 'average_participation_coefficient'
     nonzero_arr_partic_coef = np.delete(pc_arr[:, 1], [0])
     pc_arr[num_edges, 1] = np.mean(nonzero_arr_partic_coef)
-    print("%s%s" % ('Mean Participation Coefficient across edges: ', str(pc_arr[num_edges, 1])))
+    print("%s%s" % ('Mean Participation Coefficient: ', str(pc_arr[num_edges, 1])))
     for i in pc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(pc_arr[:, 1])
@@ -1089,7 +1092,7 @@ def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
 
 def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
     dc_vector = diversity_coef_sign(in_mat, ci)[0]
-    print('\nExtracting Diversity Coefficient vector for all network nodes...')
+    print('\nCalculating Diversity Coefficients...')
     dc_vals = list(dc_vector)
     dc_edges = list(range(len(dc_vector)))
     num_edges = len(dc_edges)
@@ -1100,14 +1103,14 @@ def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
         try:
             dc_arr[j, 1] = dc_vals[j]
         except:
-            print("%s%s%s" % ('Diversity coefficient is undefined for node ', str(j), ' of graph G'))
+            print("%s%s%s" % ('Diversity coefficient is undefined for node ', str(j), ' of G'))
             dc_arr[j, 1] = np.nan
         j = j + 1
     # Add mean
     dc_arr[num_edges, 0] = 'average_diversity_coefficient'
     nonzero_arr_diversity_coef = np.delete(dc_arr[:, 1], [0])
     dc_arr[num_edges, 1] = np.mean(nonzero_arr_diversity_coef)
-    print("%s%s" % ('Mean Diversity Coefficient across edges: ', str(dc_arr[num_edges, 1])))
+    print("%s%s" % ('Mean Diversity Coefficient: ', str(dc_arr[num_edges, 1])))
     for i in dc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(dc_arr[:, 1])
@@ -1116,7 +1119,7 @@ def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
 
 def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
     le_vector = local_efficiency(G)
-    print('\nExtracting Local Efficiency vector for all network nodes...')
+    print('\nCalculating Local Efficiencies...')
     le_vals = list(le_vector.values())
     le_nodes = list(le_vector.keys())
     num_nodes = len(le_nodes)
@@ -1127,13 +1130,13 @@ def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
         try:
             le_arr[j, 1] = le_vals[j]
         except:
-            print("%s%s%s" % ('Local efficiency is undefined for node ', str(j), ' of graph G'))
+            print("%s%s%s" % ('Local efficiency is undefined for node ', str(j), ' of G'))
             le_arr[j, 1] = np.nan
         j = j + 1
     le_arr[num_nodes, 0] = 'average_local_efficiency_nodewise'
     nonzero_arr_le = np.delete(le_arr[:, 1], [0])
     le_arr[num_nodes, 1] = np.mean(nonzero_arr_le)
-    print("%s%s" % ('Mean Local Efficiency across nodes: ', str(le_arr[num_nodes, 1])))
+    print("%s%s" % ('Mean Local Efficiency: ', str(le_arr[num_nodes, 1])))
     for i in le_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(le_arr[:, 1])
@@ -1144,7 +1147,7 @@ def get_clustering(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import clustering
 
     cl_vector = clustering(G)
-    print('\nExtracting Local Clustering vector for all network nodes...')
+    print('\nCalculating Local Clusterings...')
     cl_vals = list(cl_vector.values())
     cl_nodes = list(cl_vector.keys())
     num_nodes = len(cl_nodes)
@@ -1155,7 +1158,7 @@ def get_clustering(G, metric_list_names, net_met_val_list_final):
         try:
             cl_arr[j, 1] = cl_vals[j]
         except:
-            print("%s%s%s" % ('Local clustering is undefined for node ', str(j), ' of graph G'))
+            print("%s%s%s" % ('Local clustering is undefined for node ', str(j), ' of G'))
             cl_arr[j, 1] = np.nan
         j = j + 1
     cl_arr[num_nodes, 0] = 'average_local_efficiency_nodewise'
@@ -1171,7 +1174,7 @@ def get_clustering(G, metric_list_names, net_met_val_list_final):
 def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import degree_centrality
     dc_vector = degree_centrality(G)
-    print('\nExtracting Degree Centrality vector for all network nodes...')
+    print('\nCalculating Local Degree Centralities...')
     dc_vals = list(dc_vector.values())
     dc_nodes = list(dc_vector.keys())
     num_nodes = len(dc_nodes)
@@ -1182,7 +1185,7 @@ def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
         try:
             dc_arr[j, 1] = dc_vals[j]
         except:
-            print("%s%s%s" % ('Degree centrality is undefined for node ', str(j), ' of graph G'))
+            print("%s%s%s" % ('Degree centrality is undefined for node ', str(j), ' of G'))
             dc_arr[j, 1] = np.nan
         j = j + 1
     dc_arr[num_nodes, 0] = 'average_degree_cent'
@@ -1198,7 +1201,7 @@ def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
 def get_betweenness_centrality(G_len, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import betweenness_centrality
     bc_vector = betweenness_centrality(G_len, normalized=True)
-    print('\nExtracting Betweeness Centrality vector for all network nodes...')
+    print('\nCalculating Local Betweenness Centralities...')
     bc_vals = list(bc_vector.values())
     bc_nodes = list(bc_vector.keys())
     num_nodes = len(bc_nodes)
@@ -1209,7 +1212,7 @@ def get_betweenness_centrality(G_len, metric_list_names, net_met_val_list_final)
         try:
             bc_arr[j, 1] = bc_vals[j]
         except:
-            print("%s%s%s" % ('Betweeness centrality is undefined for node ', str(j), ' of graph G'))
+            print("%s%s%s" % ('Betweeness centrality is undefined for node ', str(j), ' of G'))
             bc_arr[j, 1] = np.nan
         j = j + 1
     bc_arr[num_nodes, 0] = 'average_betweenness_centrality'
@@ -1225,7 +1228,7 @@ def get_betweenness_centrality(G_len, metric_list_names, net_met_val_list_final)
 def get_eigen_centrality(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import eigenvector_centrality
     ec_vector = eigenvector_centrality(G, max_iter=1000)
-    print('\nExtracting Eigenvector Centrality vector for all network nodes...')
+    print('\nCalculating Local Eigenvector Centralities...')
     ec_vals = list(ec_vector.values())
     ec_nodes = list(ec_vector.keys())
     num_nodes = len(ec_nodes)
@@ -1236,7 +1239,7 @@ def get_eigen_centrality(G, metric_list_names, net_met_val_list_final):
         try:
             ec_arr[j, 1] = ec_vals[j]
         except:
-            print("%s%s%s" % ('Eigenvector centrality is undefined for node ', str(j), ' of graph G'))
+            print("%s%s%s" % ('Eigenvector centrality is undefined for node ', str(j), ' of G'))
             ec_arr[j, 1] = np.nan
         j = j + 1
     ec_arr[num_nodes, 0] = 'average_eigenvector_centrality'
@@ -1252,7 +1255,7 @@ def get_eigen_centrality(G, metric_list_names, net_met_val_list_final):
 def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import communicability_betweenness_centrality
     cc_vector = communicability_betweenness_centrality(G, normalized=True)
-    print('\nExtracting Communicability Centrality vector for all network nodes...')
+    print('\nCalculating Local Communicability Centralities...')
     cc_vals = list(cc_vector.values())
     cc_nodes = list(cc_vector.keys())
     num_nodes = len(cc_nodes)
@@ -1263,7 +1266,7 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
         try:
             cc_arr[j, 1] = cc_vals[j]
         except:
-            print("%s%s%s" % ('Communicability centrality is undefined for node ', str(j), ' of graph G'))
+            print("%s%s%s" % ('Communicability centrality is undefined for node ', str(j), ' of G'))
             cc_arr[j, 1] = np.nan
         j = j + 1
     cc_arr[num_nodes, 0] = 'average_communicability_centrality'
@@ -1280,7 +1283,7 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
 def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import rich_club_coefficient
     rc_vector = rich_club_coefficient(G, normalized=True, seed=42, Q=100)
-    print('\nExtracting Rich Club Coefficient vector for all network nodes...')
+    print('\nCalculating Local Rich Club Coefficients...')
     rc_vals = list(rc_vector.values())
     rc_edges = list(rc_vector.keys())
     num_edges = len(rc_edges)
@@ -1291,7 +1294,7 @@ def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final):
         try:
             rc_arr[j, 1] = rc_vals[j]
         except:
-            print("%s%s%s" % ('Rich club coefficient is undefined for node ', str(j), ' of graph G'))
+            print("%s%s%s" % ('Rich club coefficient is undefined for node ', str(j), ' of G'))
             rc_arr[j, 1] = np.nan
         j = j + 1
     # Add mean
@@ -1339,6 +1342,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     out_path : str
         Path to .csv file where graph analysis results are saved.
     """
+    import time
     import gc
     import os.path as op
     import yaml
@@ -1411,9 +1415,11 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     # Calculate modularity using the Louvain algorithm
     if 'louvain_modularity' in metric_list_nodal:
         try:
+            start_time = time.time()
             net_met_val_list_final, metric_list_names, ci = get_community(G, net_met_val_list_final, metric_list_names)
+            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
         except:
-            print('Louvain modularity calculation is undefined for graph G')
+            print('Louvain modularity calculation is undefined for G')
             # np.save("%s%s%s" % ('/tmp/community_failure', random.randint(1, 400), '.npy'),
             #         np.array(nx.to_numpy_matrix(G)))
             pass
@@ -1422,12 +1428,14 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     if 'participation_coefficient' in metric_list_nodal:
         try:
             if ci is None:
-                raise KeyError('Participation coefficient cannot be calculated for graph G in the absence of a '
+                raise KeyError('Participation coefficient cannot be calculated for G in the absence of a '
                                'community affiliation vector')
+            start_time = time.time()
             metric_list_names, net_met_val_list_final = get_participation(in_mat, ci, metric_list_names,
                                                                           net_met_val_list_final)
+            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
         except:
-            print('Participation coefficient cannot be calculated for graph G')
+            print('Participation coefficient cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/partic_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
             pass
 
@@ -1435,22 +1443,26 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     if 'diversity_coefficient' in metric_list_nodal:
         try:
             if ci is None:
-                raise KeyError('Diversity coefficient cannot be calculated for graph G in the absence of a community '
+                raise KeyError('Diversity coefficient cannot be calculated for G in the absence of a community '
                                'affiliation vector')
+            start_time = time.time()
             metric_list_names, net_met_val_list_final = get_diversity(in_mat, ci, metric_list_names,
                                                                       net_met_val_list_final)
+            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
         except:
-            print('Diversity coefficient cannot be calculated for graph G')
+            print('Diversity coefficient cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/div_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
             pass
 
     # Local Efficiency
     if 'local_efficiency' in metric_list_nodal:
         try:
+            start_time = time.time()
             metric_list_names, net_met_val_list_final = get_local_efficiency(G, metric_list_names,
                                                                              net_met_val_list_final)
+            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
         except:
-            print('Local efficiency cannot be calculated for graph G')
+            print('Local efficiency cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/local_eff_failure', random.randint(1, 400), '.npy'),
             #         np.array(nx.to_numpy_matrix(G)))
             pass
@@ -1458,9 +1470,11 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     # Local Clustering
     if 'local_clustering' in metric_list_nodal:
         try:
+            start_time = time.time()
             metric_list_names, net_met_val_list_final = get_clustering(G, metric_list_names, net_met_val_list_final)
+            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
         except:
-            print('Local clustering cannot be calculated for graph G')
+            print('Local clustering cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/local_clust_failure', random.randint(1, 400), '.npy'),
             #         np.array(nx.to_numpy_matrix(G)))
             pass
@@ -1468,10 +1482,12 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     # Degree centrality
     if 'degree_centrality' in metric_list_nodal:
         try:
+            start_time = time.time()
             metric_list_names, net_met_val_list_final = get_degree_centrality(G, metric_list_names,
                                                                               net_met_val_list_final)
+            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
         except:
-            print('Degree centrality cannot be calculated for graph G')
+            print('Degree centrality cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/degree_cent_failure', random.randint(1, 400), '.npy'),
             #         np.array(nx.to_numpy_matrix(G)))
             pass
@@ -1479,10 +1495,12 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     # Betweenness Centrality
     if 'betweenness_centrality' in metric_list_nodal:
         try:
+            start_time = time.time()
             metric_list_names, net_met_val_list_final = get_betweenness_centrality(G_len, metric_list_names,
                                                                                    net_met_val_list_final)
+            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
         except:
-            print('Betweenness centrality cannot be calculated for graph G')
+            print('Betweenness centrality cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/betw_cent_failure', random.randint(1, 400), '.npy'),
             #         np.array(nx.to_numpy_matrix(G_len)))
             pass
@@ -1490,10 +1508,12 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     # Eigenvector Centrality
     if 'eigenvector_centrality' in metric_list_nodal:
         try:
+            start_time = time.time()
             metric_list_names, net_met_val_list_final = get_eigen_centrality(G, metric_list_names,
                                                                              net_met_val_list_final)
+            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
         except:
-            print('Eigenvector centrality cannot be calculated for graph G')
+            print('Eigenvector centrality cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/eig_cent_failure', random.randint(1, 400), '.npy'),
             #         np.array(nx.to_numpy_matrix(G)))
             pass
@@ -1501,10 +1521,12 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     # Communicability Centrality
     if 'communicability_centrality' in metric_list_nodal:
         try:
+            start_time = time.time()
             metric_list_names, net_met_val_list_final = get_comm_centrality(G, metric_list_names,
                                                                             net_met_val_list_final)
+            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
         except:
-            print('Communicability centrality cannot be calculated for graph G')
+            print('Communicability centrality cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/comm_cent_failure', random.randint(1, 400), '.npy'),
             #         np.array(nx.to_numpy_matrix(G)))
             pass
@@ -1512,10 +1534,12 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     # Rich club coefficient
     if 'rich_club_coefficient' in metric_list_nodal:
         try:
+            start_time = time.time()
             metric_list_names, net_met_val_list_final = get_rich_club_coeff(G, metric_list_names,
                                                                             net_met_val_list_final)
+            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
         except:
-            print('Rich club coefficient cannot be calculated for graph G')
+            print('Rich club coefficient cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/rich_club_failure', random.randint(1, 400), '.npy'),
             #         np.array(nx.to_numpy_matrix(G)))
             pass
@@ -1560,7 +1584,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
     from pynets.core import utils
     from itertools import groupby
     import re
-    from sklearn.decomposition import PCA
+    # from sklearn.decomposition import PCA
 
     # Check for existence of net_mets csv files, condensing final list to only those that were actually produced.
     net_mets_csv_list_exist = []
@@ -1640,8 +1664,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                 for measure in df_summary.columns[:-1]:
                     # Get Area Under the Curve
                     df_summary_nonan = df_summary[pd.notnull(df_summary[measure])]
-                    df_summary_auc[measure] = np.trapz(np.array(df_summary_nonan[measure]).astype('float32'),
-                                                       np.array(df_summary_nonan['thr']).astype('float32'))
+                    df_summary_auc[measure] = np.trapz(np.array(df_summary_nonan[measure]).astype('float32'))
                     print("%s%s%s" % (measure, ': ', df_summary_auc[measure].to_string(index=False)))
                 meta[thr_set]['auc_dataframe'] = df_summary_auc
                 auc_dir = "%s%s%s%s" % (subject_path, '/', atlas, '/netmetrics/auc/')

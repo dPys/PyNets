@@ -320,7 +320,7 @@ def build_multigraphs(est_path_iterlist, ID):
             parcel_dict[res] = list(set(itertools.product(parcel_dict_dwi[res], parcel_dict_func[res])))
 
         dir_path = str(Path(os.path.dirname(est_path_iterlist_dwi[0])).parent)
-        namer_dir = dir_path + '/graphs_multilayer'
+        namer_dir = "%s%s" % (dir_path, '/graphs_multilayer')
         if not os.path.isdir(namer_dir):
             os.mkdir(namer_dir)
         ml_graph_path_list = []

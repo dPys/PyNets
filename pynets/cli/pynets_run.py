@@ -731,15 +731,18 @@ def build_workflow(args, retval):
     if (min_thr is not None) and (max_thr is not None) and (step_thr is not None):
         multi_thr = True
     elif (min_thr is not None) or (max_thr is not None) or (step_thr is not None):
-        raise ValueError('Error: Missing either min_thr, max_thr, or step_thr flags!')
+        print('Error: Missing either min_thr, max_thr, or step_thr flags!')
+        retval['return_code'] = 1
+        return retval
     else:
         multi_thr = False
 
     # Check required inputs for existence, and configure run
     if (func_file is None) and (dwi_file is None) and (graph is None) and (multi_graph is None):
-        raise ValueError("\nError: You must include a file path to either an MNI152-normalized space functional image "
-                         "in .nii or .nii.gz format with the -func flag.")
-
+        print("\nError: You must include a file path to either an MNI152-normalized space functional image "
+                    "in .nii or .nii.gz format with the -func flag.")
+        retval['return_code'] = 1
+        return retval
     if func_file:
         if isinstance(func_file, list) and len(func_file) > 1:
             func_file_list = func_file
@@ -758,9 +761,10 @@ def build_workflow(args, retval):
         func_file_list = None
 
     if dwi_file and (not anat_file and not fbval and not fbvec):
-        raise ValueError('ERROR: Anatomical image(s) (-anat), b-values file(s) (-fbval), and b-vectors file(s) '
-                         '(-fbvec) must be specified for dmri_connectometry.')
-
+        print('ERROR: Anatomical image(s) (-anat), b-values file(s) (-fbval), and b-vectors file(s) '
+              '(-fbvec) must be specified for dmri_connectometry.')
+        retval['return_code'] = 1
+        return retval
     if dwi_file:
         if isinstance(dwi_file, list) and len(dwi_file) > 1:
             dwi_file_list = dwi_file
@@ -786,7 +790,9 @@ def build_workflow(args, retval):
 
     if func_file_list and isinstance(ID, list):
         if len(ID) != len(func_file_list):
-            raise ValueError("Error: Length of ID list does not correspond to length of input func file list.")
+            print("Error: Length of ID list does not correspond to length of input func file list.")
+            retval['return_code'] = 1
+            return retval
 
     if isinstance(ID, list) and len(ID) == 1:
         ID = ID[0]
@@ -794,8 +800,9 @@ def build_workflow(args, retval):
     if conf:
         if isinstance(conf, list) and func_file_list:
             if len(conf) != len(func_file_list):
-                raise ValueError("Error: Length of confound regressor list does not correspond to length of input file "
-                                 "list.")
+                print("Error: Length of confound regressor list does not correspond to length of input file list.")
+                retval['return_code'] = 1
+                return retval
             else:
                 conf_list = conf
                 conf = None
@@ -814,12 +821,15 @@ def build_workflow(args, retval):
 
     if dwi_file_list and isinstance(ID, list):
         if len(ID) != len(dwi_file_list):
-            raise ValueError("Error: Length of ID list does not correspond to length of input dwi file list.")
-
+            print("Error: Length of ID list does not correspond to length of input dwi file list.")
+            retval['return_code'] = 1
+            return retval
     if fbval:
         if isinstance(fbval, list) and dwi_file_list:
             if len(fbval) != len(dwi_file_list):
-                raise ValueError("Error: Length of fbval list does not correspond to length of input dwi file list.")
+                print("Error: Length of fbval list does not correspond to length of input dwi file list.")
+                retval['return_code'] = 1
+                return retval
             else:
                 fbval_list = fbval
                 fbval = None
@@ -839,7 +849,9 @@ def build_workflow(args, retval):
     if fbvec:
         if isinstance(fbvec, list) and dwi_file_list:
             if len(fbvec) != len(dwi_file_list):
-                raise ValueError("Error: Length of fbvec list does not correspond to length of input dwi file list.")
+                print("Error: Length of fbvec list does not correspond to length of input dwi file list.")
+                retval['return_code'] = 1
+                return retval
             else:
                 fbvec_list = fbvec
                 fbvec = None
@@ -859,20 +871,25 @@ def build_workflow(args, retval):
     if anat_file:
         if isinstance(anat_file, list) and dwi_file_list and func_file_list:
             if len(anat_file) != len(dwi_file_list) and len(anat_file) != len(dwi_file_list):
-                raise ValueError("Error: Length of anat list does not correspond to length of input dwi and func file "
-                                 "lists.")
+                print("Error: Length of anat list does not correspond to length of input dwi and func file lists.")
+                retval['return_code'] = 1
+                return retval
             else:
                 anat_file_list = anat_file
                 anat_file = None
         elif isinstance(anat_file, list) and dwi_file_list:
             if len(anat_file) != len(dwi_file_list):
-                raise ValueError("Error: Length of anat list does not correspond to length of input dwi file list.")
+                print("Error: Length of anat list does not correspond to length of input dwi file list.")
+                retval['return_code'] = 1
+                return retval
             else:
                 anat_file_list = anat_file
                 anat_file = None
         elif isinstance(anat_file, list) and func_file_list:
             if len(anat_file) != len(func_file_list):
-                raise ValueError("Error: Length of anat list does not correspond to length of input func file list.")
+                print("Error: Length of anat list does not correspond to length of input func file list.")
+                retval['return_code'] = 1
+                return retval
             else:
                 anat_file_list = anat_file
                 anat_file = None
@@ -888,22 +905,26 @@ def build_workflow(args, retval):
     if mask:
         if isinstance(mask, list) and func_file_list and dwi_file_list:
             if len(mask) != len(func_file_list) and len(mask) != len(dwi_file_list):
-                raise ValueError("Error: Length of brain mask list does not correspond to length of input func "
-                                 "and dwi file lists.")
+                print("Error: Length of brain mask list does not correspond to length of input func "
+                      "and dwi file lists.")
+                retval['return_code'] = 1
+                return retval
             else:
                 mask_list = mask
                 mask = None
         elif isinstance(mask, list) and func_file_list:
             if len(mask) != len(func_file_list):
-                raise ValueError("Error: Length of brain mask list does not correspond to length of input func "
-                                 "file list.")
+                print("Error: Length of brain mask list does not correspond to length of input func file list.")
+                retval['return_code'] = 1
+                return retval
             else:
                 mask_list = mask
                 mask = None
         elif isinstance(mask, list) and dwi_file_list:
             if len(mask) != len(dwi_file_list):
-                raise ValueError("Error: Length of brain mask list does not correspond to length of input dwi "
-                                 "file list.")
+                print("Error: Length of brain mask list does not correspond to length of input dwi file list.")
+                retval['return_code'] = 1
+                return retval
             else:
                 mask_list = mask
                 mask = None
@@ -998,13 +1019,19 @@ def build_workflow(args, retval):
                         block_size = int(block_size)
                     except ValueError:
                         print('ERROR: size of bootstrap blocks indicated with the -bs flag must be an integer > 0.')
+                        retval['return_code'] = 1
+                        return retval
                 except ValueError:
                     print('ERROR: number of boostraps indicated with the -b flag must be an integer > 0.')
+                    retval['return_code'] = 1
+                    return retval
                 print("%s%s%s%s" % ('\nApplying circular-block bootstrapping to the node-extracted time-series using: ',
                                     int(c_boot), ' bootstraps with block size ', int(block_size)))
             if (c_boot and not block_size) or (block_size and not c_boot):
-                raise ValueError("Error: Both number of bootstraps (-b) and block size (-bs) must be specified to run "
-                                 "bootstrapped resampling.")
+                print("Error: Both number of bootstraps (-b) and block size (-bs) must be specified to run "
+                      "bootstrapped resampling.")
+                retval['return_code'] = 1
+                return retval
 
         if conn_model_list:
             print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ',
@@ -1181,7 +1208,8 @@ def build_workflow(args, retval):
                                                                       k_clustering == 2 or
                                                                       k_clustering == 1) and (atlas is None):
             print('Error: the -ua flag cannot be used alone with the clustering option. Use the -cm flag instead.')
-            sys.exit(0)
+            retval['return_code'] = 1
+            return retval
 
         if multi_atlas is not None:
             print('\nIterating across multiple predefined atlases...')
@@ -1190,35 +1218,43 @@ def build_workflow(args, retval):
                     for _atlas in multi_atlas:
                         if (parc is True) and (_atlas in nilearn_coord_atlases or _atlas in
                                                nilearn_prob_atlases):
-                            raise ValueError("%s%s%s" % ('\nERROR: ', _atlas,
-                                                         ' is a coordinate atlas and must be used with the -spheres '
-                                                         'flag.'))
+                            print("%s%s%s" % ('\nERROR: ', _atlas,
+                                              ' is a coordinate atlas and must be used with the -spheres flag.'))
+                            retval['return_code'] = 1
+                            return retval
                         else:
                             print(_atlas)
             else:
                 for _atlas in multi_atlas:
                     if (parc is True) and (_atlas in nilearn_coord_atlases or _atlas in
                                            nilearn_prob_atlases):
-                        raise ValueError("%s%s%s" % ('\nERROR: ', _atlas,
-                                                     ' is a coordinate atlas and must be used with the -spheres '
-                                                     'flag.'))
+                        print("%s%s%s" % ('\nERROR: ', _atlas,
+                                          ' is a coordinate atlas and must be used with the -spheres flag.'))
+                        retval['return_code'] = 1
+                        return retval
                     else:
                         print(_atlas)
         elif atlas is not None:
             if (parc is True) and (atlas in nilearn_coord_atlases or atlas in nilearn_prob_atlases):
-                raise ValueError("%s%s%s" % ('\nERROR: ', atlas,
-                                             ' is a coordinate atlas and must be used with the -spheres flag.'))
+                print("%s%s%s" % ('\nERROR: ', atlas, ' is a coordinate atlas and must be used with the -spheres '
+                                                      'flag.'))
+                retval['return_code'] = 1
+                return retval
             else:
                 print("%s%s" % ("\nPredefined atlas: ", atlas))
         else:
             if (uatlas is None) and (k == 0) and user_atlas_list is None and k_list is None and atlas is None and multi_atlas is None:
-                raise KeyError('\nERROR: No atlas specified!')
+                print('\nERROR: No atlas specified!')
+                retval['return_code'] = 1
+                return retval
             else:
                 pass
 
     if dwi_file or dwi_file_list:
         if (conn_model == 'tensor') and (directget == 'prob'):
-            raise ValueError('Cannot perform probabilistic tracking with tensor model estimation...')
+            print('Cannot perform probabilistic tracking with tensor model estimation...')
+            retval['return_code'] = 1
+            return retval
 
         if user_atlas_list:
             print('\nIterating across multiple user atlases...')
@@ -1237,23 +1273,27 @@ def build_workflow(args, retval):
                 for _dwi_file in dwi_file_list:
                     for _atlas in multi_atlas:
                         if (parc is True) and (_atlas in nilearn_coord_atlases):
-                            raise ValueError("%s%s%s" % ('\nERROR: ', _atlas,
-                                                         ' is a coordinate atlas and must be used with the -spheres '
-                                                         'flag.'))
+                            print("%s%s%s" % ('\nERROR: ', _atlas,
+                                              ' is a coordinate atlas and must be used with the -spheres flag.'))
+                            retval['return_code'] = 1
+                            return retval
                         else:
                             print(_atlas)
             else:
                 for _atlas in multi_atlas:
                     if (parc is True) and (_atlas in nilearn_coord_atlases):
-                        raise ValueError("%s%s%s" % ('\nERROR: ', _atlas,
-                                                     ' is a coordinate atlas and must be used with the -spheres '
-                                                     'flag.'))
+                        print("%s%s%s" % ('\nERROR: ', _atlas,
+                                          ' is a coordinate atlas and must be used with the -spheres flag.'))
+                        retval['return_code'] = 1
+                        return retval
                     else:
                         print(_atlas)
         elif atlas:
             if (parc is True) and (atlas in nilearn_coord_atlases):
-                raise ValueError("%s%s%s" % ('\nERROR: ', atlas,
-                                             ' is a coordinate atlas and must be used with the -spheres flag.'))
+                print("%s%s%s" % ('\nERROR: ', atlas, ' is a coordinate atlas and must be used with the -spheres '
+                                                      'flag.'))
+                retval['return_code'] = 1
+                return retval
             else:
                 print("%s%s" % ("\nNilearn atlas: ", atlas))
 
@@ -1312,6 +1352,68 @@ def build_workflow(args, retval):
     else:
         multimodal = False
     print('\n-------------------------------------------------------------------------\n\n')
+
+    # Variable tracking
+    retval['ID'] = ID
+    retval['atlas'] = atlas
+    retval['network'] = network
+    retval['node_size'] = node_size
+    retval['smooth'] = smooth
+    retval['hpass'] = hpass
+    retval['hpass_list'] = hpass_list
+    retval['roi'] = roi
+    retval['thr'] = thr
+    retval['uatlas'] = uatlas
+    retval['conn_model'] = conn_model
+    retval['dens_thresh'] = dens_thresh
+    retval['conf'] = conf
+    retval['plot_switch'] = plot_switch
+    retval['multi_thr'] = multi_thr
+    retval['multi_atlas'] = multi_atlas
+    retval['min_thr'] = min_thr
+    retval['max_thr'] = max_thr
+    retval['step_thr'] = step_thr
+    retval['spheres'] = spheres
+    retval['ref_txt'] = ref_txt
+    retval['procmem'] = procmem
+    retval['waymask'] = waymask
+    retval['k'] = k
+    retval['clust_mask'] = clust_mask
+    retval['k_list'] = k_list
+    retval['k_clustering'] = k_clustering
+    retval['user_atlas_list'] = user_atlas_list
+    retval['clust_mask_list'] = clust_mask_list
+    retval['clust_type'] = clust_type
+    retval['local_corr'] = local_corr
+    retval['clust_type_list'] = clust_type_list
+    retval['prune'] = prune
+    retval['node_size_list'] = node_size_list
+    retval['smooth_list'] = smooth_list
+    retval['c_boot'] = c_boot
+    retval['block_size'] = block_size
+    retval['mask'] = mask
+    retval['norm'] = norm
+    retval['binary'] = binary
+    retval['embed'] = embed
+    retval['multiplex'] = multiplex
+    retval['track_type'] = track_type
+    retval['tiss_class'] = tiss_class
+    retval['directget'] = directget
+    retval['multi_directget'] = multi_directget
+    retval['template'] = template
+    retval['template_mask'] = template_mask
+    retval['func_file'] = func_file
+    retval['dwi_file'] = dwi_file
+    retval['fbval'] = fbval
+    retval['fbvec'] = fbvec
+    retval['anat_file'] = anat_file
+    retval['func_file_list'] = func_file_list
+    retval['dwi_file_list'] = dwi_file_list
+    retval['mask_list'] = mask_list
+    retval['fbvec_list'] = fbvec_list
+    retval['fbval_list'] = fbval_list
+    retval['conf_list'] = conf_list
+    retval['anat_file_list'] = anat_file_list
 
     # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
@@ -1382,7 +1484,7 @@ def build_workflow(args, retval):
     import warnings
     warnings.filterwarnings("ignore")
     from pynets.core.utils import collectpandasjoin
-    from pynets.core.interfaces import CombinePandasDfs, ExtractNetStats
+    from pynets.core.interfaces import CombineOutputs, NetworkAnalysis
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core.workflows import workflow_selector
@@ -1458,7 +1560,6 @@ def build_workflow(args, retval):
                                     maxcrossing, min_length, directget, tiss_class, runtime_dict, execution_dict,
                                     embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
                                     vox_size, multiplex, waymask, local_corr, max_length_list)
-
         meta_wf._n_procs = procmem[0]
         meta_wf._mem_gb = procmem[1]
         meta_wf.n_procs = procmem[0]
@@ -1490,45 +1591,41 @@ def build_workflow(args, retval):
         wf.get_node(meta_wf.name).get_node(wf_selected).mem_gb = procmem[1]
 
         # Fully-automated graph analysis
-        net_mets_node = pe.MapNode(interface=ExtractNetStats(), name="ExtractNetStats",
+        net_mets_node = pe.MapNode(interface=NetworkAnalysis(), name="NetworkAnalysis",
                                    iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
                                               'roi', 'prune', 'norm', 'binary'], nested=True,
                                    imports=import_list)
         net_mets_node.synchronize = True
-
         net_mets_node._n_procs = 1
         net_mets_node._mem_gb = 2
 
         collect_pd_list_net_csv_node = pe.Node(niu.Function(input_names=['net_mets_csv'],
                                                             output_names=['net_mets_csv_out'],
                                                             function=collectpandasjoin),
-                                               name="AggregatePandasCSVs",
+                                               name="AggregateOutputs",
                                                imports=import_list)
 
         # Combine dataframes across models
-        combine_pandas_dfs_node = pe.Node(interface=CombinePandasDfs(), name="CombinePandasDfs",
+        combine_pandas_dfs_node = pe.Node(interface=CombineOutputs(), name="CombineOutputs",
                                           input_names=['network', 'ID', 'net_mets_csv_list', 'plot_switch',
                                                        'multi_nets', 'multimodal'],
                                           output_names=['combination_complete'],
                                           imports=import_list)
-
         combine_pandas_dfs_node._n_procs = 1
         combine_pandas_dfs_node._mem_gb = 2
-
-        handshake_node = meta_wf.get_node('pass_meta_outs_node')
 
         final_outputnode = pe.Node(niu.IdentityInterface(fields=['combination_complete']), name='final_outputnode')
 
         wf.connect([
-            (handshake_node, net_mets_node, [('est_path_iterlist', 'est_path'),
-                                             ('network_iterlist', 'network'),
-                                             ('thr_iterlist', 'thr'),
-                                             ('ID_iterlist', 'ID'),
-                                             ('conn_model_iterlist', 'conn_model'),
-                                             ('roi_iterlist', 'roi'),
-                                             ('prune_iterlist', 'prune'),
-                                             ('norm_iterlist', 'norm'),
-                                             ('binary_iterlist', 'binary')]),
+            (meta_wf.get_node('pass_meta_outs_node'), net_mets_node, [('est_path_iterlist', 'est_path'),
+                                                                      ('network_iterlist', 'network'),
+                                                                      ('thr_iterlist', 'thr'),
+                                                                      ('ID_iterlist', 'ID'),
+                                                                      ('conn_model_iterlist', 'conn_model'),
+                                                                      ('roi_iterlist', 'roi'),
+                                                                      ('prune_iterlist', 'prune'),
+                                                                      ('norm_iterlist', 'norm'),
+                                                                      ('binary_iterlist', 'binary')]),
             (inputnode, combine_pandas_dfs_node, [('network', 'network'),
                                                   ('ID', 'ID'),
                                                   ('plot_switch', 'plot_switch'),
@@ -1541,7 +1638,7 @@ def build_workflow(args, retval):
 
         # Raw graph case
         if graph or multi_graph:
-            wf.disconnect([(handshake_node, net_mets_node,
+            wf.disconnect([(meta_wf.get_node('pass_meta_outs_node'), net_mets_node,
                             [('est_path_iterlist', 'est_path'),
                              ('network_iterlist', 'network'),
                              ('thr_iterlist', 'thr'),
@@ -1694,10 +1791,10 @@ def build_workflow(args, retval):
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).n_procs = procmem[0]
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
-            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._n_procs = 1
-            wf_multi.get_node(wf_single_subject.name).get_node("ExtractNetStats")._mem_gb = 2
-            wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._n_procs = 1
-            wf_multi.get_node(wf_single_subject.name).get_node("CombinePandasDfs")._mem_gb = 2
+            wf_multi.get_node(wf_single_subject.name).get_node("NetworkAnalysis")._n_procs = 1
+            wf_multi.get_node(wf_single_subject.name).get_node("NetworkAnalysis")._mem_gb = 2
+            wf_multi.get_node(wf_single_subject.name).get_node("CombineOutputs")._n_procs = 1
+            wf_multi.get_node(wf_single_subject.name).get_node("CombineOutputs")._mem_gb = 2
 
             i = i + 1
 
@@ -1727,6 +1824,7 @@ def build_workflow(args, retval):
 
         os.makedirs("%s%s%s" % (work_dir, '/wf_multi_subject_', '_'.join(ID)), exist_ok=True)
         wf_multi.base_dir = "%s%s%s" % (work_dir, '/wf_multi_subject_', '_'.join(ID))
+        retval['run_uuid'] = None
 
         func_dir_list = []
         if func_file_list:
@@ -1776,7 +1874,11 @@ def build_workflow(args, retval):
         else:
             plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
+        retval['execution_dict'] = execution_dict
+        retval['plugin_settings'] = plugin_args
+        retval['workflow'] = wf_multi
         wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
+        retval['return_code'] = 0
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
             print('Plotting resource profile from run...')
@@ -1822,6 +1924,8 @@ def build_workflow(args, retval):
             base_dirname = "%s%s" % ('wf_single_subject_', str(ID))
 
         run_uuid = '%s_%s' % (strftime('%Y%m%d_%H%M%S'), uuid.uuid4())
+        retval['run_uuid'] = run_uuid
+
         if func_file:
             func_dir = os.path.dirname(func_file)
         if dwi_file:
@@ -1864,7 +1968,11 @@ def build_workflow(args, retval):
         else:
             plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
         print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
+        retval['execution_dict'] = execution_dict
+        retval['plugin_settings'] = plugin_args
+        retval['workflow'] = wf
         wf.run(plugin=plugin_type, plugin_args=plugin_args)
+        retval['return_code'] = 0
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
             print('Plotting resource profile from run...')
@@ -1883,13 +1991,14 @@ def build_workflow(args, retval):
     print('\n\n------------FINISHED-----------')
     print('Execution Time: ', str(timedelta(seconds=timeit.default_timer() - start_time)))
     print('-------------------------------')
-    return
+    return retval
 
 
 def main():
     """Initializes main script from command-line call to generate single-subject or multi-subject workflow(s)"""
     import gc
     import sys
+    import multiprocessing as mp
     try:
         from pynets.core.utils import do_dir_path
     except ImportError:
@@ -1902,23 +2011,34 @@ def main():
     args = get_parser().parse_args()
 
     try:
-        from multiprocessing import set_start_method, Process, Manager
-        set_start_method('forkserver')
-        with Manager() as mgr:
+        mp.set_start_method('forkserver')
+        with mp.Manager() as mgr:
             retval = mgr.dict()
-            p = Process(target=build_workflow, args=(args, retval))
+            p = mp.Process(target=build_workflow, args=(args, retval))
             p.start()
             p.join()
 
-            if p.exitcode != 0:
-                sys.exit(p.exitcode)
+            retcode = p.exitcode or retval.get('return_code', 0)
+
+            pynets_wf = retval.get('workflow', None)
+            work_dir = retval.get('work_dir')
+            plugin_settings = retval.get('plugin_settings', None)
+            execution_dict = retval.get('execution_dict', None)
+            run_uuid = retval.get('run_uuid', None)
+
+            retcode = retcode or int(pynets_wf is None)
+            if retcode != 0:
+                sys.exit(retcode)
 
             # Clean up master process before running workflow, which may create forks
             gc.collect()
     except:
-        print('\nWARNING: Forkserver failed to initialize. Are you using Python3 ?')
-        retval = dict()
-        build_workflow(args, retval)
+        try:
+            print('Running outside of forkserver multiprocessing context...')
+            retval = dict()
+            build_workflow(args, retval)
+        except RuntimeError:
+            print('\nError: Workflow execution failed. Check installation.')
 
 
 if __name__ == '__main__':
