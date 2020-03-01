@@ -8,8 +8,8 @@ Copyright (C) 2017
 from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface, Directory
 
 
-class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
-    """Input interface wrapper for ExtractNetStats"""
+class NetworkAnalysisInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for NetworkAnalysis"""
     ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=False)
     thr = traits.Any(mandatory=True)
@@ -21,15 +21,15 @@ class ExtractNetStatsInputSpec(BaseInterfaceInputSpec):
     binary = traits.Bool(False, usedefault=True)
 
 
-class ExtractNetStatsOutputSpec(TraitedSpec):
-    """Output interface wrapper for ExtractNetStats"""
+class NetworkAnalysisOutputSpec(TraitedSpec):
+    """Output interface wrapper for NetworkAnalysis"""
     out_path_neat = File(exists=True, mandatory=True)
 
 
-class ExtractNetStats(BaseInterface):
-    """Interface wrapper for ExtractNetStats"""
-    input_spec = ExtractNetStatsInputSpec
-    output_spec = ExtractNetStatsOutputSpec
+class NetworkAnalysis(BaseInterface):
+    """Interface wrapper for NetworkAnalysis"""
+    input_spec = NetworkAnalysisInputSpec
+    output_spec = NetworkAnalysisOutputSpec
 
     def _run_interface(self, runtime):
         from pynets.stats.netstats import extractnetstats
@@ -51,8 +51,8 @@ class ExtractNetStats(BaseInterface):
         return {'out_path_neat': op.abspath(getattr(self, '_outpath'))}
 
 
-class CombinePandasDfsInputSpec(BaseInterfaceInputSpec):
-    """Input interface wrapper for CombinePandasDfs"""
+class CombineOutputsInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for CombineOutputs"""
     ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=False)
     net_mets_csv_list = traits.List(mandatory=True)
@@ -61,15 +61,15 @@ class CombinePandasDfsInputSpec(BaseInterfaceInputSpec):
     multimodal = traits.Bool(False, usedefault=True)
 
 
-class CombinePandasDfsOutputSpec(TraitedSpec):
-    """Output interface wrapper for CombinePandasDfs"""
+class CombineOutputsOutputSpec(TraitedSpec):
+    """Output interface wrapper for CombineOutputs"""
     combination_complete = traits.Bool()
 
 
-class CombinePandasDfs(SimpleInterface):
-    """Interface wrapper for CombinePandasDfs"""
-    input_spec = CombinePandasDfsInputSpec
-    output_spec = CombinePandasDfsOutputSpec
+class CombineOutputs(SimpleInterface):
+    """Interface wrapper for CombineOutputs"""
+    input_spec = CombineOutputsInputSpec
+    output_spec = CombineOutputsOutputSpec
 
     def _run_interface(self, runtime):
         from pynets.core.utils import collect_pandas_df

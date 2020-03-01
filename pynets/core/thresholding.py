@@ -677,6 +677,7 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
 
     conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64))
 
+    # Enforce original dimensionality by padding with zeros.
     if conn_matrix_bin.shape != conn_matrix.shape:
         if conn_matrix.shape[0] > conn_matrix_bin.shape[0]:
             result = np.zeros(conn_matrix.shape)
@@ -711,6 +712,7 @@ def perform_thresholding(conn_matrix, coords, labels, thr, thr_perc, min_span_tr
         # print('Backbone graph: nodes = %s, edges = %s' % (G2.number_of_nodes(), G2.number_of_edges()))
         # print(G2.edges(data=True))
         conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(G1, nodelist=sorted(G1.nodes()), dtype=np.float64))
+        # Enforce original dimensionality by padding with zeros.
         if conn_matrix_bin.shape != conn_matrix.shape:
             if conn_matrix.shape[0] > conn_matrix_bin.shape[0]:
                 result = np.zeros(conn_matrix.shape)

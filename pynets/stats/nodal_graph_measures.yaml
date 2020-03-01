@@ -1,7 +1,7 @@
 metric_list_nodal:
 #    - 'participation_coefficient'
 #    - 'diversity_coefficient'
-    - 'local_efficiency'
+#    - 'local_efficiency'
     - 'local_clustering'
     - 'degree_centrality'
     - 'betweenness_centrality'

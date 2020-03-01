@@ -308,7 +308,6 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     from pynets.core import utils, nodemaker
     from dipy.io.streamline import load_tractogram
     from dipy.io.stateful_tractogram import Space, Origin
-    import time
 
     # Load parcellation
     roi_img = nib.load(atlas_mni)
@@ -341,8 +340,6 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         g.add_node(node)
 
     # Build graph
-    start_time = time.time()
-
     ix = 0
     for s in streamlines:
         # Map the streamlines coordinates to voxel coordinates and get labels for label_volume
@@ -375,7 +372,6 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
             g.add_weighted_edges_from(edge_list)
         ix = ix + 1
 
-    print("%s%s%s" % ('Graph construction runtime: ', np.round(time.time() - start_time, 1), 's'))
     del streamlines
 
     if fa_wei is True:
