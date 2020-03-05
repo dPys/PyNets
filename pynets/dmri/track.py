@@ -311,7 +311,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                 if len(seeds) == 0:
                     raise RuntimeWarning('Warning: No valid seed points found in wm-gm interface...')
 
-                print(seeds)
+                # print(seeds)
 
                 # Perform tracking
                 if track_type == 'local':
