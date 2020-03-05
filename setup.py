@@ -21,7 +21,8 @@ setup(
     name='pynets',
     version=__version__,
     cmdclass=cmdclass,
-    description="A Fully-Automated Workflow for Reproducible Ensemble Graph Analysis of Functional and Structural Connectomes",
+    description="A Fully-Automated Workflow for Reproducible Ensemble Sampling of Functional and Structural "
+                "Connectomes",
     author="Derek Pisner",
     author_email='dpisner@utexas.edu',
     url='https://github.com/dPys/pynets',
@@ -29,9 +30,9 @@ setup(
     entry_points={
         'console_scripts': [
             'pynets=pynets.cli.pynets_run:main',
-	    'pynets_cloud=pynets.cli.pynets_cloud:main',
-	    'pynets_bids=pynets.cli.pynets_bids:main',
-	    'pynets_collect=pynets.cli.pynets_collect:main'
+            'pynets_cloud=pynets.cli.pynets_cloud:main',
+            'pynets_bids=pynets.cli.pynets_bids:main',
+            'pynets_collect=pynets.cli.pynets_collect:main'
         ]
     },
     include_package_data=True,

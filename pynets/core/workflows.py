@@ -20,8 +20,9 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       track_type, max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict,
                       execution_dict, embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
                       vox_size, multiplex, waymask, local_corr, max_length_list, clean=True):
-    """A meta-interface for selecting modality-specific nested workflows to nest into a single-subject workflow"""
+    """A meta-interface for selecting modality-specific workflows to nest into a single-subject workflow"""
     import gc
+    import sys
     import yaml
     from pathlib import Path
     import pkg_resources
@@ -38,10 +39,12 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
             func_models = hardcoded_params['available_models']['func_models']
         except KeyError:
             print('ERROR: available functional models not successfully extracted from runconfig.yaml')
+            sys.exit()
         try:
             struct_models = hardcoded_params['available_models']['struct_models']
         except KeyError:
             print('ERROR: available structural models not successfully extracted from runconfig.yaml')
+            sys.exit()
 
     # Handle modality logic
     if (func_file is not None) and (dwi_file is not None):
@@ -65,6 +68,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
         else:
             raise RuntimeError('ERROR: Multimodal fMRI-dMRI pipeline specified, but only one connectivity model '
                                'specified.')
+            sys.exit()
     elif (dwi_file is not None) and (func_file is None):
         print('Parsing diffusion models...')
         conn_model_dwi = conn_model
@@ -608,6 +612,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                          ])
     else:
         raise ValueError('ERROR: meta-workflow options not defined.')
+        sys.exit()
 
     # Set resource restrictions at level of the meta wf
     if func_file:

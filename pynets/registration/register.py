@@ -430,7 +430,7 @@ class DmriReg(object):
         """
         A function to segment and threshold tissue types from T1w.
         """
-        from pynets.plotting.plot_gen import qa_fast_png
+        # from pynets.plotting.plot_gen import qa_fast_png
         import glob
 
         # Apply brain mask if detected as a separate file
@@ -452,11 +452,11 @@ class DmriReg(object):
             self.gm_mask = maps['gm_prob']
             self.csf_mask = maps['csf_prob']
         else:
-            self.wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.vox_size)
-            self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size)
-            self.csf_mask = regutils.check_orient_and_dims(csf_mask_existing, self.vox_size)
+            self.wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.vox_size, overwrite=False)
+            self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size, overwrite=False)
+            self.csf_mask = regutils.check_orient_and_dims(csf_mask_existing, self.vox_size, overwrite=False)
 
-        qa_fast_png(self.csf_mask, self.gm_mask, self.wm_mask, self.map_path)
+        # qa_fast_png(self.csf_mask, self.gm_mask, self.wm_mask, self.map_path)
 
         # Threshold WM to binary in dwi space
         t_img = nib.load(self.wm_mask)
@@ -806,7 +806,7 @@ class FmriReg(object):
                 print('Segmentation failed. Does the input anatomical image still contained skull?')
             self.gm_mask = maps['gm_prob']
         else:
-            self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size)
+            self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size, overwrite=False)
 
         # Threshold GM to binary in func space
         t_img = nib.load(self.gm_mask)

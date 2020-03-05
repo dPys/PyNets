@@ -98,13 +98,18 @@ def normalize_gradients(bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_sca
 
 
 def make_mean_b0(in_file):
-    b0_img = nib.load(in_file)
-    b0_img_data = b0_img.get_fdata()
-    mean_b0 = np.mean(b0_img_data, axis=3, dtype=b0_img_data.dtype)
-    mean_file_out = in_file.split(".nii")[0] + "_mean_b0.nii.gz"
-    nib.save(nib.Nifti1Image(mean_b0, affine=b0_img.affine, header=b0_img.header), mean_file_out)
-    del b0_img_data
-    b0_img.uncache()
+    mean_file_out = "%s%s" % (in_file.split(".nii")[0], "_mean_b0.nii.gz")
+
+    if os.path.isfile(mean_file_out):
+        pass
+    else:
+        b0_img = nib.load(in_file)
+        b0_img_data = np.asarray(b0_img.dataobj)
+        mean_b0 = np.mean(b0_img_data, axis=3, dtype=b0_img_data.dtype)
+
+        nib.save(nib.Nifti1Image(mean_b0, affine=b0_img.affine, header=b0_img.header), mean_file_out)
+        del b0_img_data
+        b0_img.uncache()
     return mean_file_out
 
 
@@ -193,27 +198,31 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas, b0_th
     # Save gradient table to pickle
     save_pickle(gtab_file, gtab)
 
-    # Extract and Combine all b0s collected, make mean b0
-    print("Extracting b0's...")
-    b0_vols = []
-    dwi_img = nib.load(dwi_file)
-    all_b0s_aff = dwi_img.affine.copy()
-    dwi_data = np.asarray(dwi_img.dataobj)
-    dwi_img.uncache()
-    for b0 in b0s:
-        print(b0)
-        b0_vols.append(dwi_data[:, :, :, b0])
-
-    all_b0s_aff[3][3] = len(b0_vols)
-    nib.save(nib.Nifti1Image(np.stack(b0_vols, axis=3), affine=all_b0s_aff), all_b0s_file)
-    mean_b0_file = make_mean_b0(all_b0s_file)
+    if os.path.isfile(all_b0s_file):
+        pass
+    else:
+        # Extract and Combine all b0s collected, make mean b0
+        print("Extracting b0's...")
+        b0_vols = []
+        dwi_img = nib.load(dwi_file)
+        all_b0s_aff = dwi_img.affine.copy()
+        dwi_data = np.asarray(dwi_img.dataobj)
+        for b0 in b0s:
+            print(b0)
+            b0_vols.append(dwi_data[:, :, :, b0])
+        all_b0s_aff[3][3] = len(b0_vols)
+        nib.save(nib.Nifti1Image(np.stack(b0_vols, axis=3), affine=all_b0s_aff), all_b0s_file)
+        mean_b0_file = make_mean_b0(all_b0s_file)
+        dwi_img.uncache()
+        del dwi_data
 
     # Create mean b0 brain mask
-    cmd = 'bet ' + mean_b0_file + ' ' + B0_bet + ' -m -f 0.2'
-    os.system(cmd)
-    while not os.path.exists(B0_bet):
-        time.sleep(1)
-
-    del dwi_data
+    if os.path.isfile(B0_bet):
+        pass
+    else:
+        cmd = 'bet ' + mean_b0_file + ' ' + B0_bet + ' -m -f 0.2'
+        os.system(cmd)
+        while not os.path.exists(B0_bet):
+            time.sleep(1)
 
     return gtab_file, B0_bet, B0_mask, dwi_file

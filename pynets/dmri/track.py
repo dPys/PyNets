@@ -80,9 +80,9 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     # Loads mask and ensures it's a true binary mask
     mask_img = nib.load(B0_mask)
     # Load tissue maps and prepare tissue classifier
-    gm_mask_data = nib.load(gm_in_dwi).get_fdata()
-    wm_mask_data = nib.load(wm_in_dwi).get_fdata()
-    vent_csf_in_dwi_data = nib.load(vent_csf_in_dwi).get_fdata()
+    gm_mask_data = np.asarray(nib.load(gm_in_dwi).dataobj)
+    wm_mask_data = np.asarray(nib.load(wm_in_dwi).dataobj)
+    vent_csf_in_dwi_data = np.asarray(nib.load(vent_csf_in_dwi).dataobj)
     if tiss_class == 'act':
         background = np.ones(mask_img.shape)
         background[(gm_mask_data + wm_mask_data + vent_csf_in_dwi_data) > 0] = 0
@@ -98,7 +98,7 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
         tiss_classifier = CmcStoppingCriterion.from_pve(wm_mask_data, gm_mask_data, vent_csf_in_dwi_data,
                                                         step_size=cmc_step_size, average_voxel_size=voxel_size)
     elif tiss_class == 'wb':
-        tiss_classifier = BinaryStoppingCriterion(mask_img.get_fdata().astype('bool'))
+        tiss_classifier = BinaryStoppingCriterion(np.asarray(mask_img.dataobj).astype('bool'))
     else:
         raise ValueError('Tissue Classifier cannot be none.')
 
@@ -278,7 +278,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
     from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
 
     if waymask:
-        waymask_data = nib.load(waymask).get_fdata().astype('bool')
+        waymask_data = np.asarray(nib.load(waymask).dataobj).astype('bool')
 
     # Commence Ensemble Tractography
     parcel_vec = list(np.ones(len(parcels)).astype('bool'))
@@ -554,14 +554,14 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
 
     # Load diffusion data
     dwi_img = nib.load(dwi_file)
-    dwi_data = dwi_img.get_fdata()
+    dwi_data = np.asarray(dwi_img.dataobj)
 
     # Fit diffusion model
     mod_fit = reconstruction(conn_model, load_pickle(gtab_file), dwi_data, B0_mask)
 
     # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
-    atlas_data = nib.load(labels_im_file).get_fdata().astype('uint16')
-    atlas_data_wm_gm_int = nib.load(labels_im_file_wm_gm_int).get_fdata().astype('uint16')
+    atlas_data = np.array(nib.load(labels_im_file).dataobj).astype('uint16')
+    atlas_data_wm_gm_int = np.asarray(nib.load(labels_im_file_wm_gm_int).dataobj).astype('uint16')
 
     # Build mask vector from atlas for later roi filtering
     parcels = []
