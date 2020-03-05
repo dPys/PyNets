@@ -364,10 +364,10 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True, outdir=N
     if (vols > 1) and (bvecs is not None):
         # dwi case
         # Check orientation
-        if 'reor_RAS' not in infile:
+        if 'reor-RAS' not in infile:
             [infile, bvecs] = reorient_dwi(infile, bvecs, outdir, overwrite=overwrite)
         # Check dimensions
-        if 'res_' not in infile:
+        if 'res-' not in infile:
             outfile = match_target_vox_res(infile, vox_size, outdir, overwrite=overwrite)
             print(outfile)
         else:
@@ -375,10 +375,10 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True, outdir=N
     elif (vols > 1) and (bvecs is None):
         # func case
         # Check orientation
-        if 'reo_RAS' not in infile:
+        if 'reor-RAS' not in infile:
             infile = reorient_img(infile, outdir, overwrite=overwrite)
         # Check dimensions
-        if 'res_' not in infile:
+        if 'res-' not in infile:
             outfile = match_target_vox_res(infile, vox_size, outdir, overwrite=overwrite)
             print(outfile)
         else:
@@ -386,10 +386,10 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True, outdir=N
     else:
         # t1w case
         # Check orientation
-        if 'reor_RAS' not in infile:
+        if 'reor-RAS' not in infile:
             infile = reorient_img(infile, outdir, overwrite=overwrite)
         # Check dimensions
-        if 'res_' not in infile:
+        if 'res-' not in infile:
             outfile = match_target_vox_res(infile, vox_size, outdir, overwrite=overwrite)
             print(outfile)
         else:
