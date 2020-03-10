@@ -778,6 +778,8 @@ class NiParcellate(object):
                 raise FileNotFoundError('File containing sparse matrix of local connectivity structure not found.')
 
         if self.clust_type == 'complete' or self.clust_type == 'average' or self.clust_type == 'single' or self.clust_type == 'ward' or (self.clust_type == 'rena' and self.num_conn_comps == 1) or (self.clust_type == 'kmeans' and self.num_conn_comps == 1):
+            from nilearn.regions import connected_label_regions
+
             self._clust_est = Parcellations(method=self.clust_type, standardize=self._standardize,
                                             detrend=self._detrending,
                                             n_parcels=self.k, mask=self._clust_mask_corr_img,
@@ -795,6 +797,7 @@ class NiParcellate(object):
             else:
                 self._clust_est.fit(self._func_img)
 
+            self._clust_est.labels_img_ = connected_label_regions(self._clust_est.labels_img_)
             self._clust_est.labels_img_.set_data_dtype(np.uint16)
             nib.save(self._clust_est.labels_img_, self.uatlas)
         elif self.clust_type == 'ncut':
@@ -803,44 +806,25 @@ class NiParcellate(object):
             nib.save(out_img, self.uatlas)
         elif self.clust_type == 'rena' or self.clust_type == 'kmeans' and self.num_conn_comps > 1:
             from pynets.core import nodemaker
-            from nilearn.regions import connected_regions, Parcellations, connected_label_regions
+            from nilearn.regions import connected_regions, Parcellations
             from nilearn.image import iter_img, new_img_like
-            from pynets.core.utils import flatten
-
-            conn_comp_list = iter_img(self._conn_comps)
-
-            def proportional(k, voxels_list):
-                """Hagenbach-Bischoff Quota"""
-                quota = sum(voxels_list) / (1. + k)
-                frac = [voxels / quota for voxels in voxels_list]
-                res = [int(f) for f in frac]
-                n = k - sum(res)
-                if n == 0: return res
-                if n < 0: return [min(x, k) for x in res]
-                remainders = [ai - bi for ai, bi in zip(frac, res)]
-                limit = sorted(remainders, reverse=True)[n - 1]
-                for i, r in enumerate(remainders):
-                    if r >= limit:
-                        res[i] += 1
-                        n -= 1
-                        if n == 0:
-                            return res
-                raise
+            from pynets.core.utils import flatten, proportional
 
             mask_img_list = []
             mask_voxels_dict = dict()
-            for i, mask_img in enumerate(iter_img(conn_comp_list)):
+            for i, mask_img in enumerate(list(iter_img(self._conn_comps))):
                 mask_voxels_dict[i] = np.int(np.sum(mask_img.get_data()))
                 mask_img_list.append(mask_img)
 
+            # Allocate k across connected components using Hagenbach-Bischoff Quota based on number of voxels
             k_list = proportional(self.k, list(mask_voxels_dict.values()))
 
             conn_comp_atlases = []
-            i = 0
             print("%s%s%s" % ('Building ', len(mask_img_list), ' separate atlases with voxel-proportional nclusters '
                                                                'for each connected component...'))
-            for mask_img in mask_img_list:
+            for i, mask_img in enumerate(mask_img_list):
                 if k_list[i] == 0:
+                    print('0 voxels in component. Discarding...')
                     continue
                 self._clust_est = Parcellations(method=self.clust_type, standardize=self._standardize,
                                                 detrend=self._detrending,
@@ -858,8 +842,7 @@ class NiParcellate(object):
                         self._clust_est.fit(self._func_img, confounds=self.conf)
                 else:
                     self._clust_est.fit(self._func_img)
-                conn_comp_atlases.append(connected_label_regions(self._clust_est.labels_img_))
-                i = i + 1
+                conn_comp_atlases.append(self._clust_est.labels_img_)
 
             # Then combine the multiple atlases, corresponding to each connected component, into a single atlas
             atlas_of_atlases = []
@@ -889,7 +872,7 @@ class NiParcellate(object):
             super_atlas_ward.set_data_dtype(np.uint16)
 
             nib.save(super_atlas_ward, self.uatlas)
-            del atlas_of_atlases, super_atlas_ward, conn_comp_atlases, mask_img_list, mask_voxels_dict, conn_comp_list
+            del atlas_of_atlases, super_atlas_ward, conn_comp_atlases, mask_img_list, mask_voxels_dict
 
         print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
 

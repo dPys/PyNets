@@ -404,3 +404,155 @@ class PlotFunc(SimpleInterface):
         self._results['out'] = 'None'
 
         return runtime
+
+
+class _RegisterDWIInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for RegisterDWI"""
+    fa_path = File(exists=True, mandatory=True)
+    ap_path = File(exists=True, mandatory=True)
+    B0_mask = File(exists=True, mandatory=True)
+    anat_file = File(exists=True, mandatory=True)
+    gtab_file = File(exists=True, mandatory=True)
+    dwi_file = File(exists=True, mandatory=True)
+    vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
+    waymask = traits.Any(mandatory=False)
+    mask = traits.Any(mandatory=False)
+    simple = traits.Bool(False, usedefault=True)
+    overwrite = traits.Bool(True, usedefault=True)
+
+
+class _RegisterDWIOutputSpec(TraitedSpec):
+    """Output interface wrapper for RegisterDWI"""
+    wm_in_dwi = File(exists=True, mandatory=True)
+    gm_in_dwi = File(exists=True, mandatory=True)
+    vent_csf_in_dwi = File(exists=True, mandatory=True)
+    csf_mask_dwi = File(exists=True, mandatory=True)
+    anat_file = File(exists=True, mandatory=True)
+    B0_mask = File(exists=True, mandatory=True)
+    ap_path = File(exists=True, mandatory=True)
+    gtab_file = File(exists=True, mandatory=True)
+    dwi_file = File(exists=True, mandatory=True)
+    waymask_in_dwi = traits.Any(mandatory=False)
+    basedir_path = Directory(exists=True, mandatory=True)
+
+
+class RegisterDWI(SimpleInterface):
+    """Interface wrapper for RegisterDWI to create T1w->MNI->DWI mappings."""
+    input_spec = _RegisterDWIInputSpec
+    output_spec = _RegisterDWIOutputSpec
+
+    def _run_interface(self, runtime):
+        import gc
+        import os.path as op
+        from pynets.registration import register
+        from nipype.utils.filemanip import fname_presuffix, copyfile
+
+        # anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
+        # copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
+
+        fa_tmp_path = fname_presuffix(self.inputs.fa_path, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.fa_path, fa_tmp_path, copy=True, use_hardlink=False)
+
+        ap_tmp_path = fname_presuffix(self.inputs.ap_path, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.ap_path, ap_tmp_path, copy=True, use_hardlink=False)
+
+        B0_mask_tmp_path = fname_presuffix(self.inputs.B0_mask, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.B0_mask, B0_mask_tmp_path, copy=True, use_hardlink=False)
+
+        reg = register.DmriReg(basedir_path=runtime.cwd,
+                               fa_path=fa_tmp_path,
+                               ap_path=ap_tmp_path,
+                               B0_mask=B0_mask_tmp_path,
+                               anat_file=self.inputs.anat_file,
+                               mask=self.inputs.mask,
+                               vox_size=self.inputs.vox_size,
+                               simple=self.inputs.simple)
+
+        if (self.inputs.overwrite is True) or (op.isfile(reg.map_path) is False):
+            # Perform anatomical segmentation
+            reg.gen_tissue()
+
+        if (self.inputs.overwrite is True) or (op.isfile(reg.t1w2dwi) is False):
+            # Align t1w to dwi
+            reg.t1w2dwi_align()
+
+        if (self.inputs.overwrite is True) or (op.isfile(reg.wm_gm_int_in_dwi) is False):
+            # Align tissue
+            reg.tissue2dwi_align()
+
+        if self.inputs.waymask is not None:
+            if (self.inputs.overwrite is True) or (op.isfile(reg.waymask_in_dwi) is False):
+                # Align waymask
+                reg.waymask2dwi_align(self.inputs.waymask)
+        else:
+            reg.waymask_in_dwi = None
+
+        self._results['wm_in_dwi'] = reg.wm_in_dwi
+        self._results['gm_in_dwi'] = reg.gm_in_dwi
+        self._results['vent_csf_in_dwi'] = reg.vent_csf_in_dwi
+        self._results['csf_mask_dwi'] = reg.csf_mask_dwi
+        self._results['anat_file'] = self.inputs.anat_file
+        self._results['B0_mask'] = self.inputs.B0_mask
+        self._results['ap_path'] = self.inputs.ap_path
+        self._results['gtab_file'] = self.inputs.gtab_file
+        self._results['dwi_file'] = self.inputs.dwi_file
+        self._results['waymask_in_dwi'] = reg.waymask_in_dwi
+        self._results['basedir_path'] = runtime.cwd
+
+        gc.collect()
+
+        return runtime
+
+
+class _RegisterFuncInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for RegisterFunc"""
+    anat_file = File(exists=True, mandatory=True)
+    mask = traits.Any(mandatory=False)
+    vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
+    simple = traits.Bool(False, usedefault=True)
+    overwrite = traits.Bool(True, usedefault=True)
+
+
+class _RegisterFuncOutputSpec(TraitedSpec):
+    """Output interface wrapper for RegisterFunc"""
+    reg_fmri_complete = traits.Bool()
+    basedir_path = Directory(exists=True, mandatory=True)
+
+
+class RegisterFunc(SimpleInterface):
+    """Interface wrapper for RegisterDWI to create Func->T1w->MNI mappings."""
+    input_spec = _RegisterFuncInputSpec
+    output_spec = _RegisterFuncOutputSpec
+
+    def _run_interface(self, runtime):
+        import gc
+        import os.path as op
+        from pynets.registration import register
+        from nipype.utils.filemanip import fname_presuffix, copyfile
+
+        # anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
+        # copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
+
+        mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
+
+        reg = register.FmriReg(basedir_path=runtime.cwd,
+                               anat_file=self.inputs.anat_file,
+                               mask=mask_tmp_path,
+                               vox_size=self.inputs.vox_size,
+                               simple=self.inputs.simple)
+
+        if (self.inputs.overwrite is True) or (op.isfile(reg.map_path) is False):
+            # Perform anatomical segmentation
+            reg.gen_tissue()
+
+        if (self.inputs.overwrite is True) or (op.isfile(reg.t1_aligned_mni) is False):
+            # Align t1w to dwi
+            reg.t1w2mni_align()
+
+        self._results['reg_fmri_complete'] = True
+        self._results['basedir_path'] = runtime.cwd
+
+        gc.collect()
+
+        return runtime

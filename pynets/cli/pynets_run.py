@@ -2035,16 +2035,15 @@ def main():
 
             # Clean up master process before running workflow, which may create forks
             gc.collect()
-        sys.exit()
     except:
         try:
             print('Running outside of forkserver multiprocessing context...')
             retval = dict()
             build_workflow(args, retval)
-            sys.exit()
         except RuntimeError:
             print('\nError: Workflow execution failed. Check installation.')
-            sys.exit()
+
+    sys.exit()
 
 
 if __name__ == '__main__':

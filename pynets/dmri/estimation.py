@@ -45,8 +45,9 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
 
     print('Generating simple tensor FA image to use for registrations...')
     nodif_B0_img = nib.load(B0_mask)
+    nodif_B0_mask_data = np.asarray(nodif_B0_img.dataobj).astype('bool')
     model = TensorModel(gtab)
-    mod = model.fit(np.asarray(nib.load(dwi_file).dataobj), np.asarray(nodif_B0_img.dataobj).astype('bool'))
+    mod = model.fit(np.asarray(nib.load(dwi_file).dataobj), nodif_B0_mask_data)
     FA = fractional_anisotropy(mod.evals)
     FA[np.isnan(FA)] = 0
     fa_path = "%s%s" % (os.path.dirname(B0_mask), '/tensor_fa.nii.gz')
@@ -136,8 +137,9 @@ def csa_mod_est(gtab, data, B0_mask):
     from dipy.reconst.shm import CsaOdfModel
     print('Fitting CSA model...')
     model = CsaOdfModel(gtab, sh_order=6)
-    csa_mod = model.fit(data, np.asarray(nib.load(B0_mask).dataobj).astype('bool')).shm_coeff
-    del model
+    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
+    csa_mod = model.fit(data, B0_mask_data).shm_coeff
+    del model, B0_mask_data
     return csa_mod
 
 
