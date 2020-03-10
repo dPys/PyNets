@@ -6,7 +6,6 @@ Copyright (C) 2017
 @author: Derek Pisner
 """
 import os
-import indexed_gzip
 import nibabel as nib
 import warnings
 import numpy as np
@@ -430,20 +429,40 @@ class DmriReg(object):
         """
         A function to segment and threshold tissue types from T1w.
         """
-        from pynets.plotting.plot_gen import qa_fast_png
+        # from pynets.plotting.plot_gen import qa_fast_png
         import glob
 
         # Apply brain mask if detected as a separate file
-        anat_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
-        if os.path.isfile(anat_mask_existing) and not self.mask:
-            anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.vox_size)
-            os.system("fslmaths {} -mas {} {}".format(self.t1w_brain, anat_mask_existing, self.t1w_brain))
+        try:
+            anat_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
+            if os.path.isfile(anat_mask_existing) and not self.mask:
+                anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.vox_size)
+                os.system("fslmaths {} -mas {} {}".format(self.t1w_brain, anat_mask_existing, self.t1w_brain))
 
-        # Segment the t1w brain into probability maps
-        gm_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
-        wm_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_label-WM_probseg.nii.gz')[0]
-        csf_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_label-CSF_probseg.nii.gz')[0]
-        if not os.path.isfile(wm_mask_existing) and not os.path.isfile(gm_mask_existing) and not os.path.isfile(csf_mask_existing):
+            # Segment the t1w brain into probability maps
+            gm_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
+            wm_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_label-WM_probseg.nii.gz')[0]
+            csf_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_label-CSF_probseg.nii.gz')[0]
+        except:
+            anat_mask_existing = None
+            wm_mask_existing = None
+            gm_mask_existing = None
+            csf_mask_existing = None
+
+        if wm_mask_existing and gm_mask_existing and csf_mask_existing:
+            if os.path.isfile(wm_mask_existing) and os.path.isfile(gm_mask_existing) and os.path.isfile(csf_mask_existing):
+                self.wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.vox_size, overwrite=False)
+                self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size, overwrite=False)
+                self.csf_mask = regutils.check_orient_and_dims(csf_mask_existing, self.vox_size, overwrite=False)
+            else:
+                try:
+                    maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
+                except RuntimeError:
+                    print('Segmentation failed. Does the input anatomical image still contained skull?')
+                self.wm_mask = maps['wm_prob']
+                self.gm_mask = maps['gm_prob']
+                self.csf_mask = maps['csf_prob']
+        else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
             except RuntimeError:
@@ -451,12 +470,8 @@ class DmriReg(object):
             self.wm_mask = maps['wm_prob']
             self.gm_mask = maps['gm_prob']
             self.csf_mask = maps['csf_prob']
-        else:
-            self.wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.vox_size)
-            self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size)
-            self.csf_mask = regutils.check_orient_and_dims(csf_mask_existing, self.vox_size)
 
-        qa_fast_png(self.csf_mask, self.gm_mask, self.wm_mask, self.map_path)
+        # qa_fast_png(self.csf_mask, self.gm_mask, self.wm_mask, self.map_path)
 
         # Threshold WM to binary in dwi space
         t_img = nib.load(self.wm_mask)
@@ -792,21 +807,33 @@ class FmriReg(object):
         import glob
 
         # Apply brain mask if detected as a separate file
-        anat_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
-        if os.path.isfile(anat_mask_existing) and not self.mask:
-            anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.vox_size)
-            os.system("fslmaths {} -mas {} {}".format(self.t1w_brain, anat_mask_existing, self.t1w_brain))
+        try:
+            anat_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
+            if os.path.isfile(anat_mask_existing) and not self.mask:
+                anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.vox_size)
+                os.system("fslmaths {} -mas {} {}".format(self.t1w_brain, anat_mask_existing, self.t1w_brain))
 
-        # Segment the t1w brain into probability maps
-        gm_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
-        if not os.path.isfile(gm_mask_existing):
+            # Segment the t1w brain into probability maps
+            gm_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
+        except:
+            anat_mask_existing = None
+            gm_mask_existing = None
+
+        if gm_mask_existing:
+            if os.path.isfile(gm_mask_existing):
+                self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size, overwrite=False)
+            else:
+                try:
+                    maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
+                except RuntimeError:
+                    print('Segmentation failed. Does the input anatomical image still contained skull?')
+                self.gm_mask = maps['gm_prob']
+        else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
             except RuntimeError:
                 print('Segmentation failed. Does the input anatomical image still contained skull?')
             self.gm_mask = maps['gm_prob']
-        else:
-            self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size)
 
         # Threshold GM to binary in func space
         t_img = nib.load(self.gm_mask)
@@ -881,88 +908,6 @@ class FmriReg(object):
         atlas_img.uncache()
 
         return aligned_atlas_t1mni_gm
-
-
-def register_all_dwi(basedir_path, fa_path, ap_path, B0_mask, anat_file, gtab_file, dwi_file, vox_size, waymask,
-                     mask, simple=False, overwrite=False):
-    """
-    A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
-
-    Parameters
-    ----------
-    basedir_path : str
-        Path to directory to output direct-streamline normalized temp files and outputs.
-    fa_path : str
-        File path to FA Nifti1Image.
-    ap_path : str
-        File path to anisotropic power Nifti1Image.
-    B0_mask : str
-        File path to B0 brain mask.
-    anat_file : str
-        Path to a skull-stripped anatomical Nifti1Image.
-    gtab_file : str
-        File path to pickled DiPy gradient table object.
-    dwi_file : str
-        File path to diffusion weighted image.
-    vox_size : str
-        Voxel size in mm. (e.g. 2mm).
-    waymask : str
-        Path to a Nifti1Image in MNI-space to constrain tractography.
-    mask : str
-        Path to a brain mask to apply to the anatomical Nifti1Image.
-    simple : bool
-        Indicates whether to use non-linear registration and BBR (True) or entirely linear methods (False).
-        Default is False.
-    overwrite : bool
-        Indicates whether to overwrite existing registration files. Default is False.
-
-    Returns
-    -------
-    wm_in_dwi : str
-        File path to white-matter tissue segmentation Nifti1Image in native diffusion space.
-    gm_in_dwi : str
-        File path to grey-matter tissue segmentation Nifti1Image in native diffusion space.
-    vent_csf_in_dwi : str
-        File path to ventricular CSF tissue segmentation Nifti1Image in native diffusion space.
-    csf_mask_dwi : str
-        File path to CSF tissue segmentation Nifti1Image in native diffusion space.
-    anat_file : str
-        Path to a skull-stripped anatomical Nifti1Image.
-    B0_mask : str
-        File path to B0 brain mask.
-    ap_path : str
-        File path to anisotropic power Nifti1Image.
-    gtab_file : str
-        File path to pickled DiPy gradient table object.
-    dwi_file : str
-        File path to diffusion weighted image.
-    waymask : str
-        Path to a Nifti1Image, aligned to native diffusion space, used to constrain tractography.
-    """
-    import os.path as op
-    from pynets.registration import register
-    reg = register.DmriReg(basedir_path, fa_path, ap_path, B0_mask, anat_file, mask, vox_size, simple)
-
-    if (overwrite is True) or (op.isfile(reg.map_path) is False):
-        # Perform anatomical segmentation
-        reg.gen_tissue()
-
-    if (overwrite is True) or (op.isfile(reg.t1w2dwi) is False):
-        # Align t1w to dwi
-        reg.t1w2dwi_align()
-
-    if (overwrite is True) or (op.isfile(reg.wm_gm_int_in_dwi) is False):
-        # Align tissue
-        reg.tissue2dwi_align()
-
-    if waymask is not None:
-        if (overwrite is True) or (op.isfile(reg.waymask_in_dwi) is False):
-            # Align waymask
-            reg.waymask2dwi_align(waymask)
-    else:
-        reg.waymask_in_dwi = None
-
-    return reg.wm_in_dwi, reg.gm_in_dwi, reg.vent_csf_in_dwi, reg.csf_mask_dwi, anat_file, B0_mask, ap_path, gtab_file, dwi_file, reg.waymask_in_dwi
 
 
 def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, fa_path, ap_path, B0_mask, anat_file,
@@ -1064,49 +1009,6 @@ def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, f
                                                                                                    atlas)
 
     return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni, uatlas, atlas, coords, labels, node_size, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, ap_path, gtab_file, B0_mask, dwi_file
-
-
-def register_all_fmri(basedir_path, anat_file, mask, vox_size, overwrite=False, simple=False):
-    """
-    A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
-
-    Parameters
-    ----------
-    basedir_path : str
-        Path to directory to output direct-streamline normalized temp files and outputs.
-    anat_file : str
-        Path to a skull-stripped anatomical Nifti1Image.
-    mask : str
-        Path to a brain mask to apply to the anatomical Nifti1Image.
-    vox_size : str
-        Voxel size in mm. (e.g. 2mm).
-    overwrite : bool
-        Indicates whether to overwrite existing registration files. Default is False.
-    simple : bool
-        Indicates whether to use non-linear registration (True) or entirely linear methods (False).
-        Default is False.
-
-    Returns
-    -------
-    reg_fmri_complete : bool
-        Indicates whether initial registration is complete.
-    """
-    import os.path as op
-    from pynets.registration import register
-
-    reg = register.FmriReg(basedir_path, anat_file, mask, vox_size, simple)
-
-    if (overwrite is True) or (op.isfile(reg.map_path) is False):
-        # Perform anatomical segmentation
-        reg.gen_tissue()
-
-    if (overwrite is True) or (op.isfile(reg.t1_aligned_mni) is False):
-        # Align t1w to dwi
-        reg.t1w2mni_align()
-
-    reg_fmri_complete = True
-
-    return reg_fmri_complete
 
 
 def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, vox_size, mask, reg_fmri_complete,

@@ -671,6 +671,25 @@ def flatten(l):
             yield el
 
 
+def proportional(k, voxels_list):
+    """Hagenbach-Bischoff Quota"""
+    quota = sum(voxels_list) / (1. + k)
+    frac = [voxels / quota for voxels in voxels_list]
+    res = [int(f) for f in frac]
+    n = k - sum(res)
+    if n == 0: return res
+    if n < 0: return [min(x, k) for x in res]
+    remainders = [ai - bi for ai, bi in zip(frac, res)]
+    limit = sorted(remainders, reverse=True)[n - 1]
+    for i, r in enumerate(remainders):
+        if r >= limit:
+            res[i] += 1
+            n -= 1
+            if n == 0:
+                return res
+    raise
+
+
 def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal):
     """
     API for summarizing independent lists of pickled pandas dataframes of graph metrics for each modality, RSN, and roi.

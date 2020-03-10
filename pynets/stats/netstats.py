@@ -1072,7 +1072,7 @@ def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
     pc_arr = np.zeros([num_edges + 1, 2], dtype='object')
     j = 0
     for i in range(num_edges):
-        pc_arr[j, 0] = "%s%s" % (str(pc_edges[j]), '_partic_coef')
+        pc_arr[j, 0] = "%s%s" % (str(pc_edges[j]), '_participation_coefficient')
         try:
             pc_arr[j, 1] = pc_vals[j]
         except:
@@ -1099,7 +1099,7 @@ def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
     dc_arr = np.zeros([num_edges + 1, 2], dtype='object')
     j = 0
     for i in range(num_edges):
-        dc_arr[j, 0] = "%s%s" % (str(dc_edges[j]), '_diversity_coef')
+        dc_arr[j, 0] = "%s%s" % (str(dc_edges[j]), '_diversity_coefficient')
         try:
             dc_arr[j, 1] = dc_vals[j]
         except:
@@ -1161,7 +1161,7 @@ def get_clustering(G, metric_list_names, net_met_val_list_final):
             print("%s%s%s" % ('Local clustering is undefined for node ', str(j), ' of G'))
             cl_arr[j, 1] = np.nan
         j = j + 1
-    cl_arr[num_nodes, 0] = 'average_local_efficiency_nodewise'
+    cl_arr[num_nodes, 0] = 'average_local_clustering_nodewise'
     nonzero_arr_cl = np.delete(cl_arr[:, 1], [0])
     cl_arr[num_nodes, 1] = np.mean(nonzero_arr_cl)
     print("%s%s" % ('Mean Local Clustering across nodes: ', str(cl_arr[num_nodes, 1])))
@@ -1188,7 +1188,7 @@ def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
             print("%s%s%s" % ('Degree centrality is undefined for node ', str(j), ' of G'))
             dc_arr[j, 1] = np.nan
         j = j + 1
-    dc_arr[num_nodes, 0] = 'average_degree_cent'
+    dc_arr[num_nodes, 0] = 'average_degree_centrality'
     nonzero_arr_dc = np.delete(dc_arr[:, 1], [0])
     dc_arr[num_nodes, 1] = np.mean(nonzero_arr_dc)
     print("%s%s" % ('Mean Degree Centrality across nodes: ', str(dc_arr[num_nodes, 1])))
@@ -1290,7 +1290,7 @@ def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final):
     rc_arr = np.zeros([num_edges + 1, 2], dtype='object')
     j = 0
     for i in range(num_edges):
-        rc_arr[j, 0] = "%s%s" % (str(rc_edges[j]), '_rich_club')
+        rc_arr[j, 0] = "%s%s" % (str(rc_edges[j]), '_rich_club_coefficient')
         try:
             rc_arr[j, 1] = rc_vals[j]
         except:

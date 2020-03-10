@@ -24,8 +24,7 @@ def get_parser():
                                                  'Sampling of Functional and Structural Connectomes')
     # Debug/Runtime settings
     parser.add_argument('-basedir',
-                        metavar='Working directory',
-                        default='/tmp/work',
+                        metavar='Output directory',
                         help='Specify the path to the base output directory with group-level pynets derivatives.\n')
     parser.add_argument('-pm',
                         metavar='Cores,memory',
@@ -59,7 +58,7 @@ def load_pd_dfs(file_):
     pd.set_option('display.float_format', lambda x: '%.8f' % x)
 
     if file_:
-        if op.isfile(file_):
+        if op.isfile(file_) and not file_.endswith('_clean.csv'):
             df = pd.read_csv(file_, chunksize=100000).read()
             try:
                 df.drop(df.filter(regex="Unname"),axis=1, inplace=True)
@@ -129,8 +128,8 @@ def df_concat(dfs, working_path):
 
     frame = frame.drop_duplicates(subset='id')
     frame = frame.loc[:, ~frame.columns.str.contains(r'thr_auc$', regex=True)]
-    frame = frame.loc[:, (frame == 0).mean() < .5]
-    frame = frame.loc[:, frame.isnull().mean() <= 0.1]
+    # frame = frame.loc[:, (frame == 0).mean() < .5]
+    # frame = frame.loc[:, frame.isnull().mean() <= 0.1]
     frame.to_csv("%s%s" % (working_path, '/all_subs_neat.csv'), index=False)
     return frame
 
@@ -171,8 +170,8 @@ def build_subject_dict(sub, working_path, modality='func'):
             auc_csvs = glob.glob("%s%s%s%s%s%s%s%s%s%s" % (working_path, '/', sub, '/', ses, '/', modality, '/', atlas,
                                  '/netmetrics/auc/*'))
             for auc_file in auc_csvs:
-                prefix = os.path.basename(auc_file).split('.csv')[0].split('est-')[1].split("%s%s%s" % ('_', modality,
-                                                                                            'net_mets_auc'))[0]
+                prefix = os.path.basename(auc_file).split('.csv')[0].split('est-')[1].split("%s%s" % (modality,
+                                                                                            'net_mets'))[0]
                 try:
                     subject_dict[sub][ses].append(load_pd_dfs_auc(atlas_name, prefix, auc_file))
                 except:
@@ -236,7 +235,7 @@ def collect_all(working_path):
     return wf
 
 
-def build_workflow(args):
+def build_collect_workflow(args, retval):
     import re
     import glob
     import warnings
@@ -269,7 +268,7 @@ def build_workflow(args):
 
     wf = collect_all(working_path)
 
-# with open('/opt/conda/lib/python3.6/site-packages/pynets-0.9.90rc0-py3.6.egg/pynets/runconfig.yaml', 'r') as stream:
+    # with open('/opt/conda/lib/python3.6/site-packages/pynets-0.9.92-py3.6.egg/pynets/runconfig.yaml', 'r') as stream:
     with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
         try:
             hardcoded_params = yaml.load(stream)
@@ -332,6 +331,7 @@ def build_workflow(args):
 
     files_ = glob.glob("%s%s" % (str(Path(working_path).parent), '/all_visits_netmets_auc/*clean.csv'))
 
+    print('Aggregating dataframes...')
     dfs = []
     for file_ in files_:
         df = pd.read_csv(file_, chunksize=100000).read()
@@ -341,22 +341,7 @@ def build_workflow(args):
             pass
         dfs.append(df)
         del df
-    frame = df_concat(dfs, working_path)
-
-    for i in list(frame.columns)[1:]:
-        try:
-            frame[i] = frame[i].astype('float32')
-        except:
-            try:
-                frame[i] = pd.to_numeric(frame[i].apply(lambda x: re.sub('-', '', str(x))))
-            except:
-                pass
-
-    frame = frame.drop_duplicates(subset='id')
-    frame = frame.loc[:, ~frame.columns.str.contains(r'thr_auc$', regex=True)]
-    frame = frame.loc[:, (frame == 0).mean() < .5]
-    frame = frame.loc[:, frame.isnull().mean() <= 0.1]
-    frame.to_csv("%s%s" % (working_path, '/all_subs_neat.csv'), index=False)
+    df_concat(dfs, working_path)
 
     return
 
@@ -378,8 +363,9 @@ def main():
     # args_dict_all = {}
     # args_dict_all['plug'] = 'MultiProc'
     # args_dict_all['v'] = False
-    # args_dict_all['pm'] = None
-    # args_dict_all['basedir'] = '/data/04171/dpisner/data/HNU/HNU1_out/pynets_out'
+    # args_dict_all['pm'] = '68,96'
+    # #args_dict_all['basedir'] = '/data/04171/dpisner/data/HNU/HNU1_out/pynets_out'
+    # args_dict_all['basedir'] = '/scratch/04171/dpisner/pynets_out'
     # args_dict_all['work'] = '/tmp'
     # from types import SimpleNamespace
     # args = SimpleNamespace(**args_dict_all)
@@ -389,7 +375,7 @@ def main():
         set_start_method('forkserver')
         with Manager() as mgr:
             retval = mgr.dict()
-            p = Process(target=build_workflow, args=(args, retval))
+            p = Process(target=build_collect_workflow, args=(args, retval))
             p.start()
             p.join()
 
@@ -401,7 +387,7 @@ def main():
     except:
         print('\nWARNING: Forkserver failed to initialize. Are you using Python3 ?')
         retval = dict()
-        build_workflow(args, retval)
+        build_collect_workflow(args, retval)
 
 
 if __name__ == '__main__':

@@ -1989,6 +1989,7 @@ def build_workflow(args, retval):
     # shutil.rmtree(work_dir, ignore_errors=True)
 
     print('\n\n------------FINISHED-----------')
+    print('Subject: ', ID)
     print('Execution Time: ', str(timedelta(seconds=timeit.default_timer() - start_time)))
     print('-------------------------------')
     return retval
@@ -2017,6 +2018,8 @@ def main():
             p = mp.Process(target=build_workflow, args=(args, retval))
             p.start()
             p.join()
+            if p.is_alive():
+                p.terminate()
 
             retcode = p.exitcode or retval.get('return_code', 0)
 
@@ -2039,6 +2042,8 @@ def main():
             build_workflow(args, retval)
         except RuntimeError:
             print('\nError: Workflow execution failed. Check installation.')
+
+    sys.exit()
 
 
 if __name__ == '__main__':

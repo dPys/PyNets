@@ -364,30 +364,36 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True, outdir=N
     if (vols > 1) and (bvecs is not None):
         # dwi case
         # Check orientation
-        if ('RAS' not in infile) or (overwrite is True):
-            [infile, bvecs] = reorient_dwi(infile, bvecs, outdir)
+        if ('reor-RAS' not in infile) or (overwrite is True):
+            [infile, bvecs] = reorient_dwi(infile, bvecs, outdir, overwrite=overwrite)
         # Check dimensions
-        if ('reor' not in infile) or (overwrite is True):
-            outfile = match_target_vox_res(infile, vox_size, outdir)
+        if ('res-' not in infile) or (overwrite is True):
+            outfile = match_target_vox_res(infile, vox_size, outdir, overwrite=overwrite)
             print(outfile)
+        else:
+            outfile = infile
     elif (vols > 1) and (bvecs is None):
         # func case
         # Check orientation
-        if ('RAS' not in infile) or (overwrite is True):
-            infile = reorient_img(infile, outdir)
+        if ('reor-RAS' not in infile) or (overwrite is True):
+            infile = reorient_img(infile, outdir, overwrite=overwrite)
         # Check dimensions
-        if ('reor' not in infile) or (overwrite is True):
-            outfile = match_target_vox_res(infile, vox_size, outdir)
+        if ('res-' not in infile) or (overwrite is True):
+            outfile = match_target_vox_res(infile, vox_size, outdir, overwrite=overwrite)
             print(outfile)
+        else:
+            outfile = infile
     else:
         # t1w case
         # Check orientation
-        if ('RAS' not in infile) or (overwrite is True):
-            infile = reorient_img(infile, outdir)
+        if ('reor-RAS' not in infile) or (overwrite is True):
+            infile = reorient_img(infile, outdir, overwrite=overwrite)
         # Check dimensions
-        if ('reor' not in infile) or (overwrite is True):
-            outfile = match_target_vox_res(infile, vox_size, outdir)
+        if ('res-' not in infile) or (overwrite is True):
+            outfile = match_target_vox_res(infile, vox_size, outdir, overwrite=overwrite)
             print(outfile)
+        else:
+            outfile = infile
 
     if bvecs is None:
         return outfile
@@ -428,7 +434,7 @@ def normalize_xform(img):
     return new_img
 
 
-def reorient_dwi(dwi_prep, bvecs, out_dir):
+def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
     """
     A function to reorient any dwi image and associated bvecs to RAS+.
 
@@ -462,33 +468,39 @@ def reorient_dwi(dwi_prep, bvecs, out_dir):
     if normalized is not input_img:
         out_fname = "%s%s%s%s%s" % (out_dir, '/', dwi_prep.split('/')[-1].split('.nii')[0], '_reor-RAS.nii',
                                     dwi_prep.split('/')[-1].split('.nii')[1])
-        print("%s%s%s" % ('Reorienting ', dwi_prep, ' to RAS+...'))
+        if overwrite is False and os.path.isfile(out_fname) and os.path.isfile(out_bvec_fname):
+            pass
+        else:
+            print("%s%s%s" % ('Reorienting ', dwi_prep, ' to RAS+...'))
 
-        # Flip the bvecs
-        transform_orientation = nib.orientations.ornt_transform(nib.orientations.axcodes2ornt(input_axcodes),
-                                                                nib.orientations.axcodes2ornt(new_axcodes))
-        bvec_array = np.loadtxt(bvec_fname)
-        if bvec_array.shape[0] != 3:
-            bvec_array = bvec_array.T
-        if not bvec_array.shape[0] == transform_orientation.shape[0]:
-            raise ValueError("Unrecognized bvec format")
-        output_array = np.zeros_like(bvec_array)
-        for this_axnum, (axnum, flip) in enumerate(transform_orientation):
-            output_array[this_axnum] = bvec_array[int(axnum)] * float(flip)
-        np.savetxt(out_bvec_fname, output_array, fmt="%.8f ")
+            # Flip the bvecs
+            transform_orientation = nib.orientations.ornt_transform(nib.orientations.axcodes2ornt(input_axcodes),
+                                                                    nib.orientations.axcodes2ornt(new_axcodes))
+            bvec_array = np.loadtxt(bvec_fname)
+            if bvec_array.shape[0] != 3:
+                bvec_array = bvec_array.T
+            if not bvec_array.shape[0] == transform_orientation.shape[0]:
+                raise ValueError("Unrecognized bvec format")
+            output_array = np.zeros_like(bvec_array)
+            for this_axnum, (axnum, flip) in enumerate(transform_orientation):
+                output_array[this_axnum] = bvec_array[int(axnum)] * float(flip)
+            np.savetxt(out_bvec_fname, output_array, fmt="%.8f ")
     else:
         out_fname = "%s%s%s%s%s" % (out_dir, '/', dwi_prep.split('/')[-1].split('.nii')[0], '_noreor-RAS.nii',
                                     dwi_prep.split('/')[-1].split('.nii')[1])
         out_bvec_fname = bvec_fname
 
-    normalized.to_filename(out_fname)
-    normalized.uncache()
-    input_img.uncache()
-    del normalized, input_img
+    if overwrite is False and os.path.isfile(out_fname) and os.path.isfile(out_bvec_fname):
+        pass
+    else:
+        normalized.to_filename(out_fname)
+        normalized.uncache()
+        input_img.uncache()
+        del normalized, input_img
     return out_fname, out_bvec_fname
 
 
-def reorient_img(img, out_dir):
+def reorient_img(img, out_dir, overwrite=True):
     """
     A function to reorient any non-dwi image to RAS+.
 
@@ -519,15 +531,18 @@ def reorient_img(img, out_dir):
         out_name = "%s%s%s%s%s" % (out_dir, '/', img.split('/')[-1].split('.nii')[0], '_noreor-RAS.nii',
                                    img.split('/')[-1].split('.nii')[1])
 
-    normalized.to_filename(out_name)
-    orig_img.uncache()
-    normalized.uncache()
-    del orig_img
+    if overwrite is False and os.path.isfile(out_name):
+        pass
+    else:
+        normalized.to_filename(out_name)
+        orig_img.uncache()
+        normalized.uncache()
+        del orig_img
 
     return out_name
 
 
-def match_target_vox_res(img_file, vox_size, out_dir):
+def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
     """
     A function to resample an image to a given isotropic voxel resolution.
 
@@ -557,18 +572,26 @@ def match_target_vox_res(img_file, vox_size, out_dir):
         new_zooms = (2., 2., 2.)
 
     if (abs(zooms[0]), abs(zooms[1]), abs(zooms[2])) != new_zooms:
-        print('Reslicing image ' + img_file + ' to ' + vox_size + '...')
         img_file_res = "%s%s%s%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii')[0], '_res-',
                                            vox_size, '.nii', os.path.basename(img_file).split('.nii')[1])
-        data2, affine2 = reslice(np.asarray(img.dataobj), img.affine, zooms, new_zooms)
-        nib.save(nib.Nifti1Image(data2, affine=affine2), img_file_res)
-        img_file = img_file_res
-        del data2
+        if overwrite is False and os.path.isfile(img_file_res):
+            img_file = img_file_res
+            pass
+        else:
+            print('Reslicing image ' + img_file + ' to ' + vox_size + '...')
+            data2, affine2 = reslice(np.asarray(img.dataobj), img.affine, zooms, new_zooms)
+            nib.save(nib.Nifti1Image(data2, affine=affine2), img_file_res)
+            img_file = img_file_res
+            del data2
     else:
         img_file_nores = "%s%s%s%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii')[0], '_nores-',
                                              vox_size, '.nii', os.path.basename(img_file).split('.nii')[1])
-        nib.save(img, img_file_nores)
-        img_file = img_file_nores
+        if overwrite is False and os.path.isfile(img_file_nores):
+            img_file = img_file_nores
+            pass
+        else:
+            nib.save(img, img_file_nores)
+            img_file = img_file_nores
 
     img.uncache()
     del img

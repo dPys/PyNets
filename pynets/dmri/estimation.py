@@ -41,13 +41,13 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
     from dipy.reconst.dti import TensorModel
     from dipy.reconst.dti import fractional_anisotropy
 
-    data = nib.load(dwi_file).get_fdata()
     gtab = load_pickle(gtab_file)
 
     print('Generating simple tensor FA image to use for registrations...')
     nodif_B0_img = nib.load(B0_mask)
+    nodif_B0_mask_data = np.asarray(nodif_B0_img.dataobj).astype('bool')
     model = TensorModel(gtab)
-    mod = model.fit(data, nodif_B0_img.get_fdata().astype('bool'))
+    mod = model.fit(np.asarray(nib.load(dwi_file).dataobj), nodif_B0_mask_data)
     FA = fractional_anisotropy(mod.evals)
     FA[np.isnan(FA)] = 0
     fa_path = "%s%s" % (os.path.dirname(B0_mask), '/tensor_fa.nii.gz')
@@ -93,21 +93,25 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     img = nib.load(dwi_file)
     aff = img.affine
 
-    print('Generating anisotropic power map to use for registrations...')
-    nodif_B0_img = nib.load(B0_mask)
-
-    dwi_data = np.asarray(img.dataobj)
-    for b0 in sorted(list(np.where(gtab.b0s_mask==True)[0]), reverse=True):
-        dwi_data = np.delete(dwi_data, b0, 3)
-
-    anisomap = anisotropic_power(sf_to_sh(dwi_data, gtab_hemisphere, sh_order=2))
-    anisomap[np.isnan(anisomap)] = 0
-    masked_data = anisomap * np.asarray(nodif_B0_img.dataobj).astype('bool')
     anisopwr_path = "%s%s" % (os.path.dirname(B0_mask), '/aniso_power.nii.gz')
-    img = nib.Nifti1Image(masked_data.astype(np.float32), aff)
-    img.to_filename(anisopwr_path)
-    nodif_B0_img.uncache()
-    del anisomap
+
+    if os.path.isfile(anisopwr_path):
+        pass
+    else:
+        print('Generating anisotropic power map to use for registrations...')
+        nodif_B0_img = nib.load(B0_mask)
+
+        dwi_data = np.asarray(img.dataobj)
+        for b0 in sorted(list(np.where(gtab.b0s_mask==True)[0]), reverse=True):
+            dwi_data = np.delete(dwi_data, b0, 3)
+
+        anisomap = anisotropic_power(sf_to_sh(dwi_data, gtab_hemisphere, sh_order=2))
+        anisomap[np.isnan(anisomap)] = 0
+        masked_data = anisomap * np.asarray(nodif_B0_img.dataobj).astype('bool')
+        img = nib.Nifti1Image(masked_data.astype(np.float32), aff)
+        img.to_filename(anisopwr_path)
+        nodif_B0_img.uncache()
+        del anisomap
 
     return anisopwr_path, B0_mask, gtab_file, dwi_file
 
@@ -133,8 +137,9 @@ def csa_mod_est(gtab, data, B0_mask):
     from dipy.reconst.shm import CsaOdfModel
     print('Fitting CSA model...')
     model = CsaOdfModel(gtab, sh_order=6)
-    csa_mod = model.fit(data, nib.load(B0_mask).get_fdata().astype('bool')).shm_coeff
-    del model
+    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
+    csa_mod = model.fit(data, B0_mask_data).shm_coeff
+    del model, B0_mask_data
     return csa_mod
 
 
@@ -158,7 +163,7 @@ def csd_mod_est(gtab, data, B0_mask):
     '''
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     print('Fitting CSD model...')
-    B0_mask_data = nib.load(B0_mask).get_fdata().astype('bool')
+    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
     print('Reconstructing...')
     response = recursive_response(gtab, data, mask=B0_mask_data, sh_order=8, peak_thr=0.01, init_fa=0.08,
                                   init_trace=0.0021, iter=8, convergence=0.001, parallel=False)
@@ -311,7 +316,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Load parcellation
     roi_img = nib.load(atlas_mni)
-    atlas_data = np.around(roi_img.get_fdata())
+    atlas_data = np.around(np.asarray(roi_img.dataobj))
     roi_zooms = roi_img.header.get_zooms()
     roi_shape = roi_img.shape
 
@@ -320,7 +325,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
                                               bbox_valid_check=False).streamlines)
     roi_img.uncache()
 
-    fa_weights = values_from_volume(nib.load(warped_fa).get_fdata(), streamlines, np.eye(4))
+    fa_weights = values_from_volume(np.asarray(nib.load(warped_fa).dataobj), streamlines, np.eye(4))
     global_fa_weights = list(utils.flatten(fa_weights))
     min_global_fa_wei = min(global_fa_weights)
     max_global_fa_wei = max(global_fa_weights)
