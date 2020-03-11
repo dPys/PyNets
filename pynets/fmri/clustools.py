@@ -778,8 +778,6 @@ class NiParcellate(object):
                 raise FileNotFoundError('File containing sparse matrix of local connectivity structure not found.')
 
         if self.clust_type == 'complete' or self.clust_type == 'average' or self.clust_type == 'single' or self.clust_type == 'ward' or (self.clust_type == 'rena' and self.num_conn_comps == 1) or (self.clust_type == 'kmeans' and self.num_conn_comps == 1):
-            from nilearn.regions import connected_label_regions
-
             self._clust_est = Parcellations(method=self.clust_type, standardize=self._standardize,
                                             detrend=self._detrending,
                                             n_parcels=self.k, mask=self._clust_mask_corr_img,
@@ -797,7 +795,6 @@ class NiParcellate(object):
             else:
                 self._clust_est.fit(self._func_img)
 
-            self._clust_est.labels_img_ = connected_label_regions(self._clust_est.labels_img_)
             self._clust_est.labels_img_.set_data_dtype(np.uint16)
             nib.save(self._clust_est.labels_img_, self.uatlas)
         elif self.clust_type == 'ncut':
@@ -813,7 +810,7 @@ class NiParcellate(object):
             mask_img_list = []
             mask_voxels_dict = dict()
             for i, mask_img in enumerate(list(iter_img(self._conn_comps))):
-                mask_voxels_dict[i] = np.int(np.sum(mask_img.get_data()))
+                mask_voxels_dict[i] = np.int(np.sum(np.asarray(mask_img.dataobj)))
                 mask_img_list.append(mask_img)
 
             # Allocate k across connected components using Hagenbach-Bischoff Quota based on number of voxels
@@ -824,7 +821,7 @@ class NiParcellate(object):
                                                                'for each connected component...'))
             for i, mask_img in enumerate(mask_img_list):
                 if k_list[i] == 0:
-                    print('0 voxels in component. Discarding...')
+                    # print('0 voxels in component. Discarding...')
                     continue
                 self._clust_est = Parcellations(method=self.clust_type, standardize=self._standardize,
                                                 detrend=self._detrending,
