@@ -29,7 +29,7 @@ env:
 # command to run tests, e.g. python setup.py test
 script:
    - travis_wait 60 pytest tests/test_estimation.py -s
-   - travis_wait 120 pytest tests/test_nodemaker.py -s
+#   - travis_wait 120 pytest tests/test_nodemaker.py -s
    - travis_wait 60 pytest tests/test_plotting.py -s
    - travis_wait 60 pytest tests/test_thresholding.py -s
    - travis_wait 60 pytest tests/test_utils.py -s
