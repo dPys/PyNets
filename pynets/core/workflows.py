@@ -2496,9 +2496,12 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             (check_orient_and_dims_mask_node, extract_ts_node, [('outfile', 'mask'), ('outfile', 'roi')]),
             (extract_ts_node, get_conn_matrix_node, [('roi', 'roi')]),
             (check_orient_and_dims_mask_node, node_gen_node, [('outfile', 'roi')]),
-            (check_orient_and_dims_mask_node, register_node, [('outfile', 'mask')]),
-            (check_orient_and_dims_mask_node, register_atlas_node, [('outfile', 'mask')])
         ])
+        if parc is True:
+            fmri_connectometry_wf.connect([
+                (check_orient_and_dims_mask_node, register_node, [('outfile', 'mask')]),
+                (check_orient_and_dims_mask_node, register_atlas_node, [('outfile', 'mask')])
+            ])
         if k_clustering > 0:
             fmri_connectometry_wf.connect([
                 (check_orient_and_dims_mask_node, clustering_node, [('outfile', 'mask')]),
@@ -2508,17 +2511,24 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             (inputnode, node_gen_node, [('template_mask', 'roi')]),
             (inputnode, get_conn_matrix_node, [('template_mask', 'roi')]),
             (inputnode, extract_ts_node, [('mask', 'mask'), ('roi', 'roi')]),
-            (inputnode, register_node, [('mask', 'mask')]),
-            (inputnode, register_atlas_node, [('mask', 'mask')])
+
         ])
+        if parc is True:
+            fmri_connectometry_wf.connect([
+                (inputnode, register_node, [('mask', 'mask')]),
+                (inputnode, register_atlas_node, [('mask', 'mask')])
+            ])
     else:
         fmri_connectometry_wf.connect([
             (inputnode, node_gen_node, [('roi', 'roi')]),
             (inputnode, get_conn_matrix_node, [('roi', 'roi')]),
             (inputnode, extract_ts_node, [('mask', 'mask'), ('roi', 'roi')]),
-            (inputnode, register_node, [('mask', 'mask')]),
-            (inputnode, register_atlas_node, [('mask', 'mask')])
         ])
+        if parc is True:
+            fmri_connectometry_wf.connect([
+                (inputnode, register_node, [('mask', 'mask')]),
+                (inputnode, register_atlas_node, [('mask', 'mask')])
+            ])
 
     # Connect remaining nodes of workflow
     fmri_connectometry_wf.connect([
