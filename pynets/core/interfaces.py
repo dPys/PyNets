@@ -126,14 +126,20 @@ class IndividualClustering(SimpleInterface):
         clust_mask_temp_path = check_orient_and_dims(self.inputs.clust_mask, self.inputs.vox_size,
                                                      outdir=runtime.cwd)
 
-        out_name_mask = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
-        copyfile(self.inputs.mask, out_name_mask, copy=True, use_hardlink=False)
+        if self.inputs.mask:
+            out_name_mask = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.mask, out_name_mask, copy=True, use_hardlink=False)
+        else:
+            out_name_mask = None
 
         out_name_func_file = fname_presuffix(self.inputs.func_file, suffix='_tmp', newpath=runtime.cwd)
         copyfile(self.inputs.func_file, out_name_func_file, copy=True, use_hardlink=False)
 
-        out_name_conf = fname_presuffix(self.inputs.conf, suffix='_tmp', newpath=runtime.cwd)
-        copyfile(self.inputs.conf, out_name_conf, copy=True, use_hardlink=False)
+        if self.inputs.conf:
+            out_name_conf = fname_presuffix(self.inputs.conf, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.conf, out_name_conf, copy=True, use_hardlink=False)
+        else:
+            out_name_conf = None
 
         nip = clustools.NiParcellate(func_file=out_name_func_file,
                                      clust_mask=clust_mask_temp_path,
@@ -211,18 +217,25 @@ class ExtractTimeseries(SimpleInterface):
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import estimation
 
-        out_name_net_parcels_nii_path = fname_presuffix(self.inputs.net_parcels_nii_path, suffix='_tmp',
-                                                        newpath=runtime.cwd)
-        copyfile(self.inputs.net_parcels_nii_path, out_name_net_parcels_nii_path, copy=True, use_hardlink=False)
-
-        out_name_mask = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
-        copyfile(self.inputs.mask, out_name_mask, copy=True, use_hardlink=False)
-
+        if self.inputs.net_parcels_nii_path:
+            out_name_net_parcels_nii_path = fname_presuffix(self.inputs.net_parcels_nii_path, suffix='_tmp',
+                                                            newpath=runtime.cwd)
+            copyfile(self.inputs.net_parcels_nii_path, out_name_net_parcels_nii_path, copy=True, use_hardlink=False)
+        else:
+            out_name_net_parcels_nii_path = None
+        if self.inputs.mask:
+            out_name_mask = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.mask, out_name_mask, copy=True, use_hardlink=False)
+        else:
+            out_name_mask = None
         out_name_func_file = fname_presuffix(self.inputs.func_file, suffix='_tmp', newpath=runtime.cwd)
         copyfile(self.inputs.func_file, out_name_func_file, copy=True, use_hardlink=False)
 
-        out_name_conf = fname_presuffix(self.inputs.conf, suffix='_tmp', newpath=runtime.cwd)
-        copyfile(self.inputs.conf, out_name_conf, copy=True, use_hardlink=False)
+        if self.inputs.conf:
+            out_name_conf = fname_presuffix(self.inputs.conf, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.conf, out_name_conf, copy=True, use_hardlink=False)
+        else:
+            out_name_conf = None
 
         te = estimation.TimeseriesExtraction(net_parcels_nii_path=out_name_net_parcels_nii_path,
                                              node_size=self.inputs.node_size,
@@ -532,10 +545,12 @@ class RegisterFunc(SimpleInterface):
 
         # anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
         # copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
-
-        mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
-        copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
-
+        if self.inputs.mask:
+            mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
+        else:
+            mask_tmp_path = None
+            
         reg = register.FmriReg(basedir_path=runtime.cwd,
                                anat_file=self.inputs.anat_file,
                                mask=mask_tmp_path,

@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="" />
+    <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/core/interfaces.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/interfaces.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/core/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/workflows.py" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,8 +31,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="261">
-              <caret line="531" lean-forward="true" selection-start-line="531" selection-end-line="531" />
+            <state relative-caret-position="363">
+              <caret line="552" column="12" selection-start-line="552" selection-start-column="12" selection-end-line="552" selection-end-column="12" />
             </state>
           </provider>
         </entry>
@@ -57,8 +61,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/core/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-19023">
-              <caret line="1280" column="33" selection-start-line="1280" selection-start-column="33" selection-end-line="1280" selection-end-column="33" />
+            <state relative-caret-position="317">
+              <caret line="2521" column="39" lean-forward="true" selection-start-line="2521" selection-start-column="39" selection-end-line="2521" selection-end-column="39" />
               <folding>
                 <element signature="e#139#154#0" expanded="true" />
               </folding>
@@ -101,12 +105,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>outfile</find>
-      <find>overwrite</find>
-      <find>out_bvec_fname</find>
-      <find>out_fname</find>
-      <find>dwi_img</find>
-      <find>make_mean_b0</find>
       <find>b0_img_data</find>
       <find>all_b0s_file</find>
       <find>uncache</find>
@@ -120,7 +118,6 @@
       <find>asyncio</find>
       <find>Register</find>
       <find>basedir_path</find>
-      <find>register_atlas_node</find>
       <find>dir_path</find>
       <find>atlas</find>
       <find>default_value</find>
@@ -131,6 +128,13 @@
       <find>kmeans</find>
       <find>min_region_size</find>
       <find>ward</find>
+      <find>register_atlas_node</find>
+      <find>(inputnode, register_atlas_node, [('mask', 'mask')])</find>
+      <find>parc is False</find>
+      <find>parc</find>
+      <find>net_parcels_nii_path</find>
+      <find>extract_ts_node</find>
+      <find>fname_presuffix</find>
     </findStrings>
     <replaceStrings>
       <replace>nii</replace>
@@ -209,17 +213,17 @@
         <option value="$PROJECT_DIR$/pynets/dmri/estimation.py" />
         <option value="$PROJECT_DIR$/pynets/registration/reg_utils.py" />
         <option value="$PROJECT_DIR$/pynets/core/utils.py" />
-        <option value="$PROJECT_DIR$/pynets/core/workflows.py" />
-        <option value="$PROJECT_DIR$/pynets/core/interfaces.py" />
         <option value="$PROJECT_DIR$/pynets/registration/register.py" />
         <option value="$PROJECT_DIR$/pynets/cli/pynets_run.py" />
         <option value="$PROJECT_DIR$/pynets/fmri/clustools.py" />
+        <option value="$PROJECT_DIR$/pynets/core/workflows.py" />
+        <option value="$PROJECT_DIR$/pynets/core/interfaces.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
-    <option name="x" value="549" />
-    <option name="y" value="101" />
+  <component name="ProjectFrameBounds">
+    <option name="x" value="334" />
+    <option name="y" value="23" />
     <option name="width" value="1251" />
     <option name="height" value="984" />
   </component>
@@ -235,6 +239,17 @@
             <path>
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="pynets" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="pynets" type="462c0819:PsiDirectoryNode" />
+              <item name="core" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -350,12 +365,12 @@
       <workItem from="1581447576189" duration="101897000" />
       <workItem from="1582671869947" duration="2278000" />
       <workItem from="1582783890247" duration="11429000" />
-      <workItem from="1583018210734" duration="52306000" />
+      <workItem from="1583018210734" duration="53737000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="492918000" />
+    <option name="totallyTimeSpent" value="494349000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -367,7 +382,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="549" y="101" width="1251" height="984" extended-state="0" />
+    <frame x="334" y="23" width="1251" height="984" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49482164" visible="true" weight="0.16211745" />
@@ -770,16 +785,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/core/workflows.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-19023">
-          <caret line="1280" column="33" selection-start-line="1280" selection-start-column="33" selection-end-line="1280" selection-end-column="33" />
-          <folding>
-            <element signature="e#139#154#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/fmri/clustools.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="732">
@@ -800,10 +805,20 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/core/workflows.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="317">
+          <caret line="2521" column="39" lean-forward="true" selection-start-line="2521" selection-start-column="39" selection-end-line="2521" selection-end-column="39" />
+          <folding>
+            <element signature="e#139#154#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="261">
-          <caret line="531" lean-forward="true" selection-start-line="531" selection-end-line="531" />
+        <state relative-caret-position="363">
+          <caret line="552" column="12" selection-start-line="552" selection-start-column="12" selection-end-line="552" selection-end-column="12" />
         </state>
       </provider>
     </entry>
