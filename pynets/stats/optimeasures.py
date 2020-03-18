@@ -173,7 +173,9 @@ def calc_graph_vector(dir_path):
     N_measures = len(measures)
 
     thr_ix = filtered_filenames[0].split('_').index('thr-' + filtered_filenames[0].split('thr-')[1].split('_')[0])
-    filtered_list_grouped_by_thr = [list(j) for i, j in groupby(filtered_filenames, lambda x: '_'.join(x.split('_')[:thr_ix] + x.split('_')[1+thr_ix:]))]
+    filtered_list_grouped_by_thr = [list(j) for i, j in
+                                    groupby(filtered_filenames, lambda x: '_'.join(x.split('_')[:thr_ix] +
+                                                                                   x.split('_')[1+thr_ix:]))]
 
     if len(filtered_list_grouped_by_thr) > 0:
         namer_dir = dir_path + '/optimeasures'

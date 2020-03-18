@@ -1714,7 +1714,8 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                 # node_measures_grouped = [list(y) for x, y in groupby(node_cols, lambda s: s.split('_')[1])]
                 # for node_measures in node_measures_grouped:
                 #     pca = PCA(n_components=2)
-                #     df_concatted_pca = pd.Series(pca.fit_transform(df_concat.loc[:, node_measures])[1]).to_frame().transpose()
+                #     df_concatted_pca = pd.Series(pca.fit_transform(df_concat.loc[:,
+                #     node_measures])[1]).to_frame().transpose()
                 #     df_concatted_pca.columns = [str(col) + '_PCA' for col in df_concatted_pca.columns]
                 df_concatted_mean.columns = [str(col) + '_mean' for col in df_concatted_mean.columns]
                 df_concatted_median.columns = [str(col) + '_median' for col in df_concatted_median.columns]

@@ -777,7 +777,9 @@ class NiParcellate(object):
             else:
                 raise FileNotFoundError('File containing sparse matrix of local connectivity structure not found.')
 
-        if self.clust_type == 'complete' or self.clust_type == 'average' or self.clust_type == 'single' or self.clust_type == 'ward' or (self.clust_type == 'rena' and self.num_conn_comps == 1) or (self.clust_type == 'kmeans' and self.num_conn_comps == 1):
+        if self.clust_type == 'complete' or self.clust_type == 'average' or self.clust_type == 'single' or \
+            self.clust_type == 'ward' or (self.clust_type == 'rena' and self.num_conn_comps == 1) or \
+            (self.clust_type == 'kmeans' and self.num_conn_comps == 1):
             self._clust_est = Parcellations(method=self.clust_type, standardize=self._standardize,
                                             detrend=self._detrending,
                                             n_parcels=self.k, mask=self._clust_mask_corr_img,

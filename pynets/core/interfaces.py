@@ -5,7 +5,8 @@ Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
-from nipype.interfaces.base import BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface, Directory
+from nipype.interfaces.base import (BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface,
+                                    Directory)
 
 
 class NetworkAnalysisInputSpec(BaseInterfaceInputSpec):
@@ -550,7 +551,7 @@ class RegisterFunc(SimpleInterface):
             copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
         else:
             mask_tmp_path = None
-            
+
         reg = register.FmriReg(basedir_path=runtime.cwd,
                                anat_file=self.inputs.anat_file,
                                mask=mask_tmp_path,

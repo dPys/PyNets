@@ -622,8 +622,10 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                 meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._n_procs = runtime_dict[node_name][0]
                 meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._mem_gb = runtime_dict[node_name][1]
                 try:
-                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.n_procs = runtime_dict[node_name][0]
-                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.mem_gb = runtime_dict[node_name][1]
+                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.n_procs = \
+                        runtime_dict[node_name][0]
+                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.mem_gb = \
+                        runtime_dict[node_name][1]
                 except:
                     continue
 
@@ -634,8 +636,10 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                 meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._n_procs = runtime_dict[node_name][0]
                 meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._mem_gb = runtime_dict[node_name][1]
                 try:
-                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.n_procs = runtime_dict[node_name][0]
-                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.mem_gb = runtime_dict[node_name][1]
+                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.n_procs = \
+                        runtime_dict[node_name][0]
+                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.mem_gb = \
+                        runtime_dict[node_name][1]
                 except:
                     continue
 
@@ -1207,7 +1211,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                     [x for x in map_connects if x != ('thr', 'thr')])])
 
     # Begin joinnode chaining logic
-    if conn_model_list or multi_directget or node_size_list or user_atlas_list or multi_atlas or flexi_atlas is True or multi_thr is True or max_length_list:
+    if conn_model_list or multi_directget or node_size_list or user_atlas_list or multi_atlas or \
+        flexi_atlas is True or multi_thr is True or max_length_list:
         if user_atlas_list or multi_atlas or flexi_atlas is True:
             join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
                                           name='join_iters_node_atlas',
@@ -1349,7 +1354,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                        'track_type', 'directget', 'max_length']
 
         # # Plotting iterable graph solutions
-        if conn_model_list or node_size_list or multi_directget or max_length_list or multi_thr or user_atlas_list or multi_atlas or flexi_atlas is True:
+        if conn_model_list or node_size_list or multi_directget or max_length_list or multi_thr or user_atlas_list or \
+            multi_atlas or flexi_atlas is True:
             plot_all_node = pe.MapNode(PlotStruct(), iterfield=plot_fields, name="plot_all_node", nested=True)
         else:
             # Plotting singular graph solution
@@ -2291,7 +2297,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                     [x for x in map_connects if x != ('thr', 'thr')])])
 
     # Begin joinnode chaining logic
-    if conn_model_list or node_size_list or smooth_list or user_atlas_list or multi_atlas or float(k_clustering) > 1 or flexi_atlas is True or multi_thr is True or hpass_list is not None:
+    if conn_model_list or node_size_list or smooth_list or user_atlas_list or multi_atlas or float(k_clustering) > 1 \
+        or flexi_atlas is True or multi_thr is True or hpass_list is not None:
         if user_atlas_list or multi_atlas or float(k_clustering) > 1 or flexi_atlas is True:
             join_iters_node = pe.JoinNode(niu.IdentityInterface(fields=map_fields),
                                           name='join_iters_node_atlas',
@@ -2423,7 +2430,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                        'coords', 'thr', 'node_size', 'edge_threshold', 'smooth', 'prune', 'uatlas', 'c_boot',
                        'norm', 'binary', 'hpass']
         # Plotting iterable graph solutions
-        if conn_model_list or node_size_list or smooth_list or multi_thr or user_atlas_list or multi_atlas or float(k_clustering) > 1 or flexi_atlas is True or hpass_list:
+        if conn_model_list or node_size_list or smooth_list or multi_thr or user_atlas_list or multi_atlas or \
+            float(k_clustering) > 1 or flexi_atlas is True or hpass_list:
             plot_all_node = pe.MapNode(PlotFunc(), iterfield=plot_fields, name="plot_all_node", nested=True)
         else:
             # Plotting singular graph solution

@@ -115,7 +115,8 @@ def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_af
     return
 
 
-def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size, smooth, c_boot, hpass):
+def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size, smooth,
+                       c_boot, hpass):
     """
     API for selecting among various functional connectivity matrix plotting approaches.
 
@@ -211,7 +212,8 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
     return
 
 
-def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size, target_samples, track_type, directget, max_length):
+def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size,
+                         target_samples, track_type, directget, max_length):
     """
     API for selecting among various structural connectivity matrix plotting approaches.
 

@@ -138,7 +138,8 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         print('\nComputing partial correlation matrix...\n')
         conn_measure = ConnectivityMeasure(kind='partial correlation')
         conn_matrix = conn_measure.fit_transform([time_series])[0]
-    elif conn_model == 'cov' or conn_model == 'covariance' or conn_model == 'covar' or conn_model == 'sps' or conn_model == 'sparse' or conn_model == 'precision':
+    elif conn_model == 'cov' or conn_model == 'covariance' or conn_model == 'covar' or conn_model == 'sps' or \
+        conn_model == 'sparse' or conn_model == 'precision':
         # Fit estimator to matrix to get sparse matrix
         estimator_shrunk = None
         estimator = GraphicalLassoCV(cv=5)
@@ -261,7 +262,8 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
 
     del time_series
 
-    return conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass
+    return (conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
+            disp_filt, parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass)
 
 
 def timeseries_bootstrap(tseries, block_size):

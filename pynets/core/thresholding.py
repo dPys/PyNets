@@ -879,7 +879,8 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     utils.save_mat(conn_matrix_thr, est_path)
     gc.collect()
 
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID, dir_path, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass
+    return (conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID,
+            dir_path, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass)
 
 
 def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
@@ -1038,4 +1039,6 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     utils.save_mat(conn_matrix_thr, est_path)
     gc.collect()
 
-    return conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, atlas_mni, streams, directget, max_length
+    return (conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path,
+            atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, atlas_mni, streams, directget,
+            max_length)
