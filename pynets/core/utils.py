@@ -257,7 +257,8 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
     return est_path
 
 
-def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, target_samples, track_type, parc, directget, max_length):
+def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, target_samples, track_type, parc,
+                         directget, max_length):
     """
     Name the raw structural connectivity matrix file based on relevant graph-generating parameters.
 
@@ -457,7 +458,8 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr
     if (multiplex > 0) and (multimodal is True):
         multigraph_list_all = netmotifs.build_multigraphs(est_path_iterlist, list(flatten(ID_iterlist))[0])
 
-    return conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
+    return (conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
+            roi_iterlist, norm_iterlist, binary_iterlist)
 
 
 def pass_meta_ins(conn_model, est_path, network, thr, prune, ID, roi, norm, binary):
@@ -534,7 +536,8 @@ def pass_meta_ins(conn_model, est_path, network, thr, prune, ID, roi, norm, bina
     # print(norm_iterlist)
     # print(binary_iterlist)
     # print('\n\n')
-    return conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
+    return (conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
+            roi_iterlist, norm_iterlist, binary_iterlist)
 
 
 def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, thr_func, prune_func, ID_func,
@@ -637,7 +640,8 @@ def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, thr_func, 
     # print(norm_iterlist)
     # print(binary_iterlist)
     # print('\n\n')
-    return conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist
+    return (conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
+            roi_iterlist, norm_iterlist, binary_iterlist)
 
 
 def collectpandasjoin(net_mets_csv):
@@ -1011,9 +1015,9 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
     hyperparam_dict['atlas'] = atlas
 
     for hyperparam in hyperparams:
-        if hyperparam != 'smooth' and hyperparam != 'hpass' and hyperparam != 'track_type' and hyperparam != 'directget' and hyperparam != 'max_length':
+        if (hyperparam != 'smooth') and (hyperparam != 'hpass') and (hyperparam != 'track_type') and \
+                (hyperparam != 'directget') and (hyperparam != 'max_length'):
             hyperparam_dict[hyperparam] = file_renamed.split(hyperparam + '-')[1].split('_')[0]
-
     if modality == 'func':
         if 'smooth-' in file_renamed:
             hyperparam_dict['smooth'] = file_renamed.split('smooth-')[1].split('_')[0].split('fwhm')[0]

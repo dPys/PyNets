@@ -275,7 +275,8 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
     from dipy.tracking.local_tracking import LocalTracking, ParticleFilteringTracking
-    from dipy.direction import ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter, DeterministicMaximumDirectionGetter
+    from dipy.direction import (ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter,
+                                DeterministicMaximumDirectionGetter)
 
     if waymask:
         waymask_data = np.asarray(nib.load(waymask).dataobj).astype('bool')
@@ -610,4 +611,6 @@ def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels
 
     gc.collect()
 
-    return streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, curv_thr_list, step_list, fa_path, dm_path, directget, labels_im_file, roi_neighborhood_tol, max_length
+    return (streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi,
+            min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni,
+            curv_thr_list, step_list, fa_path, dm_path, directget, labels_im_file, roi_neighborhood_tol, max_length)

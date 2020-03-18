@@ -1243,7 +1243,8 @@ def build_workflow(args, retval):
             else:
                 print("%s%s" % ("\nPredefined atlas: ", atlas))
         else:
-            if (uatlas is None) and (k == 0) and user_atlas_list is None and k_list is None and atlas is None and multi_atlas is None:
+            if (uatlas is None) and (k == 0) and (user_atlas_list is None) and (k_list is None) and \
+                    (atlas is None) and (multi_atlas is None):
                 print('\nERROR: No atlas specified!')
                 retval['return_code'] = 1
                 return retval
@@ -1571,15 +1572,19 @@ def build_workflow(args, retval):
             wf_selected = "%s%s" % ('fmri_connectometry_', ID)
             for node_name in wf.get_node(meta_wf.name).get_node(wf_selected).list_node_names():
                 if node_name in runtime_dict:
-                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
-                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = \
+                        runtime_dict[node_name][0]
+                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = \
+                        runtime_dict[node_name][1]
 
         if dwi_file:
             wf_selected = "%s%s" % ('dmri_connectometry_', ID)
             for node_name in wf.get_node(meta_wf.name).get_node(wf_selected).list_node_names():
                 if node_name in runtime_dict:
-                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
-                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = \
+                        runtime_dict[node_name][0]
+                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = \
+                        runtime_dict[node_name][1]
 
         wf.get_node(meta_wf.name)._n_procs = procmem[0]
         wf.get_node(meta_wf.name)._mem_gb = procmem[1]
@@ -1760,25 +1765,35 @@ def build_workflow(args, retval):
             if func_file:
                 wf_selected = "%s%s" % ('fmri_connectometry_', ID[i])
                 meta_wf_name = "%s%s" % ('meta_wf_', ID[i])
-                for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
+                for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).\
+                        get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
-                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
-                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).\
+                            get_node(node_name)._n_procs = runtime_dict[node_name][0]
+                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).\
+                            get_node(node_name)._mem_gb = runtime_dict[node_name][1]
                         try:
-                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name).interface.n_procs = runtime_dict[node_name][0]
-                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name).interface.mem_gb = runtime_dict[node_name][1]
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).\
+                                get_node(node_name).interface.n_procs = runtime_dict[node_name][0]
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).\
+                                get_node(node_name).interface.mem_gb = runtime_dict[node_name][1]
                         except:
                             continue
             if dwi_file:
                 wf_selected = "%s%s" % ('dmri_connectometry_', ID[i])
                 meta_wf_name = "%s%s" % ('meta_wf_', ID[i])
-                for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).list_node_names():
+                for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).\
+                        get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
-                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._n_procs = runtime_dict[node_name][0]
-                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name)._mem_gb = runtime_dict[node_name][1]
+                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).\
+                            get_node(node_name)._n_procs = runtime_dict[node_name][0]
+                        wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).\
+                            get_node(node_name)._mem_gb = runtime_dict[node_name][1]
                         try:
-                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name).interface.n_procs = runtime_dict[node_name][0]
-                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).get_node(node_name).interface.mem_gb = runtime_dict[node_name][1]
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).\
+                                get_node(node_name).interface.n_procs = runtime_dict[node_name][0]
+                            wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).get_node(wf_selected).\
+                                get_node(node_name).interface.mem_gb = runtime_dict[node_name][1]
                         except:
                             continue
 

@@ -358,7 +358,8 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
                                                target_shape=RSNmask.shape).dataobj) == 1] = 1
 
             # Count number of unique voxels where overlap of parcel and mask occurs
-            overlap_count = len(np.unique(np.where((RSNmask.astype('uint16') == 1) & (parcel_vol.astype('uint16') == 1))))
+            overlap_count = len(np.unique(np.where((RSNmask.astype('uint16') == 1) &
+                                                   (parcel_vol.astype('uint16') == 1))))
 
             # Count number of total unique voxels within the parcel
             total_count = len(np.unique(np.where((parcel_vol.astype('uint16') == 1))))
@@ -382,7 +383,8 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
     par_img.uncache()
 
     if len(coords_mm) <= 1:
-        raise ValueError("%s%s%s" % ('\nERROR: No coords from the specified atlas found within ', network, ' network.'))
+        raise ValueError("%s%s%s" % ('\nERROR: No coords from the specified atlas found within ', network,
+                                     ' network.'))
 
     return coords_mm, RSN_parcels, net_labels, network
 
@@ -439,7 +441,8 @@ def parcel_masker(roi, coords, parcel_list, labels, dir_path, ID, perc_overlap):
         parcel_vol[parcel_data_reshaped == 1] = 1
 
         # Count number of unique voxels where overlap of parcel and mask occurs
-        overlap_count = len(np.unique(np.where((mask_data.astype('uint16') == 1) & (parcel_vol.astype('uint16') == 1))))
+        overlap_count = len(np.unique(np.where((mask_data.astype('uint16') == 1) &
+                                               (parcel_vol.astype('uint16') == 1))))
 
         # Count number of total unique voxels within the parcel
         total_count = len(np.unique(np.where((parcel_vol.astype('uint16') == 1))))

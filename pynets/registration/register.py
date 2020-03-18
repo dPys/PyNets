@@ -182,11 +182,11 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     from dipy.io.streamline import load_tractogram
 
     dsn_dir = "%s%s" % (basedir_path, '/dmri_reg_tmp/DSN')
-    if not os.path.isdir(dsn_dir):
+    if not op.isdir(dsn_dir):
         os.mkdir(dsn_dir)
 
     namer_dir = '{}/tractography'.format(dir_path)
-    if not os.path.isdir(namer_dir):
+    if not op.isdir(namer_dir):
         os.mkdir(namer_dir)
 
     atlas_img = nib.load(labels_im_file)
@@ -282,7 +282,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
         transform_streamlines(transform_streamlines(
             [sum(d, s) for d, s in zip(values_from_volume(mapping.get_forward_field(), streams_in_curr_grid,
                                                           ref_grid_aff), streams_in_curr_grid)],
-            np.linalg.inv(adjusted_affine)), np.linalg.inv(warped_fa_img.affine)), np.eye(4), brain_mask, include=True))
+            np.linalg.inv(adjusted_affine)), np.linalg.inv(warped_fa_img.affine)), np.eye(4), brain_mask,
+        include=True))
 
     # Remove streamlines with negative voxel indices
     lin_T, offset = _mapping_to_voxel(np.eye(4))
@@ -321,18 +322,21 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     uatlas_mni_data = np.asarray(uatlas_mni_img.dataobj)
     uatlas_mni_img.uncache()
     overlap_mask = np.invert(warped_uatlas_img_res_data.astype('bool') * uatlas_mni_data.astype('bool'))
-    atlas_mni = "%s%s%s%s" % (dir_path, '/parcellations/', os.path.basename(uatlas).split('.nii')[0],
+    atlas_mni = "%s%s%s%s" % (dir_path, '/parcellations/', op.basename(uatlas).split('.nii')[0],
                               '_UNION.nii.gz')
     nib.save(nib.Nifti1Image(warped_uatlas_img_res_data * overlap_mask.astype('int') +
                              uatlas_mni_data * overlap_mask.astype('int') +
                              np.invert(overlap_mask).astype('int') *
                              warped_uatlas_img_res_data, affine=warped_fa_affine), atlas_mni)
 
-    del tractogram, streamlines, warped_uatlas_img_res_data, uatlas_mni_data, overlap_mask, stf, streams_final_filt_final, streams_final_filt, streams_in_curr_grid, brain_mask
+    del (tractogram, streamlines, warped_uatlas_img_res_data, uatlas_mni_data, overlap_mask, stf,
+         streams_final_filt_final, streams_final_filt, streams_in_curr_grid, brain_mask)
 
     gc.collect()
 
-    return streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget, warped_fa, max_length, error_margin
+    return (streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi,
+            min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget,
+            warped_fa, max_length, error_margin)
 
 
 class DmriReg(object):
@@ -342,6 +346,7 @@ class DmriReg(object):
 
     def __init__(self, basedir_path, fa_path, ap_path, B0_mask, anat_file, mask, vox_size, simple):
         import pkg_resources
+        import os.path as op
         self.simple = simple
         self.ap_path = ap_path
         self.fa_path = fa_path
@@ -406,7 +411,8 @@ class DmriReg(object):
         self.mni_atlas = pkg_resources.resource_filename("pynets", "core/atlases/HarvardOxford-sub-prob-" + vox_size +
                                                          ".nii.gz")
         self.wm_gm_int_in_dwi = "%s%s%s%s" % (self.reg_path_img, '/', self.t1w_name, "_wm_gm_int_in_dwi.nii.gz")
-        self.wm_gm_int_in_dwi_bin = "%s%s%s%s" % (self.reg_path_img, '/', self.t1w_name, "_wm_gm_int_in_dwi_bin.nii.gz")
+        self.wm_gm_int_in_dwi_bin = "%s%s%s%s" % (self.reg_path_img, '/', self.t1w_name,
+                                                  "_wm_gm_int_in_dwi_bin.nii.gz")
         self.corpuscallosum = pkg_resources.resource_filename("pynets", "templates/CorpusCallosum_" + vox_size +
                                                               ".nii.gz")
         self.corpuscallosum_mask_t1w = ("%s%s" % (self.reg_path_img, '/CorpusCallosum_t1wmask.nii.gz'))
@@ -418,10 +424,10 @@ class DmriReg(object):
         reg_dirs = [self.tmp_path, self.reg_path, self.anat_path, self.reg_path_mat, self.reg_path_warp,
                     self.reg_path_img]
         for i in range(len(reg_dirs)):
-            if not os.path.isdir(reg_dirs[i]):
+            if not op.isdir(reg_dirs[i]):
                 os.mkdir(reg_dirs[i])
 
-        if os.path.isfile(self.t1w_brain) is False:
+        if op.isfile(self.t1w_brain) is False:
             import shutil
             shutil.copyfile(self.t1w, self.t1w_brain)
 
@@ -430,19 +436,20 @@ class DmriReg(object):
         A function to segment and threshold tissue types from T1w.
         """
         # from pynets.plotting.plot_gen import qa_fast_png
+        import os.path as op
         import glob
 
         # Apply brain mask if detected as a separate file
         try:
-            anat_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
-            if os.path.isfile(anat_mask_existing) and not self.mask:
+            anat_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
+            if op.isfile(anat_mask_existing) and not self.mask:
                 anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.vox_size)
                 os.system("fslmaths {} -mas {} {}".format(self.t1w_brain, anat_mask_existing, self.t1w_brain))
 
             # Segment the t1w brain into probability maps
-            gm_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
-            wm_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_label-WM_probseg.nii.gz')[0]
-            csf_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_label-CSF_probseg.nii.gz')[0]
+            gm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
+            wm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-WM_probseg.nii.gz')[0]
+            csf_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-CSF_probseg.nii.gz')[0]
         except:
             anat_mask_existing = None
             wm_mask_existing = None
@@ -450,7 +457,7 @@ class DmriReg(object):
             csf_mask_existing = None
 
         if wm_mask_existing and gm_mask_existing and csf_mask_existing:
-            if os.path.isfile(wm_mask_existing) and os.path.isfile(gm_mask_existing) and os.path.isfile(csf_mask_existing):
+            if op.isfile(wm_mask_existing) and op.isfile(gm_mask_existing) and op.isfile(csf_mask_existing):
                 self.wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.vox_size, overwrite=False)
                 self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size, overwrite=False)
                 self.csf_mask = regutils.check_orient_and_dims(csf_mask_existing, self.vox_size, overwrite=False)
@@ -656,9 +663,10 @@ class DmriReg(object):
         First creates ventricle ROI. Then creates transforms from stock MNI template to dwi space.
         For this to succeed, must first have called both t1w2dwi_align and atlas2t1w2dwi_align.
         """
+        import os.path as op
 
         # Register Lateral Ventricles and Corpus Callosum rois to t1w
-        if not os.path.isfile(self.mni_atlas):
+        if not op.isfile(self.mni_atlas):
             raise ValueError('FSL atlas for ventricle reference not found!')
 
         # Create transform to MNI atlas to T1w using flirt. This will be use to transform the ventricles to dwi space.
@@ -756,6 +764,7 @@ class FmriReg(object):
     """
 
     def __init__(self, basedir_path, anat_file, mask, vox_size, simple):
+        import os.path as op
         import pkg_resources
         self.t1w = anat_file
         self.mask = mask
@@ -793,10 +802,10 @@ class FmriReg(object):
         reg_dirs = [self.tmp_path, self.reg_path, self.anat_path, self.reg_path_mat, self.reg_path_warp,
                     self.reg_path_img]
         for i in range(len(reg_dirs)):
-            if not os.path.isdir(reg_dirs[i]):
+            if not op.isdir(reg_dirs[i]):
                 os.mkdir(reg_dirs[i])
 
-        if os.path.isfile(self.t1w_brain) is False:
+        if op.isfile(self.t1w_brain) is False:
             import shutil
             shutil.copyfile(self.t1w, self.t1w_brain)
 
@@ -805,22 +814,23 @@ class FmriReg(object):
         A function to segment and threshold tissue types from T1w.
         """
         import glob
+        import os.path as op
 
         # Apply brain mask if detected as a separate file
         try:
-            anat_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
-            if os.path.isfile(anat_mask_existing) and not self.mask:
+            anat_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
+            if op.isfile(anat_mask_existing) and not self.mask:
                 anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.vox_size)
                 os.system("fslmaths {} -mas {} {}".format(self.t1w_brain, anat_mask_existing, self.t1w_brain))
 
             # Segment the t1w brain into probability maps
-            gm_mask_existing = glob.glob(os.path.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
+            gm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
         except:
             anat_mask_existing = None
             gm_mask_existing = None
 
         if gm_mask_existing:
-            if os.path.isfile(gm_mask_existing):
+            if op.isfile(gm_mask_existing):
                 self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size, overwrite=False)
             else:
                 try:
@@ -1008,7 +1018,8 @@ def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, f
                                                                                                    uatlas_parcels,
                                                                                                    atlas)
 
-    return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni, uatlas, atlas, coords, labels, node_size, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, ap_path, gtab_file, B0_mask, dwi_file
+    return (dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni, uatlas, atlas, coords, labels,
+            node_size, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, ap_path, gtab_file, B0_mask, dwi_file)
 
 
 def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, vox_size, mask, reg_fmri_complete,
