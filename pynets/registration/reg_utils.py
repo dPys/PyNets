@@ -264,7 +264,7 @@ def wm_syn(template_path, fa_path, working_dir):
     from dipy.align.transforms import TranslationTransform3D, RigidTransform3D, AffineTransform3D
     from dipy.align.imwarp import SymmetricDiffeomorphicRegistration
     from dipy.align.metrics import CCMetric
-    from dipy.viz import regtools
+    # from dipy.viz import regtools
 
     fa_img = nib.load(fa_path)
     template_img = nib.load(template_path)
@@ -317,13 +317,13 @@ def wm_syn(template_path, fa_path, working_dir):
     warped_fa = '{}/warped_fa_{}.nii.gz'.format(working_dir, run_uuid)
     nib.save(nib.Nifti1Image(warped_moving, affine=static_affine), warped_fa)
 
-    # We show the registration result with:
-    regtools.overlay_slices(static, warped_moving, None, 0, "Static", "Moving",
-                            "%s%s%s%s" % (working_dir, "/transformed_sagittal_", run_uuid, ".png"))
-    regtools.overlay_slices(static, warped_moving, None, 1, "Static", "Moving",
-                            "%s%s%s%s" % (working_dir, "/transformed_coronal_", run_uuid, ".png"))
-    regtools.overlay_slices(static, warped_moving, None, 2, "Static", "Moving",
-                            "%s%s%s%s" % (working_dir, "/transformed_axial_", run_uuid, ".png"))
+    # # We show the registration result with:
+    # regtools.overlay_slices(static, warped_moving, None, 0, "Static", "Moving",
+    #                         "%s%s%s%s" % (working_dir, "/transformed_sagittal_", run_uuid, ".png"))
+    # regtools.overlay_slices(static, warped_moving, None, 1, "Static", "Moving",
+    #                         "%s%s%s%s" % (working_dir, "/transformed_coronal_", run_uuid, ".png"))
+    # regtools.overlay_slices(static, warped_moving, None, 2, "Static", "Moving",
+    #                         "%s%s%s%s" % (working_dir, "/transformed_axial_", run_uuid, ".png"))
 
     return mapping, affine_map, warped_fa
 
