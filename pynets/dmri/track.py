@@ -271,6 +271,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
     """
+    import gc
     from colorama import Fore, Style
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
@@ -336,13 +337,13 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                                                       mode='any',
                                                                       tol=roi_neighborhood_tol))
 
-                print("%s%s" % ('Qualifying streamlines by node intersection: ', len(roi_proximal_streamlines)))
+                print("%s%s" % ('Filtering by node intersection: ', len(roi_proximal_streamlines)))
 
                 roi_proximal_streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in
                                                                                          roi_proximal_streamlines if
                                                                                          len(s) > float(min_length)])
 
-                print("%s%s" % ('Qualifying streamlines by minimum length criterion: ', len(roi_proximal_streamlines)))
+                print("%s%s" % ('Filtering by minimum length criterion: ', len(roi_proximal_streamlines)))
 
                 if waymask:
                     roi_proximal_streamlines = roi_proximal_streamlines[utils.near_roi(roi_proximal_streamlines,
@@ -350,21 +351,14 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                                                                        waymask_data,
                                                                                        tol=roi_neighborhood_tol,
                                                                                        mode='any')]
-                    print("%s%s" % ('Qualifying streamlines by waymask proximity: ', len(roi_proximal_streamlines)))
+                    print("%s%s" % ('Filtering by waymask proximity: ', len(roi_proximal_streamlines)))
 
-                # Repeat process until target samples condition is met
-                ix = ix + 1
-                for s in roi_proximal_streamlines:
-                    stream_counter = stream_counter + len(s)
-                    streamlines.append(s)
-                    if int(stream_counter) >= int(target_samples):
-                        break
-                    else:
-                        continue
+                streamlines.extend([s for s in roi_proximal_streamlines])
+                stream_counter = stream_counter + len([s for s in roi_proximal_streamlines])
 
                 # Cleanup memory
                 del seeds, roi_proximal_streamlines, streamline_generator
-
+                gc.collect()
             del dg
 
         circuit_ix = circuit_ix + 1
@@ -372,245 +366,6 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                               Fore.CYAN, stream_counter))
         print(Style.RESET_ALL)
 
-    print('\n')
-
-    return streamlines
-
-
-def run_track(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, labels_im_file_wm_gm_int,
-              labels_im_file, target_samples, curv_thr_list, step_list, track_type, max_length, maxcrossing, directget,
-              conn_model, gtab_file, dwi_file, network, node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc,
-              prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, min_length,
-              fa_path, waymask, roi_neighborhood_tol=8, sphere='repulsion724'):
-    """
-    Run all ensemble tractography and filtering routines.
-
-    Parameters
-    ----------
-    B0_mask : str
-        File path to B0 brain mask.
-    gm_in_dwi : str
-        File path to grey-matter tissue segmentation Nifti1Image.
-    vent_csf_in_dwi : str
-        File path to ventricular CSF tissue segmentation Nifti1Image.
-    wm_in_dwi : str
-        File path to white-matter tissue segmentation Nifti1Image.
-    tiss_class : str
-        Tissue classification method.
-    labels_im_file_wm_gm_int : str
-        File path to atlas parcellation Nifti1Image in T1w-warped native diffusion space, restricted to wm-gm interface.
-    labels_im_file : str
-        File path to atlas parcellation Nifti1Image in T1w-warped native diffusion space.
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
-    curv_thr_list : list
-        List of integer curvature thresholds used to perform ensemble tracking.
-    step_list : list
-        List of float step-sizes used to perform ensemble tracking.
-    track_type : str
-        Tracking algorithm used (e.g. 'local' or 'particle').
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
-    maxcrossing : int
-        Maximum number if diffusion directions that can be assumed per voxel while tracking.
-    directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
-        and prob (probabilistic).
-    conn_model : str
-        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
-    gtab_file : str
-        File path to pickled DiPy gradient table object.
-    dwi_file : str
-        File path to diffusion weighted image.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
-        used to filter nodes in the study of brain subgraphs.
-    node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for tracking.
-    dens_thresh : bool
-        Indicates whether a target graph density is to be used as the basis for
-        thresholding.
-    ID : str
-        A subject id or other unique identifier.
-    roi : str
-        File path to binarized/boolean region-of-interest Nifti1Image file.
-    min_span_tree : bool
-        Indicates whether local thresholding from the Minimum Spanning Tree
-        should be used.
-    disp_filt : bool
-        Indicates whether local thresholding using a disparity filter and
-        'backbone network' should be used.
-    parc : bool
-        Indicates whether to use parcels instead of coordinates as ROI nodes.
-    prune : bool
-        Indicates whether to prune final graph of disconnected nodes/isolates.
-    atlas : str
-        Name of atlas parcellation used.
-    uatlas : str
-        File path to atlas parcellation Nifti1Image in MNI template space.
-    labels : list
-        List of string labels corresponding to graph nodes.
-    coords : list
-        List of (x, y, z) tuples corresponding to a coordinate atlas used or
-        which represent the center-of-mass of each parcellation node.
-    norm : int
-        Indicates method of normalizing resulting graph.
-    binary : bool
-        Indicates whether to binarize resulting graph edges to form an
-        unweighted graph.
-    atlas_mni : str
-        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
-    min_length : int
-        Minimum fiber length threshold in mm.
-    fa_path : str
-        File path to FA Nifti1Image.
-    waymask : str
-        Path to a Nifti1Image in native diffusion space to constrain tractography.
-    roi_neighborhood_tol : float
-        Distance (in the units of the streamlines, usually mm). If any
-        coordinate in the streamline is within this distance from the center
-        of any voxel in the ROI, the filtering criterion is set to True for
-        this streamline, otherwise False. Defaults to the distance between
-        the center of each voxel and the corner of the voxel. Default is 10 mm.
-    sphere : str
-        Provide triangulated spheres. Default is repulsion724. Options are:
-        `symmetric362`, `symmetric642`, `symmetric724`, `repulsion724`, `repulsion100`, or `repulsion200`
-
-    Returns
-    -------
-    streams : str
-        File path to save streamline array sequence in .trk format.
-    track_type : str
-        Tracking algorithm used (e.g. 'local' or 'particle').
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
-    conn_model : str
-        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
-    dir_path : str
-        Path to directory containing subject derivative data for a given pynets run.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
-        used to filter nodes in the study of brain subgraphs.
-    node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for tracking.
-    dens_thresh : bool
-        Indicates whether a target graph density is to be used as the basis for
-        thresholding.
-    ID : str
-        A subject id or other unique identifier.
-    roi : str
-        File path to binarized/boolean region-of-interest Nifti1Image file.
-    min_span_tree : bool
-        Indicates whether local thresholding from the Minimum Spanning Tree
-        should be used.
-    disp_filt : bool
-        Indicates whether local thresholding using a disparity filter and
-        'backbone network' should be used.
-    parc : bool
-        Indicates whether to use parcels instead of coordinates as ROI nodes.
-    prune : bool
-        Indicates whether to prune final graph of disconnected nodes/isolates.
-    atlas : str
-        Name of atlas parcellation used.
-    uatlas : str
-        File path to atlas parcellation Nifti1Image in MNI template space.
-    labels : list
-        List of string labels corresponding to graph nodes.
-    coords : list
-        List of (x, y, z) tuples corresponding to a coordinate atlas used or
-        which represent the center-of-mass of each parcellation node.
-    norm : int
-        Indicates method of normalizing resulting graph.
-    binary : bool
-        Indicates whether to binarize resulting graph edges to form an
-        unweighted graph.
-    atlas_mni : str
-        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
-    curv_thr_list : list
-        List of integer curvature thresholds used to perform ensemble tracking.
-    step_list : list
-        List of float step-sizes used to perform ensemble tracking.
-    fa_path : str
-        File path to FA Nifti1Image.
-    dm_path : str
-        File path to fiber density map Nifti1Image.
-    directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
-        and prob (probabilistic).
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
-    """
-    import gc
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
-    from dipy.io import load_pickle
-    from colorama import Fore, Style
-    from dipy.data import get_sphere
-    from pynets.core import utils
-    from pynets.dmri.track import prep_tissues, reconstruction, create_density_map, track_ensemble
-
-    # Load diffusion data
-    dwi_img = nib.load(dwi_file)
-    dwi_data = np.asarray(dwi_img.dataobj)
-
-    # Fit diffusion model
-    mod_fit = reconstruction(conn_model, load_pickle(gtab_file), dwi_data, B0_mask)
-
-    # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
-    atlas_data = np.array(nib.load(labels_im_file).dataobj).astype('uint16')
-    atlas_data_wm_gm_int = np.asarray(nib.load(labels_im_file_wm_gm_int).dataobj).astype('uint16')
-
-    # Build mask vector from atlas for later roi filtering
-    parcels = []
-    i = 0
-    for roi_val in np.unique(atlas_data)[1:]:
-        parcels.append(atlas_data == roi_val)
-        i = i + 1
-
-    if np.sum(atlas_data) == 0:
-        raise ValueError('ERROR: No non-zero voxels found in atlas. Check any roi masks and/or wm-gm interface images '
-                         'to verify overlap with dwi-registered atlas.')
-
-    # Iteratively build a list of streamlines for each ROI while tracking
-    print("%s%s%s%s" % (Fore.GREEN, 'Target number of samples: ', Fore.BLUE, target_samples))
-    print(Style.RESET_ALL)
-    print("%s%s%s%s" % (Fore.GREEN, 'Using curvature threshold(s): ', Fore.BLUE, curv_thr_list))
-    print(Style.RESET_ALL)
-    print("%s%s%s%s" % (Fore.GREEN, 'Using step size(s): ', Fore.BLUE, step_list))
-    print(Style.RESET_ALL)
-    print("%s%s%s%s" % (Fore.GREEN, 'Tracking type: ', Fore.BLUE, track_type))
-    print(Style.RESET_ALL)
-    if directget == 'prob':
-        print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Probabilistic'))
-    elif directget == 'boot':
-        print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Bootstrapped'))
-    elif directget == 'closest':
-        print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Closest Peak'))
-    elif directget == 'det':
-        print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Deterministic Maximum'))
-    print(Style.RESET_ALL)
-
-    # Commence Ensemble Tractography
-    streamlines = track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_fit,
-                                 prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class),
-                                 get_sphere(sphere), directget, curv_thr_list, step_list, track_type,
-                                 maxcrossing, max_length, roi_neighborhood_tol, min_length, waymask)
     print('Tracking Complete')
 
-    # Create streamline density map
-    [streams, dir_path, dm_path] = create_density_map(dwi_img, utils.do_dir_path(atlas, dwi_file), streamlines,
-                                                      conn_model, target_samples, node_size, curv_thr_list, step_list,
-                                                      network, roi, directget, max_length)
-
-    del streamlines, dwi_data, atlas_data_wm_gm_int, atlas_data, mod_fit, parcels
-    dwi_img.uncache()
-
-    gc.collect()
-
-    return (streams, track_type, target_samples, conn_model, dir_path, network, node_size, dens_thresh, ID, roi,
-            min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni,
-            curv_thr_list, step_list, fa_path, dm_path, directget, labels_im_file, roi_neighborhood_tol, max_length)
+    return streamlines

@@ -325,13 +325,15 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
                                               bbox_valid_check=False).streamlines)
     roi_img.uncache()
 
-    fa_weights = values_from_volume(np.asarray(nib.load(warped_fa).dataobj), streamlines, np.eye(4))
-    global_fa_weights = list(utils.flatten(fa_weights))
-    min_global_fa_wei = min(global_fa_weights)
-    max_global_fa_wei = max(global_fa_weights)
-    fa_weights_norm = []
-    for val_list in fa_weights:
-        fa_weights_norm.append((val_list - min_global_fa_wei) / (max_global_fa_wei - min_global_fa_wei))
+    if fa_wei is True:
+        fa_weights = values_from_volume(np.asarray(nib.load(warped_fa).dataobj), streamlines, np.eye(4))
+        global_fa_weights = list(utils.flatten(fa_weights))
+        min_global_fa_wei = min(i for i in global_fa_weights if i > 0)
+        max_global_fa_wei = max(global_fa_weights)
+        fa_weights_norm = []
+        # Here we normalize by global FA
+        for val_list in fa_weights:
+            fa_weights_norm.append((val_list - min_global_fa_wei) / (max_global_fa_wei - min_global_fa_wei))
 
     # Instantiate empty networkX graph object & dictionary and create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4))
@@ -399,7 +401,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     # Convert to numpy matrix
     conn_matrix_raw = nx.to_numpy_matrix(g)
 
-    # Enforce symmetry
+    # Impose symmetry
     conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
 
     coords = np.array(coords)

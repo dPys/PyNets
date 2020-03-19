@@ -700,11 +700,11 @@ def perform_thresholding(conn_matrix, coords, labels, thr, thr_perc, min_span_tr
         if dens_thresh is True:
             print('Ignoring -dt flag since local density thresholding is not currently supported.')
         thr_type = 'MST_thr'
-        edge_threshold = "%s%s" % (str(np.abs(thr_perc)), '%')
+        edge_threshold = "%s%s" % (str(thr_perc), '%')
         [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, coords, labels, thr)
     elif disp_filt is True:
         thr_type = 'DISP_alpha'
-        edge_threshold = "%s%s" % (str(np.abs(thr_perc)), '%')
+        edge_threshold = "%s%s" % (str(thr_perc), '%')
         G1 = thresholding.disparity_filter(nx.from_numpy_array(np.abs(conn_matrix)))
         # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
         print('Computing edge disparity significance with alpha = %s' % thr)
@@ -727,7 +727,7 @@ def perform_thresholding(conn_matrix, coords, labels, thr, thr_perc, min_span_tr
     else:
         if dens_thresh is False:
             thr_type = 'prop'
-            edge_threshold = "%s%s" % (str(np.abs(thr_perc)), '%')
+            edge_threshold = "%s%s" % (str(thr_perc), '%')
             print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         else:
@@ -851,7 +851,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     import gc
     from pynets.core import utils, thresholding
 
-    thr_perc = 100 * float(thr)
+    thr_perc = 100-np.abs(100 * float(thr))
     if parc is True:
         node_size = 'parc'
 
@@ -1011,7 +1011,7 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     import gc
     from pynets.core import utils, thresholding
 
-    thr_perc = 100 * float(thr)
+    thr_perc = 100 - np.abs(100 * float(thr))
     if parc is True:
         node_size = 'parc'
 

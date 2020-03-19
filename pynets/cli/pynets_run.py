@@ -120,7 +120,6 @@ def get_parser():
     parser.add_argument('-mod',
                         metavar='Connectivity estimation/reconstruction method',
                         default='partcorr',
-                        required=True,
                         nargs='+',
                         choices=['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
                                  'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso', 'csa', 'csd'],
@@ -1550,22 +1549,24 @@ def build_workflow(args, retval):
         inputnode.inputs.binary = binary
         inputnode.inputs.multimodal = multimodal
 
-        meta_wf = workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas,
-                                    multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
-                                    anat_file, parc, ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr,
-                                    step_thr, k, clust_mask, k_list, k_clustering, user_atlas_list,
-                                    clust_mask_list, prune, node_size_list, num_total_samples, conn_model_list,
-                                    min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list, disp_filt,
-                                    clust_type, clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec,
-                                    target_samples, curv_thr_list, step_list, overlap_thr, track_type, max_length,
-                                    maxcrossing, min_length, directget, tiss_class, runtime_dict, execution_dict,
-                                    embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
-                                    vox_size, multiplex, waymask, local_corr, max_length_list)
-        meta_wf._n_procs = procmem[0]
-        meta_wf._mem_gb = procmem[1]
-        meta_wf.n_procs = procmem[0]
-        meta_wf.mem_gb = procmem[1]
-        wf.add_nodes([meta_wf])
+        if func_file or dwi_file:
+            meta_wf = workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas,
+                                        multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
+                                        anat_file, parc, ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr,
+                                        step_thr, k, clust_mask, k_list, k_clustering, user_atlas_list,
+                                        clust_mask_list, prune, node_size_list, num_total_samples, conn_model_list,
+                                        min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list,
+                                        disp_filt, clust_type, clust_type_list, c_boot, block_size, mask, norm, binary,
+                                        fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
+                                        track_type, max_length, maxcrossing, min_length, directget, tiss_class,
+                                        runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass,
+                                        hpass_list, template, template_mask, vox_size, multiplex, waymask, local_corr,
+                                        max_length_list)
+            meta_wf._n_procs = procmem[0]
+            meta_wf._mem_gb = procmem[1]
+            meta_wf.n_procs = procmem[0]
+            meta_wf.mem_gb = procmem[1]
+            wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
         if func_file:
@@ -1586,14 +1587,15 @@ def build_workflow(args, retval):
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = \
                         runtime_dict[node_name][1]
 
-        wf.get_node(meta_wf.name)._n_procs = procmem[0]
-        wf.get_node(meta_wf.name)._mem_gb = procmem[1]
-        wf.get_node(meta_wf.name).n_procs = procmem[0]
-        wf.get_node(meta_wf.name).mem_gb = procmem[1]
-        wf.get_node(meta_wf.name).get_node(wf_selected)._n_procs = procmem[0]
-        wf.get_node(meta_wf.name).get_node(wf_selected)._mem_gb = procmem[1]
-        wf.get_node(meta_wf.name).get_node(wf_selected).n_procs = procmem[0]
-        wf.get_node(meta_wf.name).get_node(wf_selected).mem_gb = procmem[1]
+        if func_file or dwi_file:
+            wf.get_node(meta_wf.name)._n_procs = procmem[0]
+            wf.get_node(meta_wf.name)._mem_gb = procmem[1]
+            wf.get_node(meta_wf.name).n_procs = procmem[0]
+            wf.get_node(meta_wf.name).mem_gb = procmem[1]
+            wf.get_node(meta_wf.name).get_node(wf_selected)._n_procs = procmem[0]
+            wf.get_node(meta_wf.name).get_node(wf_selected)._mem_gb = procmem[1]
+            wf.get_node(meta_wf.name).get_node(wf_selected).n_procs = procmem[0]
+            wf.get_node(meta_wf.name).get_node(wf_selected).mem_gb = procmem[1]
 
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=NetworkAnalysis(), name="NetworkAnalysis",
@@ -1621,41 +1623,8 @@ def build_workflow(args, retval):
 
         final_outputnode = pe.Node(niu.IdentityInterface(fields=['combination_complete']), name='final_outputnode')
 
-        wf.connect([
-            (meta_wf.get_node('pass_meta_outs_node'), net_mets_node, [('est_path_iterlist', 'est_path'),
-                                                                      ('network_iterlist', 'network'),
-                                                                      ('thr_iterlist', 'thr'),
-                                                                      ('ID_iterlist', 'ID'),
-                                                                      ('conn_model_iterlist', 'conn_model'),
-                                                                      ('roi_iterlist', 'roi'),
-                                                                      ('prune_iterlist', 'prune'),
-                                                                      ('norm_iterlist', 'norm'),
-                                                                      ('binary_iterlist', 'binary')]),
-            (inputnode, combine_pandas_dfs_node, [('network', 'network'),
-                                                  ('ID', 'ID'),
-                                                  ('plot_switch', 'plot_switch'),
-                                                  ('multi_nets', 'multi_nets'),
-                                                  ('multimodal', 'multimodal')]),
-            (net_mets_node, collect_pd_list_net_csv_node, [('out_path_neat', 'net_mets_csv')]),
-            (collect_pd_list_net_csv_node, combine_pandas_dfs_node, [('net_mets_csv_out', 'net_mets_csv_list')]),
-            (combine_pandas_dfs_node, final_outputnode, [('combination_complete', 'combination_complete')])
-        ])
-
         # Raw graph case
         if graph or multi_graph:
-            wf.disconnect([(meta_wf.get_node('pass_meta_outs_node'), net_mets_node,
-                            [('est_path_iterlist', 'est_path'),
-                             ('network_iterlist', 'network'),
-                             ('thr_iterlist', 'thr'),
-                             ('ID_iterlist', 'ID'),
-                             ('conn_model_iterlist', 'conn_model'),
-                             ('roi_iterlist', 'roi'),
-                             ('prune_iterlist', 'prune'),
-                             ('norm_iterlist', 'norm'),
-                             ('binary_iterlist', 'binary')])
-                           ])
-            wf.remove_nodes([meta_wf])
-
             # Multiple raw graphs
             if multi_graph:
                 net_mets_node.inputs.est_path = multi_graph
@@ -1678,7 +1647,29 @@ def build_workflow(args, retval):
                                                         ('norm', 'norm'),
                                                         ('binary', 'binary')])
                             ])
+        else:
+            wf.connect([
+                (meta_wf.get_node('pass_meta_outs_node'), net_mets_node, [('est_path_iterlist', 'est_path'),
+                                                                          ('network_iterlist', 'network'),
+                                                                          ('thr_iterlist', 'thr'),
+                                                                          ('ID_iterlist', 'ID'),
+                                                                          ('conn_model_iterlist', 'conn_model'),
+                                                                          ('roi_iterlist', 'roi'),
+                                                                          ('prune_iterlist', 'prune'),
+                                                                          ('norm_iterlist', 'norm'),
+                                                                          ('binary_iterlist', 'binary')])
+            ])
 
+        wf.connect([
+            (inputnode, combine_pandas_dfs_node, [('network', 'network'),
+                                                  ('ID', 'ID'),
+                                                  ('plot_switch', 'plot_switch'),
+                                                  ('multi_nets', 'multi_nets'),
+                                                  ('multimodal', 'multimodal')]),
+            (net_mets_node, collect_pd_list_net_csv_node, [('out_path_neat', 'net_mets_csv')]),
+            (collect_pd_list_net_csv_node, combine_pandas_dfs_node, [('net_mets_csv_out', 'net_mets_csv_list')]),
+            (combine_pandas_dfs_node, final_outputnode, [('combination_complete', 'combination_complete')])
+        ])
         return wf
 
     # Multi-subject pipeline

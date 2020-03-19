@@ -663,7 +663,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     from pynets.registration import reg_utils as regutils
     from pynets.dmri import estimation, track
     from pynets.dmri import dmri_utils as dmriutils
-    from pynets.core.interfaces import PlotStruct, RegisterDWI
+    from pynets.core.interfaces import PlotStruct, RegisterDWI, Tracking
     import os.path as op
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
@@ -848,9 +848,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                 name="get_anisopwr_node")
 
     register_node = pe.Node(RegisterDWI(), name="register_node")
-
-
-
     register_node._n_procs = runtime_dict['register_node'][0]
     register_node._mem_gb = runtime_dict['register_node'][1]
 
@@ -873,31 +870,13 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                              'B0_mask', 'dwi_file'],
                                                function=register.register_atlas_dwi, imports=import_list),
                                   name="register_atlas_node")
-
     register_atlas_node._n_procs = runtime_dict['register_atlas_node'][0]
     register_atlas_node._mem_gb = runtime_dict['register_atlas_node'][1]
 
-    run_tracking_node = pe.Node(niu.Function(input_names=['B0_mask', 'gm_in_dwi', 'vent_csf_in_dwi', 'wm_in_dwi',
-                                                          'tiss_class', 'labels_im_file_wm_gm_int',
-                                                          'labels_im_file', 'target_samples', 'curv_thr_list',
-                                                          'step_list', 'track_type', 'max_length', 'maxcrossing',
-                                                          'directget', 'conn_model', 'gtab_file', 'dwi_file', 'network',
-                                                          'node_size', 'dens_thresh', 'ID', 'roi', 'min_span_tree',
-                                                          'disp_filt', 'parc', 'prune', 'atlas',
-                                                          'uatlas', 'labels', 'coords', 'norm', 'binary',
-                                                          'atlas_mni', 'min_length', 'fa_path', 'waymask'],
-                                             output_names=['streams', 'track_type', 'target_samples',
-                                                           'conn_model', 'dir_path', 'network', 'node_size',
-                                                           'dens_thresh', 'ID', 'roi', 'min_span_tree',
-                                                           'disp_filt', 'parc', 'prune', 'atlas',
-                                                           'uatlas', 'labels', 'coords', 'norm', 'binary',
-                                                           'atlas_mni', 'curv_thr_list', 'step_list', 'fa_path',
-                                                           'dm_path', 'directget', 'labels_im_file',
-                                                           'roi_neighborhood_tol', 'max_length'],
-                                             function=track.run_track,
-                                             imports=import_list),
-                                name="run_tracking_node")
+    run_tracking_node = pe.Node(Tracking(), name="run_tracking_node")
     run_tracking_node.synchronize = True
+    run_tracking_node._n_procs = runtime_dict['run_tracking_node'][0]
+    run_tracking_node._mem_gb = runtime_dict['run_tracking_node'][1]
 
     # Set tracking iterable combinations
     if conn_model_list or multi_directget or max_length_list:
