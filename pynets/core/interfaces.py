@@ -448,7 +448,7 @@ class _RegisterDWIOutputSpec(TraitedSpec):
     dwi_file = File(exists=True, mandatory=True)
     waymask_in_dwi = traits.Any(mandatory=False)
     basedir_path = Directory(exists=True, mandatory=True)
-
+    t1w2dwi = File(exists=True, mandatory=True)
 
 class RegisterDWI(SimpleInterface):
     """Interface wrapper for RegisterDWI to create T1w->MNI->DWI mappings."""
@@ -506,6 +506,7 @@ class RegisterDWI(SimpleInterface):
         self._results['vent_csf_in_dwi'] = reg.vent_csf_in_dwi
         self._results['csf_mask_dwi'] = reg.csf_mask_dwi
         self._results['anat_file'] = self.inputs.anat_file
+        self._results['t1w2dwi'] = reg.t1w2dwi
         self._results['B0_mask'] = self.inputs.B0_mask
         self._results['ap_path'] = self.inputs.ap_path
         self._results['gtab_file'] = self.inputs.gtab_file
@@ -583,12 +584,12 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     tiss_class = traits.Str(mandatory=True)
     labels_im_file_wm_gm_int = File(exists=True, mandatory=True)
     labels_im_file = File(exists=True, mandatory=True)
-    target_samples = traits.Int(mandatory=True)
+    target_samples = traits.Any(mandatory=True)
     curv_thr_list = traits.List(mandatory=True)
     step_list = traits.List(mandatory=True)
     track_type = traits.Str(mandatory=True)
-    max_length = traits.Int(mandatory=True)
-    maxcrossing = traits.Int(mandatory=True)
+    max_length = traits.Any(mandatory=True)
+    maxcrossing = traits.Any(mandatory=True)
     directget = traits.Str(mandatory=True)
     conn_model = traits.Str(mandatory=True)
     gtab_file = File(exists=True, mandatory=True)
@@ -609,18 +610,19 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     norm = traits.Any()
     binary = traits.Bool(False, usedefault=True)
     atlas_mni = File(exists=True, mandatory=True)
-    min_length = traits.Int(mandatory=True)
+    min_length = traits.Any(mandatory=True)
     fa_path = File(exists=True, mandatory=True)
     waymask = traits.Any(mandatory=False)
-    roi_neighborhood_tol = traits.Int(mandatory=True, default_value=8)
-    sphere = traits.Str(mandatory=True, default_value='repulsion724')
+    t1w2dwi = File(exists=True, mandatory=True)
+    roi_neighborhood_tol = traits.Any(8, mandatory=True, usedefault=True)
+    sphere = traits.Str('repulsion724', mandatory=True, usedefault=True)
 
 
 class _TrackingOutputSpec(TraitedSpec):
     """Output interface wrapper for Tracking"""
     streams = File(exists=True, mandatory=True)
     track_type = traits.Str(mandatory=True)
-    target_samples = traits.Int(mandatory=True)
+    target_samples = traits.Any(mandatory=True)
     conn_model = traits.Str(mandatory=True)
     dir_path = traits.Any()
     network = traits.Any(mandatory=False)
@@ -645,8 +647,8 @@ class _TrackingOutputSpec(TraitedSpec):
     dm_path = File(exists=True, mandatory=True)
     directget = traits.Str(mandatory=True)
     labels_im_file = File(exists=True, mandatory=True)
-    roi_neighborhood_tol = traits.Int(mandatory=True)
-    max_length = traits.Int(mandatory=True)
+    roi_neighborhood_tol = traits.Any()
+    max_length = traits.Any()
 
 
 class Tracking(SimpleInterface):
@@ -715,7 +717,7 @@ class Tracking(SimpleInterface):
         # Commence Ensemble Tractography
         streamlines = track_ensemble(np.asarray(dwi_img.dataobj), self.inputs.target_samples, atlas_data_wm_gm_int,
                                      parcels, mod_fit,
-                                     prep_tissues(self.inputs.B0_mask, self.inputs.gm_in_dwi,
+                                     prep_tissues(self.inputs.t1w2dwi, self.inputs.gm_in_dwi,
                                                   self.inputs.vent_csf_in_dwi, self.inputs.wm_in_dwi,
                                                   self.inputs.tiss_class),
                                      get_sphere(self.inputs.sphere), self.inputs.directget, self.inputs.curv_thr_list,

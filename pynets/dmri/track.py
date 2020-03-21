@@ -48,14 +48,14 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
     return mod
 
 
-def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc_step_size=0.2):
+def prep_tissues(t1_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc_step_size=0.2):
     """
     Estimate a tissue classifier for tractography.
 
     Parameters
     ----------
-    B0_mask : str
-        File path to B0 brain mask.
+    t1_mask : str
+        File path to a T1w mask.
     gm_in_dwi : str
         File path to grey-matter tissue segmentation Nifti1Image.
     vent_csf_in_dwi : str
@@ -77,22 +77,27 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     except ImportError:
         import _pickle as pickle
     from dipy.tracking.stopping_criterion import ActStoppingCriterion, CmcStoppingCriterion, BinaryStoppingCriterion
+    from nilearn.masking import intersect_masks
+    from nilearn.image import math_img
+
     # Loads mask and ensures it's a true binary mask
-    mask_img = nib.load(B0_mask)
+    mask_img = nib.load(t1_mask)
     # Load tissue maps and prepare tissue classifier
-    gm_mask_data = np.asarray(nib.load(gm_in_dwi).dataobj)
-    wm_mask_data = np.asarray(nib.load(wm_in_dwi).dataobj)
+    wm_img = nib.load(wm_in_dwi)
+    gm_img = nib.load(gm_in_dwi)
+    gm_mask_data = np.asarray(gm_img.dataobj)
+    wm_mask_data = np.asarray(wm_img.dataobj)
     vent_csf_in_dwi_data = np.asarray(nib.load(vent_csf_in_dwi).dataobj)
     if tiss_class == 'act':
         background = np.ones(mask_img.shape)
         background[(gm_mask_data + wm_mask_data + vent_csf_in_dwi_data) > 0] = 0
-        include_map = gm_mask_data
-        include_map[background > 0] = 1
-        tiss_classifier = ActStoppingCriterion(include_map, vent_csf_in_dwi_data)
+        gm_mask_data[background > 0] = 1
+        tiss_classifier = ActStoppingCriterion(gm_mask_data, vent_csf_in_dwi_data)
         del background
-        del include_map
     elif tiss_class == 'bin':
-        tiss_classifier = BinaryStoppingCriterion(wm_mask_data.astype('bool'))
+        tiss_classifier = BinaryStoppingCriterion(np.asarray(intersect_masks([math_img('img > 0.0', img=mask_img),
+                                                                              math_img('img > 0.0', img=wm_img)],
+                                                                             threshold=1, connected=False).dataobj))
     elif tiss_class == 'cmc':
         voxel_size = np.average(mask_img.header['pixdim'][1:4])
         tiss_classifier = CmcStoppingCriterion.from_pve(wm_mask_data, gm_mask_data, vent_csf_in_dwi_data,
@@ -104,6 +109,8 @@ def prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
 
     del gm_mask_data, wm_mask_data, vent_csf_in_dwi_data
     mask_img.uncache()
+    gm_img.uncache()
+    wm_img.uncache()
 
     return tiss_classifier
 
@@ -334,7 +341,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                 # Filter resulting streamlines by roi-intersection characteristics
                 roi_proximal_streamlines = Streamlines(select_by_rois(streamline_generator, affine=np.eye(4),
                                                                       rois=parcels, include=parcel_vec,
-                                                                      mode='any',
+                                                                      mode='either_end',
                                                                       tol=roi_neighborhood_tol))
 
                 print("%s%s" % ('Filtering by node intersection: ', len(roi_proximal_streamlines)))

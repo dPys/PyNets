@@ -245,7 +245,7 @@ def combine_xfms(xfm1, xfm2, xfmout):
     return
 
 
-def wm_syn(template_path, fa_path, working_dir):
+def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     """
     A function to perform SyN registration
 
@@ -255,6 +255,10 @@ def wm_syn(template_path, fa_path, working_dir):
             File path to the template reference image.
         fa_path : str
             File path to the FA moving image.
+        template_anat_path  : str
+            File path to the anatomical template reference image.
+        ap_path : str
+            File path to the AP moving image.
         working_dir : str
             Path to the working directory to perform SyN and save outputs.
     """
@@ -306,6 +310,14 @@ def wm_syn(template_path, fa_path, working_dir):
     # We now perform the non-rigid deformation using the Symmetric Diffeomorphic Registration(SyN) Algorithm:
     metric = CCMetric(3)
     level_iters = [10, 10, 5]
+
+    ap_img = nib.load(ap_path)
+    template_anat_img = nib.load(template_anat_path)
+    static = np.asarray(template_anat_img.dataobj)
+    static_affine = template_anat_img.affine
+    moving = np.asarray(ap_img.dataobj).astype(np.float32)
+    moving_affine = ap_img.affine
+
     sdr = SymmetricDiffeomorphicRegistration(metric, level_iters)
 
     mapping = sdr.optimize(static, moving, static_affine, moving_affine,
@@ -315,7 +327,7 @@ def wm_syn(template_path, fa_path, working_dir):
     # Save warped FA image
     run_uuid = '%s_%s' % (strftime('%Y%m%d_%H%M%S'), uuid.uuid4())
     warped_fa = '{}/warped_fa_{}.nii.gz'.format(working_dir, run_uuid)
-    nib.save(nib.Nifti1Image(warped_moving, affine=static_affine), warped_fa)
+    nib.save(nib.Nifti1Image(warped_moving, affine=template_img.affine), warped_fa)
 
     # # We show the registration result with:
     # regtools.overlay_slices(static, warped_moving, None, 0, "Static", "Moving",

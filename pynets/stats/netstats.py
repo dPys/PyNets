@@ -877,7 +877,7 @@ class CleanGraphs(object):
 
         # Get hyperbolic tangent (i.e. fischer r-to-z transform) of matrix if non-covariance
         if (self.conn_model == 'corr') or (self.conn_model == 'partcorr'):
-            self.in_mat = np.arctanh(self.in_mat)
+            self.in_mat = np.nan_to_num(np.arctanh(self.in_mat))
 
         # Normalize connectivity matrix
         if self.norm == 3 or self.norm == 4 or self.norm == 5:

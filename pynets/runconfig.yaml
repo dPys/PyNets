@@ -1,7 +1,7 @@
 maxcrossing:
     - 2
 min_length:
-    - 20
+    - 40
 overlap_thr:
     - 1
 step_list:
@@ -11,7 +11,7 @@ step_list:
     - 0.4
     - 0.5
 curv_thr_list:
-    - 60
+    - 50
     - 30
     - 30
     - 10

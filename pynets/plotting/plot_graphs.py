@@ -30,22 +30,17 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig):
     matplotlib.use('agg')
     from matplotlib import pyplot as plt
     from nilearn.plotting import plot_matrix
+    from pynets.core import thresholding
+
+    conn_matrix = thresholding.standardize(conn_matrix)
 
     dpi_resolution = 300
-    [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
-    rois_num = conn_matrix.shape[0]
-    if rois_num < 100:
-        try:
-            plot_matrix(conn_matrix, figure=(10, 10), labels=labels, vmax=z_max*0.5, vmin=z_min*0.5,
-                        reorder=False, auto_fit=True, grid=False, colorbar=False)
-        except RuntimeWarning:
-            print('Connectivity matrix too sparse for plotting...')
-    else:
-        try:
-            plot_matrix(conn_matrix, figure=(10, 10), auto_fit=True, vmax=z_max*0.5, vmin=z_min*0.5,
-                        grid=False, colorbar=False)
-        except RuntimeWarning:
-            print('Connectivity matrix too sparse for plotting...')
+    [z_min, z_max] = -np.abs(conn_matrix).max()*0.5, np.abs(conn_matrix).max()*0.5
+    try:
+        plot_matrix(conn_matrix, figure=(10, 10), labels=labels, vmax=z_max, vmin=z_min,
+                    reorder='average', auto_fit=True, grid=False, colorbar=False)
+    except RuntimeWarning:
+        print('Connectivity matrix too sparse for plotting...')
     plt.savefig(out_path_fig, dpi=dpi_resolution)
     plt.close()
     return
@@ -72,6 +67,9 @@ def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_af
     matplotlib.use('agg')
     #from pynets import thresholding
     from nilearn.plotting import plot_matrix
+    from pynets.core import thresholding
+
+    conn_matrix = thresholding.standardize(conn_matrix)
 
     dpi_resolution = 300
 
@@ -79,18 +77,18 @@ def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_af
     sorting_array = sorted(range(len(community_aff)), key=lambda k: community_aff[k])
     sorted_conn_matrix = conn_matrix[sorting_array, :]
     sorted_conn_matrix = sorted_conn_matrix[:, sorting_array]
-    [z_min, z_max] = -np.abs(sorted_conn_matrix).max(), np.abs(sorted_conn_matrix).max()
+    [z_min, z_max] = -np.abs(sorted_conn_matrix).max()*0.5, np.abs(sorted_conn_matrix).max()*0.5
     rois_num = sorted_conn_matrix.shape[0]
     if rois_num < 100:
         try:
-            plot_matrix(conn_matrix, figure=(10, 10), labels=labels, vmax=z_max*0.5, vmin=z_min*0.5,
+            plot_matrix(conn_matrix, figure=(10, 10), labels=labels, vmax=z_max, vmin=z_min,
                         reorder=False, auto_fit=True, grid=False, colorbar=False)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')
     else:
         try:
-            plot_matrix(conn_matrix, figure=(10, 10), vmax=z_max*0.5, vmin=z_min*0.5, auto_fit=True, grid=False,
-                        colorbar=False)
+            plot_matrix(conn_matrix, figure=(10, 10), vmax=z_max, vmin=z_min, auto_fit=True,
+                        grid=False, colorbar=False)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')
 

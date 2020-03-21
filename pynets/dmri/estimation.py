@@ -333,7 +333,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         fa_weights_norm = []
         # Here we normalize by global FA
         for val_list in fa_weights:
-            fa_weights_norm.append((val_list - min_global_fa_wei) / (max_global_fa_wei - min_global_fa_wei))
+            fa_weights_norm.append(np.nanmean((val_list - min_global_fa_wei) / (max_global_fa_wei - min_global_fa_wei)))
 
     # Instantiate empty networkX graph object & dictionary and create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4))
@@ -374,7 +374,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
         if fa_wei is True:
             # Add edgelist to g, weighted by average fa of the streamline
-            g.add_weighted_edges_from(edge_list, weight=np.nanmean(fa_weights_norm[ix]))
+            g.add_weighted_edges_from(edge_list, weight=fa_weights_norm[ix])
         else:
             g.add_weighted_edges_from(edge_list)
         ix = ix + 1

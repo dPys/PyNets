@@ -1298,9 +1298,9 @@ def build_workflow(args, retval):
                 print("%s%s" % ("\nNilearn atlas: ", atlas))
 
         if target_samples:
-            print("%s%s%s" % ('Using ', target_samples, ' samples...'))
+            print("%s%s%s" % ('Using ', target_samples, ' streamline samples...'))
         if max_length:
-            print("%s%s%s" % ('Using ', max_length, ' maximum length of streamlines...'))
+            print("%s%s%s" % ('Using ', max_length, 'mm maximum length of streamlines...'))
 
     if (dwi_file or dwi_file_list) and not (func_file or func_file_list):
         print('\nRunning dmri connectometry only...')
@@ -1604,7 +1604,7 @@ def build_workflow(args, retval):
                                    imports=import_list)
         net_mets_node.synchronize = True
         net_mets_node._n_procs = 1
-        net_mets_node._mem_gb = 2
+        net_mets_node._mem_gb = 4
 
         collect_pd_list_net_csv_node = pe.Node(niu.Function(input_names=['net_mets_csv'],
                                                             output_names=['net_mets_csv_out'],
@@ -1798,7 +1798,7 @@ def build_workflow(args, retval):
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
             wf_multi.get_node(wf_single_subject.name).get_node("NetworkAnalysis")._n_procs = 1
-            wf_multi.get_node(wf_single_subject.name).get_node("NetworkAnalysis")._mem_gb = 2
+            wf_multi.get_node(wf_single_subject.name).get_node("NetworkAnalysis")._mem_gb = 4
             wf_multi.get_node(wf_single_subject.name).get_node("CombineOutputs")._n_procs = 1
             wf_multi.get_node(wf_single_subject.name).get_node("CombineOutputs")._mem_gb = 2
 
