@@ -80,7 +80,7 @@ def prep_tissues(t1_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     from nilearn.masking import intersect_masks
     from nilearn.image import math_img
 
-    # Loads mask and ensures it's a true binary mask
+    # Loads mask
     mask_img = nib.load(t1_mask)
     # Load tissue maps and prepare tissue classifier
     wm_img = nib.load(wm_in_dwi)
@@ -116,7 +116,7 @@ def prep_tissues(t1_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
 
 
 def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_samples,
-                       node_size, curv_thr_list, step_list, network, roi, directget, max_length):
+                       node_size, curv_thr_list, step_list, network, roi, directget, min_length):
     """
     Create a density map of the list of streamlines.
 
@@ -145,10 +145,10 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
-        and prob (probabilistic).
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos),
+        boot (bootstrapped), and prob (probabilistic).
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
 
     Returns
     -------
@@ -185,7 +185,7 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
                                                                 else 'parc_'),
                                                         'curv-', str(curv_thr_list).replace(', ', '_'),
                                                         '_step-', str(step_list).replace(', ', '_'), '_dg-', directget,
-                                                        '_ml-', max_length, '.nii.gz')
+                                                        '_ml-', min_length, '.nii.gz')
     dm_img.to_filename(dm_path)
 
     # Save streamlines to trk
@@ -200,7 +200,7 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
                                                                 else 'parc_'),
                                                         'curv-', str(curv_thr_list).replace(', ', '_'),
                                                         '_step-', str(step_list).replace(', ', '_'), '_dg-', directget,
-                                                        '_ml-', max_length, '.trk')
+                                                        '_ml-', min_length, '.trk')
 
     save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, origin=Origin.TRACKVIS),
                     streams, bbox_valid_check=False)
@@ -212,9 +212,9 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
 
 
 def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere, directget,
-                   curv_thr_list, step_list, track_type, maxcrossing, max_length, roi_neighborhood_tol, min_length,
-                   waymask, n_seeds_per_iter=100, pft_back_tracking_dist=2, pft_front_tracking_dist=1,
-                   particle_count=15):
+                   curv_thr_list, step_list, track_type, maxcrossing, roi_neighborhood_tol, min_length, waymask,
+                   max_length=1000, n_seeds_per_iter=200, pft_back_tracking_dist=2, pft_front_tracking_dist=1,
+                   particle_count=15, min_separation_angle=20):
     """
     Perform native-space ensemble tractography, restricted to a vector of ROI masks.
 
@@ -245,8 +245,6 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
         Tracking algorithm used (e.g. 'local' or 'particle').
     maxcrossing : int
         Maximum number if diffusion directions that can be assumed per voxel while tracking.
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
     roi_neighborhood_tol : float
         Distance (in the units of the streamlines, usually mm). If any
         coordinate in the streamline is within this distance from the center
@@ -257,6 +255,8 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
         Minimum fiber length threshold in mm.
     waymask : str
         Path to a Nifti1Image in native diffusion space to constrain tractography.
+    max_length : int
+        Maximum number of steps to restrict tracking.
     n_seeds_per_iter : int
         Number of seeds from which to initiate tracking for each unique ensemble combination.
         By default this is set to 200.
@@ -272,6 +272,8 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
         default this is set to 1 mm.
     particle_count : int
         Number of particles to use in the particle filter.
+    min_separation_angle : float
+        The minimum angle between directions [0, 90].
 
     Returns
     -------
@@ -301,13 +303,17 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
 
             # Instantiate DirectionGetter
             if directget == 'prob':
-                dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere)
+                dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere,
+                                                               min_separation_angle=min_separation_angle)
             elif directget == 'boot':
-                dg = BootDirectionGetter.from_data(dwi_data, mod_fit, max_angle=float(curv_thr), sphere=sphere)
+                dg = BootDirectionGetter.from_data(dwi_data, mod_fit, max_angle=float(curv_thr), sphere=sphere,
+                                                   min_separation_angle=min_separation_angle)
             elif directget == 'clos':
-                dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere)
+                dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere,
+                                                             min_separation_angle=min_separation_angle)
             elif directget == 'det':
-                dg = DeterministicMaximumDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere)
+                dg = DeterministicMaximumDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere,
+                                                                      min_separation_angle=min_separation_angle)
             else:
                 raise ValueError('ERROR: No valid direction getter(s) specified.')
 
@@ -326,7 +332,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                 if track_type == 'local':
                     streamline_generator = LocalTracking(dg, tiss_classifier, seeds, np.eye(4),
                                                          max_cross=int(maxcrossing), maxlen=int(max_length),
-                                                         step_size=float(step), return_all=True)
+                                                         step_size=float(step), fixedstep=False, return_all=True)
                 elif track_type == 'particle':
                     streamline_generator = ParticleFilteringTracking(dg, tiss_classifier, seeds, np.eye(4),
                                                                      max_cross=int(maxcrossing),
@@ -334,14 +340,15 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                                                      maxlen=int(max_length),
                                                                      pft_back_tracking_dist=pft_back_tracking_dist,
                                                                      pft_front_tracking_dist=pft_front_tracking_dist,
-                                                                     particle_count=particle_count, return_all=True)
+                                                                     particle_count=particle_count,
+                                                                     return_all=True)
                 else:
                     raise ValueError('ERROR: No valid tracking method(s) specified.')
 
                 # Filter resulting streamlines by roi-intersection characteristics
                 roi_proximal_streamlines = Streamlines(select_by_rois(streamline_generator, affine=np.eye(4),
                                                                       rois=parcels, include=parcel_vec,
-                                                                      mode='either_end',
+                                                                      mode='both_end',
                                                                       tol=roi_neighborhood_tol))
 
                 print("%s%s" % ('Filtering by node intersection: ', len(roi_proximal_streamlines)))
@@ -369,8 +376,8 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
             del dg
 
         circuit_ix = circuit_ix + 1
-        print("%s%s%s%s%s" % ('Completed hyperparameter circuit: ', circuit_ix, '...\nCumulative Streamline Count: ',
-                              Fore.CYAN, stream_counter))
+        print("%s%s%s%s%s%s" % ('\nCompleted Hyperparameter Circuit: ', circuit_ix,
+                                '\nCumulative Streamline Count: ', Fore.CYAN, stream_counter, "\n"))
         print(Style.RESET_ALL)
 
     print('Tracking Complete')

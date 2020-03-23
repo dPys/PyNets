@@ -885,7 +885,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
 
 def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
                   disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
-                  target_samples, track_type, atlas_mni, streams, directget, max_length):
+                  target_samples, track_type, atlas_mni, streams, directget, min_length):
     """
     Threshold a structural connectivity matrix using any of a variety of methods.
 
@@ -949,8 +949,8 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
 
     Returns
     -------
@@ -1005,8 +1005,8 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
     """
     import gc
     from pynets.core import utils, thresholding
@@ -1020,7 +1020,7 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
 
     # Save unthresholded
     utils.save_mat(conn_matrix, utils.create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size,
-                                                           target_samples, track_type, parc, directget, max_length))
+                                                           target_samples, track_type, parc, directget, min_length))
 
     [thr_type, edge_threshold, conn_matrix_thr, coords, labels] = thresholding.perform_thresholding(conn_matrix,
                                                                                                     coords, labels,
@@ -1034,11 +1034,11 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
 
     # Save thresholded mat
     est_path = utils.create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples,
-                                          track_type, thr_type, parc, directget, max_length)
+                                          track_type, thr_type, parc, directget, min_length)
 
     utils.save_mat(conn_matrix_thr, est_path)
     gc.collect()
 
     return (conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path,
             atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, atlas_mni, streams, directget,
-            max_length)
+            min_length)

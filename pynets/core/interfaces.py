@@ -312,7 +312,7 @@ class _PlotStructInputSpec(BaseInterfaceInputSpec):
     binary = traits.Bool()
     track_type = traits.Any()
     directget = traits.Any()
-    max_length = traits.Any()
+    min_length = traits.Any()
 
 
 class _PlotStructOutputSpec(BaseInterfaceInputSpec):
@@ -349,7 +349,7 @@ class PlotStruct(SimpleInterface):
                                      self.inputs.binary,
                                      self.inputs.track_type,
                                      self.inputs.directget,
-                                     self.inputs.max_length)
+                                     self.inputs.min_length)
 
         self._results['out'] = 'None'
 
@@ -588,7 +588,7 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     curv_thr_list = traits.List(mandatory=True)
     step_list = traits.List(mandatory=True)
     track_type = traits.Str(mandatory=True)
-    max_length = traits.Any(mandatory=True)
+    min_length = traits.Any(mandatory=True)
     maxcrossing = traits.Any(mandatory=True)
     directget = traits.Str(mandatory=True)
     conn_model = traits.Str(mandatory=True)
@@ -610,11 +610,10 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     norm = traits.Any()
     binary = traits.Bool(False, usedefault=True)
     atlas_mni = File(exists=True, mandatory=True)
-    min_length = traits.Any(mandatory=True)
     fa_path = File(exists=True, mandatory=True)
     waymask = traits.Any(mandatory=False)
     t1w2dwi = File(exists=True, mandatory=True)
-    roi_neighborhood_tol = traits.Any(8, mandatory=True, usedefault=True)
+    roi_neighborhood_tol = traits.Any(10, mandatory=True, usedefault=True)
     sphere = traits.Str('repulsion724', mandatory=True, usedefault=True)
 
 
@@ -648,7 +647,7 @@ class _TrackingOutputSpec(TraitedSpec):
     directget = traits.Str(mandatory=True)
     labels_im_file = File(exists=True, mandatory=True)
     roi_neighborhood_tol = traits.Any()
-    max_length = traits.Any()
+    min_length = traits.Any()
 
 
 class Tracking(SimpleInterface):
@@ -722,8 +721,7 @@ class Tracking(SimpleInterface):
                                                   self.inputs.tiss_class),
                                      get_sphere(self.inputs.sphere), self.inputs.directget, self.inputs.curv_thr_list,
                                      self.inputs.step_list, self.inputs.track_type, self.inputs.maxcrossing,
-                                     self.inputs.max_length, self.inputs.roi_neighborhood_tol, self.inputs.min_length,
-                                     self.inputs.waymask)
+                                     int(self.inputs.roi_neighborhood_tol), self.inputs.min_length, self.inputs.waymask)
 
         # Create streamline density map
         [streams, dir_path, dm_path] = create_density_map(dwi_img, utils.do_dir_path(self.inputs.atlas,
@@ -731,7 +729,7 @@ class Tracking(SimpleInterface):
                                                           self.inputs.conn_model, self.inputs.target_samples,
                                                           self.inputs.node_size, self.inputs.curv_thr_list,
                                                           self.inputs.step_list, self.inputs.network, self.inputs.roi,
-                                                          self.inputs.directget, self.inputs.max_length)
+                                                          self.inputs.directget, self.inputs.min_length)
 
         self._results['streams'] = streams
         self._results['track_type'] = self.inputs.track_type
@@ -761,7 +759,7 @@ class Tracking(SimpleInterface):
         self._results['directget'] = self.inputs.directget
         self._results['labels_im_file'] = self.inputs.labels_im_file
         self._results['roi_neighborhood_tol'] = self.inputs.roi_neighborhood_tol
-        self._results['max_length'] = self.inputs.max_length
+        self._results['min_length'] = self.inputs.min_length
 
         del streamlines, atlas_data_wm_gm_int, atlas_data, mod_fit, parcels
         dwi_img.uncache()

@@ -268,8 +268,8 @@ def build_collect_workflow(args, retval):
 
     wf = collect_all(working_path)
 
-    # with open('/opt/conda/lib/python3.6/site-packages/pynets-0.9.92-py3.6.egg/pynets/runconfig.yaml', 'r') as stream:
-    with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
+    with open('/opt/conda/lib/python3.6/site-packages/pynets-0.9.93-py3.6.egg/pynets/runconfig.yaml', 'r') as stream:
+    #with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
         try:
             hardcoded_params = yaml.load(stream)
             runtime_dict = {}
@@ -360,15 +360,15 @@ def main():
         sys.exit()
 
     args = get_parser().parse_args()
-    # args_dict_all = {}
-    # args_dict_all['plug'] = 'MultiProc'
-    # args_dict_all['v'] = False
-    # args_dict_all['pm'] = '68,96'
-    # #args_dict_all['basedir'] = '/data/04171/dpisner/data/HNU/HNU1_out/pynets_out'
-    # args_dict_all['basedir'] = '/scratch/04171/dpisner/pynets_out'
-    # args_dict_all['work'] = '/tmp'
-    # from types import SimpleNamespace
-    # args = SimpleNamespace(**args_dict_all)
+    args_dict_all = {}
+    args_dict_all['plug'] = 'MultiProc'
+    args_dict_all['v'] = False
+    args_dict_all['pm'] = '68,96'
+    #args_dict_all['basedir'] = '/data/04171/dpisner/data/HNU/HNU1_out/pynets_out'
+    args_dict_all['basedir'] = '/scratch/04171/dpisner/pynets_out'
+    args_dict_all['work'] = '/tmp'
+    from types import SimpleNamespace
+    args = SimpleNamespace(**args_dict_all)
 
     try:
         from multiprocessing import set_start_method, Process, Manager

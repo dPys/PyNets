@@ -21,7 +21,7 @@ except KeyError:
 def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, target_samples, conn_model, network,
                            node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas,
                            labels_im_file, uatlas, labels, coords, norm, binary, atlas_mni, basedir_path,
-                           curv_thr_list, step_list, directget, max_length, error_margin):
+                           curv_thr_list, step_list, directget, min_length, error_margin):
     """
     A Function to perform normalization of streamlines tracked in native diffusion space to an
     FA template in MNI space.
@@ -92,8 +92,8 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
     error_margin : int
         Distance (in the units of the streamlines, usually mm). If any
         coordinate in the streamline is within this distance from the center
@@ -157,8 +157,8 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
         and prob (probabilistic).
     warped_fa : str
         File path to MNI-space warped FA Nifti1Image.
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
     error_margin : int
         Distance (in the units of the streamlines, usually mm). If any
         coordinate in the streamline is within this distance from the center
@@ -216,7 +216,7 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
                                                               'curv', str(curv_thr_list).replace(', ', '_'),
                                                               'step', str(step_list).replace(', ', '_'),
                                                               'tt-', track_type, '_dg-', directget, '_ml-',
-                                                              max_length, '.trk')
+                                                              min_length, '.trk')
 
     density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/density_map_mni_',
                                                               '%s' % (network + '_' if network is not None else ''),
@@ -229,7 +229,7 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
                                                               'curv', str(curv_thr_list).replace(', ', '_'),
                                                               'step', str(step_list).replace(', ', '_'), 'tt-',
                                                               track_type,
-                                                              '_dg-', directget, '_ml-', max_length, '.nii.gz')
+                                                              '_dg-', directget, '_ml-', min_length, '.nii.gz')
 
     # streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
     #                                                                '%s' % (network + '_' if network is not
@@ -244,7 +244,7 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
     #                                                                        '_'),
     #                                                                'curv', str(curv_thr_list).replace(', ', '_'),
     #                                                                'step', str(step_list).replace(', ', '_'), 'tt-',
-    #                                                                track_type,  '_dg-', directget, '_ml-', max_length,
+    #                                                                track_type,  '_dg-', directget, '_ml-', min_length,
     #                                                                '.png')
 
     # SyN FA->Template
@@ -340,7 +340,7 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
 
     return (streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi,
             min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget,
-            warped_fa, max_length, error_margin)
+            warped_fa, min_length, error_margin)
 
 
 class DmriReg(object):
@@ -486,7 +486,7 @@ class DmriReg(object):
 
         # Threshold WM to binary in dwi space
         t_img = nib.load(self.wm_mask)
-        mask = math_img('img > 0.2', img=t_img)
+        mask = math_img('img > 0.20', img=t_img)
         mask.to_filename(self.wm_mask_thr)
 
         # Threshold T1w brain to binary in anat space
@@ -653,8 +653,8 @@ class DmriReg(object):
         img = nib.Nifti1Image(np.around(np.asarray(atlas_img.dataobj)).astype('uint16'),
                               affine=atlas_img.affine, header=atlas_img.header)
         nib.save(img, dwi_aligned_atlas)
-        os.system("fslmaths {} -mas {} {}".format(dwi_aligned_atlas, self.wm_gm_int_in_dwi_bin,
-                                                  dwi_aligned_atlas_wmgm_int))
+        os.system("fslmaths {} -add {} -bin {}".format(dwi_aligned_atlas, self.wm_gm_int_in_dwi_bin,
+                                                       dwi_aligned_atlas_wmgm_int))
         atlas_img.uncache()
         img.uncache()
         mask.uncache()
@@ -702,12 +702,12 @@ class DmriReg(object):
 
         # Threshold WM to binary in dwi space
         thr_img = nib.load(self.wm_in_dwi)
-        thr_img = math_img('img > 0.15', img=thr_img)
+        thr_img = math_img('img > 0.20', img=thr_img)
         nib.save(thr_img, self.wm_in_dwi_bin)
 
         # Threshold GM to binary in dwi space
         thr_img = nib.load(self.gm_in_dwi)
-        thr_img = math_img('img > 0.2', img=thr_img)
+        thr_img = math_img('img > 0.15', img=thr_img)
         nib.save(thr_img, self.gm_in_dwi_bin)
 
         # Threshold CSF to binary in dwi space

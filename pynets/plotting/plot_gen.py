@@ -540,7 +540,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
 
 def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, coords, thr,
                     node_size, edge_threshold, prune, uatlas, target_samples, norm, binary, track_type, directget,
-                    max_length):
+                    min_length):
     """
     Plot adjacency matrix, connectogram, and glass brain for functional connectome.
 
@@ -591,8 +591,8 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
     """
     import matplotlib
     matplotlib.use('agg')
@@ -665,7 +665,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         if not node_size or node_size == 'None':
             node_size = 'parc'
         plot_graphs.plot_conn_mat_struct(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels, roi, thr,
-                                         node_size, target_samples, track_type, directget, max_length)
+                                         node_size, target_samples, track_type, directget, min_length)
 
         # Plot connectome
         out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-dwi_',
@@ -688,7 +688,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
                                                                          'streams_')
                                                                              if float(target_samples) > 0 else '_'),
                                                                      'tt-', track_type, '_dg-', directget,
-                                                                     '_ml-', max_length,
+                                                                     '_ml-', min_length,
                                                                      '_thr-', thr, '_glass_viz.png')
         if roi:
             # Save coords to pickle

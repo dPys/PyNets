@@ -211,7 +211,7 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
 
 
 def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size,
-                         target_samples, track_type, directget, max_length):
+                         target_samples, track_type, directget, min_length):
     """
     API for selecting among various structural connectivity matrix plotting approaches.
 
@@ -248,8 +248,8 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, 
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
     """
     from pynets.plotting import plot_graphs
     import networkx as nx
@@ -271,7 +271,7 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, 
                                                                                      'streams_')
                                                                          if float(target_samples) > 0 else '_'),
                                                                  'tt-', track_type, '_dg-', directget,
-                                                                 '_ml-', max_length,
+                                                                 '_ml-', min_length,
                                                                  '_thr-', thr, '_adj_mat.png')
     plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig)
 
@@ -300,7 +300,7 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, 
                                                                                   if float(target_samples) > 0
                                                                                   else '_'),
                                                                           'tt-', track_type, '_dg-', directget,
-                                                                          '_ml-', max_length,
+                                                                          '_ml-', min_length,
                                                                           '_thr-', thr, '_adj_mat_comm.png')
         plot_graphs.plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, node_comm_aff_mat)
     except:
