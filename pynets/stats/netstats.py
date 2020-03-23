@@ -819,8 +819,12 @@ def raw_mets(G, i):
                     [H, _] = prune_disconnected(H)
                     net_met_val = float(i(H))
                 except:
-                    np.save("%s%s%s" % ('/tmp/degree_assortativity_coefficient', random.randint(1, 400), '.npy'),
-                            np.array(nx.to_numpy_matrix(H)))
+                    try:
+                        from networkx.algorithms.assortativity import degree_pearson_correlation_coefficient
+                        net_met_val = float(degree_pearson_correlation_coefficient(H, weight='weight'))
+                    except:
+                        np.save("%s%s%s" % ('/tmp/degree_assortativity_coefficient', random.randint(1, 400), '.npy'),
+                                np.array(nx.to_numpy_matrix(H)))
     else:
         net_met_val = float(i(G))
 
@@ -877,7 +881,7 @@ class CleanGraphs(object):
 
         # Get hyperbolic tangent (i.e. fischer r-to-z transform) of matrix if non-covariance
         if (self.conn_model == 'corr') or (self.conn_model == 'partcorr'):
-            self.in_mat = np.arctanh(self.in_mat)
+            self.in_mat = np.nan_to_num(np.arctanh(self.in_mat))
 
         # Normalize connectivity matrix
         if self.norm == 3 or self.norm == 4 or self.norm == 5:

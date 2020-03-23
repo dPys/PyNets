@@ -35,11 +35,13 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
         File path to pickled DiPy gradient table object.
     dwi_file : str
         File path to diffusion weighted Nifti1Image.
+    fa_md_path : str
+        File path to FA/MD mask Nifti1Image.
     '''
     import os
     from dipy.io import load_pickle
     from dipy.reconst.dti import TensorModel
-    from dipy.reconst.dti import fractional_anisotropy
+    from dipy.reconst.dti import fractional_anisotropy, mean_diffusivity
 
     gtab = load_pickle(gtab_file)
 
@@ -49,11 +51,19 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
     model = TensorModel(gtab)
     mod = model.fit(np.asarray(nib.load(dwi_file).dataobj), nodif_B0_mask_data)
     FA = fractional_anisotropy(mod.evals)
+    MD = mean_diffusivity(mod.evals)
+    FA_MD = (np.logical_or(FA >= 0.2, (np.logical_and(FA >= 0.08, MD >= 0.0011))))
     FA[np.isnan(FA)] = 0
+    FA_MD[np.isnan(FA_MD)] = 0
+
     fa_path = "%s%s" % (os.path.dirname(B0_mask), '/tensor_fa.nii.gz')
     nib.save(nib.Nifti1Image(FA.astype(np.float32), nodif_B0_img.affine), fa_path)
+
+    fa_md_path = "%s%s" % (os.path.dirname(B0_mask), '/tensor_fa_md.nii.gz')
+    nib.save(nib.Nifti1Image(FA_MD.astype(np.float32), nodif_B0_img.affine), fa_md_path)
+
     nodif_B0_img.uncache()
-    del FA
+    del FA, FA_MD
     return fa_path, B0_mask, gtab_file, dwi_file
 
 
@@ -116,7 +126,7 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     return anisopwr_path, B0_mask, gtab_file, dwi_file
 
 
-def csa_mod_est(gtab, data, B0_mask):
+def csa_mod_est(gtab, data, B0_mask, sh_order=8):
     '''
     Estimate a Constant Solid Angle (CSA) model from dwi data.
 
@@ -128,6 +138,8 @@ def csa_mod_est(gtab, data, B0_mask):
         4D numpy array of diffusion image data.
     B0_mask : str
         File path to B0 brain mask.
+    sh_order : int
+        The order of the SH model. Default is 8.
 
     Returns
     -------
@@ -136,14 +148,14 @@ def csa_mod_est(gtab, data, B0_mask):
     '''
     from dipy.reconst.shm import CsaOdfModel
     print('Fitting CSA model...')
-    model = CsaOdfModel(gtab, sh_order=6)
+    model = CsaOdfModel(gtab, sh_order=sh_order)
     B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
     csa_mod = model.fit(data, B0_mask_data).shm_coeff
     del model, B0_mask_data
     return csa_mod
 
 
-def csd_mod_est(gtab, data, B0_mask):
+def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     '''
     Estimate a Constrained Spherical Deconvolution (CSD) model from dwi data.
 
@@ -155,6 +167,8 @@ def csd_mod_est(gtab, data, B0_mask):
         4D numpy array of diffusion image data.
     B0_mask : str
         File path to B0 brain mask.
+    sh_order : int
+        The order of the SH model. Default is 8.
 
     Returns
     -------
@@ -165,10 +179,10 @@ def csd_mod_est(gtab, data, B0_mask):
     print('Fitting CSD model...')
     B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
     print('Reconstructing...')
-    response = recursive_response(gtab, data, mask=B0_mask_data, sh_order=8, peak_thr=0.01, init_fa=0.08,
+    response = recursive_response(gtab, data, mask=B0_mask_data, sh_order=sh_order, peak_thr=0.01, init_fa=0.08,
                                   init_trace=0.0021, iter=8, convergence=0.001, parallel=False)
     print('CSD Reponse: ' + str(response))
-    model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=6)
+    model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=sh_order)
     csd_mod = model.fit(data, B0_mask_data).shm_coeff
     del model, response, B0_mask_data
     return csd_mod
@@ -176,7 +190,7 @@ def csd_mod_est(gtab, data, B0_mask):
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
                   dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm,
-                  binary, directget, warped_fa, error_margin, max_length, fa_wei=True):
+                  binary, directget, warped_fa, error_margin, min_length, fa_wei=True):
     '''
     Use tracked streamlines as a basis for estimating a structural connectome.
 
@@ -241,8 +255,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         File path to MNI-space warped FA Nifti1Image.
     error_margin : int
         Euclidean margin of error for classifying a streamline as a connection to an ROI. Default is 2 voxels.
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
     fa_wei :  bool
         Scale streamline count edges by fractional anistropy (FA). Default is False.
 
@@ -302,8 +316,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
     '''
     from dipy.tracking.streamline import Streamlines, values_from_volume
     from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
@@ -325,13 +339,15 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
                                               bbox_valid_check=False).streamlines)
     roi_img.uncache()
 
-    fa_weights = values_from_volume(np.asarray(nib.load(warped_fa).dataobj), streamlines, np.eye(4))
-    global_fa_weights = list(utils.flatten(fa_weights))
-    min_global_fa_wei = min(global_fa_weights)
-    max_global_fa_wei = max(global_fa_weights)
-    fa_weights_norm = []
-    for val_list in fa_weights:
-        fa_weights_norm.append((val_list - min_global_fa_wei) / (max_global_fa_wei - min_global_fa_wei))
+    if fa_wei is True:
+        fa_weights = values_from_volume(np.asarray(nib.load(warped_fa).dataobj), streamlines, np.eye(4))
+        global_fa_weights = list(utils.flatten(fa_weights))
+        min_global_fa_wei = min(i for i in global_fa_weights if i > 0)
+        max_global_fa_wei = max(global_fa_weights)
+        fa_weights_norm = []
+        # Here we normalize by global FA
+        for val_list in fa_weights:
+            fa_weights_norm.append(np.nanmean((val_list - min_global_fa_wei) / (max_global_fa_wei - min_global_fa_wei)))
 
     # Instantiate empty networkX graph object & dictionary and create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4))
@@ -372,7 +388,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
         if fa_wei is True:
             # Add edgelist to g, weighted by average fa of the streamline
-            g.add_weighted_edges_from(edge_list, weight=np.nanmean(fa_weights_norm[ix]))
+            g.add_weighted_edges_from(edge_list, weight=fa_weights_norm[ix])
         else:
             g.add_weighted_edges_from(edge_list)
         ix = ix + 1
@@ -399,7 +415,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     # Convert to numpy matrix
     conn_matrix_raw = nx.to_numpy_matrix(g)
 
-    # Enforce symmetry
+    # Impose symmetry
     conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
 
     coords = np.array(coords)
@@ -407,4 +423,4 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     return (atlas_mni, streams, conn_matrix, track_type, target_samples, dir_path, conn_model, network, node_size,
             dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
-            directget, max_length)
+            directget, min_length)

@@ -18,10 +18,10 @@ except KeyError:
     print('FSLDIR environment variable not set!')
 
 
-def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_samples, conn_model, network, node_size,
-                           dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, labels_im_file, uatlas,
-                           labels, coords, norm, binary, atlas_mni, basedir_path, curv_thr_list, step_list, directget,
-                           max_length, error_margin):
+def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, target_samples, conn_model, network,
+                           node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas,
+                           labels_im_file, uatlas, labels, coords, norm, binary, atlas_mni, basedir_path,
+                           curv_thr_list, step_list, directget, min_length, error_margin):
     """
     A Function to perform normalization of streamlines tracked in native diffusion space to an
     FA template in MNI space.
@@ -32,6 +32,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
         File path to save streamline array sequence in .trk format.
     fa_path : str
         File path to FA Nifti1Image.
+    ap_path : str
+        File path to the anisotropic power Nifti1Image.
     dir_path : str
         Path to directory containing subject derivative data for a given pynets run.
     track_type : str
@@ -90,8 +92,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
     error_margin : int
         Distance (in the units of the streamlines, usually mm). If any
         coordinate in the streamline is within this distance from the center
@@ -155,8 +157,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
         and prob (probabilistic).
     warped_fa : str
         File path to MNI-space warped FA Nifti1Image.
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
     error_margin : int
         Distance (in the units of the streamlines, usually mm). If any
         coordinate in the streamline is within this distance from the center
@@ -195,6 +197,8 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     fa_img = nib.load(fa_path)
     vox_size = fa_img.header.get_zooms()[0]
     template_path = pkg_resources.resource_filename("pynets", "%s%s%s" % ('templates/FA_', int(vox_size), 'mm.nii.gz'))
+    template_anat_path = pkg_resources.resource_filename("pynets", "%s%s%s" % ('templates/MNI152_T1_', int(vox_size),
+                                                                               'mm_brain.nii.gz'))
     template_img = nib.load(template_path)
     brain_mask = np.asarray(template_img.dataobj).astype('bool')
     template_img.uncache()
@@ -212,7 +216,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                                                               'curv', str(curv_thr_list).replace(', ', '_'),
                                                               'step', str(step_list).replace(', ', '_'),
                                                               'tt-', track_type, '_dg-', directget, '_ml-',
-                                                              max_length, '.trk')
+                                                              min_length, '.trk')
 
     density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/density_map_mni_',
                                                               '%s' % (network + '_' if network is not None else ''),
@@ -225,7 +229,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
                                                               'curv', str(curv_thr_list).replace(', ', '_'),
                                                               'step', str(step_list).replace(', ', '_'), 'tt-',
                                                               track_type,
-                                                              '_dg-', directget, '_ml-', max_length, '.nii.gz')
+                                                              '_dg-', directget, '_ml-', min_length, '.nii.gz')
 
     # streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
     #                                                                '%s' % (network + '_' if network is not
@@ -240,11 +244,11 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
     #                                                                        '_'),
     #                                                                'curv', str(curv_thr_list).replace(', ', '_'),
     #                                                                'step', str(step_list).replace(', ', '_'), 'tt-',
-    #                                                                track_type,  '_dg-', directget, '_ml-', max_length,
+    #                                                                track_type,  '_dg-', directget, '_ml-', min_length,
     #                                                                '.png')
 
     # SyN FA->Template
-    [mapping, affine_map, warped_fa] = regutils.wm_syn(template_path, fa_path, dsn_dir)
+    [mapping, affine_map, warped_fa] = regutils.wm_syn(template_path, fa_path, template_anat_path, ap_path, dsn_dir)
 
     tractogram = load_tractogram(streams, fa_img, to_space=Space.RASMM, to_origin=Origin.TRACKVIS,
                                  bbox_valid_check=False)
@@ -336,7 +340,7 @@ def direct_streamline_norm(streams, fa_path, dir_path, track_type, target_sample
 
     return (streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi,
             min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget,
-            warped_fa, max_length, error_margin)
+            warped_fa, min_length, error_margin)
 
 
 class DmriReg(object):
@@ -482,7 +486,7 @@ class DmriReg(object):
 
         # Threshold WM to binary in dwi space
         t_img = nib.load(self.wm_mask)
-        mask = math_img('img > 0.2', img=t_img)
+        mask = math_img('img > 0.20', img=t_img)
         mask.to_filename(self.wm_mask_thr)
 
         # Threshold T1w brain to binary in anat space
@@ -588,6 +592,7 @@ class DmriReg(object):
                                       aligned_atlas_t1mni_parcels, interp="nearestneighbour")
                     regutils.apply_warp(self.t1w_brain, aligned_atlas_t1mni_parcels, aligned_atlas_skull_parcels,
                                         warp=self.mni2t1w_warp, interp='nn', sup=True)
+                    aligned_atlas_t1mni = aligned_atlas_skull_parcels
                 else:
                     aligned_atlas_skull_parcels = None
 
@@ -648,8 +653,8 @@ class DmriReg(object):
         img = nib.Nifti1Image(np.around(np.asarray(atlas_img.dataobj)).astype('uint16'),
                               affine=atlas_img.affine, header=atlas_img.header)
         nib.save(img, dwi_aligned_atlas)
-        os.system("fslmaths {} -mas {} {}".format(dwi_aligned_atlas, self.wm_gm_int_in_dwi_bin,
-                                                  dwi_aligned_atlas_wmgm_int))
+        os.system("fslmaths {} -add {} -bin {}".format(dwi_aligned_atlas, self.wm_gm_int_in_dwi_bin,
+                                                       dwi_aligned_atlas_wmgm_int))
         atlas_img.uncache()
         img.uncache()
         mask.uncache()
@@ -697,33 +702,27 @@ class DmriReg(object):
 
         # Threshold WM to binary in dwi space
         thr_img = nib.load(self.wm_in_dwi)
-        thr_img = math_img('img > 0.1', img=thr_img)
+        thr_img = math_img('img > 0.20', img=thr_img)
         nib.save(thr_img, self.wm_in_dwi_bin)
 
         # Threshold GM to binary in dwi space
         thr_img = nib.load(self.gm_in_dwi)
-        thr_img = math_img('img > 0.2', img=thr_img)
+        thr_img = math_img('img > 0.15', img=thr_img)
         nib.save(thr_img, self.gm_in_dwi_bin)
 
         # Threshold CSF to binary in dwi space
         thr_img = nib.load(self.csf_mask_dwi)
         thr_img = math_img('img > 0.95', img=thr_img)
-        nib.save(thr_img, self.csf_mask_dwi)
+        nib.save(thr_img, self.csf_mask_dwi_bin)
 
         # Threshold WM to binary in dwi space
-        t_img = nib.load(self.wm_in_dwi_bin)
-        mask = math_img('img > 0', img=t_img)
-        mask.to_filename(self.wm_in_dwi_bin)
+        os.system("fslmaths {} -mas {} {}".format(self.wm_in_dwi, self.wm_in_dwi_bin, self.wm_in_dwi))
 
         # Threshold GM to binary in dwi space
-        t_img = nib.load(self.gm_in_dwi_bin)
-        mask = math_img('img > 0', img=t_img)
-        mask.to_filename(self.gm_in_dwi_bin)
+        os.system("fslmaths {} -mas {} {}".format(self.gm_in_dwi, self.gm_in_dwi_bin, self.gm_in_dwi))
 
         # Threshold CSF to binary in dwi space
-        t_img = nib.load(self.csf_mask_dwi)
-        mask = math_img('img > 0', img=t_img)
-        mask.to_filename(self.csf_mask_dwi_bin)
+        os.system("fslmaths {} -mas {} {}".format(self.csf_mask_dwi, self.csf_mask_dwi_bin, self.csf_mask_dwi))
 
         # Create ventricular CSF mask
         print('Creating ventricular CSF mask...')
@@ -849,6 +848,7 @@ class FmriReg(object):
         t_img = nib.load(self.gm_mask)
         mask = math_img('img > 0.05', img=t_img)
         mask.to_filename(self.gm_mask_thr)
+        os.system("fslmaths {} -mas {} {}".format(self.gm_mask, self.gm_mask_thr, self.gm_mask))
 
         # Threshold T1w brain to binary in anat space
         t_img = nib.load(self.t1w_brain)
@@ -900,10 +900,10 @@ class FmriReg(object):
                               interp="nearestneighbour")
 
         try:
-            regutils.apply_warp(self.t1_aligned_mni, self.gm_mask_thr, gm_mask_mni, warp=self.warp_t1w2mni,
+            regutils.apply_warp(self.t1_aligned_mni, self.gm_mask, gm_mask_mni, warp=self.warp_t1w2mni,
                                 xfm=self.t12mni_xfm_init, interp='nn', sup=True)
         except:
-            regutils.applyxfm(self.t1_aligned_mni, self.gm_mask_thr, self.t12mni_xfm_init, gm_mask_mni,
+            regutils.applyxfm(self.t1_aligned_mni, self.gm_mask, self.t12mni_xfm_init, gm_mask_mni,
                               interp="nearestneighbour")
 
         # Set intensities to int

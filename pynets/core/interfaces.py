@@ -312,7 +312,7 @@ class _PlotStructInputSpec(BaseInterfaceInputSpec):
     binary = traits.Bool()
     track_type = traits.Any()
     directget = traits.Any()
-    max_length = traits.Any()
+    min_length = traits.Any()
 
 
 class _PlotStructOutputSpec(BaseInterfaceInputSpec):
@@ -349,7 +349,7 @@ class PlotStruct(SimpleInterface):
                                      self.inputs.binary,
                                      self.inputs.track_type,
                                      self.inputs.directget,
-                                     self.inputs.max_length)
+                                     self.inputs.min_length)
 
         self._results['out'] = 'None'
 
@@ -448,7 +448,7 @@ class _RegisterDWIOutputSpec(TraitedSpec):
     dwi_file = File(exists=True, mandatory=True)
     waymask_in_dwi = traits.Any(mandatory=False)
     basedir_path = Directory(exists=True, mandatory=True)
-
+    t1w2dwi = File(exists=True, mandatory=True)
 
 class RegisterDWI(SimpleInterface):
     """Interface wrapper for RegisterDWI to create T1w->MNI->DWI mappings."""
@@ -506,6 +506,7 @@ class RegisterDWI(SimpleInterface):
         self._results['vent_csf_in_dwi'] = reg.vent_csf_in_dwi
         self._results['csf_mask_dwi'] = reg.csf_mask_dwi
         self._results['anat_file'] = self.inputs.anat_file
+        self._results['t1w2dwi'] = reg.t1w2dwi
         self._results['B0_mask'] = self.inputs.B0_mask
         self._results['ap_path'] = self.inputs.ap_path
         self._results['gtab_file'] = self.inputs.gtab_file
@@ -569,6 +570,199 @@ class RegisterFunc(SimpleInterface):
         self._results['reg_fmri_complete'] = True
         self._results['basedir_path'] = runtime.cwd
 
+        gc.collect()
+
+        return runtime
+
+
+class _TrackingInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for Tracking"""
+    B0_mask = File(exists=True, mandatory=True)
+    gm_in_dwi = File(exists=True, mandatory=True)
+    vent_csf_in_dwi = File(exists=True, mandatory=True)
+    wm_in_dwi = File(exists=True, mandatory=True)
+    tiss_class = traits.Str(mandatory=True)
+    labels_im_file_wm_gm_int = File(exists=True, mandatory=True)
+    labels_im_file = File(exists=True, mandatory=True)
+    target_samples = traits.Any(mandatory=True)
+    curv_thr_list = traits.List(mandatory=True)
+    step_list = traits.List(mandatory=True)
+    track_type = traits.Str(mandatory=True)
+    min_length = traits.Any(mandatory=True)
+    maxcrossing = traits.Any(mandatory=True)
+    directget = traits.Str(mandatory=True)
+    conn_model = traits.Str(mandatory=True)
+    gtab_file = File(exists=True, mandatory=True)
+    dwi_file = File(exists=True, mandatory=True)
+    network = traits.Any(mandatory=False)
+    node_size = traits.Any()
+    dens_thresh = traits.Bool()
+    ID = traits.Any(mandatory=True)
+    roi = traits.Any(mandatory=False)
+    min_span_tree = traits.Bool()
+    disp_filt = traits.Bool()
+    parc = traits.Bool()
+    prune = traits.Any()
+    atlas = traits.Any(mandatory=True)
+    uatlas = traits.Any(mandatory=False)
+    labels = traits.Any(mandatory=True)
+    coords = traits.Any(mandatory=True)
+    norm = traits.Any()
+    binary = traits.Bool(False, usedefault=True)
+    atlas_mni = File(exists=True, mandatory=True)
+    fa_path = File(exists=True, mandatory=True)
+    waymask = traits.Any(mandatory=False)
+    t1w2dwi = File(exists=True, mandatory=True)
+    roi_neighborhood_tol = traits.Any(10, mandatory=True, usedefault=True)
+    sphere = traits.Str('repulsion724', mandatory=True, usedefault=True)
+
+
+class _TrackingOutputSpec(TraitedSpec):
+    """Output interface wrapper for Tracking"""
+    streams = File(exists=True, mandatory=True)
+    track_type = traits.Str(mandatory=True)
+    target_samples = traits.Any(mandatory=True)
+    conn_model = traits.Str(mandatory=True)
+    dir_path = traits.Any()
+    network = traits.Any(mandatory=False)
+    node_size = traits.Any()
+    dens_thresh = traits.Bool()
+    ID = traits.Any(mandatory=True)
+    roi = traits.Any(mandatory=False)
+    min_span_tree = traits.Bool()
+    disp_filt = traits.Bool()
+    parc = traits.Bool()
+    prune = traits.Any()
+    atlas = traits.Any(mandatory=True)
+    uatlas = traits.Any(mandatory=False)
+    labels = traits.Any(mandatory=True)
+    coords = traits.Any(mandatory=True)
+    norm = traits.Any()
+    binary = traits.Bool(False, usedefault=True)
+    atlas_mni = File(exists=True, mandatory=True)
+    curv_thr_list = traits.List(mandatory=True)
+    step_list = traits.List(mandatory=True)
+    fa_path = File(exists=True, mandatory=True)
+    dm_path = File(exists=True, mandatory=True)
+    directget = traits.Str(mandatory=True)
+    labels_im_file = File(exists=True, mandatory=True)
+    roi_neighborhood_tol = traits.Any()
+    min_length = traits.Any()
+
+
+class Tracking(SimpleInterface):
+    """Interface wrapper for Tracking"""
+    input_spec = _TrackingInputSpec
+    output_spec = _TrackingOutputSpec
+
+    def _run_interface(self, runtime):
+        import gc
+        import numpy as np
+        import nibabel as nib
+        try:
+            import cPickle as pickle
+        except ImportError:
+            import _pickle as pickle
+        from dipy.io import load_pickle
+        from colorama import Fore, Style
+        from dipy.data import get_sphere
+        from pynets.core import utils
+        from pynets.dmri.track import prep_tissues, reconstruction, create_density_map, track_ensemble
+
+        # Load diffusion data
+        dwi_img = nib.load(self.inputs.dwi_file)
+
+        # Fit diffusion model
+        mod_fit = reconstruction(self.inputs.conn_model, load_pickle(self.inputs.gtab_file),
+                                 np.asarray(dwi_img.dataobj), self.inputs.B0_mask)
+
+        # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
+        atlas_data = np.array(nib.load(self.inputs.labels_im_file).dataobj).astype('uint16')
+        atlas_data_wm_gm_int = np.asarray(nib.load(self.inputs.labels_im_file_wm_gm_int).dataobj).astype('uint16')
+
+        # Build mask vector from atlas for later roi filtering
+        parcels = []
+        i = 0
+        for roi_val in np.unique(atlas_data)[1:]:
+            parcels.append(atlas_data == roi_val)
+            i = i + 1
+
+        if np.sum(atlas_data) == 0:
+            raise ValueError(
+                'ERROR: No non-zero voxels found in atlas. Check any roi masks and/or wm-gm interface images '
+                'to verify overlap with dwi-registered atlas.')
+
+        # Iteratively build a list of streamlines for each ROI while tracking
+        print("%s%s%s%s" % (Fore.GREEN, 'Target number of samples: ', Fore.BLUE, self.inputs.target_samples))
+        print(Style.RESET_ALL)
+        print("%s%s%s%s" % (Fore.GREEN, 'Using curvature threshold(s): ', Fore.BLUE, self.inputs.curv_thr_list))
+        print(Style.RESET_ALL)
+        print("%s%s%s%s" % (Fore.GREEN, 'Using step size(s): ', Fore.BLUE, self.inputs.step_list))
+        print(Style.RESET_ALL)
+        print("%s%s%s%s" % (Fore.GREEN, 'Tracking type: ', Fore.BLUE, self.inputs.track_type))
+        print(Style.RESET_ALL)
+        if self.inputs.directget == 'prob':
+            print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Probabilistic'))
+        elif self.inputs.directget == 'boot':
+            print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Bootstrapped'))
+        elif self.inputs.directget == 'closest':
+            print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Closest Peak'))
+        elif self.inputs.directget == 'det':
+            print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Deterministic Maximum'))
+        else:
+            raise ValueError('Direction-getting type not recognized!')
+        print(Style.RESET_ALL)
+
+        # Commence Ensemble Tractography
+        streamlines = track_ensemble(np.asarray(dwi_img.dataobj), self.inputs.target_samples, atlas_data_wm_gm_int,
+                                     parcels, mod_fit,
+                                     prep_tissues(self.inputs.t1w2dwi, self.inputs.gm_in_dwi,
+                                                  self.inputs.vent_csf_in_dwi, self.inputs.wm_in_dwi,
+                                                  self.inputs.tiss_class),
+                                     get_sphere(self.inputs.sphere), self.inputs.directget, self.inputs.curv_thr_list,
+                                     self.inputs.step_list, self.inputs.track_type, self.inputs.maxcrossing,
+                                     int(self.inputs.roi_neighborhood_tol), self.inputs.min_length, self.inputs.waymask)
+
+        # Create streamline density map
+        [streams, dir_path, dm_path] = create_density_map(dwi_img, utils.do_dir_path(self.inputs.atlas,
+                                                                                     self.inputs.dwi_file), streamlines,
+                                                          self.inputs.conn_model, self.inputs.target_samples,
+                                                          self.inputs.node_size, self.inputs.curv_thr_list,
+                                                          self.inputs.step_list, self.inputs.network, self.inputs.roi,
+                                                          self.inputs.directget, self.inputs.min_length)
+
+        self._results['streams'] = streams
+        self._results['track_type'] = self.inputs.track_type
+        self._results['target_samples'] = self.inputs.target_samples
+        self._results['conn_model'] = self.inputs.conn_model
+        self._results['dir_path'] = dir_path
+        self._results['network'] = self.inputs.network
+        self._results['node_size'] = self.inputs.node_size
+        self._results['dens_thresh'] = self.inputs.dens_thresh
+        self._results['ID'] = self.inputs.ID
+        self._results['roi'] = self.inputs.roi
+        self._results['min_span_tree'] = self.inputs.min_span_tree
+        self._results['disp_filt'] = self.inputs.disp_filt
+        self._results['parc'] = self.inputs.parc
+        self._results['prune'] = self.inputs.prune
+        self._results['atlas'] = self.inputs.atlas
+        self._results['uatlas'] = self.inputs.uatlas
+        self._results['labels'] = self.inputs.labels
+        self._results['coords'] = self.inputs.coords
+        self._results['norm'] = self.inputs.norm
+        self._results['binary'] = self.inputs.binary
+        self._results['atlas_mni'] = self.inputs.atlas_mni
+        self._results['curv_thr_list'] = self.inputs.curv_thr_list
+        self._results['step_list'] = self.inputs.step_list
+        self._results['fa_path'] = self.inputs.fa_path
+        self._results['dm_path'] = dm_path
+        self._results['directget'] = self.inputs.directget
+        self._results['labels_im_file'] = self.inputs.labels_im_file
+        self._results['roi_neighborhood_tol'] = self.inputs.roi_neighborhood_tol
+        self._results['min_length'] = self.inputs.min_length
+
+        del streamlines, atlas_data_wm_gm_int, atlas_data, mod_fit, parcels
+        dwi_img.uncache()
         gc.collect()
 
         return runtime

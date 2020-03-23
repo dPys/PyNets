@@ -118,7 +118,7 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
 
 
 def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples, track_type, thr_type,
-                         parc, directget, max_length):
+                         parc, directget, min_length):
     """
     Name the thresholded structural connectivity matrix file based on relevant graph-generating parameters.
 
@@ -153,8 +153,8 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
 
     Returns
     -------
@@ -185,7 +185,7 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
                                                                                      'streams_')
                                                                          if float(target_samples) > 0 else '_'),
                                                                  'tt-', track_type, '_dg-', directget,
-                                                                 '_ml-', max_length,
+                                                                 '_ml-', min_length,
                                                                  '_thrtype-', thr_type, '_thr-', thr, '.npy')
     return est_path
 
@@ -258,7 +258,7 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
 
 
 def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, target_samples, track_type, parc,
-                         directget, max_length):
+                         directget, min_length):
     """
     Name the raw structural connectivity matrix file based on relevant graph-generating parameters.
 
@@ -288,8 +288,8 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
     directget : str
         The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
-    max_length : int
-        Maximum fiber length threshold in mm to restrict tracking.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
 
     Returns
     -------
@@ -316,7 +316,7 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
                                                          "%s" % ("%s%s%s" % ('samples-', int(target_samples),
                                                                              'streams_') if float(target_samples) > 0
                                                                  else ''), 'tt-', track_type, '_dg-', directget,
-                                                         '_ml-', max_length, '_raw.npy')
+                                                         '_ml-', min_length, '_raw.npy')
     return est_path
 
 
@@ -1016,7 +1016,7 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
 
     for hyperparam in hyperparams:
         if (hyperparam != 'smooth') and (hyperparam != 'hpass') and (hyperparam != 'track_type') and \
-                (hyperparam != 'directget') and (hyperparam != 'max_length'):
+                (hyperparam != 'directget') and (hyperparam != 'min_length'):
             hyperparam_dict[hyperparam] = file_renamed.split(hyperparam + '-')[1].split('_')[0]
     if modality == 'func':
         if 'smooth-' in file_renamed:
@@ -1033,8 +1033,8 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
             hyperparam_dict['directget'] = file_renamed.split('dg-')[1].split('_')[0]
             hyperparams.append('directget')
         if 'ml-' in file_renamed:
-            hyperparam_dict['max_length'] = file_renamed.split('ml-')[1].split('_')[0]
-            hyperparams.append('max_length')
+            hyperparam_dict['min_length'] = file_renamed.split('ml-')[1].split('_')[0]
+            hyperparams.append('min_length')
     return hyperparam_dict, hyperparams
 
 

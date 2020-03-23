@@ -120,7 +120,6 @@ def get_parser():
     parser.add_argument('-mod',
                         metavar='Connectivity estimation/reconstruction method',
                         default='partcorr',
-                        required=True,
                         nargs='+',
                         choices=['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
                                  'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso', 'csa', 'csd'],
@@ -152,12 +151,13 @@ def get_parser():
                              'atlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl\ncoords_dosenbach_2010\n'
                              'coords_power_2011\natlas_pauli_2017.\n')
     parser.add_argument('-ns',
-                        metavar='Spherical centroid node size',
+                        metavar='Spherical node size',
                         default=4,
                         nargs='+',
-                        help='(Hyperparameter): Optionally specify coordinate-based node radius size(s). Default is 4 '
-                             'mm for fMRI and 8mm for dMRI. If you wish to iterate the pipeline across multiple '
-                             'node sizes, separate the list by space (e.g. 2 4 6).\n')
+                        help='(Hyperparameter): Optionally specify coordinate-based node radius size(s) in the case '
+                             'that the `-spheres` flag is used. Default is 4 mm for fMRI and 8mm for dMRI. If you wish '
+                             'to iterate the pipeline across multiple node sizes, separate the list by space '
+                             '(e.g. 2 4 6).\n')
     parser.add_argument('-thr',
                         metavar='Graph threshold',
                         default=1.00,
@@ -165,21 +165,21 @@ def get_parser():
                              'graph. Default is proportional thresholding. If omitted, no thresholding will be applied.'
                              '\n')
     parser.add_argument('-min_thr',
-                        metavar='Multi-thresholding minimum threshold',
+                        metavar='Minimum threshold',
                         default=None,
                         help='(Hyperparameter): Minimum threshold for multi-thresholding.\n')
     parser.add_argument('-max_thr',
-                        metavar='Multi-thresholding maximum threshold',
+                        metavar='Maximum threshold',
                         default=None,
                         help='(Hyperparameter): Maximum threshold for multi-thresholding.')
     parser.add_argument('-step_thr',
-                        metavar='Multi-thresholding step size',
+                        metavar='Thresholding step size',
                         default=None,
                         help='(Hyperparameter): Threshold step value for multi-thresholding. Default is 0.01.\n')
 
     # fMRI hyperparameters
     parser.add_argument('-sm',
-                        metavar='Smoothing value (mm fwhm)',
+                        metavar='Smoothing value (fwhm)',
                         default=0,
                         nargs='+',
                         help='(Hyperparameter): Optionally specify smoothing width(s). Default is 0 / no smoothing. '
@@ -207,14 +207,14 @@ def get_parser():
                         help='(Hyperparameter): Specify the types of clustering to use. Recommended options are: '
                              'ward or ncut in the case of multiple connected components. If specifying a list of '
                              'clustering types, separate them by space.\n')
-    parser.add_argument('-cc',
-                        metavar='Clustering connectivity type',
-                        default='allcorr',
-                        nargs=1,
-                        choices=['tcorr', 'scorr', 'allcorr'],
-                        help='Include this flag if you are running agglomerative-type clustering and wish to specify a '
-                             'spatially constrained connectivity method based on tcorr or scorr. Default is allcorr '
-                             'which has no spatial constraints.\n')
+    # parser.add_argument('-cc',
+    #                     metavar='Clustering connectivity type',
+    #                     default='allcorr',
+    #                     nargs=1,
+    #                     choices=['tcorr', 'scorr', 'allcorr'],
+    #                     help='Include this flag if you are running agglomerative-type clustering and wish to specify a '
+    #                          'spatially constrained connectivity method based on tcorr or scorr. Default is allcorr '
+    #                          'which has no spatial constraints.\n')
     parser.add_argument('-cm',
                         metavar='Cluster mask',
                         default=None,
@@ -225,12 +225,12 @@ def get_parser():
 
     # dMRI hyperparameters
     parser.add_argument('-ml',
-                        metavar='Maximum fiber length for tracking',
-                        default=200,
+                        metavar='Minimum fiber length for tracking',
+                        default=10,
                         nargs='+',
-                        help='(Hyperparameter): Include this flag to manually specify a maximum tract length (mm) for '
-                             'dmri connectome tracking. Default is 200. If you wish to iterate the pipeline across '
-                             'multiple maximum values, separate the list by space (e.g. 150 200 250).\n')
+                        help='(Hyperparameter): Include this flag to manually specify a minimum tract length (mm) for '
+                             'dmri connectome tracking. Default is 10. If you wish to iterate the pipeline across '
+                             'multiple values, separate the list by space (e.g. 10 20 50).\n')
     parser.add_argument('-dg',
                         metavar='Direction getter',
                         default='det',
@@ -244,20 +244,20 @@ def get_parser():
                              '\'boot\').\n')
 
     # fMRI settings (non-hyperparameter)
-    parser.add_argument('-b',
-                        metavar='Number of bootstraps (integer)',
-                        default=0,
-                        nargs='+',
-                        help='Optionally specify the number of bootstraps with this flag if you wish to apply '
-                             'circular-block bootstrapped resampling of the node-extracted time-series. Size of '
-                             'blocks can be specified using the -bs flag.\n')
-    parser.add_argument('-bs',
-                        metavar='Size bootstrap blocks (integer)',
-                        default=None,
-                        nargs='+',
-                        help='If using the -b flag, you may manually specify a bootstrap block size for circular-block '
-                             'resampling of the node-extracted time-series. sqrt(TR) rounded to the nearest integer is '
-                             'recommended\n')
+    # parser.add_argument('-b',
+    #                     metavar='Number of bootstraps (integer)',
+    #                     default=0,
+    #                     nargs='+',
+    #                     help='Optionally specify the number of bootstraps with this flag if you wish to apply '
+    #                          'circular-block bootstrapped resampling of the node-extracted time-series. Size of '
+    #                          'blocks can be specified using the -bs flag.\n')
+    # parser.add_argument('-bs',
+    #                     metavar='Size bootstrap blocks (integer)',
+    #                     default=None,
+    #                     nargs='+',
+    #                     help='If using the -b flag, you may manually specify a bootstrap block size for
+    #                           circular-block resampling of the node-extracted time-series. sqrt(TR) rounded to the
+    #                           nearest integer is recommended\n')
 
     # dMRI settings (non-hyperparameter)
     parser.add_argument('-tt',
@@ -279,15 +279,14 @@ def get_parser():
                              'selection of tissue classification method is not currently supported.\n')
     parser.add_argument('-s',
                         metavar='Number of samples',
-                        default='1000000',
+                        default='100000',
                         help='Include this flag to manually specify a number of cumulative streamline samples for '
-                             'tractography. Default is 1000000. Iterable number of samples not currently supported.\n')
+                             'tractography. Default is 100000. Iterable number of samples not currently supported.\n')
     parser.add_argument('-way',
-                        metavar='Path to binarized Nifti1Image to constrain tractography',
                         default=None,
                         nargs='+',
-                        help='Optionally specify a binarized ROI mask in MNI-space to constrain tractography in the '
-                             'case of dmri connectome estimation.\n')
+                        help='Optionally specify the path to an ROI mask Nifti1Image \nin MNI-space to constrain '
+                             'tractography in the case of structural connectome estimation.\n')
 
     # General settings
     parser.add_argument('-norm',
@@ -330,7 +329,7 @@ def get_parser():
                         help='Optionally use this flag if you wish to apply local thresholding via the disparity '
                              'filter approach. -thr values in this case correspond to α.\n')
     parser.add_argument('-mplx',
-                        metavar='Perform various levels of multiplex graph analysis if both structural and diffusion '
+                        metavar='Perform various levels of multiplex graph analysis if both structural \nand diffusion '
                                 'connectomes are provided.',
                         default=0,
                         nargs=1,
@@ -507,8 +506,8 @@ def build_workflow(args, retval):
             hpass_list = None
     else:
         hpass_list = None
-    c_boot = args.b
-    block_size = args.bs
+    # c_boot = args.b
+    # block_size = args.bs
     roi = args.roi
     template = args.templ
     template_mask = args.templm
@@ -545,9 +544,11 @@ def build_workflow(args, retval):
             clust_type_list = None
     else:
         clust_type_list = None
-    local_corr = args.cc
-    if type(local_corr) is list:
-        local_corr = local_corr[0]
+    # local_corr = args.cc
+    # if type(local_corr) is list:
+    #     local_corr = local_corr[0]
+    local_corr = 'allcorr'
+
     # adapt_thresh=args.at
     adapt_thresh = False
     plot_switch = args.plt
@@ -659,20 +660,20 @@ def build_workflow(args, retval):
     else:
         multi_atlas = None
     target_samples = args.s
-    max_length = args.ml
-    if max_length:
-        if (type(max_length) is list) and (len(max_length) > 1):
-            max_length_list = max_length
-            max_length = None
-        elif max_length == ['None']:
-            max_length_list = None
-        elif type(max_length) is list:
-            max_length = max_length[0]
-            max_length_list = None
+    min_length = args.ml
+    if min_length:
+        if (type(min_length) is list) and (len(min_length) > 1):
+            min_length_list = min_length
+            min_length = None
+        elif min_length == ['None']:
+            min_length_list = None
+        elif type(min_length) is list:
+            min_length = min_length[0]
+            min_length_list = None
         else:
-            max_length_list = None
+            min_length_list = None
     else:
-        max_length_list = None
+        min_length_list = None
     track_type = args.tt
     if type(track_type) is list:
         track_type = track_type[0]
@@ -710,7 +711,6 @@ def build_workflow(args, retval):
         try:
             hardcoded_params = yaml.load(stream)
             maxcrossing = hardcoded_params['maxcrossing'][0]
-            min_length = hardcoded_params['min_length'][0]
             overlap_thr = hardcoded_params['overlap_thr'][0]
             step_list = hardcoded_params['step_list']
             curv_thr_list = hardcoded_params['curv_thr_list']
@@ -1007,31 +1007,33 @@ def build_workflow(args, retval):
             else:
                 hpass = None
 
-            if isinstance(c_boot, list):
-                c_boot = c_boot[0]
-            if isinstance(block_size, list):
-                block_size = block_size[0]
-
-            if float(c_boot) > 0:
-                try:
-                    c_boot = int(c_boot)
-                    try:
-                        block_size = int(block_size)
-                    except ValueError:
-                        print('ERROR: size of bootstrap blocks indicated with the -bs flag must be an integer > 0.')
-                        retval['return_code'] = 1
-                        return retval
-                except ValueError:
-                    print('ERROR: number of boostraps indicated with the -b flag must be an integer > 0.')
-                    retval['return_code'] = 1
-                    return retval
-                print("%s%s%s%s" % ('\nApplying circular-block bootstrapping to the node-extracted time-series using: ',
-                                    int(c_boot), ' bootstraps with block size ', int(block_size)))
-            if (c_boot and not block_size) or (block_size and not c_boot):
-                print("Error: Both number of bootstraps (-b) and block size (-bs) must be specified to run "
-                      "bootstrapped resampling.")
-                retval['return_code'] = 1
-                return retval
+            # if isinstance(c_boot, list):
+            #     c_boot = c_boot[0]
+            # if isinstance(block_size, list):
+            #     block_size = block_size[0]
+            #
+            # if float(c_boot) > 0:
+            #     try:
+            #         c_boot = int(c_boot)
+            #         try:
+            #             block_size = int(block_size)
+            #         except ValueError:
+            #             print('ERROR: size of bootstrap blocks indicated with the -bs flag must be an integer > 0.')
+            #             retval['return_code'] = 1
+            #             return retval
+            #     except ValueError:
+            #         print('ERROR: number of boostraps indicated with the -b flag must be an integer > 0.')
+            #         retval['return_code'] = 1
+            #         return retval
+            #     print("%s%s%s%s" % ('\nApplying circular-block bootstrapping to the node-extracted time-series using: ',
+            #                         int(c_boot), ' bootstraps with block size ', int(block_size)))
+            # if (c_boot and not block_size) or (block_size and not c_boot):
+            #     print("Error: Both number of bootstraps (-b) and block size (-bs) must be specified to run "
+            #           "bootstrapped resampling.")
+            #     retval['return_code'] = 1
+            #     return retval
+            c_boot = 0
+            block_size = None
 
         if conn_model_list:
             print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ',
@@ -1299,9 +1301,9 @@ def build_workflow(args, retval):
                 print("%s%s" % ("\nNilearn atlas: ", atlas))
 
         if target_samples:
-            print("%s%s%s" % ('Using ', target_samples, ' samples...'))
-        if max_length:
-            print("%s%s%s" % ('Using ', max_length, ' maximum length of streamlines...'))
+            print("%s%s%s" % ('Using ', target_samples, ' streamline samples...'))
+        if min_length:
+            print("%s%s%s" % ('Using ', min_length, 'mm minimum streamline length...'))
 
     if (dwi_file or dwi_file_list) and not (func_file or func_file_list):
         print('\nRunning dmri connectometry only...')
@@ -1497,10 +1499,10 @@ def build_workflow(args, retval):
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
                                clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples,
-                               curv_thr_list, step_list, overlap_thr, track_type, max_length, maxcrossing, min_length,
-                               directget, tiss_class, runtime_dict, execution_dict, embed, multi_directget, multimodal,
-                               hpass, hpass_list, template, template_mask, vox_size, multiplex, waymask, local_corr,
-                               max_length_list):
+                               curv_thr_list, step_list, overlap_thr, track_type, min_length, maxcrossing, directget,
+                               tiss_class, runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass,
+                               hpass_list, template, template_mask, vox_size, multiplex, waymask, local_corr,
+                               min_length_list):
         """A function interface for generating a single-subject workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1550,22 +1552,24 @@ def build_workflow(args, retval):
         inputnode.inputs.binary = binary
         inputnode.inputs.multimodal = multimodal
 
-        meta_wf = workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas,
-                                    multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
-                                    anat_file, parc, ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr,
-                                    step_thr, k, clust_mask, k_list, k_clustering, user_atlas_list,
-                                    clust_mask_list, prune, node_size_list, num_total_samples, conn_model_list,
-                                    min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list, disp_filt,
-                                    clust_type, clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec,
-                                    target_samples, curv_thr_list, step_list, overlap_thr, track_type, max_length,
-                                    maxcrossing, min_length, directget, tiss_class, runtime_dict, execution_dict,
-                                    embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask,
-                                    vox_size, multiplex, waymask, local_corr, max_length_list)
-        meta_wf._n_procs = procmem[0]
-        meta_wf._mem_gb = procmem[1]
-        meta_wf.n_procs = procmem[0]
-        meta_wf.mem_gb = procmem[1]
-        wf.add_nodes([meta_wf])
+        if func_file or dwi_file:
+            meta_wf = workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas,
+                                        multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
+                                        anat_file, parc, ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr,
+                                        step_thr, k, clust_mask, k_list, k_clustering, user_atlas_list,
+                                        clust_mask_list, prune, node_size_list, num_total_samples, conn_model_list,
+                                        min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list,
+                                        disp_filt, clust_type, clust_type_list, c_boot, block_size, mask, norm, binary,
+                                        fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
+                                        track_type, min_length, maxcrossing, directget, tiss_class, runtime_dict,
+                                        execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
+                                        template, template_mask, vox_size, multiplex, waymask, local_corr,
+                                        min_length_list)
+            meta_wf._n_procs = procmem[0]
+            meta_wf._mem_gb = procmem[1]
+            meta_wf.n_procs = procmem[0]
+            meta_wf.mem_gb = procmem[1]
+            wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
         if func_file:
@@ -1586,14 +1590,15 @@ def build_workflow(args, retval):
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = \
                         runtime_dict[node_name][1]
 
-        wf.get_node(meta_wf.name)._n_procs = procmem[0]
-        wf.get_node(meta_wf.name)._mem_gb = procmem[1]
-        wf.get_node(meta_wf.name).n_procs = procmem[0]
-        wf.get_node(meta_wf.name).mem_gb = procmem[1]
-        wf.get_node(meta_wf.name).get_node(wf_selected)._n_procs = procmem[0]
-        wf.get_node(meta_wf.name).get_node(wf_selected)._mem_gb = procmem[1]
-        wf.get_node(meta_wf.name).get_node(wf_selected).n_procs = procmem[0]
-        wf.get_node(meta_wf.name).get_node(wf_selected).mem_gb = procmem[1]
+        if func_file or dwi_file:
+            wf.get_node(meta_wf.name)._n_procs = procmem[0]
+            wf.get_node(meta_wf.name)._mem_gb = procmem[1]
+            wf.get_node(meta_wf.name).n_procs = procmem[0]
+            wf.get_node(meta_wf.name).mem_gb = procmem[1]
+            wf.get_node(meta_wf.name).get_node(wf_selected)._n_procs = procmem[0]
+            wf.get_node(meta_wf.name).get_node(wf_selected)._mem_gb = procmem[1]
+            wf.get_node(meta_wf.name).get_node(wf_selected).n_procs = procmem[0]
+            wf.get_node(meta_wf.name).get_node(wf_selected).mem_gb = procmem[1]
 
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(interface=NetworkAnalysis(), name="NetworkAnalysis",
@@ -1602,7 +1607,7 @@ def build_workflow(args, retval):
                                    imports=import_list)
         net_mets_node.synchronize = True
         net_mets_node._n_procs = 1
-        net_mets_node._mem_gb = 2
+        net_mets_node._mem_gb = 4
 
         collect_pd_list_net_csv_node = pe.Node(niu.Function(input_names=['net_mets_csv'],
                                                             output_names=['net_mets_csv_out'],
@@ -1621,41 +1626,8 @@ def build_workflow(args, retval):
 
         final_outputnode = pe.Node(niu.IdentityInterface(fields=['combination_complete']), name='final_outputnode')
 
-        wf.connect([
-            (meta_wf.get_node('pass_meta_outs_node'), net_mets_node, [('est_path_iterlist', 'est_path'),
-                                                                      ('network_iterlist', 'network'),
-                                                                      ('thr_iterlist', 'thr'),
-                                                                      ('ID_iterlist', 'ID'),
-                                                                      ('conn_model_iterlist', 'conn_model'),
-                                                                      ('roi_iterlist', 'roi'),
-                                                                      ('prune_iterlist', 'prune'),
-                                                                      ('norm_iterlist', 'norm'),
-                                                                      ('binary_iterlist', 'binary')]),
-            (inputnode, combine_pandas_dfs_node, [('network', 'network'),
-                                                  ('ID', 'ID'),
-                                                  ('plot_switch', 'plot_switch'),
-                                                  ('multi_nets', 'multi_nets'),
-                                                  ('multimodal', 'multimodal')]),
-            (net_mets_node, collect_pd_list_net_csv_node, [('out_path_neat', 'net_mets_csv')]),
-            (collect_pd_list_net_csv_node, combine_pandas_dfs_node, [('net_mets_csv_out', 'net_mets_csv_list')]),
-            (combine_pandas_dfs_node, final_outputnode, [('combination_complete', 'combination_complete')])
-        ])
-
         # Raw graph case
         if graph or multi_graph:
-            wf.disconnect([(meta_wf.get_node('pass_meta_outs_node'), net_mets_node,
-                            [('est_path_iterlist', 'est_path'),
-                             ('network_iterlist', 'network'),
-                             ('thr_iterlist', 'thr'),
-                             ('ID_iterlist', 'ID'),
-                             ('conn_model_iterlist', 'conn_model'),
-                             ('roi_iterlist', 'roi'),
-                             ('prune_iterlist', 'prune'),
-                             ('norm_iterlist', 'norm'),
-                             ('binary_iterlist', 'binary')])
-                           ])
-            wf.remove_nodes([meta_wf])
-
             # Multiple raw graphs
             if multi_graph:
                 net_mets_node.inputs.est_path = multi_graph
@@ -1678,7 +1650,29 @@ def build_workflow(args, retval):
                                                         ('norm', 'norm'),
                                                         ('binary', 'binary')])
                             ])
+        else:
+            wf.connect([
+                (meta_wf.get_node('pass_meta_outs_node'), net_mets_node, [('est_path_iterlist', 'est_path'),
+                                                                          ('network_iterlist', 'network'),
+                                                                          ('thr_iterlist', 'thr'),
+                                                                          ('ID_iterlist', 'ID'),
+                                                                          ('conn_model_iterlist', 'conn_model'),
+                                                                          ('roi_iterlist', 'roi'),
+                                                                          ('prune_iterlist', 'prune'),
+                                                                          ('norm_iterlist', 'norm'),
+                                                                          ('binary_iterlist', 'binary')])
+            ])
 
+        wf.connect([
+            (inputnode, combine_pandas_dfs_node, [('network', 'network'),
+                                                  ('ID', 'ID'),
+                                                  ('plot_switch', 'plot_switch'),
+                                                  ('multi_nets', 'multi_nets'),
+                                                  ('multimodal', 'multimodal')]),
+            (net_mets_node, collect_pd_list_net_csv_node, [('out_path_neat', 'net_mets_csv')]),
+            (collect_pd_list_net_csv_node, combine_pandas_dfs_node, [('net_mets_csv_out', 'net_mets_csv_list')]),
+            (combine_pandas_dfs_node, final_outputnode, [('combination_complete', 'combination_complete')])
+        ])
         return wf
 
     # Multi-subject pipeline
@@ -1690,9 +1684,9 @@ def build_workflow(args, retval):
                          graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
                          smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask, norm,
                          binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr, track_type,
-                         max_length, maxcrossing, min_length, directget, tiss_class, runtime_dict, execution_dict,
-                         embed, multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
-                         multiplex, waymask, local_corr, max_length_list):
+                         min_length, maxcrossing, directget, tiss_class, runtime_dict, execution_dict, embed,
+                         multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex,
+                         waymask, local_corr, min_length_list):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1746,11 +1740,11 @@ def build_workflow(args, retval):
                 clust_type=clust_type, clust_type_list=clust_type_list, c_boot=c_boot, block_size=block_size,
                 mask=mask_sub, norm=norm, binary=binary, fbval=fbval_sub, fbvec=fbvec_sub,
                 target_samples=target_samples, curv_thr_list=curv_thr_list, step_list=step_list,
-                overlap_thr=overlap_thr, track_type=track_type, max_length=max_length, maxcrossing=maxcrossing,
-                min_length=min_length, directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict,
-                execution_dict=execution_dict, embed=embed, multi_directget=multi_directget, multimodal=multimodal,
-                hpass=hpass, hpass_list=hpass_list, template=template, template_mask=template_mask, vox_size=vox_size,
-                multiplex=multiplex, waymask=waymask, local_corr=local_corr, max_length_list=max_length_list)
+                overlap_thr=overlap_thr, track_type=track_type, min_length=min_length, maxcrossing=maxcrossing,
+                directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, execution_dict=execution_dict,
+                embed=embed, multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
+                template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex, waymask=waymask,
+                local_corr=local_corr, min_length_list=min_length_list)
             wf_single_subject._n_procs = procmem[0]
             wf_single_subject._mem_gb = procmem[1]
             wf_single_subject.n_procs = procmem[0]
@@ -1807,7 +1801,7 @@ def build_workflow(args, retval):
             wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).mem_gb = procmem[1]
 
             wf_multi.get_node(wf_single_subject.name).get_node("NetworkAnalysis")._n_procs = 1
-            wf_multi.get_node(wf_single_subject.name).get_node("NetworkAnalysis")._mem_gb = 2
+            wf_multi.get_node(wf_single_subject.name).get_node("NetworkAnalysis")._mem_gb = 4
             wf_multi.get_node(wf_single_subject.name).get_node("CombineOutputs")._n_procs = 1
             wf_multi.get_node(wf_single_subject.name).get_node("CombineOutputs")._mem_gb = 2
 
@@ -1829,10 +1823,9 @@ def build_workflow(args, retval):
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
                                     smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot,
                                     block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list,
-                                    step_list, overlap_thr, track_type, max_length, maxcrossing,
-                                    min_length, directget, tiss_class, runtime_dict, execution_dict, embed,
-                                    multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size,
-                                    multiplex, waymask, local_corr, max_length_list)
+                                    step_list, overlap_thr, track_type, min_length, maxcrossing, directget, tiss_class,
+                                    runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
+                                    template, template_mask, vox_size, multiplex, waymask, local_corr, min_length_list)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1921,10 +1914,9 @@ def build_workflow(args, retval):
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
                                     smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask,
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
-                                    track_type, max_length, maxcrossing, min_length, directget, tiss_class,
-                                    runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass,
-                                    hpass_list, template, template_mask, vox_size, multiplex, waymask, local_corr,
-                                    max_length_list)
+                                    track_type, min_length, maxcrossing, directget, tiss_class, runtime_dict,
+                                    execution_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
+                                    template_mask, vox_size, multiplex, waymask, local_corr, min_length_list)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil

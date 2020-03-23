@@ -1,20 +1,16 @@
 maxcrossing:
     - 2
-min_length:
-    - 20
 overlap_thr:
     - 1
-step_list:
-    - 0.2
+step_list: # Should never exceed the voxel size.
+    - 0.1
     - 0.2
     - 0.3
     - 0.4
     - 0.5
-curv_thr_list:
-    - 60
+curv_thr_list: # Should be [0, 90] degrees.
+    - 40
     - 30
-    - 30
-    - 10
 nilearn_parc_atlases:
     - 'atlas_harvard_oxford'
     - 'atlas_aal'
@@ -72,6 +68,8 @@ resource_dict:
         - (1, 0.5)
       - 'dsn_node':
         - (1, 4)
+      - 'plot_all_node':
+        - (1, 1)
       - 'streams2graph_node':
         - (1, 4)
 execution_dict:
