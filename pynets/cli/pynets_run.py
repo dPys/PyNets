@@ -688,7 +688,7 @@ def build_workflow(args, retval):
             multi_directget = directget
             directget = None
         elif directget == ['None']:
-            directget_list = None
+            multi_directget = None
         elif type(directget) is list:
             directget = directget[0]
             multi_directget = None
@@ -740,7 +740,7 @@ def build_workflow(args, retval):
     # Check required inputs for existence, and configure run
     if (func_file is None) and (dwi_file is None) and (graph is None) and (multi_graph is None):
         print("\nError: You must include a file path to either an MNI152-normalized space functional image "
-                    "in .nii or .nii.gz format with the -func flag.")
+              "in .nii or .nii.gz format with the -func flag.")
         retval['return_code'] = 1
         return retval
     if func_file:

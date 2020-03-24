@@ -3,84 +3,91 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
-@authors: Neurodata, Alex Loftus, Derek Pisner
+@authors: Derek Pisner
 """
-import warnings
+import pandas as pd
 import numpy as np
+import itertools
 import re
-import networkx as nx
-from pathlib import Path
-from math import sqrt, ceil
-from sklearn.metrics import euclidean_distances
-from collections import namedtuple
+from sklearn.metrics.pairwise import (cosine_distances, haversine_distances, manhattan_distances,
+                                      nan_euclidean_distances)
 from sklearn.utils import check_X_y
-from matplotlib import pyplot as plt
-from graspy.utils import pass_to_ranks, import_edgelist
-from graspy.plot import heatmap
-from functools import reduce
+from sklearn.impute import IterativeImputer
+from sklearn.preprocessing import StandardScaler
+import warnings
+from scipy import stats
+warnings.filterwarnings("ignore")
 
-KEYWORDS = ["sub", "ses"]
+working_dir = '/scratch/04171/dpisner/pynets_out'
+thr_type = 'MST'
+icc = True
+disc = True
+naughty_list = ['boot', 'sps', 'triple_net_ICA_overlap_3']
+mets = ['global_efficiency', 'degree_assortativity_coefficient', 'average_shortest_path_length',
+        'average_betweenness_centrality', 'average_eigenvector_centrality', 'average_degree_centrality',
+        'modularity']
 
 
-def is_graph(filename, atlas="", suffix=""):
+def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
     """
-    Check if `filename` is a pynets graph file.
-    
-    Parameters
-    ----------
-    filename : str or Path
-        location of the file.
-    
-    Returns
-    -------
-    bool
-        True if the file has the pynets naming convention, else False.
+    A function to build a hyperparameter dictionary by parsing a given net_mets file path.
     """
 
-    if atlas:
-        atlas = atlas.lower()
-        KEYWORDS.append(atlas)
+    if 'atlas' not in hyperparam_dict.keys():
+        hyperparam_dict['atlas'] = [atlas]
+    else:
+        hyperparam_dict['atlas'].append(atlas)
 
-    if suffix:
-        if not suffix.startswith("."):
-            suffix = "." + suffix
+    for hyperparam in hyperparams:
+        if hyperparam != 'smooth' and hyperparam != 'hpass' and hyperparam != 'track_type' and \
+                hyperparam != 'directget' and hyperparam != 'min_length':
+            if hyperparam not in hyperparam_dict.keys():
+                hyperparam_dict[hyperparam] = [file_renamed.split(hyperparam + '-')[1].split('_')[0]]
+            else:
+                hyperparam_dict[hyperparam].append(file_renamed.split(hyperparam + '-')[1].split('_')[0])
 
-    correct_suffix = Path(filename).suffix == suffix
-    correct_filename = all(i in str(filename) for i in KEYWORDS)
-    return correct_suffix and correct_filename
+    if modality == 'func':
+        if 'smooth-' in file_renamed:
+            if 'smooth' not in hyperparam_dict.keys():
+                hyperparam_dict['smooth'] = [file_renamed.split('smooth-')[1].split('_')[0].split('fwhm')[0]]
+            else:
+                hyperparam_dict['smooth'].append(file_renamed.split('smooth-')[1].split('_')[0].split('fwhm')[0])
+            hyperparams.append('smooth')
+        if 'hpass-' in file_renamed:
+            if 'hpass' not in hyperparam_dict.keys():
+                hyperparam_dict['hpass'] = [file_renamed.split('hpass-')[1].split('_')[0].split('Hz')[0]]
+            else:
+                hyperparam_dict['hpass'].append(file_renamed.split('hpass-')[1].split('_')[0].split('Hz')[0])
+            hyperparams.append('hpass')
+    elif modality == 'dwi':
+        if 'tt-' in file_renamed:
+            if 'track_type' not in hyperparam_dict.keys():
+                hyperparam_dict['track_type'].append(file_renamed.split('tt-')[1].split('_')[0])
+            else:
+                hyperparam_dict['track_type'] = [file_renamed.split('tt-')[1].split('_')[0]]
+            hyperparams.append('track_type')
+        if 'dg-' in file_renamed:
+            if 'directget' not in hyperparam_dict.keys():
+                hyperparam_dict['directget'] = [file_renamed.split('dg-')[1].split('_')[0]]
+            else:
+                hyperparam_dict['directget'].append(file_renamed.split('dg-')[1].split('_')[0])
+            hyperparams.append('directget')
+        if 'ml-' in file_renamed:
+            if 'min_length' not in hyperparam_dict.keys():
+                hyperparam_dict['min_length'] = [file_renamed.split('ml-')[1].split('_')[0]]
+            else:
+                hyperparam_dict['min_length'].append(file_renamed.split('ml-')[1].split('_')[0])
+            hyperparams.append('min_length')
+    return hyperparam_dict, hyperparams
 
 
-def filter_graph_files(file_list, return_bool=False, **kwargs):
-    """
-    Generator. 
-    Check if each file in `file_list` is a pynets edgelist,
-    yield it if it is.
-    
-    Parameters
-    ----------
-    return_bool : bool
-        if True, return a boolean that says whether graph files exist in the 
-        directory.
-    file_list : iterator
-        iterator of inputs to the `is_graph` function.
-    """
-    if return_bool:
-        has_graphs = any(is_graph(x, **kwargs) for x in file_list)
-        return has_graphs
-
-    for filename in file_list:
-        if is_graph(filename, **kwargs):
-            yield (filename)
-
-
-def discr_stat(X, Y, dissimilarity="euclidean", remove_isolates=True, return_rdfs=False):
+def discr_stat(X, Y, dissimilarity="euclidean", remove_isolates=True, return_rdfs=True):
     """
     Computes the discriminability statistic.
     Parameters
     ----------
     X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-        Input data. If dissimilarity=='precomputed', the input should be the 
-        dissimilarity matrix.
+        Input data. If dissimilarity=='precomputed', the input should be the dissimilarity matrix.
     Y : 1d-array, shape (n_samples)
         Input labels.
     dissimilarity : str, {"euclidean" (default), "precomputed"}
@@ -96,7 +103,7 @@ def discr_stat(X, Y, dissimilarity="euclidean", remove_isolates=True, return_rdf
     Returns
     -------
     stat : float
-        Discriminability statistic. 
+        Discriminability statistic.
     rdfs : array, shape (n_samples, max{len(id)})
         Rdfs for each sample. Only returned if ``return_rdfs==True``.
     """
@@ -110,7 +117,8 @@ def discr_stat(X, Y, dissimilarity="euclidean", remove_isolates=True, return_rdf
         idx = np.isin(Y, uniques[counts != 1])
         labels = Y[idx]
 
-        if dissimilarity == "euclidean":
+        if dissimilarity == "euclidean" or dissimilarity == "cosine" or dissimilarity == "haversine" or \
+            dissimilarity == "manhattan" or dissimilarity == "mahalanobis":
             X = X[idx]
         else:
             X = X[np.ix_(idx, idx)]
@@ -118,11 +126,18 @@ def discr_stat(X, Y, dissimilarity="euclidean", remove_isolates=True, return_rdf
         labels = Y
 
     if dissimilarity == "euclidean":
-        dissimilarities = euclidean_distances(X)
+        dissimilarities = nan_euclidean_distances(X)
+    elif dissimilarity == "cosine":
+        dissimilarities = cosine_distances(X)
+    elif dissimilarity == "haversine":
+        dissimilarities = haversine_distances(X)
+    elif dissimilarity == "manhattan":
+        dissimilarities = manhattan_distances(X)
     else:
         dissimilarities = X
 
     rdfs = _discr_rdf(dissimilarities, labels)
+    rdfs[rdfs<0.5] = np.nan
     stat = np.nanmean(rdfs)
 
     if return_rdfs:
@@ -137,7 +152,7 @@ def _discr_rdf(dissimilarities, labels):
     Parameters
     ----------
     dissimilarities : array, shape (n_samples, n_features) or (n_samples, n_samples)
-        Input data. If dissimilarity=='precomputed', the input should be the 
+        Input data. If dissimilarity=='precomputed', the input should be the
         dissimilarity matrix.
     labels : 1d-array, shape (n_samples)
         Input labels.
@@ -147,8 +162,8 @@ def _discr_rdf(dissimilarities, labels):
         Rdfs for each sample. Only returned if ``return_rdfs==True``.
     """
     check_X_y(dissimilarities, labels, accept_sparse=True)
-
     rdfs = []
+
     for i, label in enumerate(labels):
         di = dissimilarities[i]
 
@@ -160,7 +175,9 @@ def _discr_rdf(dissimilarities, labels):
         idx[i] = False
         Dii = di[idx]
 
-        rdf = [1 - ((Dij < d).sum() + 0.5 * (Dij == d).sum()) / Dij.size for d in Dii]
+        rdf = [
+            1 - ((Dij < d).sum() + 0.5 * (Dij == d).sum()) / Dij.size for d in Dii
+        ]
         rdfs.append(rdf)
 
     out = np.full((len(rdfs), max(map(len, rdfs))), np.nan)
@@ -170,314 +187,150 @@ def _discr_rdf(dissimilarities, labels):
     return out
 
 
-def replace_doc(value):
-    """
-    Decorator for changing docstring of a function.
-    
-    Parameters
-    ----------
-    value : str
-        docstring to change to.
-    
-    Returns
-    -------
-    func
-        wrapper function.
-    """
-
-    def _doc(func):
-        func.__doc__ = value
-        return func
-
-    return _doc
+def reshape_graphs(graphs):
+    n, v1, v2 = np.shape(graphs)
+    return np.reshape(graphs, (n, v1 * v2))
 
 
-def nearest_square(num):
-    """ 
-    Return the smallest square number greater than `num`.
-    For use in visualize_biggraph(), to make the correct number of axes.
-    
-    Parameters:
-    -----------
-        num: int
-    Returns: 
-    --------
-        int. Square number.
-    """
-    return ceil(sqrt(num)) ** 2
+def CronbachAlpha(itemscores):
+    itemscores = np.asarray([i for i in itemscores if np.nan not in i])
+    itemvars = itemscores.var(axis=0, ddof=1)
+    tscores = itemscores.sum(axis=1)
+    nitems = itemscores.shape[1]
+    calpha = nitems / float(nitems-1) * (1 - itemvars.sum() / float(tscores.var(ddof=1)))
+
+    return calpha
 
 
-class PyNetsGraphs(object):
+if __name__ == '__main__':
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
 
-    """    
-    PyNetsDirectory which contains graph objects.
+    df = pd.read_csv(working_dir + '/all_subs_neat.csv')
+    for bad_col in naughty_list:
+        df = df.loc[:, ~df.columns.str.contains(bad_col, regex=True)]
+    df = df.rename(columns=lambda x: re.sub('_k','_k-',x))
+    df = df.rename(columns=lambda x: re.sub('_thr_','',x))
+    df = df.dropna(subset=['id'])
 
-    Parameters
-    ----------
-    delimiter : str
-        The delimiter used in edgelists    
-    Attributes
-    ----------
-    delimiter : str
-        The delimiter used in edgelists    
-    vertices : np.ndarray
-        sorted union of all nodes across edgelists.
-    graphs : np.ndarray, shape (n, v, v), 3D
-        Volumetric numpy array, n vxv adjacency matrices corresponding to each edgelist.
-        graphs[0, :, :] corresponds to files[0].
-    subjects : np.ndarray, shape n, 1D
-        subject IDs, sorted set of all subject IDs in `dir`.
-        Y[0] corresponds to files[0].
-    """
+    for col in df.columns[1:]:
+        df[col]=(df[col]-df[col].min())/(df[col].max()-df[col].min())
+        df[col] = df[col][df[col]>0]
+        df[col] = df[col][df[col]<1]
+        df[col] = df[col][(np.abs(stats.zscore(df[col], nan_policy='omit')) < 3)]
 
-    def __init__(self, *args, **kwargs):
+    cols = list(set([i.split('_thrtype-' + thr_type + '_')[0] for i in list(set(df.columns[1:]))]))
+    hyperparam_dict = {}
+    gen_hyperparams = ['est', 'clust', '_k']
+    for col in cols:
+        build_hp_dict(col, col.split('_sig_')[0], 'func', hyperparam_dict, gen_hyperparams)
 
-        super().__init__(*args, **kwargs)
-        self.vertices = self._vertices()
-        self.graphs = self._graphs()
-        self.subjects = self._parse()[0]
-        self.sessions = self._parse()[0]
+    for key in hyperparam_dict:
+        hyperparam_dict[key] = list(set(hyperparam_dict[key]))
 
-    def __repr__(self):
-        return f"PyNetsGraphs : {str(self.directory)}"
+    grid = list(itertools.product(*(hyperparam_dict[param] for param in hyperparam_dict.keys())))
 
-    def _nx_graphs(self):
-        """
-        List of networkx graph objects. Hidden property, mainly for use to calculate vertices.
-        Returns
-        -------
-        nx_graphs : List[nx.Graph]
-            List of networkX graphs corresponding to subjects.
-        """
-        nx_graphs = [
-            nx.read_weighted_edgelist(f, nodetype=int, delimiter=self.delimiter)
-            for f in self.files
-        ]
-        return nx_graphs
+    subject_dict = {}
+    for id in df['id']:
+        print(id)
+        ID = id.split('_')[0].split('sub-')[1]
+        ses = id.split('_')[1].split('ses-')[1]
+        if ID not in subject_dict.keys():
+            subject_dict[ID] = {}
+        subject_dict[ID][ses] = dict.fromkeys(grid , np.nan)
+        for atlas, est, clust, _k, smooth, hpass in subject_dict[ID][ses]:
+            subject_dict[ID][ses][(atlas, est, clust, _k, smooth, hpass)] = {}
+            met_vals = np.empty([len(mets), 1], dtype = np.float32)
+            met_vals[:] = np.nan
+            i = 0
+            for met in mets:
+                col = atlas + '_sig_bin_reor-RAS_nores-2mm_clust-' + clust + '_k-' + str(_k) + '_est-' + est + \
+                      '_nodetype-parc_' + 'smooth-' + str(smooth) + 'fwhm_hpass-' + str(hpass) + 'Hz_' + 'thrtype-' + \
+                      thr_type + '_net_mets_auc_' + met + '_auc'
+                try:
+                    met_vals[i] = df[df['id'] == 'sub-' + ID + '_ses-' + ses][col].values[0]
+                except:
+                    print('No values found for: ' + met + ' in column: ' + col + '\n')
+                    met_vals[i] = np.nan
+                del col
+                i += 1
+            subject_dict[ID][ses][(atlas, est, clust, _k, smooth, hpass)]['topology'] = met_vals
+            del i, atlas, est, clust, _k, smooth, hpass
+        del ID, ses
 
-    def _vertices(self):
-        nx_graphs = self._nx_graphs()
-        return np.sort(reduce(np.union1d, [G.nodes for G in nx_graphs]))
+    if icc is True and disc is False:
+        df_summary = pd.DataFrame(columns=['grid', 'topological_icc'])
+    elif icc is False and disc is True:
+        df_summary = pd.DataFrame(columns=['grid', 'topological_discriminability'])
+    elif icc is True and disc is True:
+        df_summary = pd.DataFrame(columns=['grid', 'topological_discriminability', 'topological_icc'])
 
-    def _graphs(self):
-        """
-        volumetric numpy array, shape (n, v, v),
-        accounting for isolate nodes by unioning the vertices of all component edgelists,
-        sorted in the same order as `self.files`.
-        Returns
-        -------
-        graphs : np.ndarray, shape (n, v, v), 3D
-            Volumetric numpy array, n vxv adjacency matrices corresponding to each edgelist.
-            graphs[0, :, :] corresponds to files[0].D
-        """
-        list_of_arrays = import_edgelist(self.files, delimiter=self.delimiter)
-        if not isinstance(list_of_arrays, list):
-            list_of_arrays = [list_of_arrays]
-        return np.atleast_3d(list_of_arrays)
+    if icc is True:
+        i = 0
+        for atlas, est, clust, _k, smooth, hpass in grid:
+            df_summary.at[i,'grid'] = (atlas, est, clust, _k, smooth, hpass)
+            print(atlas, est, clust, _k, smooth, hpass)
+            id_list = []
+            icc_list = []
+            for ID in subject_dict.keys():
+                ses_list = []
+                for ses in subject_dict[ID].keys():
+                    id_list.append(ID)
+                    ses_list.append(subject_dict[ID][ses][(atlas, est, clust, _k, smooth, hpass)]['topology'])
+                meas = np.hstack(ses_list)
+                try:
+                    icc_out = CronbachAlpha(meas)
+                    icc_list.append(icc_out)
+                    df_summary.at[i,'icc'] = np.nanmean(icc_list)
+                    del icc_out, ses_list
+                except:
+                    continue
+            del icc_list
+            i += 1
 
-    def _parse(self):
-        """
-        Get subject IDs
-        
-        Returns
-        -------
-        out : np.ndarray 
-            Array of strings. Each element is a subject ID.
-        """
-        pattern = r"(?<=sub-|ses-)(\w*)(?=_ses|_dwi)"
-        subjects = [re.findall(pattern, str(edgelist))[0] for edgelist in self.files]
-        sessions = [re.findall(pattern, str(edgelist))[1] for edgelist in self.files]
-        return np.array(subjects), np.array(sessions)
+    if disc is True:
+        i = 0
+        for atlas, est, clust, _k, smooth, hpass in grid:
+            print(atlas, est, clust, _k, smooth, hpass)
+            id_list = []
+            vect_all = []
+            for ID in subject_dict.keys():
+                vects = []
+                for ses in subject_dict[ID].keys():
+                    id_list.append(ID)
+                    vects.append(subject_dict[ID][ses][(atlas, est, clust, _k, smooth, hpass)]['topology'])
+                vect_all.append(np.concatenate(vects, axis=1))
+                del vects
+            X_top = np.swapaxes(np.hstack(vect_all),0,1)
 
+            Y = np.array(id_list)
+            try:
+                df_summary.at[i,'grid'] = (atlas, est, clust, _k, smooth, hpass)
+                bad_ixs = [i[1] for i in np.argwhere(np.isnan(X_top))]
+                for m in set(bad_ixs):
+                    if (X_top.shape[0] - bad_ixs.count(m))/X_top.shape[0] < 0.50:
+                        X_top = np.delete(X_top, m, axis=1)
+                imp = IterativeImputer(max_iter=50, random_state=42)
+                X_top = imp.fit_transform(X_top)
+                scaler = StandardScaler()
+                X_top = scaler.fit_transform(X_top)
+                discr_stat_val, rdf = discr_stat(X_top, Y)
+                df_summary.at[i,'topological_discriminability'] = discr_stat_val
+                print(discr_stat_val)
+                #print(rdf)
+                del discr_stat_val
+                i += 1
+            except:
+                i += 1
+                continue
 
-class PyNetsStats(object):
-    """Compute statistics from a pynets directory.
-    Parameters
-    ----------
-    X : np.ndarray, shape (n, v*v), 2D
-        numpy array, created by vectorizing each adjacency matrix and stacking.
-    Methods
-    -------
-    pass_to_ranks : returns None 
-        change state of object.
-        calls pass to ranks on `self.graphs`, `self.X`, or both.
-    save_X_and_Y : returns None
-        Saves `self.X` and `self.Y` into a directory.
-    discriminability : return float
-        discriminability statistic for this dataset
-    """
+    if icc is True and disc is False:
+        df_summary = df_summary.sort_values('topological_icc', ascending=False)
+        #df_summary = df_summary[df_summary.topological_icc > df_summary.icc.quantile(.50)]
+    elif icc is False and disc is True:
+        df_summary = df_summary.sort_values('topological_discriminability', ascending=False)
+        # df_summary = df_summary[df_summary.topological_discriminability >
+        #                         df_summary.topological_discriminability.quantile(.50)]
+    elif icc is True and disc is True:
+        df_summary = df_summary.sort_values(by=['topological_discriminability', 'icc'], ascending=False)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.X = self._X()
-        self.Y = self.subjects
-
-    def __repr__(self):
-        return f"PyNetsStats : {str(self.directory)}"
-
-    def _X(self, graphs=None):
-        """
-        this will be a single matrix,
-        created by vectorizing each array in `self.graphs`,
-        and then appending that array as a row to X.
-        Parameters
-        ----------
-        graphs : None or np.ndarray
-            if None, graphs will be `self.graphs`.
-        Returns
-        -------
-        X : np.ndarray, shape (n, v*v), 2D
-            numpy array, created by vectorizing each adjacency matrix and stacking.
-        """
-        if graphs is None:
-            graphs = self.graphs
-        if graphs.ndim == 3:
-            n, v1, v2 = np.shape(graphs)
-            return np.reshape(graphs, (n, v1 * v2))
-        elif len(self.files) == 1:
-            warnings.warn("Only one graph in directory.")
-            return graphs
-        else:
-            raise ValueError("Dimensionality of input must be 3.")
-
-    def save_X_and_Y(self, output_directory="cwd", output_name=""):
-        """
-        Save `self.X` and `self.subjects` into an output directory.
-        Parameters
-        ----------
-        output_directory : str, default current working directory
-            Directory in which to save the output.
-        Returns
-        -------
-        namedtuple with str
-            namedtuple of `name.X, name.Y`. Paths to X and Y.
-        """
-        if not output_name:
-            output_name = self.name
-
-        if output_directory == "cwd":
-            output_directory = Path.cwd()
-        p = Path(output_directory)
-        p.mkdir(parents=True, exist_ok=True)
-
-        X_name = f"{str(p)}/{output_name}_X.csv"
-        Y_name = f"{str(p)}/{output_name}_Y.csv"
-
-        np.savetxt(X_name, self.X, fmt="%f", delimiter=",")
-        np.savetxt(Y_name, self.subjects, fmt="%s")
-
-        name = namedtuple("name", ["X", "Y"])
-        return name(X_name, Y_name)
-
-    @replace_doc(discr_stat.__doc__)
-    def discriminability(self, PTR=True, **kwargs):
-        """
-        Attach discriminability functionality to the object.
-        See `discr_stat` for full documentation.
-        
-        Returns
-        -------
-        stat : float
-            Discriminability statistic.
-        """
-        if PTR:
-            graphs = np.copy(self.graphs)
-            graphs = np.array([pass_to_ranks(graph) for graph in graphs])
-            X = self._X(graphs)
-            return discr_stat(X, self.Y, **kwargs)
-
-        return discr_stat(self.X, self.Y, **kwargs)
-
-
-    def visualize(self, i, savedir=""):
-        """
-        Visualize the ith graph of self.graphs, passed-to-ranks.
-        
-        Parameters
-        ----------
-        i : int
-            Graph to visualize.
-        savedir : str, optional
-            Directory to save graph into.
-            If left empty, do not save.
-        """
-
-        nmax = np.max(self.graphs)
-
-        if isinstance(i, int):
-            graph = pass_to_ranks(self.graphs[i])
-            sub = self.subjects[i]
-            sesh = ""  # TODO
-        
-        elif isinstance(i, np.ndarray):
-            graph = pass_to_ranks(i)
-            sub = ""
-            sesh = ""
-        
-        else:
-            raise TypeError("Passed value must be integer or np.ndarray.")
-
-        viz = heatmap(graph, title = f"sub-{sub}_session-{sesh}", xticklabels=True, yticklabels=True, vmin=0, vmax=1)
-
-        # set color of title
-        viz.set_title(viz.get_title(), color="black")
-
-        # set color of colorbar ticks
-        viz.collections[0].colorbar.ax.yaxis.set_tick_params(color="black")
-
-        # set font size and color of heatmap ticks
-        for item in (viz.get_xticklabels() + viz.get_yticklabels()):
-            item.set_color("black")
-            item.set_fontsize(7)
-
-        if savedir:
-            p = Path(savedir).resolve()
-            if not p.is_dir():
-                p.mkdir()
-            plt.savefig(p / f"sub-{sub}_sesh-{sesh}.png", facecolor="white", bbox_inches="tight", dpi=300)
-        else:
-            plt.show()
-
-        plt.cla()
-
-
-def url_to_pynets_dir(urls):
-    """
-    take a list of urls or filepaths,
-    get a dict of PyNetsGraphs objects
-    
-    Parameters
-    ----------
-    urls : list
-        list of urls or filepaths. 
-        Each element should be of the same form as the input to a `PyNetsGraphs` object.
-    
-    Returns
-    -------
-    dict
-        dict of {dataset:PyNetsGraphs} objects.
-    
-    Raises
-    ------
-    TypeError
-        Raises error if input is not a list.
-    """
-
-    # checks for type
-    if isinstance(urls, str):
-        urls = [urls]
-    if not isinstance(urls, list):
-        raise TypeError("urls must be a list of URLs.")
-
-    # appends each object
-    return_value = {}
-    for url in urls:
-        try:
-            val = PyNetsStats(url)
-            key = val.name
-            return_value[key] = val
-        except ValueError:
-            warnings.warn(f"Graphs for {url} not found. Skipping ...")
-            continue
-
-    return return_value
+    df_summary.to_csv(working_dir + '/grid_clean.csv')

@@ -435,7 +435,7 @@ class DmriReg(object):
             import shutil
             shutil.copyfile(self.t1w, self.t1w_brain)
 
-    def gen_tissue(self):
+    def gen_tissue(self, overwrite=True):
         """
         A function to segment and threshold tissue types from T1w.
         """
@@ -446,7 +446,7 @@ class DmriReg(object):
         # Apply brain mask if detected as a separate file
         try:
             anat_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
-            if op.isfile(anat_mask_existing) and not self.mask:
+            if op.isfile(anat_mask_existing) and not self.mask and overwrite is False:
                 anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.vox_size)
                 os.system("fslmaths {} -mas {} {}".format(self.t1w_brain, anat_mask_existing, self.t1w_brain))
 
@@ -460,7 +460,7 @@ class DmriReg(object):
             gm_mask_existing = None
             csf_mask_existing = None
 
-        if wm_mask_existing and gm_mask_existing and csf_mask_existing:
+        if wm_mask_existing and gm_mask_existing and csf_mask_existing and overwrite is False:
             if op.isfile(wm_mask_existing) and op.isfile(gm_mask_existing) and op.isfile(csf_mask_existing):
                 self.wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.vox_size, overwrite=False)
                 self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size, overwrite=False)
@@ -808,7 +808,7 @@ class FmriReg(object):
             import shutil
             shutil.copyfile(self.t1w, self.t1w_brain)
 
-    def gen_tissue(self):
+    def gen_tissue(self, overwrite=False):
         """
         A function to segment and threshold tissue types from T1w.
         """
@@ -818,7 +818,7 @@ class FmriReg(object):
         # Apply brain mask if detected as a separate file
         try:
             anat_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
-            if op.isfile(anat_mask_existing) and not self.mask:
+            if op.isfile(anat_mask_existing) and not self.mask and overwrite is False:
                 anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.vox_size)
                 os.system("fslmaths {} -mas {} {}".format(self.t1w_brain, anat_mask_existing, self.t1w_brain))
 
@@ -829,7 +829,7 @@ class FmriReg(object):
             gm_mask_existing = None
 
         if gm_mask_existing:
-            if op.isfile(gm_mask_existing):
+            if op.isfile(gm_mask_existing) and overwrite is False:
                 self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size, overwrite=False)
             else:
                 try:
