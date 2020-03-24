@@ -461,8 +461,8 @@ class RegisterDWI(SimpleInterface):
         from pynets.registration import register
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
-        # anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
-        # copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
+        anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
 
         fa_tmp_path = fname_presuffix(self.inputs.fa_path, suffix='_tmp', newpath=runtime.cwd)
         copyfile(self.inputs.fa_path, fa_tmp_path, copy=True, use_hardlink=False)
@@ -477,7 +477,7 @@ class RegisterDWI(SimpleInterface):
                                fa_path=fa_tmp_path,
                                ap_path=ap_tmp_path,
                                B0_mask=B0_mask_tmp_path,
-                               anat_file=self.inputs.anat_file,
+                               anat_file=anat_file_tmp_path,
                                mask=self.inputs.mask,
                                vox_size=self.inputs.vox_size,
                                simple=self.inputs.simple)
@@ -613,7 +613,7 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     fa_path = File(exists=True, mandatory=True)
     waymask = traits.Any(mandatory=False)
     t1w2dwi = File(exists=True, mandatory=True)
-    roi_neighborhood_tol = traits.Any(10, mandatory=True, usedefault=True)
+    roi_neighborhood_tol = traits.Any(8, mandatory=True, usedefault=True)
     sphere = traits.Str('repulsion724', mandatory=True, usedefault=True)
 
 

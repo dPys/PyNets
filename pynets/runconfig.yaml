@@ -71,7 +71,7 @@ resource_dict:
       - 'plot_all_node':
         - (1, 1)
       - 'streams2graph_node':
-        - (1, 4)
+        - (1, 8)
 execution_dict:
     - 'stop_on_first_crash':
         - False

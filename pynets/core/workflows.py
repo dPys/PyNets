@@ -918,10 +918,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             run_tracking_node_iterables.append(("min_length", min_length_list))
             run_tracking_node_iterables.append(("directget", multi_directget))
             run_tracking_node_iterables.append(("conn_model", conn_model_list))
-            dmri_connectometry_wf.connect([(inputnode, run_tracking_node, [('directget', 'directget')])])
-            dmri_connectometry_wf.connect([(inputnode, run_tracking_node, [('conn_model', 'conn_model')])])
-            dmri_connectometry_wf.connect([(inputnode, run_tracking_node, [('min_length', 'min_length')])])
-
         run_tracking_node.iterables = run_tracking_node_iterables
     else:
         dmri_connectometry_wf.connect([(inputnode, run_tracking_node, [('conn_model', 'conn_model'),

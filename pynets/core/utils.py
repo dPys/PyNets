@@ -7,6 +7,7 @@ Copyright (C) 2017
 """
 import warnings
 import os
+import re
 import os.path as op
 import indexed_gzip
 import nibabel as nib
@@ -36,6 +37,11 @@ def do_dir_path(atlas, in_file):
     dir_path : str
         Path to directory containing subject derivative data for given run.
     """
+    if 'reor-RAS' in atlas:
+        atlas = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", atlas)
+    if 'res-' in atlas:
+        atlas = re.sub(r"_res\-*[0-9]mm", "", atlas)
+
     dir_path = "%s%s%s" % (op.dirname(op.realpath(in_file)), '/', atlas)
     if not op.exists(dir_path) and atlas is not None:
         os.makedirs(dir_path, exist_ok=True)

@@ -369,6 +369,7 @@ def check_orient_and_dims(infile, vox_size, bvecs=None, overwrite=True, outdir=N
 
     if outdir is None:
         outdir = op.dirname(infile)
+
     img = nib.load(infile)
     vols = img.shape[-1]
 

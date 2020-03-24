@@ -245,7 +245,8 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
     elif (multimodal is False) and (len(est_path_iterlist) > 1):
         atlases = list(set([x.split('/')[-3].split('/')[0] for x in est_path_iterlist]))
         parcel_dict = dict.fromkeys(atlases)
-        subnets = list(set([i.split('_est')[0].split('/')[-1] for i in est_path_iterlist if i.split('_est')[0].split('/')[-1] != ID]))
+        subnets = list(set([i.split('_est')[0].split('/')[-1] for i in est_path_iterlist if
+                            i.split('_est')[0].split('/')[-1] != ID]))
         out_path = None
         for atlas in atlases:
             if len(subnets) > 1:
