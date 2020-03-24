@@ -37,10 +37,10 @@ def do_dir_path(atlas, in_file):
     dir_path : str
         Path to directory containing subject derivative data for given run.
     """
-    if 'reor-RAS' in atlas:
-        atlas = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", atlas)
-    if 'res-' in atlas:
-        atlas = re.sub(r"_res\-*[0-9]mm", "", atlas)
+    if 'reor-RAS' in str(atlas):
+        atlas = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(atlas))
+    if 'res-' in str(atlas):
+        atlas = re.sub(r"_res\-*[0-9]mm", "", str(atlas))
 
     dir_path = "%s%s%s" % (op.dirname(op.realpath(in_file)), '/', atlas)
     if not op.exists(dir_path) and atlas is not None:
