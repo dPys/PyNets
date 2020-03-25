@@ -495,5 +495,3 @@ def test_mask_roi():
     roi = base_dir + '/pDMN_3_bin.nii.gz'
     roi_masked = nodemaker.mask_roi(dir_path, roi, mask, img_file)
     assert roi_masked is not None
-
-
