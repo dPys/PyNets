@@ -112,11 +112,16 @@ def test_save_ts_to_file():
 #     ID = '002'
 #     multimodal = False
 #     types = ['omni', 'mase']
-#     est_path_iterlist = [dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track.npy',
-#                          dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.08dens_100000samples_particle_track.npy',
-#                          dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.07dens_100000samples_particle_track.npy',
-#                          dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.06dens_100000samples_particle_track.npy',
-#                          dir_path + '/DesikanKlein2012/0021001_Default_est_csd_0.05dens_100000samples_particle_track.npy']
+#     est_path_iterlist = [dir_path +
+#     '/DesikanKlein2012/0021001_Default_est_csd_0.09dens_100000samples_particle_track.npy',
+#                          dir_path +
+#                          '/DesikanKlein2012/0021001_Default_est_csd_0.08dens_100000samples_particle_track.npy',
+#                          dir_path +
+#                          '/DesikanKlein2012/0021001_Default_est_csd_0.07dens_100000samples_particle_track.npy',
+#                          dir_path +
+#                          '/DesikanKlein2012/0021001_Default_est_csd_0.06dens_100000samples_particle_track.npy',
+#                          dir_path +
+#                          '/DesikanKlein2012/0021001_Default_est_csd_0.05dens_100000samples_particle_track.npy']
 #     for type in types:
 #         out_path = utils.build_embedded_connectome(est_path_iterlist, ID, multimodal, type)
 #         assert out_path is not None
@@ -507,7 +512,8 @@ def test_pass_meta_ins_multi():
     conn_model_func = 'cor'
     conn_model_struct = 'cov'
     est_path_func = func_path + '/002_Default_est_cov_0.95propTEST_mm3_nb2_fwhm0.1_Hz.npy'
-    est_path_struct = dmri_path + '/DesikanKlein2012/0021001_Default_est_tensor_0.05dens_100000samples_particle_track.npy'
+    est_path_struct = dmri_path + \
+                      '/DesikanKlein2012/0021001_Default_est_tensor_0.05dens_100000samples_particle_track.npy'
     network_func = 'Default'
     network_struct = 'Default'
     thr_func = 0.6
@@ -541,11 +547,8 @@ def test_pass_meta_ins_multi():
 
 
 @pytest.mark.parametrize("embed_multimodal_multiplex",
-                            [
-                                [None, False, 0],
-                                pytest.param(['omni', True, 1], marks=pytest.mark.xfail(raises=IndexError))
-                            ]
-                        )
+                         [[None, False, 0], pytest.param(['omni', True, 1],
+                                                         marks=pytest.mark.xfail(raises=IndexError))])
 def test_pass_meta_outs(embed_multimodal_multiplex):
     """
     Test pass_meta_outs functionality
