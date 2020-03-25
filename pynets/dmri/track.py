@@ -351,13 +351,15 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                                                       mode='both_end',
                                                                       tol=roi_neighborhood_tol))
 
-                print("%s%s" % ('Filtering by node intersection: ', len(roi_proximal_streamlines)))
+                print("%s%s" % ('Filtering by: \nnode intersection: ', len(roi_proximal_streamlines)))
 
-                roi_proximal_streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in
-                                                                                         roi_proximal_streamlines if
-                                                                                         len(s) > float(min_length)])
+                if min_length != 0:
+                    roi_proximal_streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in
+                                                                                             roi_proximal_streamlines
+                                                                                             if len(s) >
+                                                                                             float(min_length)])
 
-                print("%s%s" % ('Filtering by minimum length criterion: ', len(roi_proximal_streamlines)))
+                    print("%s%s" % ('minimum length criterion: ', len(roi_proximal_streamlines)))
 
                 if waymask:
                     roi_proximal_streamlines = roi_proximal_streamlines[utils.near_roi(roi_proximal_streamlines,
@@ -365,7 +367,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                                                                        waymask_data,
                                                                                        tol=roi_neighborhood_tol,
                                                                                        mode='any')]
-                    print("%s%s" % ('Filtering by waymask proximity: ', len(roi_proximal_streamlines)))
+                    print("%s%s" % ('waymask proximity: ', len(roi_proximal_streamlines)))
 
                 streamlines.extend([s for s in roi_proximal_streamlines])
                 stream_counter = stream_counter + len([s for s in roi_proximal_streamlines])
@@ -376,7 +378,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
             del dg
 
         circuit_ix = circuit_ix + 1
-        print("%s%s%s%s%s%s" % ('\nCompleted Hyperparameter Circuit: ', circuit_ix,
+        print("%s%s%s%s%s%s" % ('Completed Hyperparameter Circuit: ', circuit_ix,
                                 '\nCumulative Streamline Count: ', Fore.CYAN, stream_counter, "\n"))
         print(Style.RESET_ALL)
 

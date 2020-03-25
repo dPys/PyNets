@@ -90,8 +90,8 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
     step_list : list
         List of float step-sizes used to perform ensemble tracking.
     directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
-        and prob (probabilistic).
+        The statistical approach to tracking. Options are: det (deterministic),
+        closest (clos), boot (bootstrapped), and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
     error_margin : int
