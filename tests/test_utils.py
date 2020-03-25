@@ -541,11 +541,8 @@ def test_pass_meta_ins_multi():
 
 
 @pytest.mark.parametrize("embed_multimodal_multiplex",
-                            [
-                                [None, False, 0],
-                                pytest.param(['omni', True, 1], marks=pytest.mark.xfail(raises=IndexError))
-                            ]
-                        )
+                         [[None, False, 0], pytest.param(['omni', True, 1],
+                                                         marks=pytest.mark.xfail(raises=IndexError))])
 def test_pass_meta_outs(embed_multimodal_multiplex):
     """
     Test pass_meta_outs functionality
