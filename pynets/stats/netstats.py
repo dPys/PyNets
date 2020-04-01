@@ -919,13 +919,16 @@ class CleanGraphs(object):
 
         # Prune irrelevant nodes (i.e. nodes who are fully disconnected from the graph and/or those whose betweenness
         # centrality are > 3 standard deviations below the mean)
-        if (self.prune == 1) or (nx.is_connected(self.G) is True):
+        if int(self.prune) == 1:
             if nx.is_connected(self.G) is False:
                 print('Warning: Fragmented graph...\n')
             [self.G, _] = prune_disconnected(self.G)
-        elif self.prune == 2:
+        elif int(self.prune) == 2:
             print('Pruning by node centrality...')
             [self.G, _] = most_important(self.G)
+        elif int(self.prune) == 3:
+            print('Pruning all but the largest connected component subgraph...')
+            self.G = sorted(nx.connected_component_subgraphs(self.G), key=len, reverse=True)[0]
         else:
             print('Graph is connected...')
 

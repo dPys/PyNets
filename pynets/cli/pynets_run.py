@@ -151,13 +151,12 @@ def get_parser():
                              'atlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl\ncoords_dosenbach_2010\n'
                              'coords_power_2011\natlas_pauli_2017.\n')
     parser.add_argument('-ns',
-                        metavar='Spherical node size',
+                        metavar='Spherical centroid node size',
                         default=4,
                         nargs='+',
-                        help='(Hyperparameter): Optionally specify coordinate-based node radius size(s) in the case '
-                             'that the `-spheres` flag is used. Default is 4 mm for fMRI and 8mm for dMRI. If you wish '
-                             'to iterate the pipeline across multiple node sizes, separate the list by space '
-                             '(e.g. 2 4 6).\n')
+                        help='(Hyperparameter): Optionally specify coordinate-based node radius size(s). Default is 4 '
+                             'mm for fMRI and 8mm for dMRI. If you wish to iterate the pipeline across multiple '
+                             'node sizes, separate the list by space (e.g. 2 4 6).\n')
     parser.add_argument('-thr',
                         metavar='Graph threshold',
                         default=1.00,
@@ -165,21 +164,21 @@ def get_parser():
                              'graph. Default is proportional thresholding. If omitted, no thresholding will be applied.'
                              '\n')
     parser.add_argument('-min_thr',
-                        metavar='Minimum threshold',
+                        metavar='Multi-thresholding minimum threshold',
                         default=None,
                         help='(Hyperparameter): Minimum threshold for multi-thresholding.\n')
     parser.add_argument('-max_thr',
-                        metavar='Maximum threshold',
+                        metavar='Multi-thresholding maximum threshold',
                         default=None,
                         help='(Hyperparameter): Maximum threshold for multi-thresholding.')
     parser.add_argument('-step_thr',
-                        metavar='Thresholding step size',
+                        metavar='Multi-thresholding step size',
                         default=None,
                         help='(Hyperparameter): Threshold step value for multi-thresholding. Default is 0.01.\n')
 
     # fMRI hyperparameters
     parser.add_argument('-sm',
-                        metavar='Smoothing value (fwhm)',
+                        metavar='Smoothing value (mm fwhm)',
                         default=0,
                         nargs='+',
                         help='(Hyperparameter): Optionally specify smoothing width(s). Default is 0 / no smoothing. '
@@ -203,18 +202,20 @@ def get_parser():
                         metavar='Clustering type',
                         default='ward',
                         nargs='+',
-                        choices=['ward', 'kmeans', 'complete', 'average', 'single', 'ncut', 'rena'],
+                        choices=['ward', 'kmeans', 'complete', 'average', 'single'],
                         help='(Hyperparameter): Specify the types of clustering to use. Recommended options are: '
-                             'ward or ncut in the case of multiple connected components. If specifying a list of '
+                             'ward or kmeans. Note that imposing spatial constraints with a mask consisting of '
+                             'disconnected components will leading to clustering instability in the case of complete, '
+                             'average, or single clustering. If specifying a list of '
                              'clustering types, separate them by space.\n')
-    # parser.add_argument('-cc',
-    #                     metavar='Clustering connectivity type',
-    #                     default='allcorr',
-    #                     nargs=1,
-    #                     choices=['tcorr', 'scorr', 'allcorr'],
-    #                     help='Include this flag if you are running agglomerative-type clustering and wish to specify a '
-    #                          'spatially constrained connectivity method based on tcorr or scorr. Default is allcorr '
-    #                          'which has no spatial constraints.\n')
+    parser.add_argument('-cc',
+                        metavar='Clustering connectivity type',
+                        default='allcorr',
+                        nargs=1,
+                        choices=['tcorr', 'scorr', 'allcorr'],
+                        help='Include this flag if you are running agglomerative-type clustering and wish to specify a '
+                             'spatially constrained connectivity method based on tcorr or scorr. Default is allcorr '
+                             'which has no spatial constraints.\n')
     parser.add_argument('-cm',
                         metavar='Cluster mask',
                         default=None,
@@ -225,12 +226,12 @@ def get_parser():
 
     # dMRI hyperparameters
     parser.add_argument('-ml',
-                        metavar='Minimum fiber length for tracking',
-                        default=10,
+                        metavar='Maximum fiber length for tracking',
+                        default=200,
                         nargs='+',
-                        help='(Hyperparameter): Include this flag to manually specify a minimum tract length (mm) for '
-                             'dmri connectome tracking. Default is 10. If you wish to iterate the pipeline across '
-                             'multiple values, separate the list by space (e.g. 10 20 50).\n')
+                        help='(Hyperparameter): Include this flag to manually specify a maximum tract length (mm) for '
+                             'dmri connectome tracking. Default is 200. If you wish to iterate the pipeline across '
+                             'multiple maximum values, separate the list by space (e.g. 150 200 250).\n')
     parser.add_argument('-dg',
                         metavar='Direction getter',
                         default='det',
@@ -244,20 +245,20 @@ def get_parser():
                              '\'boot\').\n')
 
     # fMRI settings (non-hyperparameter)
-    # parser.add_argument('-b',
-    #                     metavar='Number of bootstraps (integer)',
-    #                     default=0,
-    #                     nargs='+',
-    #                     help='Optionally specify the number of bootstraps with this flag if you wish to apply '
-    #                          'circular-block bootstrapped resampling of the node-extracted time-series. Size of '
-    #                          'blocks can be specified using the -bs flag.\n')
-    # parser.add_argument('-bs',
-    #                     metavar='Size bootstrap blocks (integer)',
-    #                     default=None,
-    #                     nargs='+',
-    #                     help='If using the -b flag, you may manually specify a bootstrap block size for
-    #                           circular-block resampling of the node-extracted time-series. sqrt(TR) rounded to the
-    #                           nearest integer is recommended\n')
+    parser.add_argument('-b',
+                        metavar='Number of bootstraps (integer)',
+                        default=0,
+                        nargs='+',
+                        help='Optionally specify the number of bootstraps with this flag if you wish to apply '
+                             'circular-block bootstrapped resampling of the node-extracted time-series. Size of '
+                             'blocks can be specified using the -bs flag.\n')
+    parser.add_argument('-bs',
+                        metavar='Size bootstrap blocks (integer)',
+                        default=None,
+                        nargs='+',
+                        help='If using the -b flag, you may manually specify a bootstrap block size for circular-block '
+                             'resampling of the node-extracted time-series. sqrt(TR) rounded to the nearest integer is '
+                             'recommended\n')
 
     # dMRI settings (non-hyperparameter)
     parser.add_argument('-tt',
@@ -279,14 +280,15 @@ def get_parser():
                              'selection of tissue classification method is not currently supported.\n')
     parser.add_argument('-s',
                         metavar='Number of samples',
-                        default='100000',
+                        default='1000000',
                         help='Include this flag to manually specify a number of cumulative streamline samples for '
-                             'tractography. Default is 100000. Iterable number of samples not currently supported.\n')
+                             'tractography. Default is 1000000. Iterable number of samples not currently supported.\n')
     parser.add_argument('-way',
+                        metavar='Path to binarized Nifti1Image to constrain tractography',
                         default=None,
                         nargs='+',
-                        help='Optionally specify the path to an ROI mask Nifti1Image \nin MNI-space to constrain '
-                             'tractography in the case of structural connectome estimation.\n')
+                        help='Optionally specify a binarized ROI mask in MNI-space to constrain tractography in the '
+                             'case of dmri connectome estimation.\n')
 
     # General settings
     parser.add_argument('-norm',
@@ -319,7 +321,7 @@ def get_parser():
                         metavar='Pruning strategy',
                         default=1,
                         nargs=1,
-                        choices=['0', '1', '2'],
+                        choices=['0', '1', '2', '3'],
                         help='Include this flag to prune the resulting graph of (1) any isolated + fully '
                              'disconnected nodes or (2) any isolated + fully disconnected + non-important nodes. '
                              'Default pruning=1. Include -p 0 to disable pruning.\n')
@@ -329,13 +331,13 @@ def get_parser():
                         help='Optionally use this flag if you wish to apply local thresholding via the disparity '
                              'filter approach. -thr values in this case correspond to α.\n')
     parser.add_argument('-mplx',
-                        metavar='Perform various levels of multiplex graph analysis if both structural \nand diffusion '
+                        metavar='Perform various levels of multiplex graph analysis if both structural and diffusion '
                                 'connectomes are provided.',
                         default=0,
                         nargs=1,
                         choices=['0', '1', '2', '3'],
                         help='Include this flag to perform multiplex graph analysis across structural-functional '
-                             'connectome modalities. Options include level (1) Create and ensemble of multiplex graphs '
+                             'connectome modalities. Options include level (1) Create an ensemble of multiplex graphs '
                              'using motif-matched adaptive thresholding; (2) Additionally perform multiplex graph '
                              'embedding and analysis; (3) Additionally perform plotting. '
                              'Default is (0) which is no multiplex analysis.\n')
@@ -700,6 +702,8 @@ def build_workflow(args, retval):
     if embed is not None:
         embed = embed[0]
     multiplex = args.mplx
+    if type(multiplex) is list:
+        multiplex = multiplex[0]
     vox_size = args.vox
     work_dir = args.work
     os.makedirs(work_dir, exist_ok=True)
@@ -1051,6 +1055,7 @@ def build_workflow(args, retval):
         hpass = 'None'
         conn_model = 'None'
         c_boot = 'None'
+        block_size = 'None'
         if multi_graph:
             print('\nUsing multiple custom input graphs...')
             conn_model = None

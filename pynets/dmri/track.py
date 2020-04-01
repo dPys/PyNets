@@ -369,11 +369,12 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                                                                        mode='any')]
                     print("%s%s" % ('waymask proximity: ', len(roi_proximal_streamlines)))
 
-                streamlines.extend([s for s in roi_proximal_streamlines])
-                stream_counter = stream_counter + len([s for s in roi_proximal_streamlines])
+                out_streams = [s.astype('float32') for s in roi_proximal_streamlines]
+                streamlines.extend(out_streams)
+                stream_counter = stream_counter + len(out_streams)
 
                 # Cleanup memory
-                del seeds, roi_proximal_streamlines, streamline_generator
+                del seeds, roi_proximal_streamlines, streamline_generator, out_streams
                 gc.collect()
             del dg
 

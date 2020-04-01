@@ -252,7 +252,7 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
                                                          network is not None else ''),
                                                  '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0], '_') if
                                                          roi is not None else ''),
-                                                 'raw_', conn_model, '_',
+                                                 'raw_est-', conn_model, '_',
                                                  '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
                                                          ((node_size != 'parc') and (node_size is not None)) else
                                                          'nodetype-parc_'),
@@ -317,7 +317,7 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
                                                          network is not None else ''),
                                                          '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0],
                                                                              '_') if roi is not None else ''),
-                                                         'raw_', conn_model, '_',
+                                                         'raw_est-', conn_model, '_',
                                                          '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
                                                                  ((node_size != 'parc') and (node_size is not None))
                                                                  else 'parc_'),
@@ -463,7 +463,7 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr
         embeddings.build_embedded_connectome(list(flatten(est_path_iterlist)), list(flatten(ID_iterlist))[0],
                                              multimodal, embed)
 
-    if (multiplex > 0) and (multimodal is True):
+    if (float(multiplex) > 0) and (multimodal is True):
         multigraph_list_all = netmotifs.build_multigraphs(est_path_iterlist, list(flatten(ID_iterlist))[0])
 
     return (conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
