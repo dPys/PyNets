@@ -12,6 +12,7 @@ import re
 from sklearn.metrics.pairwise import (cosine_distances, haversine_distances, manhattan_distances,
                                       nan_euclidean_distances)
 from sklearn.utils import check_X_y
+from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.preprocessing import StandardScaler
 import warnings
@@ -210,6 +211,7 @@ if __name__ == '__main__':
         df = df.loc[:, ~df.columns.str.contains(bad_col, regex=True)]
     df = df.rename(columns=lambda x: re.sub('_k','_k-',x))
     df = df.rename(columns=lambda x: re.sub('_thr_','',x))
+    df = df.rename(columns=lambda x: re.sub('_partcorr_','_est-partcorr_',x))
     df = df.dropna(subset=['id'])
 
     for col in df.columns[1:]:
@@ -258,11 +260,11 @@ if __name__ == '__main__':
         del ID, ses
 
     if icc is True and disc is False:
-        df_summary = pd.DataFrame(columns=['grid', 'topological_icc'])
+        df_summary = pd.DataFrame(columns=['grid', 'icc'])
     elif icc is False and disc is True:
-        df_summary = pd.DataFrame(columns=['grid', 'topological_discriminability'])
+        df_summary = pd.DataFrame(columns=['grid', 'discriminability'])
     elif icc is True and disc is True:
-        df_summary = pd.DataFrame(columns=['grid', 'topological_discriminability', 'topological_icc'])
+        df_summary = pd.DataFrame(columns=['grid', 'discriminability', 'icc'])
 
     if icc is True:
         i = 0
@@ -314,7 +316,7 @@ if __name__ == '__main__':
                 scaler = StandardScaler()
                 X_top = scaler.fit_transform(X_top)
                 discr_stat_val, rdf = discr_stat(X_top, Y)
-                df_summary.at[i,'topological_discriminability'] = discr_stat_val
+                df_summary.at[i, 'discriminability'] = discr_stat_val
                 print(discr_stat_val)
                 #print(rdf)
                 del discr_stat_val
@@ -324,13 +326,13 @@ if __name__ == '__main__':
                 continue
 
     if icc is True and disc is False:
-        df_summary = df_summary.sort_values('topological_icc', ascending=False)
+        df_summary = df_summary.sort_values('icc', ascending=False)
         #df_summary = df_summary[df_summary.topological_icc > df_summary.icc.quantile(.50)]
     elif icc is False and disc is True:
-        df_summary = df_summary.sort_values('topological_discriminability', ascending=False)
-        # df_summary = df_summary[df_summary.topological_discriminability >
-        #                         df_summary.topological_discriminability.quantile(.50)]
+        df_summary = df_summary.sort_values('discriminability', ascending=False)
+        # df_summary = df_summary[df_summary.discriminability >
+        #                         df_summary.discriminability.quantile(.50)]
     elif icc is True and disc is True:
-        df_summary = df_summary.sort_values(by=['topological_discriminability', 'icc'], ascending=False)
+        df_summary = df_summary.sort_values(by=['discriminability', 'icc'], ascending=False)
 
     df_summary.to_csv(working_dir + '/grid_clean.csv')

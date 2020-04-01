@@ -64,6 +64,7 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
 
     nodif_B0_img.uncache()
     del FA, FA_MD
+
     return fa_path, B0_mask, gtab_file, dwi_file
 
 
@@ -319,6 +320,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
     '''
+    import gc
     from dipy.tracking.streamline import Streamlines, values_from_volume
     from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
     import networkx as nx
@@ -335,8 +337,9 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     roi_shape = roi_img.shape
 
     # Read Streamlines
-    streamlines = Streamlines(load_tractogram(streams, roi_img, to_space=Space.RASMM, to_origin=Origin.TRACKVIS,
-                                              bbox_valid_check=False).streamlines)
+    streamlines = [i.astype(np.float32) for i in Streamlines(load_tractogram(streams, roi_img, to_space=Space.RASMM,
+                                                                             to_origin=Origin.TRACKVIS,
+                                                                             bbox_valid_check=False).streamlines)]
     roi_img.uncache()
 
     if fa_wei is True:
@@ -347,7 +350,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         fa_weights_norm = []
         # Here we normalize by global FA
         for val_list in fa_weights:
-            fa_weights_norm.append(np.nanmean((val_list - min_global_fa_wei) / (max_global_fa_wei - min_global_fa_wei)))
+            fa_weights_norm.append(np.nanmean((val_list - min_global_fa_wei) /
+                                              (max_global_fa_wei - min_global_fa_wei)))
 
     # Instantiate empty networkX graph object & dictionary and create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4))
@@ -364,9 +368,9 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     ix = 0
     for s in streamlines:
         # Map the streamlines coordinates to voxel coordinates and get labels for label_volume
-        i, j, k = np.vstack(np.array([nodemaker.get_sphere(coord, error_margin, roi_zooms,
-                                                           roi_shape) for coord in
-                                      _to_voxel_coordinates(s, lin_T, offset)])).T
+        lab_coords = [nodemaker.get_sphere(coord, error_margin, roi_zooms, roi_shape) for coord in
+                      _to_voxel_coordinates(s, lin_T, offset)]
+        [i, j, k] = np.vstack(np.array(lab_coords)).T
 
         # get labels for label_volume
         lab_arr = atlas_data[i, j, k]
@@ -392,6 +396,9 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         else:
             g.add_weighted_edges_from(edge_list)
         ix = ix + 1
+
+        del lab_coords, lab_arr, endlabels, edges, edge_list
+        gc.collect()
 
     del streamlines
 

@@ -442,13 +442,25 @@ class DmriReg(object):
         # from pynets.plotting.plot_gen import qa_fast_png
         import os.path as op
         import glob
+        import shutil
 
         # Apply brain mask if detected as a separate file
         try:
             anat_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
             if op.isfile(anat_mask_existing) and not self.mask and overwrite is False:
                 anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.vox_size)
-                os.system("fslmaths {} -mas {} {}".format(self.t1w_brain, anat_mask_existing, self.t1w_brain))
+                try:
+                    os.system("fslmaths {} -mas {} {} 2>/dev/null".format(self.t1w_brain, anat_mask_existing,
+                                                                          self.t1w_brain))
+                except:
+                    try:
+                        from nilearn.image import resample_to_img
+                        nib.save(resample_to_img(nib.load(anat_mask_existing), nib.load(self.t1w_brain)),
+                                 anat_mask_existing)
+                        os.system("fslmaths {} -mas {} {} 2>/dev/null".format(self.t1w_brain, anat_mask_existing,
+                                                                              self.t1w_brain))
+                    except ValueError:
+                        print('Cannot coerce mask to shape of T1w anatomical.')
 
             # Segment the t1w brain into probability maps
             gm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
@@ -462,30 +474,30 @@ class DmriReg(object):
 
         if wm_mask_existing and gm_mask_existing and csf_mask_existing and overwrite is False:
             if op.isfile(wm_mask_existing) and op.isfile(gm_mask_existing) and op.isfile(csf_mask_existing):
-                self.wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.vox_size, overwrite=False)
-                self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size, overwrite=False)
-                self.csf_mask = regutils.check_orient_and_dims(csf_mask_existing, self.vox_size, overwrite=False)
+                wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.vox_size, overwrite=False)
+                gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size, overwrite=False)
+                csf_mask = regutils.check_orient_and_dims(csf_mask_existing, self.vox_size, overwrite=False)
             else:
                 try:
                     maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
                 except RuntimeError:
                     print('Segmentation failed. Does the input anatomical image still contained skull?')
-                self.wm_mask = maps['wm_prob']
-                self.gm_mask = maps['gm_prob']
-                self.csf_mask = maps['csf_prob']
+                wm_mask = maps['wm_prob']
+                gm_mask = maps['gm_prob']
+                csf_mask = maps['csf_prob']
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
             except RuntimeError:
                 print('Segmentation failed. Does the input anatomical image still contained skull?')
-            self.wm_mask = maps['wm_prob']
-            self.gm_mask = maps['gm_prob']
-            self.csf_mask = maps['csf_prob']
+            wm_mask = maps['wm_prob']
+            gm_mask = maps['gm_prob']
+            csf_mask = maps['csf_prob']
 
         # qa_fast_png(self.csf_mask, self.gm_mask, self.wm_mask, self.map_path)
 
         # Threshold WM to binary in dwi space
-        t_img = nib.load(self.wm_mask)
+        t_img = nib.load(wm_mask)
         mask = math_img('img > 0.20', img=t_img)
         mask.to_filename(self.wm_mask_thr)
 
@@ -495,7 +507,12 @@ class DmriReg(object):
         mask.to_filename(self.t1w_brain_mask)
 
         # Extract wm edge
-        os.system("fslmaths {} -edge -bin -mas {} {}".format(self.wm_mask_thr, self.wm_mask_thr, self.wm_edge))
+        os.system("fslmaths {} -edge -bin -mas {} {} 2>/dev/null".format(wm_mask, self.wm_mask_thr,
+                                                                         self.wm_edge))
+
+        shutil.copyfile(wm_mask, self.wm_mask)
+        shutil.copyfile(gm_mask, self.gm_mask)
+        shutil.copyfile(csf_mask, self.csf_mask)
 
         return
 
@@ -522,7 +539,8 @@ class DmriReg(object):
                 regutils.inverse_warp(self.t1w_brain, self.mni2t1w_warp, self.warp_t1w2mni)
 
                 # Get mat from MNI -> T1
-                os.system("convert_xfm -omat {} -inverse {}".format(self.mni2t1_xfm_init, self.t12mni_xfm_init))
+                os.system("convert_xfm -omat {} -inverse {} 2>/dev/null".format(self.mni2t1_xfm_init,
+                                                                                self.t12mni_xfm_init))
 
             except RuntimeError('Error: FNIRT failed!'):
                 pass
@@ -532,12 +550,12 @@ class DmriReg(object):
                            bins=None, dof=12, cost='mutualinfo', searchrad=True, interp="spline",
                            out=self.t1_aligned_mni, sch=None)
             # Get mat from MNI -> T1
-            os.system("convert_xfm -omat {} -inverse {}".format(self.t12mni_xfm, self.mni2t1_xfm))
+            os.system("convert_xfm -omat {} -inverse {} 2>/dev/null".format(self.t12mni_xfm, self.mni2t1_xfm))
 
         # Align T1w-->DWI
         regutils.align(self.ap_path, self.t1w_brain, xfm=self.t1w2dwi_xfm, bins=None, interp="spline", dof=6,
                        cost='mutualinfo', out=None, searchrad=True, sch=None)
-        os.system("convert_xfm -omat {} -inverse {}".format(self.dwi2t1w_xfm, self.t1w2dwi_xfm))
+        os.system("convert_xfm -omat {} -inverse {} 2>/dev/null".format(self.dwi2t1w_xfm, self.t1w2dwi_xfm))
 
         if self.simple is False:
             # Flirt bbr
@@ -546,7 +564,8 @@ class DmriReg(object):
                 regutils.align(self.fa_path, self.t1w_brain, wmseg=self.wm_edge, xfm=self.dwi2t1w_bbr_xfm,
                                init=self.dwi2t1w_xfm, bins=256, dof=7, searchrad=True, interp="spline", out=None,
                                cost='bbr', sch="${FSLDIR}/etc/flirtsch/bbr.sch")
-                os.system("convert_xfm -omat {} -inverse {}".format(self.t1w2dwi_bbr_xfm, self.dwi2t1w_bbr_xfm))
+                os.system("convert_xfm -omat {} -inverse {} 2>/dev/null".format(self.t1w2dwi_bbr_xfm,
+                                                                                self.dwi2t1w_bbr_xfm))
 
                 # Apply the alignment
                 regutils.align(self.t1w_brain, self.ap_path, init=self.t1w2dwi_bbr_xfm, xfm=self.t1wtissue2dwi_xfm,
@@ -573,8 +592,8 @@ class DmriReg(object):
         dwi_aligned_atlas_wmgm_int = "%s%s%s%s" % (self.reg_path_img, '/', atlas, "_dwi_track_wmgm_int.nii.gz")
         uatlas_filled = "%s%s%s%s" % (self.reg_path_img, '/', atlas, "_filled.nii.gz")
 
-        os.system("fslmaths {} -add {} -mas {} {}".format(self.input_mni_brain, uatlas, self.input_mni_mask,
-                                                          uatlas_filled))
+        os.system("fslmaths {} -add {} -mas {} {} 2>/dev/null".format(self.input_mni_brain, uatlas,
+                                                                      self.input_mni_mask, uatlas_filled))
 
         regutils.align(uatlas_filled, self.t1_aligned_mni, init=None, xfm=self.atlas2t1mni_xfm_init,
                        out=None, dof=12, searchrad=True, interp="nearestneighbour", cost='mutualinfo')
@@ -653,8 +672,8 @@ class DmriReg(object):
         img = nib.Nifti1Image(np.around(np.asarray(atlas_img.dataobj)).astype('uint16'),
                               affine=atlas_img.affine, header=atlas_img.header)
         nib.save(img, dwi_aligned_atlas)
-        os.system("fslmaths {} -add {} -bin {}".format(dwi_aligned_atlas, self.wm_gm_int_in_dwi_bin,
-                                                       dwi_aligned_atlas_wmgm_int))
+        os.system("fslmaths {} -add {} -bin {} 2>/dev/null".format(dwi_aligned_atlas, self.wm_gm_int_in_dwi_bin,
+                                                                   dwi_aligned_atlas_wmgm_int))
         atlas_img.uncache()
         img.uncache()
         mask.uncache()
@@ -716,27 +735,36 @@ class DmriReg(object):
         nib.save(thr_img, self.csf_mask_dwi_bin)
 
         # Threshold WM to binary in dwi space
-        os.system("fslmaths {} -mas {} {}".format(self.wm_in_dwi, self.wm_in_dwi_bin, self.wm_in_dwi))
+        os.system("fslmaths {} -mas {} {} 2>/dev/null".format(self.wm_in_dwi, self.wm_in_dwi_bin,
+                                                              self.wm_in_dwi))
 
         # Threshold GM to binary in dwi space
-        os.system("fslmaths {} -mas {} {}".format(self.gm_in_dwi, self.gm_in_dwi_bin, self.gm_in_dwi))
+        os.system("fslmaths {} -mas {} {} 2>/dev/null".format(self.gm_in_dwi, self.gm_in_dwi_bin,
+                                                              self.gm_in_dwi))
 
         # Threshold CSF to binary in dwi space
-        os.system("fslmaths {} -mas {} {}".format(self.csf_mask_dwi, self.csf_mask_dwi_bin, self.csf_mask_dwi))
+        os.system("fslmaths {} -mas {} {} 2>/dev/null".format(self.csf_mask_dwi, self.csf_mask_dwi_bin,
+                                                              self.csf_mask_dwi))
 
         # Create ventricular CSF mask
         print('Creating ventricular CSF mask...')
-        os.system("fslmaths {} -kernel sphere 10 -ero -bin {}".format(self.vent_mask_dwi, self.vent_mask_dwi))
-        os.system("fslmaths {} -add {} -bin {} ".format(self.csf_mask_dwi, self.vent_mask_dwi, self.vent_csf_in_dwi))
+        os.system("fslmaths {} -kernel sphere 10 -ero -bin {} 2>/dev/null".format(self.vent_mask_dwi,
+                                                                                  self.vent_mask_dwi))
+        os.system("fslmaths {} -add {} -bin {} 2>/dev/null".format(self.csf_mask_dwi, self.vent_mask_dwi,
+                                                                   self.vent_csf_in_dwi))
 
         print("Creating Corpus Callosum mask...")
-        os.system("fslmaths {} -mas {} -sub {} -bin {}".format(self.corpuscallosum_dwi, self.wm_in_dwi_bin,
-                                                               self.vent_csf_in_dwi, self.corpuscallosum_dwi))
+        os.system("fslmaths {} -mas {} -sub {} -bin {} 2>/dev/null".format(self.corpuscallosum_dwi,
+                                                                           self.wm_in_dwi_bin,
+                                                                           self.vent_csf_in_dwi,
+                                                                           self.corpuscallosum_dwi))
 
         # Create gm-wm interface image
-        os.system("fslmaths {} -mul {} -add {} -mas {} -bin {}".format(self.gm_in_dwi_bin, self.wm_in_dwi_bin,
-                                                                       self.corpuscallosum_dwi, self.B0_mask,
-                                                                       self.wm_gm_int_in_dwi))
+        os.system("fslmaths {} -mul {} -add {} -mas {} -bin {} 2>/dev/null".format(self.gm_in_dwi_bin,
+                                                                                   self.wm_in_dwi_bin,
+                                                                                   self.corpuscallosum_dwi,
+                                                                                   self.B0_mask,
+                                                                                   self.wm_gm_int_in_dwi))
 
         return
 
@@ -820,7 +848,18 @@ class FmriReg(object):
             anat_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
             if op.isfile(anat_mask_existing) and not self.mask and overwrite is False:
                 anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.vox_size)
-                os.system("fslmaths {} -mas {} {}".format(self.t1w_brain, anat_mask_existing, self.t1w_brain))
+                try:
+                    os.system("fslmaths {} -mas {} {} 2>/dev/null".format(self.t1w_brain, anat_mask_existing,
+                                                                          self.t1w_brain))
+                except:
+                    try:
+                        from nilearn.image import resample_to_img
+                        nib.save(resample_to_img(nib.load(anat_mask_existing), nib.load(self.t1w_brain)),
+                                 anat_mask_existing)
+                        os.system("fslmaths {} -mas {} {} 2>/dev/null".format(self.t1w_brain, anat_mask_existing,
+                                                                              self.t1w_brain))
+                    except ValueError:
+                        print('Cannot coerce mask to shape of T1w anatomical.')
 
             # Segment the t1w brain into probability maps
             gm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
@@ -830,25 +869,25 @@ class FmriReg(object):
 
         if gm_mask_existing:
             if op.isfile(gm_mask_existing) and overwrite is False:
-                self.gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size, overwrite=False)
+                out_gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size, overwrite=False)
             else:
                 try:
                     maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
                 except RuntimeError:
                     print('Segmentation failed. Does the input anatomical image still contained skull?')
-                self.gm_mask = maps['gm_prob']
+                out_gm_mask = maps['gm_prob']
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
             except RuntimeError:
                 print('Segmentation failed. Does the input anatomical image still contained skull?')
-            self.gm_mask = maps['gm_prob']
+            out_gm_mask = maps['gm_prob']
 
         # Threshold GM to binary in func space
-        t_img = nib.load(self.gm_mask)
+        t_img = nib.load(out_gm_mask)
         mask = math_img('img > 0.05', img=t_img)
         mask.to_filename(self.gm_mask_thr)
-        os.system("fslmaths {} -mas {} {}".format(self.gm_mask, self.gm_mask_thr, self.gm_mask))
+        os.system("fslmaths {} -mas {} {} 2>/dev/null".format(out_gm_mask, self.gm_mask_thr, self.gm_mask))
 
         # Threshold T1w brain to binary in anat space
         t_img = nib.load(self.t1w_brain)
@@ -880,14 +919,15 @@ class FmriReg(object):
         A function to perform atlas alignment from atlas --> T1_MNI.
         """
         from nilearn.image import resample_img
+
         aligned_atlas_t1mni = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni.nii.gz")
-        gm_mask_mni = "%s%s%s%s%s" % (self.anat_path, '/', atlas, self.t1w_name, "_gm_mask_t1w_mni.nii.gz")
-        gm_mask_mni_atlas_res = "%s%s%s%s%s" % (self.anat_path, '/', atlas, self.t1w_name, "_gm_mask_t1w_mni.nii.gz")
+        gm_mask_mni = "%s%s%s%s" % (self.anat_path, '/', atlas, "_gm_mask_t1w_mni.nii.gz")
+        gm_mask_mni_atlas_res = "%s%s%s%s" % (self.anat_path, '/', atlas, "_gm_mask_t1w_mni_res.nii.gz")
         aligned_atlas_t1mni_gm = "%s%s%s%s" % (self.anat_path, '/', atlas, "_t1w_mni_gm.nii.gz")
 
         uatlas_filled = "%s%s%s%s" % (self.anat_path, '/', atlas, "_filled.nii.gz")
-        os.system("fslmaths {} -add {} -mas {} {}".format(self.input_mni_brain, uatlas, self.input_mni_mask,
-                                                          uatlas_filled))
+        os.system("fslmaths {} -add {} -mas {} {} 2>/dev/null".format(self.input_mni_brain, uatlas,
+                                                                      self.input_mni_mask, uatlas_filled))
 
         regutils.align(uatlas_filled, self.t1_aligned_mni, init=None, xfm=self.atlas2t1wmni_xfm_init,
                        out=None, dof=12, searchrad=True, interp="nearestneighbour", cost='mutualinfo')
@@ -911,8 +951,9 @@ class FmriReg(object):
         gm_mask_img_res = resample_img(nib.load(gm_mask_mni), target_affine=atlas_img.affine,
                                        target_shape=atlas_img.shape)
         nib.save(gm_mask_img_res, gm_mask_mni_atlas_res)
-        os.system("fslmaths {} -bin {}".format(gm_mask_mni_atlas_res, gm_mask_mni_atlas_res))
-        os.system("fslmaths {} -mas {} {}".format(aligned_atlas_t1mni, gm_mask_mni_atlas_res, aligned_atlas_t1mni_gm))
+        os.system("fslmaths {} -bin {} 2>/dev/null".format(gm_mask_mni_atlas_res, gm_mask_mni_atlas_res))
+        os.system("fslmaths {} -mas {} {} 2>/dev/null".format(aligned_atlas_t1mni, gm_mask_mni_atlas_res,
+                                                              aligned_atlas_t1mni_gm))
 
         gm_mask_img_res.uncache()
         atlas_img.uncache()
