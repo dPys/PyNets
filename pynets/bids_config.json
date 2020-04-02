@@ -1,15 +1,15 @@
 {
     "dwi": {
             "dg": "['prob', 'det']",
-            "ml": "['10', '20', '50']",
+            "ml": "['10', '40']",
             "mod": "['csd', 'csa']",
             "s": 100000,
             "tc": "['bin']",
             "tt": "['local']"
         },
     "func": {
-            "b": "['100']",
-            "bs": "['12']",
+            "b": "None",
+            "bs": "None",
             "cc": "['tcorr']",
             "ct": "['ward']",
             "hp": "['0', '0.028', '0.080']",
@@ -23,28 +23,20 @@
             "df":  "False",
             "dt":  "False",
             "embed":  "None",
-            "g":  "None",
-            "ref":  "None",
-            "roi":  "None",
-            "templ":  "None",
-            "templm":  "None",
             "max_thr":  "None",
             "min_thr":  "None",
             "mplx":  0,
-            "mst":  "False",
+            "mst":  "True",
             "n":  "None",
             "names":  "False",
-            "norm": "0",
+            "norm": "6",
             "ns":  "4",
-            "p":  "['1']",
-            "plt":  "True",
-            "plug":  "'MultiProc'",
-            "pm":  "'4,8'",
+            "p":  "['3']",
+            "plt":  "False",
             "spheres":  "False",
             "step_thr":  "None",
             "thr":  1.0,
-            "v":  "False",
-            "vox":  "'2mm'",
-            "work":  "'/tmp'"
+            "vox":  "'2mm'"
         }
 }
+

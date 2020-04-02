@@ -52,6 +52,38 @@ def do_dir_path(atlas, in_file):
     return dir_path
 
 
+def as_directory(dir_, remove=False, return_as_path=False):
+    """
+    Convenience function to make a directory while returning it.
+
+    Parameters
+    ----------
+    dir_ : str, Path
+        File location to directory.
+    remove : bool, optional
+        Whether to remove a previously existing directory, by default False
+
+    Returns
+    -------
+    str
+        Directory string.
+    """
+    import shutil
+    from pathlib import Path
+
+    p = Path(dir_).absolute()
+
+    if remove:
+        print(f"Previous directory found at {dir_}. Removing.")
+        shutil.rmtree(p, ignore_errors=True)
+    p.mkdir(parents=True, exist_ok=True)
+
+    if return_as_path:
+        return p
+
+    return str(p)
+
+
 def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot, thr_type, hpass, parc):
     """
     Name the thresholded functional connectivity matrix file based on relevant graph-generating parameters.

@@ -144,7 +144,7 @@ def s3_get_data(bucket, remote, local, info="", force=False):
     local : list
         Local input directory where you want the files copied to and subject/session info [input, sub-#/ses-#]
     info : str, optional
-        Relevant subject and session information in the form of sub-#/ses-#
+        Relevant subject and session information in the form of sub-#/ses-#/<MODALITY>
     force : bool, optional
         Whether to overwrite the local directory containing the s3 files if it already exists, by default False
     """
@@ -154,11 +154,10 @@ def s3_get_data(bucket, remote, local, info="", force=False):
     else:
         if os.path.exists(os.path.join(local, info)) and not force:
             if os.listdir(os.path.join(local, info)):
-                print(
-                    f"Local directory: {os.path.join(local, info)} already exists. Not pulling s3 data. Delete "
-                    f"contents to re-download data."
-                )
+                print(f"Local directory: {os.path.join(local, info)} already exists. Not pulling s3 data. Delete "
+                      f"contents to re-download data.")
                 return
+        run_str = info.split('/')
 
     # get client with credentials if they exist
     client = s3_client(service="s3")
@@ -166,11 +165,9 @@ def s3_get_data(bucket, remote, local, info="", force=False):
     # check that bucket exists
     bkts = [bk["Name"] for bk in client.list_buckets()["Buckets"]]
     if bucket not in bkts:
-        raise ValueError(
-            "Error: could not locate bucket. Available buckets: " + ", ".join(bkts)
-        )
+        raise ValueError("Error: could not locate bucket. Available buckets: " + ", ".join(bkts))
 
-    bpath = get_matching_s3_objects(bucket, f"{remote}/{info}")
+    bpath = get_matching_s3_objects(bucket, f"{remote}/{'/'.join(run_str[:-1])}/")
 
     # go through all folders inside of remote directory and download relevant files
     for obj in bpath:
@@ -218,20 +215,14 @@ def s3_push_data(bucket, remote, outDir, subject=None, session=None, creds=True)
     # check that bucket exists
     bkts = [bk["Name"] for bk in client.list_buckets()["Buckets"]]
     if bucket not in bkts:
-        sys.exit(
-            "Error: could not locate bucket. Available buckets: " + ", ".join(bkts)
-        )
+        sys.exit("Error: could not locate bucket. Available buckets: " + ", ".join(bkts))
 
     # List all files and upload
     for root, _, files in os.walk(outDir):
         for file_ in files:
-            if not "tmp/" in root:  # exclude things in the tmp/ folder
+            if "tmp/" not in root:  # exclude things in the tmp/ folder
                 if f"sub-{subject}/ses-{session}" in root:
                     print(f"Uploading: {os.path.join(root, file_)}")
                     spath = root[root.find("sub-"):]  # remove everything before /sub-*
-                    client.upload_file(
-                        os.path.join(root, file_),
-                        bucket,
-                        f"{remote}/{os.path.join(spath, file_)}",
-                        ExtraArgs={"ACL": "public-read"},
-                    )
+                    client.upload_file(os.path.join(root, file_), bucket, f"{remote}/{os.path.join(spath, file_)}",
+                                       ExtraArgs={"ACL": "public-read"})

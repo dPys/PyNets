@@ -115,6 +115,12 @@ def get_parser():
                         default=None,
                         help='Specify the path to the atlas reference .txt file that maps labels to '
                              'intensities corresponding to the atlas parcellation file specified with the -ua flag.\n')
+    parser.add_argument('-way',
+                        metavar='Path to binarized Nifti1Image to constrain tractography',
+                        default=None,
+                        nargs='+',
+                        help='Optionally specify a binarized ROI mask in MNI-space to constrain tractography in the '
+                             'case of dmri connectome estimation.\n')
 
     # Modality-independent hyperparameters
     parser.add_argument('-mod',
@@ -213,9 +219,9 @@ def get_parser():
                         default='allcorr',
                         nargs=1,
                         choices=['tcorr', 'scorr', 'allcorr'],
-                        help='Include this flag if you are running agglomerative-type clustering and wish to specify a '
-                             'spatially constrained connectivity method based on tcorr or scorr. Default is allcorr '
-                             'which has no spatial constraints.\n')
+                        help='Include this flag if you are running agglomerative-type clustering (e.g. ward, average, '
+                             'single, complete, and wish to specify a spatially constrained connectivity method based '
+                             'on tcorr or scorr. Default is allcorr which has no constraints.\n')
     parser.add_argument('-cm',
                         metavar='Cluster mask',
                         default=None,
@@ -283,12 +289,6 @@ def get_parser():
                         default='1000000',
                         help='Include this flag to manually specify a number of cumulative streamline samples for '
                              'tractography. Default is 1000000. Iterable number of samples not currently supported.\n')
-    parser.add_argument('-way',
-                        metavar='Path to binarized Nifti1Image to constrain tractography',
-                        default=None,
-                        nargs='+',
-                        help='Optionally specify a binarized ROI mask in MNI-space to constrain tractography in the '
-                             'case of dmri connectome estimation.\n')
 
     # General settings
     parser.add_argument('-norm',

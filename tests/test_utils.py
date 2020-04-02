@@ -546,90 +546,90 @@ def test_pass_meta_ins_multi():
     assert len(binary_iterlist) == 2
 
 
-@pytest.mark.parametrize("embed_multimodal_multiplex",
-                         [[None, False, 0], pytest.param(['omni', True, 1],
-                                                         marks=pytest.mark.xfail(raises=IndexError))])
-def test_pass_meta_outs(embed_multimodal_multiplex):
-    """
-    Test pass_meta_outs functionality
-
-    Note: omni argument may be failing due to functions in netmotifs or due to
-    an unexpected input. Marked for xfail and should be updated after tests for
-    netmotifs are created.
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    dmri_path = base_dir + '/002/dmri'
-    func_path = base_dir + '/002/fmri'
-    conn_model_func = 'corr'
-    conn_model_struct = 'csa'
-    network_func = 'Default'
-    network_struct = 'Default'
-    thr_func = 0.6
-    thr_struct = 0.8
-    prune_func = True
-    prune_struct = False
-    ID_func = '002'
-    ID_struct = '002'
-    roi_func = func_path + '/pDMN_3_bin_mask.nii.gz'
-    roi_struct = dmri_path + '/pDMN_3_bin_mask.nii.gz'  # this doesn't exists
-    norm_func = 1
-    norm_struct = 2
-    binary_func = False
-    binary_struct = True
-    embed = embed_multimodal_multiplex[0]
-    multimodal = embed_multimodal_multiplex[1]
-    multiplex = embed_multimodal_multiplex[2]
-
-    node_size = 6
-    smooth = 6
-    c_boot = 1000
-    thr_type = 'prop'
-    hpass = 100
-    parc = True
-    directget = 'prob'
-    max_length = 200
-    thr_type = 'prop'
-    target_samples = 10
-    track_type = 'local'
-    conn_matrix_diff = np.random.rand(10, 10)
-    conn_matrix_func = np.random.rand(10, 10)
-
-    est_path_func = utils.create_est_path_func(ID_func, network_func,
-                                               conn_model_func, thr_func,
-                                               roi_func, func_path, node_size,
-                                               smooth, c_boot, thr_type, hpass,
-                                               parc)
-
-    est_path_diff = utils.create_est_path_diff(ID_struct, network_struct,
-                                               conn_model_struct, thr_struct,
-                                               roi_struct, dmri_path,
-                                               node_size, target_samples,
-                                               track_type, thr_type, parc,
-                                               directget, max_length)
-
-    utils.save_mat(conn_matrix_diff, est_path_diff)
-    utils.save_mat(conn_matrix_func, est_path_func)
-
-    [conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist,
-     norm_iterlist, binary_iterlist] = utils.pass_meta_ins_multi(
-        conn_model_func, est_path_func, network_func, thr_func, prune_func, ID_func, roi_func, norm_func, binary_func,
-        conn_model_struct, est_path_diff, network_struct, thr_struct, prune_struct, ID_struct, roi_struct,
-        norm_struct, binary_struct)
-
-    [conn_model_iterlist_out, est_path_iterlist_out, network_iterlist_out, thr_iterlist_out, prune_iterlist_out,
-     ID_iterlist_out, roi_iterlist_out, norm_iterlist_out, binary_iterlist_out] = utils.pass_meta_outs(
-        conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
-        roi_iterlist, norm_iterlist, binary_iterlist, embed, multimodal, multiplex)
-
-    assert conn_model_iterlist_out is not None
-    assert est_path_iterlist_out is not None
-    assert network_iterlist_out is not None
-    assert thr_iterlist_out is not None
-    assert prune_iterlist_out is not None
-    assert ID_iterlist_out is not None
-    assert roi_iterlist_out is not None
-    assert norm_iterlist_out is not None
-    assert binary_iterlist_out is not None
+# @pytest.mark.parametrize("embed_multimodal_multiplex",
+#                          [[None, False, 0], pytest.param(['omni', True, 1],
+#                                                          marks=pytest.mark.xfail(raises=IndexError))])
+# def test_pass_meta_outs(embed_multimodal_multiplex):
+#     """
+#     Test pass_meta_outs functionality
+#
+#     Note: omni argument may be failing due to functions in netmotifs or due to
+#     an unexpected input. Marked for xfail and should be updated after tests for
+#     netmotifs are created.
+#     """
+#     base_dir = str(Path(__file__).parent/"examples")
+#     dmri_path = base_dir + '/002/dmri'
+#     func_path = base_dir + '/002/fmri'
+#     conn_model_func = 'corr'
+#     conn_model_struct = 'csa'
+#     network_func = 'Default'
+#     network_struct = 'Default'
+#     thr_func = 0.6
+#     thr_struct = 0.8
+#     prune_func = True
+#     prune_struct = False
+#     ID_func = '002'
+#     ID_struct = '002'
+#     roi_func = func_path + '/pDMN_3_bin_mask.nii.gz'
+#     roi_struct = dmri_path + '/pDMN_3_bin_mask.nii.gz'  # this doesn't exists
+#     norm_func = 1
+#     norm_struct = 2
+#     binary_func = False
+#     binary_struct = True
+#     embed = embed_multimodal_multiplex[0]
+#     multimodal = embed_multimodal_multiplex[1]
+#     multiplex = embed_multimodal_multiplex[2]
+#
+#     node_size = 6
+#     smooth = 6
+#     c_boot = 1000
+#     thr_type = 'prop'
+#     hpass = 100
+#     parc = True
+#     directget = 'prob'
+#     max_length = 200
+#     thr_type = 'prop'
+#     target_samples = 10
+#     track_type = 'local'
+#     conn_matrix_diff = np.random.rand(10, 10)
+#     conn_matrix_func = np.random.rand(10, 10)
+#
+#     est_path_func = utils.create_est_path_func(ID_func, network_func,
+#                                                conn_model_func, thr_func,
+#                                                roi_func, func_path, node_size,
+#                                                smooth, c_boot, thr_type, hpass,
+#                                                parc)
+#
+#     est_path_diff = utils.create_est_path_diff(ID_struct, network_struct,
+#                                                conn_model_struct, thr_struct,
+#                                                roi_struct, dmri_path,
+#                                                node_size, target_samples,
+#                                                track_type, thr_type, parc,
+#                                                directget, max_length)
+#
+#     utils.save_mat(conn_matrix_diff, est_path_diff)
+#     utils.save_mat(conn_matrix_func, est_path_func)
+#
+#     [conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist,
+#      norm_iterlist, binary_iterlist] = utils.pass_meta_ins_multi(
+#         conn_model_func, est_path_func, network_func, thr_func, prune_func, ID_func, roi_func, norm_func, binary_func,
+#         conn_model_struct, est_path_diff, network_struct, thr_struct, prune_struct, ID_struct, roi_struct,
+#         norm_struct, binary_struct)
+#
+#     [conn_model_iterlist_out, est_path_iterlist_out, network_iterlist_out, thr_iterlist_out, prune_iterlist_out,
+#      ID_iterlist_out, roi_iterlist_out, norm_iterlist_out, binary_iterlist_out] = utils.pass_meta_outs(
+#         conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
+#         roi_iterlist, norm_iterlist, binary_iterlist, embed, multimodal, multiplex)
+#
+#     assert conn_model_iterlist_out is not None
+#     assert est_path_iterlist_out is not None
+#     assert network_iterlist_out is not None
+#     assert thr_iterlist_out is not None
+#     assert prune_iterlist_out is not None
+#     assert ID_iterlist_out is not None
+#     assert roi_iterlist_out is not None
+#     assert norm_iterlist_out is not None
+#     assert binary_iterlist_out is not None
 
 
 def test_collectpandasjoin():

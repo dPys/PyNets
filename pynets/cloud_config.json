@@ -1,6 +1,6 @@
 {
 "jobName": "<JOBNAME>",
-"jobQueue": "pynets-queue",
+"jobQueue": "pynets",
 "dependsOn": [],
 "jobDefinition": "pynets",
 "parameters": {},
@@ -12,10 +12,16 @@
     "<PATH>",
     "--participant_label",
     "<SUBJ>",
+    "--session_label",
+    "<SESH>",
+    "--push_location",
+    "<PUSH>",
     "--modality",
     "func",
     "-cm",
-    "'/hnu/masks/triple_net_ICA_overlap_3_sig_bin.nii.gz' '/hnu/masks/triple_net_ICA_overlap_6_sig_bin.nii.gz' '/hnu/masks/triple_net_ICA_overlap_9_sig_bin.nii.gz'"
+    "'/hnu/HNU/masks/triple_net_ICA_overlap_3_sig_bin.nii.gz' '/hnu/HNU/masks/triple_net_ICA_overlap_6_sig_bin.nii.gz' '/hnu/HNU/masks/triple_net_ICA_overlap_9_sig_bin.nii.gz'",
+    "<INPUT>",
+    "/output"
   ],
   "environment": [
     {
