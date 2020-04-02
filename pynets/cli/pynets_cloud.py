@@ -326,7 +326,8 @@ def main():
     parser.add_argument(
         "--credentials",
         action="store",
-        help="csv formatted AWS credentials."
+        help="csv formatted AWS credentials.",
+        default=None,
     )
     parser.add_argument("--dataset", action="store", help="Dataset name")
     parser.add_argument(
@@ -365,5 +366,8 @@ def main():
     sys.exit(0)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
+    import warnings
+    warnings.filterwarnings("ignore")
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     main()

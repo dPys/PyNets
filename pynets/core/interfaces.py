@@ -450,6 +450,7 @@ class _RegisterDWIOutputSpec(TraitedSpec):
     basedir_path = Directory(exists=True, mandatory=True)
     t1w2dwi = File(exists=True, mandatory=True)
 
+
 class RegisterDWI(SimpleInterface):
     """Interface wrapper for RegisterDWI to create T1w->MNI->DWI mappings."""
     input_spec = _RegisterDWIInputSpec
