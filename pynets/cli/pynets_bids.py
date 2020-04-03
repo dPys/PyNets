@@ -186,11 +186,9 @@ def get_bids_parser():
                         help="""The directory with the input dataset formatted according to the BIDS standard. To use 
                         data from s3, just pass `s3://<bucket>/<dataset>` as the input directory.""")
     parser.add_argument("output_dir",
-                        help="""The directory to store pynets derivatives. If the input_dir is an s3 bucket, then use 
-                        `--push_location`, since output_dir will be created automatically.""")
+                        help="""The directory to store pynets derivatives locally.""")
     parser.add_argument("modality",
                         metavar='modality',
-                        default=None,
                         nargs='+',
                         choices=['dwi', 'func'],
                         help='Specify data modality to process from bids directory. Options are `dwi` and `func`.')
@@ -285,7 +283,6 @@ def get_bids_parser():
                         metavar='Working directory',
                         default='/tmp/work',
                         help='Specify the path to a working directory for pynets to run. Default is /tmp/work.\n')
-
     return parser
 
 
@@ -295,6 +292,7 @@ def main():
     import sys
     import json
     import ast
+    import yaml
     from types import SimpleNamespace
     from pathlib import Path
     try:
@@ -319,6 +317,21 @@ def main():
     # with open('/Users/derekpisner/Applications/PyNets/pynets/bids_config.json') as stream:
         arg_dict = json.load(stream)
 
+    # Available functional and structural connectivity models
+    with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
+    # with open('/Users/derekpisner/Applications/PyNets/pynets/runconfig.yaml') as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            func_models = hardcoded_params['available_models']['func_models']
+        except KeyError:
+            print('ERROR: available functional models not successfully extracted from runconfig.yaml')
+            sys.exit()
+        try:
+            struct_models = hardcoded_params['available_models']['struct_models']
+        except KeyError:
+            print('ERROR: available structural models not successfully extracted from runconfig.yaml')
+            sys.exit()
+
     # S3
     s3 = bids_args.input_dir.startswith("s3://")
 
@@ -330,7 +343,7 @@ def main():
 
         buck, remo = cloud_utils.parse_path(bids_args.input_dir)
         home = os.path.expanduser("~")
-        input_dir = as_directory(home + "/.pynets/input", remove=True)
+        input_dir = as_directory(home + "/.pynets/input", remove=False)
         output_dir = as_directory(home + "/.pynets/output", remove=False)
         if (not creds) and bids_args.push_location:
             raise AttributeError("""No AWS credentials found, but "--push_location" flag called. Pushing will most 
@@ -361,9 +374,16 @@ def main():
     args_dict_all = {}
     for d in arg_list:
         if 'mod' in d.keys():
-            if d['mod'] is None or d['mod'] == [None] or d['mod'] == "None" or d['mod'] == "['None']":
-                del d['mod']
+            if len(modality) == 1:
+                if any(x in d['mod'] for x in func_models):
+                    if modality[0] == 'dwi':
+                        del d['mod']
+                if any(x in d['mod'] for x in struct_models):
+                    if modality[0] == 'func':
+                        del d['mod']
         args_dict_all.update(d)
+
+    print(args_dict_all)
 
     for key, val in args_dict_all.items():
         if isinstance(val, str):
@@ -398,7 +418,7 @@ def main():
     args_dict_all['roi'] = bids_args.roi
     args_dict_all['templ'] = bids_args.templ
     args_dict_all['templm'] = bids_args.templm
-    if modality == 'func':
+    if modality[0] == 'func':
         args_dict_all['cm'] = bids_args.cm
     else:
         args_dict_all['cm'] = None

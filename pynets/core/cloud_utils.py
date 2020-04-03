@@ -208,6 +208,25 @@ def s3_push_data(bucket, remote, outDir, subject=None, session=None, creds=True)
     creds : bool, optional
         Whether s3 credentials are being provided, may fail to push big files if False, by default True
     """
+    import re
+    import hashlib
+    import boto3
+
+    s3 = boto3.resource('s3')
+
+    # Shortcut to MD5
+    def get_md5(filename):
+        f = open(filename, 'rb')
+        m = hashlib.md5()
+        while True:
+            data = f.read(10240)
+            if len(data) == 0:
+                break
+            m.update(data)
+        return m.hexdigest()
+
+    def to_uri(outDir, f):
+        return re.sub(outDir, '', f)
 
     # get client with credentials if they exist
     client = s3_client(service="s3")
@@ -218,11 +237,28 @@ def s3_push_data(bucket, remote, outDir, subject=None, session=None, creds=True)
         sys.exit("Error: could not locate bucket. Available buckets: " + ", ".join(bkts))
 
     # List all files and upload
+    bucket_boto = s3.Bucket(bucket)
+
     for root, _, files in os.walk(outDir):
+        files_to_upload = []
         for file_ in files:
             if "tmp/" not in root:  # exclude things in the tmp/ folder
                 if f"sub-{subject}/ses-{session}" in root:
-                    print(f"Uploading: {os.path.join(root, file_)}")
-                    spath = root[root.find("sub-"):]  # remove everything before /sub-*
-                    client.upload_file(os.path.join(root, file_), bucket, f"{remote}/{os.path.join(spath, file_)}",
-                                       ExtraArgs={"ACL": "public-read"})
+                    # Compare them to S3 checksums
+                    uri = to_uri(outDir, file_)
+                    key = bucket_boto.get_key(uri)
+                    if key is None:
+                        # new file, upload
+                        files_to_upload.append(file_)
+                    else:
+                        # check MD5
+                        md5 = get_md5(file_)
+                        etag = key.etag.strip('"').strip("'")
+                        if etag != md5:
+                            print(file_ + ": " + md5 + " != " + etag)
+                            files_to_upload.append(file_)
+        for file_ in files_to_upload:
+            print(f"Uploading: {os.path.join(root, file_)}")
+            spath = root[root.find("sub-"):]  # remove everything before /sub-*
+            client.upload_file(os.path.join(root, file_), bucket, f"{remote}/{os.path.join(spath, file_)}",
+                               ExtraArgs={"ACL": "public-read"})
