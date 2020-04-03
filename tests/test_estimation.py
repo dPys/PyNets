@@ -29,7 +29,6 @@ def test_get_conn_matrix_cov(conn_model):
     time_series = np.load(time_series_file)
     node_size = 2
     smooth = 2
-    c_boot = 0
     dens_thresh = False
     network = 'Default'
     ID = '002'
@@ -53,9 +52,9 @@ def test_get_conn_matrix_cov(conn_model):
     start_time = time.time()
     [conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network,
     ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas,
-    labels, coords, c_boot, norm, binary, hpass] = fmri_estimation.get_conn_matrix(time_series, conn_model,
+    labels, coords, norm, binary, hpass] = fmri_estimation.get_conn_matrix(time_series, conn_model,
     dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-    disp_filt, parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass)
+    disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, hpass)
     print("%s%s%s" %
     ('get_conn_matrix --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -64,7 +63,6 @@ def test_get_conn_matrix_cov(conn_model):
     assert dir_path is not None
     assert node_size is not None
     assert smooth is not None
-    assert c_boot is not None
     assert dens_thresh is not None
     assert network is not None
     assert ID is not None
@@ -92,8 +90,6 @@ def test_extract_ts_rsn_parc():
     network = 'Default'
     ID = '002'
     smooth = 2
-    c_boot = 0
-    boot_size = 3
     conf = None
     wb_coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     file_ = open(wb_coords_file, 'rb')
@@ -111,8 +107,7 @@ def test_extract_ts_rsn_parc():
     te = fmri_estimation.TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
                                               conf=conf, func_file=func_file, coords=coords, roi=roi, dir_path=dir_path,
                                               ID=ID, network=network, smooth=smooth, atlas=atlas, uatlas=uatlas,
-                                              labels=labels, c_boot=c_boot, block_size=boot_size, hpass=hpass,
-                                              mask=mask)
+                                              labels=labels, hpass=hpass, mask=mask)
 
     te.prepare_inputs()
 
@@ -126,8 +121,7 @@ def test_extract_ts_rsn_parc():
 
 @pytest.mark.parametrize("node_size", [pytest.param(0, marks=pytest.mark.xfail), '2', '8'])
 @pytest.mark.parametrize("smooth", ['0', '2'])
-@pytest.mark.parametrize("c_boot", ['0', '2'])
-def test_extract_ts_rsn_coords(node_size, smooth, c_boot):
+def test_extract_ts_rsn_coords(node_size, smooth):
     """
     Test for extract_ts_coords functionality
     """
@@ -141,8 +135,6 @@ def test_extract_ts_rsn_coords(node_size, smooth, c_boot):
     conf = None
     node_size = 2
     smooth = 2
-    c_boot = 0
-    boot_size = 3
     wb_coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
     file_ = open(wb_coords_file, 'rb')
     coords = pickle.load(file_)
@@ -157,7 +149,7 @@ def test_extract_ts_rsn_coords(node_size, smooth, c_boot):
     te = fmri_estimation.TimeseriesExtraction(net_parcels_nii_path=None, node_size=node_size,
                                               conf=conf, func_file=func_file, coords=coords, roi=roi, dir_path=dir_path,
                                               ID=ID, network=network, smooth=smooth, atlas=atlas, uatlas=uatlas,
-                                              labels=labels, c_boot=c_boot, block_size=boot_size, hpass=hpass,
+                                              labels=labels, hpass=hpass,
                                               mask=mask)
 
     te.prepare_inputs()
@@ -169,4 +161,3 @@ def test_extract_ts_rsn_coords(node_size, smooth, c_boot):
     assert te.node_size is not None
     assert te.smooth is not None
     assert te.dir_path is not None
-    assert te.c_boot is not None

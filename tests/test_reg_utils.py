@@ -281,8 +281,8 @@ def test_check_orient_and_dims():
 
     anat_LAStoRAS = reg_utils.check_orient_and_dims(anat_LAS, '2mm', bvecs=None)
     anat_RAStoRAS = reg_utils.check_orient_and_dims(anat_RAS, '2mm', bvecs=None)
-    dmri_LAStoRAS, bvecs_LAStoRAS = reg_utils.check_orient_and_dims(dmri_LAS, '1mm', bvecs=bvecs_LAS)
-    dmri_RAStoRAS, bvecs_RAStoRAS = reg_utils.check_orient_and_dims(dmri_RAS, '1mm', bvecs=bvecs_RAS)
+    dmri_LAStoRAS, bvecs_LAStoRAS = reg_utils.check_orient_and_dims(dmri_LAS, test_dir, '1mm', bvecs=bvecs_LAS)
+    dmri_RAStoRAS, bvecs_RAStoRAS = reg_utils.check_orient_and_dims(dmri_RAS, test_dir, '1mm', bvecs=bvecs_RAS)
 
     anat_LAStoRAS = nib.load(anat_LAStoRAS)
 

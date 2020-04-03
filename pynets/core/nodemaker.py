@@ -736,7 +736,7 @@ def AAL_naming(coords):
     return labels
 
 
-def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming, clustering=False):
+def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming, outdir, clustering=False):
     """
     General API for fetching, identifying, and defining atlas nodes based on coordinates and/or labels.
 
@@ -756,6 +756,8 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
     use_AAL_naming : bool
         Indicates whether to perform Automated-Anatomical Labeling of each coordinate from a list of a voxel
         coordinates.
+    outdir : str
+        Path to base derivatives directory.
     clustering : bool
         Indicates whether clustering was performed. Default is False.
 
@@ -901,7 +903,7 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
         print('WARNING: No labels available since atlas name is not specified!')
 
     print("%s%s" % ('Labels:\n', labels))
-    dir_path = utils.do_dir_path(atlas, in_file)
+    dir_path = utils.do_dir_path(atlas, outdir)
 
     if len(coords) != len(labels):
         labels = len(coords) * [np.nan]

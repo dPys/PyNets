@@ -345,7 +345,7 @@ def plot_network_clusters(graph, communities, out_path, figsize=(8, 8), node_siz
 
 
 def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, coords, thr,
-                  node_size, edge_threshold, smooth, prune, uatlas, c_boot, norm, binary, hpass):
+                  node_size, edge_threshold, smooth, prune, uatlas, norm, binary, hpass):
     """
     Plot adjacency matrix, connectogram, and glass brain for functional connectome.
 
@@ -386,8 +386,6 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         Indicates whether to prune final graph of disconnected nodes/isolates.
     uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
-    c_boot : int
-        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
     norm : int
         Indicates method of normalizing resulting graph.
     binary : bool
@@ -466,26 +464,24 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         if not node_size or node_size == 'None':
             node_size = 'parc'
         plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels, roi, thr,
-                                       node_size, smooth, c_boot, hpass)
+                                       node_size, smooth, hpass)
 
         # Plot connectome
-        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
-                                                             '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                                     network is not None else ''),
-                                                             '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0],
-                                                                                 '_') if roi is not None else ''),
-                                                             'est-', conn_model, '_',
-                                                             '%s' % (
-                                                                 "%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
-                                                                 ((node_size != 'parc') and (node_size is not None))
-                                                                 else 'nodetype-parc_'),
-                                                             "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
-                                                                     float(c_boot) > 0 else ''),
-                                                             "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
-                                                                     float(smooth) > 0 else ''),
-                                                             "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
-                                                                     hpass is not None else ''),
-                                                             '_thr-', thr, '_glass_viz.png')
+        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
+                                                           '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                   network is not None else ''),
+                                                           '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0],
+                                                                               '_') if roi is not None else ''),
+                                                           'est-', conn_model, '_',
+                                                           '%s' % (
+                                                               "%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
+                                                               ((node_size != 'parc') and (node_size is not None))
+                                                               else 'nodetype-parc_'),
+                                                           "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                                   float(smooth) > 0 else ''),
+                                                           "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                                   hpass is not None else ''),
+                                                           '_thr-', thr, '_glass_viz.png')
         if roi:
             # Save coords to pickle
             coord_path = "%s%s%s%s" % (namer_dir, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')

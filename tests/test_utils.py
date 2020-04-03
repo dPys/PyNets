@@ -81,7 +81,6 @@ def test_save_ts_to_file():
     """
     base_dir = str(Path(__file__).parent/"examples")
     roi = None
-    c_boot = 3
     smooth = None
     hpass = None
     network = None
@@ -95,7 +94,7 @@ def test_save_ts_to_file():
     if os.path.exists(ts_dir):
         shutil.move(ts_dir, ts_dir + '_tmp')
 
-    out_path_ts = utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, c_boot, smooth, hpass, node_size)
+    out_path_ts = utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, node_size)
     assert os.path.isfile(out_path_ts) is True
 
     # Restore pre-existing ts dir
@@ -218,7 +217,6 @@ def test_create_est_path_func(node_size, hpass, smooth, parc):
     ID = '002'
     conn_model = 'corr'
     roi = None
-    c_boot = 1000
     thr_type = 'prop'
     thr = 0.75
 
@@ -228,7 +226,7 @@ def test_create_est_path_func(node_size, hpass, smooth, parc):
         shutil.move(graph_dir, graph_dir + '_tmp')
 
     est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi,
-                                          dir_path, node_size, smooth, c_boot,
+                                          dir_path, node_size, smooth,
                                           thr_type, hpass, parc)
     assert est_path is not None
 
@@ -288,7 +286,6 @@ def test_create_csv_path():
     roi = None
     node_size = 6
     smooth = 6
-    c_boot = 100
     hpass = 100
     parc = True
     thr = 0.75
@@ -305,7 +302,7 @@ def test_create_csv_path():
         shutil.move(netmetrics_dir, netmetrics_dir + '_tmp')
 
     est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi,
-                                          dir_path, node_size, smooth, c_boot,
+                                          dir_path, node_size, smooth,
                                           thr_type, hpass, parc)
     out_path = utils.create_csv_path(dir_path, est_path)
     assert out_path is not None
@@ -356,7 +353,6 @@ def test_create_unthr_path(node_size, hpass, smooth, parc):
     dir_path = base_dir + '/002/fmri'
     network = 'Default'
     ID = '002'
-    c_boot = 10
     conn_model = 'corr'
     roi = None
 
@@ -367,7 +363,7 @@ def test_create_unthr_path(node_size, hpass, smooth, parc):
 
     unthr_path_func = utils.create_raw_path_func(ID, network, conn_model, roi,
                                                  dir_path, node_size, smooth,
-                                                 c_boot, hpass, parc)
+                                                 hpass, parc)
     assert unthr_path_func is not None
     # Restore pre-existing graph dir
     if os.path.exists(graph_dir + '_tmp'):
@@ -420,7 +416,7 @@ def test_do_dir_path(atlas, input):
     if os.path.exists(atlas_dir):
         shutil.move(atlas_dir, atlas_dir + '_tmp')
 
-    dir_path = utils.do_dir_path(atlas, in_file)
+    dir_path = utils.do_dir_path(atlas, atlas_dir)
     assert dir_path is not None
 
     # Restore oringal atlas dir
@@ -582,7 +578,6 @@ def test_pass_meta_ins_multi():
 #
 #     node_size = 6
 #     smooth = 6
-#     c_boot = 1000
 #     thr_type = 'prop'
 #     hpass = 100
 #     parc = True
@@ -597,7 +592,7 @@ def test_pass_meta_ins_multi():
 #     est_path_func = utils.create_est_path_func(ID_func, network_func,
 #                                                conn_model_func, thr_func,
 #                                                roi_func, func_path, node_size,
-#                                                smooth, c_boot, thr_type, hpass,
+#                                                smooth, thr_type, hpass,
 #                                                parc)
 #
 #     est_path_diff = utils.create_est_path_diff(ID_struct, network_struct,

@@ -114,7 +114,7 @@ def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_af
 
 
 def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size, smooth,
-                       c_boot, hpass):
+                       hpass):
     """
     API for selecting among various functional connectivity matrix plotting approaches.
 
@@ -146,8 +146,6 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
         are used as ROI's.
     smooth : int
         Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
-    c_boot : int
-        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
@@ -155,26 +153,24 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
     import os.path as op
     from pynets.plotting import plot_graphs
 
-    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_modality-func_',
-                                                         '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                                 network is not None else ''),
-                                                         '%s' % ("%s%s%s" % ('roi-',
-                                                                             op.basename(roi).split('.')[0],
-                                                                             '_') if roi is not None else ''),
-                                                         'est-', conn_model, '_',
-                                                         '%s' % (
-                                                             "%s%s%s" % ('nodetype-spheres-',
-                                                                         node_size, 'mm_') if
-                                                             ((node_size != 'parc') and (node_size is not
-                                                                                         None))
-                                                             else 'nodetype-parc_'),
-                                                         "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
-                                                                 float(c_boot) > 0 else ''),
-                                                         "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
-                                                                 float(smooth) > 0 else ''),
-                                                         "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
-                                                                 hpass is not None else ''),
-                                                         '_thr-', thr, '_adj_mat.png')
+    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_modality-func_',
+                                                       '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                               network is not None else ''),
+                                                       '%s' % ("%s%s%s" % ('roi-',
+                                                                           op.basename(roi).split('.')[0],
+                                                                           '_') if roi is not None else ''),
+                                                       'est-', conn_model, '_',
+                                                       '%s' % (
+                                                           "%s%s%s" % ('nodetype-spheres-',
+                                                                       node_size, 'mm_') if
+                                                           ((node_size != 'parc') and (node_size is not
+                                                                                       None))
+                                                           else 'nodetype-parc_'),
+                                                       "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                               float(smooth) > 0 else ''),
+                                                       "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                               hpass is not None else ''),
+                                                       '_thr-', thr, '_adj_mat.png')
 
     plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig)
 
@@ -183,26 +179,24 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
         from pynets.stats.netstats import community_resolution_selection
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
         _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(G)
-        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_modality-func_',
-                                                                  '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                                          network is not None else ''),
-                                                                  '%s' % ("%s%s%s" % ('roi-',
-                                                                                      op.basename(roi).split('.')[0],
-                                                                                      '_') if roi is not None else ''),
-                                                                  'est-', conn_model, '_',
-                                                                  '%s' % (
-                                                                      "%s%s%s" % ('nodetype-spheres-',
-                                                                                  node_size, 'mm_') if
-                                                                      ((node_size != 'parc') and (node_size is not
-                                                                                                  None))
-                                                                      else 'nodetype-parc_'),
-                                                                  "%s" % ("%s%s%s" % ('boot-', int(c_boot), 'iter_') if
-                                                                          float(c_boot) > 0 else ''),
-                                                                  "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
-                                                                          float(smooth) > 0 else ''),
-                                                                  "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
-                                                                          hpass is not None else ''),
-                                                                  '_thr-', thr, '_adj_mat_comm.png')
+        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_modality-func_',
+                                                                '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                        network is not None else ''),
+                                                                '%s' % ("%s%s%s" % ('roi-',
+                                                                                    op.basename(roi).split('.')[0],
+                                                                                    '_') if roi is not None else ''),
+                                                                'est-', conn_model, '_',
+                                                                '%s' % (
+                                                                    "%s%s%s" % ('nodetype-spheres-',
+                                                                                node_size, 'mm_') if
+                                                                    ((node_size != 'parc') and (node_size is not
+                                                                                                None))
+                                                                    else 'nodetype-parc_'),
+                                                                "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                                        float(smooth) > 0 else ''),
+                                                                "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                                        hpass is not None else ''),
+                                                                '_thr-', thr, '_adj_mat_comm.png')
         plot_graphs.plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, node_comm_aff_mat)
     except:
         print('\nWARNING: Louvain community detection failed. Cannot plot community matrix...')

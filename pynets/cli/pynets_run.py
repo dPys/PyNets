@@ -12,6 +12,7 @@ warnings.filterwarnings("ignore")
 def get_parser():
     """Parse command-line inputs"""
     import argparse
+    from pathlib import Path
     from pynets.__about__ import __version__
     verstr = 'pynets v{}'.format(__version__)
 
@@ -28,6 +29,9 @@ def get_parser():
                              'parameter must be an alphanumeric string and can be arbitrarily chosen. If functional '
                              'and dmri connectomes are being generated simultaneously, then space-separated id\'s '
                              'need to be repeated to match the total input file count.\n')
+    parser.add_argument("output_dir",
+                        default=str(Path.home()),
+                        help='The directory to store pynets derivatives.')
 
     # Primary file inputs
     parser.add_argument('-func',
@@ -208,9 +212,9 @@ def get_parser():
                         metavar='Clustering type',
                         default='ward',
                         nargs='+',
-                        choices=['ward', 'kmeans', 'complete', 'average', 'single'],
+                        choices=['ward', 'rena', 'kmeans', 'complete', 'average', 'single'],
                         help='(Hyperparameter): Specify the types of clustering to use. Recommended options are: '
-                             'ward or kmeans. Note that imposing spatial constraints with a mask consisting of '
+                             'ward, rena or kmeans. Note that imposing spatial constraints with a mask consisting of '
                              'disconnected components will leading to clustering instability in the case of complete, '
                              'average, or single clustering. If specifying a list of '
                              'clustering types, separate them by space.\n')
@@ -249,22 +253,6 @@ def get_parser():
                              'Default is det. If you wish to iterate the pipeline across multiple '
                              'direction-getting methods, separate the list by space (e.g. \'det\', \'prob\', \'clos\', '
                              '\'boot\').\n')
-
-    # fMRI settings (non-hyperparameter)
-    parser.add_argument('-b',
-                        metavar='Number of bootstraps (integer)',
-                        default=0,
-                        nargs='+',
-                        help='Optionally specify the number of bootstraps with this flag if you wish to apply '
-                             'circular-block bootstrapped resampling of the node-extracted time-series. Size of '
-                             'blocks can be specified using the -bs flag.\n')
-    parser.add_argument('-bs',
-                        metavar='Size bootstrap blocks (integer)',
-                        default=None,
-                        nargs='+',
-                        help='If using the -b flag, you may manually specify a bootstrap block size for circular-block '
-                             'resampling of the node-extracted time-series. sqrt(TR) rounded to the nearest integer is '
-                             'recommended\n')
 
     # dMRI settings (non-hyperparameter)
     parser.add_argument('-tt',
@@ -433,6 +421,7 @@ def build_workflow(args, retval):
     start_time = timeit.default_timer()
 
     # Set Arguments to global variables
+    outdir = args.output_dir
     func_file = args.func
     mask = args.m
     dwi_file = args.dwi
@@ -508,8 +497,6 @@ def build_workflow(args, retval):
             hpass_list = None
     else:
         hpass_list = None
-    # c_boot = args.b
-    # block_size = args.bs
     roi = args.roi
     template = args.templ
     template_mask = args.templm
@@ -1011,34 +998,6 @@ def build_workflow(args, retval):
             else:
                 hpass = None
 
-            # if isinstance(c_boot, list):
-            #     c_boot = c_boot[0]
-            # if isinstance(block_size, list):
-            #     block_size = block_size[0]
-            #
-            # if float(c_boot) > 0:
-            #     try:
-            #         c_boot = int(c_boot)
-            #         try:
-            #             block_size = int(block_size)
-            #         except ValueError:
-            #             print('ERROR: size of bootstrap blocks indicated with the -bs flag must be an integer > 0.')
-            #             retval['return_code'] = 1
-            #             return retval
-            #     except ValueError:
-            #         print('ERROR: number of boostraps indicated with the -b flag must be an integer > 0.')
-            #         retval['return_code'] = 1
-            #         return retval
-            #     print("%s%s%s%s" % ('\nApplying circular-block bootstrapping to the node-extracted time-series using: ',
-            #                         int(c_boot), ' bootstraps with block size ', int(block_size)))
-            # if (c_boot and not block_size) or (block_size and not c_boot):
-            #     print("Error: Both number of bootstraps (-b) and block size (-bs) must be specified to run "
-            #           "bootstrapped resampling.")
-            #     retval['return_code'] = 1
-            #     return retval
-            c_boot = 0
-            block_size = None
-
         if conn_model_list:
             print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ',
                               str(', '.join(str(n) for n in conn_model_list)), '...'))
@@ -1054,8 +1013,6 @@ def build_workflow(args, retval):
         node_size = 'None'
         hpass = 'None'
         conn_model = 'None'
-        c_boot = 'None'
-        block_size = 'None'
         if multi_graph:
             print('\nUsing multiple custom input graphs...')
             conn_model = None
@@ -1072,7 +1029,7 @@ def build_workflow(args, retval):
                     sys.exit(0)
                 print(graph_name)
                 atlas = "%s%s%s" % (graph_name, '_', ID)
-                do_dir_path(atlas, graph)
+                do_dir_path(atlas, outdir)
                 i = i + 1
         else:
             if '.txt' in graph:
@@ -1085,7 +1042,7 @@ def build_workflow(args, retval):
             print('\nUsing single custom graph input...')
             print(graph_name)
             atlas = "%s%s%s" % (graph_name, '_', ID)
-            do_dir_path(atlas, graph)
+            do_dir_path(atlas, outdir)
 
     if func_file or func_file_list:
         if (uatlas is not None) and (k_clustering == 0) and (user_atlas_list is None):
@@ -1338,8 +1295,6 @@ def build_workflow(args, retval):
         clust_type = None
         local_corr = None
         clust_type_list = None
-        c_boot = None
-        block_size = None
         multimodal = False
     elif (func_file or func_file_list) and not (dwi_file or dwi_file_list):
         print('\nRunning fmri connectometry only...')
@@ -1363,6 +1318,7 @@ def build_workflow(args, retval):
 
     # Variable tracking
     retval['ID'] = ID
+    retval['outdir'] = outdir
     retval['atlas'] = atlas
     retval['network'] = network
     retval['node_size'] = node_size
@@ -1397,8 +1353,6 @@ def build_workflow(args, retval):
     retval['prune'] = prune
     retval['node_size_list'] = node_size_list
     retval['smooth_list'] = smooth_list
-    retval['c_boot'] = c_boot
-    retval['block_size'] = block_size
     retval['mask'] = mask
     retval['norm'] = norm
     retval['binary'] = binary
@@ -1425,6 +1379,7 @@ def build_workflow(args, retval):
 
     # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
+    # print("%s%s" % ('outdir: ', outdir))
     # print("%s%s" % ('atlas: ', atlas))
     # print("%s%s" % ('network: ', network))
     # print("%s%s" % ('node_size: ', node_size))
@@ -1459,8 +1414,6 @@ def build_workflow(args, retval):
     # print("%s%s" % ('prune: ', prune))
     # print("%s%s" % ('node_size_list: ', node_size_list))
     # print("%s%s" % ('smooth_list: ', smooth_list))
-    # print("%s%s" % ('c_boot: ', c_boot))
-    # print("%s%s" % ('block_size: ', block_size))
     # print("%s%s" % ('mask: ', mask))
     # print("%s%s" % ('norm: ', norm))
     # print("%s%s" % ('binary: ', binary))
@@ -1503,11 +1456,11 @@ def build_workflow(args, retval):
                                clust_mask, k_list, k_clustering, user_atlas_list, clust_mask_list, prune,
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
-                               clust_type_list, c_boot, block_size, mask, norm, binary, fbval, fbvec, target_samples,
+                               clust_type_list, mask, norm, binary, fbval, fbvec, target_samples,
                                curv_thr_list, step_list, overlap_thr, track_type, min_length, maxcrossing, directget,
                                tiss_class, runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass,
                                hpass_list, template, template_mask, vox_size, multiplex, waymask, local_corr,
-                               min_length_list):
+                               min_length_list, outdir):
         """A function interface for generating a single-subject workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1564,12 +1517,12 @@ def build_workflow(args, retval):
                                         step_thr, k, clust_mask, k_list, k_clustering, user_atlas_list,
                                         clust_mask_list, prune, node_size_list, num_total_samples, conn_model_list,
                                         min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list,
-                                        disp_filt, clust_type, clust_type_list, c_boot, block_size, mask, norm, binary,
+                                        disp_filt, clust_type, clust_type_list, mask, norm, binary,
                                         fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                         track_type, min_length, maxcrossing, directget, tiss_class, runtime_dict,
                                         execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
                                         template, template_mask, vox_size, multiplex, waymask, local_corr,
-                                        min_length_list)
+                                        min_length_list, outdir)
             meta_wf._n_procs = procmem[0]
             meta_wf._mem_gb = procmem[1]
             meta_wf.n_procs = procmem[0]
@@ -1687,11 +1640,11 @@ def build_workflow(args, retval):
                          max_thr, step_thr, anat_file, parc, ref_txt, procmem, k, clust_mask, k_list,
                          k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, num_total_samples,
                          graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
-                         smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask, norm,
+                         smooth, smooth_list, disp_filt, clust_type, clust_type_list, mask, norm,
                          binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr, track_type,
                          min_length, maxcrossing, directget, tiss_class, runtime_dict, execution_dict, embed,
                          multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex,
-                         waymask, local_corr, min_length_list):
+                         waymask, local_corr, min_length_list, outdir):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1742,14 +1695,14 @@ def build_workflow(args, retval):
                 num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
                 min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type, use_AAL_naming=use_AAL_naming,
                 multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
-                clust_type=clust_type, clust_type_list=clust_type_list, c_boot=c_boot, block_size=block_size,
+                clust_type=clust_type, clust_type_list=clust_type_list,
                 mask=mask_sub, norm=norm, binary=binary, fbval=fbval_sub, fbvec=fbvec_sub,
                 target_samples=target_samples, curv_thr_list=curv_thr_list, step_list=step_list,
                 overlap_thr=overlap_thr, track_type=track_type, min_length=min_length, maxcrossing=maxcrossing,
                 directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, execution_dict=execution_dict,
                 embed=embed, multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
                 template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex, waymask=waymask,
-                local_corr=local_corr, min_length_list=min_length_list)
+                local_corr=local_corr, min_length_list=min_length_list, outdir=outdir)
             wf_single_subject._n_procs = procmem[0]
             wf_single_subject._mem_gb = procmem[1]
             wf_single_subject.n_procs = procmem[0]
@@ -1826,11 +1779,12 @@ def build_workflow(args, retval):
                                     k_clustering, user_atlas_list, clust_mask_list, prune,
                                     node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
-                                    smooth, smooth_list, disp_filt, clust_type, clust_type_list, c_boot,
-                                    block_size, mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list,
+                                    smooth, smooth_list, disp_filt, clust_type, clust_type_list, mask, norm, binary,
+                                    fbval, fbvec, target_samples, curv_thr_list,
                                     step_list, overlap_thr, track_type, min_length, maxcrossing, directget, tiss_class,
                                     runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
-                                    template, template_mask, vox_size, multiplex, waymask, local_corr, min_length_list)
+                                    template, template_mask, vox_size, multiplex, waymask, local_corr, min_length_list,
+                                    outdir)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1900,12 +1854,23 @@ def build_workflow(args, retval):
             logger.removeHandler(handler)
 
         # Clean up temporary directories
+        print('Cleaning up...')
         if len(func_dir_list) > 0:
             for func_dir in func_dir_list:
                 for cnfnd_tmp_dir in glob.glob("%s%s" % (func_dir, '/*/confounds_tmp')):
                     shutil.rmtree(cnfnd_tmp_dir)
+                shutil.rmtree("%s%s" % (func_dir, '/reg_fmri'), ignore_errors=True)
+                for file_ in glob.glob("%s%s" % (func_dir, '/*')):
+                    if ('reor-RAS' in file_) or ('res-' in file_):
+                        shutil.rmtree(file_)
 
-        # print('Cleaning up...')
+        if len(dwi_dir_list) > 0:
+            for dwi_dir in dwi_dir_list:
+                shutil.rmtree("%s%s" % (dwi_dir, '/dmri_tmp'), ignore_errors=True)
+                shutil.rmtree("%s%s" % (dwi_dir, '/reg_dmri'), ignore_errors=True)
+                for file_ in glob.glob("%s%s" % (dwi_dir, '/*')):
+                    if ('reor-RAS' in file_) or ('res-' in file_):
+                            shutil.rmtree(file_)
         # shutil.rmtree(work_dir, ignore_errors=True)
 
     # Single-subject workflow generator
@@ -1917,11 +1882,11 @@ def build_workflow(args, retval):
                                     procmem, k, clust_mask, k_list, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
-                                    smooth_list, disp_filt, clust_type, clust_type_list, c_boot, block_size, mask,
+                                    smooth_list, disp_filt, clust_type, clust_type_list, mask,
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     track_type, min_length, maxcrossing, directget, tiss_class, runtime_dict,
                                     execution_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
-                                    template_mask, vox_size, multiplex, waymask, local_corr, min_length_list)
+                                    template_mask, vox_size, multiplex, waymask, local_corr, min_length_list, outdir)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1993,12 +1958,21 @@ def build_workflow(args, retval):
             logger.removeHandler(handler)
 
         # Clean up temporary directories
+        print('Cleaning up...')
         if func_file:
             for cnfnd_tmp_dir in glob.glob("%s%s" % (func_dir, '/*/confounds_tmp')):
                 shutil.rmtree(cnfnd_tmp_dir)
-
-    # print('Cleaning up...')
-    # shutil.rmtree(work_dir, ignore_errors=True)
+            shutil.rmtree("%s%s" % (func_dir, '/reg_fmri'), ignore_errors=True)
+            for file_ in glob.glob("%s%s" % (func_dir, '/*')):
+                if ('reor-RAS' in file_) or ('res-' in file_):
+                    shutil.rmtree(file_)
+        if dwi_file:
+            shutil.rmtree("%s%s" % (dwi_dir, '/dmri_tmp'), ignore_errors=True)
+            shutil.rmtree("%s%s" % (dwi_dir, '/reg_dmri'), ignore_errors=True)
+            for file_ in glob.glob("%s%s" % (dwi_dir, '/*')):
+                if ('reor-RAS' in file_) or ('res-' in file_):
+                    shutil.rmtree(file_)
+        # shutil.rmtree(work_dir, ignore_errors=True)
 
     print('\n\n------------FINISHED-----------')
     print('Subject: ', ID)
@@ -2013,9 +1987,9 @@ def main():
     import sys
     import multiprocessing as mp
     try:
-        from pynets.core.utils import do_dir_path
+        import pynets
     except ImportError:
-        print('PyNets not installed! Ensure that you are referencing the correct site-packages and using Python3.5+')
+        print('PyNets not installed! Ensure that you are referencing the correct site-packages and using Python3.6+')
 
     if len(sys.argv) < 1:
         print("\nMissing command-line inputs! See help options with the -h flag.\n")
@@ -2023,37 +1997,29 @@ def main():
 
     args = get_parser().parse_args()
 
-    try:
-        mp.set_start_method('forkserver')
-        with mp.Manager() as mgr:
-            retval = mgr.dict()
-            p = mp.Process(target=build_workflow, args=(args, retval))
-            p.start()
-            p.join()
-            if p.is_alive():
-                p.terminate()
+    mp.set_start_method('forkserver')
+    with mp.Manager() as mgr:
+        retval = mgr.dict()
+        p = mp.Process(target=build_workflow, args=(args, retval))
+        p.start()
+        p.join()
+        if p.is_alive():
+            p.terminate()
 
-            retcode = p.exitcode or retval.get('return_code', 0)
+        retcode = p.exitcode or retval.get('return_code', 0)
 
-            pynets_wf = retval.get('workflow', None)
-            work_dir = retval.get('work_dir')
-            plugin_settings = retval.get('plugin_settings', None)
-            execution_dict = retval.get('execution_dict', None)
-            run_uuid = retval.get('run_uuid', None)
+        pynets_wf = retval.get('workflow', None)
+        work_dir = retval.get('work_dir')
+        plugin_settings = retval.get('plugin_settings', None)
+        execution_dict = retval.get('execution_dict', None)
+        run_uuid = retval.get('run_uuid', None)
 
-            retcode = retcode or int(pynets_wf is None)
-            if retcode != 0:
-                sys.exit(retcode)
+        retcode = retcode or int(pynets_wf is None)
+        if retcode != 0:
+            sys.exit(retcode)
 
-            # Clean up master process before running workflow, which may create forks
-            gc.collect()
-    except:
-        try:
-            print('Running outside of forkserver multiprocessing context...')
-            retval = dict()
-            build_workflow(args, retval)
-        except RuntimeError:
-            print('\nError: Workflow execution failed. Check installation.')
+        # Clean up master process before running workflow, which may create forks
+        gc.collect()
 
     sys.exit()
 

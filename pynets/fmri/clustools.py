@@ -204,7 +204,8 @@ def discretisation(eigen_vec):
     # normalize the eigenvectors
     [n, k] = np.shape(eigen_vec)
     vm = np.kron(np.ones((1, k)), np.sqrt(np.multiply(eigen_vec, eigen_vec).sum(1)))
-    eigen_vec = divide(eigen_vec, vm)
+    out_vec = np.reshape(vm, eigen_vec.shape)
+    eigen_vec = divide(eigen_vec, out_vec)
 
     svd_restarts = 0
     exitLoop = 0
@@ -214,11 +215,11 @@ def discretisation(eigen_vec):
         # initialize algorithm with a random ordering of eigenvectors
         c = np.zeros((n, 1))
         R = np.matrix(np.zeros((k, k)))
-        R[:, 0] = eigen_vec[int(sp.rand(1) * (n - 1)), :].transpose()
+        R[:, 0] = np.reshape(eigen_vec[int(sp.rand(1) * (n - 1)), :].transpose(), (k, 1))
 
         for j in range(1, k):
             c = c + abs(eigen_vec * R[:, j - 1])
-            R[:, j] = eigen_vec[c.argmin(), :].transpose()
+            R[:, j] = np.reshape(eigen_vec[c.argmin(), :].transpose(), (k, 1))
 
         lastObjectiveValue = 0
         nbIterationsDiscretisation = 0
@@ -299,7 +300,7 @@ def parcellate_ncut(W, k, mask_img):
     for i in range(1, k):
         a = a + (i + 1) * eigenvec_discrete[:, i]
 
-    unique_a = list(set(a.flatten()))
+    unique_a = list(set(np.array(a.flatten().tolist()[0])))
     unique_a.sort()
 
     # Renumber clusters to make the contiguous
@@ -311,7 +312,7 @@ def parcellate_ncut(W, k, mask_img):
     imdat[imdat > 0] = 1
     imdat[imdat > 0] = np.short(b[0:int(np.sum(imdat))].flatten())
 
-    del a, W
+    del a, b, W
 
     return nib.Nifti1Image(imdat.astype('uint16'), mask_img.get_affine(), mask_img.get_header())
 
@@ -607,11 +608,39 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     return W
 
 
+def ensemble_parcellate(infiles, k):
+    from sklearn.feature_extraction import image
+
+    # Read in the files, convert them to similarity matrices, and then average them
+    for i, file_ in enumerate(infiles):
+
+        img = nib.load(file_)
+
+        img_data = img.get_fdata().astype('int16')
+
+        shape = img.shape
+        conn = image.grid_to_graph(n_x=shape[0], n_y=shape[1],
+                                   n_z=shape[2], mask=img_data)
+
+        if i == 0:
+            W = conn
+        else:
+            W = W + conn
+
+    # complete the average
+    W = W / len(infiles)
+
+    out_img = parcellate_ncut(W, k, img)
+    out_img.set_data_dtype(np.uint16)
+
+    return out_img
+
+
 class NiParcellate(object):
     """
     Class for implementing various clustering routines.
     """
-    def __init__(self, func_file, clust_mask, k, clust_type, local_corr, conf=None, mask=None):
+    def __init__(self, func_file, clust_mask, k, clust_type, local_corr, outdir, conf=None, mask=None):
         """
         Parameters
         ----------
@@ -627,6 +656,8 @@ class NiParcellate(object):
         local_corr : str
             Type of local connectivity to use as the basis for clustering methods. Options are tcorr or scorr.
             Default is tcorr.
+        outdir : str
+            Path to base derivatives directory.
         conf : str
             File path to a confound regressor file for reduce noise in the time-series when extracting from ROI's.
         mask : str
@@ -655,6 +686,7 @@ class NiParcellate(object):
         self._masked_fmri_vol = None
         self._conn_comps = None
         self.num_conn_comps = None
+        self.outdir = outdir
 
     def create_clean_mask(self, num_std_dev=1.5):
         """
@@ -668,7 +700,7 @@ class NiParcellate(object):
         self.atlas = "%s%s%s%s%s" % (mask_name, '_', self.clust_type, '_k', str(self.k))
         print("%s%s%s%s%s%s%s" % ('\nCreating atlas using ', self.clust_type, ' at cluster level ', str(self.k),
                                   ' for ', str(self.atlas), '...\n'))
-        self._dir_path = utils.do_dir_path(self.atlas, self.func_file)
+        self._dir_path = utils.do_dir_path(self.atlas, self.outdir)
         self.uatlas = "%s%s%s%s%s%s%s%s" % (self._dir_path, '/', mask_name, '_clust-', self.clust_type, '_k',
                                             str(self.k), '.nii.gz')
 
@@ -758,11 +790,15 @@ class NiParcellate(object):
             self._local_conn = 'auto'
         return
 
-    def parcellate(self):
+    def prep_boot(self, blocklength=1):
+        from nilearn.masking import apply_mask
+        ts_data = apply_mask(self._func_img, self._clust_mask_corr_img)
+        return ts_data, int(int(np.sqrt(ts_data.shape[0])) * blocklength)
+
+    def parcellate(self, func_boot_img):
         """
         API for performing any of a variety of clustering routines available through NiLearn.
         """
-        import gc
         import time
         import os
         from nilearn.regions import Parcellations
@@ -791,18 +827,22 @@ class NiParcellate(object):
                 confounds = pd.read_csv(self.conf, sep='\t')
                 if confounds.isnull().values.any():
                     conf_corr = fill_confound_nans(confounds, self._dir_path)
-                    self._clust_est.fit(self._func_img, confounds=conf_corr)
+                    self._clust_est.fit(func_boot_img, confounds=conf_corr)
                 else:
-                    self._clust_est.fit(self._func_img, confounds=self.conf)
+                    self._clust_est.fit(func_boot_img, confounds=self.conf)
             else:
-                self._clust_est.fit(self._func_img)
+                self._clust_est.fit(func_boot_img)
 
             self._clust_est.labels_img_.set_data_dtype(np.uint16)
-            nib.save(self._clust_est.labels_img_, self.uatlas)
+            print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
+            return self._clust_est.labels_img_
+
         elif self.clust_type == 'ncut':
             out_img = parcellate_ncut(self._local_conn, self.k, self._clust_mask_corr_img)
             out_img.set_data_dtype(np.uint16)
-            nib.save(out_img, self.uatlas)
+            print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
+            return out_img
+
         elif self.clust_type == 'rena' or self.clust_type == 'kmeans' and self.num_conn_comps > 1:
             from pynets.core import nodemaker
             from nilearn.regions import connected_regions, Parcellations
@@ -836,11 +876,11 @@ class NiParcellate(object):
                     confounds = pd.read_csv(self.conf, sep='\t')
                     if confounds.isnull().values.any():
                         conf_corr = fill_confound_nans(confounds, self._dir_path)
-                        self._clust_est.fit(self._func_img, confounds=conf_corr)
+                        self._clust_est.fit(func_boot_img, confounds=conf_corr)
                     else:
-                        self._clust_est.fit(self._func_img, confounds=self.conf)
+                        self._clust_est.fit(func_boot_img, confounds=self.conf)
                 else:
-                    self._clust_est.fit(self._func_img)
+                    self._clust_est.fit(func_boot_img)
                 conn_comp_atlases.append(self._clust_est.labels_img_)
 
             # Then combine the multiple atlases, corresponding to each connected component, into a single atlas
@@ -869,15 +909,7 @@ class NiParcellate(object):
 
             [super_atlas_ward, _] = nodemaker.create_parcel_atlas(atlas_of_atlases)
             super_atlas_ward.set_data_dtype(np.uint16)
+            del atlas_of_atlases, conn_comp_atlases, mask_img_list, mask_voxels_dict
 
-            nib.save(super_atlas_ward, self.uatlas)
-            del atlas_of_atlases, super_atlas_ward, conn_comp_atlases, mask_img_list, mask_voxels_dict
-
-        print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
-
-        del self._clust_est
-        self._func_img.uncache()
-        self._clust_mask_corr_img.uncache()
-        gc.collect()
-
-        return self.uatlas
+            print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
+            return super_atlas_ward
