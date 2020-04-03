@@ -1662,6 +1662,7 @@ def build_workflow(args, retval):
             fbval_list = len(func_file_list) * [None]
 
         i = 0
+        dir_list = []
         for dwi_file, func_file in zip(dwi_file_list, func_file_list):
             if conf_list and func_file:
                 conf_sub = conf_list[i]
@@ -1683,6 +1684,11 @@ def build_workflow(args, retval):
                 anat_file = anat_file_list[i]
             else:
                 anat_file = None
+
+            subj_dir = outdir + '/sub-' + ID.split('_')[0] + '/ses-' + ID.split('_')[1]
+            os.makedirs(subj_dir, exist_ok=True)
+            dir_list.append(subj_dir)
+
             wf_single_subject = init_wf_single_subject(
                 ID=ID[i], func_file=func_file, atlas=atlas,
                 network=network, node_size=node_size, roi=roi, thr=thr, uatlas=uatlas,
@@ -1702,7 +1708,7 @@ def build_workflow(args, retval):
                 directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, execution_dict=execution_dict,
                 embed=embed, multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
                 template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex, waymask=waymask,
-                local_corr=local_corr, min_length_list=min_length_list, outdir=outdir)
+                local_corr=local_corr, min_length_list=min_length_list, outdir=subj_dir)
             wf_single_subject._n_procs = procmem[0]
             wf_single_subject._mem_gb = procmem[1]
             wf_single_subject.n_procs = procmem[0]
@@ -1765,26 +1771,26 @@ def build_workflow(args, retval):
 
             i = i + 1
 
-        return wf_multi
+        return wf_multi, dir_list
 
     # Workflow generation
     # Multi-subject workflow generator
     if (func_file_list or dwi_file_list) or (func_file_list and dwi_file_list):
-        wf_multi = wf_multi_subject(ID, func_file_list, dwi_file_list, mask_list, fbvec_list, fbval_list,
-                                    conf_list, anat_file_list, atlas, network, node_size, roi,
-                                    thr, uatlas, multi_nets, conn_model, dens_thresh,
-                                    conf, adapt_thresh, plot_switch, dwi_file, multi_thr,
-                                    multi_atlas, min_thr, max_thr, step_thr, anat_file, parc,
-                                    ref_txt, procmem, k, clust_mask, k_list,
-                                    k_clustering, user_atlas_list, clust_mask_list, prune,
-                                    node_size_list, num_total_samples, graph, conn_model_list,
-                                    min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
-                                    smooth, smooth_list, disp_filt, clust_type, clust_type_list, mask, norm, binary,
-                                    fbval, fbvec, target_samples, curv_thr_list,
-                                    step_list, overlap_thr, track_type, min_length, maxcrossing, directget, tiss_class,
-                                    runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
-                                    template, template_mask, vox_size, multiplex, waymask, local_corr, min_length_list,
-                                    outdir)
+        wf_multi, dir_list = wf_multi_subject(ID, func_file_list, dwi_file_list, mask_list, fbvec_list, fbval_list,
+                                              conf_list, anat_file_list, atlas, network, node_size, roi,
+                                              thr, uatlas, multi_nets, conn_model, dens_thresh,
+                                              conf, adapt_thresh, plot_switch, dwi_file, multi_thr,
+                                              multi_atlas, min_thr, max_thr, step_thr, anat_file, parc,
+                                              ref_txt, procmem, k, clust_mask, k_list,
+                                              k_clustering, user_atlas_list, clust_mask_list, prune,
+                                              node_size_list, num_total_samples, graph, conn_model_list,
+                                              min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
+                                              smooth, smooth_list, disp_filt, clust_type, clust_type_list, mask, norm,
+                                              binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
+                                              overlap_thr, track_type, min_length, maxcrossing, directget, tiss_class,
+                                              runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass,
+                                              hpass_list, template, template_mask, vox_size, multiplex, waymask,
+                                              local_corr, min_length_list, outdir)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1792,18 +1798,6 @@ def build_workflow(args, retval):
         os.makedirs("%s%s%s" % (work_dir, '/wf_multi_subject_', '_'.join(ID)), exist_ok=True)
         wf_multi.base_dir = "%s%s%s" % (work_dir, '/wf_multi_subject_', '_'.join(ID))
         retval['run_uuid'] = None
-
-        func_dir_list = []
-        if func_file_list:
-            for func_file in func_file_list:
-                if func_file is not None:
-                    func_dir_list.append(os.path.dirname(func_file))
-
-        dwi_dir_list = []
-        if dwi_file_list:
-            for dwi_file in dwi_file_list:
-                if dwi_file is not None:
-                    dwi_dir_list.append(os.path.dirname(dwi_file))
 
         if verbose is True:
             from nipype import config, logging
@@ -1855,26 +1849,33 @@ def build_workflow(args, retval):
 
         # Clean up temporary directories
         print('Cleaning up...')
-        if len(func_dir_list) > 0:
-            for func_dir in func_dir_list:
-                for cnfnd_tmp_dir in glob.glob("%s%s" % (func_dir, '/*/confounds_tmp')):
+        for dir in dir_list:
+            if 'func' in dir:
+                for cnfnd_tmp_dir in glob.glob("%s%s" % (dir, '/*/confounds_tmp')):
                     shutil.rmtree(cnfnd_tmp_dir)
-                shutil.rmtree("%s%s" % (func_dir, '/reg_fmri'), ignore_errors=True)
-                for file_ in glob.glob("%s%s" % (func_dir, '/*')):
+                shutil.rmtree("%s%s" % (dir, '/reg_fmri'), ignore_errors=True)
+                for file_ in [i for i in glob.glob("%s%s" % (dir, '/*/*')) if os.path.isfile(i)]:
                     if ('reor-RAS' in file_) or ('res-' in file_):
-                        shutil.rmtree(file_)
-
-        if len(dwi_dir_list) > 0:
-            for dwi_dir in dwi_dir_list:
-                shutil.rmtree("%s%s" % (dwi_dir, '/dmri_tmp'), ignore_errors=True)
-                shutil.rmtree("%s%s" % (dwi_dir, '/reg_dmri'), ignore_errors=True)
-                for file_ in glob.glob("%s%s" % (dwi_dir, '/*')):
+                        try:
+                            os.remove(file_)
+                        except:
+                            continue
+            if 'dwi' in dir:
+                shutil.rmtree("%s%s" % (dir, '/dmri_tmp'), ignore_errors=True)
+                shutil.rmtree("%s%s" % (dir, '/reg_dmri'), ignore_errors=True)
+                for file_ in [i for i in glob.glob("%s%s" % (dir, '/*/*')) if os.path.isfile(i)]:
                     if ('reor-RAS' in file_) or ('res-' in file_):
-                            shutil.rmtree(file_)
+                        try:
+                            os.remove(file_)
+                        except:
+                            continue
         # shutil.rmtree(work_dir, ignore_errors=True)
 
     # Single-subject workflow generator
     else:
+        subj_dir = outdir + '/sub-' + ID.split('_')[0] + '/ses-' + ID.split('_')[1]
+        os.makedirs(subj_dir, exist_ok=True)
+
         # Single-subject pipeline
         wf = init_wf_single_subject(ID, func_file, atlas, network, node_size, roi, thr, uatlas,
                                     multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
@@ -1886,7 +1887,7 @@ def build_workflow(args, retval):
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     track_type, min_length, maxcrossing, directget, tiss_class, runtime_dict,
                                     execution_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
-                                    template_mask, vox_size, multiplex, waymask, local_corr, min_length_list, outdir)
+                                    template_mask, vox_size, multiplex, waymask, local_corr, min_length_list, subj_dir)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1903,10 +1904,6 @@ def build_workflow(args, retval):
         run_uuid = '%s_%s' % (strftime('%Y%m%d_%H%M%S'), uuid.uuid4())
         retval['run_uuid'] = run_uuid
 
-        if func_file:
-            func_dir = os.path.dirname(func_file)
-        if dwi_file:
-            dwi_dir = os.path.dirname(dwi_file)
         os.makedirs("%s%s%s%s%s%s%s" % (work_dir, '/', ID, '_', run_uuid, '_', base_dirname), exist_ok=True)
         wf.base_dir = "%s%s%s%s%s%s%s" % (work_dir, '/', ID, '_', run_uuid, '_', base_dirname)
 
@@ -1960,18 +1957,24 @@ def build_workflow(args, retval):
         # Clean up temporary directories
         print('Cleaning up...')
         if func_file:
-            for cnfnd_tmp_dir in glob.glob("%s%s" % (func_dir, '/*/confounds_tmp')):
+            for cnfnd_tmp_dir in glob.glob("%s%s" % (subj_dir, '/*/confounds_tmp')):
                 shutil.rmtree(cnfnd_tmp_dir)
-            shutil.rmtree("%s%s" % (func_dir, '/reg_fmri'), ignore_errors=True)
-            for file_ in glob.glob("%s%s" % (func_dir, '/*')):
+            shutil.rmtree("%s%s" % (subj_dir, '/reg_fmri'), ignore_errors=True)
+            for file_ in [i for i in glob.glob("%s%s" % (subj_dir, '/*/*')) if os.path.isfile(i)]:
                 if ('reor-RAS' in file_) or ('res-' in file_):
-                    shutil.rmtree(file_)
+                    try:
+                        os.remove(file_)
+                    except:
+                        continue
         if dwi_file:
-            shutil.rmtree("%s%s" % (dwi_dir, '/dmri_tmp'), ignore_errors=True)
-            shutil.rmtree("%s%s" % (dwi_dir, '/reg_dmri'), ignore_errors=True)
-            for file_ in glob.glob("%s%s" % (dwi_dir, '/*')):
+            shutil.rmtree("%s%s" % (subj_dir, '/dmri_tmp'), ignore_errors=True)
+            shutil.rmtree("%s%s" % (subj_dir, '/reg_dmri'), ignore_errors=True)
+            for file_ in [i for i in glob.glob("%s%s" % (subj_dir, '/*/*')) if os.path.isfile(i)]:
                 if ('reor-RAS' in file_) or ('res-' in file_):
-                    shutil.rmtree(file_)
+                    try:
+                        os.remove(file_)
+                    except:
+                        continue
         # shutil.rmtree(work_dir, ignore_errors=True)
 
     print('\n\n------------FINISHED-----------')

@@ -6,22 +6,23 @@
 "parameters": {},
 "containerOverrides": {
   "command": [
-    "--bucket",
+    "pynets_bids",
     "<BUCKET>",
-    "--remote_path",
-    "<PATH>",
+    "/outputs",
+    "--modality",
+    "<MODALITY>",
     "--participant_label",
     "<SUBJ>",
     "--session_label",
     "<SESH>",
     "--push_location",
     "<PUSH>",
-    "--modality",
-    "func",
     "-cm",
-    "'/hnu/HNU/masks/triple_net_ICA_overlap_3_sig_bin.nii.gz' '/hnu/HNU/masks/triple_net_ICA_overlap_6_sig_bin.nii.gz' '/hnu/HNU/masks/triple_net_ICA_overlap_9_sig_bin.nii.gz'",
-    "<INPUT>",
-    "/output"
+    "'s3://hnu/HNU/masks/triple_net_ICA_overlap_6_sig_bin.nii.gz' 's3://hnu/HNU/masks/triple_net_ICA_overlap_9_sig_bin.nii.gz'",
+    "-plug",
+    "<PLUGIN>",
+    "-pm",
+    "<RESOURCES>"
   ],
   "environment": [
     {

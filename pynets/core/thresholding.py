@@ -699,11 +699,11 @@ def perform_thresholding(conn_matrix, coords, labels, thr, thr_perc, min_span_tr
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is True:
             print('Ignoring -dt flag since local density thresholding is not currently supported.')
-        thr_type = 'MST_thr'
+        thr_type = 'MST'
         edge_threshold = "%s%s" % (str(thr_perc), '%')
         [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, coords, labels, thr)
     elif disp_filt is True:
-        thr_type = 'DISP_alpha'
+        thr_type = 'DISPARITY'
         edge_threshold = "%s%s" % (str(thr_perc), '%')
         G1 = thresholding.disparity_filter(nx.from_numpy_array(np.abs(conn_matrix)))
         # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
@@ -726,12 +726,12 @@ def perform_thresholding(conn_matrix, coords, labels, thr, thr_perc, min_span_tr
             conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
     else:
         if dens_thresh is False:
-            thr_type = 'prop'
+            thr_type = 'PROP'
             edge_threshold = "%s%s" % (str(thr_perc), '%')
             print("%s%.2f%s" % ('\nThresholding proportionally at: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         else:
-            thr_type = 'dens'
+            thr_type = 'DENS'
             edge_threshold = None
             print("%s%.2f%s" % ('\nThresholding to achieve density of: ', thr_perc, '% ...\n'))
             conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))

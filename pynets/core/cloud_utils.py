@@ -226,7 +226,7 @@ def s3_push_data(bucket, remote, outDir, subject=None, session=None, creds=True)
         return m.hexdigest()
 
     def to_uri(outDir, f):
-        return re.sub(outDir, '', f)
+        return os.path.join(remote + '/', re.sub(outDir, '', f))
 
     # get client with credentials if they exist
     client = s3_client(service="s3")
@@ -242,23 +242,23 @@ def s3_push_data(bucket, remote, outDir, subject=None, session=None, creds=True)
     for root, _, files in os.walk(outDir):
         files_to_upload = []
         for file_ in files:
-            if "tmp/" not in root:  # exclude things in the tmp/ folder
-                if f"sub-{subject}/ses-{session}" in root:
-                    # Compare them to S3 checksums
-                    uri = to_uri(outDir, file_)
-                    key = bucket_boto.get_key(uri)
-                    if key is None:
-                        # new file, upload
-                        files_to_upload.append(file_)
-                    else:
-                        # check MD5
-                        md5 = get_md5(file_)
-                        etag = key.etag.strip('"').strip("'")
-                        if etag != md5:
-                            print(file_ + ": " + md5 + " != " + etag)
-                            files_to_upload.append(file_)
-        for file_ in files_to_upload:
-            print(f"Uploading: {os.path.join(root, file_)}")
-            spath = root[root.find("sub-"):]  # remove everything before /sub-*
-            client.upload_file(os.path.join(root, file_), bucket, f"{remote}/{os.path.join(spath, file_)}",
-                               ExtraArgs={"ACL": "public-read"})
+            # Compare them to S3 checksums
+            uri = to_uri(outDir, os.path.join(root, file_))
+            key = list(bucket_boto.objects.filter(Prefix=uri))
+            if len(key) == 0:
+                # new file, upload
+                files_to_upload.append(os.path.join(root, file_))
+            else:
+                # check MD5
+                md5 = get_md5(os.path.join(root, file_))
+                s3_resp = client.head_object(Bucket=bucket, Key=uri)
+                etag = s3_resp['ETag'].strip('"')
+                if etag != md5:
+                    print(file_ + ": " + md5 + " != " + etag)
+                    files_to_upload.append(os.path.join(root, file_))
+        if len(files_to_upload) > 0:
+            print(f"Uploading: {files_to_upload}")
+            for file_ in files_to_upload:
+                uri = to_uri(outDir, os.path.join(root, file_))
+                client.upload_file(file_, bucket, uri,
+                                   ExtraArgs={"ACL": "public-read"})

@@ -249,12 +249,6 @@ def get_bids_parser():
                         default=None,
                         help='Specify the path to the atlas reference .txt file that maps labels to '
                              'intensities corresponding to the atlas parcellation file specified with the -ua flag.\n')
-    parser.add_argument('-g',
-                        metavar='Path to graph file input.',
-                        default=None,
-                        nargs='+',
-                        help='In either .txt or .npy format. This skips fMRI and dMRI graph estimation workflows and '
-                             'begins at the graph analysis stage. Multiple graph files should be separated by space.\n')
     parser.add_argument('-way',
                         metavar='Path to binarized Nifti1Image to constrain tractography',
                         default=None,
@@ -333,26 +327,110 @@ def main():
             sys.exit()
 
     # S3
+    # Primary inputs
     s3 = bids_args.input_dir.startswith("s3://")
 
-    if s3:
+    # secondary inputs
+    sec_s3_objs = []
+    if isinstance(bids_args.ua, list):
+        for i in bids_args.ua:
+            if i.startswith("s3://"):
+                print('Downloading user atlas: ', i, ' from S3...')
+                sec_s3_objs.append(i)
+    if isinstance(bids_args.cm, list):
+        for i in bids_args.cm:
+            if i.startswith("s3://"):
+                print('Downloading clustering mask: ', i, ' from S3...')
+                sec_s3_objs.append(i)
+    if isinstance(bids_args.roi, list):
+        for i in bids_args.roi:
+            if i.startswith("s3://"):
+                print('Downloading ROI mask: ', i, ' from S3...')
+                sec_s3_objs.append(i)
+    if isinstance(bids_args.way, list):
+        for i in bids_args.way:
+            if i.startswith("s3://"):
+                print('Downloading tractography waymask: ', i, ' from S3...')
+                sec_s3_objs.append(i)
+
+    if bids_args.templ:
+        if bids_args.templ.startswith("s3://"):
+            print('Downloading brain template: ', bids_args.templ, ' from S3...')
+            sec_s3_objs.append(bids_args.templ)
+    if bids_args.templm:
+        if bids_args.templm.startswith("s3://"):
+            print('Downloading brain template mask: ', bids_args.templm, ' from S3...')
+            sec_s3_objs.append(bids_args.templm)
+    if bids_args.ref:
+        if bids_args.ref.startswith("s3://"):
+            print('Downloading atlas labeling reference file: ', bids_args.ref, ' from S3...')
+            sec_s3_objs.append(bids_args.ref)
+
+    if s3 or len(sec_s3_objs) > 0:
+        import boto3
         from pynets.core import cloud_utils
         from pynets.core.utils import as_directory
 
+        home = os.path.expanduser("~")
         creds = bool(cloud_utils.get_credentials())
 
-        buck, remo = cloud_utils.parse_path(bids_args.input_dir)
-        home = os.path.expanduser("~")
-        input_dir = as_directory(home + "/.pynets/input", remove=False)
-        output_dir = as_directory(home + "/.pynets/output", remove=False)
-        if (not creds) and bids_args.push_location:
-            raise AttributeError("""No AWS credentials found, but "--push_location" flag called. Pushing will most 
-            likely fail.""")
+        if s3:
+            buck, remo = cloud_utils.parse_path(bids_args.input_dir)
+            input_dir = as_directory(home + "/.pynets/input", remove=False)
+            if (not creds) and bids_args.push_location:
+                raise AttributeError("""No AWS credentials found, but "--push_location" flag called. Pushing will most 
+                likely fail.""")
+            else:
+                output_dir = as_directory(home + "/.pynets/output", remove=False)
 
-        # Get S3 input data if needed
-        if participant_label and session_label:
-            info = "sub-" + participant_label[0] + '/ses-' + session_label[0] + '/' + modality[0]
-        cloud_utils.s3_get_data(buck, remo, input_dir, info=info)
+            # Get S3 input data if needed
+            if participant_label and session_label:
+                info = "sub-" + participant_label[0] + '/ses-' + session_label[0] + '/' + modality[0]
+            cloud_utils.s3_get_data(buck, remo, input_dir, info=info)
+
+        if len(sec_s3_objs) > 0:
+            s3_r = boto3.resource('s3')
+            s3_c = boto3.client('s3')
+            sec_dir = as_directory(home + "/.pynets/secondary_files", remove=False)
+            for s3_obj in [i for i in sec_s3_objs if i is not None]:
+                buck, remo = cloud_utils.parse_path(s3_obj)
+                bucket = s3_r.Bucket(buck)
+                s3_c.download_file(buck, remo, sec_dir + '/' + os.path.basename(s3_obj))
+
+            if isinstance(bids_args.ua, list):
+                local_ua = bids_args.ua.copy()
+                for i in local_ua:
+                    if i.startswith("s3://"):
+                        local_ua[local_ua.index(i)] = sec_dir + '/' + os.path.basename(i)
+                bids_args.ua = local_ua
+            if isinstance(bids_args.cm, list):
+                local_cm = bids_args.cm.copy()
+                for i in bids_args.cm:
+                    if i.startswith("s3://"):
+                        local_cm[local_cm.index(i)] = sec_dir + '/' + os.path.basename(i)
+                bids_args.cm = local_cm
+            if isinstance(bids_args.roi, list):
+                local_roi = bids_args.roi.copy()
+                for i in bids_args.roi:
+                    if i.startswith("s3://"):
+                        local_roi[local_roi.index(i)] = sec_dir + '/' + os.path.basename(i)
+                bids_args.roi = local_roi
+            if isinstance(bids_args.way, list):
+                local_way = bids_args.way.copy()
+                for i in bids_args.way:
+                    if i.startswith("s3://"):
+                        local_way[local_way.index(i)] = sec_dir + '/' + os.path.basename(i)
+                bids_args.way = local_way
+
+            if bids_args.templ:
+                if bids_args.templ.startswith("s3://"):
+                    bids_args.templ = sec_dir + '/' + os.path.basename(bids_args.templ)
+            if bids_args.templm:
+                if bids_args.templm.startswith("s3://"):
+                    bids_args.templm = sec_dir + '/' + os.path.basename(bids_args.templm)
+            if bids_args.ref:
+                if bids_args.ref.startswith("s3://"):
+                    bids_args.ref = sec_dir + '/' + os.path.basename(bids_args.ref)
     else:
         output_dir = bids_args.output_dir
         if output_dir is None:
@@ -383,6 +461,7 @@ def main():
                         del d['mod']
         args_dict_all.update(d)
 
+    print('Arguments parsed from bids_config.json:\n')
     print(args_dict_all)
 
     for key, val in args_dict_all.items():
@@ -410,7 +489,7 @@ def main():
     args_dict_all['bvec'] = bvecs
     args_dict_all['anat'] = anats
     args_dict_all['m'] = masks
-    args_dict_all['g'] = bids_args.g
+    args_dict_all['g'] = None
     args_dict_all['way'] = bids_args.way
     args_dict_all['id'] = id_list
     args_dict_all['ua'] = bids_args.ua
