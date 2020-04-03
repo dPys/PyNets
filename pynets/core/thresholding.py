@@ -739,7 +739,7 @@ def perform_thresholding(conn_matrix, coords, labels, thr, thr_perc, min_span_tr
 
 
 def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
-                smooth, disp_filt, parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary,
+                smooth, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
                 hpass):
     """
     Threshold a functional connectivity matrix using any of a variety of methods.
@@ -789,8 +789,6 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     coords : list
         List of (x, y, z) tuples corresponding to a coordinate atlas used or
         which represent the center-of-mass of each parcellation node.
-    c_boot : int
-        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
     norm : int
         Indicates method of normalizing resulting graph.
     binary : bool
@@ -838,8 +836,6 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     coords : list
         List of (x, y, z) tuples corresponding to a coordinate atlas used or
         which represent the center-of-mass of each parcellation node.
-    c_boot : int
-        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
     norm : int
         Indicates method of normalizing resulting graph.
     binary : bool
@@ -860,7 +856,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
 
     # Save unthresholded
     utils.save_mat(conn_matrix, utils.create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth,
-                                                           c_boot, hpass, parc))
+                                                           hpass, parc))
 
     [thr_type, edge_threshold, conn_matrix_thr, coords, labels] = thresholding.perform_thresholding(conn_matrix, coords,
                                                                                                     labels, thr,
@@ -873,14 +869,14 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         print('Warning: Fragmented graph')
 
     # Save thresholded mat
-    est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, c_boot,
-                                          thr_type, hpass, parc)
+    est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, thr_type,
+                                          hpass, parc)
 
     utils.save_mat(conn_matrix_thr, est_path)
     gc.collect()
 
     return (conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID,
-            dir_path, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass)
+            dir_path, atlas, uatlas, labels, coords, norm, binary, hpass)
 
 
 def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,

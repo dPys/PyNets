@@ -81,15 +81,15 @@ def sweep_directory(derivatives_path, modality, space='MNI152NLin2009cAsym', fun
                     mod_query[key] = attr
 
             # grab anat
-            anat_attributes = [sub, ses]  # the attributes for our anat img
-            anat_keys = ['subject', 'session']  # the keys for our modality img
+            anat_attributes = [sub, ses]
+            anat_keys = ['subject', 'session']
             # our query for the anatomical image
             anat_query = {'datatype': 'anat', 'suffix': 'T1w',
                           'extensions': ['.nii', '.nii.gz']}
             for attr, key in zip(anat_attributes, anat_keys):
                 if attr:
                     anat_query[key] = attr
-            # make a query to fine the desired files from the BIDSLayout
+            # make a query to find the desired files from the BIDSLayout
             anat = layout.get(**anat_query)
             anat = [i for i in anat if 'MNI' not in i.filename and 'space' not in i.filename]
 
@@ -179,11 +179,15 @@ def get_bids_parser():
     import argparse
 
     # Parse args
+    # Primary inputs
     parser = argparse.ArgumentParser(description='PyNets BIDS CLI: A Fully-Automated Workflow for Reproducible '
                                                  'Ensemble Sampling of Functional and Structural Connectomes')
     parser.add_argument("input_dir",
                         help="""The directory with the input dataset formatted according to the BIDS standard. To use 
                         data from s3, just pass `s3://<bucket>/<dataset>` as the input directory.""")
+    parser.add_argument("output_dir",
+                        help="""The directory to store pynets derivatives. If the input_dir is an s3 bucket, then use 
+                        `--push_location`, since output_dir will be created automatically.""")
     parser.add_argument("modality",
                         metavar='modality',
                         default=None,
@@ -204,6 +208,13 @@ def get_bids_parser():
                          space separated list.""",
                         nargs="+",
                         default=None)
+    parser.add_argument("--push_location",
+                        action="store",
+                        help="Name of folder on s3 to push output data to, if the folder does not exist, it will be "
+                             "created. Format the location as `s3://<bucket>/<path>`",
+                        default=None)
+
+    # Secondary file inputs
     parser.add_argument('-ua',
                         metavar='Path to parcellation file in MNI-space',
                         default=None,
@@ -254,11 +265,6 @@ def get_bids_parser():
                              'case of dmri connectome estimation.\n')
 
     # Debug/Runtime settings
-    parser.add_argument("--push_location",
-                        action="store",
-                        help="Name of folder on s3 to push output data to, if the folder does not exist, it will be "
-                             "created. Format the location as `s3://<bucket>/<path>`",
-                        default=None),
     parser.add_argument('-pm',
                         metavar='Cores,memory',
                         default='4,8',
@@ -292,9 +298,9 @@ def main():
     from types import SimpleNamespace
     from pathlib import Path
     try:
-        from pynets.core.utils import do_dir_path
+        import pynets
     except ImportError:
-        print('PyNets not installed! Ensure that you are referencing the correct site-packages and using Python3.5+')
+        print('PyNets not installed! Ensure that you are referencing the correct site-packages and using Python3.6+')
 
     if len(sys.argv) < 1:
         print("\nMissing command-line inputs! See help options with the -h flag.\n")
@@ -309,8 +315,8 @@ def main():
     session_label = bids_args.session_label
     modality = bids_args.modality
 
-    #with open("%s%s" % (str(Path(__file__).parent.parent), '/bids_config.json'), 'r') as stream:
-    with open('/Users/derekpisner/Applications/PyNets/pynets/bids_config.json') as stream:
+    with open("%s%s" % (str(Path(__file__).parent.parent), '/bids_config.json'), 'r') as stream:
+    # with open('/Users/derekpisner/Applications/PyNets/pynets/bids_config.json') as stream:
         arg_dict = json.load(stream)
 
     # S3
@@ -325,6 +331,7 @@ def main():
         buck, remo = cloud_utils.parse_path(bids_args.input_dir)
         home = os.path.expanduser("~")
         input_dir = as_directory(home + "/.pynets/input", remove=True)
+        output_dir = as_directory(home + "/.pynets/output", remove=False)
         if (not creds) and bids_args.push_location:
             raise AttributeError("""No AWS credentials found, but "--push_location" flag called. Pushing will most 
             likely fail.""")
@@ -333,6 +340,10 @@ def main():
         if participant_label and session_label:
             info = "sub-" + participant_label[0] + '/ses-' + session_label[0] + '/' + modality[0]
         cloud_utils.s3_get_data(buck, remo, input_dir, info=info)
+    else:
+        output_dir = bids_args.output_dir
+        if output_dir is None:
+            raise ValueError('Must specify an output directory')
 
     arg_list = []
     if len(modality) > 1:
@@ -342,7 +353,7 @@ def main():
     else:
         outs = sweep_directory(input_dir, modality=modality[0], subj=bids_args.participant_label[0],
                                sesh=bids_args.session_label[0])
-    for mod in ['dwi', 'func']:
+    for mod in modalities:
         arg_list.append(arg_dict[mod])
 
     arg_list.append(arg_dict['gen'])
@@ -368,6 +379,7 @@ def main():
         id_list = id_list*2
 
     args_dict_all['work'] = bids_args.work
+    args_dict_all['output_dir'] = output_dir
     args_dict_all['plug'] = bids_args.plug
     args_dict_all['pm'] = bids_args.pm
     args_dict_all['v'] = bids_args.v
@@ -394,27 +406,21 @@ def main():
     # Mimic argparse with SimpleNamespace object
     args = SimpleNamespace(**args_dict_all)
 
-    try:
-        import gc
-        from pynets.cli.pynets_run import build_workflow
-        from multiprocessing import set_start_method, Process, Manager
-        set_start_method('forkserver')
-        with Manager() as mgr:
-            retval = mgr.dict()
-            p = Process(target=build_workflow, args=(args, retval))
-            p.start()
-            p.join()
+    import gc
+    from pynets.cli.pynets_run import build_workflow
+    from multiprocessing import set_start_method, Process, Manager
+    set_start_method('forkserver')
+    with Manager() as mgr:
+        retval = mgr.dict()
+        p = Process(target=build_workflow, args=(args, retval))
+        p.start()
+        p.join()
 
-            if p.exitcode != 0:
-                sys.exit(p.exitcode)
+        if p.exitcode != 0:
+            sys.exit(p.exitcode)
 
-            # Clean up master process before running workflow, which may create forks
-            gc.collect()
-
-    except:
-        print('\nWARNING: Forkserver failed to initialize. Are you using Python3 ?')
-        retval = dict()
-        build_workflow(args, retval)
+        # Clean up master process before running workflow, which may create forks
+        gc.collect()
 
     if bids_args.push_location:
         print(f"Pushing to s3 at {bids_args.push_location}.")
@@ -423,7 +429,7 @@ def main():
             cloud_utils.s3_push_data(
                 push_buck,
                 push_remo,
-                bids_args.output_dir,
+                output_dir,
                 subject=id.split('_')[0],
                 session=id.split('_')[1],
                 creds=creds,

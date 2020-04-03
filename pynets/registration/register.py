@@ -448,7 +448,8 @@ class DmriReg(object):
         try:
             anat_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
             if op.isfile(anat_mask_existing) and not self.mask and overwrite is False:
-                anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.vox_size)
+                anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.basedir_path,
+                                                                    self.vox_size)
                 try:
                     os.system("fslmaths {} -mas {} {} 2>/dev/null".format(self.t1w_brain, anat_mask_existing,
                                                                           self.t1w_brain))
@@ -474,9 +475,12 @@ class DmriReg(object):
 
         if wm_mask_existing and gm_mask_existing and csf_mask_existing and overwrite is False:
             if op.isfile(wm_mask_existing) and op.isfile(gm_mask_existing) and op.isfile(csf_mask_existing):
-                wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.vox_size, overwrite=False)
-                gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size, overwrite=False)
-                csf_mask = regutils.check_orient_and_dims(csf_mask_existing, self.vox_size, overwrite=False)
+                wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.basedir_path,
+                                                         self.vox_size, overwrite=False)
+                gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.basedir_path,
+                                                         self.vox_size, overwrite=False)
+                csf_mask = regutils.check_orient_and_dims(csf_mask_existing, self.basedir_path,
+                                                          self.vox_size, overwrite=False)
             else:
                 try:
                     maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
@@ -847,7 +851,8 @@ class FmriReg(object):
         try:
             anat_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
             if op.isfile(anat_mask_existing) and not self.mask and overwrite is False:
-                anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.vox_size)
+                anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.basedir_path,
+                                                                    self.vox_size)
                 try:
                     os.system("fslmaths {} -mas {} {} 2>/dev/null".format(self.t1w_brain, anat_mask_existing,
                                                                           self.t1w_brain))
@@ -869,7 +874,8 @@ class FmriReg(object):
 
         if gm_mask_existing:
             if op.isfile(gm_mask_existing) and overwrite is False:
-                out_gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.vox_size, overwrite=False)
+                out_gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.basedir_path, self.vox_size,
+                                                             overwrite=False)
             else:
                 try:
                     maps = regutils.segment_t1w(self.t1w_brain, self.map_path)

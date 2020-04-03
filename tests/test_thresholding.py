@@ -252,7 +252,6 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     thr = 0.5
     node_size = 6
     smooth = 2
-    c_boot = 3
     roi = base_dir + dir_path + \
         '/fmri/whole_brain_cluster_labels_PCA200/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz'
     coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
@@ -270,10 +269,10 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     hpass = False 
                                                
     conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, \
-        prune, ID, dir_path, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass = \
+        prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, hpass = \
         thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, 
                                  roi, node_size, min_span_tree, smooth, disp_filt, parc, prune, 
-                                 atlas, uatlas, labels, coords, c_boot, norm, binary, hpass)    
+                                 atlas, uatlas, labels, coords, norm, binary, hpass)
                                  
     assert conn_matrix_thr is not None
     if min_span_tree is False and disp_filt is False and dens_thresh is True:
@@ -294,7 +293,6 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     assert uatlas is None # Set to none above
     assert labels is not None
     assert coords is not None
-    assert c_boot is not None
     assert norm is not None
     assert binary is not None
     assert hpass is not None

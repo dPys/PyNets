@@ -29,7 +29,7 @@ def test_make_gtab_and_bmask():
 
     for atlas in atlases:
         [gtab_file, B0_bet, B0_mask, dwi_file] = dmriutils.make_gtab_and_bmask(
-            fbval, fbvec, dwi_file, network, node_size, atlas)
+            fbval, fbvec, dwi_file, network, node_size, atlas, dwi_path)
 
     assert gtab_file is not None
     assert B0_bet is not None

@@ -113,7 +113,7 @@ def make_mean_b0(in_file):
     return mean_file_out
 
 
-def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas, b0_thr=50):
+def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas, outdir, b0_thr=50):
     """
     Create gradient table from bval/bvec, and a mean B0 brain mask.
 
@@ -134,6 +134,8 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas, b0_th
     atlas : str
         Name of a Nilearn-hosted coordinate or parcellation/label-based atlas supported for fetching.
         See Nilearn's datasets.atlas module for more detailed reference.
+    outdir : str
+        Path to base derivatives directory.
 
     Returns
     -------
@@ -149,12 +151,9 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas, b0_th
     import time
     import os
     from dipy.io import save_pickle
-    import os.path as op
     from dipy.io import read_bvals_bvecs
     from dipy.core.gradients import gradient_table
     from pynets.dmri.dmri_utils import make_mean_b0, normalize_gradients
-
-    outdir = op.dirname(dwi_file)
 
     namer_dir = outdir + '/dmri_tmp'
     if not os.path.isdir(namer_dir):

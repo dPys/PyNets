@@ -54,8 +54,7 @@ def test_nodemaker_tools_parlistfile_RSN():
     parcel_list = nodemaker.gen_img_list(parlistfile)
 
     [net_coords, net_parcel_list, net_labels, network] = nodemaker.get_node_membership(network, func_file, coords,
-                                                                                            labels, parc,
-                                                                                            parcel_list)
+                                                                                       labels, parc, parcel_list)
     print("%s%s%s" % ('get_node_membership --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
@@ -350,7 +349,8 @@ def test_WB_fetch_nodes_and_labels1():
 
     start_time = time.time()
     [_, coords, atlas_name, _, parcel_list, par_max, parlistfile,
-     dir_path] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc, func_file, use_AAL_naming)
+     dir_path] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc, func_file, use_AAL_naming,
+                                                  dir_path)
     print("%s%s%s" % ('WB_fetch_nodes_and_labels (Parcel Nodes) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -377,7 +377,7 @@ def test_WB_fetch_nodes_and_labels2():
     use_AAL_naming = True
     start_time = time.time()
     [_, coords, atlas_name, _, _, par_max, parlistfile,
-     _] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc, func_file, use_AAL_naming)
+     _] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc, func_file, use_AAL_naming, dir_path)
     print("%s%s%s" % ('WB_fetch_nodes_and_labels (Spherical Nodes) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -404,7 +404,7 @@ def test_RSN_fetch_nodes_and_labels1():
     start_time = time.time()
     [RSN_labels, RSN_coords, atlas_name, _, parcel_list, par_max,
      parlistfile, _] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc,
-                                                        func_file, use_AAL_naming)
+                                                        func_file, use_AAL_naming, dir_path)
     print("%s%s%s" % ('RSN_fetch_nodes_and_labels (Parcel Nodes) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -433,7 +433,7 @@ def test_RSN_fetch_nodes_and_labels2():
     start_time = time.time()
     [RSN_labels, RSN_coords, atlas_name, _, _,
      par_max, parlistfile, _] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc, func_file,
-                                                                 use_AAL_naming)
+                                                                 use_AAL_naming, dir_path)
     print("%s%s%s" % ('RSN_fetch_nodes_and_labels (Spherical Nodes) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
 

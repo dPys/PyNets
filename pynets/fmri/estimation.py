@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 
 
 def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-                    disp_filt, parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary,
+                    disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
                     hpass):
     """
     Computes a functional connectivity matrix based on a node-extracted time-series array.
@@ -61,8 +61,6 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
     coords : list
         List of (x, y, z) tuples corresponding to a coordinate atlas used or
         which represent the center-of-mass of each parcellation node.
-    c_boot : int
-        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
     norm : int
         Indicates method of normalizing resulting graph.
     binary : bool
@@ -114,8 +112,6 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
     coords : list
         List of (x, y, z) tuples corresponding to a coordinate atlas used or
         which represent the center-of-mass of each parcellation node.
-    c_boot : int
-        Number of bootstraps if user specified circular-block bootstrapped resampling of the node-extracted time-series.
     norm : int
         Indicates method of normalizing resulting graph.
     binary : bool
@@ -263,7 +259,7 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
     del time_series
 
     return (conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-            disp_filt, parc, prune, atlas, uatlas, labels, coords, c_boot, norm, binary, hpass)
+            disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, hpass)
 
 
 def timeseries_bootstrap(tseries, block_size):
@@ -290,8 +286,6 @@ def timeseries_bootstrap(tseries, block_size):
        special issue on Statistical Challenges and Advances in Brain Science,
        2008, 18: 1253-1268.
     """
-    np.random.seed(int(42))
-
     # calculate number of blocks
     k = int(np.ceil(float(tseries.shape[0]) / block_size))
 
@@ -326,7 +320,7 @@ class TimeseriesExtraction(object):
     Class for implementing various time-series extracting routines.
     """
     def __init__(self, net_parcels_nii_path, node_size, conf, func_file, coords, roi, dir_path, ID, network, smooth,
-                 atlas, uatlas, labels, c_boot, block_size, hpass, mask):
+                 atlas, uatlas, labels, hpass, mask):
         self.net_parcels_nii_path = net_parcels_nii_path
         self.node_size = node_size
         self.conf = conf
@@ -340,8 +334,6 @@ class TimeseriesExtraction(object):
         self.atlas = atlas
         self.uatlas = uatlas
         self.labels = labels
-        self.c_boot = c_boot
-        self.block_size = block_size
         self.mask = mask
         self.hpass = hpass
         self.ts_within_nodes = None
@@ -482,19 +474,13 @@ class TimeseriesExtraction(object):
 
         return
 
-    def bootstrap_timeseries(self):
-        """Perform circular-block bootstrapping of the extracted time-series"""
-        print("%s%s%s" % ('Performing circular block bootstrapping with ', self.c_boot, ' iterations...'))
-        self.ts_within_nodes = timeseries_bootstrap(self.ts_within_nodes, self.block_size)[0]
-        return
-
     def save_and_cleanup(self):
         """Save the extracted time-series and clean cache"""
         import gc
         from pynets.core import utils
 
         # Save time series as file
-        utils.save_ts_to_file(self.roi, self.network, self.ID, self.dir_path, self.ts_within_nodes, self.c_boot,
+        utils.save_ts_to_file(self.roi, self.network, self.ID, self.dir_path, self.ts_within_nodes,
                               self.smooth, self.hpass, self.node_size)
 
         if self._mask_path is not None:

@@ -99,6 +99,7 @@ class _IndividualClusteringInputSpec(BaseInterfaceInputSpec):
     vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
     local_corr = traits.Str('allcorr', mandatory=True, usedefault=True)
     mask = traits.Any(mandatory=False)
+    outdir = traits.Str(mandatory=True)
 
 
 class _IndividualClusteringOutputSpec(TraitedSpec):
@@ -116,16 +117,18 @@ class IndividualClustering(SimpleInterface):
     input_spec = _IndividualClusteringInputSpec
     output_spec = _IndividualClusteringOutputSpec
 
-    def _run_interface(self, runtime):
+    def _run_interface(self, runtime, c_boot=10):
         import gc
+        import nibabel as nib
+        from nilearn.masking import unmask
+        from pynets.fmri.estimation import timeseries_bootstrap
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import clustools
         from pynets.registration.reg_utils import check_orient_and_dims
 
         clust_list = ['kmeans', 'ward', 'complete', 'average', 'ncut', 'rena']
 
-        clust_mask_temp_path = check_orient_and_dims(self.inputs.clust_mask, self.inputs.vox_size,
-                                                     outdir=runtime.cwd)
+        clust_mask_temp_path = check_orient_and_dims(self.inputs.clust_mask, runtime.cwd, self.inputs.vox_size)
 
         if self.inputs.mask:
             out_name_mask = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
@@ -144,9 +147,10 @@ class IndividualClustering(SimpleInterface):
 
         nip = clustools.NiParcellate(func_file=out_name_func_file,
                                      clust_mask=clust_mask_temp_path,
-                                     k=self.inputs.k,
+                                     k=int(self.inputs.k),
                                      clust_type=self.inputs.clust_type,
                                      local_corr=self.inputs.local_corr,
+                                     outdir=self.inputs.outdir,
                                      conf=out_name_conf,
                                      mask=out_name_mask)
 
@@ -154,16 +158,28 @@ class IndividualClustering(SimpleInterface):
         nip.create_local_clustering(overwrite=True, r_thresh=0.4)
 
         if self.inputs.clust_type in clust_list:
-            uatlas = nip.parcellate()
+            print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))
+            ts_data, block_size = nip.prep_boot()
+            boot_parcellations = []
+            for i in range(c_boot):
+                print("%s%s" % ('\nBootstrapped iteration: ', i))
+                boot_series = timeseries_bootstrap(ts_data, block_size)[0]
+                func_boot_img = unmask(boot_series, nip._clust_mask_corr_img)
+                out_path = runtime.cwd + '/boot_parc_tmp_' + str(i) + '.nii.gz'
+                nib.save(nip.parcellate(func_boot_img), out_path)
+                boot_parcellations.append(out_path)
+                gc.collect()
+
+            print('Creating spatially-constrained consensus parcellation...')
+            consensus_parcellation = clustools.ensemble_parcellate(boot_parcellations, int(self.inputs.k))
+            nib.save(consensus_parcellation, nip.uatlas)
         else:
             raise ValueError('Clustering method not recognized. '
                              'See: https://nilearn.github.io/modules/generated/nilearn.regions.Parcellations.'
                              'html#nilearn.regions.Parcellations')
-        del nip
-        gc.collect()
 
         self._results['atlas'] = atlas
-        self._results['uatlas'] = uatlas
+        self._results['uatlas'] = nip.uatlas
         self._results['clust_mask'] = self.inputs.clust_mask
         self._results['k'] = self.inputs.k
         self._results['clust_type'] = self.inputs.clust_type
@@ -177,15 +193,13 @@ class _ExtractTimeseriesInputSpec(BaseInterfaceInputSpec):
     func_file = File(exists=True, mandatory=True)
     coords = traits.Any(mandatory=True)
     roi = traits.Any(mandatory=False)
-    dir_path = traits.Str(mandatory=True)
+    dir_path = Directory(exists=True, mandatory=True)
     ID = traits.Any(mandatory=True)
     network = traits.Any(mandatory=False)
     smooth = traits.Any(mandatory=True)
     atlas = traits.Any(mandatory=True)
     uatlas = traits.Any(mandatory=False)
     labels = traits.Any(mandatory=True)
-    c_boot = traits.Any(mandatory=False)
-    block_size = traits.Any(mandatory=False)
     hpass = traits.Any(mandatory=True)
     mask = traits.Any(mandatory=False)
     parc = traits.Bool()
@@ -198,12 +212,11 @@ class _ExtractTimeseriesOutputSpec(TraitedSpec):
     ts_within_nodes = traits.Any(mandatory=True)
     node_size = traits.Any(mandatory=True)
     smooth = traits.Any(mandatory=True)
-    dir_path = traits.Str(mandatory=True)
+    dir_path = Directory(exists=True, mandatory=True)
     atlas = traits.Any(mandatory=True)
     uatlas = traits.Any(mandatory=True)
     labels = traits.Any(mandatory=True)
     coords = traits.Any(mandatory=True)
-    c_boot = traits.Any(mandatory=True)
     hpass = traits.Any(mandatory=True)
     roi = traits.Any(mandatory=True)
 
@@ -251,8 +264,6 @@ class ExtractTimeseries(SimpleInterface):
                                              atlas=self.inputs.atlas,
                                              uatlas=self.inputs.uatlas,
                                              labels=self.inputs.labels,
-                                             c_boot=self.inputs.c_boot,
-                                             block_size=self.inputs.block_size,
                                              hpass=self.inputs.hpass,
                                              mask=out_name_mask)
 
@@ -268,9 +279,6 @@ class ExtractTimeseries(SimpleInterface):
         else:
             te.extract_ts_parc()
 
-        if float(self.inputs.c_boot) > 0:
-            te.bootstrap_timeseries()
-
         te.save_and_cleanup()
 
         self._results['ts_within_nodes'] = te.ts_within_nodes
@@ -281,7 +289,6 @@ class ExtractTimeseries(SimpleInterface):
         self._results['uatlas'] = te.uatlas
         self._results['labels'] = te.labels
         self._results['coords'] = te.coords
-        self._results['c_boot'] = te.c_boot
         self._results['hpass'] = te.hpass
         self._results['roi'] = self.inputs.roi
 
@@ -373,7 +380,6 @@ class _PlotFuncInputSpec(BaseInterfaceInputSpec):
     smooth = traits.Any()
     prune = traits.Any()
     uatlas = traits.Any()
-    c_boot = traits.Any()
     norm = traits.Any()
     binary = traits.Bool()
     hpass = traits.Any()
@@ -410,7 +416,6 @@ class PlotFunc(SimpleInterface):
                                    self.inputs.smooth,
                                    self.inputs.prune,
                                    self.inputs.uatlas,
-                                   self.inputs.c_boot,
                                    self.inputs.norm,
                                    self.inputs.binary,
                                    self.inputs.hpass)
@@ -624,7 +629,7 @@ class _TrackingOutputSpec(TraitedSpec):
     track_type = traits.Str(mandatory=True)
     target_samples = traits.Any(mandatory=True)
     conn_model = traits.Str(mandatory=True)
-    dir_path = traits.Any()
+    dir_path = Directory(exists=True, mandatory=True)
     network = traits.Any(mandatory=False)
     node_size = traits.Any()
     dens_thresh = traits.Bool()

@@ -28,7 +28,6 @@ def test_plot_conn_mat_nonet_no_mask():
     thr = 0.95
     node_size = 2
     smooth = 2
-    c_boot = 2
     hpass = 0.1
     conn_model = 'sps'
     atlas = 'whole_brain_cluster_labels_PCA200'
@@ -40,7 +39,7 @@ def test_plot_conn_mat_nonet_no_mask():
 
     start_time = time.time()
     plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path,
-    ID, network, labels, roi, thr, node_size, smooth, c_boot, hpass)
+    ID, network, labels, roi, thr, node_size, smooth, hpass)
     print("%s%s%s" % ('plot_conn_mat_func --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -57,7 +56,6 @@ def test_plot_conn_mat_nonet_mask():
     thr = 0.95
     node_size = 2
     smooth = 2
-    c_boot = 3
     hpass = 0.1
     conn_model = 'sps'
     atlas = 'whole_brain_cluster_labels_PCA200'
@@ -69,7 +67,7 @@ def test_plot_conn_mat_nonet_mask():
 
     start_time = time.time()
     plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path,
-    ID, network, labels, roi, thr, node_size, smooth, c_boot, hpass)
+    ID, network, labels, roi, thr, node_size, smooth, hpass)
     print("%s%s%s" % ('plot_conn_mat_func (Masking version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -86,7 +84,6 @@ def test_plot_all_nonet_no_mask():
     thr = 0.95
     node_size = 2
     smooth = 2
-    c_boot = 3
     conn_model = 'sps'
     parlistfile = None
     atlas = 'whole_brain_cluster_labels_PCA200'
@@ -106,11 +103,9 @@ def test_plot_all_nonet_no_mask():
 
     start_time = time.time()
     #coords already a list
-    plot_gen.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID,
-    network, labels, roi, coords, edge_threshold, thr, node_size, smooth,
-    prune, parlistfile, c_boot, norm, binary, hpass)
-    print("%s%s%s" % ('plot_all --> finished: ',
-    str(np.round(time.time() - start_time, 1)), 's'))
+    plot_gen.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, coords, edge_threshold,
+                           thr, node_size, smooth, prune, parlistfile, norm, binary, hpass)
+    print("%s%s%s" % ('plot_all --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 
 def test_plot_all_nonet_with_mask():
@@ -125,7 +120,6 @@ def test_plot_all_nonet_with_mask():
     thr = 0.95
     node_size = 2
     smooth = 2
-    c_boot = 3
     prune = 1
     norm = 1
     hpass = 0.1
@@ -145,11 +139,9 @@ def test_plot_all_nonet_with_mask():
 
     start_time = time.time()
     #coords already a list
-    plot_gen.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID,
-    network, labels, roi, coords, edge_threshold, thr, node_size, smooth,
-    prune, parlistfile, c_boot, norm, binary, hpass)
-    print("%s%s%s" % ('plot_all (Masking version) --> finished: ',
-    str(np.round(time.time() - start_time, 1)), 's'))
+    plot_gen.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, coords, edge_threshold,
+                           thr, node_size, smooth, prune, parlistfile, norm, binary, hpass)
+    print("%s%s%s" % ('plot_all (Masking version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 
 def test_plot_connectogram():
@@ -169,10 +161,8 @@ def test_plot_connectogram():
     labels = pickle.load(labels_file)
 
     start_time = time.time()
-    plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, dir_path,
-    ID, network, labels)
-    print("%s%s%s" % ('plot_connectogram --> finished: ',
-    str(np.round(time.time() - start_time, 1)), 's'))
+    plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, labels)
+    print("%s%s%s" % ('plot_connectogram --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 
 def test_plot_timeseries():
