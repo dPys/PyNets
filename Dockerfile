@@ -168,4 +168,4 @@ ENV OMP_NUM_THREADS=1
 ENV USE_SIMPLE_THREADED_LEVEL3=1
 
 # and add it as an entrypoint
-ENTRYPOINT ["pynets"]
+ENTRYPOINT ["pynets_bids"]

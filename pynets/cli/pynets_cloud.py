@@ -22,43 +22,58 @@ from pynets.core.cloud_utils import s3_client
 
 def batch_submit(
     bucket,
-    path,
+    dataset,
+    push_dir,
+    modality,
+    participant_label,
+    session_label,
+    user_atlas,
+    cluster_mask,
+    roi,
+    templ,
+    templm,
+    ref,
+    way,
+    plugin,
+    resources,
+    working_dir,
+    verbose,
     jobdir,
-    credentials=None,
-    dataset=None,
-    modif=None
+    credentials
 ):
     """Searches through an S3 bucket, gets all subject-ids, creates json files for each,
-    submits batch jobs, and returns list of job ids to query status upon later
+    submits batch jobs, and returns list of job ids to query status upon later."""
 
-    Parameters
-    ----------
-    bucket : str
-        The S3 bucket with the input dataset formatted according to the BIDS standard.
-    path : str
-        The directory where the dataset is stored on the S3 bucket
-    jobdir : str
-        Directory of batch jobs to generate/check up on
-    credentials : [type], optional
-        AWS formatted csv of credentials, by default None
-    dataset : str, optional
-        Name given to the output directory containing analyzed data set "pynets-<version>-<dataset>", by default None
-    modif : str, optional
-        Name of folder on s3 to push to. If empty, push to a folder with pynets's version number, by default ""
-    """
+    print(f"Getting list from s3://{bucket}/{dataset}/...")
+    seshs = crawl_bucket(bucket, dataset, jobdir)
 
-    print(f"Getting list from s3://{bucket}/{path}/...")
-    threads = crawl_bucket(bucket, path, jobdir)
+    for sub, ses in list(seshs.items()):
+        if session_label != ['None'] and session_label != [None]:
+            seshs[sub] = [i for i in seshs[sub] if i in session_label]
+        if participant_label != ['None'] and participant_label != [None]:
+            if sub not in participant_label:
+                del seshs[sub]
 
     print("Generating job for each subject...")
     jobs = create_json(
         bucket,
-        path,
-        threads,
+        dataset,
+        push_dir,
+        modality,
+        seshs,
+        user_atlas,
+        cluster_mask,
+        roi,
+        templ,
+        templm,
+        ref,
+        way,
+        plugin,
+        resources,
+        working_dir,
+        verbose,
         jobdir,
-        credentials=credentials,
-        dataset=dataset,
-        modif=modif
+        credentials
     )
 
     print("Submitting jobs to the queue...")
@@ -112,7 +127,7 @@ def crawl_bucket(bucket, path, jobdir):
 
         if sesh != []:
             seshs[subj] = sesh
-            print(f"{subj} added to seshs.")
+            print(f"{subj} added to sessions.")
         else:
             seshs[subj] = None
             print(f"{subj} not added (no sessions).")
@@ -139,53 +154,35 @@ def crawl_bucket(bucket, path, jobdir):
 
 def create_json(
     bucket,
-    path,
-    threads,
+    dataset,
+    push_dir,
+    modality,
+    seshs,
+    user_atlas,
+    cluster_mask,
+    roi,
+    templ,
+    templm,
+    ref,
+    way,
+    plugin,
+    resources,
+    working_dir,
+    verbose,
     jobdir,
-    credentials=None,
-    dataset=None,
-    modif=""
+    credentials,
 ):
-    """Creates the json files for each of the jobs
-
-    Parameters
-    ----------
-    bucket : str
-        The S3 bucket with the input dataset formatted according to the BIDS standard.
-    path : str
-        The directory where the dataset is stored on the S3 bucket
-    threads : OrderedDict
-        dictionary containing all subjects and sessions from the path location
-    jobdir : str
-        Directory of batch jobs to generate/check up on
-    credentials : [type], optional
-        AWS formatted csv of credentials, by default None
-    dataset : [type], optional
-        Name added to the generated json job files "pynets_<version>_<dataset>_sub-<sub>_ses-<ses>", by default None
-    modif : str, optional
-        Name of folder on s3 to push to. If empty, push to a folder with pynets's version number, by default ""
-
-    Returns
-    -------
-    list
-        list of job jsons
-    """
+    """Creates the json files for each of the jobs"""
     from pathlib import Path
     jobsjson = f"{jobdir}/jobs.json"
-    if os.path.isfile(jobsjson):
-        with open(jobsjson, "r") as f:
-            jobs = json.load(f)
-        return jobs
 
     # set up infrastructure
     out = subprocess.check_output(f"mkdir -p {jobdir}", shell=True)
     out = subprocess.check_output(f"mkdir -p {jobdir}/jobs/", shell=True)
     out = subprocess.check_output(f"mkdir -p {jobdir}/ids/", shell=True)
-    seshs = threads
-
-    templ = os.path.dirname(__file__)
 
     with open("%s%s" % (str(Path(__file__).parent.parent), '/cloud_config.json'), 'r') as inf:
+    #with open('/Users/derekpisner/Applications/PyNets/pynets/cloud_config.json') as inf:
         template = json.load(inf)
 
     cmd = template["containerOverrides"]["command"]
@@ -200,8 +197,49 @@ def create_json(
 
     # edit non-defaults
     jobs = []
-    cmd[cmd.index("<INPUT>")] = f's3://{bucket}/{path}'
-    cmd[cmd.index("<PUSH>")] = f's3://{bucket}/{path}/{modif}'
+    cmd[cmd.index("<INPUT>")] = f's3://{bucket}/{dataset}'
+    cmd[cmd.index("<PUSH>")] = f's3://{bucket}/{push_dir}'
+    cmd[cmd.index("<MODALITY>")] = modality[0]
+    cmd[cmd.index("<PLUGIN>")] = plugin
+    cmd[cmd.index("<RESOURCES>")] = resources
+    cmd[cmd.index("<WORK>")] = working_dir
+
+    if user_atlas is not None:
+        cmd.append('-ua')
+        if len(user_atlas) > 1:
+            cmd.append('\'' + '\', \''.join(user_atlas) + '\'')
+        else:
+            cmd.append(user_atlas[0])
+
+    if cluster_mask is not None:
+        cmd.append('-cm')
+        if len(cluster_mask) > 1:
+            cmd.append('\'' + '\', \''.join(cluster_mask) + '\'')
+        else:
+            cmd.append(cluster_mask[0])
+
+    if roi is not None:
+        cmd.append('-roi')
+        cmd.append(roi)
+
+    if templ is not None:
+        cmd.append('-templ')
+        cmd.append(templ)
+
+    if templm is not None:
+        cmd.append('-templm')
+        cmd.append(templm)
+
+    if ref is not None:
+        cmd.append('-ref')
+        cmd.append(ref)
+
+    if way is not None:
+        cmd.append('-way')
+        cmd.append(way)
+
+    if verbose is True:
+        cmd.append('-v')
 
     # edit participant-specific values ()
     # loop over every session of every participant
@@ -306,47 +344,131 @@ def kill_jobs(jobdir, reason='"Killing job"'):
 def main():
     parser = ArgumentParser(description='PyNets AWS Cloud CLI: A Fully-Automated Workflow for Reproducible '
                                         'Ensemble Sampling of Functional and Structural Connectomes')
+    parser.add_argument("--bucket",
+                        help="""The S3 bucket name.""")
+    parser.add_argument("--dataset",
+                        help="""The directory with the input dataset formatted according to the BIDS standard such that
+                        `s3://<bucket>/<dataset>` as the input directory.""")
+    parser.add_argument("modality",
+                        metavar='modality',
+                        nargs='+',
+                        choices=['dwi', 'func'],
+                        help='Specify data modality to process from bids directory. Options are `dwi` and `func`.')
+    parser.add_argument("--participant_label",
+                        help="""The label(s) of the participant(s) that should be analyzed. The label corresponds to 
+                            sub-<participant_label> from the BIDS spec (so it does not include "sub-"). If this 
+                            parameter is not provided all subjects should be analyzed. Multiple participants can be 
+                            specified with a space separated list.""",
+                        nargs="+",
+                        default=None)
+    parser.add_argument("--session_label",
+                        help="""The label(s) of the session that should be analyzed. The label  corresponds to
+                         ses-<participant_label> from the BIDS spec (so it does not include "ses-"). If this parameter 
+                         is not provided all sessions should be analyzed. Multiple sessions can be specified with a 
+                         space separated list.""",
+                        nargs="+",
+                        default=None)
+    parser.add_argument("--push_location",
+                        action="store",
+                        help="Name of folder on s3 to push output data to, if the folder does not exist, it will be "
+                             "created. Format the location as `s3://<bucket>/<path>`",
+                        default=None)
 
-    parser.add_argument(
-        "--bucket",
-        help="""The S3 bucket with the input dataset
-         formatted according to the BIDS standard.""",
-    )
-    parser.add_argument(
-        "--bidsdir",
-        help="""The path of the directory where the dataset
-        lives on the S3 bucket.""",
-    )
-    parser.add_argument(
-        "--jobdir",
-        action="store",
-        help="""Local directory where the generated batch jobs will be
-        saved/run through in case of batch termination or check-up."""
-    )
-    parser.add_argument(
-        "--credentials",
-        action="store",
-        help="csv formatted AWS credentials.",
-        default=None,
-    )
-    parser.add_argument("--dataset", action="store", help="Dataset name")
-    parser.add_argument(
-        "--modif",
-        action="store",
-        help="""Name of folder on s3 to push to. Data will be saved at '<bucket>/<bidsdir>/<modif>' on the s3 bucket
-        If empty, push to a folder with pynets's version number.""",
-        default="",
-    )
+    # Secondary file inputs
+    parser.add_argument('-ua',
+                        metavar='Path to parcellation file in MNI-space',
+                        default=None,
+                        nargs='+',
+                        help='Optionally specify a path to a parcellation/atlas Nifti1Image file in MNI152 space. '
+                             'Labels should be spatially distinct across hemispheres and ordered with consecutive '
+                             'integers with a value of 0 as the background label. If specifying a list of paths to '
+                             'multiple user atlases, separate them by space.\n')
+    parser.add_argument('-cm',
+                        metavar='Cluster mask',
+                        default=None,
+                        nargs='+',
+                        help='Optionally specify the path to a Nifti1Image mask file to constrained functional '
+                             'clustering. If specifying a list of paths to multiple cluster masks, separate '
+                             'them by space.\n')
+    parser.add_argument('-roi',
+                        metavar='Path to binarized Region-of-Interest (ROI) Nifti1Image',
+                        default=None,
+                        nargs='+',
+                        help='Optionally specify a binarized ROI mask and retain only those nodes '
+                             'of a parcellation contained within that mask for connectome estimation.\n')
+    parser.add_argument('-templ',
+                        metavar='Path to template file',
+                        default=None,
+                        help='Optionally specify a path to a template Nifti1Image file. If none is specified, then '
+                             'will use the MNI152 template by default.\n')
+    parser.add_argument('-templm',
+                        metavar='Path to template mask file',
+                        default=None,
+                        help='Optionally specify a path to a template mask Nifti1Image file. If none is specified, '
+                             'then will use the MNI152 template mask by default.\n')
+    parser.add_argument('-ref',
+                        metavar='Atlas reference file path',
+                        default=None,
+                        help='Specify the path to the atlas reference .txt file that maps labels to '
+                             'intensities corresponding to the atlas parcellation file specified with the -ua flag.\n')
+    parser.add_argument('-way',
+                        metavar='Path to binarized Nifti1Image to constrain tractography',
+                        default=None,
+                        nargs='+',
+                        help='Optionally specify a binarized ROI mask in MNI-space to constrain tractography in the '
+                             'case of dmri connectome estimation.\n')
+
+    # Debug/Runtime settings
+    parser.add_argument("--jobdir",
+                        action="store",
+                        help="""Local directory where the generated batch jobs will be 
+                        saved/run through in case of batch termination or check-up.""")
+    parser.add_argument("--credentials",
+                        action="store",
+                        help="csv formatted AWS credentials.",
+                        default=None)
+    parser.add_argument('-pm',
+                        metavar='Cores,memory',
+                        default='4,8',
+                        help='Number of cores to use, number of GB of memory to use for single subject run, entered as '
+                             'two integers seperated by comma.\n')
+    parser.add_argument('-plug',
+                        metavar='Scheduler type',
+                        default='MultiProc',
+                        nargs=1,
+                        choices=['Linear', 'MultiProc', 'SGE', 'PBS', 'SLURM', 'SGEgraph', 'SLURMgraph',
+                                 'LegacyMultiProc'],
+                        help='Include this flag to specify a workflow plugin other than the default MultiProc.\n')
+    parser.add_argument('-v',
+                        default=False,
+                        action='store_true',
+                        help='Verbose print for debugging.\n')
+    parser.add_argument('-work',
+                        metavar='Working directory',
+                        default='/tmp/work',
+                        help='Specify the path to a working directory for pynets to run. Default is /tmp/work.\n')
 
     result = parser.parse_args()
 
     bucket = result.bucket
-    path = result.bidsdir
-    path = path.strip("/") if path is not None else path
-    dset = path.split("/")[-1] if path is not None else None
-    creds = result.credentials
+    dataset = result.dataset
+    push_dir = result.push_location
+    modality = result.modality
     jobdir = result.jobdir
-    modif = result.modif
+    resources = result.pm
+    plugin = result.plug
+    creds = result.credentials
+    participant_label = result.participant_label
+    session_label = result.session_label
+    verbose = result.v
+    working_dir = result.work
+    user_atlas = result.ua
+    cluster_mask = result.cm
+    roi = result.roi
+    templ = result.templ
+    templm = result.templm
+    ref = result.ref
+    way = result.way
 
     if jobdir is None:
         jobdir = "./"
@@ -355,13 +477,27 @@ def main():
     if not os.path.exists(jobdir):
         print("job directory not found. Creating...")
         Path(jobdir).mkdir(parents=True)
+
     batch_submit(
-        bucket,
-        path,
-        jobdir,
+        bucket=bucket,
+        dataset=dataset,
+        push_dir=push_dir,
+        modality=modality,
+        participant_label=participant_label,
+        session_label=session_label,
+        user_atlas=user_atlas,
+        cluster_mask=cluster_mask,
+        roi=roi,
+        templ=templ,
+        templm=templm,
+        ref=ref,
+        way=way,
+        plugin=plugin,
+        resources=resources,
+        working_dir=working_dir,
+        verbose=verbose,
+        jobdir=jobdir,
         credentials=creds,
-        dataset=dset,
-        modif=modif
     )
     sys.exit(0)
 

@@ -6,22 +6,22 @@
 "parameters": {},
 "containerOverrides": {
   "command": [
-    "--bucket",
-    "<BUCKET>",
-    "--remote_path",
-    "<PATH>",
+    "<INPUT>",
+    "/outputs",
+    "--modality",
+    "<MODALITY>",
     "--participant_label",
     "<SUBJ>",
     "--session_label",
     "<SESH>",
     "--push_location",
     "<PUSH>",
-    "--modality",
-    "func",
-    "-cm",
-    "'/hnu/HNU/masks/triple_net_ICA_overlap_3_sig_bin.nii.gz' '/hnu/HNU/masks/triple_net_ICA_overlap_6_sig_bin.nii.gz' '/hnu/HNU/masks/triple_net_ICA_overlap_9_sig_bin.nii.gz'",
-    "<INPUT>",
-    "/output"
+    "-plug",
+    "<PLUGIN>",
+    "-pm",
+    "<RESOURCES>",
+    "-work",
+    "<WORK>"
   ],
   "environment": [
     {
