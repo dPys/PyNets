@@ -1,27 +1,20 @@
 {
 "jobName": "<JOBNAME>",
-"jobQueue": "pynets",
+"jobQueue": "PynetsQueue",
 "dependsOn": [],
-"jobDefinition": "pynets",
+"jobDefinition": "PynetsJobDefinition",
 "parameters": {},
 "containerOverrides": {
   "command": [
     "<INPUT>",
     "/outputs",
-    "--modality",
     "<MODALITY>",
     "--participant_label",
     "<SUBJ>",
     "--session_label",
     "<SESH>",
     "--push_location",
-    "<PUSH>",
-    "-plug",
-    "<PLUGIN>",
-    "-pm",
-    "<RESOURCES>",
-    "-work",
-    "<WORK>"
+    "<PUSH>"
   ],
   "environment": [
     {
