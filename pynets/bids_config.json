@@ -1,19 +1,19 @@
 {
     "dwi": {
-            "dg": "['prob']",
-            "ml": "['10']",
-            "mod": "['csd']",
-            "s": 10000,
+            "dg": "['prob', 'det']",
+            "ml": "['10', '40']",
+            "mod": "['csd', 'csa']",
+            "s": 100000,
             "tc": "['bin']",
             "tt": "['local']"
         },
     "func": {
             "cc": "['tcorr']",
-            "ct": "['ward']",
-            "hp": "['0']",
-            "k": "None",
+            "ct": "['rena', 'ward']",
+            "hp": "['0', '0.028']",
+            "k": "['400', '600']",
             "mod": "['partcorr']",
-            "sm": "['0']"
+            "sm": "['0', '2', '4']"
         },
     "gen": {
             "a":  "None",
@@ -21,8 +21,8 @@
             "df":  "False",
             "dt":  "False",
             "embed":  "None",
-            "max_thr":  "None",
-            "min_thr":  "None",
+            "max_thr":  0.20,
+            "min_thr":  0.80,
             "mplx":  0,
             "mst":  "True",
             "n":  "None",
@@ -32,8 +32,8 @@
             "p":  "['3']",
             "plt":  "False",
             "spheres":  "False",
-            "step_thr":  "None",
-            "thr":  1.0,
+            "step_thr":  0.10,
+            "thr":  "None",
             "vox":  "'2mm'"
         }
 }
