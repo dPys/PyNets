@@ -200,21 +200,18 @@ def create_json(
     cmd[cmd.index("<INPUT>")] = f's3://{bucket}/{dataset}'
     cmd[cmd.index("<PUSH>")] = f's3://{bucket}/{push_dir}'
     cmd[cmd.index("<MODALITY>")] = modality[0]
-    cmd[cmd.index("<PLUGIN>")] = plugin
-    cmd[cmd.index("<RESOURCES>")] = resources
-    cmd[cmd.index("<WORK>")] = working_dir
 
     if user_atlas is not None:
         cmd.append('-ua')
         if len(user_atlas) > 1:
-            cmd.append('\'' + '\', \''.join(user_atlas) + '\'')
+            cmd.append('\'' + '\' \''.join(user_atlas) + '\'')
         else:
             cmd.append(user_atlas[0])
 
     if cluster_mask is not None:
         cmd.append('-cm')
         if len(cluster_mask) > 1:
-            cmd.append('\'' + '\', \''.join(cluster_mask) + '\'')
+            cmd.append('\'' + '\' \''.join(cluster_mask) + '\'')
         else:
             cmd.append(cluster_mask[0])
 
@@ -240,6 +237,18 @@ def create_json(
 
     if verbose is True:
         cmd.append('-v')
+
+    if plugin is not None:
+        cmd.append('-plug')
+        cmd.append(plugin)
+
+    if plugin is not None:
+        cmd.append('-pm')
+        cmd.append(resources)
+
+    if working_dir is not None:
+        cmd.append('-work')
+        cmd.append(working_dir)
 
     # edit participant-specific values ()
     # loop over every session of every participant

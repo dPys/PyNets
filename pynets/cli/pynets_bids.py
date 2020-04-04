@@ -257,6 +257,11 @@ def get_bids_parser():
                              'case of dmri connectome estimation.\n')
 
     # Debug/Runtime settings
+    parser.add_argument('-config',
+                        metavar='Optional path to a config.json file with runtime settings.',
+                        default=None,
+                        help='Including this flag will override the bids_config.json template in the base directory '
+                             'of pynets. See the template ad `pynets -h` for available settings.\n')
     parser.add_argument('-pm',
                         metavar='Cores,memory',
                         default='4,8',
@@ -306,10 +311,15 @@ def main():
     participant_label = bids_args.participant_label
     session_label = bids_args.session_label
     modality = bids_args.modality
+    bids_config = bids_args.config
 
-    with open("%s%s" % (str(Path(__file__).parent.parent), '/bids_config.json'), 'r') as stream:
-    # with open('/Users/derekpisner/Applications/PyNets/pynets/bids_config.json') as stream:
-        arg_dict = json.load(stream)
+    if bids_config:
+        with open(bids_config, 'r') as stream:
+            arg_dict = json.load(stream)
+    else:
+        with open("%s%s" % (str(Path(__file__).parent.parent), '/bids_config.json'), 'r') as stream:
+        # with open('/Users/derekpisner/Applications/PyNets/pynets/bids_config.json') as stream:
+            arg_dict = json.load(stream)
 
     # Available functional and structural connectivity models
     with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:

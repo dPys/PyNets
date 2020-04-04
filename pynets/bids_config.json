@@ -33,8 +33,7 @@
             "plt":  "False",
             "spheres":  "False",
             "step_thr":  0.10,
-            "thr":  "None",
+            "thr":  1.0,
             "vox":  "'2mm'"
         }
 }
-
