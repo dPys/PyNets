@@ -204,14 +204,14 @@ def create_json(
     if user_atlas is not None:
         cmd.append('-ua')
         if len(user_atlas) > 1:
-            cmd.append('\'' + '\' \''.join(user_atlas) + '\'')
+            cmd.append(' '.join(user_atlas))
         else:
             cmd.append(user_atlas[0])
 
     if cluster_mask is not None:
         cmd.append('-cm')
         if len(cluster_mask) > 1:
-            cmd.append('\'' + '\' \''.join(cluster_mask) + '\'')
+            cmd.append(' '.join(cluster_mask))
         else:
             cmd.append(cluster_mask[0])
 
