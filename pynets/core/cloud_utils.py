@@ -210,9 +210,16 @@ def s3_push_data(bucket, remote, outDir, subject=None, session=None, creds=True)
     """
     import re
     import hashlib
-    import boto3
+    from boto3.session import Session
 
-    s3 = boto3.resource('s3')
+    [access_key, secret_key] = get_credentials()
+
+    session = Session(
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key
+    )
+
+    s3 = session.resource('s3')
 
     # Shortcut to MD5
     def get_md5(filename):
@@ -251,7 +258,10 @@ def s3_push_data(bucket, remote, outDir, subject=None, session=None, creds=True)
             else:
                 # check MD5
                 md5 = get_md5(os.path.join(root, file_))
-                s3_resp = client.head_object(Bucket=bucket, Key=uri)
+                try:
+                    s3_resp = client.head_object(Bucket=bucket, Key=uri)
+                except:
+                    continue
                 etag = s3_resp['ETag'].strip('"')
                 if etag != md5:
                     print(file_ + ": " + md5 + " != " + etag)

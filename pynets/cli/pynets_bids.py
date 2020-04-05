@@ -377,7 +377,7 @@ def main():
             sec_s3_objs.append(bids_args.ref)
 
     if s3 or len(sec_s3_objs) > 0:
-        import boto3
+        from boto3.session import Session
         from pynets.core import cloud_utils
         from pynets.core.utils import as_directory
 
@@ -399,8 +399,15 @@ def main():
             cloud_utils.s3_get_data(buck, remo, input_dir, info=info)
 
         if len(sec_s3_objs) > 0:
-            s3_r = boto3.resource('s3')
-            s3_c = boto3.client('s3')
+            [access_key, secret_key] = cloud_utils.get_credentials()
+
+            session = Session(
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key
+            )
+
+            s3_r = session.resource('s3')
+            s3_c = cloud_utils.s3_client(service="s3")
             sec_dir = as_directory(home + "/.pynets/secondary_files", remove=False)
             for s3_obj in [i for i in sec_s3_objs if i is not None]:
                 buck, remo = cloud_utils.parse_path(s3_obj)
