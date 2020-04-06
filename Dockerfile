@@ -106,6 +106,7 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     # Precaching fonts, set 'Agg' as default backend for matplotlib
     && python -c "from matplotlib import font_manager" \
     && sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" ) \
+    && mkdir -p /home/neuro/.pynets \
     # Create nipype config for resource monitoring
     && mkdir -p ~/.nipype \
     && echo "[monitoring]" > ~/.nipype/nipype.cfg \
@@ -113,12 +114,29 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && pip uninstall -y pandas \
     && conda install -yq pandas
 
+# Python ENV Config
+ENV LD_LIBRARY_PATH="/opt/conda/lib":$LD_LIBRARY_PATH
+
+# PyNets ENV Config
+ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets:$PATH"
+
+# FSL ENV Config
+ENV FSLDIR=/usr/share/fsl/5.0
+ENV FSLOUTPUTTYPE=NIFTI_GZ
+ENV PATH=/usr/lib/fsl/5.0:$PATH
+ENV FSLMULTIFILEQUIT=TRUE
+ENV POSSUMDIR=/usr/share/fsl/5.0
+ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
+ENV FSLTCLSH=/usr/bin/tclsh
+ENV FSLWISH=/usr/bin/wish
+
 # Handle permissions, cleanup, and create mountpoints
 USER root
 RUN chown -R neuro /opt \
     && chmod a+s -R /opt \
     && chmod 775 -R /opt/conda/lib/python3.6/site-packages \
     && chmod 777 /opt/conda/bin/pynets \
+    && chmod 777 -R /home/neuro/.pynets \
     && find /opt -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.yaml" -exec chmod 777 {} \; \
     && apt-get purge -y --auto-remove \
@@ -143,28 +161,9 @@ RUN chown -R neuro /opt \
     && mkdir /working && \
     chmod -R 777 /working
 
+RUN ldconfig
+
 USER neuro
-
-# Python ENV Config
-ENV LD_LIBRARY_PATH="/opt/conda/lib":$LD_LIBRARY_PATH
-
-# PyNets ENV Config
-ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets:$PATH"
-
-# FSL ENV Config
-ENV FSLDIR=/usr/share/fsl/5.0
-ENV FSLOUTPUTTYPE=NIFTI_GZ
-ENV PATH=/usr/lib/fsl/5.0:$PATH
-ENV FSLMULTIFILEQUIT=TRUE
-ENV POSSUMDIR=/usr/share/fsl/5.0
-ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
-ENV FSLTCLSH=/usr/bin/tclsh
-ENV FSLWISH=/usr/bin/wish
-
-# Misc environment vars
-ENV PYTHONWARNINGS ignore
-ENV OMP_NUM_THREADS=1
-ENV USE_SIMPLE_THREADED_LEVEL3=1
 
 # and add it as an entrypoint
 ENTRYPOINT ["pynets_bids"]
