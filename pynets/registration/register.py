@@ -484,19 +484,19 @@ class DmriReg(object):
             else:
                 try:
                     maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
+                    wm_mask = maps['wm_prob']
+                    gm_mask = maps['gm_prob']
+                    csf_mask = maps['csf_prob']
                 except RuntimeError:
                     print('Segmentation failed. Does the input anatomical image still contained skull?')
-                wm_mask = maps['wm_prob']
-                gm_mask = maps['gm_prob']
-                csf_mask = maps['csf_prob']
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
+                wm_mask = maps['wm_prob']
+                gm_mask = maps['gm_prob']
+                csf_mask = maps['csf_prob']
             except RuntimeError:
                 print('Segmentation failed. Does the input anatomical image still contained skull?')
-            wm_mask = maps['wm_prob']
-            gm_mask = maps['gm_prob']
-            csf_mask = maps['csf_prob']
 
         # qa_fast_png(self.csf_mask, self.gm_mask, self.wm_mask, self.map_path)
 
@@ -879,15 +879,15 @@ class FmriReg(object):
             else:
                 try:
                     maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
+                    out_gm_mask = maps['gm_prob']
                 except RuntimeError:
                     print('Segmentation failed. Does the input anatomical image still contained skull?')
-                out_gm_mask = maps['gm_prob']
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
+                out_gm_mask = maps['gm_prob']
             except RuntimeError:
                 print('Segmentation failed. Does the input anatomical image still contained skull?')
-            out_gm_mask = maps['gm_prob']
 
         # Threshold GM to binary in func space
         t_img = nib.load(out_gm_mask)

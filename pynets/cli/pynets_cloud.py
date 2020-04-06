@@ -203,49 +203,40 @@ def create_json(
 
     if user_atlas is not None:
         cmd.append('-ua')
-        if len(user_atlas) > 1:
-            cmd.append(' '.join(user_atlas))
-        else:
-            cmd.append(user_atlas[0])
-
+        for i in user_atlas:
+            cmd.append(i)
     if cluster_mask is not None:
         cmd.append('-cm')
-        if len(cluster_mask) > 1:
-            cmd.append(' '.join(cluster_mask))
-        else:
-            cmd.append(cluster_mask[0])
-
+        for i in cluster_mask:
+            cmd.append(i)
     if roi is not None:
         cmd.append('-roi')
-        cmd.append(roi)
-
+        for i in roi:
+            cmd.append(i)
     if templ is not None:
         cmd.append('-templ')
-        cmd.append(templ)
-
+        for i in templ:
+            cmd.append(i)
     if templm is not None:
         cmd.append('-templm')
-        cmd.append(templm)
-
+        for i in templm:
+            cmd.append(i)
     if ref is not None:
         cmd.append('-ref')
-        cmd.append(ref)
-
+        for i in ref:
+            cmd.append(i)
     if way is not None:
         cmd.append('-way')
-        cmd.append(way)
-
+        for i in way:
+            cmd.append(i)
     if verbose is True:
         cmd.append('-v')
-
     if plugin is not None:
         cmd.append('-plug')
         cmd.append(plugin)
-
     if plugin is not None:
         cmd.append('-pm')
         cmd.append(resources)
-
     if working_dir is not None:
         cmd.append('-work')
         cmd.append(working_dir)
@@ -253,7 +244,7 @@ def create_json(
     # edit participant-specific values ()
     # loop over every session of every participant
     for subj in seshs.keys():
-        print(f"... Generating job for sub-{subj}")
+        print(f"Generating job for sub-{subj}")
         # and for each subject number in each participant number,
         for sesh in seshs[subj]:
             # add format-specific commands,
@@ -309,7 +300,7 @@ def submit_jobs(jobs, jobdir):
     for job in jobs:
         with open(job, "r") as f:
             kwargs = json.load(f)
-        print(f"... Submitting job {job}...")
+        print(f"Submitting Job: {job}")
         submission = batch.submit_job(**kwargs)
         print((f'Job Name: {submission["jobName"]}, Job ID: {submission["jobId"]}'))
         sub_file = os.path.join(jobdir, "ids", submission["jobName"] + ".json")

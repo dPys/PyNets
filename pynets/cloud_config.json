@@ -2,7 +2,7 @@
 "jobName": "<JOBNAME>",
 "jobQueue": "PynetsQueue",
 "dependsOn": [],
-"jobDefinition": "PynetsJobDefinition",
+"jobDefinition": "PynetsJobDefinition:6",
 "parameters": {},
 "containerOverrides": {
   "command": [

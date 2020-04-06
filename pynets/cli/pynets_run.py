@@ -1314,6 +1314,13 @@ def build_workflow(args, retval):
         print("%s%s" % ('T1-Weighted Image:\n', anat_file))
     else:
         multimodal = False
+
+    if anat_file or anat_file_list:
+        if anat_file_list and len(anat_file_list) > 1:
+            for anat_file in anat_file_list:
+                print("%s%s" % ('T1-Weighted Image:\n', anat_file))
+        else:
+            print("%s%s" % ('T1-Weighted Image:\n', anat_file))
     print('\n-------------------------------------------------------------------------\n\n')
 
     # Variable tracking
