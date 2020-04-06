@@ -54,7 +54,6 @@ def batch_submit(
             if sub not in participant_label:
                 del seshs[sub]
 
-    print("Generating job for each subject...")
     jobs = create_json(
         bucket,
         dataset,
