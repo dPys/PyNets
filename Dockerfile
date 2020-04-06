@@ -78,7 +78,6 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && conda config --system --prepend channels conda-forge \
     && conda config --system --set auto_update_conda false \
     && conda config --system --set show_channel_urls true \
-    && conda clean -tipsy \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
     && conda install -yq python=3.6 ipython \
     && conda clean -tipsy \

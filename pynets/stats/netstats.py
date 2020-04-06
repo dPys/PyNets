@@ -1606,7 +1606,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
     subject_path = op.dirname(op.dirname(op.dirname(net_mets_csv_list[0])))
 
     if len(net_mets_csv_list) > 1:
-        print("%s%s%s" % ('\n\nList of result files to concatenate:\n', str(net_mets_csv_list), '\n\n'))
+        print("%s%s%s" % ('\n\nAll graph analysis results:\n', str(net_mets_csv_list), '\n\n'))
 
         models = []
         for file_ in net_mets_csv_list:

@@ -386,6 +386,9 @@ def main():
 
         if s3:
             buck, remo = cloud_utils.parse_path(bids_args.input_dir)
+            os.makedirs(home + "/.pynets", exist_ok=True)
+            os.makedirs(home + "/.pynets/input", exist_ok=True)
+            os.makedirs(home + "/.pynets/output", exist_ok=True)
             input_dir = as_directory(home + "/.pynets/input", remove=False)
             if (not creds) and bids_args.push_location:
                 raise AttributeError("""No AWS credentials found, but "--push_location" flag called. Pushing will most 
@@ -486,6 +489,7 @@ def main():
             args_dict_all[key] = ast.literal_eval(val)
 
     funcs, confs, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
+    print(outs)
 
     id_list = []
     for i in subjs:
