@@ -184,21 +184,25 @@ def create_json(
     #with open('/Users/derekpisner/Applications/PyNets/pynets/cloud_config.json') as inf:
         template = json.load(inf)
 
-    cmd = template["containerOverrides"]["command"]
-    env = template["containerOverrides"]["environment"]
+    co = template["containerOverrides"]
+    cmd = co["command"]
+    env = co["environment"]
 
     # modify template
     if credentials is not None:
         env[0]["value"], env[1]["value"] = get_credentials()
     else:
         env = []
-    template["containerOverrides"]["environment"] = env
+    co["environment"] = env
 
     # edit non-defaults
+    procmem = list(eval(str(resources)))
     jobs = []
     cmd[cmd.index("<INPUT>")] = f's3://{bucket}/{dataset}'
     cmd[cmd.index("<PUSH>")] = f's3://{bucket}/{push_dir}'
     cmd[cmd.index("<MODALITY>")] = modality[0]
+    # co["vcpus"] = int(procmem[0])
+    # co["memory"] = int(1000*float(procmem[1]))
 
     if user_atlas is not None:
         cmd.append('-ua')
@@ -428,9 +432,10 @@ def main():
                         default=None)
     parser.add_argument('-pm',
                         metavar='Cores,memory',
-                        default='4,8',
+                        default='all',
                         help='Number of cores to use, number of GB of memory to use for single subject run, entered as '
-                             'two integers seperated by comma.\n')
+                             'two integers seperated by comma. Otherwise, default is `None`, which uses all resources '
+                             'detected on the current compute node.\n')
     parser.add_argument('-plug',
                         metavar='Scheduler type',
                         default='MultiProc',

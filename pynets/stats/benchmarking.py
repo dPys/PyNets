@@ -209,9 +209,9 @@ if __name__ == '__main__':
     df = pd.read_csv(working_dir + '/all_subs_neat.csv')
     for bad_col in naughty_list:
         df = df.loc[:, ~df.columns.str.contains(bad_col, regex=True)]
-    df = df.rename(columns=lambda x: re.sub('_k','_k-',x))
-    df = df.rename(columns=lambda x: re.sub('_thr_','',x))
-    df = df.rename(columns=lambda x: re.sub('_partcorr_','_est-partcorr_',x))
+    df = df.rename(columns=lambda x: re.sub('_k', '_k-', x))
+    df = df.rename(columns=lambda x: re.sub('_thr_', '', x))
+    df = df.rename(columns=lambda x: re.sub('_partcorr_', '_est-partcorr_', x))
     df = df.dropna(subset=['id'])
 
     for col in df.columns[1:]:
