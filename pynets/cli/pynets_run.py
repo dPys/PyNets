@@ -373,9 +373,9 @@ def get_parser():
     # Debug/Runtime settings
     parser.add_argument('-pm',
                         metavar='Cores,memory',
-                        default=None,
+                        default='auto',
                         help='Number of cores to use, number of GB of memory to use for single subject run, entered as '
-                             'two integers seperated by comma. Otherwise, default is `None`, which uses all resources '
+                             'two integers seperated by comma. Otherwise, default is `auto`, which uses all resources '
                              'detected on the current compute node.\n')
     parser.add_argument('-plug',
                         metavar='Scheduler type',
@@ -443,12 +443,12 @@ def build_workflow(args, retval):
         multi_graph = None
     ID = args.id
     resources = args.pm
-    if resources is not None:
-        procmem = list(eval(str(resources)))
-    else:
+    if resources == 'auto':
         from multiprocessing import cpu_count
         nthreads = cpu_count()
         procmem = [int(nthreads), int(float(nthreads) * 2)]
+    else:
+        procmem = list(eval(str(resources)))
     thr = float(args.thr)
     node_size = args.ns
     if node_size:

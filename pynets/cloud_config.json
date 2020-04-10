@@ -1,10 +1,12 @@
 {
 "jobName": "<JOBNAME>",
-"jobQueue": "PynetsQueue",
+"jobQueue": "Queue2",
 "dependsOn": [],
-"jobDefinition": "PynetsJobDefinition:11",
+"jobDefinition": "JobDefinitionDockerHub",
 "parameters": {},
 "containerOverrides": {
+  "vcpus": "<CORES>",
+  "memory": "<MEM>",
   "command": [
     "<INPUT>",
     "/outputs",
