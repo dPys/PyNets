@@ -914,7 +914,7 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
 
 
 def node_gen_masking(roi, coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas,
-                     perc_overlap=0.75, error=4):
+                     perc_overlap=0.75, error=2):
     """
     In the case that masking was applied, this function generate nodes based on atlas definitions established by
     fetch_nodes_and_labels.

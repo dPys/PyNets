@@ -39,12 +39,12 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
             func_models = hardcoded_params['available_models']['func_models']
         except KeyError:
             print('ERROR: available functional models not successfully extracted from runconfig.yaml')
-            sys.exit()
+            sys.exit(0)
         try:
             struct_models = hardcoded_params['available_models']['struct_models']
         except KeyError:
             print('ERROR: available structural models not successfully extracted from runconfig.yaml')
-            sys.exit()
+            sys.exit(0)
 
     # Handle modality logic
     if (func_file is not None) and (dwi_file is not None):
@@ -68,7 +68,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
         else:
             raise RuntimeError('ERROR: Multimodal fMRI-dMRI pipeline specified, but only one connectivity model '
                                'specified.')
-            sys.exit()
+            sys.exit(0)
     elif (dwi_file is not None) and (func_file is None):
         print('Parsing diffusion models...')
         conn_model_dwi = conn_model
@@ -608,7 +608,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                          ])
     else:
         raise ValueError('ERROR: meta-workflow options not defined.')
-        sys.exit()
+        sys.exit(0)
 
     # Set resource restrictions at level of the meta wf
     if func_file:
@@ -814,7 +814,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                       name="save_nifti_parcels_node")
 
     # Generate nodes
-    if roi:
+    if (roi is not None) or (mask is not None):
         # Masking case
         node_gen_node = pe.Node(niu.Function(input_names=['roi', 'coords', 'parcel_list', 'labels', 'dir_path',
                                                           'ID', 'parc', 'atlas', 'uatlas'],
@@ -2069,7 +2069,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                            ])
 
     # Generate nodes
-    if roi is not None:
+    if (roi is not None) or (mask is not None):
         # Masking case
         node_gen_node = pe.Node(niu.Function(input_names=['roi', 'coords', 'parcel_list', 'labels', 'dir_path',
                                                           'ID', 'parc', 'atlas', 'uatlas'],

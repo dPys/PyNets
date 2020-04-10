@@ -1693,7 +1693,10 @@ def build_workflow(args, retval):
             else:
                 anat_file = None
 
-            subj_dir = outdir + '/sub-' + ID.split('_')[0] + '/ses-' + ID.split('_')[1]
+            try:
+                subj_dir = outdir + '/sub-' + ID.split('_')[0] + '/ses-' + ID.split('_')[1]
+            except:
+                subj_dir = outdir + '/' + ID
             os.makedirs(subj_dir, exist_ok=True)
             dir_list.append(subj_dir)
 
@@ -1881,7 +1884,10 @@ def build_workflow(args, retval):
 
     # Single-subject workflow generator
     else:
-        subj_dir = outdir + '/sub-' + ID.split('_')[0] + '/ses-' + ID.split('_')[1]
+        try:
+            subj_dir = outdir + '/sub-' + ID.split('_')[0] + '/ses-' + ID.split('_')[1]
+        except:
+            subj_dir = outdir + '/' + ID
         os.makedirs(subj_dir, exist_ok=True)
 
         # Single-subject pipeline
@@ -2004,7 +2010,7 @@ def main():
 
     if len(sys.argv) < 1:
         print("\nMissing command-line inputs! See help options with the -h flag.\n")
-        sys.exit()
+        sys.exit(0)
 
     args = get_parser().parse_args()
 
@@ -2032,7 +2038,7 @@ def main():
         # Clean up master process before running workflow, which may create forks
         gc.collect()
 
-    sys.exit()
+    sys.exit(0)
 
 
 if __name__ == '__main__':

@@ -1,8 +1,8 @@
 {
 "jobName": "<JOBNAME>",
-"jobQueue": "Queue2",
+"jobQueue": "Queue",
 "dependsOn": [],
-"jobDefinition": "JobDefinitionDockerHub",
+"jobDefinition": "PynetsJobDefinition:15",
 "parameters": {},
 "containerOverrides": {
   "vcpus": "<CORES>",

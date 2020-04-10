@@ -414,8 +414,7 @@ class TimeseriesExtraction(object):
                                                              allow_overlap=True, standardize=True,
                                                              smoothing_fwhm=float(self.smooth),
                                                              high_pass=self.hpass, detrend=self._detrending,
-                                                             t_r=self._t_r, verbose=2, dtype='auto',
-                                                             mask_img=self._mask_img)
+                                                             t_r=self._t_r, verbose=2, dtype='auto')
         if self.conf is not None:
             import pandas as pd
             confounds = pd.read_csv(self.conf, sep='\t')
