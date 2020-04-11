@@ -831,6 +831,11 @@ def raw_mets(G, i):
     return net_met_val
 
 
+def connected_component_subgraphs(G):
+    for c in nx.connected_components(G):
+        yield G.subgraph(c)
+
+
 class CleanGraphs(object):
     """
     A Class for cleaning graphs in preparation for network analysis.
@@ -928,7 +933,7 @@ class CleanGraphs(object):
             [self.G, _] = most_important(self.G)
         elif int(self.prune) == 3:
             print('Pruning all but the largest connected component subgraph...')
-            self.G = sorted(nx.connected_component_subgraphs(self.G), key=len, reverse=True)[0]
+            self.G = sorted(connected_component_subgraphs(self.G), key=len, reverse=True)[0]
         else:
             print('Graph is connected...')
 

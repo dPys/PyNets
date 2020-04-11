@@ -264,9 +264,9 @@ def get_bids_parser():
                              'of pynets. See the template ad `pynets -h` for available settings.\n')
     parser.add_argument('-pm',
                         metavar='Cores,memory',
-                        default='all',
+                        default='auto',
                         help='Number of cores to use, number of GB of memory to use for single subject run, entered as '
-                             'two integers seperated by comma. Otherwise, default is `None`, which uses all resources '
+                             'two integers seperated by comma. Otherwise, default is `auto`, which uses all resources '
                              'detected on the current compute node.\n')
     parser.add_argument('-plug',
                         metavar='Scheduler type',

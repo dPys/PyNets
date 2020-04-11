@@ -83,8 +83,20 @@ The `runconfig.yml` file in the base directory includes parameter presets, but a
 The common parts of the command follow the `BIDS-Apps <https://github.com/BIDS-Apps>`_ definition.
 Example: ::
 
-    pynets_bids HNU/derivatives/fmriprep --participant_label 0025427 --session_label 1
+    pynets_bids 's3://hnu/HNU' '/Users/derekpisner/Downloads' func --participant_label 0025427 --session_label 1 --push_location s3://hnu/outputs -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz'
 
+
+Docker and AWS
+==============
+
+PyNets now includes an API for running pynets_bids in a Docker container as well as using AWS Batch. The latter assumes a dataset with BIDS derivatives is stored in an S3 bucket.
+Docker Example: ::
+
+    docker run -ti --rm --privileged -v $HOME/.aws/credentials:/home/neuro/.aws/credentials dpys/pynets:latest 's3://hnu/HNU' /outputs func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz' -plug 'MultiProc' -pm '8,12' -work '/working'
+
+AWS Batch Example: ::
+
+    pynets_cloud --bucket hnu --dataset HNU func --participant_label 0025427 --session_label 1 --push_location s3://hnu/outputs --jobdir '/Users/derekpisner/.pynets/jobs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz' -pm '30,110'
 
 *****************
 Parametric Inputs

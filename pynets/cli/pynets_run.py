@@ -14,7 +14,7 @@ def get_parser():
     import argparse
     from pathlib import Path
     from pynets.__about__ import __version__
-    verstr = 'pynets v{}'.format(__version__)
+    verstr = 'PyNets v{}'.format(__version__)
 
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
@@ -373,9 +373,9 @@ def get_parser():
     # Debug/Runtime settings
     parser.add_argument('-pm',
                         metavar='Cores,memory',
-                        default=None,
+                        default='auto',
                         help='Number of cores to use, number of GB of memory to use for single subject run, entered as '
-                             'two integers seperated by comma. Otherwise, default is `None`, which uses all resources '
+                             'two integers seperated by comma. Otherwise, default is `auto`, which uses all resources '
                              'detected on the current compute node.\n')
     parser.add_argument('-plug',
                         metavar='Scheduler type',
@@ -443,12 +443,12 @@ def build_workflow(args, retval):
         multi_graph = None
     ID = args.id
     resources = args.pm
-    if resources is not None:
-        procmem = list(eval(str(resources)))
-    else:
+    if resources == 'auto':
         from multiprocessing import cpu_count
         nthreads = cpu_count()
         procmem = [int(nthreads), int(float(nthreads) * 2)]
+    else:
+        procmem = list(eval(str(resources)))
     thr = float(args.thr)
     node_size = args.ns
     if node_size:
@@ -1693,7 +1693,10 @@ def build_workflow(args, retval):
             else:
                 anat_file = None
 
-            subj_dir = outdir + '/sub-' + ID.split('_')[0] + '/ses-' + ID.split('_')[1]
+            try:
+                subj_dir = outdir + '/sub-' + ID.split('_')[0] + '/ses-' + ID.split('_')[1]
+            except:
+                subj_dir = outdir + '/' + ID
             os.makedirs(subj_dir, exist_ok=True)
             dir_list.append(subj_dir)
 
@@ -1881,7 +1884,10 @@ def build_workflow(args, retval):
 
     # Single-subject workflow generator
     else:
-        subj_dir = outdir + '/sub-' + ID.split('_')[0] + '/ses-' + ID.split('_')[1]
+        try:
+            subj_dir = outdir + '/sub-' + ID.split('_')[0] + '/ses-' + ID.split('_')[1]
+        except:
+            subj_dir = outdir + '/' + ID
         os.makedirs(subj_dir, exist_ok=True)
 
         # Single-subject pipeline
@@ -2004,7 +2010,7 @@ def main():
 
     if len(sys.argv) < 1:
         print("\nMissing command-line inputs! See help options with the -h flag.\n")
-        sys.exit()
+        sys.exit(0)
 
     args = get_parser().parse_args()
 
@@ -2032,7 +2038,7 @@ def main():
         # Clean up master process before running workflow, which may create forks
         gc.collect()
 
-    sys.exit()
+    sys.exit(0)
 
 
 if __name__ == '__main__':

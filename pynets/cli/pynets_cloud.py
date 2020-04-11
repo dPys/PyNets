@@ -201,8 +201,8 @@ def create_json(
     cmd[cmd.index("<INPUT>")] = f's3://{bucket}/{dataset}'
     cmd[cmd.index("<PUSH>")] = f's3://{bucket}/{push_dir}'
     cmd[cmd.index("<MODALITY>")] = modality[0]
-    # co["vcpus"] = int(procmem[0])
-    # co["memory"] = int(1000*float(procmem[1]))
+    co["vcpus"] = int(procmem[0])
+    co["memory"] = int(1000*float(procmem[1]))
 
     if user_atlas is not None:
         cmd.append('-ua')
@@ -432,9 +432,9 @@ def main():
                         default=None)
     parser.add_argument('-pm',
                         metavar='Cores,memory',
-                        default='all',
+                        default='auto',
                         help='Number of cores to use, number of GB of memory to use for single subject run, entered as '
-                             'two integers seperated by comma. Otherwise, default is `None`, which uses all resources '
+                             'two integers seperated by comma. Otherwise, default is `auto`, which uses all resources '
                              'detected on the current compute node.\n')
     parser.add_argument('-plug',
                         metavar='Scheduler type',
