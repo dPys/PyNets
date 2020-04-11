@@ -14,7 +14,7 @@ def get_parser():
     import argparse
     from pathlib import Path
     from pynets.__about__ import __version__
-    verstr = 'pynets v{}'.format(__version__)
+    verstr = 'PyNets v{}'.format(__version__)
 
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '

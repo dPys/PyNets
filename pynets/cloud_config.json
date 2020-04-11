@@ -1,8 +1,8 @@
 {
 "jobName": "<JOBNAME>",
-"jobQueue": "Queue",
+"jobQueue": "SPOTQueue",
 "dependsOn": [],
-"jobDefinition": "PynetsJobDefinition:15",
+"jobDefinition": "FuncDefinition:3",
 "parameters": {},
 "containerOverrides": {
   "vcpus": "<CORES>",
