@@ -1,8 +1,8 @@
 {
 "jobName": "<JOBNAME>",
-"jobQueue": "SPOTQueue",
+"jobQueue": "Queue2",
 "dependsOn": [],
-"jobDefinition": "FuncDefinition:3",
+"jobDefinition": "FuncDefinition:6",
 "parameters": {},
 "containerOverrides": {
   "vcpus": "<CORES>",

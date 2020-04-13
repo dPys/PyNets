@@ -619,7 +619,7 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     fa_path = File(exists=True, mandatory=True)
     waymask = traits.Any(mandatory=False)
     t1w2dwi = File(exists=True, mandatory=True)
-    roi_neighborhood_tol = traits.Any(4, mandatory=True, usedefault=True)
+    roi_neighborhood_tol = traits.Any(8, mandatory=True, usedefault=True)
     sphere = traits.Str('repulsion724', mandatory=True, usedefault=True)
 
 
@@ -663,6 +663,7 @@ class Tracking(SimpleInterface):
 
     def _run_interface(self, runtime):
         import gc
+        import os
         import numpy as np
         import nibabel as nib
         try:
@@ -730,8 +731,10 @@ class Tracking(SimpleInterface):
                                      int(self.inputs.roi_neighborhood_tol), self.inputs.min_length, self.inputs.waymask)
 
         # Create streamline density map
-        [streams, dir_path, dm_path] = create_density_map(dwi_img, utils.do_dir_path(self.inputs.atlas,
-                                                                                     self.inputs.dwi_file), streamlines,
+        [streams, dir_path, dm_path] = create_density_map(dwi_img,
+                                                          utils.do_dir_path(self.inputs.atlas,
+                                                                            os.path.dirname(self.inputs.dwi_file)),
+                                                          streamlines,
                                                           self.inputs.conn_model, self.inputs.target_samples,
                                                           self.inputs.node_size, self.inputs.curv_thr_list,
                                                           self.inputs.step_list, self.inputs.network, self.inputs.roi,
