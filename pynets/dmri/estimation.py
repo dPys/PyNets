@@ -45,7 +45,7 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
 
     gtab = load_pickle(gtab_file)
 
-    print('Generating simple tensor FA image to use for registrations...')
+    print('Generating tensor FA image to use for registrations...')
     nodif_B0_img = nib.load(B0_mask)
     nodif_B0_mask_data = np.asarray(nodif_B0_img.dataobj).astype('bool')
     model = TensorModel(gtab)

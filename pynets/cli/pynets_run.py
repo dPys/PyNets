@@ -19,6 +19,9 @@ def get_parser():
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
                                                  'Sampling of Functional and Structural Connectomes')
+    parser.add_argument("output_dir",
+                        default=str(Path.home()),
+                        help='The directory to store pynets derivatives.')
     parser.add_argument('-id',
                         metavar='A subject id or other unique identifier',
                         default=None,
@@ -29,10 +32,6 @@ def get_parser():
                              'parameter must be an alphanumeric string and can be arbitrarily chosen. If functional '
                              'and dmri connectomes are being generated simultaneously, then space-separated id\'s '
                              'need to be repeated to match the total input file count.\n')
-    parser.add_argument("output_dir",
-                        default=str(Path.home()),
-                        help='The directory to store pynets derivatives.')
-
     # Primary file inputs
     parser.add_argument('-func',
                         metavar='Path to input functional file (required for functional connectomes)',
@@ -237,11 +236,11 @@ def get_parser():
     # dMRI hyperparameters
     parser.add_argument('-ml',
                         metavar='Maximum fiber length for tracking',
-                        default=200,
+                        default=20,
                         nargs='+',
-                        help='(Hyperparameter): Include this flag to manually specify a maximum tract length (mm) for '
-                             'dmri connectome tracking. Default is 200. If you wish to iterate the pipeline across '
-                             'multiple maximum values, separate the list by space (e.g. 150 200 250).\n')
+                        help='(Hyperparameter): Include this flag to manually specify a minimum tract length (mm) for '
+                             'dmri connectome tracking. Default is 20. If you wish to iterate the pipeline across '
+                             'multiple minimums, separate the list by space (e.g. 10 30 50).\n')
     parser.add_argument('-dg',
                         metavar='Direction getter',
                         default='det',
@@ -274,9 +273,9 @@ def get_parser():
                              'selection of tissue classification method is not currently supported.\n')
     parser.add_argument('-s',
                         metavar='Number of samples',
-                        default='1000000',
+                        default='100000',
                         help='Include this flag to manually specify a number of cumulative streamline samples for '
-                             'tractography. Default is 1000000. Iterable number of samples not currently supported.\n')
+                             'tractography. Default is 100000. Iterable number of samples not currently supported.\n')
 
     # General settings
     parser.add_argument('-norm',
@@ -311,8 +310,9 @@ def get_parser():
                         nargs=1,
                         choices=['0', '1', '2', '3'],
                         help='Include this flag to prune the resulting graph of (1) any isolated + fully '
-                             'disconnected nodes or (2) any isolated + fully disconnected + non-important nodes. '
-                             'Default pruning=1. Include -p 0 to disable pruning.\n')
+                             'disconnected nodes, (2) any isolated + fully disconnected + non-important nodes, or (3) '
+                             'the larged connected component subgraph Default pruning=1. '
+                             'Include -p 0 to disable pruning.\n')
     parser.add_argument('-df',
                         default=False,
                         action='store_true',
@@ -1276,14 +1276,12 @@ def build_workflow(args, retval):
                 print("%s%s" % ('Diffusion-Weighted Image:\n', _dwi_file))
                 print("%s%s" % ('B-Values:\n', _fbval))
                 print("%s%s" % ('B-Vectors:\n', _fbvec))
-                print("%s%s" % ('T1-weighted Image:\n', _anat_file))
                 if waymask is not None:
                     print("%s%s" % ('Waymask:\n', waymask))
         else:
             print("%s%s" % ('Diffusion-Weighted Image:\n', dwi_file))
             print("%s%s" % ('B-Values:\n', fbval))
             print("%s%s" % ('B-Vectors:\n', fbvec))
-            print("%s%s" % ('T1-weighted Image:\n', anat_file))
             if waymask is not None:
                 print("%s%s" % ('Waymask:\n', waymask))
         conf = None
@@ -1312,7 +1310,6 @@ def build_workflow(args, retval):
         print("%s%s" % ('Diffusion-Weighted Image:\n', dwi_file))
         print("%s%s" % ('B-Values:\n', fbval))
         print("%s%s" % ('B-Vectors:\n', fbvec))
-        print("%s%s" % ('T1-Weighted Image:\n', anat_file))
     else:
         multimodal = False
 
@@ -2038,6 +2035,7 @@ def main():
         # Clean up master process before running workflow, which may create forks
         gc.collect()
 
+    mgr.shutdown()
     sys.exit(0)
 
 

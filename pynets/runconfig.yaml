@@ -39,39 +39,45 @@ available_models:
       - 'csd'
 resource_dict:
       - 'fetch_nodes_and_labels_node':
-        - (1, 1)
-      - 'check_orient_and_dims_func_node':
+        - (2, 1)
+      - 'save_nifti_parcels_node':
         - (1, 2)
+      - 'check_orient_and_dims_func_node':
+        - (2, 2)
       - 'check_orient_and_dims_mask_node':
+        - (1, 1)
+      - 'check_orient_and_dims_uatlas_node':
         - (1, 1)
       - 'node_gen_node':
         - (1, 3)
       - 'check_orient_and_dims_dwi_node':
-        - (1, 2)
+        - (2, 2)
+      - 'get_anisopwr_node':
+        - (1, 0.5)
       - 'extract_ts_node':
-        - (1, 6)
+        - (1, 4)
       - 'clustering_node':
-        - (1, 8)
+        - (1, 6)
       - 'get_conn_matrix_node':
         - (1, 2)
       - 'thresh_func_node':
         - (1, 0.5)
       - 'register_node':
-        - (1, 6)
+        - (1, 3)
       - 'register_atlas_node':
-        - (1, 4)
+        - (1, 2)
       - 'get_fa_node':
         - (1, 2)
       - 'run_tracking_node':
-        - (1, 8)
+        - (8, 4)
       - 'thresh_diff_node':
         - (1, 0.5)
       - 'dsn_node':
-        - (1, 4)
+        - (4, 2)
       - 'plot_all_node':
         - (1, 1)
       - 'streams2graph_node':
-        - (1, 8)
+        - (2, 6)
 execution_dict:
     - 'stop_on_first_crash':
         - False
