@@ -40,6 +40,7 @@ RUN apt-get update -qq \
         pkg-config \
         libgsl0-dev \
         openssl \
+	openssh-server \
         gsl-bin \
         libglu1-mesa-dev \
         libglib2.0-0 \
@@ -49,6 +50,11 @@ RUN apt-get update -qq \
 	sqlite3 \
 	libsqlite3-dev \
 	libquadmath0 \
+    # Configure ssh
+    && mkdir /var/run/sshd \
+    && echo 'root:screencast' | chpasswd \
+    && sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd \
     # Add and configure git-lfs
     && apt-get install -y apt-transport-https debian-archive-keyring \
     && apt-get install -y dirmngr --install-recommends \
@@ -187,6 +193,9 @@ ENV LD_LIBRARY_PATH="/usr/lib/openblas-base":$LD_LIBRARY_PATH
 ENV PYTHONWARNINGS ignore
 ENV OMP_NUM_THREADS=1
 ENV USE_SIMPLE_THREADED_LEVEL3=1
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]
 
 # and add it as an entrypoint
 ENTRYPOINT ["pynets_bids"]

@@ -113,7 +113,7 @@ def make_mean_b0(in_file):
     return mean_file_out
 
 
-def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas, outdir, b0_thr=50):
+def make_gtab_and_bmask(fbval, fbvec, dwi_file, outdir, b0_thr=50):
     """
     Create gradient table from bval/bvec, and a mean B0 brain mask.
 
@@ -125,15 +125,6 @@ def make_gtab_and_bmask(fbval, fbvec, dwi_file, network, node_size, atlas, outdi
         File name of the b-vectors file.
     dwi_file : str
         File path to diffusion weighted image.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
-    node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
-    atlas : str
-        Name of a Nilearn-hosted coordinate or parcellation/label-based atlas supported for fetching.
-        See Nilearn's datasets.atlas module for more detailed reference.
     outdir : str
         Path to base derivatives directory.
 

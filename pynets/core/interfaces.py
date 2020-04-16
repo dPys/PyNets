@@ -467,8 +467,11 @@ class RegisterDWI(SimpleInterface):
         from pynets.registration import register
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
-        anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
-        copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
+        if self.inputs.overwrite is True:
+            anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
+        else:
+            anat_file_tmp_path = self.inputs.anat_file
 
         fa_tmp_path = fname_presuffix(self.inputs.fa_path, suffix='_tmp', newpath=runtime.cwd)
         copyfile(self.inputs.fa_path, fa_tmp_path, copy=True, use_hardlink=False)
@@ -488,7 +491,8 @@ class RegisterDWI(SimpleInterface):
                                vox_size=self.inputs.vox_size,
                                simple=self.inputs.simple)
 
-        if (self.inputs.overwrite is True) or (op.isfile(reg.map_path) is False):
+        if (self.inputs.overwrite is True) or ((op.isfile(reg.wm_mask_thr) is False) and
+                                               (op.isfile(reg.wm_edge) is False)):
             # Perform anatomical segmentation
             reg.gen_tissue()
 
@@ -565,7 +569,7 @@ class RegisterFunc(SimpleInterface):
                                vox_size=self.inputs.vox_size,
                                simple=self.inputs.simple)
 
-        if (self.inputs.overwrite is True) or (op.isfile(reg.map_path) is False):
+        if (self.inputs.overwrite is True) or (op.isfile(reg.gm_mask_thr) is False):
             # Perform anatomical segmentation
             reg.gen_tissue()
 

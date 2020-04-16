@@ -379,7 +379,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
             if (lab > 0) and (np.sum(lab_arr == lab) >= overlap_thr):
                 try:
                     endlabels.append(node_dict[lab])
-                except UserWarning:
+                except:
                     print("%s%s%s" % ('Label ', lab, ' missing from parcellation. Check registration and ensure valid '
                                                      'input parcellation file.'))
 

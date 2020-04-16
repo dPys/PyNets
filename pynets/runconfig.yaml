@@ -84,7 +84,7 @@ execution_dict:
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':
-        - True
+        - False
     - 'display_variable':
         - ':0'
     - 'job_finished_timeout':
@@ -92,7 +92,7 @@ execution_dict:
     - 'matplotlib_backend':
         - 'Agg'
     - 'use_relative_paths':
-        - False
+        - True
     - 'keep_inputs':
         - True
     - 'remove_unnecessary_outputs':

@@ -24,7 +24,7 @@ thr_type = 'MST'
 icc = True
 disc = True
 naughty_list = ['boot', 'sps', 'triple_net_ICA_overlap_3']
-mets = ['global_efficiency', 'degree_assortativity_coefficient', 'average_shortest_path_length',
+mets = ['global_efficiency', 'average_shortest_path_length',
         'average_betweenness_centrality', 'average_eigenvector_centrality', 'average_degree_centrality',
         'modularity']
 
@@ -212,6 +212,8 @@ if __name__ == '__main__':
     df = df.rename(columns=lambda x: re.sub('_k', '_k-', x))
     df = df.rename(columns=lambda x: re.sub('_thr_', '', x))
     df = df.rename(columns=lambda x: re.sub('_partcorr_', '_est-partcorr_', x))
+    df = df.rename(columns=lambda x: re.sub('_nores-2mm', '_est-partcorr_', x))
+    df = df.rename(columns=lambda x: re.sub('__', '_', x))
     df = df.dropna(subset=['id'])
 
     for col in df.columns[1:]:
@@ -245,7 +247,7 @@ if __name__ == '__main__':
             met_vals[:] = np.nan
             i = 0
             for met in mets:
-                col = atlas + '_sig_bin_reor-RAS_nores-2mm_clust-' + clust + '_k-' + str(_k) + '_est-' + est + \
+                col = atlas + '_sig_bin_nores-2mm_clust-' + clust + '_k-' + str(_k) + '_est-' + est + \
                       '_nodetype-parc_' + 'smooth-' + str(smooth) + 'fwhm_hpass-' + str(hpass) + 'Hz_' + 'thrtype-' + \
                       thr_type + '_net_mets_auc_' + met + '_auc'
                 try:

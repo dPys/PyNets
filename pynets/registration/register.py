@@ -388,7 +388,7 @@ class DmriReg(object):
         self.atlas_skull2dwi_xfm = "%s%s" % (self.reg_path_mat, "/atlas_skull2dwi_xfm.mat")
         self.temp2dwi_xfm = "%s%s%s%s" % (self.reg_path_mat, '/', self.dwi_name, "_xfm_temp2dwi.mat")
         self.temp2dwi_xfm = "%s%s%s%s" % (self.reg_path_mat, '/', self.dwi_name, "_xfm_temp2dwi.mat")
-        self.map_path = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_seg")
+        self.map_name = "%s%s" % (self.t1w_name, "_seg")
         self.wm_mask = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_wm.nii.gz")
         self.wm_mask_thr = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_wm_thr.nii.gz")
         self.wm_edge = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_wm_edge.nii.gz")
@@ -483,7 +483,7 @@ class DmriReg(object):
                                                           self.vox_size, overwrite=False)
             else:
                 try:
-                    maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
+                    maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
                     wm_mask = maps['wm_prob']
                     gm_mask = maps['gm_prob']
                     csf_mask = maps['csf_prob']
@@ -491,14 +491,14 @@ class DmriReg(object):
                     print('Segmentation failed. Does the input anatomical image still contained skull?')
         else:
             try:
-                maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
+                maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
                 wm_mask = maps['wm_prob']
                 gm_mask = maps['gm_prob']
                 csf_mask = maps['csf_prob']
             except RuntimeError:
                 print('Segmentation failed. Does the input anatomical image still contained skull?')
 
-        # qa_fast_png(self.csf_mask, self.gm_mask, self.wm_mask, self.map_path)
+        # qa_fast_png(self.csf_mask, self.gm_mask, self.wm_mask, self.map_name)
 
         # Threshold WM to binary in dwi space
         t_img = nib.load(wm_mask)
@@ -820,7 +820,7 @@ class FmriReg(object):
         self.t1_aligned_mni = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_aligned_mni.nii.gz")
         self.t1w_brain = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_brain.nii.gz")
         self.t1w_brain_mask = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_brain_mask.nii.gz")
-        self.map_path = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_seg")
+        self.map_name = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_seg")
         self.gm_mask = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_gm.nii.gz")
         self.gm_mask_thr = "%s%s%s%s" % (self.anat_path, '/', self.t1w_name, "_gm_thr.nii.gz")
         self.input_mni = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size + ".nii.gz")
@@ -878,13 +878,13 @@ class FmriReg(object):
                                                              overwrite=False)
             else:
                 try:
-                    maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
+                    maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
                     out_gm_mask = maps['gm_prob']
                 except RuntimeError:
                     print('Segmentation failed. Does the input anatomical image still contained skull?')
         else:
             try:
-                maps = regutils.segment_t1w(self.t1w_brain, self.map_path)
+                maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
                 out_gm_mask = maps['gm_prob']
             except RuntimeError:
                 print('Segmentation failed. Does the input anatomical image still contained skull?')

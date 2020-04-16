@@ -154,7 +154,7 @@ def build_subject_dict(sub, working_path, modality='func'):
     print(sub)
     subject_dict[sub] = {}
     sessions = sorted([i for i in os.listdir("%s%s%s" % (working_path, '/', sub)) if i.startswith('ses-')],
-                      key = lambda x: int(x.split("-")[1]))
+                      key = lambda x: x.split("-")[1])
     atlases = list(set([os.path.basename(str(Path(i).parent.parent)) for i in
                         glob.glob("%s%s%s%s" % (working_path, '/', sub, '/*/*/*/netmetrics/*'))]))
 
@@ -268,7 +268,7 @@ def build_collect_workflow(args, retval):
 
     wf = collect_all(working_path)
 
-    #with open('/opt/conda/lib/python3.6/site-packages/pynets-0.9.93-py3.6.egg/pynets/runconfig.yaml', 'r') as stream:
+    #with open('/opt/conda/lib/python3.6/site-packages/pynets-0.9.94-py3.6.egg/pynets/runconfig.yaml', 'r') as stream:
     with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
         try:
             hardcoded_params = yaml.load(stream)
@@ -360,34 +360,28 @@ def main():
         sys.exit()
 
     args = get_parser().parse_args()
-    # args_dict_all = {}
-    # args_dict_all['plug'] = 'MultiProc'
-    # args_dict_all['v'] = False
-    # args_dict_all['pm'] = '68,96'
-    # #args_dict_all['basedir'] = '/data/04171/dpisner/data/HNU/HNU1_out/pynets_out'
-    # args_dict_all['basedir'] = '/scratch/04171/dpisner/pynets_out'
-    # args_dict_all['work'] = '/tmp'
-    # from types import SimpleNamespace
-    # args = SimpleNamespace(**args_dict_all)
+    args_dict_all = {}
+    args_dict_all['plug'] = 'MultiProc'
+    args_dict_all['v'] = False
+    args_dict_all['pm'] = '40,40'
+    args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU_outs'
+    args_dict_all['work'] = '/scratch/04171/dpisner/pynets_scratch'
+    from types import SimpleNamespace
+    args = SimpleNamespace(**args_dict_all)
 
-    try:
-        from multiprocessing import set_start_method, Process, Manager
-        set_start_method('forkserver')
-        with Manager() as mgr:
-            retval = mgr.dict()
-            p = Process(target=build_collect_workflow, args=(args, retval))
-            p.start()
-            p.join()
+    from multiprocessing import set_start_method, Process, Manager
+    set_start_method('forkserver')
+    with Manager() as mgr:
+        retval = mgr.dict()
+        p = Process(target=build_collect_workflow, args=(args, retval))
+        p.start()
+        p.join()
 
-            if p.exitcode != 0:
-                sys.exit(p.exitcode)
+        if p.exitcode != 0:
+            sys.exit(p.exitcode)
 
-            # Clean up master process before running workflow, which may create forks
-            gc.collect()
-    except:
-        print('\nWARNING: Forkserver failed to initialize. Are you using Python3 ?')
-        retval = dict()
-        build_collect_workflow(args, retval)
+        # Clean up master process before running workflow, which may create forks
+        gc.collect()
 
 
 if __name__ == '__main__':
