@@ -38,10 +38,14 @@ def do_dir_path(atlas, outdir):
         Path to directory containing subject derivative data for given run.
     """
     if atlas:
+        if os.path.isfile(atlas):
+            atlas = os.path.basename(atlas)
         if 'reor-RAS' in str(atlas):
             atlas = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(atlas))
         if 'res-' in str(atlas):
             atlas = re.sub(r"_res\-*[0-9]mm", "", str(atlas))
+        if atlas.endswith('.nii.gz'):
+           atlas = atlas.replace('.nii.gz', '')
 
     dir_path = "%s%s%s" % (outdir, '/', atlas)
     if not op.exists(dir_path) and atlas is not None:

@@ -652,6 +652,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                        template, template_mask, vox_size, waymask, min_length_list, outdir):
     """A function interface for generating a dMRI nested workflow"""
     import itertools
+    import os
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core import nodemaker, thresholding, utils
@@ -680,6 +681,9 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                       'vox_size', 'multi_directget', 'waymask', 'min_length_list',
                                                       'outdir']),
                         name='inputnode')
+
+    outdir = outdir + '/dwi'
+    os.makedirs(outdir, exist_ok=True)
 
     inputnode.inputs.ID = ID
     inputnode.inputs.atlas = atlas
@@ -830,8 +834,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                            'atlas', 'uatlas', 'dir_path'],
                                              function=nodemaker.node_gen, imports=import_list), name="node_gen_node")
 
-    gtab_node = pe.Node(niu.Function(input_names=['fbval', 'fbvec', 'dwi_file', 'network', 'node_size', 'atlas',
-                                                  'outdir'],
+    gtab_node = pe.Node(niu.Function(input_names=['fbval', 'fbvec', 'dwi_file', 'outdir'],
                                      output_names=['gtab_file', 'B0_bet', 'B0_mask', 'dwi_file'],
                                      function=dmriutils.make_gtab_and_bmask, imports=import_list), name="gtab_node")
 
@@ -1054,7 +1057,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                        (fetch_nodes_and_labels_node, save_coords_and_labels_node,
                                         [('dir_path', 'dir_path')]),
                                        (get_node_membership_node, run_tracking_node, [('network', 'network')]),
-                                       (get_node_membership_node, gtab_node, [('network', 'network')]),
                                        (get_node_membership_node, save_nifti_parcels_node,
                                         [('network', 'network')]),
                                        (save_nifti_parcels_node, dsn_node, [('net_parcels_nii_path', 'uatlas')])
@@ -1074,7 +1076,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                              ('parcel_list', 'parcel_list')]),
                                            (get_node_membership_node, node_gen_node,
                                             [('net_coords', 'coords'), ('net_labels', 'labels')]),
-                                           (prep_spherical_nodes_node, gtab_node, [('node_size', 'node_size')]),
                                            (save_nifti_parcels_node, register_atlas_node, [('net_parcels_nii_path',
                                                                                             'uatlas_parcels')]),
                                            ])
@@ -1086,7 +1087,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                            (get_node_membership_node, node_gen_node,
                                             [('net_coords', 'coords'), ('net_labels', 'labels'),
                                              ('net_parcel_list', 'parcel_list')]),
-                                           (inputnode, gtab_node, [('node_size', 'node_size')]),
                                            (get_node_membership_node, save_coords_and_labels_node,
                                             [('net_coords', 'coords'), ('net_labels', 'labels'),
                                              ('network', 'network')]),
@@ -1107,17 +1107,13 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                            (fetch_nodes_and_labels_node, node_gen_node,
                                             [('coords', 'coords'),
                                              ('labels', 'labels')]),
-                                           (inputnode, gtab_node, [('network', 'network')]),
-                                           (prep_spherical_nodes_node, gtab_node, [('node_size', 'node_size')]),
                                            (node_gen_node, register_atlas_node, [('uatlas', 'uatlas_parcels')])
                                            ])
         else:
             dmri_connectometry_wf.connect([(fetch_nodes_and_labels_node, node_gen_node,
                                             [('coords', 'coords'),
                                              ('labels', 'labels'),
-                                             ('parcel_list', 'parcel_list')]),
-                                           (inputnode, gtab_node, [('network', 'network'),
-                                                                   ('node_size', 'node_size')])
+                                             ('parcel_list', 'parcel_list')])
                                            ])
 
     if parc is False:
@@ -1378,7 +1374,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         (check_orient_and_dims_dwi_node, gtab_node, [('bvecs', 'fbvec'),
                                                      ('outfile', 'dwi_file')]),
         (inputnode, gtab_node, [('fbval', 'fbval'), ('outdir', 'outdir')]),
-        (fetch_nodes_and_labels_node, gtab_node, [('atlas', 'atlas')]),
         (inputnode, register_node, [('vox_size', 'vox_size')]),
         (inputnode, check_orient_and_dims_anat_node, [('anat_file', 'infile'), ('vox_size', 'vox_size'),
                                                       ('outdir', 'outdir')]),
@@ -1606,6 +1601,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                        local_corr, outdir):
     """A function interface for generating an fMRI nested workflow"""
     import itertools
+    import os
     import os.path as op
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -1619,6 +1615,9 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]
     base_dirname = "%s%s" % ('fmri_connectometry_', ID)
     fmri_connectometry_wf = pe.Workflow(name=base_dirname)
+
+    outdir = outdir + '/func'
+    os.makedirs(outdir, exist_ok=True)
 
     # Create input/output nodes
     inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID', 'atlas', 'network',

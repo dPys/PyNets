@@ -41,7 +41,7 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
     elif conn_model == 'csd':
         mod = csd_mod_est(gtab, dwi_data, B0_mask)
     else:
-        raise ValueError('Error: Either no seeds supplied, or no valid seeds found in white-matter interface')
+        raise ValueError('Error: No valid reconstruction model specified. See the `-mod` flag.')
 
     del dwi_data
 
@@ -105,7 +105,7 @@ def prep_tissues(t1_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     elif tiss_class == 'wb':
         tiss_classifier = BinaryStoppingCriterion(np.asarray(mask_img.dataobj).astype('bool'))
     else:
-        raise ValueError('Tissue Classifier cannot be none.')
+        raise ValueError('Tissue classifier cannot be none.')
 
     del gm_mask_data, wm_mask_data, vent_csf_in_dwi_data
     mask_img.uncache()
@@ -359,7 +359,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                                                                              if len(s) >=
                                                                                              float(min_length)])
 
-                    print("%s%s" % ('minimum length criterion: ', len(roi_proximal_streamlines)))
+                    print("%s%s" % ('Minimum length criterion: ', len(roi_proximal_streamlines)))
 
                 if waymask:
                     roi_proximal_streamlines = roi_proximal_streamlines[utils.near_roi(roi_proximal_streamlines,
@@ -367,7 +367,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                                                                        waymask_data,
                                                                                        tol=roi_neighborhood_tol,
                                                                                        mode='any')]
-                    print("%s%s" % ('waymask proximity: ', len(roi_proximal_streamlines)))
+                    print("%s%s" % ('Waymask proximity: ', len(roi_proximal_streamlines)))
 
                 out_streams = [s.astype('float32') for s in roi_proximal_streamlines]
                 streamlines.extend(out_streams)
