@@ -11,7 +11,6 @@ import indexed_gzip
 import nibabel as nib
 import warnings
 warnings.filterwarnings("ignore")
-
 try:
     FSLDIR = os.environ['FSLDIR']
 except KeyError:
@@ -41,12 +40,12 @@ def segment_t1w(t1w, basename, opts=''):
     print("Segmenting Anatomical Image into WM, GM, and CSF...")
     # run FAST, with options -t for the image type and -n to
     # segment into CSF (pve_0), GM (pve_1), WM (pve_2)
-    cmd = "fast -t 1 {} -n 3 -o {} {}".format(opts, basename, t1w)
+    cmd = f"fast -t 1 {opts} -n 3 -o {basename} {t1w}"
     os.system(cmd)
     out = {}  # the outputs
-    out['wm_prob'] = "{}_{}".format(basename, "pve_2.nii.gz")
-    out['gm_prob'] = "{}_{}".format(basename, "pve_1.nii.gz")
-    out['csf_prob'] = "{}_{}".format(basename, "pve_0.nii.gz")
+    out['wm_prob'] = f"{basename}_{'pve_2.nii.gz'}"
+    out['gm_prob'] = f"{basename}_{'pve_1.nii.gz'}"
+    out['csf_prob'] = f"{basename}_{'pve_0.nii.gz'}"
     return out
 
 
@@ -81,27 +80,27 @@ def align(inp, ref, xfm=None, out=None, dof=12, searchrad=True, bins=256, interp
         init : str
             File path to a transformation matrix in .xfm format to use as an initial guess for the alignment.
     """
-    cmd = "flirt -in {} -ref {}".format(inp, ref)
+    cmd = f"flirt -in {inp} -ref {ref}"
     if xfm is not None:
-        cmd += " -omat {}".format(xfm)
+        cmd += f" -omat {xfm}"
     if out is not None:
-        cmd += " -out {}".format(out)
+        cmd += f" -out {out}"
     if dof is not None:
-        cmd += " -dof {}".format(dof)
+        cmd += f" -dof {dof}"
     if bins is not None:
-        cmd += " -bins {}".format(bins)
+        cmd += f" -bins {bins}"
     if interp is not None:
-        cmd += " -interp {}".format(interp)
+        cmd += f" -interp {interp}"
     if cost is not None:
-        cmd += " -cost {}".format(cost)
+        cmd += f" -cost {cost}"
     if searchrad is not None:
         cmd += " -searchrx -180 180 -searchry -180 180 -searchrz -180 180"
     if sch is not None:
-        cmd += " -schedule {}".format(sch)
+        cmd += f" -schedule {sch}"
     if wmseg is not None:
-        cmd += " -wmseg {}".format(wmseg)
+        cmd += f" -wmseg {wmseg}"
     if init is not None:
-        cmd += " -init {}".format(init)
+        cmd += f" -init {init}"
     print(cmd)
     os.system(cmd)
     return
@@ -130,14 +129,13 @@ def align_nonlinear(inp, ref, xfm, out, warp, ref_mask=None, in_mask=None, confi
         config : str
             Optional file path to config file specifying command line arguments.
     """
-    cmd = "fnirt --in={} --ref={} --aff={} --iout={} --cout={} --warpres=8,8,8"
-    cmd = cmd.format(inp, ref, xfm, out, warp, config)
+    cmd = f"fnirt --in={inp} --ref={ref} --aff={xfm} --iout={out} --cout={warp} --warpres=8,8,8"
     if ref_mask is not None:
-        cmd += " --refmask={}".format(ref_mask)
+        cmd += f" --refmask={ref_mask}"
     if in_mask is not None:
-        cmd += " --inmask={}".format(in_mask)
+        cmd += f" --inmask={in_mask}"
     if config is not None:
-        cmd += " --config={}".format(config)
+        cmd += f" --config={config}"
     print(cmd)
     os.system(cmd)
     return
@@ -162,8 +160,7 @@ def applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6):
         dof : int
             Number of degrees of freedom to use in the alignment.
     """
-    cmd = "flirt -in {} -ref {} -out {} -init {} -interp {} -dof {} -applyxfm".format(inp, ref, aligned, xfm, interp,
-                                                                                      dof)
+    cmd = f"flirt -in {inp} -ref {ref} -out {aligned} -init {xfm} -interp {interp} -dof {dof} -applyxfm"
     print(cmd)
     os.system(cmd)
     return
@@ -192,13 +189,13 @@ def apply_warp(ref, inp, out, warp, xfm=None, mask=None, interp=None, sup=False)
         sup : bool
             Intermediary supersampling of output. Default is False.
     """
-    cmd = "applywarp --ref={} --in={} --out={} --warp={}".format(ref, inp, out, warp)
+    cmd = f"applywarp --ref={ref} --in={inp} --out={out} --warp={warp}"
     if xfm is not None:
-        cmd += " --premat={}".format(xfm)
+        cmd += f" --premat={xfm}"
     if mask is not None:
-        cmd += " --mask={}".format(mask)
+        cmd += f" --mask={mask}"
     if interp is not None:
-        cmd += " --interp={}".format(interp)
+        cmd += f" --interp={interp}"
     if sup is True:
         cmd += " --super --superlevel=a"
     print(cmd)
@@ -220,7 +217,7 @@ def inverse_warp(ref, out, warp):
         warp : str
             File path to input Nifti1Image output for the nonlinear warp following alignment.
     """
-    cmd = "invwarp --warp=" + warp + " --out=" + out + " --ref=" + ref
+    cmd = f"invwarp --warp={warp} --out={out} --ref={ref}"
     print(cmd)
     os.system(cmd)
     return
@@ -239,7 +236,7 @@ def combine_xfms(xfm1, xfm2, xfmout):
         xfmout : str
             File path to the output transformation.
     """
-    cmd = "convert_xfm -omat {} -concat {} {}".format(xfmout, xfm1, xfm2)
+    cmd = f"convert_xfm -omat {xfmout} -concat {xfm1} {xfm2}"
     print(cmd)
     os.system(cmd)
     return
@@ -325,8 +322,8 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     warped_moving = mapping.transform(moving)
 
     # Save warped FA image
-    run_uuid = '%s_%s' % (strftime('%Y%m%d_%H%M%S'), uuid.uuid4())
-    warped_fa = '{}/warped_fa_{}.nii.gz'.format(working_dir, run_uuid)
+    run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
+    warped_fa = f"{working_dir}/warped_fa_{run_uuid}.nii.gz"
     nib.save(nib.Nifti1Image(warped_moving, affine=template_img.affine), warped_fa)
 
     # # We show the registration result with:
@@ -466,7 +463,7 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
     from pynets.registration.reg_utils import normalize_xform
     fname = dwi_prep
     bvec_fname = bvecs
-    out_bvec_fname = "%s%s" % (out_dir, '/bvecs_reor.bvec')
+    out_bvec_fname = f"{out_dir}/bvecs_reor.bvec"
 
     input_img = nib.load(fname)
     input_axcodes = nib.aff2axcodes(input_img.affine)
@@ -475,12 +472,12 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
     # Is the input image oriented how we want?
     new_axcodes = ('R', 'A', 'S')
     if normalized is not input_img:
-        out_fname = "%s%s%s%s%s" % (out_dir, '/', dwi_prep.split('/')[-1].split('.nii')[0], '_reor-RAS.nii',
-                                    dwi_prep.split('/')[-1].split('.nii')[1])
+        out_fname = f"{out_dir}/{dwi_prep.split('/')[-1].split('.nii')[0]}_" \
+            f"reor-RAS.nii{dwi_prep.split('/')[-1].split('.nii')[1]}"
         if overwrite is False and os.path.isfile(out_fname) and os.path.isfile(out_bvec_fname):
             pass
         else:
-            print("%s%s%s" % ('Reorienting ', dwi_prep, ' to RAS+...'))
+            print(f"Reorienting {dwi_prep} to RAS+...")
 
             # Flip the bvecs
             transform_orientation = nib.orientations.ornt_transform(nib.orientations.axcodes2ornt(input_axcodes),
@@ -495,8 +492,8 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
                 output_array[this_axnum] = bvec_array[int(axnum)] * float(flip)
             np.savetxt(out_bvec_fname, output_array, fmt="%.8f ")
     else:
-        out_fname = "%s%s%s%s%s" % (out_dir, '/', dwi_prep.split('/')[-1].split('.nii')[0], '_noreor-RAS.nii',
-                                    dwi_prep.split('/')[-1].split('.nii')[1])
+        out_fname = f"{out_dir}/{dwi_prep.split('/')[-1].split('.nii')[0]}_" \
+            f"noreor-RAS.nii{dwi_prep.split('/')[-1].split('.nii')[1]}"
         out_bvec_fname = bvec_fname
 
     if overwrite is False and os.path.isfile(out_fname) and os.path.isfile(out_bvec_fname):
@@ -533,12 +530,12 @@ def reorient_img(img, out_dir, overwrite=True):
 
     # Image may be reoriented
     if normalized is not orig_img:
-        print("%s%s%s" % ('Reorienting ', img, ' to RAS+...'))
-        out_name = "%s%s%s%s%s" % (out_dir, '/', img.split('/')[-1].split('.nii')[0], '_reor-RAS.nii',
-                                   img.split('/')[-1].split('.nii')[1])
+        print(f"{'Reorienting '}{img}{' to RAS+...'}")
+        out_name = f"{out_dir}/{img.split('/')[-1].split('.nii')[0]}_" \
+            f"reor-RAS.nii{img.split('/')[-1].split('.nii')[1]}"
     else:
-        out_name = "%s%s%s%s%s" % (out_dir, '/', img.split('/')[-1].split('.nii')[0], '_noreor-RAS.nii',
-                                   img.split('/')[-1].split('.nii')[1])
+        out_name = f"{out_dir}/{img.split('/')[-1].split('.nii')[0]}_" \
+            f"noreor-RAS.nii{img.split('/')[-1].split('.nii')[1]}"
 
     if overwrite is False and os.path.isfile(out_name):
         pass
@@ -581,20 +578,20 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
         new_zooms = (2., 2., 2.)
 
     if (abs(zooms[0]), abs(zooms[1]), abs(zooms[2])) != new_zooms:
-        img_file_res = "%s%s%s%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii')[0], '_res-',
-                                           vox_size, '.nii', os.path.basename(img_file).split('.nii')[1])
+        img_file_res = f"{out_dir}/{os.path.basename(img_file).split('.nii')[0]}_" \
+            f"res-{vox_size}.nii{os.path.basename(img_file).split('.nii')[1]}"
         if overwrite is False and os.path.isfile(img_file_res):
             img_file = img_file_res
             pass
         else:
-            print('Reslicing image ' + img_file + ' to ' + vox_size + '...')
+            print(f"Reslicing image {img_file} to {vox_size}...")
             data2, affine2 = reslice(np.asarray(img.dataobj), img.affine, zooms, new_zooms)
             nib.save(nib.Nifti1Image(data2, affine=affine2), img_file_res)
             img_file = img_file_res
             del data2
     else:
-        img_file_nores = "%s%s%s%s%s%s%s" % (out_dir, '/', os.path.basename(img_file).split('.nii')[0], '_nores-',
-                                             vox_size, '.nii', os.path.basename(img_file).split('.nii')[1])
+        img_file_nores = f"{out_dir}/{os.path.basename(img_file).split('.nii')[0]}_" \
+            f"nores-{vox_size}.nii{os.path.basename(img_file).split('.nii')[1]}"
         if overwrite is False and os.path.isfile(img_file_nores):
             img_file = img_file_nores
             pass

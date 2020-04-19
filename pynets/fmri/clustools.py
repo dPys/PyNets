@@ -482,10 +482,6 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     Connectivity is only calculated between a voxel and the 27 voxels in its 3D
     neighborhood (face touching and edge touching).
 
-    References
-    ----------
-    .. Adapted from PyClusterROI
-
     Parameters
     ----------
     func_img : Nifti1Image
@@ -502,6 +498,10 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     W : Compressed Sparse Matrix
         A Scipy sparse matrix, with weights corresponding to the temporal correlation between the time series from
         voxel i and voxel j
+
+    References
+    ----------
+    .. Adapted from PyClusterROI
     """
     from scipy.sparse import csc_matrix
     from scipy import prod
@@ -521,7 +521,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     # Determine the 1D coordinates of the non-zero elements of the mask
     iv = np.nonzero(mskdat)[0]
     m = len(iv)
-    print("%s%s%s" % ('\nTotal non-zero voxels in the mask: ', m, '\n'))
+    print(f"\nTotal non-zero voxels in the mask: {m}\n")
     sz = func_img.shape
 
     # Reshape fmri data to a num_voxels x num_timepoints array
@@ -697,12 +697,10 @@ class NiParcellate(object):
         from nilearn.masking import intersect_masks
         from nilearn.image import index_img, math_img, resample_img
         mask_name = os.path.basename(self.clust_mask).split('.nii')[0]
-        self.atlas = "%s%s%s%s%s" % (mask_name, '_', self.clust_type, '_k', str(self.k))
-        print("%s%s%s%s%s%s%s" % ('\nCreating atlas using ', self.clust_type, ' at cluster level ', str(self.k),
-                                  ' for ', str(self.atlas), '...\n'))
+        self.atlas = f"{mask_name}{'_'}{self.clust_type}{'_k'}{str(self.k)}"
+        print(f"\nCreating atlas using {self.clust_type} at cluster level {str(self.k)} for {str(self.atlas)}...\n")
         self._dir_path = utils.do_dir_path(self.atlas, self.outdir)
-        self.uatlas = "%s%s%s%s%s%s%s%s" % (self._dir_path, '/', mask_name, '_clust-', self.clust_type, '_k',
-                                            str(self.k), '.nii.gz')
+        self.uatlas = f"{self._dir_path}/{mask_name}_clust-{self.clust_type}_k{str(self.k)}.nii.gz"
 
         # Load clustering mask
         self._func_img.set_data_dtype(np.float32)
@@ -731,7 +729,7 @@ class NiParcellate(object):
                                                          math_img('img > 0.01', img=clust_mask_res_img)],
                                                         threshold=1, connected=False)
             self._clust_mask_corr_img.set_data_dtype(np.uint16)
-        nib.save(self._clust_mask_corr_img, "%s%s%s%s" % (self._dir_path, '/', mask_name, '.nii.gz'))
+        nib.save(self._clust_mask_corr_img, f"{self._dir_path}{'/'}{mask_name}{'.nii.gz'}")
 
         del func_data
         func_vol_img.uncache()
@@ -762,8 +760,7 @@ class NiParcellate(object):
                 raise ValueError('k must minimally be greater than the total number of connected components in '
                                  'the mask in the case of agglomerative clustering.')
             if self.local_corr == 'tcorr' or self.local_corr == 'scorr':
-                self._local_conn_mat_path = "%s%s%s%s" % (self.uatlas.split('.nii')[0], '_', self.local_corr,
-                                                          '_conn.npz')
+                self._local_conn_mat_path = f"{self.uatlas.split('.nii')[0]}_{self.local_corr}_conn.npz"
 
                 if (not op.isfile(self._local_conn_mat_path)) or (overwrite is True):
                     from pynets.fmri.clustools import make_local_connectivity_tcorr, make_local_connectivity_scorr
@@ -776,8 +773,7 @@ class NiParcellate(object):
                     else:
                         raise ValueError('Local connectivity type not available')
 
-                    print("%s%s" % ('Saving spatially constrained connectivity structure to: ',
-                                    self._local_conn_mat_path))
+                    print(f"Saving spatially constrained connectivity structure to: {self._local_conn_mat_path}")
                     save_npz(self._local_conn_mat_path, self._local_conn)
                 elif op.isfile(self._local_conn_mat_path):
                     self._local_conn = load_npz(self._local_conn_mat_path)
@@ -834,13 +830,13 @@ class NiParcellate(object):
                 self._clust_est.fit(func_boot_img)
 
             self._clust_est.labels_img_.set_data_dtype(np.uint16)
-            print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
+            print(f"{self.clust_type}{self.k}{(' clusters: %.2fs' % (time.time() - start))}")
             return self._clust_est.labels_img_
 
         elif self.clust_type == 'ncut':
             out_img = parcellate_ncut(self._local_conn, self.k, self._clust_mask_corr_img)
             out_img.set_data_dtype(np.uint16)
-            print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
+            print(f"{self.clust_type}{self.k}{(' clusters: %.2fs' % (time.time() - start))}")
             return out_img
 
         elif self.clust_type == 'rena' or self.clust_type == 'kmeans' and self.num_conn_comps > 1:
@@ -859,8 +855,8 @@ class NiParcellate(object):
             k_list = proportional(self.k, list(mask_voxels_dict.values()))
 
             conn_comp_atlases = []
-            print("%s%s%s" % ('Building ', len(mask_img_list), ' separate atlases with voxel-proportional nclusters '
-                                                               'for each connected component...'))
+            print(f"Building {len(mask_img_list)} separate atlases with voxel-proportional nclusters for each "
+                  f"connected component...")
             for i, mask_img in enumerate(mask_img_list):
                 if k_list[i] == 0:
                     # print('0 voxels in component. Discarding...')
@@ -911,5 +907,5 @@ class NiParcellate(object):
             super_atlas_ward.set_data_dtype(np.uint16)
             del atlas_of_atlases, conn_comp_atlases, mask_img_list, mask_voxels_dict
 
-            print("%s%s%s" % (self.clust_type, self.k, " clusters: %.2fs" % (time.time() - start)))
+            print(f"{self.clust_type}{self.k}{(' clusters: %.2fs' % (time.time() - start))}")
             return super_atlas_ward

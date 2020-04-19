@@ -51,10 +51,10 @@ def sweep_directory(derivatives_path, modality, space='MNI152NLin2009cAsym', fun
             spaces = sorted(spaces)
             space = spaces[0]
             if len(spaces) > 1:
+                space_list = ', '.join(spaces)
                 print(
-                    'No space was provided, but multiple spaces were detected: %s. '
-                    'Selecting the first (ordered lexicographically): %s'
-                    % (', '.join(spaces), space))
+                    f'No space was provided, but multiple spaces were detected: {space_list}. '
+                    'Selecting the first (ordered lexicographically): {{space}}')
 
     for sub in subjs:
         if not sesh:
@@ -65,8 +65,8 @@ def sweep_directory(derivatives_path, modality, space='MNI152NLin2009cAsym', fun
             # make a list so we can iterate
             seshs = as_list(sesh)
 
-        print("\n%s%s" % ('Subject(s): ', sub))
-        print("%s%s\n" % ('Session(s): ', seshs))
+        print(f"\nSubject(s): {sub}")
+        print(f"\nSession(s): {seshs}")
 
         for ses in seshs:
             # the attributes for our modality img
@@ -182,13 +182,15 @@ def get_bids_parser():
     # Primary inputs
     parser = argparse.ArgumentParser(description='PyNets BIDS CLI: A Fully-Automated Workflow for Reproducible '
                                                  'Ensemble Sampling of Functional and Structural Connectomes')
-    parser.add_argument("input_dir",
+    parser.add_argument("bids_dir",
                         help="""The directory with the input dataset formatted according to the BIDS standard. To use 
                         data from s3, just pass `s3://<bucket>/<dataset>` as the input directory.""")
     parser.add_argument("output_dir",
                         help="""The directory to store pynets derivatives locally.""")
+    parser.add_argument("analysis_level",
+                        choices=['participant', 'group'],
+                        help='Possible choices: participant, group.')
     parser.add_argument("modality",
-                        metavar='modality',
                         nargs='+',
                         choices=['dwi', 'func'],
                         help='Specify data modality to process from bids directory. Options are `dwi` and `func`.')
@@ -289,12 +291,15 @@ def get_bids_parser():
 def main():
     """Initializes main script from command-line call to generate single-subject or multi-subject workflow(s)"""
     import os
+    import gc
     import sys
     import json
     import ast
     import yaml
     from types import SimpleNamespace
     from pathlib import Path
+    from pynets.cli.pynets_run import build_workflow
+    from multiprocessing import set_start_method, Process, Manager
     try:
         import pynets
     except ImportError:
@@ -318,12 +323,12 @@ def main():
         with open(bids_config, 'r') as stream:
             arg_dict = json.load(stream)
     else:
-        with open("%s%s" % (str(Path(__file__).parent.parent), '/bids_config.json'), 'r') as stream:
+        with open(f"{str(Path(__file__).parent.parent)}/bids_config.json", 'r') as stream:
         # with open('/Users/derekpisner/Applications/PyNets/pynets/bids_config.json') as stream:
             arg_dict = json.load(stream)
 
     # Available functional and structural connectivity models
-    with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
+    with open(f"{str(Path(__file__).parent.parent)}/runconfig.yaml", 'r') as stream:
     # with open('/Users/derekpisner/Applications/PyNets/pynets/runconfig.yaml') as stream:
         hardcoded_params = yaml.load(stream)
         try:
@@ -339,7 +344,7 @@ def main():
 
     # S3
     # Primary inputs
-    s3 = bids_args.input_dir.startswith("s3://")
+    s3 = bids_args.bids_dir.startswith("s3://")
 
     # secondary inputs
     sec_s3_objs = []
@@ -386,21 +391,25 @@ def main():
         creds = bool(cloud_utils.get_credentials())
 
         if s3:
-            buck, remo = cloud_utils.parse_path(bids_args.input_dir)
-            os.makedirs(home + "/.pynets", exist_ok=True)
-            os.makedirs(home + "/.pynets/input", exist_ok=True)
-            os.makedirs(home + "/.pynets/output", exist_ok=True)
-            input_dir = as_directory(home + "/.pynets/input", remove=False)
+            buck, remo = cloud_utils.parse_path(bids_args.bids_dir)
+            os.makedirs(f"{home}/.pynets", exist_ok=True)
+            os.makedirs(f"{home}/.pynets/input", exist_ok=True)
+            os.makedirs(f"{home}/.pynets/output", exist_ok=True)
+            bids_dir = as_directory(f"{home}/.pynets/input", remove=False)
             if (not creds) and bids_args.push_location:
-                raise AttributeError("""No AWS credentials found, but "--push_location" flag called. Pushing will most 
-                likely fail.""")
+                raise AttributeError("""No AWS credentials found, but `--push_location` flag called. 
+                Pushing will most likely fail.""")
             else:
-                output_dir = as_directory(home + "/.pynets/output", remove=False)
+                output_dir = as_directory(f"{home}/.pynets/output", remove=False)
 
             # Get S3 input data if needed
             if participant_label and session_label:
-                info = "sub-" + participant_label[0] + '/ses-' + session_label[0] + '/' + modality[0]
-            cloud_utils.s3_get_data(buck, remo, input_dir, info=info)
+                info = "sub-" + participant_label[0] + '/ses-' + session_label[0]
+            elif participant_label and not session_label:
+                info = "sub-" + participant_label[0]
+            elif not participant_label and session_label:
+                info = 'ses-' + session_label[0]
+            cloud_utils.s3_get_data(buck, remo, bids_dir, modality, info=info)
 
         if len(sec_s3_objs) > 0:
             [access_key, secret_key] = cloud_utils.get_credentials()
@@ -416,42 +425,42 @@ def main():
             for s3_obj in [i for i in sec_s3_objs if i is not None]:
                 buck, remo = cloud_utils.parse_path(s3_obj)
                 bucket = s3_r.Bucket(buck)
-                s3_c.download_file(buck, remo, sec_dir + '/' + os.path.basename(s3_obj))
+                s3_c.download_file(buck, remo, f"{sec_dir}/{os.path.basename(s3_obj)}")
 
             if isinstance(bids_args.ua, list):
                 local_ua = bids_args.ua.copy()
                 for i in local_ua:
                     if i.startswith("s3://"):
-                        local_ua[local_ua.index(i)] = sec_dir + '/' + os.path.basename(i)
+                        local_ua[local_ua.index(i)] = f"{sec_dir}/{os.path.basename(i)}"
                 bids_args.ua = local_ua
             if isinstance(bids_args.cm, list):
                 local_cm = bids_args.cm.copy()
                 for i in bids_args.cm:
                     if i.startswith("s3://"):
-                        local_cm[local_cm.index(i)] = sec_dir + '/' + os.path.basename(i)
+                        local_cm[local_cm.index(i)] = f"{sec_dir}/{os.path.basename(i)}"
                 bids_args.cm = local_cm
             if isinstance(bids_args.roi, list):
                 local_roi = bids_args.roi.copy()
                 for i in bids_args.roi:
                     if i.startswith("s3://"):
-                        local_roi[local_roi.index(i)] = sec_dir + '/' + os.path.basename(i)
+                        local_roi[local_roi.index(i)] = f"{sec_dir}/{os.path.basename(i)}"
                 bids_args.roi = local_roi
             if isinstance(bids_args.way, list):
                 local_way = bids_args.way.copy()
                 for i in bids_args.way:
                     if i.startswith("s3://"):
-                        local_way[local_way.index(i)] = sec_dir + '/' + os.path.basename(i)
+                        local_way[local_way.index(i)] = f"{sec_dir}/{os.path.basename(i)}"
                 bids_args.way = local_way
 
             if bids_args.templ:
                 if bids_args.templ.startswith("s3://"):
-                    bids_args.templ = sec_dir + '/' + os.path.basename(bids_args.templ)
+                    bids_args.templ = f"{sec_dir}/{os.path.basename(bids_args.templ)}"
             if bids_args.templm:
                 if bids_args.templm.startswith("s3://"):
-                    bids_args.templm = sec_dir + '/' + os.path.basename(bids_args.templm)
+                    bids_args.templm = f"{sec_dir}/{os.path.basename(bids_args.templm)}"
             if bids_args.ref:
                 if bids_args.ref.startswith("s3://"):
-                    bids_args.ref = sec_dir + '/' + os.path.basename(bids_args.ref)
+                    bids_args.ref = f"{sec_dir}/{os.path.basename(bids_args.ref)}"
     else:
         output_dir = bids_args.output_dir
         if output_dir is None:
@@ -460,10 +469,10 @@ def main():
     arg_list = []
     if len(modality) > 1:
         for mod in modality:
-            outs = sweep_directory(input_dir, modality=mod, subj=bids_args.participant_label[0],
+            outs = sweep_directory(bids_dir, modality=mod, subj=bids_args.participant_label[0],
                                    sesh=bids_args.session_label[0])
     else:
-        outs = sweep_directory(input_dir, modality=modality[0], subj=bids_args.participant_label[0],
+        outs = sweep_directory(bids_dir, modality=modality[0], subj=bids_args.participant_label[0],
                                sesh=bids_args.session_label[0])
     for mod in modalities:
         arg_list.append(arg_dict[mod])
@@ -526,10 +535,8 @@ def main():
 
     # Mimic argparse with SimpleNamespace object
     args = SimpleNamespace(**args_dict_all)
+    print(args)
 
-    import gc
-    from pynets.cli.pynets_run import build_workflow
-    from multiprocessing import set_start_method, Process, Manager
     set_start_method('forkserver')
     with Manager() as mgr:
         retval = mgr.dict()
@@ -551,6 +558,7 @@ def main():
                 push_buck,
                 push_remo,
                 output_dir,
+                modality,
                 subject=id.split('_')[0],
                 session=id.split('_')[1],
                 creds=creds,

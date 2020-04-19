@@ -131,7 +131,7 @@ def get_matching_s3_objects(bucket, prefix="", suffix=""):
             break
 
 
-def s3_get_data(bucket, remote, local, info="", force=False):
+def s3_get_data(bucket, remote, local, modality, info="", force=False):
     """Given and s3 directory, copies files/subdirectories in that directory to local
 
     Parameters
@@ -144,7 +144,7 @@ def s3_get_data(bucket, remote, local, info="", force=False):
     local : list
         Local input directory where you want the files copied to and subject/session info [input, sub-#/ses-#]
     info : str, optional
-        Relevant subject and session information in the form of sub-#/ses-#/<MODALITY>
+        Relevant subject and session information in the form of sub-#/ses-#/
     force : bool, optional
         Whether to overwrite the local directory containing the s3 files if it already exists, by default False
     """
@@ -167,7 +167,7 @@ def s3_get_data(bucket, remote, local, info="", force=False):
     if bucket not in bkts:
         raise ValueError("Error: could not locate bucket. Available buckets: " + ", ".join(bkts))
 
-    bpath = get_matching_s3_objects(bucket, f"{remote}/{'/'.join(run_str[:-1])}/")
+    bpath = get_matching_s3_objects(bucket, f"{remote}/{'/'.join(run_str[:-1])}/{modality[0]}")
 
     # go through all folders inside of remote directory and download relevant files
     for obj in bpath:
@@ -188,7 +188,7 @@ def s3_get_data(bucket, remote, local, info="", force=False):
             print(f"File {data} already exists at {localpath}/{data}")
 
 
-def s3_push_data(bucket, remote, outDir, subject=None, session=None, creds=True):
+def s3_push_data(bucket, remote, outDir, modality, subject=None, session=None, creds=True):
     """Pushes data to a specified S3 bucket
 
     Parameters
@@ -233,7 +233,7 @@ def s3_push_data(bucket, remote, outDir, subject=None, session=None, creds=True)
         return m.hexdigest()
 
     def to_uri(outDir, f):
-        return os.path.join(remote + '/', re.sub(outDir, '', f))
+        return os.path.join(f"{remote}/{re.sub(outDir, '', f)}")
 
     # get client with credentials if they exist
     client = s3_client(service="s3")
@@ -270,5 +270,5 @@ def s3_push_data(bucket, remote, outDir, subject=None, session=None, creds=True)
             print(f"Uploading: {files_to_upload}")
             for file_ in files_to_upload:
                 uri = to_uri(outDir, os.path.join(root, file_))
-                client.upload_file(file_, bucket, uri,
+                client.upload_file(f"{file_}/{modality[0]}", bucket, uri,
                                    ExtraArgs={"ACL": "public-read"})

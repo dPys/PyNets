@@ -17,7 +17,7 @@ def get_parser():
     """Parse command-line inputs"""
     import argparse
     from pynets.__about__ import __version__
-    verstr = 'pynets v{}'.format(__version__)
+    verstr = f'pynets v{__version__}'
 
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
@@ -55,7 +55,7 @@ def load_pd_dfs(file_):
     import os.path as op
     import pandas as pd
     import numpy as np
-    pd.set_option('display.float_format', lambda x: '%.8f' % x)
+    pd.set_option('display.float_format', lambda x: f'{x:.8f}')
 
     if file_:
         if op.isfile(file_) and not file_.endswith('_clean.csv'):
@@ -91,7 +91,7 @@ def load_pd_dfs(file_):
                 df = df.loc[:, ~df.columns.duplicated()]
             except:
                 pass
-            df.to_csv("%s%s" % (file_.split('.csv')[0], '_clean.csv'), index=True)
+            df.to_csv(f"{file_.split('.csv')[0]}{'_clean.csv'}", index=True)
             del bad_cols2
             del bad_cols1
             del id
@@ -112,7 +112,7 @@ def load_pd_dfs(file_):
 def df_concat(dfs, working_path):
     import re
     import pandas as pd
-    pd.set_option('display.float_format', lambda x: '%.8f' % x)
+    pd.set_option('display.float_format', lambda x: f'{x:.8f}')
 
     dfs = [df for df in dfs if df is not None]
     frame = pd.concat(dfs, axis=0, join='outer', sort=True, ignore_index=False)
@@ -130,7 +130,7 @@ def df_concat(dfs, working_path):
     frame = frame.loc[:, ~frame.columns.str.contains(r'thr_auc$', regex=True)]
     # frame = frame.loc[:, (frame == 0).mean() < .5]
     # frame = frame.loc[:, frame.isnull().mean() <= 0.1]
-    frame.to_csv("%s%s" % (working_path, '/all_subs_neat.csv'), index=False)
+    frame.to_csv(f"{working_path}{'/all_subs_neat.csv'}", index=False)
     return frame
 
 
@@ -142,21 +142,21 @@ def build_subject_dict(sub, working_path, modality='func'):
 
     def load_pd_dfs_auc(atlas_name, prefix, auc_file):
         import pandas as pd
-        pd.set_option('display.float_format', lambda x: '%.8f' % x)
+        pd.set_option('display.float_format', lambda x: f'{x:.8f}')
 
         df = pd.read_csv(auc_file, chunksize=100000, compression='gzip', encoding='utf-8').read()
-        print("%s%s" % ('Atlas: ', atlas_name))
-        prefix = "%s%s%s%s" % (atlas_name, '_', prefix, '_')
+        print(f"{'Atlas: '}{atlas_name}")
+        prefix = f"{atlas_name}{'_'}{prefix}{'_'}"
         df_pref = df.add_prefix(prefix)
         return df_pref
 
     subject_dict = {}
     print(sub)
     subject_dict[sub] = {}
-    sessions = sorted([i for i in os.listdir("%s%s%s" % (working_path, '/', sub)) if i.startswith('ses-')],
+    sessions = sorted([i for i in os.listdir(f"{working_path}{'/'}{sub}") if i.startswith('ses-')],
                       key = lambda x: x.split("-")[1])
     atlases = list(set([os.path.basename(str(Path(i).parent.parent)) for i in
-                        glob.glob("%s%s%s%s" % (working_path, '/', sub, '/*/*/*/netmetrics/*'))]))
+                        glob.glob(f"{working_path}{'/'}{sub}{'/*/*/*/netmetrics/*'}")]))
 
     print(atlases)
 
@@ -167,8 +167,7 @@ def build_subject_dict(sub, working_path, modality='func'):
         for atlas in atlases:
             #atlas_name = atlas.replace('reor-RAS_nores-2mm_', '')
             atlas_name = atlas
-            auc_csvs = glob.glob("%s%s%s%s%s%s%s%s%s%s" % (working_path, '/', sub, '/', ses, '/', modality, '/', atlas,
-                                 '/netmetrics/auc/*'))
+            auc_csvs = glob.glob(f"{working_path}/{sub}/{ses}/{modality}/{atlas}/netmetrics/auc/*")
             for auc_file in auc_csvs:
                 prefix = os.path.basename(auc_file).split('.csv')[0].split('est-')[1].split("%s%s" % (modality,
                                                                                             'net_mets'))[0]
@@ -184,12 +183,10 @@ def build_subject_dict(sub, working_path, modality='func'):
             for m in range(len(list_))[1:]:
                 df_base = df_base.merge(list_[m][[c for c in list_[m].columns if c.endswith('auc')]], how='right',
                                         right_index=True, left_index=True)
-            if os.path.isdir("%s%s%s%s%s%s%s" % (working_path, '/', sub, '/', ses, '/', modality)):
-                out_path = "%s%s%s%s%s%s%s%s" % (working_path, '/', sub, '/', ses, '/', modality,
-                                                 '/all_combinations_auc.csv')
+            if os.path.isdir(f"{working_path}{'/'}{sub}{'/'}{ses}{'/'}{modality}"):
+                out_path = f"{working_path}/{sub}/{ses}/{modality}/all_combinations_auc.csv"
                 df_base.to_csv(out_path)
-                out_path_new = "%s%s%s%s%s%s" % (str(Path(working_path).parent), '/all_visits_netmets_auc/', sub, '_',
-                                                 ses, '_netmets_auc.csv')
+                out_path_new = f"{str(Path(working_path).parent)}/all_visits_netmets_auc/{sub}_{ses}_netmets_auc.csv"
                 files_.append(out_path_new)
                 shutil.copyfile(out_path, out_path_new)
 
@@ -245,7 +242,7 @@ def build_collect_workflow(args, retval):
     import yaml
     try:
         import pynets
-        print("%s%s%s" % ('\n\nPyNets Version:\n', pynets.__version__, '\n\n'))
+        print(f"\n\nPyNets Version:\n{pynets.__version__}\n\n")
     except ImportError:
         print('PyNets not installed! Ensure that you are using the correct python version.')
 
@@ -264,12 +261,12 @@ def build_collect_workflow(args, retval):
     working_path = args.basedir
     work_dir = args.work
 
-    os.makedirs("%s%s" % (str(Path(working_path).parent), '/all_visits_netmets_auc'), exist_ok=True)
+    os.makedirs(f"{str(Path(working_path).parent)}/all_visits_netmets_auc", exist_ok=True)
 
     wf = collect_all(working_path)
 
     #with open('/opt/conda/lib/python3.6/site-packages/pynets-0.9.94-py3.6.egg/pynets/runconfig.yaml', 'r') as stream:
-    with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
+    with open(f"{str(Path(__file__).parent.parent)}{'/runconfig.yaml'}", 'r') as stream:
         try:
             hardcoded_params = yaml.load(stream)
             runtime_dict = {}
@@ -283,8 +280,8 @@ def build_collect_workflow(args, retval):
         except FileNotFoundError:
             print('Failed to parse runconfig.yaml')
 
-    os.makedirs("%s%s" % (work_dir, '/pynets_out_collection'), exist_ok=True)
-    wf.base_dir = "%s%s" % (work_dir, '/pynets_out_collection')
+    os.makedirs(f"{work_dir}{'/pynets_out_collection'}", exist_ok=True)
+    wf.base_dir = f"{work_dir}{'/pynets_out_collection'}"
 
     if verbose is True:
         from nipype import config, logging
@@ -298,7 +295,7 @@ def build_collect_workflow(args, retval):
         config.enable_resource_monitor()
 
         import logging
-        callback_log_path = "%s%s" % (wf.base_dir, '/run_stats.log')
+        callback_log_path = f"{wf.base_dir}{'/run_stats.log'}"
         logger = logging.getLogger('callback')
         logger.setLevel(logging.DEBUG)
         handler = logging.FileHandler(callback_log_path)
@@ -329,7 +326,7 @@ def build_collect_workflow(args, retval):
         handler.close()
         logger.removeHandler(handler)
 
-    files_ = glob.glob("%s%s" % (str(Path(working_path).parent), '/all_visits_netmets_auc/*clean.csv'))
+    files_ = glob.glob(f"{str(Path(working_path).parent)}{'/all_visits_netmets_auc/*clean.csv'}")
 
     print('Aggregating dataframes...')
     dfs = []
@@ -360,14 +357,14 @@ def main():
         sys.exit()
 
     args = get_parser().parse_args()
-    args_dict_all = {}
-    args_dict_all['plug'] = 'MultiProc'
-    args_dict_all['v'] = False
-    args_dict_all['pm'] = '40,40'
-    args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU_outs'
-    args_dict_all['work'] = '/scratch/04171/dpisner/pynets_scratch'
-    from types import SimpleNamespace
-    args = SimpleNamespace(**args_dict_all)
+    # args_dict_all = {}
+    # args_dict_all['plug'] = 'MultiProc'
+    # args_dict_all['v'] = False
+    # args_dict_all['pm'] = '40,40'
+    # args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU_outs'
+    # args_dict_all['work'] = '/scratch/04171/dpisner/pynets_scratch'
+    # from types import SimpleNamespace
+    # args = SimpleNamespace(**args_dict_all)
 
     from multiprocessing import set_start_method, Process, Manager
     set_start_method('forkserver')

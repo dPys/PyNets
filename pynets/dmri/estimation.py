@@ -56,10 +56,10 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
     FA[np.isnan(FA)] = 0
     FA_MD[np.isnan(FA_MD)] = 0
 
-    fa_path = "%s%s" % (os.path.dirname(B0_mask), '/tensor_fa.nii.gz')
+    fa_path = f"{os.path.dirname(B0_mask)}{'/tensor_fa.nii.gz'}"
     nib.save(nib.Nifti1Image(FA.astype(np.float32), nodif_B0_img.affine), fa_path)
 
-    fa_md_path = "%s%s" % (os.path.dirname(B0_mask), '/tensor_fa_md.nii.gz')
+    fa_md_path = f"{os.path.dirname(B0_mask)}{'/tensor_fa_md.nii.gz'}"
     nib.save(nib.Nifti1Image(FA_MD.astype(np.float32), nodif_B0_img.affine), fa_md_path)
 
     nodif_B0_img.uncache()
@@ -104,7 +104,7 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     img = nib.load(dwi_file)
     aff = img.affine
 
-    anisopwr_path = "%s%s" % (os.path.dirname(B0_mask), '/aniso_power.nii.gz')
+    anisopwr_path = f"{os.path.dirname(B0_mask)}{'/aniso_power.nii.gz'}"
 
     if os.path.isfile(anisopwr_path):
         pass
@@ -330,6 +330,20 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     from dipy.io.streamline import load_tractogram
     from dipy.io.stateful_tractogram import Space, Origin
 
+    def generate_sl(streamlines):
+        """
+        Helper function that takes a sequence and returns a generator
+        Parameters
+        ----------
+        streamlines : sequence
+            Usually, this would be a list of 2D arrays, representing streamlines
+        Returns
+        -------
+        generator
+        """
+        for sl in streamlines:
+            yield sl
+
     # Load parcellation
     roi_img = nib.load(atlas_mni)
     atlas_data = np.around(np.asarray(roi_img.dataobj))
@@ -353,12 +367,17 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
             fa_weights_norm.append(np.nanmean((val_list - min_global_fa_wei) /
                                               (max_global_fa_wei - min_global_fa_wei)))
 
+    # Make streamlines into generators to keep memory at a minimum
+    sl = [generate_sl(i) for i in streamlines]
+    del streamlines
+
     # Instantiate empty networkX graph object & dictionary and create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4))
-    mx = len(np.unique(atlas_data.astype('uint16'))) - 1
+    atlas_data = atlas_data + 1
+    mx = len(np.unique(atlas_data.astype('uint16')))
     g = nx.Graph(ecount=0, vcount=mx)
     edge_dict = defaultdict(int)
-    node_dict = dict(zip(np.unique(atlas_data.astype('uint16')) + 1, np.arange(mx) + 1))
+    node_dict = dict(zip(np.unique(atlas_data.astype('uint16')), np.arange(mx)))
 
     # Add empty vertices
     for node in range(1, mx + 1):
@@ -366,22 +385,24 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Build graph
     ix = 0
-    for s in streamlines:
+    for s in sl:
         # Map the streamlines coordinates to voxel coordinates and get labels for label_volume
-        lab_coords = [nodemaker.get_sphere(coord, error_margin, roi_zooms, roi_shape) for coord in
-                      _to_voxel_coordinates(s, lin_T, offset)]
+        vox_coords = _to_voxel_coordinates(Streamlines(s), lin_T, offset)
+        lab_coords = [nodemaker.get_sphere(coord, error_margin, roi_zooms, roi_shape) for coord in vox_coords]
         [i, j, k] = np.vstack(np.array(lab_coords)).T
 
         # get labels for label_volume
         lab_arr = atlas_data[i, j, k]
         endlabels = []
-        for lab in np.unique(lab_arr).astype('uint32'):
+        for ix, lab in enumerate(np.unique(lab_arr).astype('uint32')):
             if (lab > 0) and (np.sum(lab_arr == lab) >= overlap_thr):
                 try:
                     endlabels.append(node_dict[lab])
                 except:
-                    print("%s%s%s" % ('Label ', lab, ' missing from parcellation. Check registration and ensure valid '
-                                                     'input parcellation file.'))
+                    del labels[ix]
+                    del coords[ix]
+                    print(f"Label {lab} missing from parcellation. Check registration and ensure valid input "
+                          f"parcellation file.")
 
         edges = combinations(endlabels, 2)
         for edge in edges:
@@ -398,9 +419,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         ix = ix + 1
 
         del lab_coords, lab_arr, endlabels, edges, edge_list
-        gc.collect()
 
-    del streamlines
+    gc.collect()
 
     if fa_wei is True:
         # Add average fa weights to streamline counts

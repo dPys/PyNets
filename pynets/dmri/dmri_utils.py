@@ -10,6 +10,7 @@ import os
 import indexed_gzip
 import nibabel as nib
 import numpy as np
+from nipype.utils.filemanip import fname_presuffix
 warnings.filterwarnings("ignore")
 
 
@@ -97,122 +98,63 @@ def normalize_gradients(bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_sca
     return bvecs, bvals.astype('uint16')
 
 
-def make_mean_b0(in_file):
-    mean_file_out = "%s%s" % (in_file.split(".nii")[0], "_mean_b0.nii.gz")
+def median(in_file):
+    """Average a 4D dataset across the last dimension using median."""
+    out_file = fname_presuffix(in_file, suffix="_mean_b0.nii.gz", use_ext=True)
 
-    if os.path.isfile(mean_file_out):
-        pass
-    else:
-        b0_img = nib.load(in_file)
-        b0_img_data = np.asarray(b0_img.dataobj)
-        mean_b0 = np.mean(b0_img_data, axis=3, dtype=b0_img_data.dtype)
+    img = nib.load(in_file)
+    if img.dataobj.ndim == 3:
+        return in_file
+    if img.shape[-1] == 1:
+        nib.squeeze_image(img).to_filename(out_file)
+        return out_file
 
-        nib.save(nib.Nifti1Image(mean_b0, affine=b0_img.affine, header=b0_img.header), mean_file_out)
-        del b0_img_data
-        b0_img.uncache()
-    return mean_file_out
+    median_data = np.median(img.get_fdata(dtype="float32"), axis=-1)
+
+    hdr = img.header.copy()
+    hdr.set_xyzt_units("mm")
+    hdr.set_data_dtype(np.float32)
+    nib.Nifti1Image(median_data, img.affine, hdr).to_filename(out_file)
+    return out_file
 
 
-def make_gtab_and_bmask(fbval, fbvec, dwi_file, outdir, b0_thr=50):
+def extract_b0(in_file, b0_ixs, out_path=None):
     """
-    Create gradient table from bval/bvec, and a mean B0 brain mask.
+    Extract the *b0* volumes from a DWI dataset.
 
     Parameters
     ----------
-    fbval : str
-        File name of the b-values file.
-    fbvec : str
-        File name of the b-vectors file.
-    dwi_file : str
-        File path to diffusion weighted image.
-    outdir : str
-        Path to base derivatives directory.
+    in_file : str
+        DWI NIfTI file.
+    b0_ixs : list
+        List of B0 indices in `in_file`.
+    out_path : str
+        Optionally specify an output path.
 
     Returns
     -------
-    gtab_file : str
-        File path to pickled DiPy gradient table object.
-    nodif_b0_bet : str
-        File path to mean brain-extracted B0 image.
-    B0_mask : str
-        File path to mean B0 brain mask.
-    dwi_file : str
-        File path to diffusion weighted image.
+    out_path : str
+       4D NIfTI file consisting of B0's.
+
+    Examples
+    --------
+    >>> os.chdir(tmpdir)
+    >>> b0_ixs = np.where(np.loadtxt(str(data_dir / 'bval')) <= 50)[0].tolist()[:2]
+    >>> in_file = str(data_dir / 'dwi.nii.gz')
+    >>> out_path = extract_b0(in_file, b0_ixs)
+    >>> assert os.path.isfile(out_path)
     """
-    import time
-    import os
-    from dipy.io import save_pickle
-    from dipy.io import read_bvals_bvecs
-    from dipy.core.gradients import gradient_table
-    from pynets.dmri.dmri_utils import make_mean_b0, normalize_gradients
+    if out_path is None:
+        out_path = fname_presuffix(
+            in_file, suffix='_b0', use_ext=True)
 
-    namer_dir = outdir + '/dmri_tmp'
-    if not os.path.isdir(namer_dir):
-        os.makedirs(namer_dir, exist_ok=True)
+    img = nib.load(in_file)
+    data = img.get_fdata()
 
-    B0_bet = "%s%s" % (namer_dir, "/mean_B0_bet.nii.gz")
-    B0_mask = "%s%s" % (namer_dir, "/mean_B0_bet_mask.nii.gz")
-    fbvec_norm = "%s%s" % (namer_dir, "/bvec_normed.bvec")
-    fbval_norm = "%s%s" % (namer_dir, "/bval_normed.bvec")
-    gtab_file = "%s%s" % (namer_dir, "/gtab.pkl")
-    all_b0s_file = "%s%s" % (namer_dir, "/all_b0s.nii.gz")
+    b0 = data[..., b0_ixs]
 
-    # loading bvecs/bvals
-    bvals, bvecs = read_bvals_bvecs(fbval, fbvec)
-
-    bvecs_norm, bvals_norm = normalize_gradients(bvecs, bvals, b0_threshold=b0_thr)
-
-    # Save corrected
-    np.savetxt(fbval_norm, bvals_norm)
-    np.savetxt(fbvec_norm, bvecs_norm)
-
-    # Creating the gradient table
-    gtab = gradient_table(bvals_norm, bvecs_norm)
-
-    # Correct b0 threshold
-    gtab.b0_threshold = b0_thr
-
-    # Get b0 indices
-    b0s = np.where(gtab.bvals <= gtab.b0_threshold)[0]
-    print("%s%s" % ('b0\'s found at: ', b0s))
-
-    # Correct bvals to set 0's for B0 based on thresh
-    gtab_bvals = gtab.bvals.copy()
-    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
-    gtab_bvals[b0_thr_ixs] = 0
-    gtab.b0s_mask = gtab_bvals == 0
-
-    # Show info
-    print(gtab.info)
-
-    # Save gradient table to pickle
-    save_pickle(gtab_file, gtab)
-
-    if os.path.isfile(all_b0s_file):
-        pass
-    else:
-        # Extract and Combine all b0s collected, make mean b0
-        print("Extracting b0's...")
-        b0_vols = []
-        dwi_img = nib.load(dwi_file)
-        all_b0s_aff = dwi_img.affine.copy()
-        dwi_data = np.asarray(dwi_img.dataobj)
-        for b0 in b0s:
-            print(b0)
-            b0_vols.append(dwi_data[:, :, :, b0])
-        all_b0s_aff[3][3] = len(b0_vols)
-        nib.save(nib.Nifti1Image(np.stack(b0_vols, axis=3), affine=all_b0s_aff), all_b0s_file)
-        mean_b0_file = make_mean_b0(all_b0s_file)
-        dwi_img.uncache()
-        del dwi_data
-
-    # Create mean b0 brain mask
-    if os.path.isfile(B0_bet):
-        pass
-    else:
-        cmd = 'bet ' + mean_b0_file + ' ' + B0_bet + ' -m -f 0.2'
-        os.system(cmd)
-        while not os.path.exists(B0_bet):
-            time.sleep(1)
-
-    return gtab_file, B0_bet, B0_mask, dwi_file
+    hdr = img.header.copy()
+    hdr.set_data_shape(b0.shape)
+    hdr.set_xyzt_units('mm')
+    nib.Nifti1Image(b0.astype(hdr.get_data_dtype()), img.affine, hdr).to_filename(out_path)
+    return out_path

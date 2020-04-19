@@ -353,7 +353,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
 
                 print("%s%s" % ('Filtering by: \nnode intersection: ', len(roi_proximal_streamlines)))
 
-                if min_length != 0:
+                if str(min_length) != '0':
                     roi_proximal_streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in
                                                                                              roi_proximal_streamlines
                                                                                              if len(s) >=

@@ -158,14 +158,14 @@ class IndividualClustering(SimpleInterface):
         nip.create_local_clustering(overwrite=True, r_thresh=0.4)
 
         if self.inputs.clust_type in clust_list:
-            print("%s%s%s" % ('Performing circular block bootstrapping with ', c_boot, ' iterations...'))
+            print(f"Performing circular block bootstrapping with {c_boot} iterations...")
             ts_data, block_size = nip.prep_boot()
             boot_parcellations = []
             for i in range(c_boot):
-                print("%s%s" % ('\nBootstrapped iteration: ', i))
+                print(f"\nBootstrapped iteration: {i}")
                 boot_series = timeseries_bootstrap(ts_data, block_size)[0]
                 func_boot_img = unmask(boot_series, nip._clust_mask_corr_img)
-                out_path = runtime.cwd + '/boot_parc_tmp_' + str(i) + '.nii.gz'
+                out_path = f"{runtime.cwd}/boot_parc_tmp_{str(i)}.nii.gz"
                 nib.save(nip.parcellate(func_boot_img), out_path)
                 boot_parcellations.append(out_path)
                 gc.collect()
@@ -399,7 +399,7 @@ class PlotFunc(SimpleInterface):
         from pynets.plotting import plot_gen
 
         if self.inputs.coords.ndim == 1:
-            print('Only 1 node detected. Plotting is not applicable...')
+            print('Only 1 node detected. Plotting not applicable...')
         else:
             plot_gen.plot_all_func(self.inputs.conn_matrix,
                                    self.inputs.conn_model,
@@ -623,7 +623,7 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     fa_path = File(exists=True, mandatory=True)
     waymask = traits.Any(mandatory=False)
     t1w2dwi = File(exists=True, mandatory=True)
-    roi_neighborhood_tol = traits.Any(8, mandatory=True, usedefault=True)
+    roi_neighborhood_tol = traits.Any(6, mandatory=True, usedefault=True)
     sphere = traits.Str('repulsion724', mandatory=True, usedefault=True)
 
 
@@ -704,22 +704,22 @@ class Tracking(SimpleInterface):
                 'to verify overlap with dwi-registered atlas.')
 
         # Iteratively build a list of streamlines for each ROI while tracking
-        print("%s%s%s%s" % (Fore.GREEN, 'Target number of samples: ', Fore.BLUE, self.inputs.target_samples))
+        print(f"{Fore.GREEN}Target number of samples: {Fore.BLUE} {self.inputs.target_samples}")
         print(Style.RESET_ALL)
-        print("%s%s%s%s" % (Fore.GREEN, 'Using curvature threshold(s): ', Fore.BLUE, self.inputs.curv_thr_list))
+        print(f"{Fore.GREEN}Using curvature threshold(s): {Fore.BLUE} {self.inputs.curv_thr_list}")
         print(Style.RESET_ALL)
-        print("%s%s%s%s" % (Fore.GREEN, 'Using step size(s): ', Fore.BLUE, self.inputs.step_list))
+        print(f"{Fore.GREEN}Using step size(s): {Fore.BLUE} {self.inputs.step_list}")
         print(Style.RESET_ALL)
-        print("%s%s%s%s" % (Fore.GREEN, 'Tracking type: ', Fore.BLUE, self.inputs.track_type))
+        print(f"{Fore.GREEN}Tracking type: {Fore.BLUE} {self.inputs.track_type}")
         print(Style.RESET_ALL)
         if self.inputs.directget == 'prob':
-            print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Probabilistic'))
+            print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Probabilistic")
         elif self.inputs.directget == 'boot':
-            print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Bootstrapped'))
+            print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Bootstrapped")
         elif self.inputs.directget == 'closest':
-            print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Closest Peak'))
+            print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Closest Peak")
         elif self.inputs.directget == 'det':
-            print("%s%s%s%s" % (Fore.GREEN, 'Direction-getting type: ', Fore.BLUE, 'Deterministic Maximum'))
+            print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Deterministic Maximum")
         else:
             raise ValueError('Direction-getting type not recognized!')
         print(Style.RESET_ALL)
@@ -732,7 +732,8 @@ class Tracking(SimpleInterface):
                                                   self.inputs.tiss_class),
                                      get_sphere(self.inputs.sphere), self.inputs.directget, self.inputs.curv_thr_list,
                                      self.inputs.step_list, self.inputs.track_type, self.inputs.maxcrossing,
-                                     int(self.inputs.roi_neighborhood_tol), self.inputs.min_length, self.inputs.waymask)
+                                     int(self.inputs.roi_neighborhood_tol), self.inputs.min_length,
+                                     self.inputs.waymask)
 
         # Create streamline density map
         [streams, dir_path, dm_path] = create_density_map(dwi_img,
@@ -777,5 +778,92 @@ class Tracking(SimpleInterface):
         del streamlines, atlas_data_wm_gm_int, atlas_data, mod_fit, parcels
         dwi_img.uncache()
         gc.collect()
+
+        return runtime
+
+
+class _MakeGtabBmaskInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for MakeGtabBmask"""
+    dwi_file = File(exists=True, mandatory=True)
+    fbval = File(exists=True, mandatory=True)
+    fbvec = File(exists=True, mandatory=True)
+    b0_thr = traits.Int(default_value=50, usedefault=True)
+
+
+class _MakeGtabBmaskOutputSpec(TraitedSpec):
+    """Output interface wrapper for MakeGtabBmask"""
+    gtab_file = File(exists=True, mandatory=True)
+    B0_bet = File(exists=True, mandatory=True)
+    B0_mask = File(exists=True, mandatory=True)
+    dwi_file = File(exists=True, mandatory=True)
+
+
+class MakeGtabBmask(SimpleInterface):
+    """Interface wrapper for MakeGtabBmask"""
+    input_spec = _MakeGtabBmaskInputSpec
+    output_spec = _MakeGtabBmaskOutputSpec
+
+    def _run_interface(self, runtime):
+        import numpy as np
+        import nibabel as nib
+        from dipy.io import save_pickle
+        from dipy.io import read_bvals_bvecs
+        from dipy.core.gradients import gradient_table
+        from dipy.segment.mask import median_otsu
+        from pynets.dmri.dmri_utils import median, normalize_gradients, extract_b0
+
+        B0_bet = f"{runtime.cwd}/mean_B0_bet.nii.gz"
+        B0_mask = f"{runtime.cwd}/mean_B0_bet_mask.nii.gz"
+        fbvec_norm = f"{runtime.cwd}/bvec_normed.bvec"
+        fbval_norm = f"{runtime.cwd}/bval_normed.bvec"
+        gtab_file = f"{runtime.cwd}/gtab.pkl"
+        all_b0s_file = f"{runtime.cwd}/all_b0s.nii.gz"
+
+        # loading bvecs/bvals
+        bvals, bvecs = read_bvals_bvecs(self.inputs.fbval, self.inputs.fbvec)
+        bvecs_norm, bvals_norm = normalize_gradients(bvecs, bvals, b0_threshold=self.inputs.b0_thr)
+
+        # Save corrected
+        np.savetxt(fbval_norm, bvals_norm)
+        np.savetxt(fbvec_norm, bvecs_norm)
+
+        # Creating the gradient table
+        gtab = gradient_table(bvals_norm, bvecs_norm)
+
+        # Correct b0 threshold
+        gtab.b0_threshold = self.inputs.b0_thr
+
+        # Correct bvals to set 0's for B0 based on thresh
+        gtab_bvals = gtab.bvals.copy()
+        b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
+        gtab_bvals[b0_thr_ixs] = 0
+        gtab.b0s_mask = gtab_bvals == 0
+
+        # Show info
+        print(gtab.info)
+
+        # Save gradient table to pickle
+        save_pickle(gtab_file, gtab)
+
+        # Extract and Combine all b0s collected, make mean b0
+        print("Extracting b0's...")
+        all_b0s_file = extract_b0(self.inputs.dwi_file, b0_thr_ixs, all_b0s_file)
+        med_b0_file = median(all_b0s_file)
+        med_b0_img = nib.load(med_b0_file)
+        med_b0_data = np.asarray(med_b0_img.dataobj)
+
+        # Create mean b0 brain mask
+        b0_mask_data, mask_data = median_otsu(med_b0_data, median_radius=2, numpass=1)
+
+        hdr = med_b0_img.header.copy()
+        hdr.set_xyzt_units("mm")
+        hdr.set_data_dtype(np.float32)
+        nib.Nifti1Image(b0_mask_data, med_b0_img.affine, hdr).to_filename(B0_bet)
+        nib.Nifti1Image(mask_data, med_b0_img.affine, hdr).to_filename(B0_mask)
+
+        self._results['gtab_file'] = gtab_file
+        self._results['B0_bet'] = B0_bet
+        self._results['B0_mask'] = B0_mask
+        self._results['dwi_file'] = self.inputs.dwi_file
 
         return runtime

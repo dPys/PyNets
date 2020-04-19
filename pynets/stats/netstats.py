@@ -551,7 +551,7 @@ def link_communities(W, type_clustering='single'):
     C[0, :] = np.arange(m)
 
     for i in range(m - 1):
-        print('Hierarchy %i' % i)
+        print(f'Hierarchy {i:d}')
         # time1 = time.time()
         # Loop over communities
         for j in range(len(U)):
@@ -783,7 +783,7 @@ def raw_mets(G, i):
                 [H, _] = prune_disconnected(G)
                 net_met_val = float(i(H))
             except:
-                np.save("%s%s%s" % ('/tmp/average_shortest_path_length', random.randint(1, 400), '.npy'),
+                np.save(f"{'/tmp/average_shortest_path_length'}{random.randint(1, 400)}{'.npy'}",
                         np.array(nx.to_numpy_matrix(H)))
     elif 'graph_number_of_cliques' in net_name:
         if nx.is_connected(G) is True:
@@ -796,7 +796,7 @@ def raw_mets(G, i):
                 [H, _] = prune_disconnected(G)
                 net_met_val = float(i(H))
             except:
-                np.save("%s%s%s" % ('/tmp/graph_num_cliques', random.randint(1, 400), '.npy'),
+                np.save(f"{'/tmp/graph_num_cliques'}{random.randint(1, 400)}{'.npy'}",
                         np.array(nx.to_numpy_matrix(H)))
     elif 'smallworldness' in net_name:
         try:
@@ -806,7 +806,7 @@ def raw_mets(G, i):
                 [H, _] = prune_disconnected(G)
                 net_met_val = float(i(H))
             except:
-                np.save("%s%s%s" % ('/tmp/smallworldness', random.randint(1, 400), '.npy'),
+                np.save(f"{'/tmp/smallworldness'}{random.randint(1, 400)}{'.npy'}",
                         np.array(nx.to_numpy_matrix(H)))
     elif 'degree_assortativity_coefficient' in net_name:
             H = G.copy()
@@ -823,7 +823,7 @@ def raw_mets(G, i):
                         from networkx.algorithms.assortativity import degree_pearson_correlation_coefficient
                         net_met_val = float(degree_pearson_correlation_coefficient(H, weight='weight'))
                     except:
-                        np.save("%s%s%s" % ('/tmp/degree_assortativity_coefficient', random.randint(1, 400), '.npy'),
+                        np.save(f"{'/tmp/degree_assortativity_coefficient'}{random.randint(1, 400)}{'.npy'}",
                                 np.array(nx.to_numpy_matrix(H)))
     else:
         net_met_val = float(i(G))
@@ -868,7 +868,7 @@ class CleanGraphs(object):
         self.norm = norm
         self.out_fmt = out_fmt
         self.in_mat = None
-        self._est_path_fmt = "%s%s" % ('.', self.est_path.split('.')[-1])
+        self._est_path_fmt = f"{'.'}{self.est_path.split('.')[-1]}"
 
         # Load and threshold matrix
         if self._est_path_fmt == '.txt':
@@ -942,15 +942,15 @@ class CleanGraphs(object):
 
         # Saved pruned
         if (self.prune != 0) and (self.prune is not None):
-            final_mat_path = "%s%s" % (self.est_path.split('.npy')[0], '_pruned_mat')
+            final_mat_path = f"{self.est_path.split('.npy')[0]}{'_pruned_mat'}"
             utils.save_mat(self.in_mat, final_mat_path, self.out_fmt)
-            print("%s%s" % ('Source File: ', final_mat_path))
+            print(f"{'Source File: '}{final_mat_path}")
         else:
-            print("%s%s" % ('Source File: ', self.est_path))
+            print(f"{'Source File: '}{self.est_path}")
         return self.in_mat, final_mat_path
 
     def print_summary(self):
-        print("%s%.2f%s" % ('\n\nThreshold: ', 100 * float(self.thr), '%'))
+        print(f"\n\nThreshold: {100 * float(self.thr):.2f}%")
 
         info_list = list(nx.info(self.G).split('\n'))[2:]
         for i in info_list:
@@ -977,7 +977,7 @@ def save_netmets(dir_path, est_path, metric_list_names, net_met_val_list_final):
     from pynets.core import utils
 
     # And save results to csv
-    out_path_neat = "%s%s" % (utils.create_csv_path(dir_path, est_path).split('.csv')[0], '_neat.csv')
+    out_path_neat = f"{utils.create_csv_path(dir_path, est_path).split('.csv')[0]}{'_neat.csv'}"
     zipped_dict = dict(zip(metric_list_names, net_met_val_list_final))
     df = pd.DataFrame.from_dict(zipped_dict, orient='index', dtype='float32').transpose()
     df.to_csv(out_path_neat, index=False)
@@ -999,12 +999,12 @@ def iterate_nx_global_measures(G, metric_list_glob):
             try:
                 net_met_val = raw_mets(G, i)
             except:
-                print("%s%s%s" % ('WARNING: ', net_met, ' failed for G.'))
+                print(f"{'WARNING: '}{net_met}{' failed for G.'}")
                 # np.save("%s%s%s%s" % ('/tmp/', net_met, random.randint(1, 400), '.npy'),
                 #         np.array(nx.to_numpy_matrix(G)))
                 net_met_val = np.nan
         except:
-            print("%s%s%s" % ('WARNING: ', str(i), ' is undefined for G'))
+            print(f"{'WARNING: '}{str(i)}{' is undefined for G'}")
             # np.save("%s%s%s%s" % ('/tmp/', net_met, random.randint(1, 400), '.npy'),
             #         np.array(nx.to_numpy_matrix(G)))
             net_met_val = np.nan
@@ -1012,7 +1012,7 @@ def iterate_nx_global_measures(G, metric_list_glob):
         net_met_arr[j, 1] = net_met_val
         print(net_met.replace('_', ' ').title())
         print(str(net_met_val))
-        print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
+        print(f"{np.round(time.time() - start_time, 1)}{'s'}")
         print('\n')
         j = j + 1
     net_met_val_list = list(net_met_arr[:, 1])
@@ -1035,7 +1035,7 @@ def community_resolution_selection(G):
         while num_comms == 1:
             ci = np.array(list(community.best_partition(G, resolution=resolution).values()))
             num_comms = len(np.unique(ci))
-            print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
+            print(f"{'Found '}{num_comms}{' communities at resolution: '}{resolution}{'...'}")
             resolution = resolution + 10
             tries = tries + 1
             if tries > 100:
@@ -1048,7 +1048,7 @@ def community_resolution_selection(G):
         while num_comms == 1:
             ci = np.array(list(community.best_partition(G, resolution=resolution).values()))
             num_comms = len(np.unique(ci))
-            print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
+            print(f"{'Found '}{num_comms}{' communities at resolution: '}{resolution}{'...'}")
             resolution = resolution / 10
             tries = tries + 1
             if tries > 100:
@@ -1056,7 +1056,7 @@ def community_resolution_selection(G):
                       'vector...')
                 break
     else:
-        print("%s%s%s%s%s" % ('Found ', num_comms, ' communities at resolution: ', resolution, '...'))
+        print(f"{'Found '}{num_comms}{' communities at resolution: '}{resolution}{'...'}")
     return dict(zip(G.nodes(), ci)), ci, resolution, num_comms
 
 
@@ -1084,18 +1084,18 @@ def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
     pc_arr = np.zeros([num_edges + 1, 2], dtype='object')
     j = 0
     for i in range(num_edges):
-        pc_arr[j, 0] = "%s%s" % (str(pc_edges[j]), '_participation_coefficient')
+        pc_arr[j, 0] = f"{str(pc_edges[j])}{'_participation_coefficient'}"
         try:
             pc_arr[j, 1] = pc_vals[j]
         except:
-            print("%s%s%s" % ('Participation coefficient is undefined for node ', str(j), ' of G'))
+            print(f"{'Participation coefficient is undefined for node '}{str(j)}{' of G'}")
             pc_arr[j, 1] = np.nan
         j = j + 1
     # Add mean
     pc_arr[num_edges, 0] = 'average_participation_coefficient'
     nonzero_arr_partic_coef = np.delete(pc_arr[:, 1], [0])
     pc_arr[num_edges, 1] = np.mean(nonzero_arr_partic_coef)
-    print("%s%s" % ('Mean Participation Coefficient: ', str(pc_arr[num_edges, 1])))
+    print(f"{'Mean Participation Coefficient: '}{str(pc_arr[num_edges, 1])}")
     for i in pc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(pc_arr[:, 1])
@@ -1111,18 +1111,18 @@ def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
     dc_arr = np.zeros([num_edges + 1, 2], dtype='object')
     j = 0
     for i in range(num_edges):
-        dc_arr[j, 0] = "%s%s" % (str(dc_edges[j]), '_diversity_coefficient')
+        dc_arr[j, 0] = f"{str(dc_edges[j])}{'_diversity_coefficient'}"
         try:
             dc_arr[j, 1] = dc_vals[j]
         except:
-            print("%s%s%s" % ('Diversity coefficient is undefined for node ', str(j), ' of G'))
+            print(f"{'Diversity coefficient is undefined for node '}{str(j)}{' of G'}")
             dc_arr[j, 1] = np.nan
         j = j + 1
     # Add mean
     dc_arr[num_edges, 0] = 'average_diversity_coefficient'
     nonzero_arr_diversity_coef = np.delete(dc_arr[:, 1], [0])
     dc_arr[num_edges, 1] = np.mean(nonzero_arr_diversity_coef)
-    print("%s%s" % ('Mean Diversity Coefficient: ', str(dc_arr[num_edges, 1])))
+    print(f"{'Mean Diversity Coefficient: '}{str(dc_arr[num_edges, 1])}")
     for i in dc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(dc_arr[:, 1])
@@ -1138,17 +1138,17 @@ def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
     le_arr = np.zeros([num_nodes + 1, 2], dtype='object')
     j = 0
     for i in range(num_nodes):
-        le_arr[j, 0] = "%s%s" % (str(le_nodes[j]), '_local_efficiency')
+        le_arr[j, 0] = f"{str(le_nodes[j])}{'_local_efficiency'}"
         try:
             le_arr[j, 1] = le_vals[j]
         except:
-            print("%s%s%s" % ('Local efficiency is undefined for node ', str(j), ' of G'))
+            print(f"{'Local efficiency is undefined for node '}{str(j)}{' of G'}")
             le_arr[j, 1] = np.nan
         j = j + 1
     le_arr[num_nodes, 0] = 'average_local_efficiency_nodewise'
     nonzero_arr_le = np.delete(le_arr[:, 1], [0])
     le_arr[num_nodes, 1] = np.mean(nonzero_arr_le)
-    print("%s%s" % ('Mean Local Efficiency: ', str(le_arr[num_nodes, 1])))
+    print(f"{'Mean Local Efficiency: '}{str(le_arr[num_nodes, 1])}")
     for i in le_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(le_arr[:, 1])
@@ -1166,17 +1166,17 @@ def get_clustering(G, metric_list_names, net_met_val_list_final):
     cl_arr = np.zeros([num_nodes + 1, 2], dtype='object')
     j = 0
     for i in range(num_nodes):
-        cl_arr[j, 0] = "%s%s" % (str(cl_nodes[j]), '_local_clustering')
+        cl_arr[j, 0] = f"{str(cl_nodes[j])}{'_local_clustering'}"
         try:
             cl_arr[j, 1] = cl_vals[j]
         except:
-            print("%s%s%s" % ('Local clustering is undefined for node ', str(j), ' of G'))
+            print(f"{'Local clustering is undefined for node '}{str(j)}{' of G'}")
             cl_arr[j, 1] = np.nan
         j = j + 1
     cl_arr[num_nodes, 0] = 'average_local_clustering_nodewise'
     nonzero_arr_cl = np.delete(cl_arr[:, 1], [0])
     cl_arr[num_nodes, 1] = np.mean(nonzero_arr_cl)
-    print("%s%s" % ('Mean Local Clustering across nodes: ', str(cl_arr[num_nodes, 1])))
+    print(f"{'Mean Local Clustering across nodes: '}{str(cl_arr[num_nodes, 1])}")
     for i in cl_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(cl_arr[:, 1])
@@ -1193,17 +1193,17 @@ def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
     dc_arr = np.zeros([num_nodes + 1, 2], dtype='object')
     j = 0
     for i in range(num_nodes):
-        dc_arr[j, 0] = "%s%s" % (str(dc_nodes[j]), '_degree_centrality')
+        dc_arr[j, 0] = f"{str(dc_nodes[j])}{'_degree_centrality'}"
         try:
             dc_arr[j, 1] = dc_vals[j]
         except:
-            print("%s%s%s" % ('Degree centrality is undefined for node ', str(j), ' of G'))
+            print(f"{'Degree centrality is undefined for node '}{str(j)}{' of G'}")
             dc_arr[j, 1] = np.nan
         j = j + 1
     dc_arr[num_nodes, 0] = 'average_degree_centrality'
     nonzero_arr_dc = np.delete(dc_arr[:, 1], [0])
     dc_arr[num_nodes, 1] = np.mean(nonzero_arr_dc)
-    print("%s%s" % ('Mean Degree Centrality across nodes: ', str(dc_arr[num_nodes, 1])))
+    print(f"{'Mean Degree Centrality across nodes: '}{str(dc_arr[num_nodes, 1])}")
     for i in dc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(dc_arr[:, 1])
@@ -1220,17 +1220,17 @@ def get_betweenness_centrality(G_len, metric_list_names, net_met_val_list_final)
     bc_arr = np.zeros([num_nodes + 1, 2], dtype='object')
     j = 0
     for i in range(num_nodes):
-        bc_arr[j, 0] = "%s%s" % (str(bc_nodes[j]), '_betweenness_centrality')
+        bc_arr[j, 0] = f"{str(bc_nodes[j])}{'_betweenness_centrality'}"
         try:
             bc_arr[j, 1] = bc_vals[j]
         except:
-            print("%s%s%s" % ('Betweeness centrality is undefined for node ', str(j), ' of G'))
+            print(f"{'Betweeness centrality is undefined for node '}{str(j)}{' of G'}")
             bc_arr[j, 1] = np.nan
         j = j + 1
     bc_arr[num_nodes, 0] = 'average_betweenness_centrality'
     nonzero_arr_betw_cent = np.delete(bc_arr[:, 1], [0])
     bc_arr[num_nodes, 1] = np.mean(nonzero_arr_betw_cent)
-    print("%s%s" % ('Mean Betweenness Centrality across nodes: ', str(bc_arr[num_nodes, 1])))
+    print(f"{'Mean Betweenness Centrality across nodes: '}{str(bc_arr[num_nodes, 1])}")
     for i in bc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(bc_arr[:, 1])
@@ -1247,17 +1247,17 @@ def get_eigen_centrality(G, metric_list_names, net_met_val_list_final):
     ec_arr = np.zeros([num_nodes + 1, 2], dtype='object')
     j = 0
     for i in range(num_nodes):
-        ec_arr[j, 0] = "%s%s" % (str(ec_nodes[j]), '_eigenvector_centrality')
+        ec_arr[j, 0] = f"{str(ec_nodes[j])}{'_eigenvector_centrality'}"
         try:
             ec_arr[j, 1] = ec_vals[j]
         except:
-            print("%s%s%s" % ('Eigenvector centrality is undefined for node ', str(j), ' of G'))
+            print(f"{'Eigenvector centrality is undefined for node '}{str(j)}{' of G'}")
             ec_arr[j, 1] = np.nan
         j = j + 1
     ec_arr[num_nodes, 0] = 'average_eigenvector_centrality'
     nonzero_arr_eig_cent = np.delete(ec_arr[:, 1], [0])
     ec_arr[num_nodes, 1] = np.mean(nonzero_arr_eig_cent)
-    print("%s%s" % ('Mean Eigenvector Centrality across nodes: ', str(ec_arr[num_nodes, 1])))
+    print(f"{'Mean Eigenvector Centrality across nodes: '}{str(ec_arr[num_nodes, 1])}")
     for i in ec_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(ec_arr[:, 1])
@@ -1274,17 +1274,17 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
     cc_arr = np.zeros([num_nodes + 1, 2], dtype='object')
     j = 0
     for i in range(num_nodes):
-        cc_arr[j, 0] = "%s%s" % (str(cc_nodes[j]), '_communicability_centrality')
+        cc_arr[j, 0] = f"{str(cc_nodes[j])}{'_communicability_centrality'}"
         try:
             cc_arr[j, 1] = cc_vals[j]
         except:
-            print("%s%s%s" % ('Communicability centrality is undefined for node ', str(j), ' of G'))
+            print(f"{'Communicability centrality is undefined for node '}{str(j)}{' of G'}")
             cc_arr[j, 1] = np.nan
         j = j + 1
     cc_arr[num_nodes, 0] = 'average_communicability_centrality'
     nonzero_arr_comm_cent = np.delete(cc_arr[:, 1], [0])
     cc_arr[num_nodes, 1] = np.mean(nonzero_arr_comm_cent)
-    print("%s%s" % ('Mean Communicability Centrality across nodes: ', str(cc_arr[num_nodes, 1])))
+    print(f"{'Mean Communicability Centrality across nodes: '}{str(cc_arr[num_nodes, 1])}")
     for i in cc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(cc_arr[:, 1])
@@ -1302,18 +1302,18 @@ def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final):
     rc_arr = np.zeros([num_edges + 1, 2], dtype='object')
     j = 0
     for i in range(num_edges):
-        rc_arr[j, 0] = "%s%s" % (str(rc_edges[j]), '_rich_club_coefficient')
+        rc_arr[j, 0] = f"{str(rc_edges[j])}{'_rich_club_coefficient'}"
         try:
             rc_arr[j, 1] = rc_vals[j]
         except:
-            print("%s%s%s" % ('Rich club coefficient is undefined for node ', str(j), ' of G'))
+            print(f"{'Rich club coefficient is undefined for node '}{str(j)}{' of G'}")
             rc_arr[j, 1] = np.nan
         j = j + 1
     # Add mean
     rc_arr[num_edges, 0] = 'average_rich_club_coefficient'
     nonzero_arr_rich_club = np.delete(rc_arr[:, 1], [0])
     rc_arr[num_edges, 1] = np.mean(nonzero_arr_rich_club)
-    print("%s%s" % ('Mean Rich Club Coefficient across edges: ', str(rc_arr[num_edges, 1])))
+    print(f"{'Mean Rich Club Coefficient across edges: '}{str(rc_arr[num_edges, 1])}")
     for i in rc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(rc_arr[:, 1])
@@ -1386,7 +1386,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     dir_path = op.dirname(op.realpath(est_path))
 
     # Load netstats config and parse graph algorithms as objects
-    with open("%s%s" % (str(Path(__file__).parent), '/global_graph_measures.yaml'), 'r') as stream:
+    with open(f"{str(Path(__file__).parent)}{'/global_graph_measures.yaml'}", 'r') as stream:
         try:
             nx_algs = ['degree_assortativity_coefficient', 'average_clustering', 'average_shortest_path_length',
                        'graph_number_of_cliques']
@@ -1402,17 +1402,15 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
                 from functools import partial
                 metric_list_global = [partial(i, weight='weight') if 'weight' in i.__code__.co_varnames else i for i in
                                       metric_list_global]
-            print("%s%s%s" % ('\n\nGlobal Topographic Metrics:\n',
-                              metric_list_global_names, '\n'))
+            print(f"\n\nGlobal Topographic Metrics:\n{metric_list_global_names}\n")
         except FileNotFoundError:
             print('Failed to parse global_graph_measures.yaml')
 
-    with open("%s%s" % (str(Path(__file__).parent), '/nodal_graph_measures.yaml'), 'r') as stream:
+    with open(f"{str(Path(__file__).parent)}{'/nodal_graph_measures.yaml'}", 'r') as stream:
         try:
             metric_dict_nodal = yaml.load(stream)
             metric_list_nodal = metric_dict_nodal['metric_list_nodal']
-            print("%s%s%s" % ('\nNodal Topographic Metrics:\n',
-                              metric_list_nodal, '\n\n'))
+            print(f"\nNodal Topographic Metrics:\n{metric_list_nodal}\n\n")
         except FileNotFoundError:
             print('Failed to parse nodal_graph_measures.yaml')
 
@@ -1429,7 +1427,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
         try:
             start_time = time.time()
             net_met_val_list_final, metric_list_names, ci = get_community(G, net_met_val_list_final, metric_list_names)
-            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
+            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
         except:
             print('Louvain modularity calculation is undefined for G')
             # np.save("%s%s%s" % ('/tmp/community_failure', random.randint(1, 400), '.npy'),
@@ -1445,7 +1443,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
             start_time = time.time()
             metric_list_names, net_met_val_list_final = get_participation(in_mat, ci, metric_list_names,
                                                                           net_met_val_list_final)
-            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
+            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
         except:
             print('Participation coefficient cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/partic_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
@@ -1460,7 +1458,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
             start_time = time.time()
             metric_list_names, net_met_val_list_final = get_diversity(in_mat, ci, metric_list_names,
                                                                       net_met_val_list_final)
-            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
+            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
         except:
             print('Diversity coefficient cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/div_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
@@ -1472,7 +1470,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
             start_time = time.time()
             metric_list_names, net_met_val_list_final = get_local_efficiency(G, metric_list_names,
                                                                              net_met_val_list_final)
-            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
+            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
         except:
             print('Local efficiency cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/local_eff_failure', random.randint(1, 400), '.npy'),
@@ -1484,7 +1482,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
         try:
             start_time = time.time()
             metric_list_names, net_met_val_list_final = get_clustering(G, metric_list_names, net_met_val_list_final)
-            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
+            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
         except:
             print('Local clustering cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/local_clust_failure', random.randint(1, 400), '.npy'),
@@ -1497,7 +1495,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
             start_time = time.time()
             metric_list_names, net_met_val_list_final = get_degree_centrality(G, metric_list_names,
                                                                               net_met_val_list_final)
-            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
+            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
         except:
             print('Degree centrality cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/degree_cent_failure', random.randint(1, 400), '.npy'),
@@ -1510,7 +1508,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
             start_time = time.time()
             metric_list_names, net_met_val_list_final = get_betweenness_centrality(G_len, metric_list_names,
                                                                                    net_met_val_list_final)
-            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
+            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
         except:
             print('Betweenness centrality cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/betw_cent_failure', random.randint(1, 400), '.npy'),
@@ -1523,7 +1521,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
             start_time = time.time()
             metric_list_names, net_met_val_list_final = get_eigen_centrality(G, metric_list_names,
                                                                              net_met_val_list_final)
-            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
+            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
         except:
             print('Eigenvector centrality cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/eig_cent_failure', random.randint(1, 400), '.npy'),
@@ -1536,7 +1534,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
             start_time = time.time()
             metric_list_names, net_met_val_list_final = get_comm_centrality(G, metric_list_names,
                                                                             net_met_val_list_final)
-            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
+            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
         except:
             print('Communicability centrality cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/comm_cent_failure', random.randint(1, 400), '.npy'),
@@ -1549,7 +1547,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
             start_time = time.time()
             metric_list_names, net_met_val_list_final = get_rich_club_coeff(G, metric_list_names,
                                                                             net_met_val_list_final)
-            print("%s%s" % (np.round(time.time() - start_time, 1), 's'))
+            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
         except:
             print('Rich club coefficient cannot be calculated for G')
             # np.save("%s%s%s" % ('/tmp/rich_club_failure', random.randint(1, 400), '.npy'),
@@ -1611,11 +1609,11 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
     subject_path = op.dirname(op.dirname(op.dirname(net_mets_csv_list[0])))
 
     if len(net_mets_csv_list) > 1:
-        print("%s%s%s" % ('\n\nAll graph analysis results:\n', str(net_mets_csv_list), '\n\n'))
+        print(f"\n\nAll graph analysis results:\n{str(net_mets_csv_list)}\n\n")
 
         models = []
         for file_ in net_mets_csv_list:
-            models.append("%s%s%s" % (op.basename(op.dirname(op.dirname(file_))), '/netmetrics/', op.basename(file_)))
+            models.append(f"{op.basename(op.dirname(op.dirname(file_)))}{'/netmetrics/'}{op.basename(file_)}")
 
         def sort_thr(model_name):
             return model_name.split('thr-')[1].split('_')[0]
@@ -1662,7 +1660,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                 df_summary_auc = df_summary.iloc[[0]]
                 df_summary_auc.columns = [col + '_auc' for col in df_summary.columns]
 
-                print("%s%s" % ('\nAUC for threshold group: ', models_grouped[thr_set]))
+                print(f"\nAUC for threshold group: {models_grouped[thr_set]}")
                 file_renamed = list(set([re.sub(r'thr\-\d+\.*\d+', '',
                                                 i.split('/netmetrics/')[1]).replace('neat', 'auc') for i in
                                          models_grouped[thr_set]]))[0]
@@ -1677,9 +1675,9 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                     # Get Area Under the Curve
                     df_summary_nonan = df_summary[pd.notnull(df_summary[measure])]
                     df_summary_auc[measure] = np.trapz(np.array(df_summary_nonan[measure]).astype('float32'))
-                    print("%s%s%s" % (measure, ': ', df_summary_auc[measure].to_string(index=False)))
+                    print(f"{measure}{': '}{df_summary_auc[measure].to_string(index=False)}")
                 meta[thr_set]['auc_dataframe'] = df_summary_auc
-                auc_dir = "%s%s%s%s" % (subject_path, '/', atlas, '/netmetrics/auc/')
+                auc_dir = f"{subject_path}{'/'}{atlas}{'/netmetrics/auc/'}"
                 if not os.path.isdir(auc_dir):
                     os.makedirs(auc_dir, exist_ok=True)
                 df_summary_auc = df_summary_auc.drop(columns=['thr_auc'])
@@ -1734,25 +1732,24 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
                 df_concatted_mode.columns = [str(col) + '_maxmode' for col in df_concatted_mode.columns]
                 result = pd.concat([df_concatted_mean, df_concatted_median, df_concatted_mode], axis=1)
                 df_concatted_final = result.reindex(sorted(result.columns), axis=1)
-                print("%s%s%s" % ('\nConcatenating dataframes for ', str(ID), '...\n'))
-                net_csv_summary_out_path = "%s%s%s%s%s%s" % (summary_dir, '/', str(ID), '_net_mets',
-                                                             '%s' % ('_' + network if network is not None else ''),
-                                                             '_mean.csv')
+                print(f"\nConcatenating dataframes for {str(ID)}...\n")
+                net_csv_summary_out_path = f"{summary_dir}/{str(ID)}_" \
+                    f"net_mets{'%s' % ('_' + network if network is not None else '')}_mean.csv"
                 df_concatted_final.to_csv(net_csv_summary_out_path, index=False)
                 del result, df_concat, df_concatted_mean, df_concatted_median, df_concatted_mode, df_concatted_final
 
                 combination_complete = True
             except RuntimeWarning:
                 combination_complete = False
-                print("%s%s%s" % ('\nWARNING: DATAFRAME CONCATENATION FAILED FOR ', str(ID), '!\n'))
+                print(f"\nWARNING: DATAFRAME CONCATENATION FAILED FOR {str(ID)}!\n")
                 pass
         else:
             combination_complete = True
     else:
         if network is not None:
-            print("%s%s%s%s%s" % ('\nSingle dataframe for the ', network, ' network for subject ', ID, '\n'))
+            print(f"\nSingle dataframe for the {network} network for subject {ID}\n")
         else:
-            print("%s%s%s" % ('\nSingle dataframe for subject ', ID, '\n'))
+            print(f"\nSingle dataframe for subject {ID}\n")
         combination_complete = True
 
     gc.collect()

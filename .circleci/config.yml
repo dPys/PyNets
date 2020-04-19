@@ -148,7 +148,7 @@ jobs:
       - run:
           name: Download OSF test data
           command: |
-            wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O examples.tar.gz "https://osf.io/aq8ur/download"
+            wget --retry-connrefused --waitretry=10 --read-timeout=40 --timeout=30 -t 0 -q -O examples.tar.gz "https://osf.io/aq8ur/download"
             tar -xvzf examples.tar.gz -C /home/circleci/data
       - save_cache:
          key: data-v0-{{ .Revision }}-{{ epoch }}
@@ -266,7 +266,7 @@ jobs:
             which pynets | grep sdist\\/bin
             INSTALLED_VERSION=$(pynets --version)
             INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
-            INSTALLED_VERSION=${INSTALLED_VERSION#*"pynets v"}
+            INSTALLED_VERSION=${INSTALLED_VERSION#*}
             echo "VERSION: \"$THISVERSION\""
             echo "INSTALLED: \"$INSTALLED_VERSION\""
             test "$INSTALLED_VERSION" = "$THISVERSION"
@@ -284,7 +284,7 @@ jobs:
             which pynets | grep wheel\\/bin
             INSTALLED_VERSION=$(pynets --version)
             INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
-            INSTALLED_VERSION=${INSTALLED_VERSION#*"pynets v"}
+            INSTALLED_VERSION=${INSTALLED_VERSION#*}
             echo "VERSION: \"$THISVERSION\""
             echo "INSTALLED: \"$INSTALLED_VERSION\""
             test "$INSTALLED_VERSION" = "$THISVERSION"

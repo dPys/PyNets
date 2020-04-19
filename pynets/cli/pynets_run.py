@@ -14,7 +14,7 @@ def get_parser():
     import argparse
     from pathlib import Path
     from pynets.__about__ import __version__
-    verstr = 'PyNets v{}'.format(__version__)
+    verstr = f'PyNets v{__version__}'
 
     # Parse args
     parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
@@ -411,7 +411,7 @@ def build_workflow(args, retval):
     import datetime
     try:
         import pynets
-        print("%s%s%s" % ('\n\nPyNets Version:\n', pynets.__version__, '\n\n'))
+        print(f"\n\nPyNets Version:\n{pynets.__version__}\n\n")
     except ImportError:
         print('PyNets not installed! Ensure that you are using the correct python version.')
     from pynets.core.utils import do_dir_path
@@ -699,7 +699,7 @@ def build_workflow(args, retval):
     print('\n\n\n------------------------------------------------------------------------\n')
 
     # Hard-coded:
-    with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
+    with open(f"{str(Path(__file__).parent.parent)}{'/runconfig.yaml'}", 'r') as stream:
         try:
             hardcoded_params = yaml.load(stream)
             maxcrossing = hardcoded_params['maxcrossing'][0]
@@ -963,48 +963,48 @@ def build_workflow(args, retval):
 
     if graph is None and multi_graph is None:
         if network is not None:
-            print("%s%s" % ("\nRunning pipeline for 1 RSN: ", network))
+            print(f"\nRunning pipeline for 1 RSN: {network}")
         elif multi_nets is not None:
             network = None
-            print("%s%d%s%s%s" % ('\nIterating pipeline across ', len(multi_nets), ' RSN\'s: ',
-                                  str(', '.join(str(n) for n in multi_nets)), '...'))
+            print(f"\nIterating pipeline across {len(multi_nets)} RSN\'s: "
+                  f"{str(', '.join(str(n) for n in multi_nets))}...")
         else:
             print("\nUsing whole-brain pipeline...")
 
         if node_size_list:
-            print("%s%s%s" % ('\nGrowing spherical nodes across multiple radius sizes: ',
-                              str(', '.join(str(n) for n in node_size_list)), '...'))
+            print(f"\nGrowing spherical nodes across multiple radius sizes: "
+                  f"{str(', '.join(str(n) for n in node_size_list))}...")
             node_size = None
         elif parc is True:
             print("\nUsing parcels as nodes...")
         else:
             if node_size is None:
                 node_size = 4
-            print("%s%s%s" % ("\nUsing node size of: ", node_size, 'mm...'))
+            print(f"\nUsing node size of: {node_size}mm...")
 
         if func_file or func_file_list:
             if smooth_list:
-                print("%s%s%s" % ('\nApplying smoothing to node signal at multiple FWHM mm values: ',
-                                  str(', '.join(str(n) for n in smooth_list)), '...'))
+                print(f"\nApplying smoothing to node signal at multiple FWHM mm values: "
+                      f"{str(', '.join(str(n) for n in smooth_list))}...")
             elif float(smooth) > 0:
-                print("%s%s%s" % ("\nApplying smoothing to node signal at: ", smooth, 'FWHM mm...'))
+                print(f"\nApplying smoothing to node signal at: {smooth}FWHM mm...")
             else:
                 smooth = 0
 
             if hpass_list:
-                print("%s%s%s" % ('\nApplying high-pass filter to node signal at multiple Hz values: ',
-                                  str(', '.join(str(n) for n in hpass_list)), '...'))
+                print(f"\nApplying high-pass filter to node signal at multiple Hz values: "
+                      f"{str(', '.join(str(n) for n in hpass_list))}...")
             elif hpass is not None:
-                print("%s%s%s" % ("\nApplying high-pass filter to node signal at: ", hpass, 'Hz...'))
+                print(f"\nApplying high-pass filter to node signal at: {hpass}Hz...")
             else:
                 hpass = None
 
         if conn_model_list:
-            print("%s%s%s" % ('\nIterating graph estimation across multiple connectivity models: ',
-                              str(', '.join(str(n) for n in conn_model_list)), '...'))
+            print(f"\nIterating graph estimation across multiple connectivity models: "
+                  f"{str(', '.join(str(n) for n in conn_model_list))}...")
             conn_model = None
         else:
-            print("%s%s" % ("\nUsing connectivity model: ", conn_model))
+            print(f"\nUsing connectivity model: {conn_model}")
 
     elif graph or multi_graph:
         network = 'custom_graph'
@@ -1026,10 +1026,10 @@ def build_workflow(args, retval):
                 elif '.npy' in graph:
                     graph_name = op.basename(graph).split('.npy')[0]
                 else:
-                    print('Error: input graph file format not recognized. See -help for supported formats.')
+                    print('Error: input graph file format not recognized. See `-help` for supported formats.')
                     sys.exit(0)
                 print(graph_name)
-                atlas = "%s%s%s" % (graph_name, '_', ID)
+                atlas = f"{graph_name}_{ID}"
                 do_dir_path(atlas, outdir)
                 i = i + 1
         else:
@@ -1038,20 +1038,20 @@ def build_workflow(args, retval):
             elif '.npy' in graph:
                 graph_name = op.basename(graph).split('.npy')[0]
             else:
-                print('Error: input graph file format not recognized. See -help for supported formats.')
+                print('Error: input graph file format not recognized. See `-help` for supported formats.')
                 sys.exit(0)
             print('\nUsing single custom graph input...')
             print(graph_name)
-            atlas = "%s%s%s" % (graph_name, '_', ID)
+            atlas = f"{graph_name}_{ID}"
             do_dir_path(atlas, outdir)
 
     if func_file or func_file_list:
         if (uatlas is not None) and (k_clustering == 0) and (user_atlas_list is None):
             atlas_par = uatlas.split('/')[-1].split('.')[0]
-            print("%s%s" % ("\nUser atlas: ", atlas_par))
+            print(f"\nUser atlas: {atlas_par}")
         elif (uatlas is not None) and (user_atlas_list is None) and (k_clustering == 0):
             atlas_par = uatlas.split('/')[-1].split('.')[0]
-            print("%s%s" % ("\nUser atlas: ", atlas_par))
+            print(f"\nUser atlas: {atlas_par}")
         elif user_atlas_list is not None:
             print('\nIterating across multiple user atlases...')
             if func_file_list:
@@ -1065,34 +1065,34 @@ def build_workflow(args, retval):
 
         if k_clustering == 1:
             cl_mask_name = op.basename(clust_mask).split('.nii')[0]
-            atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-            print("%s%s" % ("\nCluster atlas: ", atlas_clust))
+            atlas_clust = f"{cl_mask_name}_{clust_type}_k{k}"
+            print(f"\nCluster atlas: {atlas_clust}")
             print("\nClustering within mask at a single resolution...")
         elif k_clustering == 2:
             print("\nClustering within mask at multiple resolutions...")
             if func_file_list:
                 for _k in k_list:
                     cl_mask_name = op.basename(clust_mask).split('.nii')[0]
-                    atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', _k)
-                    print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                    atlas_clust = f"{cl_mask_name}_{clust_type}_k{_k}"
+                    print(f"Cluster atlas: {atlas_clust}")
             else:
                 for _k in k_list:
                     cl_mask_name = op.basename(clust_mask).split('.nii')[0]
-                    atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', _k)
-                    print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                    atlas_clust = f"{cl_mask_name}_{clust_type}_k{_k}"
+                    print(f"Cluster atlas: {atlas_clust}")
             k = None
         elif k_clustering == 3:
             print("\nClustering within multiple masks at a single resolution...")
             if func_file_list:
                 for _clust_mask in clust_mask_list:
                     cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
-                    atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                    print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                    atlas_clust = f"{cl_mask_name}_{clust_type}_k{k}"
+                    print(f"Cluster atlas: {atlas_clust}")
             else:
                 for _clust_mask in clust_mask_list:
                     cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
-                    atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', k)
-                    print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                    atlas_clust = f"{cl_mask_name}_{clust_type}_k{k}"
+                    print(f"Cluster atlas: {atlas_clust}")
             clust_mask = None
         elif k_clustering == 4:
             print("\nClustering within multiple masks at multiple resolutions...")
@@ -1100,21 +1100,21 @@ def build_workflow(args, retval):
                 for _clust_mask in clust_mask_list:
                     for _k in k_list:
                         cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
-                        atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', _k)
-                        print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                        atlas_clust = f"{cl_mask_name}_{clust_type}_k{_k}"
+                        print(f"Cluster atlas: {atlas_clust}")
             else:
                 for _clust_mask in clust_mask_list:
                     for _k in k_list:
                         cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
-                        atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', clust_type, '_k', _k)
-                        print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                        atlas_clust = f"{cl_mask_name}_{clust_type}_k{_k}"
+                        print(f"Cluster atlas: {atlas_clust}")
             clust_mask = None
             k = None
         elif k_clustering == 5:
             for _clust_type in clust_type_list:
                 cl_mask_name = op.basename(clust_mask).split('.nii')[0]
-                atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', k)
-                print("%s%s" % ("\nCluster atlas: ", atlas_clust))
+                atlas_clust = f"{cl_mask_name}_{_clust_type}_k{k}"
+                print(f"\nCluster atlas: {atlas_clust}")
                 print("\nClustering within mask at a single resolution using multiple clustering methods...")
             clust_type = None
         elif k_clustering == 6:
@@ -1123,14 +1123,14 @@ def build_workflow(args, retval):
                 for _clust_type in clust_type_list:
                     for _k in k_list:
                         cl_mask_name = op.basename(clust_mask).split('.nii')[0]
-                        atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', _k)
-                        print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                        atlas_clust = f"{cl_mask_name}_{_clust_type}_k{_k}"
+                        print(f"Cluster atlas: {atlas_clust}")
             else:
                 for _clust_type in clust_type_list:
                     for _k in k_list:
                         cl_mask_name = op.basename(clust_mask).split('.nii')[0]
-                        atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', _k)
-                        print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                        atlas_clust = f"{cl_mask_name}_{_clust_type}_k{_k}"
+                        print(f"Cluster atlas: {atlas_clust}")
             clust_type = None
             k = None
         elif k_clustering == 7:
@@ -1139,14 +1139,14 @@ def build_workflow(args, retval):
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
                         cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
-                        atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', k)
-                        print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                        atlas_clust = f"{cl_mask_name}_{_clust_type}_k{k}"
+                        print(f"Cluster atlas: {atlas_clust}")
             else:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
                         cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
-                        atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', k)
-                        print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                        atlas_clust = f"{cl_mask_name}_{_clust_type}_k{k}"
+                        print(f"Cluster atlas: {atlas_clust}")
             clust_mask = None
             clust_type = None
         elif k_clustering == 8:
@@ -1156,15 +1156,15 @@ def build_workflow(args, retval):
                     for _clust_mask in clust_mask_list:
                         for _k in k_list:
                             cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
-                            atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', _k)
-                            print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                            atlas_clust = f"{cl_mask_name}_{_clust_type}_k{_k}"
+                            print(f"Cluster atlas: {atlas_clust}")
             else:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
                         for _k in k_list:
                             cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
-                            atlas_clust = "%s%s%s%s%s" % (cl_mask_name, '_', _clust_type, '_k', _k)
-                            print("%s%s" % ("Cluster atlas: ", atlas_clust))
+                            atlas_clust = f"{cl_mask_name}_{_clust_type}_k{_k}"
+                            print(f"Cluster atlas: {atlas_clust}")
             clust_mask = None
             clust_type = None
             k = None
@@ -1172,7 +1172,7 @@ def build_workflow(args, retval):
                                                                       k_clustering == 3 or
                                                                       k_clustering == 2 or
                                                                       k_clustering == 1) and (atlas is None):
-            print('Error: the -ua flag cannot be used alone with the clustering option. Use the -cm flag instead.')
+            print('Error: the -ua flag cannot be used alone with the clustering option. Use the `-cm` flag instead.')
             retval['return_code'] = 1
             return retval
 
@@ -1183,8 +1183,7 @@ def build_workflow(args, retval):
                     for _atlas in multi_atlas:
                         if (parc is True) and (_atlas in nilearn_coord_atlases or _atlas in
                                                nilearn_prob_atlases):
-                            print("%s%s%s" % ('\nERROR: ', _atlas,
-                                              ' is a coordinate atlas and must be used with the -spheres flag.'))
+                            print(f"\nERROR: {_atlas} is a coordinate atlas and must be used with the `-spheres` flag.")
                             retval['return_code'] = 1
                             return retval
                         else:
@@ -1193,20 +1192,18 @@ def build_workflow(args, retval):
                 for _atlas in multi_atlas:
                     if (parc is True) and (_atlas in nilearn_coord_atlases or _atlas in
                                            nilearn_prob_atlases):
-                        print("%s%s%s" % ('\nERROR: ', _atlas,
-                                          ' is a coordinate atlas and must be used with the -spheres flag.'))
+                        print(f"\nERROR: {_atlas} is a coordinate atlas and must be used with the `-spheres` flag.")
                         retval['return_code'] = 1
                         return retval
                     else:
                         print(_atlas)
         elif atlas is not None:
             if (parc is True) and (atlas in nilearn_coord_atlases or atlas in nilearn_prob_atlases):
-                print("%s%s%s" % ('\nERROR: ', atlas, ' is a coordinate atlas and must be used with the -spheres '
-                                                      'flag.'))
+                print(f"\nERROR: {atlas} is a coordinate atlas and must be used with the `-spheres` flag.")
                 retval['return_code'] = 1
                 return retval
             else:
-                print("%s%s" % ("\nPredefined atlas: ", atlas))
+                print(f"\nPredefined atlas: {atlas}")
         else:
             if (uatlas is None) and (k == 0) and (user_atlas_list is None) and (k_list is None) and \
                     (atlas is None) and (multi_atlas is None):
@@ -1239,8 +1236,7 @@ def build_workflow(args, retval):
                 for _dwi_file in dwi_file_list:
                     for _atlas in multi_atlas:
                         if (parc is True) and (_atlas in nilearn_coord_atlases):
-                            print("%s%s%s" % ('\nERROR: ', _atlas,
-                                              ' is a coordinate atlas and must be used with the -spheres flag.'))
+                            print(f"\nERROR: {_atlas} is a coordinate atlas and must be used with the -spheres flag.")
                             retval['return_code'] = 1
                             return retval
                         else:
@@ -1248,42 +1244,40 @@ def build_workflow(args, retval):
             else:
                 for _atlas in multi_atlas:
                     if (parc is True) and (_atlas in nilearn_coord_atlases):
-                        print("%s%s%s" % ('\nERROR: ', _atlas,
-                                          ' is a coordinate atlas and must be used with the -spheres flag.'))
+                        print(f"\nERROR: {_atlas} is a coordinate atlas and must be used with the -spheres flag.")
                         retval['return_code'] = 1
                         return retval
                     else:
                         print(_atlas)
         elif atlas:
             if (parc is True) and (atlas in nilearn_coord_atlases):
-                print("%s%s%s" % ('\nERROR: ', atlas, ' is a coordinate atlas and must be used with the -spheres '
-                                                      'flag.'))
+                print(f"\nERROR: {atlas} is a coordinate atlas and must be used with the -spheres flag.")
                 retval['return_code'] = 1
                 return retval
             else:
-                print("%s%s" % ("\nNilearn atlas: ", atlas))
+                print(f"\nNilearn atlas: {atlas}")
 
         if target_samples:
-            print("%s%s%s" % ('Using ', target_samples, ' streamline samples...'))
+            print(f"Using {target_samples} streamline samples...")
         if min_length:
-            print("%s%s%s" % ('Using ', min_length, 'mm minimum streamline length...'))
+            print(f"Using {min_length}mm minimum streamline length...")
 
     if (dwi_file or dwi_file_list) and not (func_file or func_file_list):
         print('\nRunning dmri connectometry only...')
         if dwi_file_list:
             for (_dwi_file, _fbval, _fbvec, _anat_file) in list(zip(dwi_file_list, fbval_list, fbvec_list,
                                                                     anat_file_list)):
-                print("%s%s" % ('Diffusion-Weighted Image:\n', _dwi_file))
-                print("%s%s" % ('B-Values:\n', _fbval))
-                print("%s%s" % ('B-Vectors:\n', _fbvec))
+                print(f"Diffusion-Weighted Image:\n {_dwi_file}")
+                print(f"B-Values:\n {_fbval}")
+                print(f"B-Vectors:\n {_fbvec}")
                 if waymask is not None:
-                    print("%s%s" % ('Waymask:\n', waymask))
+                    print(f"Waymask:\n {waymask}")
         else:
-            print("%s%s" % ('Diffusion-Weighted Image:\n', dwi_file))
-            print("%s%s" % ('B-Values:\n', fbval))
-            print("%s%s" % ('B-Vectors:\n', fbvec))
+            print(f"Diffusion-Weighted Image:\n {dwi_file}")
+            print(f"B-Values:\n {fbval}")
+            print(f"B-Vectors:\n {fbvec}")
             if waymask is not None:
-                print("%s%s" % ('Waymask:\n', waymask))
+                print(f"Waymask:\n {waymask}")
         conf = None
         k = None
         clust_mask = None
@@ -1299,26 +1293,26 @@ def build_workflow(args, retval):
         print('\nRunning fmri connectometry only...')
         if func_file_list:
             for _func_file in func_file_list:
-                print("%s%s" % ('BOLD Image: ', _func_file))
+                print(f"BOLD Image: {_func_file}")
         else:
-            print("%s%s" % ('BOLD Image: ', func_file))
+            print(f"BOLD Image: {func_file}")
         multimodal = False
     elif (func_file or func_file_list) and (dwi_file or dwi_file_list):
         multimodal = True
         print('\nRunning joint fMRI-dMRI connectometry...')
-        print("%s%s" % ('BOLD Image:\n', func_file))
-        print("%s%s" % ('Diffusion-Weighted Image:\n', dwi_file))
-        print("%s%s" % ('B-Values:\n', fbval))
-        print("%s%s" % ('B-Vectors:\n', fbvec))
+        print(f"BOLD Image:\n{func_file}")
+        print(f"Diffusion-Weighted Image:\n{dwi_file}")
+        print(f"B-Values:\n{fbval}")
+        print(f"B-Vectors:\n{fbvec}")
     else:
         multimodal = False
 
     if anat_file or anat_file_list:
         if anat_file_list and len(anat_file_list) > 1:
             for anat_file in anat_file_list:
-                print("%s%s" % ('T1-Weighted Image:\n', anat_file))
+                print(f"T1-Weighted Image:\n{anat_file}")
         else:
-            print("%s%s" % ('T1-Weighted Image:\n', anat_file))
+            print(f"T1-Weighted Image:\n{anat_file}")
     print('\n-------------------------------------------------------------------------\n\n')
 
     # Variable tracking
@@ -1472,11 +1466,11 @@ def build_workflow(args, retval):
         from time import strftime
 
         if (func_file is not None) and (dwi_file is None):
-            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_fmri_', strftime('%Y%m%d_%H%M%S')))
+            wf = pe.Workflow(name=f"wf_single_sub_{ID}_fmri_{strftime('%Y%m%d_%H%M%S')}")
         elif (dwi_file is not None) and (func_file is None):
-            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_dmri_', strftime('%Y%m%d_%H%M%S')))
+            wf = pe.Workflow(name=f"wf_single_sub_{ID}_dmri_{strftime('%Y%m%d_%H%M%S')}")
         else:
-            wf = pe.Workflow(name="%s%s%s%s" % ('wf_single_sub_', ID, '_', strftime('%Y%m%d_%H%M%S')))
+            wf = pe.Workflow(name=f"wf_single_sub_{ID}_{strftime('%Y%m%d_%H%M%S')}")
         import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import indexed_gzip",
                        "import nibabel as nib", "import warnings", "warnings.filterwarnings(\"ignore\")",
                        "np.warnings.filterwarnings(\"ignore\")", "warnings.simplefilter(\"ignore\")"]
@@ -1536,7 +1530,7 @@ def build_workflow(args, retval):
 
         # Set resource restrictions at level of the meta-meta wf
         if func_file:
-            wf_selected = "%s%s" % ('fmri_connectometry_', ID)
+            wf_selected = f"fmri_connectometry_{ID}"
             for node_name in wf.get_node(meta_wf.name).get_node(wf_selected).list_node_names():
                 if node_name in runtime_dict:
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = \
@@ -1545,7 +1539,7 @@ def build_workflow(args, retval):
                         runtime_dict[node_name][1]
 
         if dwi_file:
-            wf_selected = "%s%s" % ('dmri_connectometry_', ID)
+            wf_selected = f"dmri_connectometry_{ID}"
             for node_name in wf.get_node(meta_wf.name).get_node(wf_selected).list_node_names():
                 if node_name in runtime_dict:
                     wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = \
@@ -1655,7 +1649,7 @@ def build_workflow(args, retval):
         warnings.filterwarnings("ignore")
         from time import strftime
 
-        wf_multi = pe.Workflow(name="%s%s" % ('wf_multisub_', strftime('%Y%m%d_%H%M%S')))
+        wf_multi = pe.Workflow(name=f"wf_multisub_{strftime('%Y%m%d_%H%M%S')}")
 
         if (func_file_list is None) and dwi_file_list:
             func_file_list = len(dwi_file_list) * [None]
@@ -1691,9 +1685,9 @@ def build_workflow(args, retval):
                 anat_file = None
 
             try:
-                subj_dir = outdir + '/sub-' + ID.split('_')[0] + '/ses-' + ID.split('_')[1]
+                subj_dir = f"{outdir}/sub-{ID.split('_')[0]}/ses-{ID.split('_')[1]}"
             except:
-                subj_dir = outdir + '/' + ID
+                subj_dir = f"{outdir}/{ID}"
             os.makedirs(subj_dir, exist_ok=True)
             dir_list.append(subj_dir)
 
@@ -1729,8 +1723,8 @@ def build_workflow(args, retval):
 
             # Restrict nested meta-meta wf resources at the level of the group wf
             if func_file:
-                wf_selected = "%s%s" % ('fmri_connectometry_', ID[i])
-                meta_wf_name = "%s%s" % ('meta_wf_', ID[i])
+                wf_selected = f"fmri_connectometry_{ID[i]}"
+                meta_wf_name = f"meta_wf_{ID[i]}"
                 for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).\
                         get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
@@ -1746,8 +1740,8 @@ def build_workflow(args, retval):
                         except:
                             continue
             if dwi_file:
-                wf_selected = "%s%s" % ('dmri_connectometry_', ID[i])
-                meta_wf_name = "%s%s" % ('meta_wf_', ID[i])
+                wf_selected = f"dmri_connectometry_{ID[i]}"
+                meta_wf_name = f"meta_wf_{ID[i]}"
                 for node_name in wf_multi.get_node(wf_single_subject.name).get_node(meta_wf_name).\
                         get_node(wf_selected).list_node_names():
                     if node_name in runtime_dict:
@@ -1803,8 +1797,8 @@ def build_workflow(args, retval):
         warnings.filterwarnings("ignore")
         import shutil
 
-        os.makedirs("%s%s%s" % (work_dir, '/wf_multi_subject_', '_'.join(ID)), exist_ok=True)
-        wf_multi.base_dir = "%s%s%s" % (work_dir, '/wf_multi_subject_', '_'.join(ID))
+        os.makedirs(f"{work_dir}/wf_multi_subject_{'_'.join(ID)}", exist_ok=True)
+        wf_multi.base_dir = f"{work_dir}/wf_multi_subject_{'_'.join(ID)}"
         retval['run_uuid'] = None
 
         if verbose is True:
@@ -1820,7 +1814,7 @@ def build_workflow(args, retval):
             config.enable_resource_monitor()
 
             import logging
-            callback_log_path = "%s%s" % (wf_multi.base_dir, '/run_stats.log')
+            callback_log_path = f"{wf_multi.base_dir}/run_stats.log"
             logger = logging.getLogger('callback')
             logger.setLevel(logging.DEBUG)
             handler = logging.FileHandler(callback_log_path)
@@ -1842,7 +1836,7 @@ def build_workflow(args, retval):
                            'status_callback': log_nodes_cb, 'scheduler': 'mem_thread'}
         else:
             plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
-        print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
+        print(f"\nRunning with {str(plugin_args)}\n")
         retval['execution_dict'] = execution_dict
         retval['plugin_settings'] = plugin_args
         retval['workflow'] = wf_multi
@@ -1859,19 +1853,19 @@ def build_workflow(args, retval):
         print('Cleaning up...')
         for dir in dir_list:
             if 'func' in dir:
-                for cnfnd_tmp_dir in glob.glob("%s%s" % (dir, '/*/confounds_tmp')):
+                for cnfnd_tmp_dir in glob.glob(f"{dir}/*/confounds_tmp"):
                     shutil.rmtree(cnfnd_tmp_dir)
-                shutil.rmtree("%s%s" % (dir, '/reg_fmri'), ignore_errors=True)
-                for file_ in [i for i in glob.glob("%s%s" % (dir, '/*/*')) if os.path.isfile(i)]:
+                shutil.rmtree(f"{dir}/reg_fmri", ignore_errors=True)
+                for file_ in [i for i in glob.glob(f"{dir}/*/*") if os.path.isfile(i)]:
                     if ('reor-RAS' in file_) or ('res-' in file_):
                         try:
                             os.remove(file_)
                         except:
                             continue
             if 'dwi' in dir:
-                shutil.rmtree("%s%s" % (dir, '/dmri_tmp'), ignore_errors=True)
-                shutil.rmtree("%s%s" % (dir, '/reg_dmri'), ignore_errors=True)
-                for file_ in [i for i in glob.glob("%s%s" % (dir, '/*/*')) if os.path.isfile(i)]:
+                shutil.rmtree(f"{dir}/dmri_tmp", ignore_errors=True)
+                shutil.rmtree(f"{dir}/reg_dmri", ignore_errors=True)
+                for file_ in [i for i in glob.glob(f"{dir}/*/*") if os.path.isfile(i)]:
                     if ('reor-RAS' in file_) or ('res-' in file_):
                         try:
                             os.remove(file_)
@@ -1882,9 +1876,9 @@ def build_workflow(args, retval):
     # Single-subject workflow generator
     else:
         try:
-            subj_dir = outdir + '/sub-' + ID.split('_')[0] + '/ses-' + ID.split('_')[1]
+            subj_dir = f"{outdir}/sub-{ID.split('_')[0]}/ses-{ID.split('_')[1]}"
         except:
-            subj_dir = outdir + '/' + ID
+            subj_dir = f"{outdir}/{ID}"
         os.makedirs(subj_dir, exist_ok=True)
 
         # Single-subject pipeline
@@ -1906,17 +1900,17 @@ def build_workflow(args, retval):
         import uuid
         from time import strftime
         if (func_file is not None) and (dwi_file is None):
-            base_dirname = "%s%s" % ('wf_single_subject_fmri_', str(ID))
+            base_dirname = f"wf_single_subject_fmri_{str(ID)}"
         elif (dwi_file is not None) and (func_file is None):
-            base_dirname = "%s%s" % ('wf_single_subject_dmri_', str(ID))
+            base_dirname = f"wf_single_subject_dmri_{str(ID)}"
         else:
-            base_dirname = "%s%s" % ('wf_single_subject_', str(ID))
+            base_dirname = f"wf_single_subject_{str(ID)}"
 
-        run_uuid = '%s_%s' % (strftime('%Y%m%d_%H%M%S'), uuid.uuid4())
+        run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
         retval['run_uuid'] = run_uuid
 
-        os.makedirs("%s%s%s%s%s%s%s" % (work_dir, '/', ID, '_', run_uuid, '_', base_dirname), exist_ok=True)
-        wf.base_dir = "%s%s%s%s%s%s%s" % (work_dir, '/', ID, '_', run_uuid, '_', base_dirname)
+        os.makedirs(f"{work_dir}/{ID}_{run_uuid}_{base_dirname}", exist_ok=True)
+        wf.base_dir = f"{work_dir}/{ID}_{run_uuid}_{base_dirname}"
 
         if verbose is True:
             from nipype import config, logging
@@ -1930,7 +1924,7 @@ def build_workflow(args, retval):
             config.enable_resource_monitor()
 
             import logging
-            callback_log_path = "%s%s" % (wf.base_dir, '/run_stats.log')
+            callback_log_path = f"{wf.base_dir}/run_stats.log"
             logger = logging.getLogger('callback')
             logger.setLevel(logging.DEBUG)
             handler = logging.FileHandler(callback_log_path)
@@ -1952,7 +1946,7 @@ def build_workflow(args, retval):
                            'status_callback': log_nodes_cb, 'scheduler': 'mem_thread'}
         else:
             plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
-        print("%s%s%s" % ('\nRunning with ', str(plugin_args), '\n'))
+        print(f"\nRunning with {str(plugin_args)}\n")
         retval['execution_dict'] = execution_dict
         retval['plugin_settings'] = plugin_args
         retval['workflow'] = wf
@@ -1968,19 +1962,19 @@ def build_workflow(args, retval):
         # Clean up temporary directories
         print('Cleaning up...')
         if func_file:
-            for cnfnd_tmp_dir in glob.glob("%s%s" % (subj_dir, '/*/confounds_tmp')):
+            for cnfnd_tmp_dir in glob.glob(f"{subj_dir}/*/confounds_tmp"):
                 shutil.rmtree(cnfnd_tmp_dir)
-            shutil.rmtree("%s%s" % (subj_dir, '/reg_fmri'), ignore_errors=True)
-            for file_ in [i for i in glob.glob("%s%s" % (subj_dir, '/*/*')) if os.path.isfile(i)]:
+            shutil.rmtree(f"{subj_dir}/reg_fmri", ignore_errors=True)
+            for file_ in [i for i in glob.glob(f"{subj_dir}/*/*") if os.path.isfile(i)]:
                 if ('reor-RAS' in file_) or ('res-' in file_):
                     try:
                         os.remove(file_)
                     except:
                         continue
         if dwi_file:
-            shutil.rmtree("%s%s" % (subj_dir, '/dmri_tmp'), ignore_errors=True)
-            shutil.rmtree("%s%s" % (subj_dir, '/reg_dmri'), ignore_errors=True)
-            for file_ in [i for i in glob.glob("%s%s" % (subj_dir, '/*/*')) if os.path.isfile(i)]:
+            shutil.rmtree(f"{subj_dir}/dmri_tmp", ignore_errors=True)
+            shutil.rmtree(f"{subj_dir}/reg_dmri", ignore_errors=True)
+            for file_ in [i for i in glob.glob(f"{subj_dir}/*/*") if os.path.isfile(i)]:
                 if ('reor-RAS' in file_) or ('res-' in file_):
                     try:
                         os.remove(file_)
