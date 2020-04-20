@@ -16,7 +16,7 @@ pytest>=3.3.1
 networkx>=2.0
 git+https://github.com/dPys/nilearn.git@enh/parc_conn
 nipype==1.2.0
-scikit_learn>=0.19.1
+scikit_learn>=0.22.0
 dipy>=1.1.0
 pyyaml>=4.2b1
 boto3>=1.9.111
