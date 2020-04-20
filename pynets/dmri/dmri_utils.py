@@ -118,6 +118,21 @@ def median(in_file):
     return out_file
 
 
+def generate_sl(streamlines):
+    """
+    Helper function that takes a sequence and returns a generator
+    Parameters
+    ----------
+    streamlines : sequence
+        Usually, this would be a list of 2D arrays, representing streamlines
+    Returns
+    -------
+    generator
+    """
+    for sl in streamlines:
+        yield sl
+
+
 def extract_b0(in_file, b0_ixs, out_path=None):
     """
     Extract the *b0* volumes from a DWI dataset.

@@ -327,22 +327,9 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     from itertools import combinations
     from collections import defaultdict
     from pynets.core import utils, nodemaker
+    from pynets.dmri.dmri_utils import generate_sl
     from dipy.io.streamline import load_tractogram
     from dipy.io.stateful_tractogram import Space, Origin
-
-    def generate_sl(streamlines):
-        """
-        Helper function that takes a sequence and returns a generator
-        Parameters
-        ----------
-        streamlines : sequence
-            Usually, this would be a list of 2D arrays, representing streamlines
-        Returns
-        -------
-        generator
-        """
-        for sl in streamlines:
-            yield sl
 
     # Load parcellation
     roi_img = nib.load(atlas_mni)
@@ -373,11 +360,10 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Instantiate empty networkX graph object & dictionary and create voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4))
-    atlas_data = atlas_data + 1
-    mx = len(np.unique(atlas_data.astype('uint16')))
+    mx = len(np.unique(atlas_data.astype('uint16'))) - 1
     g = nx.Graph(ecount=0, vcount=mx)
     edge_dict = defaultdict(int)
-    node_dict = dict(zip(np.unique(atlas_data.astype('uint16')), np.arange(mx)))
+    node_dict = dict(zip(np.unique(atlas_data.astype('uint16'))[1:], np.arange(mx) + 1))
 
     # Add empty vertices
     for node in range(1, mx + 1):
@@ -385,6 +371,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Build graph
     ix = 0
+    bad_idxs = []
     for s in sl:
         # Map the streamlines coordinates to voxel coordinates and get labels for label_volume
         vox_coords = _to_voxel_coordinates(Streamlines(s), lin_T, offset)
@@ -399,8 +386,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
                 try:
                     endlabels.append(node_dict[lab])
                 except:
-                    del labels[ix]
-                    del coords[ix]
+                    bad_idxs.append(ix)
                     print(f"Label {lab} missing from parcellation. Check registration and ensure valid input "
                           f"parcellation file.")
 
@@ -444,6 +430,12 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Impose symmetry
     conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
+
+    if len(bad_idxs) > 0:
+        bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+        for j in bad_idxs:
+            labels.pop(j)
+            coords.pop(j)
 
     coords = np.array(coords)
     labels = np.array(labels)

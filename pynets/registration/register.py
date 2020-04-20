@@ -183,6 +183,7 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
     import os.path as op
     from nilearn.image import resample_to_img
     from dipy.io.streamline import load_tractogram
+    from pynets.core.utils import missing_elements
 
     dsn_dir = f"{basedir_path}/dmri_reg_tmp/DSN"
     if not op.isdir(dsn_dir):
@@ -197,7 +198,7 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
     # Run SyN and normalize streamlines
     fa_img = nib.load(fa_path)
     vox_size = fa_img.header.get_zooms()[0]
-    template_path = pkg_resources.resource_filename("pynets", f"{'templates/FA_'}{int(vox_size)}{'mm.nii.gz'}")
+    template_path = pkg_resources.resource_filename("pynets", f"templates/FA_{int(vox_size)}mm.nii.gz")
     template_anat_path = pkg_resources.resource_filename("pynets",
                                                          f"templates/MNI152_T1_{int(vox_size)}mm_brain.nii.gz")
     template_img = nib.load(template_path)
@@ -333,12 +334,20 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
     nib.save(nib.Nifti1Image(warped_uatlas_img_res_data * overlap_mask.astype('int') +
                              uatlas_mni_data * overlap_mask.astype('int') +
                              np.invert(overlap_mask).astype('int') *
-                             warped_uatlas_img_res_data, affine=warped_fa_affine), atlas_mni)
+                             warped_uatlas_img_res_data.astype('int'), affine=warped_fa_affine), atlas_mni)
 
     del (tractogram, streamlines, warped_uatlas_img_res_data, uatlas_mni_data, overlap_mask, stf,
          streams_final_filt_final, streams_final_filt, streams_in_curr_grid, brain_mask, streams_in_brain)
 
     gc.collect()
+
+    # Correct coords and labels
+    bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(atlas_mni).dataobj).astype('int'))))
+    if len(bad_idxs) > 0:
+        bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+        for j in bad_idxs:
+            labels.pop(j)
+            coords.pop(j)
 
     return (streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi,
             min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget,
@@ -744,7 +753,7 @@ class DmriReg(object):
         os.system(f"fslmaths {self.csf_mask_dwi} -mas {self.csf_mask_dwi_bin} {self.csf_mask_dwi} 2>/dev/null")
 
         # Create ventricular CSF mask
-        print('Creating ventricular CSF mask...')
+        print('Creating Ventricular CSF mask...')
         os.system(f"fslmaths {self.vent_mask_dwi} -kernel sphere 10 -ero -bin {self.vent_mask_dwi} 2>/dev/null")
         os.system(f"fslmaths {self.csf_mask_dwi} -add {self.vent_mask_dwi} -bin {self.vent_csf_in_dwi} 2>/dev/null")
 
@@ -809,8 +818,10 @@ class FmriReg(object):
         self.map_name = f"{self.anat_path}{'/'}{self.t1w_name}{'_seg'}"
         self.gm_mask = f"{self.anat_path}{'/'}{self.t1w_name}{'_gm.nii.gz'}"
         self.gm_mask_thr = f"{self.anat_path}{'/'}{self.t1w_name}{'_gm_thr.nii.gz'}"
-        self.input_mni = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_{vox_size}.nii.gz")
-        self.input_mni_brain = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_{vox_size}_brain.nii.gz")
+        self.input_mni = pkg_resources.resource_filename("pynets",
+                                                         f"templates/MNI152_T1_{vox_size}.nii.gz")
+        self.input_mni_brain = pkg_resources.resource_filename("pynets",
+                                                               f"templates/MNI152_T1_{vox_size}_brain.nii.gz")
         self.input_mni_mask = pkg_resources.resource_filename("pynets",
                                                               f"templates/MNI152_T1_{vox_size}_brain_mask.nii.gz")
 
@@ -1033,9 +1044,10 @@ def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, f
     dwi_file : str
         File path to diffusion weighted image.
     """
-    from pynets.registration import register
+    from pynets.registration.register import DmriReg
+    # from pynets.core.utils import missing_elements
 
-    reg = register.DmriReg(basedir_path, fa_path, ap_path, B0_mask, anat_file, mask, vox_size, simple)
+    reg = DmriReg(basedir_path, fa_path, ap_path, B0_mask, anat_file, mask, vox_size, simple)
 
     if node_size is not None:
         atlas = f"{atlas}{'_'}{node_size}"
@@ -1043,16 +1055,24 @@ def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, f
     # Apply warps/coregister atlas to dwi
     if uatlas == uatlas_parcels:
         uatlas_parcels = None
+
     [dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas,
                                                                                                    uatlas_parcels,
                                                                                                    atlas)
+
+    # bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(dwi_aligned_atlas).dataobj).astype('int'))))
+    # if len(bad_idxs) > 0:
+    #     bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+    #     for j in bad_idxs:
+    #         labels.pop(j)
+    #         coords.pop(j)
 
     return (dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni, uatlas, atlas, coords, labels,
             node_size, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, ap_path, gtab_file, B0_mask, dwi_file)
 
 
-def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, vox_size, mask, reg_fmri_complete,
-                        simple=False):
+def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, coords, labels, vox_size, mask,
+                        reg_fmri_complete, simple=False):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 
@@ -1068,6 +1088,10 @@ def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, 
         Path to directory to output direct-streamline normalized temp files and outputs.
     anat_file : str
         Path to a skull-stripped anatomical Nifti1Image.
+    coords : list
+        List of (x, y, z) tuples corresponding to the center-of-mass of each parcellation node.
+    labels : list
+        List of string labels corresponding to graph nodes.
     vox_size : str
         Voxel size in mm. (e.g. 2mm).
     mask : str
@@ -1082,10 +1106,15 @@ def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, 
     -------
     aligned_atlas_t1mni_gm : str
         File path to atlas parcellation Nifti1Image in T1w-warped MNI space, restricted only to grey-matter.
+    coords : list
+        List of (x, y, z) tuples corresponding to the center-of-mass of each parcellation node.
+    labels : list
+        List of string labels corresponding to graph nodes.
     """
-    from pynets.registration import register
+    from pynets.registration.register import FmriReg
+    # from pynets.core.utils import missing_elements
 
-    reg = register.FmriReg(basedir_path, anat_file, mask, vox_size, simple)
+    reg = FmriReg(basedir_path, anat_file, mask, vox_size, simple)
 
     # Apply warps/coregister atlas to t1w_mni
     if uatlas == uatlas_parcels:
@@ -1093,4 +1122,11 @@ def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, 
 
     aligned_atlas_t1mni_gm = reg.atlas2t1wmni_align(uatlas, uatlas_parcels, atlas)
 
-    return aligned_atlas_t1mni_gm
+    # bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(aligned_atlas_t1mni_gm).dataobj).astype('int'))))
+    # if len(bad_idxs) > 0:
+    #     bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+    #     for j in bad_idxs:
+    #         labels.pop(j)
+    #         coords.pop(j)
+
+    return aligned_atlas_t1mni_gm, coords, labels

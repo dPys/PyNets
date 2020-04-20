@@ -888,6 +888,11 @@ def save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network):
     return coord_path, labels_path
 
 
+def missing_elements(L):
+    start, end = L[0], L[-1]
+    return sorted(set(range(start, end + 1)).difference(L))
+
+
 def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
     """
     This function takes a Nifti1Image parcellation object resulting from some form of masking and saves it to disk.

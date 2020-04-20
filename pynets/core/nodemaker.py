@@ -319,6 +319,7 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
     for i in coords:
         coords_vox.append(mmToVox(bna_aff, i))
     coords_vox = list(tuple(map(lambda y: isinstance(y, float) and int(round(y, 0)), x)) for x in coords_vox)
+    #coords_vox = list(set(list(tuple(x) for x in coords_vox)))
     if parc is False:
         i = -1
         RSN_parcels = None
@@ -518,6 +519,7 @@ def coords_masker(roi, coords, labels, error):
     for i in coords:
         coords_vox.append(mmToVox(mask_aff, i))
     coords_vox = list(tuple(map(lambda y: isinstance(y, float) and int(round(y, 0)), x)) for x in coords_vox)
+    #coords_vox = list(set(list(tuple(x) for x in coords_vox)))
     bad_coords = []
     for coord_vox in coords_vox:
         sphere_vol = np.zeros(mask_data.shape, dtype=bool)

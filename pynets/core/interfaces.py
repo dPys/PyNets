@@ -743,7 +743,8 @@ class Tracking(SimpleInterface):
                                                           self.inputs.conn_model, self.inputs.target_samples,
                                                           self.inputs.node_size, self.inputs.curv_thr_list,
                                                           self.inputs.step_list, self.inputs.network, self.inputs.roi,
-                                                          self.inputs.directget, self.inputs.min_length)
+                                                          self.inputs.directget, self.inputs.min_length,
+                                                          self.inputs.B0_mask)
 
         self._results['streams'] = streams
         self._results['track_type'] = self.inputs.track_type
