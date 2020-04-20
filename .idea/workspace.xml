@@ -5,15 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.circleci/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.circleci/config.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/core/interfaces.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/interfaces.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/core/nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/nodemaker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/core/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/core/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/workflows.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/dmri/dmri_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/dmri_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/dmri/estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/estimation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pynets/dmri/track.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/dmri/track.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/registration/register.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/register.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -76,8 +70,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="678">
-              <caret line="750" column="68" lean-forward="true" selection-start-line="750" selection-start-column="68" selection-end-line="750" selection-end-column="68" />
+            <state relative-caret-position="-430">
+              <caret line="724" column="30" selection-start-line="724" selection-start-column="30" selection-end-line="724" selection-end-column="30" />
             </state>
           </provider>
         </entry>
@@ -145,8 +139,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="677">
-              <caret line="240" column="32" lean-forward="true" selection-start-line="240" selection-start-column="32" selection-end-line="240" selection-end-column="32" />
+            <state relative-caret-position="439">
+              <caret line="362" lean-forward="true" selection-start-line="362" selection-end-line="362" />
               <folding>
                 <element signature="e#139#154#0" expanded="true" />
               </folding>
@@ -193,8 +187,8 @@
       <find>min_length</find>
       <find>mapping</find>
       <find>streams_in_curr_grid</find>
-      <find>ix</find>
       <find>B0_mask</find>
+      <find>ix</find>
     </findStrings>
     <replaceStrings>
       <replace>set_data_dtype(np.int16)</replace>
@@ -285,8 +279,8 @@
         <option value="$PROJECT_DIR$/pynets/dmri/estimation.py" />
         <option value="$PROJECT_DIR$/pynets/registration/register.py" />
         <option value="$PROJECT_DIR$/pynets/core/workflows.py" />
-        <option value="$PROJECT_DIR$/pynets/dmri/track.py" />
         <option value="$PROJECT_DIR$/pynets/core/interfaces.py" />
+        <option value="$PROJECT_DIR$/pynets/dmri/track.py" />
       </list>
     </option>
   </component>
@@ -312,18 +306,6 @@
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
               <item name="pynets" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
-              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
-              <item name="pynets" type="462c0819:PsiDirectoryNode" />
-              <item name="core" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
-              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
-              <item name="pynets" type="462c0819:PsiDirectoryNode" />
-              <item name="dmri" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -470,12 +452,12 @@
       <workItem from="1586127500675" duration="8526000" />
       <workItem from="1586289475292" duration="33085000" />
       <workItem from="1586734713676" duration="43068000" />
-      <workItem from="1587186966773" duration="49727000" />
+      <workItem from="1587186966773" duration="52191000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="876530000" />
+    <option name="totallyTimeSpent" value="878994000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -490,7 +472,7 @@
     <frame x="310" y="23" width="1370" height="983" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49078342" visible="true" weight="0.14608434" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49078342" visible="true" weight="0.14608434" />
       <window_info id="Structure" order="1" sideWeight="0.50863063" side_tool="true" weight="0.18287243" />
       <window_info id="aws.explorer" order="2" sideWeight="0.5092166" side_tool="true" weight="0.16" />
       <window_info id="Favorites" order="3" side_tool="true" />
@@ -967,15 +949,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="678">
-          <caret line="750" column="68" lean-forward="true" selection-start-line="750" selection-start-column="68" selection-end-line="750" selection-end-column="68" />
+        <state relative-caret-position="-430">
+          <caret line="724" column="30" selection-start-line="724" selection-start-column="30" selection-end-line="724" selection-end-column="30" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/dmri/track.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="677">
-          <caret line="240" column="32" lean-forward="true" selection-start-line="240" selection-start-column="32" selection-end-line="240" selection-end-column="32" />
+        <state relative-caret-position="439">
+          <caret line="362" lean-forward="true" selection-start-line="362" selection-end-line="362" />
           <folding>
             <element signature="e#139#154#0" expanded="true" />
           </folding>
