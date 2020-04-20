@@ -154,13 +154,13 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
                         try:
                             estimator_shrunk = GraphicalLasso(alpha)
                             estimator_shrunk.fit(shrunk_cov)
-                            print("Retrying covariance matrix estimate with alpha=%s" % alpha)
+                            print(f"Retrying covariance matrix estimate with alpha={alpha}")
                             if estimator_shrunk is None:
                                 pass
                             else:
                                 break
                         except:
-                            print("Covariance estimation failed with shrinkage at alpha=%s" % alpha)
+                            print(f"Covariance estimation failed with shrinkage at alpha={alpha}")
                             continue
             except ValueError:
                 print('Unstable Lasso estimation! Shrinkage failed. A different connectivity model may be needed.')
@@ -305,12 +305,12 @@ def fill_confound_nans(confounds, dir_path):
     import uuid
     import os
     from time import strftime
-    run_uuid = '%s_%s' % (strftime('%Y%m%d_%H%M%S'), uuid.uuid4())
+    run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
           'regressor file should be checked manually.')
     confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
-    os.makedirs("%s%s" % (dir_path, '/confounds_tmp'), exist_ok=True)
-    conf_corr = "%s%s%s%s" % (dir_path, '/confounds_tmp/confounds_mean_corrected_', run_uuid, '.tsv')
+    os.makedirs(f"{dir_path}{'/confounds_tmp'}", exist_ok=True)
+    conf_corr = f"{dir_path}{'/confounds_tmp/confounds_mean_corrected_'}{run_uuid}{'.tsv'}"
     confounds_nonan.to_csv(conf_corr, sep='\t')
     return conf_corr
 
@@ -393,10 +393,10 @@ class TimeseriesExtraction(object):
 
         if self.smooth:
             if float(self.smooth) > 0:
-                print("%s%s%s" % ('Smoothing FWHM: ', self.smooth, ' mm\n'))
+                print(f"Smoothing FWHM: {self.smooth} mm\n")
 
         if self.hpass:
-            print("%s%s%s" % ('Applying high-pass filter: ', self.hpass, ' Hz\n'))
+            print(f"Applying high-pass filter: {self.hpass} Hz\n")
 
         return
 
@@ -409,7 +409,7 @@ class TimeseriesExtraction(object):
         from nilearn import input_data
         from pynets.fmri.estimation import fill_confound_nans
 
-        print("%s%s%s" % ('Using node radius: ', self.node_size, ' mm'))
+        print(f"{'Using node radius: '}{self.node_size}{' mm'}")
         self._spheres_masker = input_data.NiftiSpheresMasker(seeds=self.coords, radius=float(self.node_size),
                                                              allow_overlap=True, standardize=True,
                                                              smoothing_fwhm=float(self.smooth),
@@ -431,8 +431,8 @@ class TimeseriesExtraction(object):
         if self.ts_within_nodes is None:
             raise RuntimeError('\nERROR: Time-series extraction failed!')
         else:
-            print("%s%s%d%s" % ('\nTime series has {0} samples'.format(self.ts_within_nodes.shape[0]),
-                                ' mean extracted from ', len(self.coords), ' coordinate ROI\'s'))
+            print(f"\nTime series has {self.ts_within_nodes.shape[0]} samples mean extracted from {len(self.coords)} "
+                  f"coordinate ROI\'s")
 
         return
 

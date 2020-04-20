@@ -148,7 +148,7 @@ jobs:
       - run:
           name: Download OSF test data
           command: |
-            wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O examples.tar.gz "https://osf.io/aq8ur/download"
+            wget --retry-connrefused --waitretry=10 --read-timeout=40 --timeout=30 -t 0 -q -O examples.tar.gz "https://osf.io/aq8ur/download"
             tar -xvzf examples.tar.gz -C /home/circleci/data
       - save_cache:
          key: data-v0-{{ .Revision }}-{{ epoch }}
@@ -220,12 +220,12 @@ jobs:
           command: |
             if [[ -n "$DOCKER_PASS" ]]; then
               docker login -u $DOCKER_USER -p $DOCKER_PASS
-              docker tag pynets pynets:unstable
-              docker push pynets:unstable
+              docker tag pynets dpys/pynets:unstable
+              docker push dpys/pynets:unstable
               if [[ -n "$CIRCLE_TAG" ]]; then
-                docker push pynets:latest
-                docker tag pynets pynets:$CIRCLE_TAG
-                docker push pynets:$CIRCLE_TAG
+                docker push dpys/pynets:latest
+                docker tag pynets dpys/pynets:$CIRCLE_TAG
+                docker push dpys/pynets:$CIRCLE_TAG
               fi
             fi
 
@@ -266,7 +266,7 @@ jobs:
             which pynets | grep sdist\\/bin
             INSTALLED_VERSION=$(pynets --version)
             INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
-            INSTALLED_VERSION=${INSTALLED_VERSION#*"pynets v"}
+            INSTALLED_VERSION=${INSTALLED_VERSION#*"PyNets v"}
             echo "VERSION: \"$THISVERSION\""
             echo "INSTALLED: \"$INSTALLED_VERSION\""
             test "$INSTALLED_VERSION" = "$THISVERSION"
@@ -284,7 +284,7 @@ jobs:
             which pynets | grep wheel\\/bin
             INSTALLED_VERSION=$(pynets --version)
             INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
-            INSTALLED_VERSION=${INSTALLED_VERSION#*"pynets v"}
+            INSTALLED_VERSION=${INSTALLED_VERSION#*"PyNets v"}
             echo "VERSION: \"$THISVERSION\""
             echo "INSTALLED: \"$INSTALLED_VERSION\""
             test "$INSTALLED_VERSION" = "$THISVERSION"

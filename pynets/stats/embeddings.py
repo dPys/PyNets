@@ -24,7 +24,7 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     pop_array_red = [pop_array[i] for i in graphs_ix_keep]
 
     # Omnibus embedding -- random dot product graph (rdpg)
-    print("%s%s%s%s%s" % ('Embedding ensemble for atlas: ', atlas, ' and ', subgraph_name, '...'))
+    print(f"{'Embedding ensemble for atlas: '}{atlas}{' and '}{subgraph_name}{'...'}")
     omni = OmnibusEmbed(check_lcc=False)
     mds = ClassicalMDS()
     try:
@@ -41,8 +41,7 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    out_path = "%s%s%s%s%s%s%s%s" % (namer_dir, '/', list(flatten(ID))[0], '_omnetome_', atlas, '_', subgraph_name,
-                                     '.npy')
+    out_path = f"{namer_dir}/{list(flatten(ID))[0]}_omnetome_{atlas}_{subgraph_name}.npy"
     print('Saving...')
     np.save(out_path, mds_fit)
     del mds, mds_fit, omni, omni_fit
@@ -59,7 +58,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     pop_array_red = [pop_array[i] for i in graphs_ix_keep]
 
     # Omnibus embedding -- random dot product graph (rdpg)
-    print("%s%s%s%s%s" % ('Embedding ensemble for atlas: ', atlas, ' and ', subgraph_name, '...'))
+    print(f"{'Embedding ensemble for atlas: '}{atlas}{' and '}{subgraph_name}{'...'}")
     mase = MultipleASE()
     try:
         mase_fit = mase.fit_transform(pop_array_red)
@@ -71,8 +70,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    out_path = "%s%s%s%s%s%s%s%s" % (namer_dir, '/', list(flatten(ID))[0], '_masetome_', atlas, '_', subgraph_name,
-                                     '.npy')
+    out_path = f"{namer_dir}/{list(flatten(ID))[0]}_masetome_{atlas}_{subgraph_name}.npy"
     print('Saving...')
     np.save(out_path, mase.scores_)
     del mase, mase_fit
@@ -99,7 +97,7 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
     from pathlib import Path
     from pynets.stats.embeddings import _mase_embed, _omni_embed
     # Available functional and structural connectivity models
-    with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
+    with open(f"{str(Path(__file__).parent.parent)}{'/runconfig.yaml'}", 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
             func_models = hardcoded_params['available_models']['func_models']

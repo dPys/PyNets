@@ -33,7 +33,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     from pynets.core.utils import pass_meta_ins, pass_meta_outs, pass_meta_ins_multi
 
     # Available functional and structural connectivity models
-    with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
+    with open(f"{str(Path(__file__).parent.parent)}{'/runconfig.yaml'}", 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
             func_models = hardcoded_params['available_models']['func_models']
@@ -84,11 +84,10 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
 
     # Set paths to templates
     if template is None:
-        template = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size + "_brain.nii.gz")
+        template = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_{vox_size}_brain.nii.gz")
 
     if template_mask is None:
-        template_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size +
-                                                        "_brain_mask.nii.gz")
+        template_mask = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_{vox_size}_brain_mask.nii.gz")
 
     # for each file input, delete corresponding t1w anatomical copies.
     if clean is True:
@@ -97,8 +96,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
         file_list = [dwi_file, func_file, anat_file]
         for _file in file_list:
             if _file is not None:
-                if op.isdir("%s%s" % (outdir, '/anat_tmp')):
-                    shutil.rmtree("%s%s" % (outdir, '/anat_tmp'))
+                if op.isdir(f"{outdir}{'/anat_tmp'}"):
+                    shutil.rmtree(f"{outdir}{'/anat_tmp'}")
 
     # Workflow 1: Structural connectome
     if dwi_file is not None:
@@ -142,7 +141,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
         sub_func_wf.mem_gb = procmem[1]
 
     # Create meta-workflow to organize graph simulation sets in prep for analysis
-    base_dirname = "%s%s" % ('meta_wf_', ID)
+    base_dirname = f"{'meta_wf_'}{ID}"
     meta_wf = Workflow(name=base_dirname)
 
     if verbose is True:
@@ -612,29 +611,29 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
 
     # Set resource restrictions at level of the meta wf
     if func_file:
-        wf_selected = "%s%s" % ('fmri_connectometry_', ID)
+        wf_selected = f"{'fmri_connectometry_'}{ID}"
         for node_name in sub_func_wf.list_node_names():
             if node_name in runtime_dict:
-                meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._n_procs = runtime_dict[node_name][0]
-                meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._mem_gb = runtime_dict[node_name][1]
+                meta_wf.get_node(f"{wf_selected}{'.'}{node_name}")._n_procs = runtime_dict[node_name][0]
+                meta_wf.get_node(f"{wf_selected}{'.'}{node_name}")._mem_gb = runtime_dict[node_name][1]
                 try:
-                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.n_procs = \
+                    meta_wf.get_node(f"{wf_selected}{'.'}{node_name}").interface.n_procs = \
                         runtime_dict[node_name][0]
-                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.mem_gb = \
+                    meta_wf.get_node(f"{wf_selected}{'.'}{node_name}").interface.mem_gb = \
                         runtime_dict[node_name][1]
                 except:
                     continue
 
     if dwi_file:
-        wf_selected = "%s%s" % ('dmri_connectometry_', ID)
+        wf_selected = f"{'dmri_connectometry_'}{ID}"
         for node_name in sub_struct_wf.list_node_names():
             if node_name in runtime_dict:
-                meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._n_procs = runtime_dict[node_name][0]
-                meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name))._mem_gb = runtime_dict[node_name][1]
+                meta_wf.get_node(f"{wf_selected}{'.'}{node_name}")._n_procs = runtime_dict[node_name][0]
+                meta_wf.get_node(f"{wf_selected}{'.'}{node_name}")._mem_gb = runtime_dict[node_name][1]
                 try:
-                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.n_procs = \
+                    meta_wf.get_node(f"{wf_selected}{'.'}{node_name}").interface.n_procs = \
                         runtime_dict[node_name][0]
-                    meta_wf.get_node("%s%s%s" % (wf_selected, '.', node_name)).interface.mem_gb = \
+                    meta_wf.get_node(f"{wf_selected}{'.'}{node_name}").interface.mem_gb = \
                         runtime_dict[node_name][1]
                 except:
                     continue
@@ -659,13 +658,12 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
     from pynets.dmri import estimation
-    from pynets.dmri import dmri_utils as dmriutils
-    from pynets.core.interfaces import PlotStruct, RegisterDWI, Tracking
+    from pynets.core.interfaces import PlotStruct, RegisterDWI, Tracking, MakeGtabBmask
     import os.path as op
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]
-    base_dirname = "%s%s" % ('dmri_connectometry_', ID)
+    base_dirname = f"dmri_connectometry_{ID}"
     dmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
     # Create input/output nodes
@@ -834,9 +832,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                            'atlas', 'uatlas', 'dir_path'],
                                              function=nodemaker.node_gen, imports=import_list), name="node_gen_node")
 
-    gtab_node = pe.Node(niu.Function(input_names=['fbval', 'fbvec', 'dwi_file', 'outdir'],
-                                     output_names=['gtab_file', 'B0_bet', 'B0_mask', 'dwi_file'],
-                                     function=dmriutils.make_gtab_and_bmask, imports=import_list), name="gtab_node")
+    gtab_node = pe.Node(MakeGtabBmask(), name="gtab_node")
 
     get_fa_node = pe.Node(niu.Function(input_names=['gtab_file', 'dwi_file', 'B0_mask'],
                                        output_names=['fa_path', 'B0_mask', 'gtab_file', 'dwi_file'],
@@ -1090,6 +1086,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                            (get_node_membership_node, save_coords_and_labels_node,
                                             [('net_coords', 'coords'), ('net_labels', 'labels'),
                                              ('network', 'network')]),
+                                           (save_nifti_parcels_node, register_atlas_node, [('net_parcels_nii_path',
+                                                                                            'uatlas_parcels')])
                                            ])
     else:
         dmri_connectometry_wf.connect([(inputnode, save_nifti_parcels_node,
@@ -1113,7 +1111,9 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
             dmri_connectometry_wf.connect([(fetch_nodes_and_labels_node, node_gen_node,
                                             [('coords', 'coords'),
                                              ('labels', 'labels'),
-                                             ('parcel_list', 'parcel_list')])
+                                             ('parcel_list', 'parcel_list')]),
+                                           (save_nifti_parcels_node, register_atlas_node, [('net_parcels_nii_path',
+                                                                                            'uatlas_parcels')])
                                            ])
 
     if parc is False:
@@ -1132,8 +1132,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                         [('node_size', 'node_size')]),
                                        (inputnode, node_gen_node,
                                         [('parc', 'parc')]),
-                                       (save_nifti_parcels_node, register_atlas_node, [('net_parcels_nii_path',
-                                                                                        'uatlas_parcels')]),
                                        (inputnode, register_atlas_node,
                                         [('node_size', 'node_size')]),
                                        ])
@@ -1310,7 +1308,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                      ('binary', 'binary'), ('target_samples', 'target_samples'),
                                                      ('track_type', 'track_type'), ('atlas_mni', 'atlas_mni'),
                                                      ('streams', 'streams'), ('directget', 'directget'),
-                                                     ('min_length', 'min_lengthh')])
+                                                     ('min_length', 'min_length')])
         ])
         thr_out_node = join_iters_node_thr
     else:
@@ -1373,7 +1371,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                       ('atlas', 'atlas'), ('uatlas', 'uatlas')]),
         (check_orient_and_dims_dwi_node, gtab_node, [('bvecs', 'fbvec'),
                                                      ('outfile', 'dwi_file')]),
-        (inputnode, gtab_node, [('fbval', 'fbval'), ('outdir', 'outdir')]),
+        (inputnode, gtab_node, [('fbval', 'fbval')]),
         (inputnode, register_node, [('vox_size', 'vox_size')]),
         (inputnode, check_orient_and_dims_anat_node, [('anat_file', 'infile'), ('vox_size', 'vox_size'),
                                                       ('outdir', 'outdir')]),
@@ -1613,10 +1611,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]
-    base_dirname = "%s%s" % ('fmri_connectometry_', ID)
+    base_dirname = f"fmri_connectometry_{ID}"
     fmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
-    outdir = outdir + '/func'
+    outdir = f"{outdir}/func"
     os.makedirs(outdir, exist_ok=True)
 
     # Create input/output nodes
@@ -1749,9 +1747,9 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     register_node._mem_gb = runtime_dict['register_node'][1]
 
     register_atlas_node = pe.Node(niu.Function(input_names=['uatlas', 'uatlas_parcels', 'atlas',
-                                                            'basedir_path', 'anat_file', 'mask', 'vox_size',
-                                                            'reg_fmri_complete'],
-                                               output_names=['aligned_atlas_t1mni_gm'],
+                                                            'basedir_path', 'anat_file', 'coords', 'labels', 'mask',
+                                                            'vox_size', 'reg_fmri_complete'],
+                                               output_names=['aligned_atlas_t1mni_gm', 'coords', 'labels'],
                                                function=register.register_atlas_fmri, imports=import_list),
                                   name="register_atlas_node")
 
@@ -1781,9 +1779,9 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         # clustering_node iterables and names
         if k_clustering == 1:
             mask_name = op.basename(clust_mask).split('.nii')[0]
-            cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
-            cluster_atlas_file = "%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, outdir), '/',
-                                                       mask_name, '_', clust_type, '_k', str(k), '.nii.gz')
+            cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
+            cluster_atlas_file = f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_{clust_type}_k" \
+                f"{str(k)}.nii.gz"
             if user_atlas_list:
                 user_atlas_list.append(cluster_atlas_file)
             elif uatlas and ((uatlas == cluster_atlas_file) is False):
@@ -1798,11 +1796,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for k in k_list:
                 mask_name = op.basename(clust_mask).split('.nii')[0]
-                cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
+                cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
-                cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, outdir),
-                                                                     '/', mask_name, '_', clust_type, '_k', str(k),
-                                                                     '.nii.gz'))
+                cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                                               f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
             elif uatlas:
@@ -1815,11 +1812,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for clust_mask in clust_mask_list:
                 mask_name = op.basename(clust_mask).split('.nii')[0]
-                cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
+                cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
-                cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, outdir),
-                                                                     '/', mask_name, '_', clust_type, '_k', str(k),
-                                                                     '.nii.gz'))
+                cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                                               f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
             elif uatlas:
@@ -1836,11 +1832,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             for clust_mask in clust_mask_list:
                 for k in k_list:
                     mask_name = op.basename(clust_mask).split('.nii')[0]
-                    cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
+                    cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
-                    cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name,
-                                                                                           outdir), '/', mask_name,
-                                                                         '_', clust_type, '_k', str(k), '.nii.gz'))
+                    cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                                                   f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
             elif uatlas:
@@ -1853,11 +1848,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
                 mask_name = op.basename(clust_mask).split('.nii')[0]
-                cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
+                cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
-                cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name, outdir),
-                                                                     '/', mask_name, '_', clust_type, '_k', str(k),
-                                                                     '.nii.gz'))
+                cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                                               f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
             elif uatlas:
@@ -1874,11 +1868,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             for clust_type in clust_type_list:
                 for k in k_list:
                     mask_name = op.basename(clust_mask).split('.nii')[0]
-                    cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
+                    cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
-                    cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name,
-                                                                                           outdir), '/', mask_name,
-                                                                         '_', clust_type, '_k', str(k), '.nii.gz'))
+                    cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                                                   f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
             elif uatlas:
@@ -1892,12 +1885,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             for clust_type in clust_type_list:
                 for clust_mask in clust_mask_list:
                     mask_name = op.basename(clust_mask).split('.nii')[0]
-                    cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
+                    cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
-                    cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name,
-                                                                                           outdir), '/', mask_name,
-                                                                         '_', clust_type, '_k', str(k),
-                                                                         '.nii.gz'))
+                    cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                                                   f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
             elif uatlas:
@@ -1916,12 +1907,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                 for clust_mask in clust_mask_list:
                     for k in k_list:
                         mask_name = op.basename(clust_mask).split('.nii')[0]
-                        cluster_atlas_name = "%s%s%s%s%s" % (mask_name, '_', clust_type, '_k', k)
+                        cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                         cluster_atlas_name_list.append(cluster_atlas_name)
-                        cluster_atlas_file_list.append("%s%s%s%s%s%s%s%s" % (utils.do_dir_path(cluster_atlas_name,
-                                                                                               outdir), '/',
-                                                                             mask_name, '_', clust_type, '_k', str(k),
-                                                                             '.nii.gz'))
+                        cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                                                       f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
             elif uatlas:
@@ -2550,8 +2539,9 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     # Handle case that t1w image is available to refine parcellation
     if anat_file and parc is True:
         fmri_connectometry_wf.disconnect([
-            (node_gen_node, extract_ts_node, [('uatlas', 'uatlas')]),
+            (node_gen_node, extract_ts_node, [('uatlas', 'uatlas'), ('coords', 'coords'), ('labels', 'labels')]),
         ])
+
         # Check orientation and resolution
         check_orient_and_dims_uatlas_node = pe.Node(niu.Function(input_names=['infile', 'outdir', 'vox_size'],
                                                                  output_names=['outfile'],
@@ -2571,8 +2561,11 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             (fetch_nodes_and_labels_node, check_orient_and_dims_uatlas_node, [('uatlas', 'infile'),
                                                                               ('dir_path', 'outdir')]),
             (check_orient_and_dims_uatlas_node, register_atlas_node, [('outfile', 'uatlas')]),
-            (node_gen_node, register_atlas_node, [('atlas', 'atlas'), ('uatlas', 'uatlas_parcels')]),
-            (register_atlas_node, extract_ts_node, [('aligned_atlas_t1mni_gm', 'uatlas')]),
+            (node_gen_node, register_atlas_node, [('coords', 'coords'), ('labels', 'labels'), ('atlas', 'atlas'),
+                                                  ('uatlas', 'uatlas_parcels')]),
+            (register_atlas_node, extract_ts_node, [('aligned_atlas_t1mni_gm', 'uatlas'),
+                                                    ('coords', 'coords'),
+                                                    ('labels', 'labels')]),
         ])
 
     # Set cpu/memory reqs

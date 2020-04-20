@@ -116,7 +116,7 @@ def prep_tissues(t1_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
 
 
 def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_samples,
-                       node_size, curv_thr_list, step_list, network, roi, directget, min_length):
+                       node_size, curv_thr_list, step_list, network, roi, directget, min_length, B0_mask):
     """
     Create a density map of the list of streamlines.
 
@@ -149,6 +149,8 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
         boot (bootstrapped), and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
+    B0_mask : str
+        File path to B0 brain mask.
 
     Returns
     -------
@@ -164,9 +166,23 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
     from dipy.tracking import utils
     from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
     from dipy.io.streamline import save_tractogram
+    from dipy.tracking._utils import _mapping_to_voxel
+
+    # Filter resulting streamlines by those that stay entirely inside the brain
+    B0_mask_data = nib.load(B0_mask).get_fdata()
+    streamlines = streamlines[utils.near_roi(streamlines, np.eye(4), B0_mask_data, tol=0, mode='all')]
+
+    # Remove streamlines with negative voxel indices
+    lin_T, offset = _mapping_to_voxel(np.eye(4))
+    streamlines_final = []
+    for sl in streamlines:
+        inds = np.dot(sl, lin_T)
+        inds += offset
+        if not inds.min().round(decimals=6) < 0:
+            streamlines_final.append(sl)
 
     # Create density map
-    dm = utils.density_map(streamlines, affine=np.eye(4), vol_dims=dwi_img.shape)
+    dm = utils.density_map(streamlines_final, affine=np.eye(4), vol_dims=dwi_img.shape)
 
     # Save density map
     dm_img = nib.Nifti1Image(dm.astype('int'), dwi_img.affine)
@@ -202,10 +218,10 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
                                                         '_step-', str(step_list).replace(', ', '_'), '_dg-', directget,
                                                         '_ml-', min_length, '.trk')
 
-    save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, origin=Origin.TRACKVIS),
+    save_tractogram(StatefulTractogram(streamlines_final, reference=dwi_img, space=Space.RASMM, origin=Origin.TRACKVIS),
                     streams, bbox_valid_check=False)
 
-    del streamlines
+    del streamlines_final
     dm_img.uncache()
 
     return streams, dir_path, dm_path
@@ -294,7 +310,6 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
     # Commence Ensemble Tractography
     parcel_vec = list(np.ones(len(parcels)).astype('bool'))
     streamlines = nib.streamlines.array_sequence.ArraySequence()
-    ix = 0
     circuit_ix = 0
     stream_counter = 0
     while int(stream_counter) < int(target_samples):
@@ -353,7 +368,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
 
                 print("%s%s" % ('Filtering by: \nnode intersection: ', len(roi_proximal_streamlines)))
 
-                if min_length != 0:
+                if str(min_length) != '0':
                     roi_proximal_streamlines = nib.streamlines.array_sequence.ArraySequence([s for s in
                                                                                              roi_proximal_streamlines
                                                                                              if len(s) >=

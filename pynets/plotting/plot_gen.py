@@ -83,7 +83,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
         from pynets.stats.netstats import link_communities
         # Plot link communities
         link_comm_aff_mat = link_communities(conn_matrix, type_clustering='single')
-        print("%s%s%s" % ('Found ', str(len(link_comm_aff_mat)), ' communities...'))
+        print(f"{'Found '}{str(len(link_comm_aff_mat))}{' communities...'}")
         clust_levels = len(link_comm_aff_mat)
         clust_levels_tmp = int(clust_levels) - 1
         mask_mat = np.squeeze(np.array([link_comm_aff_mat == 0]).astype('int'))
@@ -162,22 +162,21 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
         output.append(entry)
 
     if network:
-        json_file_name = "%s%s%s%s%s%s" % (str(ID), '_', network, '_connectogram_', conn_model, '_network.json')
-        json_fdg_file_name = "%s%s%s%s%s%s" % (str(ID), '_', network, '_fdg_', conn_model, '_network.json')
-        connectogram_plot = "%s%s%s" % (dir_path, '/', json_file_name)
-        fdg_js_sub = "%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_fdg_', conn_model, '_network.js')
-        fdg_js_sub_name = "%s%s%s%s%s%s" % (str(ID), '_', network, '_fdg_', conn_model, '_network.js')
-        connectogram_js_sub = "%s%s%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_', network, '_connectogram_', conn_model,
-                                                    '_network.js')
-        connectogram_js_name = "%s%s%s%s%s%s" % (str(ID), '_', network, '_connectogram_', conn_model, '_network.js')
+        json_file_name = f"{str(ID)}{'_'}{network}{'_connectogram_'}{conn_model}{'_network.json'}"
+        json_fdg_file_name = f"{str(ID)}{'_'}{network}{'_fdg_'}{conn_model}{'_network.json'}"
+        connectogram_plot = f"{dir_path}{'/'}{json_file_name}"
+        fdg_js_sub = f"{dir_path}{'/'}{str(ID)}{'_'}{network}{'_fdg_'}{conn_model}{'_network.js'}"
+        fdg_js_sub_name = f"{str(ID)}{'_'}{network}{'_fdg_'}{conn_model}{'_network.js'}"
+        connectogram_js_sub = f"{dir_path}/{str(ID)}_{network}_connectogram_{conn_model}_network.js"
+        connectogram_js_name = f"{str(ID)}{'_'}{network}{'_connectogram_'}{conn_model}{'_network.js'}"
     else:
-        json_file_name = "%s%s%s%s" % (str(ID), '_connectogram_', conn_model, '.json')
-        json_fdg_file_name = "%s%s%s%s" % (str(ID), '_fdg_', conn_model, '.json')
-        connectogram_plot = "%s%s%s" % (dir_path, '/', json_file_name)
-        connectogram_js_sub = "%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_connectogram_', conn_model, '.js')
-        fdg_js_sub = "%s%s%s%s%s%s" % (dir_path, '/', str(ID), '_fdg_', conn_model, '.js')
-        fdg_js_sub_name = "%s%s%s%s" % (str(ID), '_fdg_', conn_model, '.js')
-        connectogram_js_name = "%s%s%s%s" % (str(ID), '_connectogram_', conn_model, '.js')
+        json_file_name = f"{str(ID)}{'_connectogram_'}{conn_model}{'.json'}"
+        json_fdg_file_name = f"{str(ID)}{'_fdg_'}{conn_model}{'.json'}"
+        connectogram_plot = f"{dir_path}{'/'}{json_file_name}"
+        connectogram_js_sub = f"{dir_path}{'/'}{str(ID)}{'_connectogram_'}{conn_model}{'.js'}"
+        fdg_js_sub = f"{dir_path}{'/'}{str(ID)}{'_fdg_'}{conn_model}{'.js'}"
+        fdg_js_sub_name = f"{str(ID)}{'_fdg_'}{conn_model}{'.js'}"
+        connectogram_js_name = f"{str(ID)}{'_connectogram_'}{conn_model}{'.js'}"
     save_json(connectogram_plot, output)
 
     # Force-directed graphing
@@ -202,7 +201,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
     for k in range(len(data['nodes'])):
         data['nodes'][k]['name'] = str(labels[k])
 
-    out_file = "%s%s%s" % (dir_path, '/', str(json_fdg_file_name))
+    out_file = f"{dir_path}{'/'}{str(json_fdg_file_name)}"
     save_json(out_file, data)
 
     # Copy index.html and json to dir_path
@@ -265,11 +264,11 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas, labels):
     plt.legend()
     #plt.tight_layout()
     if network:
-        plt.title("%s%s" % (network, ' Time Series'))
-        out_path_fig = "%s%s%s%s%s%s" % (dir_path, '/', ID, '_', network, 'rsn_ts_plot.png')
+        plt.title(f"{network}{' Time Series'}")
+        out_path_fig = f"{dir_path}{'/'}{ID}{'_'}{network}{'rsn_ts_plot.png'}"
     else:
         plt.title('Time Series')
-        out_path_fig = "%s%s%s%s" % (dir_path, '/', ID, '_wb_ts_plot.png')
+        out_path_fig = f"{dir_path}{'/'}{ID}{'_wb_ts_plot.png'}"
     plt.savefig(out_path_fig)
     plt.close('all')
     return
@@ -484,23 +483,23 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
                                                            '_thr-', thr, '_glass_viz.png')
         if roi:
             # Save coords to pickle
-            coord_path = "%s%s%s%s" % (namer_dir, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
+            coord_path = f"{namer_dir}{'/coords_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
             with open(coord_path, 'wb') as f:
                 pickle.dump(coords, f, protocol=2)
 
             # Save labels to pickle
-            labels_path = "%s%s%s%s" % (namer_dir, '/labelnames_', op.basename(roi).split('.')[0], '_plotting.pkl')
+            labels_path = f"{namer_dir}{'/labelnames_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
 
         else:
             # Save coords to pickle
-            coord_path = "%s%s" % (namer_dir, '/coords_plotting.pkl')
+            coord_path = f"{namer_dir}{'/coords_plotting.pkl'}"
             with open(coord_path, 'wb') as f:
                 pickle.dump(coords, f, protocol=2)
 
             # Save labels to pickle
-            labels_path = "%s%s" % (namer_dir, '/labelnames_plotting.pkl')
+            labels_path = f"{namer_dir}{'/labelnames_plotting.pkl'}"
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
 
@@ -688,22 +687,22 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
                                                                      '_thr-', thr, '_glass_viz.png')
         if roi:
             # Save coords to pickle
-            coord_path = "%s%s%s%s" % (namer_dir, '/coords_', op.basename(roi).split('.')[0], '_plotting.pkl')
+            coord_path = f"{namer_dir}{'/coords_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
             with open(coord_path, 'wb') as f:
                 pickle.dump(coords, f, protocol=2)
 
             # Save labels to pickle
-            labels_path = "%s%s%s%s" % (namer_dir, '/labelnames_', op.basename(roi).split('.')[0], '_plotting.pkl')
+            labels_path = f"{namer_dir}{'/labelnames_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
         else:
             # Save coords to pickle
-            coord_path = "%s%s" % (namer_dir, '/coords_plotting.pkl')
+            coord_path = f"{namer_dir}{'/coords_plotting.pkl'}"
             with open(coord_path, 'wb') as f:
                 pickle.dump(coords, f, protocol=2)
 
             # Save labels to pickle
-            labels_path = "%s%s" % (namer_dir, '/labelnames_plotting.pkl')
+            labels_path = f"{namer_dir}{'/labelnames_plotting.pkl'}"
             with open(labels_path, 'wb') as f:
                 pickle.dump(labels, f, protocol=2)
 
@@ -955,13 +954,12 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
                 try:
                     x = x[~pd.isnull(x)]
                     if len(x) > 0:
-                        print("%s%s%s" % ('NaNs encountered for ', global_measures[i],
-                                          '. Plotting and averaging across non-missing values. Checking output is '
-                                          'recommended...'))
+                        print(f"NaNs encountered for {global_measures[i]}. Plotting and averaging across non-missing "
+                              f"values. Checking output is recommended...")
                         ax.hist(x, density=True, bins='auto', alpha=0.8)
                         ax.set_title(global_measures[i])
                     else:
-                        print("%s%s" % ('Warning: No numeric data to plot for ', global_measures[i]))
+                        print(f"{'Warning: No numeric data to plot for '}{global_measures[i]}")
                         continue
                 except:
                     continue
@@ -970,12 +968,11 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
                     ax.hist(x, density=True, bins='auto', alpha=0.8)
                     ax.set_title(global_measures[i])
                 except:
-                    print("%s%s" % ('Warning: Inf or NaN values encounterd. No numeric data to plot for ',
-                                    global_measures[i]))
+                    print(f"Warning: Inf or NaN values encounterd. No numeric data to plot for {global_measures[i]}")
                     continue
 
         plt.tight_layout()
-        out_path_fig = "%s%s" % (namer_dir, '/mean_global_topology_distribution_multiplot.png')
+        out_path_fig = f"{namer_dir}{'/mean_global_topology_distribution_multiplot.png'}"
         fig.savefig(out_path_fig)
         plt.close('all')
     else:

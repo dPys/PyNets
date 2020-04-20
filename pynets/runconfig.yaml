@@ -39,7 +39,7 @@ available_models:
       - 'csd'
 resource_dict:
       - 'fetch_nodes_and_labels_node':
-        - (2, 1)
+        - (2, 2)
       - 'save_nifti_parcels_node':
         - (1, 2)
       - 'check_orient_and_dims_func_node':
@@ -53,7 +53,7 @@ resource_dict:
       - 'check_orient_and_dims_dwi_node':
         - (2, 2)
       - 'get_anisopwr_node':
-        - (1, 0.5)
+        - (1, 1)
       - 'extract_ts_node':
         - (1, 4)
       - 'clustering_node':
@@ -69,15 +69,15 @@ resource_dict:
       - 'get_fa_node':
         - (1, 2)
       - 'run_tracking_node':
-        - (8, 4)
+        - (4, 8)
       - 'thresh_diff_node':
         - (1, 0.5)
       - 'dsn_node':
-        - (4, 2)
+        - (2, 4)
       - 'plot_all_node':
         - (1, 1)
       - 'streams2graph_node':
-        - (2, 6)
+        - (6, 8)
 execution_dict:
     - 'stop_on_first_crash':
         - False

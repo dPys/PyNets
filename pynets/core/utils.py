@@ -47,7 +47,7 @@ def do_dir_path(atlas, outdir):
         if atlas.endswith('.nii.gz'):
            atlas = atlas.replace('.nii.gz', '')
 
-    dir_path = "%s%s%s" % (outdir, '/', atlas)
+    dir_path = f"{outdir}/{atlas}"
     if not op.exists(dir_path) and atlas is not None:
         os.makedirs(dir_path, exist_ok=True)
     elif atlas is None:
@@ -130,7 +130,7 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
     if (node_size is None) and (parc is True):
         node_size = '_parc'
 
-    namer_dir = '{}/graphs'.format(dir_path)
+    namer_dir = f'{dir_path}/graphs'
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -205,7 +205,7 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
     if (node_size is None) and (parc is True):
         node_size = '_parc'
 
-    namer_dir = '{}/graphs'.format(dir_path)
+    namer_dir = f'{dir_path}/graphs'
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -267,7 +267,7 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
     if (node_size is None) and (parc is True):
         node_size = '_parc'
 
-    namer_dir = '{}/graphs'.format(dir_path)
+    namer_dir = f'{dir_path}/graphs'
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -336,7 +336,7 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
     if (node_size is None) and (parc is True):
         node_size = '_parc'
 
-    namer_dir = '{}/graphs'.format(dir_path)
+    namer_dir = f'{dir_path}/graphs'
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -376,11 +376,11 @@ def create_csv_path(dir_path, est_path):
     import os
     from pathlib import Path
 
-    namer_dir = '{}/netmetrics'.format(str(Path(dir_path).parent))
+    namer_dir = f'{str(Path(dir_path).parent)}/netmetrics'
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    out_path = "%s%s%s%s" % (namer_dir, '/', est_path.split('/')[-1].split('.npy')[0], '_net_mets.csv')
+    out_path = f"{namer_dir}/{est_path.split('/')[-1].split('.npy')[0]}_net_mets.csv"
 
     return out_path
 
@@ -403,17 +403,17 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
     G.graph['ecount'] = nx.number_of_edges(G)
     G = nx.convert_node_labels_to_integers(G, first_label=1)
     if fmt == 'edgelist_csv':
-        nx.write_weighted_edgelist(G, "%s%s" % (est_path.split('.npy')[0], '.csv'), encoding='utf-8')
+        nx.write_weighted_edgelist(G, f"{est_path.split('.npy')[0]}.csv", encoding='utf-8')
     elif fmt == 'gpickle':
-        nx.write_gpickle(G, "%s%s" % (est_path.split('.npy')[0], '.pkl'))
+        nx.write_gpickle(G, f"{est_path.split('.npy')[0]}.pkl")
     elif fmt == 'graphml':
-        nx.write_graphml(G, "%s%s" % (est_path.split('.npy')[0], '.graphml'))
+        nx.write_graphml(G, f"{est_path.split('.npy')[0]}.graphml")
     elif fmt == 'txt':
-        np.savetxt("%s%s" % (est_path.split('.npy')[0], '.txt'), nx.to_numpy_matrix(G))
+        np.savetxt(f"{est_path.split('.npy')[0]}{'.txt'}", nx.to_numpy_matrix(G))
     elif fmt == 'npy':
         np.save(est_path, nx.to_numpy_matrix(G))
     elif fmt == 'edgelist_ssv':
-        nx.write_weighted_edgelist(G, "%s%s" % (est_path.split('.npy')[0], '.ssv'), delimiter=" ", encoding='utf-8')
+        nx.write_weighted_edgelist(G, f"{est_path.split('.npy')[0]}.ssv", delimiter=" ", encoding='utf-8')
     else:
         raise ValueError('\nERROR: File format not supported!')
 
@@ -761,7 +761,7 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
     from pynets.stats.netstats import collect_pandas_df_make
 
     # Available functional and structural connectivity models
-    with open("%s%s" % (str(Path(__file__).parent.parent), '/runconfig.yaml'), 'r') as stream:
+    with open(f"{str(Path(__file__).parent.parent)}{'/runconfig.yaml'}", 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
             func_models = hardcoded_params['available_models']['func_models']
@@ -835,7 +835,7 @@ def check_est_path_existence(est_path_list):
         if op.isfile(est_path) is True:
             est_path_list_ex.append(est_path)
         else:
-            print("%s%s%s" % ('\n\nWarning: Missing ', est_path, '...\n\n'))
+            print(f"\n\nWarning: Missing {est_path}...\n\n")
             bad_ixs.append(i)
             continue
     return est_path_list_ex, bad_ixs
@@ -871,21 +871,26 @@ def save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network):
         import _pickle as pickle
     import os
 
-    namer_dir = '{}/nodes'.format(dir_path)
+    namer_dir = f'{dir_path}/nodes'
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
     # Save coords to pickle
-    coord_path = "%s%s%s%s" % (namer_dir, '/', network, '_coords_rsn.pkl')
+    coord_path = f"{namer_dir}{'/'}{network}{'_coords_rsn.pkl'}"
     with open(coord_path, 'wb') as f:
         pickle.dump(coords, f, protocol=2)
 
     # Save labels to pickle
-    labels_path = "%s%s%s%s" % (namer_dir, '/', network, '_labels_rsn.pkl')
+    labels_path = f"{namer_dir}{'/'}{network}{'_labels_rsn.pkl'}"
     with open(labels_path, 'wb') as f:
         pickle.dump(labels, f, protocol=2)
 
     return coord_path, labels_path
+
+
+def missing_elements(L):
+    start, end = L[0], L[-1]
+    return sorted(set(range(start, end + 1)).difference(L))
 
 
 def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
@@ -915,7 +920,7 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
     """
     import os
 
-    namer_dir = '{}/parcellations'.format(dir_path)
+    namer_dir = f'{dir_path}/parcellations'
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -961,7 +966,7 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, 
         Path to .npy file containing array of fMRI time-series extracted from nodes.
     """
     import os
-    namer_dir = '{}/timeseries'.format(dir_path)
+    namer_dir = f'{dir_path}/timeseries'
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
