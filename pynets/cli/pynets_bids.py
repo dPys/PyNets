@@ -5,7 +5,7 @@ import bids
 from pynets.core.utils import as_list, merge_dicts
 
 
-def sweep_directory(derivatives_path, modality, space='MNI152NLin2009cAsym', func_desc='smoothAROMAnonaggr', subj=None,
+def sweep_directory(derivatives_path, modality, space, func_desc, subj=None,
                     sesh=None):
     """
     Given a BIDS derivatives directory containing preprocessed functional MRI or diffusion MRI data
@@ -30,9 +30,12 @@ def sweep_directory(derivatives_path, modality, space='MNI152NLin2009cAsym', fun
     layout = bids.layout.BIDSLayout(derivatives_path, validate=False, derivatives=True, absolute_paths=True)
 
     # get all files matching the specific modality we are using
+    all_subs = layout.get_subjects()
     if not subj:
         # list of all the subjects
-        subjs = layout.get_subjects()
+        subjs = all_subs
+    elif isinstance(subj, list):
+        subjs = [sub for sub in subj if sub in all_subs]
     else:
         # make it a list so we can iterate
         subjs = as_list(subj)
@@ -54,19 +57,21 @@ def sweep_directory(derivatives_path, modality, space='MNI152NLin2009cAsym', fun
                 space_list = ', '.join(spaces)
                 print(
                     f'No space was provided, but multiple spaces were detected: {space_list}. '
-                    'Selecting the first (ordered lexicographically): {{space}}')
+                    f'Selecting the first (ordered lexicographically): {space}')
 
     for sub in subjs:
+        all_seshs = layout.get_sessions(subject=sub)
         if not sesh:
-            seshs = layout.get_sessions(subject=sub)
+            seshs = all_seshs
             # in case there are non-session level inputs
             seshs += []
+        elif isinstance(sesh, list):
+            seshs = [ses for ses in sesh if ses in all_seshs]
         else:
             # make a list so we can iterate
             seshs = as_list(sesh)
 
-        print(f"\nSubject(s): {sub}")
-        print(f"\nSession(s): {seshs}")
+        # print(f"Subject: {sub}\nSession(s): {seshs}\nModality: {modality}")
 
         for ses in seshs:
             # the attributes for our modality img
@@ -296,8 +301,10 @@ def main():
     import json
     import ast
     import yaml
+    import itertools
     from types import SimpleNamespace
     from pathlib import Path
+    from pynets.core.utils import flatten
     from pynets.cli.pynets_run import build_workflow
     from multiprocessing import set_start_method, Process, Manager
     try:
@@ -318,13 +325,21 @@ def main():
     session_label = bids_args.session_label
     modality = bids_args.modality
     bids_config = bids_args.config
+    analysis_level = bids_args.analysis_level
+
+    if analysis_level == 'group' and participant_label is not None:
+        raise ValueError('Error: You have indicated a group analysis level run, but specified a participant label!')
+
+    if analysis_level == 'participant' and participant_label is None:
+        raise ValueError('Error: You have indicated a participant analysis level run, but not specified a participant '
+                         'label!')
 
     if bids_config:
         with open(bids_config, 'r') as stream:
             arg_dict = json.load(stream)
     else:
-        with open(f"{str(Path(__file__).parent.parent)}/bids_config.json", 'r') as stream:
-        # with open('/Users/derekpisner/Applications/PyNets/pynets/bids_config.json') as stream:
+        # with open(f"{str(Path(__file__).parent.parent)}/bids_config.json", 'r') as stream:
+        with open('/Users/derekpisner/Applications/PyNets/pynets/bids_config_test.json') as stream:
             arg_dict = json.load(stream)
 
     # Available functional and structural connectivity models
@@ -341,6 +356,9 @@ def main():
         except KeyError:
             print('ERROR: available structural models not successfully extracted from runconfig.yaml')
             sys.exit()
+
+    space = 'MNI152NLin2009cAsym'
+    func_desc = 'smoothAROMAnonaggr'
 
     # S3
     # Primary inputs
@@ -403,13 +421,20 @@ def main():
                 output_dir = as_directory(f"{home}/.pynets/output", remove=False)
 
             # Get S3 input data if needed
-            if participant_label and session_label:
-                info = "sub-" + participant_label[0] + '/ses-' + session_label[0]
-            elif participant_label and not session_label:
-                info = "sub-" + participant_label[0]
-            elif not participant_label and session_label:
-                info = 'ses-' + session_label[0]
-            cloud_utils.s3_get_data(buck, remo, bids_dir, modality, info=info)
+            if analysis_level == 'participant':
+                for partic, ses in list(itertools.product(participant_label, session_label)):
+                    if ses is not None:
+                        info = "sub-" + partic + '/ses-' + ses
+                    elif ses is None:
+                        info = "sub-" + partic
+                    cloud_utils.s3_get_data(buck, remo, bids_dir, modality, info=info)
+            elif analysis_level == 'group':
+                if len(session_label) > 1 and session_label[0] != 'None':
+                    for ses in session_label:
+                        info = 'ses-' + ses
+                        cloud_utils.s3_get_data(buck, remo, bids_dir, modality, info=info)
+                else:
+                    cloud_utils.s3_get_data(buck, remo, bids_dir, modality)
 
         if len(sec_s3_objs) > 0:
             [access_key, secret_key] = cloud_utils.get_credentials()
@@ -424,7 +449,6 @@ def main():
             sec_dir = as_directory(home + "/.pynets/secondary_files", remove=False)
             for s3_obj in [i for i in sec_s3_objs if i is not None]:
                 buck, remo = cloud_utils.parse_path(s3_obj)
-                bucket = s3_r.Bucket(buck)
                 s3_c.download_file(buck, remo, f"{sec_dir}/{os.path.basename(s3_obj)}")
 
             if isinstance(bids_args.ua, list):
@@ -466,30 +490,100 @@ def main():
         if output_dir is None:
             raise ValueError('Must specify an output directory')
 
-    arg_list = []
-    if len(modality) > 1:
-        for mod in modality:
-            outs = sweep_directory(bids_dir, modality=mod, subj=bids_args.participant_label[0],
-                                   sesh=bids_args.session_label[0])
+    intermodal_dict = {k: [] for k in ['funcs', 'confs', 'dwis', 'bvals', 'bvecs', 'anats', 'masks',
+                                       'subjs', 'seshs']}
+    if analysis_level == 'group':
+        if len(modality) > 1:
+            i = 0
+            for mod in modality:
+                outs = sweep_directory(bids_dir, modality=mod, space=space, func_desc=func_desc, sesh=session_label)
+                if mod == 'func':
+                    if i == 0:
+                        funcs, confs, _, _, _, anats, masks, subjs, seshs = outs
+                    else:
+                        funcs, confs, _, _, _, _, _, _, _ = outs
+                    intermodal_dict['funcs'].append(funcs)
+                    intermodal_dict['confs'].append(confs)
+                elif mod == 'dwi':
+                    if i == 0:
+                        _, _, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
+                    else:
+                        _, _, dwis, bvals, bvecs, _, _, _, _ = outs
+                    intermodal_dict['dwis'].append(dwis)
+                    intermodal_dict['bvals'].append(bvals)
+                    intermodal_dict['bvecs'].append(bvecs)
+                intermodal_dict['anats'].append(anats)
+                intermodal_dict['masks'].append(masks)
+                intermodal_dict['subjs'].append(subjs)
+                intermodal_dict['seshs'].append(seshs)
+                i += 1
+        else:
+            intermodal_dict = None
+            outs = sweep_directory(bids_dir, modality=modality[0], space=space, func_desc=func_desc,
+                                   sesh=session_label)
+            funcs, confs, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
+    elif analysis_level == 'participant':
+        if len(modality) > 1:
+            i = 0
+            for mod in modality:
+                outs = sweep_directory(bids_dir, modality=mod, space=space, func_desc=func_desc,
+                                       subj=participant_label, sesh=session_label)
+                if mod == 'func':
+                    if i == 0:
+                        funcs, confs, _, _, _, anats, masks, subjs, seshs = outs
+                    else:
+                        funcs, confs, _, _, _, _, _, _, _ = outs
+                    intermodal_dict['funcs'].append(funcs)
+                    intermodal_dict['confs'].append(confs)
+                elif mod == 'dwi':
+                    if i == 0:
+                        _, _, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
+                    else:
+                        _, _, dwis, bvals, bvecs, _, _, _, _ = outs
+                    intermodal_dict['dwis'].append(dwis)
+                    intermodal_dict['bvals'].append(bvals)
+                    intermodal_dict['bvecs'].append(bvecs)
+                intermodal_dict['anats'].append(anats)
+                intermodal_dict['masks'].append(masks)
+                intermodal_dict['subjs'].append(subjs)
+                intermodal_dict['seshs'].append(seshs)
+                i += 1
+        else:
+            intermodal_dict = None
+            outs = sweep_directory(bids_dir, modality=modality[0], space=space, func_desc=func_desc,
+                                   subj=participant_label, sesh=session_label)
+            funcs, confs, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
     else:
-        outs = sweep_directory(bids_dir, modality=modality[0], subj=bids_args.participant_label[0],
-                               sesh=bids_args.session_label[0])
+        raise ValueError('Analysis level invalid. Must be `participant` or `group`. See --help.')
+
+    if intermodal_dict:
+        funcs, confs, dwis, bvals, bvecs, anats, masks, subjs, seshs = [list(set(list(flatten(i)))) for i in
+                                                                        intermodal_dict.values()]
+
+    arg_list = []
     for mod in modalities:
         arg_list.append(arg_dict[mod])
 
     arg_list.append(arg_dict['gen'])
 
     args_dict_all = {}
+    models = []
     for d in arg_list:
         if 'mod' in d.keys():
             if len(modality) == 1:
                 if any(x in d['mod'] for x in func_models):
-                    if modality[0] == 'dwi':
+                    if 'dwi' in modality:
                         del d['mod']
-                if any(x in d['mod'] for x in struct_models):
-                    if modality[0] == 'func':
+                elif any(x in d['mod'] for x in struct_models):
+                    if 'func' in modality:
                         del d['mod']
+            else:
+                if any(x in d['mod'] for x in func_models) or any(x in d['mod'] for x in struct_models):
+                    models.append(ast.literal_eval(d['mod']))
         args_dict_all.update(d)
+
+    if len(modality) > 1:
+        args_dict_all['mod'] = str(list(set(flatten(models))))
 
     print('Arguments parsed from bids_config.json:\n')
     print(args_dict_all)
@@ -498,15 +592,10 @@ def main():
         if isinstance(val, str):
             args_dict_all[key] = ast.literal_eval(val)
 
-    funcs, confs, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
-    print(outs)
-
     id_list = []
-    for i in subjs:
-        for ses in seshs:
+    for i in sorted(list(set(subjs))):
+        for ses in sorted(list(set(seshs))):
             id_list.append(i + '_' + ses)
-    if len(modality) > 1:
-        id_list = id_list*2
 
     args_dict_all['work'] = bids_args.work
     args_dict_all['output_dir'] = output_dir
@@ -528,7 +617,7 @@ def main():
     args_dict_all['roi'] = bids_args.roi
     args_dict_all['templ'] = bids_args.templ
     args_dict_all['templm'] = bids_args.templm
-    if modality[0] == 'func':
+    if 'func' in modality:
         args_dict_all['cm'] = bids_args.cm
     else:
         args_dict_all['cm'] = None

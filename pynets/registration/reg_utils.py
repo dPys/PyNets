@@ -431,7 +431,7 @@ def normalize_xform(img):
             int(qform_code) == xform_code, int(sform_code) == xform_code)):
         return img
 
-    new_img = img.__class__(np.asarray(img.dataobj), xform, img.header)
+    new_img = img.__class__(np.nan_to_num(np.asarray(img.dataobj)), xform, img.header)
 
     # Unconditionally set sform/qform
     new_img.set_sform(xform, xform_code)
@@ -586,7 +586,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
         else:
             print(f"Reslicing image {img_file} to {vox_size}...")
             data2, affine2 = reslice(np.asarray(img.dataobj), img.affine, zooms, new_zooms)
-            nib.save(nib.Nifti1Image(data2, affine=affine2), img_file_res)
+            nib.save(nib.Nifti1Image(np.nan_to_num(data2), affine=affine2), img_file_res)
             img_file = img_file_res
             del data2
     else:

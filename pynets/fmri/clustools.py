@@ -855,7 +855,7 @@ class NiParcellate(object):
             k_list = proportional(self.k, list(mask_voxels_dict.values()))
 
             conn_comp_atlases = []
-            print(f"Building {len(mask_img_list)} separate atlases with voxel-proportional nclusters for each "
+            print(f"Building {len(mask_img_list)} separate atlases with voxel-proportional k clusters for each "
                   f"connected component...")
             for i, mask_img in enumerate(mask_img_list):
                 if k_list[i] == 0:

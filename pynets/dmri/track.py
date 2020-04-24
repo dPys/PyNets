@@ -283,12 +283,15 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
         DiPy list/array-like object of streamline points from tractography.
     """
     import gc
+    import time
     from colorama import Fore, Style
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
     from dipy.tracking.local_tracking import LocalTracking, ParticleFilteringTracking
     from dipy.direction import (ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter,
                                 DeterministicMaximumDirectionGetter)
+
+    start = time.time()
 
     B0_mask_data = nib.load(B0_mask).get_fdata()
 
@@ -391,6 +394,6 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
                                 '\nCumulative Streamline Count: ', Fore.CYAN, stream_counter, "\n"))
         print(Style.RESET_ALL)
 
-    print('Tracking Complete')
+    print('Tracking Complete:\n', str(time.time() - start))
 
     return streamlines

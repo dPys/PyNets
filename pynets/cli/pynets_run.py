@@ -1202,8 +1202,6 @@ def build_workflow(args, retval):
                 print(f"\nERROR: {atlas} is a coordinate atlas and must be used with the `-spheres` flag.")
                 retval['return_code'] = 1
                 return retval
-            else:
-                print(f"\nPredefined atlas: {atlas}")
         else:
             if (uatlas is None) and (k == 0) and (user_atlas_list is None) and (k_list is None) and \
                     (atlas is None) and (multi_atlas is None):
@@ -1313,6 +1311,13 @@ def build_workflow(args, retval):
                 print(f"T1-Weighted Image:\n{anat_file}")
         else:
             print(f"T1-Weighted Image:\n{anat_file}")
+
+    if mask or mask_list:
+        if mask_list and len(mask_list) > 1:
+            for mask in mask_list:
+                print(f"Brain Mask Image:\n{mask}")
+        else:
+            print(f"Brain Mask Image:\n{mask}")
     print('\n-------------------------------------------------------------------------\n\n')
 
     # Variable tracking
@@ -1685,9 +1690,9 @@ def build_workflow(args, retval):
                 anat_file = None
 
             try:
-                subj_dir = f"{outdir}/sub-{ID.split('_')[0]}/ses-{ID.split('_')[1]}"
+                subj_dir = f"{outdir}/sub-{ID[i].split('_')[0]}/ses-{ID[i].split('_')[1]}"
             except:
-                subj_dir = f"{outdir}/{ID}"
+                subj_dir = f"{outdir}/{ID[i]}"
             os.makedirs(subj_dir, exist_ok=True)
             dir_list.append(subj_dir)
 

@@ -1022,13 +1022,14 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     # Connect flexi_atlas inputs to definition node
     if flexi_atlas is True:
         dmri_connectometry_wf.add_nodes([flexi_atlas_source])
-        dmri_connectometry_wf.disconnect([(inputnode, fetch_nodes_and_labels_node,
-                                           [('uatlas', 'uatlas'),
-                                            ('atlas', 'atlas')])
-                                          ])
         dmri_connectometry_wf.connect([(flexi_atlas_source, fetch_nodes_and_labels_node,
                                         [('uatlas', 'uatlas'),
                                          ('atlas', 'atlas')])
+                                       ])
+    else:
+        dmri_connectometry_wf.connect([(inputnode, fetch_nodes_and_labels_node,
+                                        [('atlas', 'atlas'),
+                                         ('uatlas', 'uatlas')])
                                        ])
 
     # RSN case
@@ -1098,7 +1099,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         if parc is False:
             dmri_connectometry_wf.connect([(prep_spherical_nodes_node, node_gen_node,
                                             [('parcel_list', 'parcel_list'),
-                                             ('par_max', 'par_max'),
                                              ('parc', 'parc')]),
                                            (fetch_nodes_and_labels_node, prep_spherical_nodes_node,
                                             [('coords', 'coords')]),
@@ -1117,6 +1117,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                            ])
 
     if parc is False:
+        # register_node.inputs.simple = True
         dmri_connectometry_wf.connect([(inputnode, prep_spherical_nodes_node,
                                         [('node_size', 'node_size'),
                                          ('template_mask', 'template_mask')]),
@@ -1134,6 +1135,13 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                         [('parc', 'parc')]),
                                        (inputnode, register_atlas_node,
                                         [('node_size', 'node_size')]),
+                                       (inputnode, check_orient_and_dims_uatlas_node,
+                                        [('vox_size', 'vox_size')]),
+                                       (fetch_nodes_and_labels_node, check_orient_and_dims_uatlas_node,
+                                        [('uatlas', 'infile'),
+                                         ('dir_path', 'outdir')]),
+                                       (check_orient_and_dims_uatlas_node, register_atlas_node,
+                                        [('outfile', 'uatlas')]),
                                        ])
     # Begin joinnode chaining
     # Set lists of fields and connect statements for repeated use throughout joins
@@ -1353,9 +1361,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
 
     # Connect nodes of workflow
     dmri_connectometry_wf.connect([
-        (inputnode, fetch_nodes_and_labels_node, [('atlas', 'atlas'),
-                                                  ('uatlas', 'uatlas'),
-                                                  ('parc', 'parc'),
+        (inputnode, fetch_nodes_and_labels_node, [('parc', 'parc'),
                                                   ('ref_txt', 'ref_txt'),
                                                   ('use_AAL_naming', 'use_AAL_naming'),
                                                   ('outdir', 'outdir')]),
@@ -1375,10 +1381,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         (inputnode, register_node, [('vox_size', 'vox_size')]),
         (inputnode, check_orient_and_dims_anat_node, [('anat_file', 'infile'), ('vox_size', 'vox_size'),
                                                       ('outdir', 'outdir')]),
-        (inputnode, check_orient_and_dims_uatlas_node, [('vox_size', 'vox_size')]),
-        (fetch_nodes_and_labels_node, check_orient_and_dims_uatlas_node, [('uatlas', 'infile'),
-                                                                          ('dir_path', 'outdir')]),
-        (check_orient_and_dims_uatlas_node, register_atlas_node, [('outfile', 'uatlas')]),
         (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_file')]),
         (inputnode, save_nifti_parcels_node, [('ID', 'ID'), ('roi', 'roi')]),
         (fetch_nodes_and_labels_node, save_nifti_parcels_node, [('dir_path', 'dir_path')]),

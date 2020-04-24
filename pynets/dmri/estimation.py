@@ -321,6 +321,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         Minimum fiber length threshold in mm to restrict tracking.
     '''
     import gc
+    import time
     from dipy.tracking.streamline import Streamlines, values_from_volume
     from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
     import networkx as nx
@@ -330,6 +331,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     from pynets.dmri.dmri_utils import generate_sl
     from dipy.io.streamline import load_tractogram
     from dipy.io.stateful_tractogram import Space, Origin
+
+    start = time.time()
 
     # Load parcellation
     roi_img = nib.load(atlas_mni)
@@ -430,6 +433,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Impose symmetry
     conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
+
+    print('Graph Building Complete:\n', str(time.time() - start))
 
     if len(bad_idxs) > 0:
         bad_idxs = sorted(list(set(bad_idxs)), reverse=True)

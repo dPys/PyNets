@@ -131,7 +131,29 @@ def get_matching_s3_objects(bucket, prefix="", suffix=""):
             break
 
 
-def s3_get_data(bucket, remote, local, modality, info="", force=False):
+def s3_fetch(client, bucket, remote, local, bpath, mod):
+    # go through all folders inside of remote directory and download relevant files
+    for obj in bpath:
+        bdir, data = os.path.split(obj)
+        localpath = os.path.join(local, bdir.replace(f"{remote}/", ""))
+        if (mod in localpath) or ('anat' in localpath):
+            # Make directory for data if it doesn't exist
+            if not os.path.exists(localpath):
+                os.makedirs(localpath)
+            if not os.path.exists(f"{localpath}/{data}"):
+                print(f"Downloading {bdir}/{data} from {bucket} s3 bucket...")
+                # Download file
+                client.download_file(bucket, f"{bdir}/{data}", f"{localpath}/{data}")
+                if os.path.exists(f"{localpath}/{data}"):
+                    print("Success!")
+                else:
+                    print("Error: File not downloaded")
+            else:
+                print(f"File {data} already exists at {localpath}/{data}")
+    return
+
+
+def s3_get_data(bucket, remote, local, modality, info=None, force=False):
     """Given and s3 directory, copies files/subdirectories in that directory to local
 
     Parameters
@@ -149,16 +171,6 @@ def s3_get_data(bucket, remote, local, modality, info="", force=False):
         Whether to overwrite the local directory containing the s3 files if it already exists, by default False
     """
 
-    if info == "sub-":
-        print("Subject not specified, comparing input folder to remote directory...")
-    else:
-        if os.path.exists(os.path.join(local, info)) and not force:
-            if os.listdir(os.path.join(local, info)):
-                print(f"Local directory: {os.path.join(local, info)} already exists. Not pulling s3 data. Delete "
-                      f"contents to re-download data.")
-                return
-        run_str = info.split('/')
-
     # get client with credentials if they exist
     client = s3_client(service="s3")
 
@@ -167,25 +179,39 @@ def s3_get_data(bucket, remote, local, modality, info="", force=False):
     if bucket not in bkts:
         raise ValueError("Error: could not locate bucket. Available buckets: " + ", ".join(bkts))
 
-    bpath = get_matching_s3_objects(bucket, f"{remote}/{'/'.join(run_str[:-1])}/{modality[0]}")
-
-    # go through all folders inside of remote directory and download relevant files
-    for obj in bpath:
-        bdir, data = os.path.split(obj)
-        localpath = os.path.join(local, bdir.replace(f"{remote}/", ""))
-        # Make directory for data if it doesn't exist
-        if not os.path.exists(localpath):
-            os.makedirs(localpath)
-        if not os.path.exists(f"{localpath}/{data}"):
-            print(f"Downloading {bdir}/{data} from {bucket} s3 bucket...")
-            # Download file
-            client.download_file(bucket, f"{bdir}/{data}", f"{localpath}/{data}")
-            if os.path.exists(f"{localpath}/{data}"):
-                print("Success!")
-            else:
-                print("Error: File not downloaded")
+    if info is not None:
+        if info == "sub-":
+            print("Subject not specified. Check BIDS formatting.")
         else:
-            print(f"File {data} already exists at {localpath}/{data}")
+            if os.path.exists(os.path.join(local, info)) and not force:
+                if os.listdir(os.path.join(local, info)):
+                    print(f"Local directory: {os.path.join(local, info)} already exists. Not pulling s3 data. Delete "
+                          f"contents to re-download data.")
+                    return
+            run_str = info.split('/')
+
+        if len(modality) > 1:
+            for mod in modality:
+                if len(run_str) == 1:
+                    bpath = get_matching_s3_objects(bucket, f"{remote}/{'/'.join(run_str[:-1])}/")
+                else:
+                    bpath = get_matching_s3_objects(bucket, f"{remote}/{'/'.join(run_str)}/")
+                s3_fetch(client, bucket, remote, local, bpath, mod)
+        else:
+            if len(run_str) == 1:
+                bpath = get_matching_s3_objects(bucket, f"{remote}/{'/'.join(run_str[:-1])}/")
+            else:
+                bpath = get_matching_s3_objects(bucket, f"{remote}/{'/'.join(run_str)}/")
+            s3_fetch(client, bucket, remote, local, bpath, modality[0])
+    else:
+        if len(modality) > 1:
+            for mod in modality:
+                bpath = get_matching_s3_objects(bucket, f"{remote}/")
+                s3_fetch(client, bucket, remote, local, bpath, mod)
+        else:
+            bpath = get_matching_s3_objects(bucket, f"{remote}/")
+            s3_fetch(client, bucket, remote, local, bpath, modality[0])
+    return
 
 
 def s3_push_data(bucket, remote, outDir, modality, subject=None, session=None, creds=True):
