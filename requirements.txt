@@ -25,6 +25,7 @@ colorama>=0.3.9
 python-louvain==0.13
 scikit-image==0.14.2
 fury>=0.2.0
+deepbrain>=0.1.0
 #skggm>=0.2.7
 graspy>=0.0.2
 #py3plex>=0.67

@@ -1073,8 +1073,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                              ('parcel_list', 'parcel_list')]),
                                            (get_node_membership_node, node_gen_node,
                                             [('net_coords', 'coords'), ('net_labels', 'labels')]),
-                                           (save_nifti_parcels_node, register_atlas_node, [('net_parcels_nii_path',
-                                                                                            'uatlas_parcels')]),
                                            ])
         else:
             dmri_connectometry_wf.connect([(fetch_nodes_and_labels_node, get_node_membership_node,
@@ -1087,8 +1085,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                            (get_node_membership_node, save_coords_and_labels_node,
                                             [('net_coords', 'coords'), ('net_labels', 'labels'),
                                              ('network', 'network')]),
-                                           (save_nifti_parcels_node, register_atlas_node, [('net_parcels_nii_path',
-                                                                                            'uatlas_parcels')])
                                            ])
     else:
         dmri_connectometry_wf.connect([(inputnode, save_nifti_parcels_node,
@@ -1105,15 +1101,12 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                            (fetch_nodes_and_labels_node, node_gen_node,
                                             [('coords', 'coords'),
                                              ('labels', 'labels')]),
-                                           (node_gen_node, register_atlas_node, [('uatlas', 'uatlas_parcels')])
                                            ])
         else:
             dmri_connectometry_wf.connect([(fetch_nodes_and_labels_node, node_gen_node,
                                             [('coords', 'coords'),
                                              ('labels', 'labels'),
                                              ('parcel_list', 'parcel_list')]),
-                                           (save_nifti_parcels_node, register_atlas_node, [('net_parcels_nii_path',
-                                                                                            'uatlas_parcels')])
                                            ])
 
     if parc is False:
@@ -1127,6 +1120,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                         [('node_size', 'node_size')]),
                                        (register_atlas_node, run_tracking_node,
                                         [('node_size', 'node_size')]),
+                                       (node_gen_node, register_atlas_node,
+                                        [('uatlas', 'uatlas')]),
                                        ])
     else:
         dmri_connectometry_wf.connect([(inputnode, run_tracking_node,
@@ -1386,6 +1381,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         (fetch_nodes_and_labels_node, save_nifti_parcels_node, [('dir_path', 'dir_path')]),
         (node_gen_node, save_nifti_parcels_node, [('net_parcels_map_nifti', 'net_parcels_map_nifti')]),
         (inputnode, register_atlas_node, [('vox_size', 'vox_size')]),
+        (save_nifti_parcels_node, register_atlas_node, [('net_parcels_nii_path',
+                                                         'uatlas_parcels')]),
         (node_gen_node, register_atlas_node, [('atlas', 'atlas'),
                                               ('coords', 'coords'),
                                               ('labels', 'labels')]),

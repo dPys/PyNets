@@ -1130,6 +1130,8 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
         Indicates whether to use the raw parcels as ROI nodes instead of coordinates at their center-of-mass.
     """
     from pynets.core.nodemaker import get_sphere, mmToVox
+    from nilearn.masking import intersect_masks
+
     mask_img = nib.load(template_mask)
     mask_aff = mask_img.affine
     mask_shape = mask_img.shape
@@ -1145,13 +1147,22 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     x_vox = np.diagonal(mask_aff[:3, 0:3])[0]
     y_vox = np.diagonal(mask_aff[:3, 0:3])[1]
     z_vox = np.diagonal(mask_aff[:3, 0:3])[2]
-    sphere_vol = np.zeros(mask_shape, dtype=bool)
-    parcel_list = []
+
+    parcel_list_all = []
     i = 0
     for coord in coords_vox:
+        sphere_vol = np.zeros(mask_shape, dtype=bool)
         sphere_vol[tuple(get_sphere(coord, node_size, (np.abs(x_vox), y_vox, z_vox), mask_shape).T)] = i * 1
-        parcel_list.append(nib.Nifti1Image(sphere_vol.astype('uint16'), affine=mask_aff))
-        i = i + 1
+        parcel_list_all.append(nib.Nifti1Image(sphere_vol.astype('bool').astype('uint16'), affine=mask_aff))
+        i += 1
+
+    # remove the intersection
+    parcel_intersect = np.invert(np.asarray(intersect_masks(parcel_list_all, threshold=1).dataobj).astype('bool'))
+
+    parcel_list = []
+    for mask in parcel_list_all:
+        non_ovlp = np.asarray(mask.dataobj) * parcel_intersect
+        parcel_list.append(nib.Nifti1Image(non_ovlp.astype('uint16'), affine=mask_aff))
 
     par_max = len(coords)
     if par_max > 0:

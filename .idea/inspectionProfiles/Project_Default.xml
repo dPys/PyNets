@@ -4,11 +4,12 @@
     <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoredPackages">
         <value>
-          <list size="4">
+          <list size="5">
             <item index="0" class="java.lang.String" itemvalue="graspy" />
             <item index="1" class="java.lang.String" itemvalue="sphinx-rtd-theme" />
             <item index="2" class="java.lang.String" itemvalue="pybids" />
             <item index="3" class="java.lang.String" itemvalue="scikit_learn" />
+            <item index="4" class="java.lang.String" itemvalue="deepbrain" />
           </list>
         </value>
       </option>

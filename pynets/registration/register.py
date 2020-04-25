@@ -8,6 +8,7 @@ Copyright (C) 2017
 import os
 import nibabel as nib
 import warnings
+import indexed_gzip
 import numpy as np
 from pynets.registration import reg_utils as regutils
 from nilearn.image import math_img
@@ -330,6 +331,7 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
     uatlas_mni_data = np.asarray(uatlas_mni_img.dataobj)
     uatlas_mni_img.uncache()
     overlap_mask = np.invert(warped_uatlas_img_res_data.astype('bool') * uatlas_mni_data.astype('bool'))
+    os.makedirs(f"{dir_path}/parcellations", exist_ok=True)
     atlas_mni = f"{dir_path}/parcellations/{op.basename(uatlas).split('.nii')[0]}_liberal.nii.gz"
     nib.save(nib.Nifti1Image(warped_uatlas_img_res_data * overlap_mask.astype('int') +
                              uatlas_mni_data * overlap_mask.astype('int') +
@@ -473,6 +475,29 @@ class DmriReg(object):
             wm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-WM_probseg.nii.gz')[0]
             csf_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-CSF_probseg.nii.gz')[0]
         except:
+            import tensorflow as tf
+            tf.logging.set_verbosity(tf.logging.ERROR)
+            from deepbrain import Extractor
+            os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+            img = nib.load(self.t1w_brain)
+            t1w_data = img.get_fdata()
+            ext = Extractor()
+            prob = ext.run(t1w_data)
+            mask = prob > 0.5
+            deeb_brain_mask = op.dirname(self.t1w) + '/deep_brain_mask.nii.gz'
+            nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), deeb_brain_mask)
+            try:
+                os.system(f"fslmaths {self.t1w_brain} -mas {deeb_brain_mask} {self.t1w_brain} 2>/dev/null")
+            except:
+                try:
+                    from nilearn.image import resample_to_img
+                    nib.save(resample_to_img(nib.load(deeb_brain_mask), nib.load(self.t1w_brain)),
+                             deeb_brain_mask)
+                    os.system(f"fslmaths {self.t1w_brain} -mas {deeb_brain_mask} {self.t1w_brain} 2>/dev/null")
+                except ValueError:
+                    print('Cannot coerce mask to shape of T1w anatomical.')
+
             anat_mask_existing = None
             wm_mask_existing = None
             gm_mask_existing = None
@@ -598,19 +623,22 @@ class DmriReg(object):
         dwi_aligned_atlas_wmgm_int = f"{self.reg_path_img}{'/'}{atlas}{'_dwi_track_wmgm_int.nii.gz'}"
         uatlas_filled = f"{self.reg_path_img}{'/'}{atlas}{'_filled.nii.gz'}"
 
-        os.system(f"fslmaths {self.input_mni_brain} -add {uatlas} -mas {self.input_mni_mask} {uatlas_filled} 2>/dev"
-                  f"/null")
+        if uatlas is not None:
+            os.system(f"fslmaths {self.input_mni_brain} -add {uatlas} -mas {self.input_mni_mask} {uatlas_filled} "
+                      f"2>/dev/null")
+        else:
+            os.system(f"fslmaths {self.input_mni_brain} -add {uatlas_parcels} -mas {self.input_mni_mask} "
+                      f"{uatlas_filled} 2>/dev/null")
 
         regutils.align(uatlas_filled, self.t1_aligned_mni, init=None, xfm=self.atlas2t1mni_xfm_init,
                        out=None, dof=12, searchrad=True, interp="nearestneighbour", cost='mutualinfo')
 
         if self.simple is False:
             try:
-                # Apply warp resulting from the inverse of T1w-->MNI created earlier
-                regutils.apply_warp(self.t1w_brain, uatlas, aligned_atlas_skull,
-                                    warp=self.mni2t1w_warp, interp='nn', sup=True)
-
                 if uatlas_parcels is not None:
+                    # Apply warp resulting from the inverse of T1w-->MNI created earlier
+                    regutils.apply_warp(self.t1w_brain, uatlas_parcels, aligned_atlas_skull,
+                                        warp=self.mni2t1w_warp, interp='nn', sup=True)
                     aligned_atlas_t1mni_parcels = f"{self.anat_path}{'/'}{atlas}{'_t1w_mni_parcels.nii.gz'}"
                     aligned_atlas_skull_parcels = f"{self.anat_path}{'/'}{atlas}{'_t1w_skull_parcels.nii.gz'}"
                     regutils.applyxfm(self.t1_aligned_mni, uatlas_parcels, self.atlas2t1mni_xfm_init,
@@ -618,14 +646,12 @@ class DmriReg(object):
                     regutils.apply_warp(self.t1w_brain, aligned_atlas_t1mni_parcels, aligned_atlas_skull_parcels,
                                         warp=self.mni2t1w_warp, interp='nn', sup=True)
                     aligned_atlas_t1mni = aligned_atlas_skull_parcels
-                else:
-                    aligned_atlas_skull_parcels = None
-
-                # Map atlas in t1w space to dwi space
-                if uatlas_parcels is not None:
                     regutils.applyxfm(self.ap_path, aligned_atlas_skull_parcels, self.t1wtissue2dwi_xfm,
                                       dwi_aligned_atlas, interp="nearestneighbour")
                 else:
+                    regutils.apply_warp(self.t1w_brain, uatlas, aligned_atlas_skull,
+                                        warp=self.mni2t1w_warp, interp='nn', sup=True)
+                    aligned_atlas_skull_parcels = None
                     regutils.applyxfm(self.ap_path, aligned_atlas_skull, self.t1wtissue2dwi_xfm,
                                       dwi_aligned_atlas, interp="nearestneighbour")
             except:
@@ -863,8 +889,31 @@ class FmriReg(object):
             # Segment the t1w brain into probability maps
             gm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
         except:
+            import tensorflow as tf
+            tf.logging.set_verbosity(tf.logging.ERROR)
+            from deepbrain import Extractor
+            os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+            img = nib.load(self.t1w_brain)
+            t1w_data = img.get_fdata()
+            ext = Extractor()
+            prob = ext.run(t1w_data)
+            mask = prob > 0.5
+            deeb_brain_mask = op.dirname(self.t1w_brain) + '/deep_brain_mask.nii.gz'
+            nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), deeb_brain_mask)
+            try:
+                os.system(f"fslmaths {self.t1w_brain} -mas {deeb_brain_mask} {self.t1w_brain} 2>/dev/null")
+            except:
+                try:
+                    from nilearn.image import resample_to_img
+                    nib.save(resample_to_img(nib.load(deeb_brain_mask), nib.load(self.t1w_brain)),
+                             deeb_brain_mask)
+                    os.system(f"fslmaths {self.t1w_brain} -mas {deeb_brain_mask} {self.t1w_brain} 2>/dev/null")
+                except ValueError:
+                    print('Cannot coerce mask to shape of T1w anatomical.')
             anat_mask_existing = None
             gm_mask_existing = None
+            img.uncache()
 
         if gm_mask_existing:
             if op.isfile(gm_mask_existing) and overwrite is False:
@@ -926,8 +975,13 @@ class FmriReg(object):
         aligned_atlas_t1mni_gm = f"{self.anat_path}{'/'}{atlas}{'_t1w_mni_gm.nii.gz'}"
 
         uatlas_filled = f"{self.anat_path}{'/'}{atlas}{'_filled.nii.gz'}"
-        os.system(f"fslmaths {self.input_mni_brain} -add {uatlas} -mas {self.input_mni_mask} {uatlas_filled} 2>/dev/"
-                  "null")
+
+        if uatlas is not None:
+            os.system(f"fslmaths {self.input_mni_brain} -add {uatlas} -mas {self.input_mni_mask} {uatlas_filled} "
+                      f"2>/dev/null")
+        else:
+            os.system(f"fslmaths {self.input_mni_brain} -add {uatlas_parcels} -mas {self.input_mni_mask} "
+                      f"{uatlas_filled} 2>/dev/null")
 
         regutils.align(uatlas_filled, self.t1_aligned_mni, init=None, xfm=self.atlas2t1wmni_xfm_init,
                        out=None, dof=12, searchrad=True, interp="nearestneighbour", cost='mutualinfo')
@@ -1052,10 +1106,7 @@ def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, f
     if node_size is not None:
         atlas = f"{atlas}{'_'}{node_size}"
 
-    # Apply warps/coregister atlas to dwi
-    if uatlas == uatlas_parcels:
-        uatlas_parcels = None
-
+    # # Apply warps/coregister atlas to dwi
     [dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas,
                                                                                                    uatlas_parcels,
                                                                                                    atlas)
@@ -1067,6 +1118,8 @@ def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, f
     #         labels.pop(j)
     #         coords.pop(j)
 
+    if uatlas is None:
+        uatlas = uatlas_parcels
     return (dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni, uatlas, atlas, coords, labels,
             node_size, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, ap_path, gtab_file, B0_mask, dwi_file)
 
@@ -1117,9 +1170,6 @@ def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, 
     reg = FmriReg(basedir_path, anat_file, mask, vox_size, simple)
 
     # Apply warps/coregister atlas to t1w_mni
-    if uatlas == uatlas_parcels:
-        uatlas_parcels = None
-
     aligned_atlas_t1mni_gm = reg.atlas2t1wmni_align(uatlas, uatlas_parcels, atlas)
 
     # bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(aligned_atlas_t1mni_gm).dataobj).astype('int'))))

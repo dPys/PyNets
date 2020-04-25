@@ -180,7 +180,7 @@ def create_json(
     out = subprocess.check_output(f"mkdir -p {jobdir}/jobs/", shell=True)
     out = subprocess.check_output(f"mkdir -p {jobdir}/ids/", shell=True)
 
-    with open("%s%s" % (str(Path(__file__).parent.parent), '/cloud_config.json'), 'r') as inf:
+    with open("%s%s" % (str(Path(__file__).parent.parent), '/config/cloud_config.json'), 'r') as inf:
     #with open('/Users/derekpisner/Applications/PyNets/pynets/cloud_config.json') as inf:
         template = json.load(inf)
 

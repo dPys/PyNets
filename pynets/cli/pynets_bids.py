@@ -338,8 +338,8 @@ def main():
         with open(bids_config, 'r') as stream:
             arg_dict = json.load(stream)
     else:
-        # with open(f"{str(Path(__file__).parent.parent)}/bids_config.json", 'r') as stream:
-        with open('/Users/derekpisner/Applications/PyNets/pynets/bids_config_test.json') as stream:
+        # with open(f"{str(Path(__file__).parent.parent)}/config/bids_config.json", 'r') as stream:
+        with open('/Users/derekpisner/Applications/PyNets/pynets/config/bids_config_test.json') as stream:
             arg_dict = json.load(stream)
 
     # Available functional and structural connectivity models
@@ -602,13 +602,13 @@ def main():
     args_dict_all['plug'] = bids_args.plug
     args_dict_all['pm'] = bids_args.pm
     args_dict_all['v'] = bids_args.v
-    args_dict_all['func'] = funcs
-    args_dict_all['conf'] = confs
-    args_dict_all['dwi'] = dwis
-    args_dict_all['bval'] = bvals
-    args_dict_all['bvec'] = bvecs
-    args_dict_all['anat'] = anats
-    args_dict_all['m'] = masks
+    args_dict_all['func'] = sorted(funcs)
+    args_dict_all['conf'] = sorted(confs)
+    args_dict_all['dwi'] = sorted(dwis)
+    args_dict_all['bval'] = sorted(bvals)
+    args_dict_all['bvec'] = sorted(bvecs)
+    args_dict_all['anat'] = sorted(anats)
+    args_dict_all['m'] = sorted(masks)
     args_dict_all['g'] = None
     args_dict_all['way'] = bids_args.way
     args_dict_all['id'] = id_list

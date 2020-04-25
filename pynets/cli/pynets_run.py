@@ -1294,14 +1294,41 @@ def build_workflow(args, retval):
                 print(f"BOLD Image: {_func_file}")
         else:
             print(f"BOLD Image: {func_file}")
+
+        if conf_list:
+            for _conf in conf_list:
+                print(f"BOLD Confound Regressors: {_conf}")
+        elif conf:
+            print(f"BOLD Confound Regressors: {conf}")
+
         multimodal = False
     elif (func_file or func_file_list) and (dwi_file or dwi_file_list):
         multimodal = True
         print('\nRunning joint fMRI-dMRI connectometry...')
-        print(f"BOLD Image:\n{func_file}")
-        print(f"Diffusion-Weighted Image:\n{dwi_file}")
-        print(f"B-Values:\n{fbval}")
-        print(f"B-Vectors:\n{fbvec}")
+        if func_file_list:
+            for _func_file in func_file_list:
+                print(f"BOLD Image: {_func_file}")
+        else:
+            print(f"BOLD Image: {func_file}")
+
+        if conf_list:
+            for _conf in conf_list:
+                print(f"BOLD Confound Regressors: {_conf}")
+        elif conf:
+            print(f"BOLD Confound Regressors: {conf}")
+
+        if dwi_file_list:
+            for (_dwi_file, _fbval, _fbvec, _anat_file) in list(zip(dwi_file_list, fbval_list, fbvec_list,
+                                                                    anat_file_list)):
+                print(f"Diffusion-Weighted Image:\n {_dwi_file}")
+                print(f"B-Values:\n {_fbval}")
+                print(f"B-Vectors:\n {_fbvec}")
+                if waymask is not None:
+                    print(f"Waymask:\n {waymask}")
+        else:
+            print(f"Diffusion-Weighted Image:\n {dwi_file}")
+            print(f"B-Values:\n {fbval}")
+            print(f"B-Vectors:\n {fbvec}")
     else:
         multimodal = False
 
