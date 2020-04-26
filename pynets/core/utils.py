@@ -761,6 +761,7 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
     from pynets.stats.netstats import collect_pandas_df_make
 
     # Available functional and structural connectivity models
+    # with open('/Users/derekpisner/Applications/PyNets/pynets/runconfig.yaml') as stream:
     with open(f"{str(Path(__file__).parent.parent)}{'/runconfig.yaml'}", 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
@@ -779,11 +780,11 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
         for network in multi_nets:
             net_mets_csv_list = list(set([i for i in net_mets_csv_list_nets if network in i]))
             if multimodal is True:
-                net_mets_csv_list_dwi = list(set([i for i in net_mets_csv_list if i.split('mets_')[1].split('_')[0]
+                net_mets_csv_list_dwi = list(set([i for i in net_mets_csv_list if i.split('est-')[1].split('_')[0]
                                                    in struct_models]))
                 combination_complete_dwi = collect_pandas_df_make(net_mets_csv_list_dwi, ID, network, plot_switch)
                 net_mets_csv_list_func = list(set([i for i in net_mets_csv_list if
-                                                    i.split('mets_')[1].split('_')[0] in func_models]))
+                                                    i.split('est-')[1].split('_')[0] in func_models]))
                 combination_complete_func = collect_pandas_df_make(net_mets_csv_list_func, ID, network, plot_switch)
 
                 if combination_complete_dwi is True and combination_complete_func is True:
@@ -794,10 +795,10 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
                 combination_complete = collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch)
     else:
         if multimodal is True:
-            net_mets_csv_list_dwi = list(set([i for i in net_mets_csv_list if i.split('mets_')[1].split('_')[0] in
+            net_mets_csv_list_dwi = list(set([i for i in net_mets_csv_list if i.split('est-')[1].split('_')[0] in
                                                struct_models]))
             combination_complete_dwi = collect_pandas_df_make(net_mets_csv_list_dwi, ID, network, plot_switch)
-            net_mets_csv_list_func = list(set([i for i in net_mets_csv_list if i.split('mets_')[1].split('_')[0]
+            net_mets_csv_list_func = list(set([i for i in net_mets_csv_list if i.split('est-')[1].split('_')[0]
                                                 in func_models]))
             combination_complete_func = collect_pandas_df_make(net_mets_csv_list_func, ID, network, plot_switch)
 

@@ -1605,11 +1605,7 @@ def build_workflow(args, retval):
                                                imports=import_list)
 
         # Combine dataframes across models
-        combine_pandas_dfs_node = pe.Node(interface=CombineOutputs(), name="CombineOutputs",
-                                          input_names=['network', 'ID', 'net_mets_csv_list', 'plot_switch',
-                                                       'multi_nets', 'multimodal'],
-                                          output_names=['combination_complete'],
-                                          imports=import_list)
+        combine_pandas_dfs_node = pe.Node(interface=CombineOutputs(), name="CombineOutputs", imports=import_list)
         combine_pandas_dfs_node._n_procs = 1
         combine_pandas_dfs_node._mem_gb = 2
 
