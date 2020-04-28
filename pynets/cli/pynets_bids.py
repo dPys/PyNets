@@ -602,22 +602,42 @@ def main():
     args_dict_all['plug'] = bids_args.plug
     args_dict_all['pm'] = bids_args.pm
     args_dict_all['v'] = bids_args.v
-    args_dict_all['func'] = sorted(funcs)
-    args_dict_all['conf'] = sorted(confs)
-    args_dict_all['dwi'] = sorted(dwis)
-    args_dict_all['bval'] = sorted(bvals)
-    args_dict_all['bvec'] = sorted(bvecs)
-    args_dict_all['anat'] = sorted(anats)
-    args_dict_all['m'] = sorted(masks)
+    if funcs is not None:
+        args_dict_all['func'] = sorted(funcs)
+    else:
+        args_dict_all['func'] = None
+    if confs is not None:
+        args_dict_all['conf'] = sorted(confs)
+    else:
+        args_dict_all['conf'] = None
+    if dwis is not None:
+        args_dict_all['dwi'] = sorted(dwis)
+        args_dict_all['bval'] = sorted(bvals)
+        args_dict_all['bvec'] = sorted(bvecs)
+    else:
+        args_dict_all['dwi'] = None
+        args_dict_all['bval'] = None
+        args_dict_all['bvec'] = None
+    if anats is not None:
+        args_dict_all['anat'] = sorted(anats)
+    else:
+        args_dict_all['anat'] = None
+    if masks is not None:
+        args_dict_all['m'] = sorted(masks)
+    else:
+        args_dict_all['m'] = None
     args_dict_all['g'] = None
-    args_dict_all['way'] = bids_args.way
+    if ('dwi' in modality) and (bids_args.way is not None):
+        args_dict_all['way'] = bids_args.way
+    else:
+        args_dict_all['way'] = None
     args_dict_all['id'] = id_list
     args_dict_all['ua'] = bids_args.ua
     args_dict_all['ref'] = bids_args.ref
     args_dict_all['roi'] = bids_args.roi
     args_dict_all['templ'] = bids_args.templ
     args_dict_all['templm'] = bids_args.templm
-    if 'func' in modality:
+    if ('func' in modality) and (bids_args.cm is not None):
         args_dict_all['cm'] = bids_args.cm
     else:
         args_dict_all['cm'] = None

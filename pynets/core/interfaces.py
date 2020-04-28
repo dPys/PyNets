@@ -684,8 +684,8 @@ class Tracking(SimpleInterface):
         dwi_img = nib.load(self.inputs.dwi_file)
 
         # Fit diffusion model
-        mod_fit = reconstruction(self.inputs.conn_model, load_pickle(self.inputs.gtab_file),
-                                 np.asarray(dwi_img.dataobj), self.inputs.B0_mask)
+        model, mod = reconstruction(self.inputs.conn_model, load_pickle(self.inputs.gtab_file),
+                                    np.asarray(dwi_img.dataobj), self.inputs.B0_mask)
 
         # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
         atlas_data = np.array(nib.load(self.inputs.labels_im_file).dataobj).astype('uint16')
@@ -714,9 +714,7 @@ class Tracking(SimpleInterface):
         print(Style.RESET_ALL)
         if self.inputs.directget == 'prob':
             print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Probabilistic")
-        elif self.inputs.directget == 'boot':
-            print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Bootstrapped")
-        elif self.inputs.directget == 'closest':
+        elif self.inputs.directget == 'clos':
             print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Closest Peak")
         elif self.inputs.directget == 'det':
             print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Deterministic Maximum")
@@ -726,7 +724,7 @@ class Tracking(SimpleInterface):
 
         # Commence Ensemble Tractography
         streamlines = track_ensemble(np.asarray(dwi_img.dataobj), self.inputs.target_samples, atlas_data_wm_gm_int,
-                                     parcels, mod_fit,
+                                     parcels, model,
                                      prep_tissues(self.inputs.t1w2dwi, self.inputs.gm_in_dwi,
                                                   self.inputs.vent_csf_in_dwi, self.inputs.wm_in_dwi,
                                                   self.inputs.tiss_class),

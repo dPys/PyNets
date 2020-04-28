@@ -1,11 +1,11 @@
 {
     "dwi": {
-            "dg": "['det']",
-            "ml": "['10']",
+            "dg": "['clos']",
+            "ml": "['20']",
             "mod": "['csd']",
-            "s": 10000,
-            "tc": "['bin']",
-            "tt": "['local']"
+            "s": 100000,
+            "tc": "['cmc']",
+            "tt": "['particle']"
         },
     "func": {
             "cc": "['tcorr']",
@@ -28,9 +28,9 @@
             "n":  "None",
             "names":  "False",
             "norm": "6",
-            "ns":  "4",
+            "ns":  "6",
             "p":  "['3']",
-            "plt":  "False",
+            "plt":  "True",
             "spheres":  "True",
             "step_thr":  0.10,
             "thr":  1.0,

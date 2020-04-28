@@ -245,13 +245,13 @@ def get_parser():
                         metavar='Direction getter',
                         default='det',
                         nargs='+',
-                        choices=['det', 'prob', 'clos', 'boot'],
+                        choices=['det', 'prob', 'clos'],
                         help='(Hyperparameter): Include this flag to manually specify the statistical approach to '
                              'tracking for dmri connectome estimation. Options are: det (deterministic), '
-                             'closest (clos), boot (bootstrapped), and prob (probabilistic). '
+                             'closest (clos), and prob (probabilistic). '
                              'Default is det. If you wish to iterate the pipeline across multiple '
-                             'direction-getting methods, separate the list by space (e.g. \'det\', \'prob\', \'clos\', '
-                             '\'boot\').\n')
+                             'direction-getting methods, separate the list by space (e.g. \'det\', \'prob\', '
+                             '\'clos\').\n')
 
     # dMRI settings (non-hyperparameter)
     parser.add_argument('-tt',

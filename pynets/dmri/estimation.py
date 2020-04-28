@@ -144,16 +144,18 @@ def csa_mod_est(gtab, data, B0_mask, sh_order=8):
 
     Returns
     -------
-    csa_mod : obj
-        Spherical harmonics coefficients of the CSA-estimated reconstruction model.
+    csa_mod : ndarray
+        Fitted Spherical harmonics coefficients of the CSA-estimated reconstruction model.
+    model : obj
+        CSA-estimated reconstruction model.
     '''
     from dipy.reconst.shm import CsaOdfModel
     print('Fitting CSA model...')
     model = CsaOdfModel(gtab, sh_order=sh_order)
     B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
     csa_mod = model.fit(data, B0_mask_data).shm_coeff
-    del model, B0_mask_data
-    return csa_mod
+    del B0_mask_data
+    return csa_mod, model
 
 
 def csd_mod_est(gtab, data, B0_mask, sh_order=8):
@@ -173,8 +175,10 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
 
     Returns
     -------
-    csd_mod : obj
-        Spherical harmonics coefficients of the CSD-estimated reconstruction model.
+    csd_mod : ndarray
+        Fitted Spherical harmonics coefficients of the CSD-estimated reconstruction model.
+    model : obj
+        CSD-estimated reconstruction model.
     '''
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     print('Fitting CSD model...')
@@ -185,8 +189,8 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     print('CSD Reponse: ' + str(response))
     model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=sh_order)
     csd_mod = model.fit(data, B0_mask_data).shm_coeff
-    del model, response, B0_mask_data
-    return csd_mod
+    del response, B0_mask_data
+    return csd_mod, model
 
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,

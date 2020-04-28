@@ -58,7 +58,7 @@ jobs:
               docker build \
                 --cache-from=pynets \
                 --rm=false \
-                -t pynets:latest \
+                -t dpys/pynets:latest \
                 --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
                 --build-arg VCS_REF=`git rev-parse --short HEAD` \
                 --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
@@ -67,7 +67,7 @@ jobs:
             # test if development image should be built
             if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[build[ _]?devel\]' )" != "" ]]; then
               echo "building development container"
-              docker tag pynets pynets:unstable
+              docker tag dpys/pynets pynets:unstable
               docker build \
                 --rm=false \
                 -t pynets \
@@ -80,7 +80,7 @@ jobs:
             THISVERSION=$( python3 get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            DOCKERVERSION=$(docker run --rm -it dpys/pynets:latest --version)
+            DOCKERVERSION=$(docker run --rm -it dpys/pynets:latest pynets --version)
             DOCKERVERSION=${DOCKERVERSION%$'\r'}
             DOCKERVERSION=${DOCKERVERSION#*"pynets v"}
             echo "VERSION: \"$THISVERSION\""
@@ -181,8 +181,8 @@ jobs:
           command: |
             if [[ -n "$DOCKER_PASS" ]]; then
               docker login -u $DOCKER_USER -p $DOCKER_PASS
-              docker tag pynets pynets:${CIRCLE_BRANCH#docker/}
-              docker push pynets:${CIRCLE_BRANCH#docker/}
+              docker tag dpys/pynets dpys/pynets:${CIRCLE_BRANCH#docker/}
+              docker push dpys/pynets:${CIRCLE_BRANCH#docker/}
             fi
 
   deploy_docker:
@@ -220,11 +220,11 @@ jobs:
           command: |
             if [[ -n "$DOCKER_PASS" ]]; then
               docker login -u $DOCKER_USER -p $DOCKER_PASS
-              docker tag pynets dpys/pynets:unstable
+              docker tag dpys/pynets dpys/pynets:unstable
               docker push dpys/pynets:unstable
               if [[ -n "$CIRCLE_TAG" ]]; then
                 docker push dpys/pynets:latest
-                docker tag pynets dpys/pynets:$CIRCLE_TAG
+                docker tag dpys/pynets dpys/pynets:$CIRCLE_TAG
                 docker push dpys/pynets:$CIRCLE_TAG
               fi
             fi

@@ -28,6 +28,8 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
 
     Returns
     -------
+    mod_fit : ndarray
+        Fitted connectivity reconstruction model.
     mod : obj
         Connectivity reconstruction model.
     """
@@ -37,15 +39,15 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         import _pickle as pickle
     from pynets.dmri.estimation import csa_mod_est, csd_mod_est
     if conn_model == 'csa':
-        mod = csa_mod_est(gtab, dwi_data, B0_mask)
+        [mod_fit, mod] = csa_mod_est(gtab, dwi_data, B0_mask)
     elif conn_model == 'csd':
-        mod = csd_mod_est(gtab, dwi_data, B0_mask)
+        [mod_fit, mod] = csd_mod_est(gtab, dwi_data, B0_mask)
     else:
         raise ValueError('Error: No valid reconstruction model specified. See the `-mod` flag.')
 
     del dwi_data
 
-    return mod
+    return mod_fit, mod
 
 
 def prep_tissues(t1_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc_step_size=0.2):
@@ -312,9 +314,6 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
             if directget == 'prob':
                 dg = ProbabilisticDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere,
                                                                min_separation_angle=min_separation_angle)
-            elif directget == 'boot':
-                dg = BootDirectionGetter.from_data(dwi_data, mod_fit, max_angle=float(curv_thr), sphere=sphere,
-                                                   min_separation_angle=min_separation_angle)
             elif directget == 'clos':
                 dg = ClosestPeakDirectionGetter.from_shcoeff(mod_fit, max_angle=float(curv_thr), sphere=sphere,
                                                              min_separation_angle=min_separation_angle)
