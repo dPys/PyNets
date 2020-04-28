@@ -82,7 +82,7 @@ jobs:
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
             DOCKERVERSION=$(docker run --rm -it dpys/pynets:latest pynets --version)
             DOCKERVERSION=${DOCKERVERSION%$'\r'}
-            DOCKERVERSION=${DOCKERVERSION#*"pynets v"}
+            DOCKERVERSION=${DOCKERVERSION#*"PyNets v"}
             echo "VERSION: \"$THISVERSION\""
             echo "DOCKERVERSION: \"${DOCKERVERSION}\""
             test "$DOCKERVERSION" = "$THISVERSION"
@@ -148,7 +148,7 @@ jobs:
       - run:
           name: Download OSF test data
           command: |
-            wget --retry-connrefused --waitretry=10 --read-timeout=40 --timeout=30 -t 0 -q -O examples.tar.gz "https://osf.io/aq8ur/download"
+            wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/aq8ur/download"
             tar -xvzf examples.tar.gz -C /home/circleci/data
       - save_cache:
          key: data-v0-{{ .Revision }}-{{ epoch }}

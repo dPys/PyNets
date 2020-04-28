@@ -193,6 +193,38 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     return csd_mod, model
 
 
+def sfm_mod_est(gtab, data, B0_mask):
+    '''
+    Estimate a Sparse Fascicle Model (SFM) from dwi data.
+
+    Parameters
+    ----------
+    gtab : Obj
+        DiPy object storing diffusion gradient information.
+    data : array
+        4D numpy array of diffusion image data.
+    B0_mask : str
+        File path to B0 brain mask.
+
+    Returns
+    -------
+    sf_mod : ndarray
+        Fitted Spherical harmonics coefficients of the sfm-estimated reconstruction model.
+    model : obj
+        SFM-estimated reconstruction model.
+    '''
+    from dipy.data import get_sphere
+    import dipy.reconst.sfm as sfm
+    print('Fitting SF model...')
+    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
+    print('Reconstructing...')
+    model = sfm.SparseFascicleModel(gtab, sphere=get_sphere('repulsion724'), l1_ratio=0.5, alpha=0.001)
+    sf_mod = model.fit(data, mask=B0_mask_data)
+
+    del B0_mask_data
+    return sf_mod, model
+
+
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
                   dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm,
                   binary, directget, warped_fa, error_margin, min_length, fa_wei=True):
