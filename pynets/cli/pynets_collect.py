@@ -134,7 +134,7 @@ def df_concat(dfs, working_path):
     return frame
 
 
-def build_subject_dict(sub, working_path, modality='dwi'):
+def build_subject_dict(sub, working_path, modality='func'):
     import shutil
     import os
     import glob
@@ -153,7 +153,7 @@ def build_subject_dict(sub, working_path, modality='dwi'):
     subject_dict = {}
     print(sub)
     subject_dict[sub] = {}
-    sessions = sorted([i for i in os.listdir(f"{working_path}{'/'}{sub}") if i.startswith('ses-run')],
+    sessions = sorted([i for i in os.listdir(f"{working_path}{'/'}{sub}") if i.startswith('ses-')],
                       key = lambda x: x.split("-")[1])
     atlases = list(set([os.path.basename(str(Path(i).parent.parent)) for i in
                         glob.glob(f"{working_path}{'/'}{sub}{'/*/*/netmetrics/*'}")])) + list(
@@ -166,7 +166,6 @@ def build_subject_dict(sub, working_path, modality='dwi'):
         print(ses)
         subject_dict[sub][ses] = []
         for atlas in atlases:
-            #atlas_name = atlas.replace('reor-RAS_nores-2mm_', '')
             atlas_name = '_'.join(atlas.split('_')[1:])
             auc_csvs = glob.glob(f"{working_path}/{sub}/{ses}/{atlas}/netmetrics/auc/*") + glob.glob(
                 f"{working_path}/{sub}/{ses}/{modality}/{atlas}/netmetrics/auc/*")

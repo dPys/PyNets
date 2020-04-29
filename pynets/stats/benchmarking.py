@@ -205,21 +205,23 @@ if __name__ == '__main__':
     mets = ['global_efficiency', 'average_shortest_path_length',
             'average_betweenness_centrality', 'average_eigenvector_centrality', 'average_degree_centrality',
             'modularity']
-    modality = 'dwi'
+    modality = 'func'
 
     if modality == 'dwi':
         naughty_list = ['fwhm', 'partcorr']
     else:
-        naughty_list = ['triple_net_ICA_overlap_3']
+        naughty_list = ['triple_net_ICA_overlap_3', 'streams', 'PROP']
     df = pd.read_csv(working_dir + '/all_subs_neat.csv')
     for bad_col in naughty_list:
         df = df.loc[:, ~df.columns.str.contains(bad_col, regex=True)]
 
     df = df[df['id'].str.contains('run')]
+    #df = df.loc[:, df.columns.str.contains('MST', regex=True)]
 
     if modality == 'func':
         df = df.rename(columns=lambda x: re.sub('_partcorr_', '_est-partcorr_', x))
-        df = df.rename(columns=lambda x: re.sub('_nores-2mm', '_est-partcorr_', x))
+        df = df.rename(columns=lambda x: re.sub('_sps_', '_est-sps_', x))
+        df = df.rename(columns=lambda x: re.sub('_sig_bin_nores-2mm', '', x))
     elif modality == 'dwi':
         df = df.rename(columns=lambda x: re.sub('csa_', 'est-csa_', x))
         df = df.rename(columns=lambda x: re.sub('csd_', 'est-csd_', x))
@@ -237,6 +239,8 @@ if __name__ == '__main__':
         df[col] = df[col][df[col]<1]
         #df[col] = df[col][(np.abs(stats.zscore(df[col])) < 3)]
 
+    df = df.drop(df.loc[:, list((100 * (df.isnull().sum() / len(df.index)) > 20))].columns, 1)
+
     hyperparam_dict = {}
 
     if icc is True and disc is False:
@@ -249,7 +253,7 @@ if __name__ == '__main__':
     if modality == 'func':
         gen_hyperparams = ['est', 'clust', '_k']
         for col in cols:
-            build_hp_dict(col, col.split('_sig_')[0], 'func', hyperparam_dict, gen_hyperparams)
+            build_hp_dict(col, col.split('_clust')[0], 'func', hyperparam_dict, gen_hyperparams)
 
         for key in hyperparam_dict:
             hyperparam_dict[key] = list(set(hyperparam_dict[key]))
@@ -266,11 +270,11 @@ if __name__ == '__main__':
             subject_dict[ID][ses] = dict.fromkeys(grid , np.nan)
             for atlas, est, clust, _k, smooth, hpass in subject_dict[ID][ses]:
                 subject_dict[ID][ses][(atlas, est, clust, _k, smooth, hpass)] = {}
-                met_vals = np.empty([len(mets), 1], dtype = np.float32)
+                met_vals = np.empty([len(mets), 1], dtype=np.float32)
                 met_vals[:] = np.nan
                 i = 0
                 for met in mets:
-                    col = atlas + '_sig_bin_nores-2mm_clust-' + clust + '_k-' + str(_k) + '_est-' + est + \
+                    col = atlas + '_clust-' + clust + '_k-' + str(_k) + '_est-' + est + \
                           '_nodetype-parc_' + 'smooth-' + str(smooth) + 'fwhm_hpass-' + str(hpass) + 'Hz_' + 'thrtype-' + \
                           thr_type + '_net_mets_auc_' + met + '_auc'
                     try:
@@ -451,4 +455,4 @@ if __name__ == '__main__':
     elif icc is True and disc is True:
         df_summary = df_summary.sort_values(by=['discriminability', 'icc'], ascending=False)
 
-    df_summary.to_csv(working_dir + '/grid_clean.csv')
+    df_summary.to_csv(working_dir + '/grid_clean_' + modality + '.csv')

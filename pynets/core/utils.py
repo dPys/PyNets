@@ -43,7 +43,7 @@ def do_dir_path(atlas, outdir):
         if 'reor-RAS' in str(atlas):
             atlas = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(atlas))
         if 'res-' in str(atlas):
-            atlas = re.sub(r"_res\-*[0-9]mm", "", str(atlas))
+            atlas = re.sub(r"_res\-*[0-4]mm", "", str(atlas))
         if atlas.endswith('.nii.gz'):
            atlas = atlas.replace('.nii.gz', '')
 

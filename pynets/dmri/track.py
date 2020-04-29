@@ -37,11 +37,15 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
-    from pynets.dmri.estimation import csa_mod_est, csd_mod_est
+    from pynets.dmri.estimation import csa_mod_est, csd_mod_est, sfm_mod_est, tens_mod_est
     if conn_model == 'csa':
         [mod_fit, mod] = csa_mod_est(gtab, dwi_data, B0_mask)
     elif conn_model == 'csd':
         [mod_fit, mod] = csd_mod_est(gtab, dwi_data, B0_mask)
+    elif conn_model == 'sfm':
+        [mod_fit, mod] = sfm_mod_est(gtab, dwi_data, B0_mask)
+    elif conn_model == 'ten':
+        [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
     else:
         raise ValueError('Error: No valid reconstruction model specified. See the `-mod` flag.')
 
@@ -290,7 +294,7 @@ def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
     from dipy.tracking.local_tracking import LocalTracking, ParticleFilteringTracking
-    from dipy.direction import (ProbabilisticDirectionGetter, BootDirectionGetter, ClosestPeakDirectionGetter,
+    from dipy.direction import (ProbabilisticDirectionGetter, ClosestPeakDirectionGetter,
                                 DeterministicMaximumDirectionGetter)
 
     start = time.time()

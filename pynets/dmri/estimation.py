@@ -127,6 +127,39 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     return anisopwr_path, B0_mask, gtab_file, dwi_file
 
 
+def tens_mod_est(gtab, data, B0_mask):
+    '''
+    Estimate a tensor ODF model from dwi data.
+
+    Parameters
+    ----------
+    gtab : Obj
+        DiPy object storing diffusion gradient information
+    data : array
+        4D numpy array of diffusion image data.
+    B0_mask : str
+        File path to B0 brain mask.
+
+    Returns
+    -------
+    mod_odf : ndarray
+        Coefficients of the tensor reconstruction.
+    model : obj
+        Fitted tensor model.
+    '''
+    from dipy.reconst.dti import TensorModel
+    from dipy.data import get_sphere
+
+    sphere = get_sphere('repulsion724')
+    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
+    print('Generating tensor model...')
+    model = TensorModel(gtab)
+    mod = model.fit(data, B0_mask_data)
+    mod_odf = mod.odf(sphere)
+    del B0_mask_data
+    return mod_odf, model
+
+
 def csa_mod_est(gtab, data, B0_mask, sh_order=8):
     '''
     Estimate a Constant Solid Angle (CSA) model from dwi data.
@@ -145,9 +178,9 @@ def csa_mod_est(gtab, data, B0_mask, sh_order=8):
     Returns
     -------
     csa_mod : ndarray
-        Fitted Spherical harmonics coefficients of the CSA-estimated reconstruction model.
+        Coefficients of the csa reconstruction.
     model : obj
-        CSA-estimated reconstruction model.
+        Fitted csa model.
     '''
     from dipy.reconst.shm import CsaOdfModel
     print('Fitting CSA model...')
@@ -176,9 +209,9 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     Returns
     -------
     csd_mod : ndarray
-        Fitted Spherical harmonics coefficients of the CSD-estimated reconstruction model.
+        Coefficients of the csd reconstruction.
     model : obj
-        CSD-estimated reconstruction model.
+        Fitted csd model.
     '''
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     print('Fitting CSD model...')
@@ -209,20 +242,23 @@ def sfm_mod_est(gtab, data, B0_mask):
     Returns
     -------
     sf_mod : ndarray
-        Fitted Spherical harmonics coefficients of the sfm-estimated reconstruction model.
+        Coefficients of the sfm reconstruction.
     model : obj
-        SFM-estimated reconstruction model.
+        Fitted sf model.
     '''
     from dipy.data import get_sphere
     import dipy.reconst.sfm as sfm
+
+    sphere = get_sphere('repulsion724')
     print('Fitting SF model...')
     B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
     print('Reconstructing...')
-    model = sfm.SparseFascicleModel(gtab, sphere=get_sphere('repulsion724'), l1_ratio=0.5, alpha=0.001)
+    model = sfm.SparseFascicleModel(gtab, sphere=sphere, l1_ratio=0.5, alpha=0.001)
     sf_mod = model.fit(data, mask=B0_mask_data)
+    sf_odf = sf_mod.odf(sphere)
 
     del B0_mask_data
-    return sf_mod, model
+    return sf_odf, model
 
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,

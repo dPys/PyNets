@@ -773,7 +773,7 @@ class Tracking(SimpleInterface):
         self._results['roi_neighborhood_tol'] = self.inputs.roi_neighborhood_tol
         self._results['min_length'] = self.inputs.min_length
 
-        del streamlines, atlas_data_wm_gm_int, atlas_data, mod_fit, parcels
+        del streamlines, atlas_data_wm_gm_int, atlas_data, model, parcels
         dwi_img.uncache()
         gc.collect()
 

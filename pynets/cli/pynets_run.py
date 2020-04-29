@@ -131,7 +131,7 @@ def get_parser():
                         default='partcorr',
                         nargs='+',
                         choices=['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
-                                 'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso', 'csa', 'csd'],
+                                 'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso', 'csa', 'csd', 'ten', 'sfm'],
                         help='(Hyperparameter): Specify connectivity estimation model. For fMRI, possible models '
                              'include: corr for correlation, cov for covariance, sps for precision covariance, '
                              'partcorr for partial correlation. sps type is used by default. '
@@ -414,7 +414,6 @@ def build_workflow(args, retval):
         print(f"\n\nPyNets Version:\n{pynets.__version__}\n\n")
     except ImportError:
         print('PyNets not installed! Ensure that you are using the correct python version.')
-    from pynets.core.utils import do_dir_path
 
     # Start timer
     now = datetime.datetime.now()
@@ -1007,6 +1006,7 @@ def build_workflow(args, retval):
             print(f"\nUsing connectivity model: {conn_model}")
 
     elif graph or multi_graph:
+        from pynets.core.utils import do_dir_path
         network = 'custom_graph'
         thr = 0
         roi = 'None'

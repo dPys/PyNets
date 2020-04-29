@@ -22,6 +22,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       vox_size, multiplex, waymask, local_corr, min_length_list, outdir, clean=True):
     """A meta-interface for selecting modality-specific workflows to nest into a single-subject workflow"""
     import gc
+    import os
     import sys
     import yaml
     from pathlib import Path
@@ -101,6 +102,9 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
 
     # Workflow 1: Structural connectome
     if dwi_file is not None:
+        outdir = f"{outdir}/dwi"
+        os.makedirs(outdir, exist_ok=True)
+
         sub_struct_wf = workflows.dmri_connectometry(ID, atlas, network, node_size, roi,
                                                      uatlas, plot_switch, parc, ref_txt, procmem,
                                                      dwi_file, fbval, fbvec, anat_file, thr, dens_thresh,
@@ -122,6 +126,9 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
 
     # Workflow 2: Functional connectome
     if func_file is not None:
+        outdir = f"{outdir}/func"
+        os.makedirs(outdir, exist_ok=True)
+
         sub_func_wf = workflows.fmri_connectometry(func_file, ID, atlas, network, node_size,
                                                    roi, thr, uatlas, conn_model_func, dens_thresh, conf,
                                                    plot_switch, parc, ref_txt, procmem,
@@ -651,7 +658,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                        template, template_mask, vox_size, waymask, min_length_list, outdir):
     """A function interface for generating a dMRI nested workflow"""
     import itertools
-    import os
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core import nodemaker, thresholding, utils
@@ -679,9 +685,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                       'vox_size', 'multi_directget', 'waymask', 'min_length_list',
                                                       'outdir']),
                         name='inputnode')
-
-    outdir = outdir + '/dwi'
-    os.makedirs(outdir, exist_ok=True)
 
     inputnode.inputs.ID = ID
     inputnode.inputs.atlas = atlas
@@ -1599,6 +1602,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     """A function interface for generating an fMRI nested workflow"""
     import itertools
     import os
+    import re
     import os.path as op
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -1612,9 +1616,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]
     base_dirname = f"fmri_connectometry_{ID}"
     fmri_connectometry_wf = pe.Workflow(name=base_dirname)
-
-    outdir = f"{outdir}/func"
-    os.makedirs(outdir, exist_ok=True)
 
     # Create input/output nodes
     inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID', 'atlas', 'network',
@@ -1778,6 +1779,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         # clustering_node iterables and names
         if k_clustering == 1:
             mask_name = op.basename(clust_mask).split('.nii')[0]
+            if 'reor-RAS' in str(mask_name):
+                mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
+            if 'res-' in str(mask_name):
+                mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
             cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
             cluster_atlas_file = f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_{clust_type}_k" \
                 f"{str(k)}.nii.gz"
@@ -1795,6 +1800,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for k in k_list:
                 mask_name = op.basename(clust_mask).split('.nii')[0]
+                if 'reor-RAS' in str(mask_name):
+                    mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
+                if 'res-' in str(mask_name):
+                    mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
                 cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
@@ -1811,6 +1820,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for clust_mask in clust_mask_list:
                 mask_name = op.basename(clust_mask).split('.nii')[0]
+                if 'reor-RAS' in str(mask_name):
+                    mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
+                if 'res-' in str(mask_name):
+                    mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
                 cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
@@ -1831,6 +1844,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             for clust_mask in clust_mask_list:
                 for k in k_list:
                     mask_name = op.basename(clust_mask).split('.nii')[0]
+                    if 'reor-RAS' in str(mask_name):
+                        mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
+                    if 'res-' in str(mask_name):
+                        mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
                     cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
@@ -1847,6 +1864,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
                 mask_name = op.basename(clust_mask).split('.nii')[0]
+                if 'reor-RAS' in str(mask_name):
+                    mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
+                if 'res-' in str(mask_name):
+                    mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
                 cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
@@ -1867,6 +1888,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             for clust_type in clust_type_list:
                 for k in k_list:
                     mask_name = op.basename(clust_mask).split('.nii')[0]
+                    if 'reor-RAS' in str(mask_name):
+                        mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
+                    if 'res-' in str(mask_name):
+                        mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
                     cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
@@ -1884,6 +1909,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             for clust_type in clust_type_list:
                 for clust_mask in clust_mask_list:
                     mask_name = op.basename(clust_mask).split('.nii')[0]
+                    if 'reor-RAS' in str(mask_name):
+                        mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
+                    if 'res-' in str(mask_name):
+                        mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
                     cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
@@ -1906,6 +1935,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                 for clust_mask in clust_mask_list:
                     for k in k_list:
                         mask_name = op.basename(clust_mask).split('.nii')[0]
+                        if 'reor-RAS' in str(mask_name):
+                            mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
+                        if 'res-' in str(mask_name):
+                            mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
                         cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                         cluster_atlas_name_list.append(cluster_atlas_name)
                         cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
