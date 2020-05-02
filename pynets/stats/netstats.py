@@ -1598,7 +1598,7 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
 
     # Check for existence of net_mets csv files, condensing final list to only those that were actually produced.
     net_mets_csv_list_exist = []
-    for net_mets_csv in list(net_mets_csv_list):
+    for net_mets_csv in list(utils.flatten(net_mets_csv_list)):
         if op.isfile(net_mets_csv) is True:
             net_mets_csv_list_exist.append(net_mets_csv)
 

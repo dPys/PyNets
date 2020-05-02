@@ -127,6 +127,39 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     return anisopwr_path, B0_mask, gtab_file, dwi_file
 
 
+def tens_mod_est(gtab, data, B0_mask):
+    '''
+    Estimate a tensor ODF model from dwi data.
+
+    Parameters
+    ----------
+    gtab : Obj
+        DiPy object storing diffusion gradient information
+    data : array
+        4D numpy array of diffusion image data.
+    B0_mask : str
+        File path to B0 brain mask.
+
+    Returns
+    -------
+    mod_odf : ndarray
+        Coefficients of the tensor reconstruction.
+    model : obj
+        Fitted tensor model.
+    '''
+    from dipy.reconst.dti import TensorModel
+    from dipy.data import get_sphere
+
+    sphere = get_sphere('repulsion724')
+    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
+    print('Generating tensor model...')
+    model = TensorModel(gtab)
+    mod = model.fit(data, B0_mask_data)
+    mod_odf = mod.odf(sphere)
+    del B0_mask_data
+    return mod_odf, model
+
+
 def csa_mod_est(gtab, data, B0_mask, sh_order=8):
     '''
     Estimate a Constant Solid Angle (CSA) model from dwi data.
@@ -144,16 +177,18 @@ def csa_mod_est(gtab, data, B0_mask, sh_order=8):
 
     Returns
     -------
-    csa_mod : obj
-        Spherical harmonics coefficients of the CSA-estimated reconstruction model.
+    csa_mod : ndarray
+        Coefficients of the csa reconstruction.
+    model : obj
+        Fitted csa model.
     '''
     from dipy.reconst.shm import CsaOdfModel
     print('Fitting CSA model...')
     model = CsaOdfModel(gtab, sh_order=sh_order)
     B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
     csa_mod = model.fit(data, B0_mask_data).shm_coeff
-    del model, B0_mask_data
-    return csa_mod
+    del B0_mask_data
+    return csa_mod, model
 
 
 def csd_mod_est(gtab, data, B0_mask, sh_order=8):
@@ -173,8 +208,10 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
 
     Returns
     -------
-    csd_mod : obj
-        Spherical harmonics coefficients of the CSD-estimated reconstruction model.
+    csd_mod : ndarray
+        Coefficients of the csd reconstruction.
+    model : obj
+        Fitted csd model.
     '''
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     print('Fitting CSD model...')
@@ -185,8 +222,43 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     print('CSD Reponse: ' + str(response))
     model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=sh_order)
     csd_mod = model.fit(data, B0_mask_data).shm_coeff
-    del model, response, B0_mask_data
-    return csd_mod
+    del response, B0_mask_data
+    return csd_mod, model
+
+
+def sfm_mod_est(gtab, data, B0_mask):
+    '''
+    Estimate a Sparse Fascicle Model (SFM) from dwi data.
+
+    Parameters
+    ----------
+    gtab : Obj
+        DiPy object storing diffusion gradient information.
+    data : array
+        4D numpy array of diffusion image data.
+    B0_mask : str
+        File path to B0 brain mask.
+
+    Returns
+    -------
+    sf_mod : ndarray
+        Coefficients of the sfm reconstruction.
+    model : obj
+        Fitted sf model.
+    '''
+    from dipy.data import get_sphere
+    import dipy.reconst.sfm as sfm
+
+    sphere = get_sphere('repulsion724')
+    print('Fitting SF model...')
+    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
+    print('Reconstructing...')
+    model = sfm.SparseFascicleModel(gtab, sphere=sphere, l1_ratio=0.5, alpha=0.001)
+    sf_mod = model.fit(data, mask=B0_mask_data)
+    sf_odf = sf_mod.odf(sphere)
+
+    del B0_mask_data
+    return sf_odf, model
 
 
 def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
@@ -321,6 +393,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
         Minimum fiber length threshold in mm to restrict tracking.
     '''
     import gc
+    import time
     from dipy.tracking.streamline import Streamlines, values_from_volume
     from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
     import networkx as nx
@@ -330,6 +403,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     from pynets.dmri.dmri_utils import generate_sl
     from dipy.io.streamline import load_tractogram
     from dipy.io.stateful_tractogram import Space, Origin
+
+    start = time.time()
 
     # Load parcellation
     roi_img = nib.load(atlas_mni)
@@ -430,6 +505,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     # Impose symmetry
     conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
+
+    print('Graph Building Complete:\n', str(time.time() - start))
 
     if len(bad_idxs) > 0:
         bad_idxs = sorted(list(set(bad_idxs)), reverse=True)

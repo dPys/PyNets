@@ -131,7 +131,7 @@ def get_parser():
                         default='partcorr',
                         nargs='+',
                         choices=['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
-                                 'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso', 'csa', 'csd'],
+                                 'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso', 'csa', 'csd', 'ten', 'sfm'],
                         help='(Hyperparameter): Specify connectivity estimation model. For fMRI, possible models '
                              'include: corr for correlation, cov for covariance, sps for precision covariance, '
                              'partcorr for partial correlation. sps type is used by default. '
@@ -245,13 +245,13 @@ def get_parser():
                         metavar='Direction getter',
                         default='det',
                         nargs='+',
-                        choices=['det', 'prob', 'clos', 'boot'],
+                        choices=['det', 'prob', 'clos'],
                         help='(Hyperparameter): Include this flag to manually specify the statistical approach to '
                              'tracking for dmri connectome estimation. Options are: det (deterministic), '
-                             'closest (clos), boot (bootstrapped), and prob (probabilistic). '
+                             'closest (clos), and prob (probabilistic). '
                              'Default is det. If you wish to iterate the pipeline across multiple '
-                             'direction-getting methods, separate the list by space (e.g. \'det\', \'prob\', \'clos\', '
-                             '\'boot\').\n')
+                             'direction-getting methods, separate the list by space (e.g. \'det\', \'prob\', '
+                             '\'clos\').\n')
 
     # dMRI settings (non-hyperparameter)
     parser.add_argument('-tt',
@@ -414,7 +414,6 @@ def build_workflow(args, retval):
         print(f"\n\nPyNets Version:\n{pynets.__version__}\n\n")
     except ImportError:
         print('PyNets not installed! Ensure that you are using the correct python version.')
-    from pynets.core.utils import do_dir_path
 
     # Start timer
     now = datetime.datetime.now()
@@ -1007,6 +1006,7 @@ def build_workflow(args, retval):
             print(f"\nUsing connectivity model: {conn_model}")
 
     elif graph or multi_graph:
+        from pynets.core.utils import do_dir_path
         network = 'custom_graph'
         thr = 0
         roi = 'None'
@@ -1202,8 +1202,6 @@ def build_workflow(args, retval):
                 print(f"\nERROR: {atlas} is a coordinate atlas and must be used with the `-spheres` flag.")
                 retval['return_code'] = 1
                 return retval
-            else:
-                print(f"\nPredefined atlas: {atlas}")
         else:
             if (uatlas is None) and (k == 0) and (user_atlas_list is None) and (k_list is None) and \
                     (atlas is None) and (multi_atlas is None):
@@ -1296,14 +1294,41 @@ def build_workflow(args, retval):
                 print(f"BOLD Image: {_func_file}")
         else:
             print(f"BOLD Image: {func_file}")
+
+        if conf_list:
+            for _conf in conf_list:
+                print(f"BOLD Confound Regressors: {_conf}")
+        elif conf:
+            print(f"BOLD Confound Regressors: {conf}")
+
         multimodal = False
     elif (func_file or func_file_list) and (dwi_file or dwi_file_list):
         multimodal = True
         print('\nRunning joint fMRI-dMRI connectometry...')
-        print(f"BOLD Image:\n{func_file}")
-        print(f"Diffusion-Weighted Image:\n{dwi_file}")
-        print(f"B-Values:\n{fbval}")
-        print(f"B-Vectors:\n{fbvec}")
+        if func_file_list:
+            for _func_file in func_file_list:
+                print(f"BOLD Image: {_func_file}")
+        else:
+            print(f"BOLD Image: {func_file}")
+
+        if conf_list:
+            for _conf in conf_list:
+                print(f"BOLD Confound Regressors: {_conf}")
+        elif conf:
+            print(f"BOLD Confound Regressors: {conf}")
+
+        if dwi_file_list:
+            for (_dwi_file, _fbval, _fbvec, _anat_file) in list(zip(dwi_file_list, fbval_list, fbvec_list,
+                                                                    anat_file_list)):
+                print(f"Diffusion-Weighted Image:\n {_dwi_file}")
+                print(f"B-Values:\n {_fbval}")
+                print(f"B-Vectors:\n {_fbvec}")
+                if waymask is not None:
+                    print(f"Waymask:\n {waymask}")
+        else:
+            print(f"Diffusion-Weighted Image:\n {dwi_file}")
+            print(f"B-Values:\n {fbval}")
+            print(f"B-Vectors:\n {fbvec}")
     else:
         multimodal = False
 
@@ -1313,6 +1338,13 @@ def build_workflow(args, retval):
                 print(f"T1-Weighted Image:\n{anat_file}")
         else:
             print(f"T1-Weighted Image:\n{anat_file}")
+
+    if mask or mask_list:
+        if mask_list and len(mask_list) > 1:
+            for mask in mask_list:
+                print(f"Brain Mask Image:\n{mask}")
+        else:
+            print(f"Brain Mask Image:\n{mask}")
     print('\n-------------------------------------------------------------------------\n\n')
 
     # Variable tracking
@@ -1573,11 +1605,7 @@ def build_workflow(args, retval):
                                                imports=import_list)
 
         # Combine dataframes across models
-        combine_pandas_dfs_node = pe.Node(interface=CombineOutputs(), name="CombineOutputs",
-                                          input_names=['network', 'ID', 'net_mets_csv_list', 'plot_switch',
-                                                       'multi_nets', 'multimodal'],
-                                          output_names=['combination_complete'],
-                                          imports=import_list)
+        combine_pandas_dfs_node = pe.Node(interface=CombineOutputs(), name="CombineOutputs", imports=import_list)
         combine_pandas_dfs_node._n_procs = 1
         combine_pandas_dfs_node._mem_gb = 2
 
@@ -1685,9 +1713,9 @@ def build_workflow(args, retval):
                 anat_file = None
 
             try:
-                subj_dir = f"{outdir}/sub-{ID.split('_')[0]}/ses-{ID.split('_')[1]}"
+                subj_dir = f"{outdir}/sub-{ID[i].split('_')[0]}/ses-{ID[i].split('_')[1]}"
             except:
-                subj_dir = f"{outdir}/{ID}"
+                subj_dir = f"{outdir}/{ID[i]}"
             os.makedirs(subj_dir, exist_ok=True)
             dir_list.append(subj_dir)
 

@@ -129,8 +129,10 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && mkdir -p ~/.nipype \
     && echo "[monitoring]" > ~/.nipype/nipype.cfg \
     && echo "enabled = true" >> ~/.nipype/nipype.cfg \
+    && pip uninstall -y numpy \
+    && pip install numpy -U \
     && pip uninstall -y pandas \
-    && conda install -yq pandas \
+    && pip install pandas -U \
     && rm -rf /home/neuro/PyNets \
     && rm -rf /home/neuro/nilearn \
     && rm -rf /home/neuro/.cache
@@ -198,4 +200,4 @@ EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]
 
 # and add it as an entrypoint
-ENTRYPOINT ["pynets_bids"]
+#ENTRYPOINT ["pynets_bids"]

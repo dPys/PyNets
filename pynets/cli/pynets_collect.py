@@ -156,8 +156,9 @@ def build_subject_dict(sub, working_path, modality='func'):
     sessions = sorted([i for i in os.listdir(f"{working_path}{'/'}{sub}") if i.startswith('ses-')],
                       key = lambda x: x.split("-")[1])
     atlases = list(set([os.path.basename(str(Path(i).parent.parent)) for i in
-                        glob.glob(f"{working_path}{'/'}{sub}{'/*/*/*/netmetrics/*'}")]))
-
+                        glob.glob(f"{working_path}{'/'}{sub}{'/*/*/netmetrics/*'}")])) + list(
+        set([os.path.basename(str(Path(i).parent.parent)) for i in
+             glob.glob(f"{working_path}{'/'}{sub}{'/*/*/*/netmetrics/*'}")]))
     print(atlases)
 
     files_ = []
@@ -165,9 +166,9 @@ def build_subject_dict(sub, working_path, modality='func'):
         print(ses)
         subject_dict[sub][ses] = []
         for atlas in atlases:
-            #atlas_name = atlas.replace('reor-RAS_nores-2mm_', '')
-            atlas_name = atlas
-            auc_csvs = glob.glob(f"{working_path}/{sub}/{ses}/{modality}/{atlas}/netmetrics/auc/*")
+            atlas_name = '_'.join(atlas.split('_')[1:])
+            auc_csvs = glob.glob(f"{working_path}/{sub}/{ses}/{atlas}/netmetrics/auc/*") + glob.glob(
+                f"{working_path}/{sub}/{ses}/{modality}/{atlas}/netmetrics/auc/*")
             for auc_file in auc_csvs:
                 prefix = os.path.basename(auc_file).split('.csv')[0].split('est-')[1].split("%s%s" % (modality,
                                                                                             'net_mets'))[0]
@@ -183,6 +184,7 @@ def build_subject_dict(sub, working_path, modality='func'):
             for m in range(len(list_))[1:]:
                 df_base = df_base.merge(list_[m][[c for c in list_[m].columns if c.endswith('auc')]], how='right',
                                         right_index=True, left_index=True)
+
             if os.path.isdir(f"{working_path}{'/'}{sub}{'/'}{ses}{'/'}{modality}"):
                 out_path = f"{working_path}/{sub}/{ses}/{modality}/all_combinations_auc.csv"
                 df_base.to_csv(out_path)
@@ -361,7 +363,7 @@ def main():
     # args_dict_all['plug'] = 'MultiProc'
     # args_dict_all['v'] = False
     # args_dict_all['pm'] = '40,40'
-    # args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU_outs'
+    # args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs'
     # args_dict_all['work'] = '/scratch/04171/dpisner/pynets_scratch'
     # from types import SimpleNamespace
     # args = SimpleNamespace(**args_dict_all)

@@ -1,0 +1,39 @@
+{
+    "dwi": {
+            "dg": "['clos']",
+            "ml": "['20']",
+            "mod": "['csd', 'ten', 'sfm']",
+            "s": 10000,
+            "tc": "['cmc']",
+            "tt": "['particle']"
+        },
+    "func": {
+            "cc": "['tcorr']",
+            "ct": "None",
+            "hp": "['0']",
+            "k": "None",
+            "mod": "['partcorr']",
+            "sm": "['0']"
+        },
+    "gen": {
+            "a":  "['coords_dosenbach_2010']",
+            "bin":  "False",
+            "df":  "False",
+            "dt":  "False",
+            "embed":  "None",
+            "max_thr":  0.80,
+            "min_thr":  0.20,
+            "mplx":  0,
+            "mst":  "True",
+            "n":  "None",
+            "names":  "False",
+            "norm": "6",
+            "ns":  "6",
+            "p":  "['3']",
+            "plt":  "True",
+            "spheres":  "True",
+            "step_thr":  0.10,
+            "thr":  1.0,
+            "vox":  "'2mm'"
+        }
+}
