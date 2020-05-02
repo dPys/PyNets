@@ -155,8 +155,7 @@ def build_subject_dict(sub, working_path, modality='func'):
     subject_dict[sub] = {}
     sessions = sorted([i for i in os.listdir(f"{working_path}{'/'}{sub}") if i.startswith('ses-')],
                       key = lambda x: x.split("-")[1])
-    atlases = list(set([os.path.basename(str(Path(i).parent.parent)) for i in
-                        glob.glob(f"{working_path}{'/'}{sub}{'/*/*/netmetrics/*'}")])) + list(
+    atlases = list(
         set([os.path.basename(str(Path(i).parent.parent)) for i in
              glob.glob(f"{working_path}{'/'}{sub}{'/*/*/*/netmetrics/*'}")]))
     print(atlases)
@@ -167,7 +166,7 @@ def build_subject_dict(sub, working_path, modality='func'):
         subject_dict[sub][ses] = []
         for atlas in atlases:
             atlas_name = '_'.join(atlas.split('_')[1:])
-            auc_csvs = glob.glob(f"{working_path}/{sub}/{ses}/{atlas}/netmetrics/auc/*") + glob.glob(
+            auc_csvs = glob.glob(
                 f"{working_path}/{sub}/{ses}/{modality}/{atlas}/netmetrics/auc/*")
             for auc_file in auc_csvs:
                 prefix = os.path.basename(auc_file).split('.csv')[0].split('est-')[1].split("%s%s" % (modality,
