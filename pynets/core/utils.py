@@ -761,8 +761,8 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
     from pynets.stats.netstats import collect_pandas_df_make
 
     # Available functional and structural connectivity models
-    # with open('/Users/derekpisner/Applications/PyNets/pynets/runconfig.yaml') as stream:
-    with open(f"{str(Path(__file__).parent.parent)}{'/runconfig.yaml'}", 'r') as stream:
+    with open('/Users/derekpisner/Applications/PyNets/pynets/runconfig.yaml') as stream:
+    #with open(f"{str(Path(__file__).parent.parent)}{'/runconfig.yaml'}", 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
             func_models = hardcoded_params['available_models']['func_models']

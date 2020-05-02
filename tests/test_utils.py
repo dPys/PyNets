@@ -647,19 +647,19 @@ def test_collect_pandas_df(multi_nets, multimodal):
     plot_switch = False
 
     # Rename to proper format.
-    shutil.copy(str(dmri_path + '/DesikanKlein2012/0021001_net_mets_Default_csd_0.1_parc'),
-                str(dmri_path + '/DesikanKlein2012/0021001_Default_net_mets_csd_0.1_parc'))
+    shutil.copy(str(dmri_path + '/DesikanKlein2012/0021001_net_mets_Default_est-csd_0.1_parc'),
+                str(dmri_path + '/DesikanKlein2012/0021001_Default_net_mets_est-csd_0.1_parc'))
     if multi_nets is not None and multimodal is False:
-        net_mets_csv_list = [str(func_path + '/whole_brain_cluster_labels_PCA200/002_Default_net_mets_sps_0.9'),
-                             str(func_path + '/whole_brain_cluster_labels_PCA200/002_Default_net_mets_sps_0.9')]
+        net_mets_csv_list = [str(func_path + '/whole_brain_cluster_labels_PCA200/002_Default_net_mets_est-sps_0.9'),
+                             str(func_path + '/whole_brain_cluster_labels_PCA200/002_Default_net_mets_est-sps_0.9')]
     elif multi_nets is not None and multimodal is True:
-        net_mets_csv_list = [str(func_path + '/whole_brain_cluster_labels_PCA200/002_Default_net_mets_sps_0.9'),
-                             str(dmri_path + '/DesikanKlein2012/0021001_Default_net_mets_csd_0.1_parc')]
+        net_mets_csv_list = [str(func_path + '/whole_brain_cluster_labels_PCA200/002_Default_net_mets_est-sps_0.9'),
+                             str(dmri_path + '/DesikanKlein2012/0021001_Default_net_mets_est-csd_0.1_parc')]
     elif multi_nets is None and multimodal is False:
-        net_mets_csv_list = [str(func_path + '/coords_dosenbach_2010/netmetrics/002_net_mets_partcorr_0.2_4mm')]
+        net_mets_csv_list = [str(func_path + '/coords_dosenbach_2010/netmetrics/002_net_mets_est-partcorr_0.2_4mm')]
     elif multi_nets is None and multimodal is True:
-        net_mets_csv_list = [str(func_path + '/coords_dosenbach_2010/netmetrics/002_net_mets_partcorr_0.2_4mm'),
-                             str(dmri_path + '/DesikanKlein2012/0021001_net_mets_csd_0.05_parc')]
+        net_mets_csv_list = [str(func_path + '/coords_dosenbach_2010/netmetrics/002_net_mets_est-partcorr_0.2_4mm'),
+                             str(dmri_path + '/DesikanKlein2012/0021001_net_mets_est-csd_0.05_parc')]
     else:
         return
 

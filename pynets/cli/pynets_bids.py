@@ -338,8 +338,8 @@ def main():
         with open(bids_config, 'r') as stream:
             arg_dict = json.load(stream)
     else:
-        # with open(f"{str(Path(__file__).parent.parent)}/config/bids_config.json", 'r') as stream:
-        with open('/Users/derekpisner/Applications/PyNets/pynets/config/bids_config_test.json') as stream:
+        with open(f"{str(Path(__file__).parent.parent)}/config/bids_config.json", 'r') as stream:
+        # with open('/Users/derekpisner/Applications/PyNets/pynets/config/bids_config_test.json') as stream:
             arg_dict = json.load(stream)
 
     # Available functional and structural connectivity models

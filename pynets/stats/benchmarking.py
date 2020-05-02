@@ -275,8 +275,8 @@ if __name__ == '__main__':
                 i = 0
                 for met in mets:
                     col = atlas + '_clust-' + clust + '_k-' + str(_k) + '_est-' + est + \
-                          '_nodetype-parc_' + 'smooth-' + str(smooth) + 'fwhm_hpass-' + str(hpass) + 'Hz_' + 'thrtype-' + \
-                          thr_type + '_net_mets_auc_' + met + '_auc'
+                          '_nodetype-parc_' + 'smooth-' + str(smooth) + 'fwhm_hpass-' + str(hpass) + 'Hz_' + \
+                          'thrtype-' + thr_type + '_net_mets_auc_' + met + '_auc'
                     try:
                         met_vals[i] = df[df['id'] == 'sub-' + ID + '_ses-' + ses][col].values[0]
                     except:
@@ -426,7 +426,7 @@ if __name__ == '__main__':
 
                 Y = np.array(id_list)
                 try:
-                    df_summary.at[i,'grid'] = (atlas, est, clust, _k, track_type, directget, min_length)
+                    df_summary.at[i, 'grid'] = (atlas, est, clust, _k, track_type, directget, min_length)
                     bad_ixs = [i[1] for i in np.argwhere(np.isnan(X_top))]
                     for m in set(bad_ixs):
                         if (X_top.shape[0] - bad_ixs.count(m))/X_top.shape[0] < 0.50:
