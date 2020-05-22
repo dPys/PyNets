@@ -37,38 +37,6 @@ def normalize_gradients(bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_sca
         Unit-normed b-vectors array.
     bvals : 1d int array
         Vector amplitude square normed b-values array.
-
-    Examples
-    --------
-    >>> bvecs = np.vstack((np.zeros(3), 2.0 * np.eye(3), -0.8 * np.eye(3), np.ones(3)))
-    >>> bvals = np.array([1000] * bvecs.shape[0])
-    >>> normalize_gradients(bvecs, bvals, 50)  # doctest: +IGNORE_EXCEPTION_DETAIL
-    Traceback (most recent call last):
-    ValueError:
-
-    >>> bvals[0] = 0.0
-    >>> norm_vecs, norm_vals = normalize_gradients(bvecs, bvals)
-    >>> np.all(norm_vecs[0] == 0)
-    True
-
-    >>> norm_vecs[1, ...].tolist()
-    [1.0, 0.0, 0.0]
-
-    >>> norm_vals[0]
-    0
-    >>> norm_vals[1]
-    4000
-    >>> norm_vals[-2]
-    600
-    >>> norm_vals[-1]
-    3000
-
-    >>> norm_vecs, norm_vals = normalize_gradients(bvecs, bvals, b_scale=False)
-    >>> norm_vals[0]
-    0
-    >>> np.all(norm_vals[1:] == 1000)
-    True
-
     """
     from dipy.core.gradients import round_bvals
     bvals = np.array(bvals, dtype='float32')
@@ -150,14 +118,6 @@ def extract_b0(in_file, b0_ixs, out_path=None):
     -------
     out_path : str
        4D NIfTI file consisting of B0's.
-
-    Examples
-    --------
-    >>> os.chdir(tmpdir)
-    >>> b0_ixs = np.where(np.loadtxt(str(data_dir / 'bval')) <= 50)[0].tolist()[:2]
-    >>> in_file = str(data_dir / 'dwi.nii.gz')
-    >>> out_path = extract_b0(in_file, b0_ixs)
-    >>> assert os.path.isfile(out_path)
     """
     if out_path is None:
         out_path = fname_presuffix(

@@ -723,7 +723,7 @@ class Tracking(SimpleInterface):
         print(Style.RESET_ALL)
 
         # Commence Ensemble Tractography
-        streamlines = track_ensemble(np.asarray(dwi_img.dataobj), self.inputs.target_samples, atlas_data_wm_gm_int,
+        streamlines = track_ensemble(self.inputs.target_samples, atlas_data_wm_gm_int,
                                      parcels, model,
                                      prep_tissues(self.inputs.t1w2dwi, self.inputs.gm_in_dwi,
                                                   self.inputs.vent_csf_in_dwi, self.inputs.wm_in_dwi,

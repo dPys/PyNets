@@ -5,6 +5,7 @@ Created on Wed Dec 27 16:19:14 2017
 @authors: Derek Pisner & Ryan Hammonds
 
 """
+import os
 import numpy as np
 try:
     import cPickle as pickle
@@ -14,35 +15,31 @@ from pathlib import Path
 from pynets.dmri import dmri_utils as dmriutils
 
 
-def test_make_gtab_and_bmask():
-    """
-    Test make_gtab_and_bmask functionality
-    """
+def test_extract_b0():
+    import tempfile
+
+    dir_path = str(tempfile.TemporaryDirectory().name)
+    os.makedirs(dir_path)
+    os.chdir(dir_path)
     base_dir = str(Path(__file__).parent/"examples")
-    dwi_path = base_dir + '/002/dmri'
-    fbval = dwi_path + '/bval.bval'
-    fbvec = dwi_path + '/bvec.bvec'
-    dwi_file = dwi_path + '/iso_eddy_corrected_data_denoised.nii.gz'
-    network = 'Default'
-    node_size = 6
-    atlases = ['Power', 'Shirer', 'Shen', 'Smith']
-
-    for atlas in atlases:
-        [gtab_file, B0_bet, B0_mask, dwi_file] = dmriutils.make_gtab_and_bmask(
-            fbval, fbvec, dwi_file, network, node_size, atlas, dwi_path)
-
-    assert gtab_file is not None
-    assert B0_bet is not None
-    assert B0_mask is not None
-    assert dwi_file is not None
+    dwi_path = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_preprocessed_dwi.nii.gz"
+    fbval = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_bval.bval"
+    b0_ixs = np.where(np.loadtxt(fbval) <= 50)[0].tolist()[:2]
+    out_path = dmriutils.extract_b0(dwi_path, b0_ixs)
+    assert os.path.isfile(out_path)
 
 
-def test_make_mean_b0():
+def test_make_median_b0():
+    import tempfile
+
     base_dir = str(Path(__file__).parent/"examples")
-    dwi_path = base_dir + '/002/dmri'
-    dwi_file = dwi_path + '/iso_eddy_corrected_data_denoised.nii.gz'
-    mean_file_out = dmriutils.make_mean_b0(dwi_file)
-    assert mean_file_out is not None
+    dir_path = str(tempfile.TemporaryDirectory().name)
+    os.makedirs(dir_path)
+    os.chdir(dir_path)
+    dwi_file = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_preprocessed_dwi.nii.gz"
+    mean_file_out = dmriutils.median(dwi_file)
+
+    assert os.path.isfile(mean_file_out)
 
 
 def test_normalize_grads():
@@ -50,9 +47,8 @@ def test_normalize_grads():
     Test make_gtab_and_bmask functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    dwi_path = base_dir + '/002/dmri'
-    fbval = dwi_path + '/bval.bval'
-    fbvec = dwi_path + '/bvec.bvec'
+    fbval = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_bval.bval"
+    fbvec = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_bvec.bvec"
     bvals = np.loadtxt(fbval)
     bvecs = np.loadtxt(fbvec)
     b0_threshold = 50

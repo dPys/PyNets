@@ -36,9 +36,9 @@ def test_nodemaker_tools_parlistfile_RSN():
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    func_file = dir_path + '/002.nii.gz'
-    parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
+    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     network = 'Default'
     parc = True
 
@@ -82,8 +82,7 @@ def test_nodemaker_tools_nilearn_coords_RSN(atlas):
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    func_file = dir_path + '/002.nii.gz'
+    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
     network = 'Default'
     parc = False
     parcel_list = None
@@ -109,10 +108,10 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    func_file = dir_path + '/002.nii.gz'
-    parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
-    roi = base_dir + '/pDMN_3_bin.nii.gz'
+    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
+    roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
     network = 'Default'
     ID = '002'
     perc_overlap = 0.10
@@ -168,9 +167,8 @@ def test_nodemaker_tools_masking_coords_RSN(atlas):
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path= base_dir + '/002/fmri'
-    func_file = dir_path + '/002.nii.gz'
-    roi = base_dir + '/pDMN_3_bin.nii.gz'
+    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
     network = 'Default'
     parc = False
     parcel_list = None
@@ -205,7 +203,7 @@ def test_nodemaker_tools_parlistfile_WB():
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
+    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
 
     start_time = time.time()
     [WB_coords, _, _] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
@@ -248,11 +246,10 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     atlas = 'whole_brain_cluster_labels_PCA200'
-    roi = base_dir + '/pDMN_3_bin.nii.gz'
-    mask = None
+    roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
     ID = '002'
     parc = True
     perc_overlap = 0.10
@@ -278,16 +275,14 @@ def test_nodemaker_tools_masking_parlistfile_WB():
 
     start_time = time.time()
     [WB_net_parcels_map_nifti_unmasked, WB_coords_unmasked, _,
-     WB_atlas, WB_uatlas, dir_path] = nodemaker.node_gen(WB_coords, WB_parcel_list, WB_labels,
-                                                                        dir_path, ID, parc, atlas, parlistfile)
+     _, _, dir_path] = nodemaker.node_gen(WB_coords, WB_parcel_list, WB_labels, dir_path, ID, parc, atlas, parlistfile)
     print("%s%s%s" % ('node_gen (Masking whole-brain version) --> finished: ',
     np.round(time.time() - start_time, 1), 's'))
 
     start_time = time.time()
     [WB_net_parcels_map_nifti_masked, WB_coords_masked, WB_labels_masked,
-     WB_atlas, WB_uatlas, dir_path] = nodemaker.node_gen_masking(roi, WB_coords, WB_parcel_list,
-                                                                                WB_labels, dir_path, ID, parc,
-                                                                                atlas, parlistfile)
+     _, _, _] = nodemaker.node_gen_masking(roi, WB_coords, WB_parcel_list, WB_labels, dir_path, ID, parc, atlas,
+                                           parlistfile)
 
     print("%s%s%s" % ('node_gen_masking (Masking whole-brain version) --> finished: ',
                       np.round(time.time() - start_time, 1), 's'))
@@ -313,7 +308,7 @@ def test_nodemaker_tools_masking_coords_WB(atlas):
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    roi = base_dir + '/pDMN_3_bin.nii.gz'
+    roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
     error = 2
 
     start_time = time.time()
@@ -339,10 +334,10 @@ def test_WB_fetch_nodes_and_labels1():
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
+    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     atlas = 'whole_brain_cluster_labels_PCA200'
-    dir_path = base_dir + '/002/fmri'
-    func_file = dir_path + '/002.nii.gz'
     use_AAL_naming = True
     ref_txt = None
     parc = True
@@ -368,10 +363,10 @@ def test_WB_fetch_nodes_and_labels2():
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
+    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     atlas = 'whole_brain_cluster_labels_PCA200'
-    dir_path = base_dir + '/002/fmri'
-    func_file = dir_path + '/002.nii.gz'
     ref_txt = None
     parc = False
     use_AAL_naming = True
@@ -393,10 +388,10 @@ def test_RSN_fetch_nodes_and_labels1():
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
+    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     atlas = 'whole_brain_cluster_labels_PCA200'
-    dir_path = base_dir + '/002/fmri'
-    func_file = dir_path + '/002.nii.gz'
     ref_txt = None
     parc = True
     use_AAL_naming = True
@@ -422,10 +417,10 @@ def test_RSN_fetch_nodes_and_labels2():
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    parlistfile = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
+    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     atlas = 'whole_brain_cluster_labels_PCA200'
-    dir_path = base_dir + '/002/fmri'
-    func_file = dir_path + '/002.nii.gz'
     ref_txt = None
     parc = False
     use_AAL_naming = True
@@ -449,16 +444,10 @@ def test_create_spherical_roi_volumes():
     Test create_spherical_roi_volumes functionality
     """
     import pkg_resources
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/dmri'
     node_size = 2
-    vox_size = '2mm'
-    template_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size +
-                                                    "_brain_mask.nii.gz")
-    coords_file = dir_path + '/DesikanKlein2012/Default_coords_rsn.pkl'
-    with open(coords_file, 'rb') as file_:
-        coords = pickle.load(file_)
-    [parcel_list, par_max, node_size, parc] = nodemaker.create_spherical_roi_volumes(node_size, coords, template_mask)
+    template_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_2mm_brain_mask.nii.gz")
+    [parcel_list, _, _, _] = nodemaker.create_spherical_roi_volumes(node_size, [(0, 0, 0), (5, 5, 5)],
+                                                                                     template_mask)
     assert len(parcel_list) > 0
 
 
@@ -467,19 +456,16 @@ def test_get_sphere():
     Test get_sphere functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/dmri'
-    img_file = dir_path + '/nodif_b0_bet.nii.gz'
+    img_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz"
     img = nib.load(img_file)
     r = 4
     vox_dims = (2.0, 2.0, 2.0)
-    coords_file = dir_path + '/DesikanKlein2012/Default_coords_rsn.pkl'
-    with open(coords_file, 'rb') as file_:
-        coords = pickle.load(file_)
+    coords = [[0, 0, 0], [-5, -5, -5], [5, 5, 5], [-10, -10, -10], [10, 10, 10]]
     neighbors = []
     for coord in coords:
         neighbors.append(nodemaker.get_sphere(coord, r, vox_dims, img.shape[0:3]))
-    neighbors = [i for i in neighbors if len(i)>0]
-    assert len(neighbors) == 4
+    neighbors = [i for i in neighbors if len(i) > 0]
+    assert len(neighbors) == 3
 
 
 def test_mask_roi():
@@ -487,11 +473,10 @@ def test_mask_roi():
     Test mask_roi functionality
     """
     import pkg_resources
-    vox_size = '2mm'
-    mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_" + vox_size + "_brain_mask.nii.gz")
+    mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_2mm_brain_mask.nii.gz")
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    img_file = dir_path + '/002.nii.gz'
-    roi = base_dir + '/pDMN_3_bin.nii.gz'
-    roi_masked = nodemaker.mask_roi(dir_path, roi, mask, img_file)
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
+    roi_masked = nodemaker.mask_roi(dir_path, roi, mask, func_file)
     assert roi_masked is not None

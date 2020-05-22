@@ -217,15 +217,13 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
     return streams, dir_path, dm_path
 
 
-def track_ensemble(dwi_data, target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere, directget,
+def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere, directget,
                    curv_thr_list, step_list, track_type, maxcrossing, roi_neighborhood_tol, min_length, waymask,
                    B0_mask, max_length=1000, n_seeds_per_iter=500, pft_back_tracking_dist=2, pft_front_tracking_dist=1,
                    particle_count=15, min_separation_angle=20):
     """
     Perform native-space ensemble tractography, restricted to a vector of ROI masks.
 
-    dwi_data : array
-        4D array of dwi data.
     target_samples : int
         Total number of streamline samples specified to generate streams.
     atlas_data_wm_gm_int : array

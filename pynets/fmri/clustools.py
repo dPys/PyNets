@@ -627,7 +627,7 @@ def ensemble_parcellate(infiles, k):
         else:
             W = W + conn
 
-    # complete the average
+    # compute the average
     W = W / len(infiles)
 
     out_img = parcellate_ncut(W, k, img)
@@ -745,17 +745,28 @@ class NiParcellate(object):
         from scipy.sparse import save_npz, load_npz
         from nilearn.regions import connected_regions
 
-        conn_comps = connected_regions(self._clust_mask_corr_img, extract_type='connected_components',
-                                       min_region_size=min_region_size)
-        self._conn_comps = conn_comps[0]
-        self.num_conn_comps = len(conn_comps[1])
+        try:
+            conn_comps = connected_regions(self._clust_mask_corr_img, extract_type='connected_components',
+                                           min_region_size=min_region_size)
+            self._conn_comps = conn_comps[0]
+            self.num_conn_comps = len(conn_comps[1])
+        except:
+            raise ValueError('Clustering mask is empty!')
 
+        if not self._conn_comps:
+            if np.sum(np.asarray(self._clust_mask_corr_img.dataobj)) == 0:
+                raise ValueError('Clustering mask is empty!')
+            else:
+                self._conn_comps = self._clust_mask_corr_img
+                self.num_conn_comps = 1
+        print(f"Detected {self.num_conn_comps} connected components in clustering mask with a mininimum region "
+              f"size of {min_region_size}")
         if self.clust_type == 'complete' or self.clust_type == 'average' or self.clust_type == 'single':
             if self.num_conn_comps > 1:
                 raise ValueError('Clustering method unstable with spatial constrainsts applied to multiple '
                                  'connected components.')
 
-        if self.clust_type == 'ward' or self.clust_type == 'ncut':
+        if (self.clust_type == 'ward' and self.num_conn_comps > 1) or self.clust_type == 'ncut':
             if self.k < self.num_conn_comps:
                 raise ValueError('k must minimally be greater than the total number of connected components in '
                                  'the mask in the case of agglomerative clustering.')
@@ -778,6 +789,9 @@ class NiParcellate(object):
                 elif op.isfile(self._local_conn_mat_path):
                     self._local_conn = load_npz(self._local_conn_mat_path)
             elif self.local_corr == 'allcorr':
+                if self.clust_type == 'ncut':
+                    raise ValueError('Must select either `tcorr` or `scorr` local connectivity option if you are using '
+                                     '`ncut` clustering method')
                 self._local_conn = 'auto'
             else:
                 raise ValueError('Local connectivity method not recognized. Only tcorr, scorr, and auto are currently '

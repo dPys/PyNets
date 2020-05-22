@@ -19,9 +19,7 @@ import pytest
 
 
 @pytest.mark.parametrize("cp", [True, False])
-@pytest.mark.parametrize("thr", 
-    [pytest.param(-0.2, marks=pytest.mark.xfail), 0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-)
+@pytest.mark.parametrize("thr", [pytest.param(-0.2, marks=pytest.mark.xfail), 0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
 def test_conn_mat_operations(cp, thr):
     """ Includes original tests using .npy and new tests from randomly generate arrays, as
         well as additional assert statements.
@@ -30,21 +28,18 @@ def test_conn_mat_operations(cp, thr):
         y = thresholding.threshold_proportional(x, thr, copy=cp)
         s = thresholding.binarize(y)
         assert np.sum(s) == np.count_nonzero(y)
-    
-    
+
     def test_normalize(x, thr, cp):
         x = thresholding.threshold_proportional(x, 1, copy=True) # remove diagonal
         s = thresholding.normalize(x)
         assert np.max(s) <= 1 and np.min(s) >= 0
         assert np.max(s) == 1 and np.min(s) == round(min(x.flatten())/max(x.flatten()), 1)
-    
-        
+
     def test_threshold_absolute(x, thr, cp):
         s = thresholding.threshold_absolute(x, thr, copy=cp)
         s_test = [val for arr in s for val in arr if val >= thr] # search for value > thr
         assert round(np.sum(s), 10) == round(np.sum(s_test), 10)
-        
-    
+
     def test_invert(x, thr, cp):
         x_cp = x.copy() # invert modifies array in place and need orig to assert.
         x_cp = thresholding.threshold_proportional(x_cp, thr, copy=cp)
@@ -53,29 +48,25 @@ def test_conn_mat_operations(cp, thr):
         s = s.flatten()
         s_gt_x = [inv_val > x[idx] for idx, inv_val in enumerate(s) if inv_val > 0]
         assert False not in s_gt_x
-        
-        
+
     def test_autofix(x, thr, cp):
         x[1][1] = np.inf
         x[2][1] = np.nan
         s = thresholding.autofix(x)
         assert (np.nan not in s) and (np.inf not in s)
-        
-    
+
     def test_density(x, thr):
         d_known = thresholding.est_density(thresholding.threshold_absolute(x, thr, copy=True))
         x = thresholding.density_thresholding(x, d_known)
         d_test = thresholding.est_density(x)
         assert np.equal(np.round(d_known, 1), np.round(d_test, 1))
-    
-    
+
     def test_thr2prob(x, thr):
         s = thresholding.threshold_absolute(thresholding.normalize(x), thr)
         s[0][0] = 0.0000001
         t = thresholding.thr2prob(s)
         assert float(len(t[np.logical_and(t < 0.001, t > 0)])) == float(0.0)
-        
-        
+
     def test_local_thresholding_prop(x, thr):
         coords = []
         labels = []
@@ -93,13 +84,11 @@ def test_conn_mat_operations(cp, thr):
         assert conn_matrix_thr is not None
         conn_matrix_thr_undir = thresholding.local_thresholding_prop(x_undir, coords, labels, thr)
         assert conn_matrix_thr_undir is not None    
-    
-    
+
     def test_knn(x, thr):
         k = int(thr * 10)
         gra = thresholding.knn(x, k)
 
-          
     def test_disparity_filter(x, thr):
         G_undir = nx.from_numpy_matrix(x)
         G_dir = G_undir.to_directed()
@@ -128,28 +117,24 @@ def test_conn_mat_operations(cp, thr):
             assert N is not None
             N = thresholding.disparity_filter_alpha_cut(G_undir, weight='weight', cut_mode = mode)
             assert N is not None
-                
-                
+
     def test_weight_conversion(x, cp):
         # Cross test all wcm and copy combinations
         for wcm in ['binarize', 'lengths']:
             w = thresholding.weight_conversion(x, wcm, cp)
             assert w is not None
 
-    
     def test_weight_to_distance(x):
         G = nx.from_numpy_matrix(x)
         w = thresholding.weight_to_distance(G)
         assert w is not None
-        
-    
+
     def test_standardize(x):
         w = thresholding.standardize(x)
         assert w is not None
-        
-        
+
     base_dir = str(Path(__file__).parent/"examples")
-    W = np.load(base_dir + '/002/fmri/002_Default_est_cov_raw_mat.npy')    
+    W = np.load(f"{base_dir}/miscellaneous/002_rsn-Default_est-cov_raw_mat.npy")
         
     x_orig = W.copy()
     x_rand = x = np.random.rand(10, 10)
@@ -234,7 +219,7 @@ def test_edge_cases(thr):
 @pytest.mark.parametrize("dens_thresh", [True, False])
 def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh, frag_g):
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
+    dir_path = f"{base_dir}/miscellaneous"
 
     if all_zero == True and type == 'func':
         conn_matrix = np.zeros((10,10))
@@ -252,12 +237,11 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     thr = 0.5
     node_size = 6
     smooth = 2
-    roi = base_dir + dir_path + \
-        '/fmri/whole_brain_cluster_labels_PCA200/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz'
-    coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
+    roi = f"{dir_path}/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz"
+    coord_file_path = f"{dir_path}/Default_func_coords_wb.pkl"
     coord_file = open(coord_file_path, 'rb')
     coords = pickle.load(coord_file)    
-    labels_file_path = dir_path +'/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+    labels_file_path = f"{dir_path}/Default_func_labelnames_wb.pkl"
     labels_file = open(labels_file_path, 'rb')
     labels = pickle.load(labels_file)
     # The arguments below arr never used in the thresholding.tresh_func, but are returned.
@@ -296,16 +280,15 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     assert norm is not None
     assert binary is not None
     assert hpass is not None
-    
-    
+
     # Additional arguments for thresh_struc
     if all_zero == True and type == 'struct':
         conn_matrix = np.zeros((10, 10))
         
     target_samples = 2
     track_type = 'local'
-    atlas_mni = base_dir + '/whole_brain_cluster_labels_PCA200.nii.gz'
-    streams = base_dir + dir_path + '/test_streamline_array_sequence.trk'
+    atlas_mni = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
+    streams = f"{base_dir}/miscellaneous/streamlines_est-csd_nodetype-parc_samples-10000streams_tt-local_dg-prob_ml-0.trk"
     directget = 'prob'
     max_length = 200
 

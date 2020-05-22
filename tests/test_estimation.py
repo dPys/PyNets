@@ -24,8 +24,8 @@ def test_get_conn_matrix_cov(conn_model):
     Test for get_conn_matrix functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    time_series_file = dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_rsn_net_ts.npy'
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    time_series_file = f"{base_dir}/miscellaneous/002_rsn-Default_net_ts.npy"
     time_series = np.load(time_series_file)
     node_size = 2
     smooth = 2
@@ -42,12 +42,12 @@ def test_get_conn_matrix_cov(conn_model):
     binary = False
     atlas = 'whole_brain_cluster_labels_PCA200'
     uatlas = None
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
-    labels_file = open(labels_file_path, 'rb')
-    labels = pickle.load(labels_file)
-    coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
+    coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
     coord_file = open(coord_file_path, 'rb')
     coords = pickle.load(coord_file)
+    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
+    labels_file = open(labels_file_path, 'rb')
+    labels = pickle.load(labels_file)
 
     start_time = time.time()
     [conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network,
@@ -83,22 +83,22 @@ def test_extract_ts_rsn_parc():
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    net_parcels_map_nifti_file = dir_path + '/whole_brain_cluster_labels_PCA200/002_parcels_Default.nii.gz'
-    func_file = dir_path + '/002.nii.gz'
+    net_parcels_map_nifti_file = f"{base_dir}/miscellaneous/002_parcels_Default.nii.gz"
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
     roi = None
     network = 'Default'
     ID = '002'
     smooth = 2
     conf = None
-    wb_coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
-    file_ = open(wb_coords_file, 'rb')
-    coords = pickle.load(file_)
-    atlas = 'whole_brain_cluster_labels_PCA200'
-    uatlas = None
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+    coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
+    coord_file = open(coord_file_path, 'rb')
+    coords = pickle.load(coord_file)
+    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
     labels_file = open(labels_file_path, 'rb')
     labels = pickle.load(labels_file)
+    atlas = 'whole_brain_cluster_labels_PCA200'
+    uatlas = None
     mask = None
     node_size = None
     hpass = None
@@ -127,23 +127,23 @@ def test_extract_ts_rsn_coords(node_size, smooth):
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    func_file = dir_path + '/002.nii.gz'
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
     roi = None
     network = 'Default'
     ID = '002'
     conf = None
     node_size = 2
     smooth = 2
-    wb_coords_file = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
-    file_ = open(wb_coords_file, 'rb')
-    coords = pickle.load(file_)
+    coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
+    coord_file = open(coord_file_path, 'rb')
+    coords = pickle.load(coord_file)
+    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
+    labels_file = open(labels_file_path, 'rb')
+    labels = pickle.load(labels_file)
     atlas = 'whole_brain_cluster_labels_PCA200'
     uatlas = None
     mask = None
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
-    labels_file = open(labels_file_path, 'rb')
-    labels = pickle.load(labels_file)
     hpass = None
     start_time = time.time()
     te = fmri_estimation.TimeseriesExtraction(net_parcels_nii_path=None, node_size=node_size,

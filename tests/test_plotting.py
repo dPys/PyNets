@@ -6,6 +6,7 @@ Created on Wed Dec 27 16:19:14 2017
 @authors: Derek Pisner & Ryan Hammonds
 
 """
+import os
 import numpy as np
 import time
 try:
@@ -20,9 +21,13 @@ def test_plot_conn_mat_nonet_no_mask():
     """
     Test plot_conn_mat_nonet_no_mask functionality
     """
-    # Set example inputs
+    import tempfile
+
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
+    dir_path = str(tempfile.TemporaryDirectory().name)
+    os.makedirs(dir_path)
+    os.chdir(dir_path)
+
     network = None
     ID = '002'
     thr = 0.95
@@ -32,8 +37,8 @@ def test_plot_conn_mat_nonet_no_mask():
     conn_model = 'sps'
     atlas = 'whole_brain_cluster_labels_PCA200'
     roi = None
-    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.94.txt')
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+    conn_matrix = np.genfromtxt(f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-sps_thrtype-PROP_thr-0.94.txt")
+    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
     labels_file = open(labels_file_path, 'rb')
     labels = pickle.load(labels_file)
 
@@ -48,9 +53,12 @@ def test_plot_conn_mat_nonet_mask():
     """
     Test plot_conn_mat_nonet_mask functionality
     """
-    # Set example inputs
+    import tempfile
+
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
+    dir_path = str(tempfile.TemporaryDirectory().name)
+    os.makedirs(dir_path)
+    os.chdir(dir_path)
     network = None
     ID = '002'
     thr = 0.95
@@ -60,8 +68,8 @@ def test_plot_conn_mat_nonet_mask():
     conn_model = 'sps'
     atlas = 'whole_brain_cluster_labels_PCA200'
     roi = None
-    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.94.txt')
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+    conn_matrix = np.genfromtxt(f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-sps_thrtype-PROP_thr-0.94.txt")
+    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
     labels_file = open(labels_file_path,'rb')
     labels = pickle.load(labels_file)
 
@@ -76,9 +84,12 @@ def test_plot_all_nonet_no_mask():
     """
     Test plot_all_nonet_no_mask functionality
     """
-    # Set example inputs
+    import tempfile
+
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
+    dir_path = str(tempfile.TemporaryDirectory().name)
+    os.makedirs(dir_path)
+    os.chdir(dir_path)
     network = None
     ID = '002'
     thr = 0.95
@@ -92,12 +103,12 @@ def test_plot_all_nonet_no_mask():
     norm = 1
     hpass = 0.1
     binary = False
-    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.94.txt')
+    conn_matrix = np.genfromtxt(f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-sps_thrtype-PROP_thr-0.94.txt")
     edge_threshold = '99%'
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
     labels_file = open(labels_file_path, 'rb')
     labels = pickle.load(labels_file)
-    coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
+    coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
     coord_file = open(coord_file_path, 'rb')
     coords = pickle.load(coord_file)
 
@@ -112,9 +123,13 @@ def test_plot_all_nonet_with_mask():
     """
     Test plot_all_nonet_with_mask functionality
     """
-    # Set example inputs
+    import tempfile
+
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
+    dir_path = str(tempfile.TemporaryDirectory().name)
+    os.makedirs(dir_path)
+    os.chdir(dir_path)
+
     network = None
     ID = '002'
     thr = 0.95
@@ -128,12 +143,12 @@ def test_plot_all_nonet_with_mask():
     atlas = 'whole_brain_cluster_labels_PCA200'
     parlistfile = None
     roi = None
-    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.94.txt')
+    conn_matrix = np.genfromtxt(f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-sps_thrtype-PROP_thr-0.94.txt")
     edge_threshold = '99%'
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
     labels_file = open(labels_file_path, 'rb')
     labels = pickle.load(labels_file)
-    coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
+    coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
     coord_file = open(coord_file_path, 'rb')
     coords = pickle.load(coord_file)
 
@@ -148,15 +163,19 @@ def test_plot_connectogram():
     """
     Test plot_connectogram functionality
     """
-    # Set example inputs
+    import tempfile
+
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
+    dir_path = str(tempfile.TemporaryDirectory().name)
+    os.makedirs(dir_path)
+    os.chdir(dir_path)
+
     network = None
     ID = '002'
     conn_model = 'sps'
     atlas = 'whole_brain_cluster_labels_PCA200'
-    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.94.txt')
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+    conn_matrix = np.genfromtxt(f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-sps_thrtype-PROP_thr-0.94.txt")
+    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
     labels_file = open(labels_file_path,'rb')
     labels = pickle.load(labels_file)
 
@@ -169,14 +188,18 @@ def test_plot_timeseries():
     """
     Test plot_timeseries functionality
     """
-    # Set example inputs
+    import tempfile
+
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
+    dir_path = str(tempfile.TemporaryDirectory().name)
+    os.makedirs(dir_path)
+    os.chdir(dir_path)
+
     network = None
     ID = '002'
     atlas = 'whole_brain_cluster_labels_PCA200'
-    time_series = np.load(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_rsn_net_ts.npy')
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+    time_series = np.load(f"{base_dir}/miscellaneous/002_rsn-Default_net_ts.npy")
+    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
     labels_file = open(labels_file_path,'rb')
     labels = pickle.load(labels_file)
 
@@ -190,9 +213,8 @@ def test_plot_conn_mat_rois_gt_100():
     Test plot_conn_mat_rois_gt_100 functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/002/fmri'
-    conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.95.txt')
-    labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+    conn_matrix = np.genfromtxt(f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-sps_thrtype-PROP_thr-0.94.txt")
+    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
     labels_file = open(labels_file_path,'rb')
     labels = pickle.load(labels_file)
     out_path_fig = '/tmp/fig'
@@ -205,8 +227,8 @@ def test_plot_conn_mat_rois_gt_100():
 # def test_plot_conn_mat_rois_lt_100():
 #     base_dir = str(Path(__file__).parent/"examples")
 #     dir_path = base_dir + '/997'
-#     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.95.txt')
-#     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+#     conn_matrix = np.genfromtxt(f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-sps_thrtype-PROP_thr-0.94.txt")
+#     labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
 #     labels_file = open(labels_file_path,'rb')
 #     labels = pickle.load(labels_file)
 #     out_path_fig = '/tmp/'
@@ -219,12 +241,12 @@ def test_plot_conn_mat_rois_gt_100():
 # def test_plot_conn_mat_struct():
 #     base_dir = str(Path(__file__).parent/"examples")
 #     dir_path = base_dir + '/997'
-#     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.95.txt')
+#     conn_matrix = np.genfromtxt(f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-sps_thrtype-PROP_thr-0.94.txt")
 #     conn_model = 'sps'
 #     atlas = 'whole_brain_cluster_labels_PCA200'
 #     ID = '997'
 #     network = None
-#     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+#     labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
 #     labels_file = open(labels_file_path,'rb')
 #     labels = pickle.load(labels_file)
 #     roi = None
@@ -238,8 +260,8 @@ def test_plot_conn_mat_rois_gt_100():
 # def test_structural_plotting():
 #     base_dir = str(Path(__file__).parent/"examples")
 #     dir_path = base_dir + '/997'
-#     conn_matrix = np.genfromtxt(dir_path + '/whole_brain_cluster_labels_PCA200/002_Default_est_sps_0.95.txt')
-#     labels_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_labelnames_wb.pkl'
+#     conn_matrix = np.genfromtxt(f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-sps_thrtype-PROP_thr-0.94.txt")
+#     labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
 #     labels_file = open(labels_file_path,'rb')
 #     labels = pickle.load(labels_file)
 #     atlas = 'whole_brain_cluster_labels_PCA200'
@@ -248,7 +270,7 @@ def test_plot_conn_mat_rois_gt_100():
 #     network = None
 #     parc = True
 #     roi = None
-#     coord_file_path = dir_path + '/whole_brain_cluster_labels_PCA200/Default_func_coords_wb.pkl'
+#     coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
 #     coord_file = open(coord_file_path, 'rb')
 #     coords = pickle.load(coord_file)
 #     conn_model = 'sps'

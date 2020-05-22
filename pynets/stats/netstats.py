@@ -346,6 +346,7 @@ def participation_coef(W, ci, degree='undirected'):
 
     return P
 
+
 @timeout(720)
 def participation_coef_sign(W, ci):
     '''
