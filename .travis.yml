@@ -12,7 +12,7 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates
   - PYTHONPATH=$PYTHONPATH:$(pwd)
-  - wget --retry-connrefused --waitretry=10 --read-timeout=30 --timeout=30 -t 0 -q -O examples.tar.gz "https://osf.io/aq8ur/download"
+  - wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 --tries=50 --continue -q -O examples.tar.gz "https://osf.io/aq8ur/download"
   - tar -xvzf examples.tar.gz -C $TRAVIS_BUILD_DIR/tests
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
