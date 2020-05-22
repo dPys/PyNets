@@ -34,8 +34,8 @@ script:
    - travis-wait-enhanced --interval=1m --timeout=60m -- pytest tests/test_estimation.py -s
    - travis-wait-enhanced --interval=1m --timeout=60m -- pytest tests/test_nodemaker.py -s
    - travis-wait-enhanced --interval=1m --timeout=60m -- pytest tests/test_plotting.py -s
-   - travis-wait-enhanced --interval=1m --timeout=120m -- pytest tests/test_clustering.py -s
-   - travis-wait-enhanced --interval=1m --timeout=120m -- pytest tests/test_workflows.py -s
+   - travis-wait-enhanced --interval=1m --timeout=120m -- pytest -q tests/test_clustering.py -s
+   - travis-wait-enhanced --interval=1m --timeout=120m -- pytest -q tests/test_workflows.py -s
    - travis-wait-enhanced --interval=1m --timeout=120m -- pytest tests/test_track.py -s
    - travis-wait-enhanced --interval=1m --timeout=120m -- pytest tests/test_reg_utils.py -s
    - travis-wait-enhanced --interval=1m --timeout=60m -- pytest tests/test_dmri_utils.py -s

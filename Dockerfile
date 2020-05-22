@@ -103,7 +103,7 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && conda clean -tipsy \
     && pip install requests psutil sqlalchemy \
     # Install pynets
-    && git clone -b master https://github.com/dPys/PyNets /home/neuro/PyNets && \
+    && git clone -b development https://github.com/dPys/PyNets /home/neuro/PyNets && \
     cd /home/neuro/PyNets && \
     pip install -r requirements.txt && \
     python setup.py install \
