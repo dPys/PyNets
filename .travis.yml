@@ -24,25 +24,14 @@ install:
   - pip install -r requirements.txt
   - python setup.py install
   - pip install git+https://github.com/dPys/nilearn.git
-  - pip install codecov pytest-cov
+  - pip install codecov pytest-cov pytest-travis-fold
 env:
   global:
     - FSLDIR=/usr/share/fsl/5.0
 
 # command to run tests, e.g. python setup.py test
 script:
-   - travis-wait-enhanced --interval=1m --timeout=60m -- pytest tests/test_estimation.py -s
-   - travis-wait-enhanced --interval=1m --timeout=60m -- pytest tests/test_nodemaker.py -s
-   - travis-wait-enhanced --interval=1m --timeout=60m -- pytest tests/test_plotting.py -s
-   - travis-wait-enhanced --interval=1m --timeout=120m -- pytest -q tests/test_clustering.py -s
-   - travis-wait-enhanced --interval=1m --timeout=120m -- pytest -q tests/test_workflows.py -s
-   - travis-wait-enhanced --interval=1m --timeout=120m -- pytest tests/test_track.py -s
-   - travis-wait-enhanced --interval=1m --timeout=120m -- pytest tests/test_reg_utils.py -s
-   - travis-wait-enhanced --interval=1m --timeout=60m -- pytest tests/test_dmri_utils.py -s
-   - pytest tests/test_refs.py -s
-   - pytest tests/test_netstats.py -s
-   - pytest tests/test_thresholding.py -s
-   - pytest tests/test_utils.py -s
+   - travis-wait-enhanced --interval=1m --timeout=720m -- ./script_with_folds.sh
 
 after_script:
   - codecov
