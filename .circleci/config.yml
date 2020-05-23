@@ -155,14 +155,38 @@ jobs:
             - /tmp/data
 
   tests:
-    machine:
-      image: circleci/classic:201808-01
-    working_directory: /home/circleci/data
+    docker:
+      - image: python:3.7.4
+    working_directory: /tmp/src/pynets
+    environment:
+      - FSLDIR: /usr/share/fsl/5.0
     steps:
       - restore_cache:
           keys:
             - data-v0-{{ .Revision }}
             - data-v0-
+      - run:
+          name: Install pytest
+          command: pip install pytest -y
+      - run:
+          name: Install FSL
+          command: |
+            bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
+            apt-get update
+            apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates
+            PYTHONPATH=$PYTHONPATH:$(pwd)
+      - run:
+          name: Install Requirements (may contain pinned versions)
+          command: python -m pip install -r requirements.txt
+      - run:
+          name: Install pynets
+          command: |
+            python setup.py install
+            pip install git+https://github.com/dPys/nilearn.git
+      - run:
+          name: Download OSF test data
+          command: |
+            wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz
       - run:
           name: Examples
           command: |
