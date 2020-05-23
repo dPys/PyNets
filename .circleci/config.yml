@@ -154,7 +154,7 @@ jobs:
          paths:
             - /tmp/data
 
-  test:
+  tests:
     machine:
       image: circleci/classic:201808-01
     working_directory: /home/circleci/data
