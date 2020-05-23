@@ -160,21 +160,30 @@ jobs:
     working_directory: /tmp/src/pynets
     environment:
       - FSLDIR: /usr/share/fsl/5.0
+      - FSLOUTPUTTYPE: 'NIFTI'
     steps:
-      - restore_cache:
-          keys:
-            - data-v0-{{ .Revision }}
-            - data-v0-
+      - checkout
+      - run:
+          name: Check whether build should be skipped
+          command: |
+            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[skip[ _]?docs\]' )" != "" ]]; then
+              echo "Skipping doc building job"
+              circleci step halt
+            fi
+      - run:
+          name: Check Python version and upgrade pip
+          command: |
+            python --version
+            python -m pip install -U pip
       - run:
           name: Install pytest
-          command: pip install pytest
+          command: python -m pip install pytest
       - run:
           name: Install FSL
           command: |
             bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
             apt-get update
             apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates
-            PYTHONPATH=$PYTHONPATH:$(pwd)
       - run:
           name: Install Requirements (may contain pinned versions)
           command: python -m pip install -r requirements.txt
@@ -182,7 +191,7 @@ jobs:
           name: Install pynets
           command: |
             python setup.py install
-            pip install git+https://github.com/dPys/nilearn.git
+            python -m pip install git+https://github.com/dPys/nilearn.git
       - run:
           name: Download OSF test data
           command: |
@@ -191,10 +200,6 @@ jobs:
           name: Examples
           command: |
             python -m pytest tests/test_*
-      - save_cache:
-         key: data-v0-{{ .Revision }}-{{ epoch }}
-         paths:
-            - /tmp/data
 
   deploy_docker_patches:
     machine:
