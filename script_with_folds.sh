@@ -34,12 +34,12 @@ travis_fold end plotting
 
 #travis_fold end clustering
 
-travis_fold start workflows
+#travis_fold start workflows
 
-echo "WORKFLOWS"
-pytest tests/test_workflows.py -s
+#echo "WORKFLOWS"
+#pytest tests/test_workflows.py -s
 
-travis_fold end workflows
+#travis_fold end workflows
 
 travis_fold start track
 
