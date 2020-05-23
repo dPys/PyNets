@@ -166,7 +166,7 @@ jobs:
       - run:
           name: Examples
           command: |
-	    python -m pytest tests/test_*
+            python -m pytest tests/test_*
       - save_cache:
          key: data-v0-{{ .Revision }}-{{ epoch }}
          paths:
@@ -359,7 +359,13 @@ workflows:
                 - /docker\/.*/
             tags:
               only: /.*/
-
+      - tests:
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+            tags:
+              only: /.*/
       - test_deploy_pypi:
           filters:
             branches:
