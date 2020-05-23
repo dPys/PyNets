@@ -148,8 +148,25 @@ jobs:
       - run:
           name: Download OSF test data
           command: |
-            wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download"
-            tar -xvzf examples.tar.gz -C /home/circleci/data
+            wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C /home/circleci/data
+      - save_cache:
+         key: data-v0-{{ .Revision }}-{{ epoch }}
+         paths:
+            - /tmp/data
+
+  test:
+    machine:
+      image: circleci/classic:201808-01
+    working_directory: /home/circleci/data
+    steps:
+      - restore_cache:
+          keys:
+            - data-v0-{{ .Revision }}
+            - data-v0-
+      - run:
+          name: Examples
+          command: |
+	    python -m pytest tests/test_*
       - save_cache:
          key: data-v0-{{ .Revision }}-{{ epoch }}
          paths:
