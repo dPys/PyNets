@@ -167,7 +167,7 @@ jobs:
             - data-v0-
       - run:
           name: Install pytest
-          command: pip install -y pytest
+          command: pip install pytest
       - run:
           name: Install FSL
           command: |
