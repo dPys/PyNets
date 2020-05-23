@@ -173,19 +173,19 @@ jobs:
       - run:
           name: Check Python version and upgrade pip
           command: |
-            python --version
-            python -m pip install -U pip
+            python3 --version
+            python3 -m pip install -U pip
       - run:
           name: Install pytest
-          command: python -m pip install pytest
+          command: python3 -m pip install pytest
       - run:
           name: Install Requirements (may contain pinned versions)
-          command: python -m pip install -r requirements.txt
+          command: python3 -m pip install -r requirements.txt
       - run:
           name: Install pynets
           command: |
-            python setup.py install
-            python -m pip install git+https://github.com/dPys/nilearn.git
+            python3 setup.py install
+            python3 -m pip install git+https://github.com/dPys/nilearn.git
       - run:
           name: Install FSL
           command: |
@@ -201,7 +201,7 @@ jobs:
       - run:
           name: Examples
           command: |
-            python -m pytest tests/test_*
+            python3 -m pytest tests/test_*
 
   deploy_docker_patches:
     machine:
