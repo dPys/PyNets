@@ -155,8 +155,8 @@ jobs:
             - /tmp/data
 
   tests:
-    machine:
-      image: circleci/classic:201808-01
+    docker:
+      - image: python:3.7.4
     working_directory: /tmp/src/pynets
     environment:
       - FSLDIR: /usr/share/fsl/5.0
@@ -173,19 +173,19 @@ jobs:
       - run:
           name: Check Python version and upgrade pip
           command: |
-            python3.6 --version
-            python3.6 -m pip install -U pip
+            python --version
+            python -m pip install -U pip
       - run:
           name: Install pytest
-          command: python3.6 -m pip install pytest
+          command: python -m pip install pytest
       - run:
           name: Install Requirements (may contain pinned versions)
-          command: python3.6 -m pip install -r requirements.txt
+          command: python -m pip install -r requirements.txt
       - run:
           name: Install pynets
           command: |
-            python3.6 setup.py install
-            python3.6 -m pip install git+https://github.com/dPys/nilearn.git
+            python setup.py install
+            python -m pip install git+https://github.com/dPys/nilearn.git
       - run:
           name: Install FSL
           command: |
@@ -201,7 +201,7 @@ jobs:
       - run:
           name: Examples
           command: |
-            python3.6 -m pytest tests/test_*
+            python -m pytest tests/test_*
 
   deploy_docker_patches:
     machine:
