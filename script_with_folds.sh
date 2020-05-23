@@ -27,12 +27,12 @@ pytest tests/test_plotting.py -s
 
 travis_fold end plotting
 
-travis_fold start clustering
+#travis_fold start clustering
 
-echo "CLUSTERING"
-pytest tests/test_clustering.py -s
+#echo "CLUSTERING"
+#pytest tests/test_clustering.py -s
 
-travis_fold end clustering
+#travis_fold end clustering
 
 travis_fold start workflows
 
