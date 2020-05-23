@@ -155,8 +155,8 @@ jobs:
             - /tmp/data
 
   tests:
-    docker:
-      - image: python:3.7.4
+    machine:
+      image: circleci/classic:201808-01
     working_directory: /tmp/src/pynets
     environment:
       - FSLDIR: /usr/share/fsl/5.0
