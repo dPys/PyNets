@@ -11,7 +11,6 @@ try:
 except ImportError:
     import _pickle as pickle
 from pathlib import Path
-import indexed_gzip
 import nibabel as nib
 import numpy as np
 import logging

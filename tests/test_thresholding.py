@@ -7,7 +7,6 @@ Created on Wed Dec 27 16:19:14 2017
 
 """
 import numpy as np
-import time
 try:
     import cPickle as pickle
 except ImportError:

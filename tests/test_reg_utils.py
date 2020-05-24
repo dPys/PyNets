@@ -7,7 +7,6 @@ Created on Monday July 29 16:19:14 2019
 """
 import numpy as np
 from pynets.registration import reg_utils
-import indexed_gzip
 import os
 import nibabel as nib
 from pathlib import Path

@@ -13,7 +13,6 @@ except ImportError:
     import _pickle as pickle
 from pathlib import Path
 from pynets.core import utils
-import indexed_gzip
 import nibabel as nib
 import pytest
 import logging
