@@ -180,10 +180,16 @@ jobs:
       - run:
           name: Git LFS (install Git Large File Storage)
           command: |
+            set -e
+            curl -L https://packagecloud.io/circleci/trusty/gpgkey | sudo apt-key add -
+            curl -L https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
             sudo apt-get update
-            sudo apt-get install curl -y
-            sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+            sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+            curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
             sudo apt-get update
+            sudo apt-get upgrade
+            sudo apt-get install openssh-client
             sudo apt-get install -y git-lfs
             mkdir -p ~/.ssh
             ssh-keyscan -H github.com >> ~/.ssh/known_hosts
