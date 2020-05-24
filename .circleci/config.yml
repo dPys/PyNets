@@ -178,6 +178,16 @@ jobs:
           name: Install pytest
           command: python -m pip install pytest
       - run:
+          name: Git LFS (install Git Large File Storage)
+          command: |
+            curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+            sudo apt-get update
+            sudo apt-get install -y git-lfs
+            mkdir -p ~/.ssh
+            ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+            ssh git@github.com git-lfs-authenticate "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}" download
+            git lfs pull
+      - run:
           name: Install Requirements (may contain pinned versions)
           command: python -m pip install -r requirements.txt
       - run:

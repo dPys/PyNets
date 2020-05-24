@@ -34,8 +34,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/core/nodemaker.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="356">
-              <caret line="1092" lean-forward="true" selection-start-line="1092" selection-end-line="1092" />
+            <state relative-caret-position="521">
+              <caret line="1104" lean-forward="true" selection-start-line="1104" selection-end-line="1104" />
               <folding>
                 <element signature="e#132#147#0" expanded="true" />
               </folding>
@@ -70,8 +70,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/fmri/clustools.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="427">
-              <caret line="697" selection-start-line="697" selection-end-line="697" selection-end-column="67" />
+            <state relative-caret-position="445">
+              <caret line="697" column="55" selection-start-line="697" selection-start-column="55" selection-end-line="697" selection-end-column="67" />
               <folding>
                 <element signature="e#139#158#0" expanded="true" />
               </folding>
@@ -217,7 +217,7 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
+  <component name="ProjectFrameBounds">
     <option name="x" value="538" />
     <option name="y" value="23" />
     <option name="width" value="1266" />
@@ -385,12 +385,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="74905000" />
+      <workItem from="1589906893238" duration="75487000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1046211000" />
+    <option name="totallyTimeSpent" value="1046793000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -865,8 +865,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/fmri/clustools.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="427">
-          <caret line="697" selection-start-line="697" selection-end-line="697" selection-end-column="67" />
+        <state relative-caret-position="445">
+          <caret line="697" column="55" selection-start-line="697" selection-start-column="55" selection-end-line="697" selection-end-column="67" />
           <folding>
             <element signature="e#139#158#0" expanded="true" />
           </folding>
@@ -875,8 +875,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/core/nodemaker.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="356">
-          <caret line="1092" lean-forward="true" selection-start-line="1092" selection-end-line="1092" />
+        <state relative-caret-position="521">
+          <caret line="1104" lean-forward="true" selection-start-line="1104" selection-end-line="1104" />
           <folding>
             <element signature="e#132#147#0" expanded="true" />
           </folding>

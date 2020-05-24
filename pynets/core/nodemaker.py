@@ -1089,7 +1089,7 @@ def mask_roi(dir_path, roi, mask, img_file):
     import os.path as op
     from nilearn import masking
     from nilearn.masking import intersect_masks
-    from nilearn.image import math_img
+    from nilearn.image import math_img, resample_img
 
     img_mask_path = f"{dir_path}/{op.basename(img_file).split('.')[0]}_mask.nii.gz"
     nib.save(masking.compute_epi_mask(img_file), img_mask_path)
@@ -1098,11 +1098,13 @@ def mask_roi(dir_path, roi, mask, img_file):
         print('Refining ROI...')
         _mask_img = nib.load(img_mask_path)
         _roi_img = nib.load(roi)
-        _mask_roi_img = intersect_masks([math_img('img > 0.0', img=_mask_img),
-                                         math_img('img > 0.0', img=_roi_img)], threshold=1, connected=False)
+        roi_res_img = resample_img(_roi_img, target_affine=_mask_img.affine, target_shape=_mask_img.shape,
+                                   interpolation='nearest')
+        masked_roi_img = intersect_masks([math_img('img > 0.0', img=_mask_img),
+                                          math_img('img > 0.0', img=roi_res_img)], threshold=1, connected=False)
 
         roi_red_path = f"{dir_path}/{op.basename(roi).split('.')[0]}_mask.nii.gz"
-        nib.save(_mask_roi_img, roi_red_path)
+        nib.save(masked_roi_img, roi_red_path)
         roi = roi_red_path
 
     return roi
