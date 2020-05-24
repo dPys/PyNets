@@ -155,14 +155,14 @@ jobs:
             - /tmp/data
 
   unit_tests:
-    docker:
-      - image: python:3.7.4
+    machine:
+      image: circleci/classic:201808-01
     working_directory: /tmp/src/pynets
     environment:
       - FSLDIR: /usr/share/fsl/5.0
       - FSLOUTPUTTYPE: 'NIFTI'
-    parallelism: 4
-    resource_class: xlarge
+    parallelism: 2
+    resource_class: medium
     steps:
       - checkout
       - run:
@@ -204,7 +204,21 @@ jobs:
           name: Examples
           no_output_timeout: 720m
           command: |
-            python -m pytest -s -q tests/test_*
+            export PYTHONUNBUFFERED=1
+            python -m pytest -s -q tests/test_clustering.py
+            python -m pytest -s -q tests/test_dmri_utils.py
+            python -m pytest -s -q tests/test_estimation.py
+            python -m pytest -s -q tests/test_netstats.py
+            python -m pytest -s -q tests/test_nodemaker.py
+            python -m pytest -s -q tests/test_plotting.py
+            python -m pytest -s -q tests/test_refs.py
+            python -m pytest -s -q tests/test_reg_utils.py
+            python -m pytest -s -q tests/test_thresholding.py
+            python -m pytest -s -q tests/test_track.py
+            python -m pytest -s -q tests/test_utils.py
+            python -m pytest -s -q tests/test_workflows.py
+      - store_test_results:
+          path: test-results
 
   deploy_docker_patches:
     machine:

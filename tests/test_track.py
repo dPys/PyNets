@@ -102,7 +102,7 @@ def test_reconstruction(conn_model):
 
 
 @pytest.mark.parametrize("directget", ['det', 'prob'])
-@pytest.mark.parametrize("target_samples", [1000, 500, pytest.param(0, marks=pytest.mark.xfail)])
+@pytest.mark.parametrize("target_samples", [500, pytest.param(0, marks=pytest.mark.xfail)])
 def test_track_ensemble(directget, target_samples):
     """
     Test for ensemble tractography functionality

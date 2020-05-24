@@ -83,14 +83,14 @@ def test_make_local_connectivity_scorr():
 
 @pytest.mark.parametrize("clust_type", ['kmeans', 'rena', 'average', 'complete', 'ward', 'ncut',
                                         pytest.param('single', marks=pytest.mark.xfail)])
-@pytest.mark.parametrize("k", [pytest.param(0, marks=pytest.mark.xfail), 20])
 # 1 connected component
-def test_ni_parcellate(clust_type, k):
+def test_ni_parcellate(clust_type):
     """
     Test for ni_parcellate
     """
     import tempfile
 
+    k = 20
     base_dir = str(Path(__file__).parent/"examples")
     out_dir = f"{base_dir}/outputs/sub-0025427/ses-1/func"
     tmpdir = tempfile.TemporaryDirectory()
@@ -112,6 +112,7 @@ def test_ni_parcellate(clust_type, k):
 
     assert out_path is not None
     assert atlas is not None
+
 
 @pytest.mark.parametrize("clust_type", ['ward', 'ncut', 'kmeans', 'rena',
                                         pytest.param('single', marks=pytest.mark.xfail),

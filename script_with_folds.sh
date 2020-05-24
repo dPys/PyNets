@@ -41,12 +41,12 @@ travis_fold end plotting
 
 #travis_fold end workflows
 
-travis_fold start track
+#travis_fold start track
 
-echo "TRACK"
-pytest tests/test_track.py -s
+#echo "TRACK"
+#pytest tests/test_track.py -s
 
-travis_fold end track
+#travis_fold end track
 
 travis_fold start reg_utils
 
