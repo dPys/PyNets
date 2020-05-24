@@ -180,7 +180,8 @@ jobs:
       - run:
           name: Git LFS (install Git Large File Storage)
           command: |
-            curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+            sudo apt-get install curl
+            sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
             sudo apt-get update
             sudo apt-get install -y git-lfs
             mkdir -p ~/.ssh
