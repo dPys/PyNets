@@ -178,13 +178,13 @@ jobs:
           name: Install pytest
           command: python -m pip install pytest
       - run:
-          name: Git LFS (install Git Large File Storage)
+          name: Install core dependencies
           command: |
             set -e
             curl -L https://packagecloud.io/circleci/trusty/gpgkey | sudo apt-key add -
             curl -L https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
             sudo apt-get update
-            sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+            sudo apt-get install -y --no-install-recommends apt-transport-https ca-certificates curl gnupg-agent software-properties-common python3-tk graphviz sqlite3 libsqlite3-dev libquadmath0 zip unzip libglu1 zlib1g-dev
             curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
             curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
             sudo apt-get update
@@ -203,6 +203,11 @@ jobs:
           command: |
             python setup.py install
             python -m pip install git+https://github.com/dPys/nilearn.git
+            python -c "from matplotlib import font_manager"
+            sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
+            mkdir -p ~/.nipype
+            echo "[monitoring]" > ~/.nipype/nipype.cfg
+            echo "enabled = true" >> ~/.nipype/nipype.cfg
       - run:
           name: Install FSL
           command: |
@@ -211,7 +216,6 @@ jobs:
             sudo apt-get update -qq
             sudo apt-get install -y --no-install-recommends fsl-5.0-core
             sudo apt-get upgrade
-
       - run:
           name: Update PATH and Define Environment Variable at Runtime
           command: |
