@@ -120,7 +120,6 @@ def test_ni_parcellate(clust_type):
 
 
 @pytest.mark.parametrize("clust_type", ['ward', 'ncut', 'kmeans', 'rena',
-                                        pytest.param('single', marks=pytest.mark.xfail),
                                         pytest.param('average', marks=pytest.mark.xfail),
                                         pytest.param('complete', marks=pytest.mark.xfail)])
 # >1 connected components
