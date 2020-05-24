@@ -17,6 +17,10 @@ try:
     import cPickle as pickle
 except ImportError:
     import _pickle as pickle
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
 
 
 @pytest.mark.parametrize("atlas", ['atlas_aal', 'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe',

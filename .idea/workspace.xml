@@ -6,7 +6,21 @@
     <bookmark url="file://$PROJECT_DIR$/tests/test_refs.py" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="" />
+    <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/script_with_folds.sh" beforeDir="false" afterPath="$PROJECT_DIR$/script_with_folds.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_clustering.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_clustering.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_dmri_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_dmri_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_estimation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_netstats.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_netstats.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_nodemaker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_plotting.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_refs.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_refs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_reg_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_reg_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_thresholding.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_thresholding.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_track.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_track.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_workflows.py" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,8 +46,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tests/test_reg_utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="262">
-              <caret line="173" column="4" selection-start-line="173" selection-start-column="4" selection-end-line="173" selection-end-column="4" />
+            <state relative-caret-position="345">
+              <caret line="23" selection-start-line="23" selection-end-line="23" />
               <folding>
                 <element signature="e#96#114#0" expanded="true" />
               </folding>
@@ -42,12 +56,24 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tests/test_clustering.py">
+        <entry file="file://$PROJECT_DIR$/tests/test_refs.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="111">
-              <caret line="85" selection-start-line="85" selection-end-line="85" />
+            <state relative-caret-position="225">
+              <caret line="15" selection-start-line="15" selection-end-line="15" />
               <folding>
-                <element signature="e#107#120#0" expanded="true" />
+                <element signature="e#129#148#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tests/test_plotting.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="315">
+              <caret line="21" selection-start-line="21" selection-end-line="21" />
+              <folding>
+                <element signature="e#131#140#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -56,10 +82,46 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="913">
-              <caret line="166" column="38" lean-forward="true" selection-start-line="166" selection-start-column="38" selection-end-line="166" selection-end-column="38" />
+            <state relative-caret-position="270">
+              <caret line="18" selection-start-line="18" selection-end-line="18" />
               <folding>
                 <element signature="e#131#144#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tests/test_estimation.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="330">
+              <caret line="22" selection-start-line="22" selection-end-line="22" />
+              <folding>
+                <element signature="e#131#144#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tests/test_dmri_utils.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="285">
+              <caret line="19" selection-start-line="19" selection-end-line="19" />
+              <folding>
+                <element signature="e#107#116#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/tests/test_clustering.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="345">
+              <caret line="23" selection-start-line="23" selection-end-line="23" />
+              <folding>
+                <element signature="e#107#120#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -68,8 +130,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tests/test_nodemaker.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-6034">
-              <caret line="31" selection-start-line="31" selection-end-line="31" />
+            <state relative-caret-position="345">
+              <caret line="23" selection-start-line="23" selection-end-line="23" />
               <folding>
                 <element signature="e#131#144#0" expanded="true" />
               </folding>
@@ -77,20 +139,23 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/tests/test_workflows.py">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tests/test_track.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="483">
-              <caret line="359" column="81" lean-forward="true" selection-start-line="359" selection-start-column="81" selection-end-line="359" selection-end-column="81" />
+            <state>
+              <caret column="21" lean-forward="true" selection-start-column="21" selection-end-column="21" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tests/test_track.py">
+        <entry file="file://$PROJECT_DIR$/tests/test_thresholding.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-964">
-              <caret line="104" column="47" selection-start-line="104" selection-start-column="47" selection-end-line="104" selection-end-column="47" />
+            <state relative-caret-position="330">
+              <caret line="22" selection-start-line="22" selection-end-line="22" />
+              <folding>
+                <element signature="e#131#149#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -210,30 +275,30 @@
         <option value="$PROJECT_DIR$/.codecov.yml" />
         <option value="$PROJECT_DIR$/pynets/dmri/track.py" />
         <option value="$PROJECT_DIR$/pynets/core/interfaces.py" />
-        <option value="$PROJECT_DIR$/tests/test_refs.py" />
-        <option value="$PROJECT_DIR$/tests/test_nodemaker.py" />
-        <option value="$PROJECT_DIR$/tests/test_thresholding.py" />
-        <option value="$PROJECT_DIR$/tests/test_estimation.py" />
-        <option value="$PROJECT_DIR$/tests/test_plotting.py" />
         <option value="$PROJECT_DIR$/pynets/stats/netstats.py" />
-        <option value="$PROJECT_DIR$/tests/test_utils.py" />
         <option value="$PROJECT_DIR$/pynets/dmri/dmri_utils.py" />
-        <option value="$PROJECT_DIR$/tests/test_dmri_utils.py" />
-        <option value="$PROJECT_DIR$/tests/test_workflows.py" />
         <option value="$PROJECT_DIR$/pynets/fmri/clustools.py" />
         <option value="$PROJECT_DIR$/docs/installation.rst" />
-        <option value="$PROJECT_DIR$/tests/test_reg_utils.py" />
         <option value="$PROJECT_DIR$/.travis.yml" />
         <option value="$PROJECT_DIR$/LICENSE" />
         <option value="$PROJECT_DIR$/README.rst" />
         <option value="$PROJECT_DIR$/.zenodo.json" />
-        <option value="$PROJECT_DIR$/tests/test_clustering.py" />
-        <option value="$PROJECT_DIR$/tests/test_netstats.py" />
+        <option value="$PROJECT_DIR$/tests/test_workflows.py" />
         <option value="$PROJECT_DIR$/tests/test_track.py" />
+        <option value="$PROJECT_DIR$/tests/test_nodemaker.py" />
+        <option value="$PROJECT_DIR$/tests/test_netstats.py" />
+        <option value="$PROJECT_DIR$/tests/test_clustering.py" />
+        <option value="$PROJECT_DIR$/tests/test_utils.py" />
+        <option value="$PROJECT_DIR$/tests/test_thresholding.py" />
+        <option value="$PROJECT_DIR$/tests/test_reg_utils.py" />
+        <option value="$PROJECT_DIR$/tests/test_refs.py" />
+        <option value="$PROJECT_DIR$/tests/test_plotting.py" />
+        <option value="$PROJECT_DIR$/tests/test_estimation.py" />
+        <option value="$PROJECT_DIR$/tests/test_dmri_utils.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
+  <component name="ProjectFrameBounds">
     <option name="x" value="538" />
     <option name="y" value="23" />
     <option name="width" value="1266" />
@@ -406,12 +471,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="71706000" />
+      <workItem from="1589906893238" duration="71976000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1043012000" />
+    <option name="totallyTimeSpent" value="1043282000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -696,42 +761,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_thresholding.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="989">
-          <caret line="290" column="121" selection-start-line="290" selection-start-column="121" selection-end-line="290" selection-end-column="121" />
-          <folding>
-            <element signature="e#131#149#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_refs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="708">
-          <caret line="99" column="41" selection-start-line="99" selection-start-column="41" selection-end-line="99" selection-end-column="41" />
-          <folding>
-            <element signature="e#129#148#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="768">
           <caret line="577" column="32" lean-forward="true" selection-start-line="577" selection-start-column="32" selection-end-line="577" selection-end-column="32" />
           <folding>
             <element signature="e#132#141#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_estimation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="536">
-          <caret line="150" column="104" selection-start-line="150" selection-start-column="104" selection-end-line="150" selection-end-column="104" />
-          <folding>
-            <element signature="e#131#144#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -756,32 +791,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="243">
-          <caret line="609" selection-start-line="609" selection-end-line="613" selection-end-column="22" />
-          <folding>
-            <element signature="e#107#125#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/dmri/dmri_utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-604">
           <caret line="46" selection-start-line="46" selection-end-line="46" />
           <folding>
             <element signature="e#139#154#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_dmri_utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="486">
-          <caret line="40" selection-start-line="40" selection-end-line="40" />
-          <folding>
-            <element signature="e#107#116#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -799,16 +814,6 @@
           <caret line="767" selection-start-line="767" selection-end-line="767" />
           <folding>
             <element signature="e#139#158#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_plotting.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="213">
-          <caret line="192" column="41" selection-start-line="192" selection-start-column="41" selection-end-line="192" selection-end-column="41" />
-          <folding>
-            <element signature="e#131#140#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -862,57 +867,117 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="330">
+          <caret line="22" selection-start-line="22" selection-end-line="22" />
+          <folding>
+            <element signature="e#107#125#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_workflows.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="18" lean-forward="true" selection-start-line="18" selection-end-line="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_track.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="21" lean-forward="true" selection-start-column="21" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_thresholding.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="330">
+          <caret line="22" selection-start-line="22" selection-end-line="22" />
+          <folding>
+            <element signature="e#131#149#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_reg_utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="262">
-          <caret line="173" column="4" selection-start-line="173" selection-start-column="4" selection-end-line="173" selection-end-column="4" />
+        <state relative-caret-position="345">
+          <caret line="23" selection-start-line="23" selection-end-line="23" />
           <folding>
             <element signature="e#96#114#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_clustering.py">
+    <entry file="file://$PROJECT_DIR$/tests/test_refs.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="111">
-          <caret line="85" selection-start-line="85" selection-end-line="85" />
+        <state relative-caret-position="225">
+          <caret line="15" selection-start-line="15" selection-end-line="15" />
           <folding>
-            <element signature="e#107#120#0" expanded="true" />
+            <element signature="e#129#148#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
+    <entry file="file://$PROJECT_DIR$/tests/test_plotting.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="913">
-          <caret line="166" column="38" lean-forward="true" selection-start-line="166" selection-start-column="38" selection-end-line="166" selection-end-column="38" />
+        <state relative-caret-position="315">
+          <caret line="21" selection-start-line="21" selection-end-line="21" />
           <folding>
-            <element signature="e#131#144#0" expanded="true" />
+            <element signature="e#131#140#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_nodemaker.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-6034">
-          <caret line="31" selection-start-line="31" selection-end-line="31" />
+        <state relative-caret-position="345">
+          <caret line="23" selection-start-line="23" selection-end-line="23" />
           <folding>
             <element signature="e#131#144#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_track.py">
+    <entry file="file://$PROJECT_DIR$/tests/test_netstats.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-964">
-          <caret line="104" column="47" selection-start-line="104" selection-start-column="47" selection-end-line="104" selection-end-column="47" />
+        <state relative-caret-position="270">
+          <caret line="18" selection-start-line="18" selection-end-line="18" />
+          <folding>
+            <element signature="e#131#144#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_workflows.py">
+    <entry file="file://$PROJECT_DIR$/tests/test_estimation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="483">
-          <caret line="359" column="81" lean-forward="true" selection-start-line="359" selection-start-column="81" selection-end-line="359" selection-end-column="81" />
+        <state relative-caret-position="330">
+          <caret line="22" selection-start-line="22" selection-end-line="22" />
+          <folding>
+            <element signature="e#131#144#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_dmri_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="19" selection-start-line="19" selection-end-line="19" />
+          <folding>
+            <element signature="e#107#116#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_clustering.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="345">
+          <caret line="23" selection-start-line="23" selection-end-line="23" />
+          <folding>
+            <element signature="e#107#120#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

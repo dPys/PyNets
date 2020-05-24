@@ -16,6 +16,11 @@ except ImportError:
     import _pickle as pickle
 from pynets.fmri import clustools
 import os
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
+
 
 def test_indx_1dto3d():
     """

@@ -10,6 +10,10 @@ try:
 except ImportError:
     import _pickle as pickle
 import pytest
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
 
 base_dir = str(Path(__file__).parent/"examples")
 

@@ -8,6 +8,11 @@ import indexed_gzip
 import nibabel as nib
 from pathlib import Path
 import pkg_resources
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
+
 
 def test_bigsmallref():
     """

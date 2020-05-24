@@ -16,6 +16,10 @@ from pynets.core import utils
 import indexed_gzip
 import nibabel as nib
 import pytest
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
 
 
 def test_save_RSN_coords_and_labels_to_pickle():

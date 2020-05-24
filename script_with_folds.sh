@@ -27,26 +27,26 @@ pytest tests/test_plotting.py -s
 
 travis_fold end plotting
 
-#travis_fold start clustering
+travis_fold start clustering
 
-#echo "CLUSTERING"
-#pytest tests/test_clustering.py -s
+echo "CLUSTERING"
+pytest tests/test_clustering.py -s
 
-#travis_fold end clustering
+travis_fold end clustering
 
-#travis_fold start workflows
+travis_fold start workflows
 
-#echo "WORKFLOWS"
-#pytest tests/test_workflows.py -s
+echo "WORKFLOWS"
+pytest tests/test_workflows.py -s
 
-#travis_fold end workflows
+travis_fold end workflows
 
-#travis_fold start track
+travis_fold start track
 
-#echo "TRACK"
-#pytest tests/test_track.py -s
+echo "TRACK"
+pytest tests/test_track.py -s
 
-#travis_fold end track
+travis_fold end track
 
 travis_fold start reg_utils
 
@@ -64,28 +64,28 @@ travis_fold end dmri_utils
 
 travis_fold start refs
 
-echo "refs"
+echo "REFS"
 pytest tests/test_refs.py -s
 
 travis_fold end refs
 
 travis_fold start netstats
 
-echo "netstats"
+echo "NETSTATS"
 pytest tests/test_netstats.py -s
 
 travis_fold end netstats
 
 travis_fold start thresholding
 
-echo "thresholding"
+echo "THRESHOLDING"
 pytest tests/test_thresholding.py -s
 
 travis_fold end thresholding
 
 travis_fold start utils
    
-echo "utils"
+echo "UTILS"
 pytest tests/test_utils.py -s
 
 travis_fold end utils

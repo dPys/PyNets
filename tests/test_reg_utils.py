@@ -17,6 +17,10 @@ except ImportError:
     import _pickle as pickle
 import warnings
 warnings.filterwarnings("ignore")
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
 
 
 def test_align():

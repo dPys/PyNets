@@ -14,6 +14,10 @@ from pathlib import Path
 import indexed_gzip
 import nibabel as nib
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
 
 
 def test_create_density_map():

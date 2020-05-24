@@ -13,6 +13,10 @@ except ImportError:
     import _pickle as pickle
 from pathlib import Path
 from pynets.dmri import dmri_utils as dmriutils
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
 
 
 def test_extract_b0():

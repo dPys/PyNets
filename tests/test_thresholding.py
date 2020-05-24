@@ -16,6 +16,10 @@ from pathlib import Path
 from pynets.core import thresholding
 import networkx as nx
 import pytest
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
 
 
 @pytest.mark.parametrize("cp", [True, False])

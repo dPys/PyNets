@@ -15,6 +15,10 @@ except ImportError:
     import _pickle as pickle
 from pathlib import Path
 from pynets.plotting import plot_gen, plot_graphs
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
 
 
 def test_plot_conn_mat_nonet_no_mask():

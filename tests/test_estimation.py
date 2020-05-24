@@ -16,6 +16,10 @@ except ImportError:
 from pynets.fmri import estimation as fmri_estimation
 from pynets.dmri import estimation as dmri_estimation
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
 
 
 @pytest.mark.parametrize("conn_model", ['corr', 'sps', 'cov', 'partcorr'])

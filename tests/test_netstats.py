@@ -12,6 +12,10 @@ import networkx as nx
 import time
 from pathlib import Path
 from pynets.stats import netstats
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
 
 
 def test_average_shortest_path_length_for_all():
