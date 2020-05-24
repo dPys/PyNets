@@ -154,13 +154,15 @@ jobs:
          paths:
             - /tmp/data
 
-  tests:
+  unit_tests:
     docker:
       - image: python:3.7.4
     working_directory: /tmp/src/pynets
     environment:
       - FSLDIR: /usr/share/fsl/5.0
       - FSLOUTPUTTYPE: 'NIFTI'
+    parallelism: 4
+    resource_class: xlarge
     steps:
       - checkout
       - run:
@@ -202,7 +204,7 @@ jobs:
           name: Examples
           no_output_timeout: 720m
           command: |
-            python -m pytest -vvv tests/test_*
+            python -m pytest -s -q tests/test_*
 
   deploy_docker_patches:
     machine:
@@ -391,7 +393,7 @@ workflows:
                 - /docker\/.*/
             tags:
               only: /.*/
-      - tests:
+      - unit_tests:
           filters:
             branches:
               ignore:
