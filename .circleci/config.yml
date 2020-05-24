@@ -200,6 +200,10 @@ jobs:
           name: Examples
           no_output_timeout: 720m
           command: |
+            export FSLDIR=/usr/share/fsl/5.0
+            . ${FSLDIR}/etc/fslconf/fsl.sh
+            PATH=${FSLDIR}/bin:${PATH}
+            export FSLDIR PATH
             export PYTHONUNBUFFERED=1
             python -m pytest -s -q tests/test_clustering.py
             python -m pytest -s -q tests/test_dmri_utils.py
