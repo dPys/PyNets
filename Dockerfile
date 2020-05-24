@@ -101,9 +101,9 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && conda install -yq python=3.6 ipython \
     && pip install --upgrade pip \
     && conda clean -tipsy \
-    && pip install requests psutil sqlalchemy \
+    && pip install numpy requests psutil sqlalchemy \
     # Install pynets
-    && git clone -b master https://github.com/dPys/PyNets /home/neuro/PyNets && \
+    && git clone -b development https://github.com/dPys/PyNets /home/neuro/PyNets && \
     cd /home/neuro/PyNets && \
     pip install -r requirements.txt && \
     python setup.py install \
@@ -129,8 +129,6 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && mkdir -p ~/.nipype \
     && echo "[monitoring]" > ~/.nipype/nipype.cfg \
     && echo "enabled = true" >> ~/.nipype/nipype.cfg \
-    && pip uninstall -y numpy \
-    && pip install numpy -U \
     && pip uninstall -y pandas \
     && pip install pandas -U \
     && rm -rf /home/neuro/PyNets \

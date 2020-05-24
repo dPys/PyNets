@@ -522,7 +522,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
             node_color = 'auto'
             connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap=color_theme,
                                  edge_vmax=float(z_max), edge_vmin=float(z_min), node_size=node_size_plot,
-                                 node_color='auto')
+                                 node_color=node_color, edge_kwargs={'alpha': 0.45})
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
     else:
         raise RuntimeError('\nERROR: no coordinates to plot! Are you running plotting outside of pynets\'s internal '
@@ -727,8 +727,8 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
                                        threshold=0.01, alpha=0.25, cmap=plt.cm.copper)
 
             connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap=plt.cm.binary,
-                                 edge_vmax=float(z_max), edge_vmin=float(z_min), node_size=node_size_plot,
-                                 node_color=clust_colors)
+                                 edge_vmax=float(z_max), edge_vmin=0, node_size=node_size_plot,
+                                 node_color=clust_colors, edge_kwargs={'alpha': 0.10})
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
     else:
         raise RuntimeError('\nERROR: no coordinates to plot! Are you running plotting outside of pynets\'s internal '

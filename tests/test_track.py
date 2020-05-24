@@ -13,6 +13,11 @@ except ImportError:
 from pathlib import Path
 import indexed_gzip
 import nibabel as nib
+import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
 
 
 def test_create_density_map():
@@ -20,28 +25,37 @@ def test_create_density_map():
     Test for create_density_map functionality
     """
     from pynets.dmri import track
+    from dipy.tracking._utils import _mapping_to_voxel
 
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/001/dmri'
-    dwi_file = dir_path + '/HARDI150.nii.gz'
-
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi"
+    dwi_file = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_preprocessed_dwi.nii.gz"
     dwi_img = nib.load(dwi_file)
 
     # Load output from test_filter_streamlines: dictionary of streamline info
-    streamlines_trk = dir_path + '/tractography/streamlines_Default_csa_10_5mm_curv[2_4_6]_step[0.1_0.2_0.5].trk'
+    streamlines_trk = f"{base_dir}/miscellaneous/streamlines_est-csd_nodetype-parc_samples-10000streams_tt-local_dg-prob_ml-0.trk"
     streamlines = nib.streamlines.load(streamlines_trk).streamlines
 
-    conn_model = 'csa'
-    target_samples = 10
-    node_size = 5
-    curv_thr_list = [2, 4, 6]
-    step_list = [0.1, 0.2, 0.5]
-    network = 'Default'
+    # Remove streamlines with negative voxel indices
+    lin_T, offset = _mapping_to_voxel(np.eye(4))
+    streams_final_filt_final = []
+    for sl in streamlines:
+        inds = np.dot(sl, lin_T)
+        inds += offset
+        if not inds.min().round(decimals=6) < 0:
+            streams_final_filt_final.append(sl)
+
+    conn_model = 'csd'
+    target_samples = 10000
+    node_size = None
+    curv_thr_list = [40, 30]
+    step_list = [0.1, 0.2, 0.3, 0.4, 0.5]
+    network = None
     roi = None
     directget = 'prob'
-    max_length = 200
+    max_length = 0
 
-    [streams, dir_path, dm_path] = track.create_density_map(dwi_img, dir_path, streamlines, conn_model,
+    [streams, dir_path, dm_path] = track.create_density_map(dwi_img, dir_path, streams_final_filt_final, conn_model,
                                                             target_samples, node_size, curv_thr_list, step_list,
                                                             network, roi, directget, max_length)
 
@@ -57,18 +71,17 @@ def test_prep_tissues(tiss_class):
     """
     from pynets.dmri import track
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = base_dir + '/003/dmri'
-    B0_mask = dir_path + '/sub-003_b0_brain_mask.nii.gz'
-    gm_in_dwi = dir_path + '/gm_mask_dmri.nii.gz'
-    vent_csf_in_dwi = dir_path + '/csf_mask_dmri.nii.gz'
-    wm_in_dwi = dir_path + '/wm_mask_dmri.nii.gz'
+    B0_mask = f"{base_dir}/003/dmri/sub-003_b0_brain_mask.nii.gz"
+    gm_in_dwi = f"{base_dir}/003/dmri/gm_mask_dmri.nii.gz"
+    vent_csf_in_dwi = f"{base_dir}/003/dmri/csf_mask_dmri.nii.gz"
+    wm_in_dwi = f"{base_dir}/003/dmri/wm_mask_dmri.nii.gz"
 
     tiss_classifier = track.prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
                                          cmc_step_size=0.2)
     assert tiss_classifier is not None
 
 
-@pytest.mark.parametrize("conn_model", ['csa', 'csd'])
+@pytest.mark.parametrize("conn_model", ['csa', 'csd', 'sfm', 'ten'])
 def test_reconstruction(conn_model):
     """
     Test for reconstruction functionality
@@ -77,15 +90,132 @@ def test_reconstruction(conn_model):
     from dipy.core.gradients import gradient_table
     base_dir = str(Path(__file__).parent/"examples")
 
-    dir_path = base_dir + '/003/dmri'
-    bvals = dir_path + '/sub-003_dwi.bval'
-    bvecs = dir_path + '/sub-003_dwi.bvec'
+    dir_path = f"{base_dir}/003/dmri"
+    bvals = f"{dir_path}/sub-003_dwi.bval"
+    bvecs = f"{dir_path}/sub-003_dwi.bvec"
     gtab = gradient_table(bvals, bvecs)
-    dwi_file = dir_path + '/sub-003_dwi.nii.gz'
-    wm_in_dwi = dir_path + '/wm_mask_dmri.nii.gz'
+    dwi_file = f"{dir_path}/sub-003_dwi.nii.gz"
+    wm_in_dwi = f"{dir_path}/wm_mask_dmri.nii.gz"
 
     dwi_img = nib.load(dwi_file)
     dwi_data = dwi_img.get_fdata()
 
-    mod = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
+    model, mod = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
+    assert model is not None
     assert mod is not None
+
+
+@pytest.mark.parametrize("directget", ['det', 'prob'])
+@pytest.mark.parametrize("target_samples", [500, pytest.param(0, marks=pytest.mark.xfail)])
+def test_track_ensemble(directget, target_samples):
+    """
+    Test for ensemble tractography functionality
+    """
+    from pynets.dmri import track
+    from dipy.core.gradients import gradient_table
+    from dipy.data import get_sphere
+
+    base_dir = str(Path(__file__).parent/"examples")
+    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
+    gm_in_dwi = f"{base_dir}/003/anat/t1w_gm_in_dwi.nii.gz"
+    vent_csf_in_dwi = f"{base_dir}/003/anat/t1w_vent_csf_in_dwi.nii.gz"
+    wm_in_dwi = f"{base_dir}/003/anat/t1w_wm_in_dwi.nii.gz"
+    dir_path = f"{base_dir}/003/dmri"
+    bvals = f"{dir_path}/sub-003_dwi.bval"
+    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
+    gtab = gradient_table(bvals, bvecs)
+    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
+    atlas_data_wm_gm_int = f"{dir_path}/whole_brain_cluster_labels_PCA200_dwi_track_wmgm_int.nii.gz"
+    labels_im_file = f"{dir_path}/whole_brain_cluster_labels_PCA200_dwi_track.nii.gz"
+    conn_model = 'csa'
+    tiss_class = 'bin'
+    min_length = 10
+    maxcrossing = 2
+    roi_neighborhood_tol = 6
+    waymask = None
+    curv_thr_list = [40, 30]
+    step_list = [0.1, 0.2, 0.3, 0.4, 0.5]
+    sphere = get_sphere('repulsion724')
+    track_type = 'local'
+
+    # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
+    atlas_data = np.array(nib.load(labels_im_file).dataobj).astype('uint16')
+    atlas_data_wm_gm_int = np.asarray(nib.load(atlas_data_wm_gm_int).dataobj).astype('uint16')
+
+    # Build mask vector from atlas for later roi filtering
+    parcels = []
+    i = 0
+    for roi_val in np.unique(atlas_data)[1:]:
+        parcels.append(atlas_data == roi_val)
+        i = i + 1
+
+    dwi_img = nib.load(dwi_file)
+    dwi_data = dwi_img.get_fdata()
+
+    model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
+
+    tiss_classifier = track.prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
+                                         cmc_step_size=0.2)
+
+    track.track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, model, tiss_classifier, sphere, directget,
+                         curv_thr_list, step_list, track_type, maxcrossing, roi_neighborhood_tol, min_length, waymask,
+                         B0_mask, max_length=1000, n_seeds_per_iter=500, pft_back_tracking_dist=2,
+                         pft_front_tracking_dist=1, particle_count=15, min_separation_angle=20)
+
+
+def test_track_ensemble_particle():
+    """
+    Test for ensemble tractography functionality
+    """
+    from pynets.dmri import track
+    from dipy.core.gradients import gradient_table
+    from dipy.data import get_sphere
+
+    base_dir = str(Path(__file__).parent/"examples")
+    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
+    gm_in_dwi = f"{base_dir}/003/anat/t1w_gm_in_dwi.nii.gz"
+    vent_csf_in_dwi = f"{base_dir}/003/anat/t1w_vent_csf_in_dwi.nii.gz"
+    wm_in_dwi = f"{base_dir}/003/anat/t1w_wm_in_dwi.nii.gz"
+    dir_path = f"{base_dir}/003/dmri"
+    bvals = f"{dir_path}/sub-003_dwi.bval"
+    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
+    gtab = gradient_table(bvals, bvecs)
+    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
+    atlas_data_wm_gm_int = f"{dir_path}/whole_brain_cluster_labels_PCA200_dwi_track_wmgm_int.nii.gz"
+    labels_im_file = f"{dir_path}/whole_brain_cluster_labels_PCA200_dwi_track.nii.gz"
+    conn_model = 'csd'
+    tiss_class = 'cmc'
+    min_length = 10
+    maxcrossing = 2
+    roi_neighborhood_tol = 6
+    waymask = None
+    curv_thr_list = [40, 30]
+    step_list = [0.1, 0.2, 0.3, 0.4, 0.5]
+    sphere = get_sphere('repulsion724')
+    directget = 'prob'
+    track_type = 'particle'
+    target_samples = 1000
+
+    # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
+    atlas_data = np.array(nib.load(labels_im_file).dataobj).astype('uint16')
+    atlas_data_wm_gm_int = np.asarray(nib.load(atlas_data_wm_gm_int).dataobj).astype('uint16')
+
+    # Build mask vector from atlas for later roi filtering
+    parcels = []
+    i = 0
+    for roi_val in np.unique(atlas_data)[1:]:
+        parcels.append(atlas_data == roi_val)
+        i = i + 1
+
+    dwi_img = nib.load(dwi_file)
+    dwi_data = dwi_img.get_fdata()
+
+    model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
+
+    tiss_classifier = track.prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
+                                         cmc_step_size=0.2)
+
+    track.track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, model, tiss_classifier, sphere, directget,
+                         curv_thr_list, step_list, track_type, maxcrossing, roi_neighborhood_tol, min_length, waymask,
+                         B0_mask, max_length=1000, n_seeds_per_iter=500, pft_back_tracking_dist=2,
+                         pft_front_tracking_dist=1, particle_count=15, min_separation_angle=20)

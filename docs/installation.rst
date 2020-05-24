@@ -6,7 +6,7 @@ Installation
 
 There are three ways to use pynets: in a `Docker Container`_,
 in a `Singularity Container`_, or in a `Manually
-Prepared Environment (Python 3.5+)`_.
+Prepared Environment (Python 3.6+)`_.
 Using a local container method is highly recommended.
 Once you are ready to run pynets, see Usage_ for details.
 
@@ -170,7 +170,7 @@ PyNets can be installed using the habitual command ::
 External Dependencies
 ---------------------
 
-PyNets is written using Python 3.5 (or above), and is based on
+PyNets is written using Python 3.6 (or above), and is based on
 nipype_.
 
 PyNets requires some other neuroimaging software tools that are

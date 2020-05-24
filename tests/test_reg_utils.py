@@ -8,6 +8,7 @@ Created on Monday July 29 16:19:14 2019
 import numpy as np
 from pynets.registration import reg_utils
 import indexed_gzip
+import os
 import nibabel as nib
 from pathlib import Path
 try:
@@ -16,19 +17,25 @@ except ImportError:
     import _pickle as pickle
 import warnings
 warnings.filterwarnings("ignore")
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
 
 
 def test_align():
     """
     Test align functionality
     """
-    # Linear registrattion
+    import pkg_resources
+
+    # Linear registration
     base_dir = str(Path(__file__).parent/"examples")
-    anat_dir = base_dir + '/003/anat'
-    inp = anat_dir + '/sub-003_T1w_brain.nii.gz'
-    ref = anat_dir + '/MNI152_T1_2mm_brain.nii.gz'
-    out = anat_dir + '/highres2standard.nii.gz'
-    xfm_out = anat_dir + '/highres2standard.mat'
+    anat_dir = f"{base_dir}/003/anat"
+    inp = f"{anat_dir}/sub-003_T1w_brain.nii.gz"
+    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_2mm_brain.nii.gz")
+    out = f"{anat_dir}/highres2standard.nii.gz"
+    xfm_out = f"{anat_dir}/highres2standard.mat"
 
     reg_utils.align(inp, ref, xfm=xfm_out, out=out, dof=12, searchrad=True, bins=256, interp=None, cost="mutualinfo",
                     sch=None, wmseg=None, init=None)
@@ -41,19 +48,21 @@ def test_applyxfm():
     """
     Test applyxfm functionality
     """
+    import pkg_resources
+
     base_dir = str(Path(__file__).parent/"examples")
-    anat_dir = base_dir + '/003/anat'
+    anat_dir = f"{base_dir}/003/anat"
     
-    ## First test: Apply xfm from test_align to orig anat img. 
-    inp = anat_dir + '/sub-003_T1w_brain.nii.gz'
-    ref = anat_dir + '/MNI152_T1_2mm_brain.nii.gz'
-    xfm = anat_dir + '/highres2standard.mat'
-    aligned = anat_dir + '/highres2standard_2.nii.gz'
+    ## First test: Apply xfm from test_align to orig anat img.
+    inp = f"{anat_dir}/sub-003_T1w_brain.nii.gz"
+    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_2mm_brain.nii.gz")
+    xfm = f"{anat_dir}/highres2standard.mat"
+    aligned = f"{anat_dir}/highres2standard_2.nii.gz"
     reg_utils.applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6)
     # Check test_applyfxm = test_align outputs
     out_applyxfm = nib.load(aligned)
     out_applyxfm_data = out_applyxfm.get_data()
-    out_align_file = anat_dir + '/highres2standard.nii.gz'
+    out_align_file = f"{anat_dir}/highres2standard.nii.gz"
     out_align = nib.load(out_align_file)
     out_align_data = out_align.get_data()
     check_eq_arrays = np.array_equal(out_applyxfm_data, out_align_data)
@@ -61,13 +70,13 @@ def test_applyxfm():
     
     ## Second test: Apply xfm to standard space roi (invert xfm first) >> native space roi.
     # ref is native space anat image
-    ref = anat_dir + '/sub-003_T1w.nii.gz'
+    ref = f"{anat_dir}/sub-003_T1w.nii.gz"
     # input is standard space precuneus mask
-    inp = anat_dir + '/precuneous_thr_bin.nii.gz'
+    inp = f"{anat_dir}/precuneous_thr_bin.nii.gz"
     # xfm is standard2native from convert_xfm -omat standard2highres.mat highres2standard.mat
-    xfm = anat_dir + '/standard2highres.mat'
+    xfm = f"{anat_dir}/standard2highres.mat"
     # precuenus mask in antive space
-    aligned = anat_dir + '/precuneous2highres.nii.gz'
+    aligned = f"{anat_dir}/precuneous2highres.nii.gz"
     
     reg_utils.applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6)
     test_out = nib.load(aligned)
@@ -78,15 +87,17 @@ def test_align_nonlinear():
     """
     Test align_nonlinear functionality
     """
-    # Nonlinear normlization
+    import pkg_resources
+
+    # Nonlinear normalization
     base_dir = str(Path(__file__).parent/"examples")
-    anat_dir = base_dir + '/003/anat'
-    inp = anat_dir + '/sub-003_T1w.nii.gz'
-    ref = anat_dir + '/MNI152_T1_2mm.nii.gz'
-    out = anat_dir + '/highres2standard_nonlinear.nii.gz'
-    warp = anat_dir + '/highres2standard_warp'
+    anat_dir = f"{base_dir}/003/anat"
+    inp = f"{anat_dir}/sub-003_T1w.nii.gz"
+    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_2mm_brain.nii.gz")
+    out = f"{anat_dir}/highres2standard_nonlinear.nii.gz"
+    warp = f"{anat_dir}/highres2standard_warp"
     # affine mat created from test_align above.
-    xfm = anat_dir + '/highres2standard.mat'
+    xfm = f"{anat_dir}/highres2standard.mat"
     
     reg_utils.align_nonlinear(inp, ref, xfm, out, warp, ref_mask=None, in_mask=None, config=None)
     
@@ -100,46 +111,49 @@ def test_combine_xfms():
     """
     # Combine func2anat and anat2std to create func2std mat
     base_dir = str(Path(__file__).parent/"examples")
-    anat_dir = base_dir + '/003/anat'
-    xfm1 = anat_dir + '/example_func2highres.mat'
-    xfm2 = anat_dir + '/highres2standard.mat'
-    xfmout = anat_dir + '/example_func2standard.mat'
+    anat_dir = f"{base_dir}/003/anat"
+    xfm1 = f"{anat_dir}/example_func2highres.mat"
+    xfm2 = f"{anat_dir}/highres2standard.mat"
+    xfmout = f"{anat_dir}/example_func2standard.mat"
     
     reg_utils.combine_xfms(xfm1, xfm2, xfmout)
     test_out = np.genfromtxt(xfmout, delimiter='  ')
     assert test_out is not None    
 
 
-# def test_invwarp():
-#     base_dir = str(Path(__file__).parent/"examples")
-#     anat_dir = base_dir + '/003/anat'
-#     ref = anat_dir + '/sub-003_T1w.nii.gz'
-#     warp = anat_dir + '/highres2standard_warp'
-#     out = anat_dir + '/highres2standard_warp_inv.nii.gz'
-#     reg_utils.inverse_warp(ref, out, warp)
-#     out_warp = nib.load(out)
-#     assert out_warp is not None
-#
-#
-# def test_apply_warp():
-#     # Warp original anat to standard space using warp img (had to invwarp first) and linear mats
-#     base_dir = str(Path(__file__).parent/"examples")
-#     anat_dir = base_dir + '/003/anat'
-#     ref = anat_dir + '/MNI152_T1_2mm.nii.gz'
-#     inp = anat_dir + '/sub-003_T1w.nii.gz'
-#     out = anat_dir + '/highres2standard_test_apply_warp.nii.gz'
-#     warp = anat_dir + '/highres2standard_warp.nii.gz'
-#     xfm = anat_dir + '/highres2standard.mat'
-#
-#     reg_utils.apply_warp(ref, inp, out, warp, xfm=xfm, mask=None, interp=None, sup=False)
-#     highres2standard_apply_warp = anat_dir + '/highres2standard_test_apply_warp.nii.gz'
-#     highres2standard_apply_warp = nib.load(highres2standard_apply_warp)
-#     highres2standard_apply_warp = highres2standard_apply_warp.get_data()
-#
-#     highres2standard_align_nonlinear = nib.load(anat_dir + '/highres2standard_nonlinear.nii.gz')
-#     highres2standard_align_nonlinear = highres2standard_align_nonlinear.get_data()
-#     check_eq_arrays = np.array_equal(highres2standard_apply_warp.astype('float32'), highres2standard_align_nonlinear)
-#     assert check_eq_arrays is True
+def test_invwarp():
+    base_dir = str(Path(__file__).parent/"examples")
+    anat_dir = f"{base_dir}/003/anat"
+    ref = f"{anat_dir}/sub-003_T1w.nii.gz"
+    warp = f"{anat_dir}/highres2standard_warp"
+    out = f"{anat_dir}/highres2standard_warp_inv.nii.gz"
+    reg_utils.inverse_warp(ref, out, warp)
+    out_warp = nib.load(out)
+    assert out_warp is not None
+
+
+def test_apply_warp():
+    import pkg_resources
+    # Warp original anat to standard space using warp img (had to invwarp first) and linear mats
+    base_dir = str(Path(__file__).parent/"examples")
+    anat_dir = f"{base_dir}/003/anat"
+    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_2mm_brain.nii.gz")
+    inp = f"{anat_dir}/sub-003_T1w.nii.gz"
+    out = f"{anat_dir}/highres2standard_test_apply_warp.nii.gz"
+    warp = f"{anat_dir}/highres2standard_warp.nii.gz"
+    xfm = f"{anat_dir}/highres2standard.mat"
+
+    reg_utils.apply_warp(ref, inp, out, warp, xfm=xfm, mask=None, interp=None, sup=False)
+    # highres2standard_apply_warp = f"{anat_dir}/highres2standard_test_apply_warp.nii.gz"
+    # highres2standard_apply_warp = nib.load(highres2standard_apply_warp)
+    # highres2standard_apply_warp = highres2standard_apply_warp.get_data()
+    #
+    # highres2standard_align_nonlinear = nib.load(f"{anat_dir}/highres2standard_nonlinear.nii.gz")
+    # highres2standard_align_nonlinear = highres2standard_align_nonlinear.get_data()
+    # check_eq_arrays = np.allclose(highres2standard_apply_warp.astype('float32'),
+    #                                  highres2standard_align_nonlinear.astype('float32'))
+    # assert check_eq_arrays is True
+    assert os.path.isfile(out)
 
 
 def test_segment_t1w():
@@ -147,9 +161,9 @@ def test_segment_t1w():
     Test segment_t1w functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    anat_dir = base_dir + '/003/anat'
-    t1w = anat_dir + '/sub-003_T1w.nii.gz'
-    basename = anat_dir + '/test_segment_t1w'
+    anat_dir = f"{base_dir}/003/anat"
+    t1w = f"{anat_dir}/sub-003_T1w.nii.gz"
+    basename = f"{anat_dir}/test_segment_t1w"
     out = reg_utils.segment_t1w(t1w, basename, opts='')
     print(out)
     assert out is not None
@@ -160,10 +174,10 @@ def test_match_target_vox_res():
     Test match_target_vox_res functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    test_out = base_dir + '/003/test_out/test_match_target_vox_res'
+    test_out = f"{base_dir}/003/test_out/test_match_target_vox_res"
     
     # Orig anat input has isotropic (1x1x1mm) dimensions.
-    anat_img_file = test_out + '/sub-003_T1w_pre_res.nii.gz'
+    anat_img_file = f"{test_out}/sub-003_T1w_pre_res.nii.gz"
     anat_vox_size = '2mm'
     anat_out_dir = test_out
     anat_img_file = reg_utils.match_target_vox_res(anat_img_file, anat_vox_size, anat_out_dir)
@@ -175,7 +189,7 @@ def test_match_target_vox_res():
             anat_success = False
     
     # Orig dMRI image has anisotropic (1.75x1.75x3mm) dimensions.
-    dwi_img_file = test_out + '/sub-003_dwi_pre_res.nii.gz'
+    dwi_img_file = f"{test_out}/sub-003_dwi_pre_res.nii.gz"
     dwi_vox_size = '1mm'
     dwi_out_dir = test_out
     dwi_img_file = reg_utils.match_target_vox_res(dwi_img_file, dwi_vox_size, dwi_out_dir)
@@ -197,16 +211,16 @@ def test_reorient_dwi():
     Test reorient_dwi functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    test_dir = base_dir + '/003/test_out/test_reorient_dwi'
+    test_dir = f"{base_dir}/003/test_out/test_reorient_dwi"
     
     # iso_eddy_corrected_data_denoised_LAS.nii.gz was the original image in radiological orientation.
     # fslswapdim and fslorient manually used to create RAS image. This test attempts to convert RAS 
     # image back to LAS. Confirms by checking output array is equal to origal LAS image array.
     
-    dwi_prep_rad = test_dir + '/iso_eddy_corrected_data_denoised_LAS.nii.gz'
-    dwi_prep_neu = test_dir + '/iso_eddy_corrected_data_denoised_RAS.nii.gz'
-    bvecs_orig = test_dir + '/bvec.bvec'
-    out_dir = test_dir + '/output'
+    dwi_prep_rad = f"{test_dir}/iso_eddy_corrected_data_denoised_LAS.nii.gz"
+    dwi_prep_neu = f"{test_dir}/iso_eddy_corrected_data_denoised_RAS.nii.gz"
+    bvecs_orig = f"{test_dir}/bvec.bvec"
+    out_dir = f"{test_dir}/output"
     
     dwi_prep_out, bvecs_out = reg_utils.reorient_dwi(dwi_prep_neu, bvecs_orig, out_dir)
     
@@ -228,15 +242,15 @@ def test_reorient_img():
     Test reorient_img functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    test_dir = base_dir + '/003/test_out/test_reorient_img'
+    test_dir = f"{base_dir}/003/test_out/test_reorient_img"
     
     # X axis increasing right to left (Radiological)
-    img_in_radio = test_dir + '/sub-003_T1w_LAS.nii.gz'
-    out_radio_dir = test_dir + '/output_LAS'
+    img_in_radio = f"{test_dir}/sub-003_T1w_LAS.nii.gz"
+    out_radio_dir = f"{test_dir}/output_LAS"
     
     # X axis increase from left to right (Neurological)
-    img_in_neuro = test_dir + '/sub-003_T1w_RAS.nii.gz'
-    out_neuro_dir = test_dir + '/output_RAS'
+    img_in_neuro = f"{test_dir}/sub-003_T1w_RAS.nii.gz"
+    out_neuro_dir = f"{test_dir}/output_RAS"
     
     # Outputs should be in neurological orientation.
     LAStoRAS_img_out = reg_utils.reorient_img(img_in_radio, out_radio_dir)
@@ -268,16 +282,16 @@ def test_check_orient_and_dims():
     # This test has a bak folder in its test_dir. 
     # To replicate test rm data in test_dir and cp from bak
     base_dir = str(Path(__file__).parent/"examples")
-    test_dir = base_dir + '/003/test_out/test_check_orient_and_dims'
+    test_dir = f"{base_dir}/003/test_out/test_check_orient_and_dims"
 
     # Antomical: 1x1x1mm
-    anat_LAS = test_dir + '/anat_LAS/sub-003_T1w_LAS.nii.gz'
-    anat_RAS = test_dir + '/anat_RAS/sub-003_T1w_RAS.nii.gz'
+    anat_LAS = f"{test_dir}/anat_LAS/sub-003_T1w_LAS.nii.gz"
+    anat_RAS = f"{test_dir}/anat_RAS/sub-003_T1w_RAS.nii.gz"
     # Diffusion: 2x2x2mm
-    dmri_LAS = test_dir + '/dmri_LAS/iso_eddy_corrected_data_denoised_LAS.nii.gz'
-    dmri_RAS = test_dir + '/dmri_RAS/iso_eddy_corrected_data_denoised_RAS.nii.gz'
-    bvecs_LAS = test_dir + '/dmri_LAS/bvec.orig.bvec'
-    bvecs_RAS = test_dir + '/dmri_RAS/bvec.trans.bvec'
+    dmri_LAS = f"{test_dir}/dmri_LAS/iso_eddy_corrected_data_denoised_LAS.nii.gz"
+    dmri_RAS = f"{test_dir}/dmri_RAS/iso_eddy_corrected_data_denoised_RAS.nii.gz"
+    bvecs_LAS = f"{test_dir}/dmri_LAS/bvec.orig.bvec"
+    bvecs_RAS = f"{test_dir}/dmri_RAS/bvec.trans.bvec"
 
     anat_LAStoRAS = reg_utils.check_orient_and_dims(anat_LAS, test_dir, '2mm', bvecs=None)
     anat_RAStoRAS = reg_utils.check_orient_and_dims(anat_RAS, test_dir, '2mm', bvecs=None)

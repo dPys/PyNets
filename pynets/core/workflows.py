@@ -34,7 +34,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     from pynets.core.utils import pass_meta_ins, pass_meta_outs, pass_meta_ins_multi
 
     # Available functional and structural connectivity models
-    with open(f"{str(Path(__file__).parent.parent)}{'/runconfig.yaml'}", 'r') as stream:
+    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
             func_models = hardcoded_params['available_models']['func_models']
@@ -808,7 +808,12 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                             name="prep_spherical_nodes_node")
 
         if node_size_list:
+            prep_spherical_nodes_node.inputs.node_size = None
             prep_spherical_nodes_node.iterables = [("node_size", node_size_list)]
+        else:
+            dmri_connectometry_wf.connect([(inputnode, prep_spherical_nodes_node,
+                                            [('node_size', 'node_size')]),
+                                           ])
 
         prep_spherical_nodes_node.synchronize = True
 
@@ -1048,6 +1053,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                            imports=import_list), name="save_coords_and_labels_node")
         if multi_nets:
             get_node_membership_iterables = []
+            get_node_membership_node.inputs.network = None
             get_node_membership_iterables.append(("network", multi_nets))
             get_node_membership_node.iterables = get_node_membership_iterables
 
@@ -1115,8 +1121,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     if parc is False:
         # register_node.inputs.simple = True
         dmri_connectometry_wf.connect([(inputnode, prep_spherical_nodes_node,
-                                        [('node_size', 'node_size'),
-                                         ('template_mask', 'template_mask')]),
+                                        [('template_mask', 'template_mask')]),
                                        (fetch_nodes_and_labels_node, prep_spherical_nodes_node,
                                         [('dir_path', 'dir_path')]),
                                        (prep_spherical_nodes_node, register_atlas_node,
@@ -1548,7 +1553,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                                          'ID', 'roi', 'conn_model', 'node_size',
                                                                          'target_samples', 'track_type', 'norm',
                                                                          'binary', 'atlas_mni', 'streams',
-                                                                         'directget', 'mn_length']),
+                                                                         'directget', 'min_length']),
                                            name='join_iters_node_nets', joinsource=get_node_membership_node,
                                            joinfield=['est_path', 'thr', 'network', 'prune', 'ID', 'roi',
                                                       'conn_model', 'node_size', 'target_samples', 'track_type', 'norm',
@@ -2222,6 +2227,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                            imports=import_list), name="save_coords_and_labels_node")
         if multi_nets:
             get_node_membership_iterables = []
+            get_node_membership_node.inputs.network = None
             get_node_membership_iterables.append(("network", multi_nets))
             get_node_membership_node.iterables = get_node_membership_iterables
 

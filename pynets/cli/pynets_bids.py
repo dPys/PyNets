@@ -362,7 +362,11 @@ def main():
 
     # S3
     # Primary inputs
+
     s3 = bids_args.bids_dir.startswith("s3://")
+
+    if not s3:
+        bids_dir = bids_args.bids_dir
 
     # secondary inputs
     sec_s3_objs = []
