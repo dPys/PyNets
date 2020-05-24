@@ -81,7 +81,7 @@ def test_prep_tissues(tiss_class):
     assert tiss_classifier is not None
 
 
-@pytest.mark.parametrize("conn_model", ['csa', 'csd', 'sfm', 'ten'])
+@pytest.mark.parametrize("conn_model", ['csa', 'csd', 'ten'])
 def test_reconstruction(conn_model):
     """
     Test for reconstruction functionality
@@ -106,7 +106,7 @@ def test_reconstruction(conn_model):
 
 
 @pytest.mark.parametrize("directget", ['det', 'prob'])
-@pytest.mark.parametrize("target_samples", [500, pytest.param(0, marks=pytest.mark.xfail)])
+@pytest.mark.parametrize("target_samples", [1000, pytest.param(0, marks=pytest.mark.xfail)])
 def test_track_ensemble(directget, target_samples):
     """
     Test for ensemble tractography functionality
