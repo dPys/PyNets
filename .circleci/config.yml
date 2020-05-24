@@ -161,17 +161,14 @@ jobs:
     environment:
       - FSLDIR: /usr/share/fsl/5.0
       - FSLOUTPUTTYPE: 'NIFTI'
-    parallelism: 2
     resource_class: medium
     steps:
       - checkout
       - run:
-          name: Check whether build should be skipped
+          name: "Switch to Python v3.7"
           command: |
-            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[skip[ _]?docs\]' )" != "" ]]; then
-              echo "Skipping doc building job"
-              circleci step halt
-            fi
+            pyenv versions
+            pyenv global 3.7.0
       - run:
           name: Check Python version and upgrade pip
           command: |
