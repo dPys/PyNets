@@ -266,7 +266,7 @@ def test_tens_mod_est():
     b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
     gtab_bvals[b0_thr_ixs] = 0
     gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()
+    data = nib.load(dwi_file).get_fdata()[20:50, 55:85, 38:39]
 
     [mod_odf, model] = dmri_estimation.tens_mod_est(gtab, data, B0_mask)
 
@@ -289,7 +289,7 @@ def test_csa_mod_est():
     b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
     gtab_bvals[b0_thr_ixs] = 0
     gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()
+    data = nib.load(dwi_file).get_fdata()[20:50, 55:85, 38:39]
 
     [csa_mod, model] = dmri_estimation.csa_mod_est(gtab, data, B0_mask)
 
@@ -312,7 +312,7 @@ def test_csd_mod_est():
     b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
     gtab_bvals[b0_thr_ixs] = 0
     gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()
+    data = nib.load(dwi_file).get_fdata()[20:50, 55:85, 38:39]
 
     [csd_mod, model] = dmri_estimation.csd_mod_est(gtab, data, B0_mask)
 
@@ -335,7 +335,7 @@ def test_sfm_mod_est():
     b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
     gtab_bvals[b0_thr_ixs] = 0
     gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()
+    data = nib.load(dwi_file).get_fdata()[20:50, 55:85, 38:39]
 
     [sf_odf, model] = dmri_estimation.sfm_mod_est(gtab, data, B0_mask)
 
@@ -352,7 +352,7 @@ def test_streams2graph(fa_wei):
     dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
     conn_model = 'csd'
     min_length = 10
-    error_margin = 6
+    error_margin = 2
     directget = 'prob'
     track_type = 'particle'
     target_samples = 1000
