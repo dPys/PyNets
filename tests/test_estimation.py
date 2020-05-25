@@ -176,15 +176,16 @@ def test_extract_ts_rsn_coords(node_size, smooth):
 
 def test_timeseries_bootstrap():
     from nilearn.masking import apply_mask
+    from pynets.registration import reg_utils
 
     blocklength = 1
     base_dir = str(Path(__file__).parent/"examples")
     func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
-    roi_mask_img = nib.load(roi)
+    roi_mask_img_RAS = reg_utils.reorient_img(roi, f"{base_dir}/outputs")
 
     func_img = nib.load(func_file)
-    ts_data = apply_mask(func_img, roi_mask_img)
+    ts_data = apply_mask(func_img, roi_mask_img_RAS)
     block_size = int(int(np.sqrt(ts_data.shape[0])) * blocklength)
 
     boot_series = fmri_estimation.timeseries_bootstrap(ts_data, block_size)[0]
@@ -198,7 +199,7 @@ def test_fill_confound_nans():
     dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
     conf = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_desc-confounds_regressors.tsv"
     conf_corr = fmri_estimation.fill_confound_nans(pd.read_csv(conf, sep='\t'), dir_path)
-    assert not conf_corr.isnull().values.any()
+    assert not pd.read_csv(conf_corr, sep='\t').isnull().values.any()
 
 
 # dMRI
