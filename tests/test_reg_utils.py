@@ -7,9 +7,9 @@ Created on Monday July 29 16:19:14 2019
 """
 import numpy as np
 from pynets.registration import reg_utils
-import indexed_gzip
 import os
 import nibabel as nib
+import indexed_gzip
 from pathlib import Path
 try:
     import cPickle as pickle

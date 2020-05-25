@@ -9,6 +9,8 @@ Created on Wed Dec 27 16:19:14 2017
 import pytest
 import numpy as np
 import time
+import nibabel as nib
+import os
 try:
     import cPickle as pickle
 except ImportError:
@@ -22,6 +24,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
+# fMRI
 @pytest.mark.parametrize("conn_model", ['corr', 'sps', 'cov', 'partcorr'])
 def test_get_conn_matrix_cov(conn_model):
     """
@@ -116,7 +119,9 @@ def test_extract_ts_rsn_parc():
     te.prepare_inputs()
 
     te.extract_ts_parc()
-        
+
+    te.save_and_cleanup()
+
     print("%s%s%s" % ('extract_ts_parc --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
     assert te.ts_within_nodes is not None
     #assert node_size is not None
@@ -160,8 +165,238 @@ def test_extract_ts_rsn_coords(node_size, smooth):
 
     te.extract_ts_coords()
 
+    te.save_and_cleanup()
+
     print("%s%s%s" % ('extract_ts_coords --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
     assert te.ts_within_nodes is not None
     assert te.node_size is not None
     assert te.smooth is not None
     assert te.dir_path is not None
+
+
+def test_timeseries_bootstrap():
+    from nilearn.masking import apply_mask
+    from pynets.registration import reg_utils
+
+    blocklength = 1
+    base_dir = str(Path(__file__).parent/"examples")
+    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
+    roi_mask_img_RAS = reg_utils.reorient_img(roi, f"{base_dir}/outputs")
+
+    func_img = nib.load(func_file)
+    ts_data = apply_mask(func_img, roi_mask_img_RAS)
+    block_size = int(int(np.sqrt(ts_data.shape[0])) * blocklength)
+
+    boot_series = fmri_estimation.timeseries_bootstrap(ts_data, block_size)[0]
+    assert boot_series.shape == ts_data.shape
+
+
+def test_fill_confound_nans():
+    import pandas as pd
+
+    base_dir = str(Path(__file__).parent/"examples")
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    conf = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_desc-confounds_regressors.tsv"
+    conf_corr = fmri_estimation.fill_confound_nans(pd.read_csv(conf, sep='\t'), dir_path)
+    assert not pd.read_csv(conf_corr, sep='\t').isnull().values.any()
+
+
+# dMRI
+def test_tens_mod_fa_est():
+    from dipy.core.gradients import gradient_table
+    from dipy.io import save_pickle
+
+    base_dir = str(Path(__file__).parent/"examples")
+    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
+    dir_path = f"{base_dir}/003/dmri"
+    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
+    bvals = f"{dir_path}/sub-003_dwi.bval"
+    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
+    gtab_file = f"{base_dir}/gtab.pkl"
+    gtab = gradient_table(bvals, bvecs)
+    gtab.b0_threshold = 50
+    gtab_bvals = gtab.bvals.copy()
+    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
+    gtab_bvals[b0_thr_ixs] = 0
+    gtab.b0s_mask = gtab_bvals == 0
+    save_pickle(gtab_file, gtab)
+
+    [fa_path, _, _, _] = dmri_estimation.tens_mod_fa_est(gtab_file, dwi_file, B0_mask)
+
+    assert os.path.isfile(fa_path)
+
+
+def test_create_anisopowermap():
+    from dipy.core.gradients import gradient_table
+    from dipy.io import save_pickle
+
+    base_dir = str(Path(__file__).parent/"examples")
+    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
+    dir_path = f"{base_dir}/003/dmri"
+    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
+    bvals = f"{dir_path}/sub-003_dwi.bval"
+    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
+    gtab_file = f"{base_dir}/gtab.pkl"
+    gtab = gradient_table(bvals, bvecs)
+    gtab.b0_threshold = 50
+    gtab_bvals = gtab.bvals.copy()
+    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
+    gtab_bvals[b0_thr_ixs] = 0
+    gtab.b0s_mask = gtab_bvals == 0
+    save_pickle(gtab_file, gtab)
+
+    [anisopwr_path, _, _, _] = dmri_estimation.create_anisopowermap(gtab_file, dwi_file, B0_mask)
+
+    assert os.path.isfile(anisopwr_path)
+
+
+def test_tens_mod_est():
+    from dipy.core.gradients import gradient_table
+
+    base_dir = str(Path(__file__).parent/"examples")
+    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
+    dir_path = f"{base_dir}/003/dmri"
+    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
+    bvals = f"{dir_path}/sub-003_dwi.bval"
+    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
+    gtab = gradient_table(bvals, bvecs)
+    gtab.b0_threshold = 50
+    gtab_bvals = gtab.bvals.copy()
+    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
+    gtab_bvals[b0_thr_ixs] = 0
+    gtab.b0s_mask = gtab_bvals == 0
+    data = nib.load(dwi_file).get_fdata()
+
+    [mod_odf, model] = dmri_estimation.tens_mod_est(gtab, data, B0_mask)
+
+    assert mod_odf is not None
+    assert model is not None
+
+
+def test_csa_mod_est():
+    from dipy.core.gradients import gradient_table
+
+    base_dir = str(Path(__file__).parent/"examples")
+    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
+    dir_path = f"{base_dir}/003/dmri"
+    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
+    bvals = f"{dir_path}/sub-003_dwi.bval"
+    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
+    gtab = gradient_table(bvals, bvecs)
+    gtab.b0_threshold = 50
+    gtab_bvals = gtab.bvals.copy()
+    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
+    gtab_bvals[b0_thr_ixs] = 0
+    gtab.b0s_mask = gtab_bvals == 0
+    data = nib.load(dwi_file).get_fdata()
+
+    [csa_mod, model] = dmri_estimation.csa_mod_est(gtab, data, B0_mask)
+
+    assert csa_mod is not None
+    assert model is not None
+
+
+def test_csd_mod_est():
+    from dipy.core.gradients import gradient_table
+
+    base_dir = str(Path(__file__).parent/"examples")
+    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
+    dir_path = f"{base_dir}/003/dmri"
+    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
+    bvals = f"{dir_path}/sub-003_dwi.bval"
+    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
+    gtab = gradient_table(bvals, bvecs)
+    gtab.b0_threshold = 50
+    gtab_bvals = gtab.bvals.copy()
+    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
+    gtab_bvals[b0_thr_ixs] = 0
+    gtab.b0s_mask = gtab_bvals == 0
+    data = nib.load(dwi_file).get_fdata()
+
+    [csd_mod, model] = dmri_estimation.csd_mod_est(gtab, data, B0_mask)
+
+    assert csd_mod is not None
+    assert model is not None
+
+
+def test_sfm_mod_est():
+    from dipy.core.gradients import gradient_table
+
+    base_dir = str(Path(__file__).parent/"examples")
+    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
+    dir_path = f"{base_dir}/003/dmri"
+    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
+    bvals = f"{dir_path}/sub-003_dwi.bval"
+    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
+    gtab = gradient_table(bvals, bvecs)
+    gtab.b0_threshold = 50
+    gtab_bvals = gtab.bvals.copy()
+    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
+    gtab_bvals[b0_thr_ixs] = 0
+    gtab.b0s_mask = gtab_bvals == 0
+    data = nib.load(dwi_file).get_fdata()
+
+    [sf_odf, model] = dmri_estimation.sfm_mod_est(gtab, data, B0_mask)
+
+    assert sf_odf is not None
+    assert model is not None
+
+
+@pytest.mark.parametrize("fa_wei", [True, False])
+def test_streams2graph(fa_wei):
+    from dipy.core.gradients import gradient_table
+    from dipy.io import save_pickle
+
+    base_dir = str(Path(__file__).parent/"examples")
+    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
+    conn_model = 'csd'
+    min_length = 10
+    error_margin = 6
+    directget = 'prob'
+    track_type = 'particle'
+    target_samples = 1000
+    overlap_thr = 1
+    min_span_tree = True
+    prune = 3
+    norm = 6
+    binary = False
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
+    network = 'Default'
+    ID = '003'
+    parc = True
+    disp_filt = False
+    node_size = None
+    dens_thresh = False
+    atlas = 'whole_brain_cluster_labels_PCA200'
+    uatlas = None
+    coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
+    coord_file = open(coord_file_path, 'rb')
+    coords = pickle.load(coord_file)
+    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
+    labels_file = open(labels_file_path, 'rb')
+    labels = pickle.load(labels_file)
+    # Not actually normalized to mni-space in this test.
+    atlas_mni = f"{dir_path}/whole_brain_cluster_labels_PCA200_dwi_track.nii.gz"
+    streams = f"{base_dir}/miscellaneous/streamlines_est-csd_nodetype-parc_samples-10000streams_tt-local_dg-prob_ml-0.trk"
+    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
+    dir_path = f"{base_dir}/003/dmri"
+    bvals = f"{dir_path}/sub-003_dwi.bval"
+    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
+    gtab_file = f"{base_dir}/gtab.pkl"
+    gtab = gradient_table(bvals, bvecs)
+    gtab.b0_threshold = 50
+    gtab_bvals = gtab.bvals.copy()
+    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
+    gtab_bvals[b0_thr_ixs] = 0
+    gtab.b0s_mask = gtab_bvals == 0
+    save_pickle(gtab_file, gtab)
+    # Not actually normalized to mni-space in this test.
+    warped_fa = dmri_estimation.tens_mod_fa_est(gtab_file, dwi_file, B0_mask)[0]
+
+    conn_matrix = dmri_estimation.streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples,
+                                                conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
+                                                disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
+                                                directget, warped_fa, error_margin, min_length, fa_wei)[2]
+    assert conn_matrix is not None

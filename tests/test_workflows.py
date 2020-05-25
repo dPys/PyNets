@@ -173,13 +173,13 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
         hpass_list = None
 
     fmri_connectometry_wf = fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatlas, conn_model,
-                       dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
-                       multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_list,
-                       k_clustering, user_atlas_list, clust_mask_list, node_size_list, conn_model_list,
-                       min_span_tree, use_AAL_naming, smooth, smooth_list, disp_filt, prune, multi_nets,
-                       clust_type, clust_type_list, plugin_type, mask, norm, binary,
-                       anat_file, runtime_dict, execution_dict, hpass, hpass_list, template, template_mask, vox_size,
-                       local_corr, outdir)
+                                               dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
+                                               multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_list,
+                                               k_clustering, user_atlas_list, clust_mask_list, node_size_list,
+                                               conn_model_list, min_span_tree, use_AAL_naming, smooth, smooth_list,
+                                               disp_filt, prune, multi_nets, clust_type, clust_type_list, plugin_type,
+                                               mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
+                                               hpass_list, template, template_mask, vox_size, local_corr, outdir)
 
     fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
@@ -314,13 +314,13 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
         hpass_list = None
 
     fmri_connectometry_wf = fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatlas, conn_model,
-                       dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
-                       multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_list,
-                       k_clustering, user_atlas_list, clust_mask_list, node_size_list, conn_model_list,
-                       min_span_tree, use_AAL_naming, smooth, smooth_list, disp_filt, prune, multi_nets,
-                       clust_type, clust_type_list, plugin_type, mask, norm, binary,
-                       anat_file, runtime_dict, execution_dict, hpass, hpass_list, template, template_mask, vox_size,
-                       local_corr, outdir)
+                                               dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
+                                               multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_list,
+                                               k_clustering, user_atlas_list, clust_mask_list, node_size_list,
+                                               conn_model_list, min_span_tree, use_AAL_naming, smooth, smooth_list,
+                                               disp_filt, prune, multi_nets, clust_type, clust_type_list, plugin_type,
+                                               mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
+                                               hpass_list, template, template_mask, vox_size, local_corr, outdir)
 
     fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
@@ -481,12 +481,14 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
         multi_directget = None
 
     dmri_connectometry_wf = dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, parc, ref_txt,
-                       procmem, dwi_file, fbval, fbvec, anat_file, thr, dens_thresh, conn_model, user_atlas_list,
-                       multi_thr, multi_atlas, max_thr, min_thr, step_thr, node_size_list, conn_model_list,
-                       min_span_tree, use_AAL_naming, disp_filt, plugin_type, multi_nets, prune, mask, norm,
-                       binary, target_samples, curv_thr_list, step_list, overlap_thr, track_type, min_length,
-                       maxcrossing, directget, tiss_class, runtime_dict, execution_dict, multi_directget,
-                       template, template_mask, vox_size, waymask, min_length_list, outdir)
+                                               procmem, dwi_file, fbval, fbvec, anat_file, thr, dens_thresh,
+                                               conn_model, user_atlas_list, multi_thr, multi_atlas, max_thr, min_thr,
+                                               step_thr, node_size_list, conn_model_list, min_span_tree,
+                                               use_AAL_naming, disp_filt, plugin_type, multi_nets, prune, mask, norm,
+                                               binary, target_samples, curv_thr_list, step_list, overlap_thr,
+                                               track_type, min_length, maxcrossing, directget, tiss_class,
+                                               runtime_dict, execution_dict, multi_directget, template, template_mask,
+                                               vox_size, waymask, min_length_list, outdir)
 
     dmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(dmri_connectometry_wf._graph) is True

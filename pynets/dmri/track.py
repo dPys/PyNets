@@ -8,6 +8,7 @@ Copyright (C) 2017
 import warnings
 import numpy as np
 import nibabel as nib
+import indexed_gzip
 warnings.filterwarnings("ignore")
 
 

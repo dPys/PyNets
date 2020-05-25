@@ -7,8 +7,8 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import pytest
 import numpy as np
-import indexed_gzip
 import nibabel as nib
+import indexed_gzip
 from pathlib import Path
 try:
     import cPickle as pickle
@@ -120,7 +120,6 @@ def test_ni_parcellate(clust_type):
 
 
 @pytest.mark.parametrize("clust_type", ['ward', 'ncut', 'kmeans', 'rena',
-                                        pytest.param('single', marks=pytest.mark.xfail),
                                         pytest.param('average', marks=pytest.mark.xfail),
                                         pytest.param('complete', marks=pytest.mark.xfail)])
 # >1 connected components
