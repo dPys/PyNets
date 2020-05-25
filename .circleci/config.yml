@@ -167,18 +167,17 @@ jobs:
       - run:
           name: "Switch to Python v3.6"
           command: |
+            sudo add-apt-repository ppa:deadsnakes/ppa
             sudo apt-get update
             sudo apt-get install -y make build-essential curl software-properties-common
             sudo apt-get update
-            sudo apt-get install python3-tk tk-dev
-            pyenv local 3.6.5
-            pip install twine  # For use in checking distributions
-            virtualenv --python=python build
-            source build/bin/activate
+            sudo apt-get install python3.6-tk tk-dev
+            pyenv install --force 3.6.5
+            pyenv global 3.6.5
       - run:
           name: Check Python version and upgrade pip
           command: |
-            python --version
+            curl https://bootstrap.pypa.io/get-pip.py | sudo python3.6
             python -m pip install -U pip
       - run:
           name: Install pytest
@@ -221,7 +220,7 @@ jobs:
             sudo sh -c 'echo `curl -sSL "http://neuro.debian.net/lists/stretch.us-ca.full"` >> /etc/apt/sources.list.d/neurodebian.sources.list'
             sudo apt-key add docker/files/neurodebian.gpg && (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
             sudo apt-get update -qq
-            sudo apt-get install -y --no-install-recommends fsl-5.0-core
+            sudo apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates
             sudo apt-get upgrade
       - run:
           name: Update PATH and Define Environment Variable at Runtime
@@ -241,17 +240,17 @@ jobs:
           no_output_timeout: 720m
           command: |
             export PYTHONUNBUFFERED=1
-            python -m pytest -s -q tests/test_clustering.py
-            python -m pytest -s -q tests/test_dmri_utils.py
-            python -m pytest -s -q tests/test_estimation.py
+            python -m pytest -s -q tests/test_thresholding.py
+            python -m pytest -s -q tests/test_utils.py
             python -m pytest -s -q tests/test_netstats.py
             python -m pytest -s -q tests/test_nodemaker.py
             python -m pytest -s -q tests/test_plotting.py
             python -m pytest -s -q tests/test_refs.py
-            python -m pytest -s -q tests/test_reg_utils.py
-            python -m pytest -s -q tests/test_thresholding.py
+            python -m pytest -s -q tests/test_clustering.py
+            python -m pytest -s -q tests/test_dmri_utils.py
             python -m pytest -s -q tests/test_track.py
-            python -m pytest -s -q tests/test_utils.py
+            python -m pytest -s -q tests/test_estimation.py
+            python -m pytest -s -q tests/test_reg_utils.py
             python -m pytest -s -q tests/test_workflows.py
       - store_test_results:
           path: test-results
