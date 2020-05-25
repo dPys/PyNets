@@ -168,13 +168,13 @@ jobs:
           name: "Switch to Python v3.7"
           command: |
             sudo apt-get update
-            sudo apt-get install python-support
-            sudo update-python-modules -a
+            sudo apt-get install -y make build-essential curl software-properties-common
             sudo apt-get update
             sudo apt-get install python3-tk tk-dev
-            pyenv install 3.7.0
-            pyenv versions
-            pyenv global 3.7.0
+            pyenv local 3.6.5
+            pip install twine  # For use in checking distributions
+            virtualenv --python=python build
+            source build/bin/activate
       - run:
           name: Check Python version and upgrade pip
           command: |
@@ -188,7 +188,6 @@ jobs:
           command: |
             set -e
             sudo apt update && sudo apt upgrade -y
-            sudo apt-get install -y make build-essential curl software-properties-common
             curl -L https://packagecloud.io/circleci/trusty/gpgkey | sudo apt-key add -
             curl -L https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
             sudo apt-get update
