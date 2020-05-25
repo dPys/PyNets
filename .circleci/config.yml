@@ -172,7 +172,7 @@ jobs:
             sudo apt-get install -y make build-essential curl software-properties-common
             sudo apt-get update
             sudo apt-get install python3.6-tk tk-dev
-            pyenv install -y 3.6.5
+            pyenv install --force 3.6.5
             pyenv global 3.6.5
       - run:
           name: Check Python version and upgrade pip
