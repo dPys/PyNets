@@ -167,11 +167,14 @@ jobs:
       - run:
           name: "Switch to Python v3.6"
           command: |
+            pyenv uninstall 3.6.5
             sudo add-apt-repository ppa:deadsnakes/ppa
             sudo apt-get update
             sudo apt-get install -y make build-essential curl software-properties-common
             sudo apt-get update
             sudo apt-get install python3.6 python3.6-tk tk-dev
+            pyenv install 3.6.5
+            pyenv local 3.6.5
       - run:
           name: Check Python version and upgrade pip
           command: |
