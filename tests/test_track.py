@@ -170,6 +170,8 @@ def test_track_ensemble_particle():
     from pynets.dmri import track
     from dipy.core.gradients import gradient_table
     from dipy.data import get_sphere
+    from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
+    from dipy.io.streamline import save_tractogram
 
     base_dir = str(Path(__file__).parent/"examples")
     B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
@@ -215,7 +217,11 @@ def test_track_ensemble_particle():
     tiss_classifier = track.prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
                                          cmc_step_size=0.2)
 
-    track.track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, model, tiss_classifier, sphere, directget,
-                         curv_thr_list, step_list, track_type, maxcrossing, roi_neighborhood_tol, min_length, waymask,
-                         B0_mask, max_length=1000, n_seeds_per_iter=500, pft_back_tracking_dist=2,
-                         pft_front_tracking_dist=1, particle_count=15, min_separation_angle=20)
+    streamlines = track.track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, model, tiss_classifier, sphere,
+                                       directget, curv_thr_list, step_list, track_type, maxcrossing,
+                                       roi_neighborhood_tol, min_length, waymask, B0_mask, max_length=1000,
+                                       n_seeds_per_iter=500, pft_back_tracking_dist=2, pft_front_tracking_dist=1,
+                                       particle_count=15, min_separation_angle=20)
+    streams = f"{base_dir}/miscellaneous/003_streamlines_est-csd_nodetype-parc_samples-1000streams_tt-particle_dg-prob_ml-10.trk"
+    save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, origin=Origin.TRACKVIS),
+                    streams, bbox_valid_check=False)

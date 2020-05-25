@@ -241,17 +241,17 @@ jobs:
           no_output_timeout: 720m
           command: |
             export PYTHONUNBUFFERED=1
-            python -m pytest -s -q tests/test_clustering.py
-            python -m pytest -s -q tests/test_dmri_utils.py
-            python -m pytest -s -q tests/test_estimation.py
+            python -m pytest -s -q tests/test_thresholding.py
+            python -m pytest -s -q tests/test_utils.py
             python -m pytest -s -q tests/test_netstats.py
             python -m pytest -s -q tests/test_nodemaker.py
             python -m pytest -s -q tests/test_plotting.py
             python -m pytest -s -q tests/test_refs.py
-            python -m pytest -s -q tests/test_reg_utils.py
-            python -m pytest -s -q tests/test_thresholding.py
+            python -m pytest -s -q tests/test_clustering.py
+            python -m pytest -s -q tests/test_dmri_utils.py
             python -m pytest -s -q tests/test_track.py
-            python -m pytest -s -q tests/test_utils.py
+            python -m pytest -s -q tests/test_estimation.py
+            python -m pytest -s -q tests/test_reg_utils.py
             python -m pytest -s -q tests/test_workflows.py
       - store_test_results:
           path: test-results

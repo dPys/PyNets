@@ -266,7 +266,7 @@ def test_tens_mod_est():
     b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
     gtab_bvals[b0_thr_ixs] = 0
     gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()[20:50, 55:85, 38:39]
+    data = nib.load(dwi_file).get_fdata()
 
     [mod_odf, model] = dmri_estimation.tens_mod_est(gtab, data, B0_mask)
 
@@ -289,7 +289,7 @@ def test_csa_mod_est():
     b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
     gtab_bvals[b0_thr_ixs] = 0
     gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()[20:50, 55:85, 38:39]
+    data = nib.load(dwi_file).get_fdata()
 
     [csa_mod, model] = dmri_estimation.csa_mod_est(gtab, data, B0_mask)
 
@@ -312,7 +312,7 @@ def test_csd_mod_est():
     b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
     gtab_bvals[b0_thr_ixs] = 0
     gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()[20:50, 55:85, 38:39]
+    data = nib.load(dwi_file).get_fdata()
 
     [csd_mod, model] = dmri_estimation.csd_mod_est(gtab, data, B0_mask)
 
@@ -335,7 +335,7 @@ def test_sfm_mod_est():
     b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
     gtab_bvals[b0_thr_ixs] = 0
     gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()[20:50, 55:85, 38:39]
+    data = nib.load(dwi_file).get_fdata()
 
     [sf_odf, model] = dmri_estimation.sfm_mod_est(gtab, data, B0_mask)
 
@@ -361,7 +361,6 @@ def test_streams2graph(fa_wei):
     prune = 3
     norm = 6
     binary = False
-    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
     network = 'Default'
     ID = '003'
@@ -378,8 +377,8 @@ def test_streams2graph(fa_wei):
     labels_file = open(labels_file_path, 'rb')
     labels = pickle.load(labels_file)
     # Not actually normalized to mni-space in this test.
-    atlas_mni = f"{dir_path}/whole_brain_cluster_labels_PCA200_dwi_track.nii.gz"
-    streams = f"{base_dir}/miscellaneous/streamlines_est-csd_nodetype-parc_samples-10000streams_tt-local_dg-prob_ml-0.trk"
+    atlas_mni = f"{base_dir}/003/dmri/whole_brain_cluster_labels_PCA200_dwi_track.nii.gz"
+    streams = f"{base_dir}/miscellaneous/003_streamlines_est-csd_nodetype-parc_samples-1000streams_tt-particle_dg-prob_ml-10.trk"
     B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
     dir_path = f"{base_dir}/003/dmri"
     bvals = f"{dir_path}/sub-003_dwi.bval"
