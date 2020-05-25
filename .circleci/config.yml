@@ -167,18 +167,15 @@ jobs:
       - run:
           name: "Switch to Python v3.6"
           command: |
+            sudo add-apt-repository ppa:deadsnakes/ppa
             sudo apt-get update
             sudo apt-get install -y make build-essential curl software-properties-common
             sudo apt-get update
-            sudo apt-get install python3-tk tk-dev
-            pyenv local 3.6.5
-            pip install twine  # For use in checking distributions
-            virtualenv --python=python build
-            source build/bin/activate
+            sudo apt-get install python3.6 python3.6-tk tk-dev
       - run:
           name: Check Python version and upgrade pip
           command: |
-            python --version
+            curl https://bootstrap.pypa.io/get-pip.py | sudo python3.6
             python -m pip install -U pip
       - run:
           name: Install pytest
