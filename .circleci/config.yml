@@ -138,7 +138,7 @@ jobs:
 
   get_data:
     machine:
-      image: circleci/classic:201808-01
+      image: ubuntu-1604:201903-01
     working_directory: /home/circleci/data
     steps:
       - restore_cache:
@@ -165,7 +165,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: "Switch to Python v3.7"
+          name: "Switch to Python v3.6"
           command: |
             sudo apt-get update
             sudo apt-get install -y make build-essential curl software-properties-common
@@ -233,9 +233,8 @@ jobs:
              echo 'export FSLDIR PATH' >> $BASH_ENV
              source $BASH_ENV
       - run:
-          name: Download OSF test data
-          command: |
-            wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C tests
+          name: Fetch example data
+          command: tar -xvzf /tmp/data/examples.tar.gz -C tests
       - run:
           name: Examples
           no_output_timeout: 720m

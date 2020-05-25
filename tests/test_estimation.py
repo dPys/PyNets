@@ -370,10 +370,10 @@ def test_streams2graph(fa_wei):
     dens_thresh = False
     atlas = 'whole_brain_cluster_labels_PCA200'
     uatlas = None
-    coord_file_path = f"{dir_path}/Default_func_coords_wb.pkl"
+    coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
     coord_file = open(coord_file_path, 'rb')
     coords = pickle.load(coord_file)
-    labels_file_path = f"{dir_path}/Default_func_labelnames_wb.pkl"
+    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
     labels_file = open(labels_file_path, 'rb')
     labels = pickle.load(labels_file)
     # Not actually normalized to mni-space in this test.
