@@ -8,6 +8,7 @@ Copyright (C) 2017
 import warnings
 import numpy as np
 import nibabel as nib
+import indexed_gzip
 import networkx as nx
 import os.path as op
 import tkinter

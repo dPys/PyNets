@@ -167,7 +167,11 @@ jobs:
       - run:
           name: "Switch to Python v3.7"
           command: |
-            sudo apt-get install python-tk python3-tk tk-dev
+            sudo apt-get update
+            sudo apt-get install python-support
+            sudo update-python-modules -a
+            sudo apt-get update
+            sudo apt-get install python3-tk tk-dev
             pyenv install 3.7.0
             pyenv versions
             pyenv global 3.7.0

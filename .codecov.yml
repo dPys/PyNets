@@ -62,12 +62,9 @@ coverage:
 	- "pynets/stats/benchmarking.py"
 	- "pynets/stats/embeddings.py"
 	- "pynets/stats/optimeasures.py"
-	- "pynets/registration/register.py"
-	- "pynets/core/interfaces.py"
 	- "pynets/core/cloud_utils.py"
-
-codecov:
-  max_report_age: off
+    - "pynets/registration/register.py"
+    - "pynets/core/interfaces.py"
 
 codecov:
   token: d62ad7b3-39a6-4657-a2e3-6acf2362d36d

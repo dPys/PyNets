@@ -42,11 +42,14 @@ htmlcov/
 .coverage.*
 .cache
 nosetests.xml
-coverage.xml
 *,cover
 .hypothesis/
+tests/examples*
+pynets/.idea/*
+.idea/*
 
 # Translations
+coverage.xml
 *.mo
 *.pot
 

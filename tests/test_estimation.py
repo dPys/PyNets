@@ -119,7 +119,9 @@ def test_extract_ts_rsn_parc():
     te.prepare_inputs()
 
     te.extract_ts_parc()
-        
+
+    te.save_and_cleanup()
+
     print("%s%s%s" % ('extract_ts_parc --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
     assert te.ts_within_nodes is not None
     #assert node_size is not None
@@ -163,11 +165,40 @@ def test_extract_ts_rsn_coords(node_size, smooth):
 
     te.extract_ts_coords()
 
+    te.save_and_cleanup()
+
     print("%s%s%s" % ('extract_ts_coords --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
     assert te.ts_within_nodes is not None
     assert te.node_size is not None
     assert te.smooth is not None
     assert te.dir_path is not None
+
+
+def test_timeseries_bootstrap():
+    from nilearn.masking import apply_mask
+
+    blocklength = 1
+    base_dir = str(Path(__file__).parent/"examples")
+    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
+    roi_mask_img = nib.load(roi)
+
+    func_img = nib.load(func_file)
+    ts_data = apply_mask(func_img, roi_mask_img)
+    block_size = int(int(np.sqrt(ts_data.shape[0])) * blocklength)
+
+    boot_series = fmri_estimation.timeseries_bootstrap(ts_data, block_size)[0]
+    assert boot_series.shape == ts_data.shape
+
+
+def test_fill_confound_nans():
+    import pandas as pd
+
+    base_dir = str(Path(__file__).parent/"examples")
+    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    conf = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_desc-confounds_regressors.tsv"
+    conf_corr = fmri_estimation.fill_confound_nans(pd.read_csv(conf, sep='\t'), dir_path)
+    assert not conf_corr.isnull().values.any()
 
 
 # dMRI

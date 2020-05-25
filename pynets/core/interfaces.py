@@ -5,9 +5,13 @@ Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
+import warnings
+import numpy as np
+import indexed_gzip
+import nibabel as nib
 from nipype.interfaces.base import (BaseInterface, BaseInterfaceInputSpec, TraitedSpec, File, traits, SimpleInterface,
                                     Directory)
-
+warnings.filterwarnings("ignore")
 
 class NetworkAnalysisInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for NetworkAnalysis"""
@@ -119,7 +123,6 @@ class IndividualClustering(SimpleInterface):
 
     def _run_interface(self, runtime, c_boot=10):
         import gc
-        import nibabel as nib
         from nilearn.masking import unmask
         from pynets.fmri.estimation import timeseries_bootstrap
         from nipype.utils.filemanip import fname_presuffix, copyfile
@@ -668,8 +671,6 @@ class Tracking(SimpleInterface):
     def _run_interface(self, runtime):
         import gc
         import os
-        import numpy as np
-        import nibabel as nib
         try:
             import cPickle as pickle
         except ImportError:
@@ -802,8 +803,6 @@ class MakeGtabBmask(SimpleInterface):
     output_spec = _MakeGtabBmaskOutputSpec
 
     def _run_interface(self, runtime):
-        import numpy as np
-        import nibabel as nib
         from dipy.io import save_pickle
         from dipy.io import read_bvals_bvecs
         from dipy.core.gradients import gradient_table
