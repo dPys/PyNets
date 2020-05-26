@@ -203,30 +203,6 @@ def test_fill_confound_nans():
 
 
 # dMRI
-def test_tens_mod_fa_est():
-    from dipy.core.gradients import gradient_table
-    from dipy.io import save_pickle
-
-    base_dir = str(Path(__file__).parent/"examples")
-    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
-    dir_path = f"{base_dir}/003/dmri"
-    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
-    bvals = f"{dir_path}/sub-003_dwi.bval"
-    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
-    gtab_file = f"{base_dir}/gtab.pkl"
-    gtab = gradient_table(bvals, bvecs)
-    gtab.b0_threshold = 50
-    gtab_bvals = gtab.bvals.copy()
-    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
-    gtab_bvals[b0_thr_ixs] = 0
-    gtab.b0s_mask = gtab_bvals == 0
-    save_pickle(gtab_file, gtab)
-
-    [fa_path, _, _, _] = dmri_estimation.tens_mod_fa_est(gtab_file, dwi_file, B0_mask)
-
-    assert os.path.isfile(fa_path)
-
-
 def test_create_anisopowermap():
     from dipy.core.gradients import gradient_table
     from dipy.io import save_pickle
@@ -251,9 +227,40 @@ def test_create_anisopowermap():
     assert os.path.isfile(anisopwr_path)
 
 
+def test_tens_mod_fa_est():
+    from dipy.core.gradients import gradient_table
+    from dipy.io import save_pickle
+    import tempfile
+
+    base_dir = str(Path(__file__).parent/"examples")
+    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
+    dir_path = f"{base_dir}/003/dmri"
+    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
+    bvals = f"{dir_path}/sub-003_dwi.bval"
+    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
+    gtab_file = f"{base_dir}/gtab.pkl"
+    gtab = gradient_table(bvals, bvecs)
+    gtab.b0_threshold = 50
+    gtab_bvals = gtab.bvals.copy()
+    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
+    gtab_bvals[b0_thr_ixs] = 0
+    gtab.b0s_mask = gtab_bvals == 0
+    save_pickle(gtab_file, gtab)
+
+    dir_path = str(tempfile.TemporaryDirectory().name)
+    os.makedirs(dir_path)
+    B0_mask_patch = f"{dir_path}/mean_B0_bet_mask_patch.nii.gz"
+    mask_img = nib.load(B0_mask)
+    mask_data = mask_img.get_fdata()
+    nib.save(nib.Nifti1Image(mask_data, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
+
+    [fa_path, _, _, _] = dmri_estimation.tens_mod_fa_est(gtab_file, dwi_file, B0_mask)
+
+    assert os.path.isfile(fa_path)
+
+
 def test_tens_mod_est():
     from dipy.core.gradients import gradient_table
-    from sklearn.feature_extraction import image
     import tempfile
 
     base_dir = str(Path(__file__).parent/"examples")
@@ -268,17 +275,14 @@ def test_tens_mod_est():
     b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
     gtab_bvals[b0_thr_ixs] = 0
     gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()
+    data = nib.load(dwi_file).get_fdata()[28:84, 28:84, 18:57]
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
     B0_mask_patch = f"{dir_path}/mean_B0_bet_mask_patch.nii.gz"
-    pe = image.PatchExtractor(patch_size=(20, 20))
     mask_img = nib.load(B0_mask)
-    mask_data = mask_img.get_fdata()
-    pe_fit = pe.fit(mask_data)
-    pe_trans = pe.transform(mask_data)
-    nib.save(nib.Nifti1Image(pe_trans, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
+    mask_data = mask_img.get_fdata()[28:84, 28:84, 18:57]
+    nib.save(nib.Nifti1Image(mask_data, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
 
     [mod_odf, model] = dmri_estimation.tens_mod_est(gtab, data, B0_mask_patch)
 
@@ -288,7 +292,6 @@ def test_tens_mod_est():
 
 def test_csa_mod_est():
     from dipy.core.gradients import gradient_table
-    from sklearn.feature_extraction import image
     import tempfile
 
     base_dir = str(Path(__file__).parent/"examples")
@@ -303,17 +306,14 @@ def test_csa_mod_est():
     b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
     gtab_bvals[b0_thr_ixs] = 0
     gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()
+    data = nib.load(dwi_file).get_fdata()[28:84, 28:84, 18:57]
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
     B0_mask_patch = f"{dir_path}/mean_B0_bet_mask_patch.nii.gz"
-    pe = image.PatchExtractor(patch_size=(20, 20))
     mask_img = nib.load(B0_mask)
-    mask_data = mask_img.get_fdata()
-    pe_fit = pe.fit(mask_data)
-    pe_trans = pe.transform(mask_data)
-    nib.save(nib.Nifti1Image(pe_trans, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
+    mask_data = mask_img.get_fdata()[28:84, 28:84, 18:57]
+    nib.save(nib.Nifti1Image(mask_data, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
 
     [csa_mod, model] = dmri_estimation.csa_mod_est(gtab, data, B0_mask_patch)
 
@@ -323,7 +323,6 @@ def test_csa_mod_est():
 
 def test_csd_mod_est():
     from dipy.core.gradients import gradient_table
-    from sklearn.feature_extraction import image
     import tempfile
 
     base_dir = str(Path(__file__).parent/"examples")
@@ -338,17 +337,14 @@ def test_csd_mod_est():
     b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
     gtab_bvals[b0_thr_ixs] = 0
     gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()
+    data = nib.load(dwi_file).get_fdata()[28:84, 28:84, 18:57]
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
     B0_mask_patch = f"{dir_path}/mean_B0_bet_mask_patch.nii.gz"
-    pe = image.PatchExtractor(patch_size=(20, 20))
     mask_img = nib.load(B0_mask)
-    mask_data = mask_img.get_fdata()
-    pe_fit = pe.fit(mask_data)
-    pe_trans = pe.transform(mask_data)
-    nib.save(nib.Nifti1Image(pe_trans, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
+    mask_data = mask_img.get_fdata()[28:84, 28:84, 18:57]
+    nib.save(nib.Nifti1Image(mask_data, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
 
     [csd_mod, model] = dmri_estimation.csd_mod_est(gtab, data, B0_mask_patch)
 
@@ -358,7 +354,6 @@ def test_csd_mod_est():
 
 def test_sfm_mod_est():
     from dipy.core.gradients import gradient_table
-    from sklearn.feature_extraction import image
     import tempfile
 
     base_dir = str(Path(__file__).parent/"examples")
@@ -373,17 +368,14 @@ def test_sfm_mod_est():
     b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
     gtab_bvals[b0_thr_ixs] = 0
     gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()
+    data = nib.load(dwi_file).get_fdata()[28:84, 28:84, 18:57]
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
     B0_mask_patch = f"{dir_path}/mean_B0_bet_mask_patch.nii.gz"
-    pe = image.PatchExtractor(patch_size=(20, 20))
     mask_img = nib.load(B0_mask)
-    mask_data = mask_img.get_fdata()
-    pe_fit = pe.fit(mask_data)
-    pe_trans = pe.transform(mask_data)
-    nib.save(nib.Nifti1Image(pe_trans, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
+    mask_data = mask_img.get_fdata()[28:84, 28:84, 18:57]
+    nib.save(nib.Nifti1Image(mask_data, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
 
     [sf_odf, model] = dmri_estimation.sfm_mod_est(gtab, data, B0_mask_patch)
 
