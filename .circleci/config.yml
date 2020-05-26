@@ -177,9 +177,11 @@ jobs:
             sudo apt-get install -y software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
             sudo apt-get upgrade
             pyenv install -f 3.6.5 || true
-            export PATH="~/.pyenv/bin:$PATH"
             eval "$(pyenv init -)"
             pyenv global 3.6.5
+            echo "export PATH="~/.pyenv/bin:$PATH"" >> $BASH_ENV
+            echo "export PATH="~/.pyenv/libexec:$PATH"" >> $BASH_ENV
+            source $BASH_ENV
       - run:
           name: Check Python version and upgrade pip
           command: |
@@ -189,7 +191,7 @@ jobs:
           name: Install pytest
           command: python -m pip install pytest
       - run:
-          name: Install core dependencies
+          name: Install system dependencies and LFS
           command: |
             sudo apt-get update
             sudo apt-get install -y tcl-dev apt-transport-https ca-certificates gnupg-agent graphviz sqlite3 dc libquadmath0 zip unzip libglu1 zlib1g-dev libssl-dev libreadline-dev wget libncursesw5-dev xz-utils libffi-dev libfreetype6-dev pkg-config libgsl0-dev g++ git libgomp1 libpng-dev libgl1-mesa-glx libxtst6 libgtk2.0-bin libxft2 lib32ncurses5 libxmu-dev bzip2 gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa
@@ -204,9 +206,8 @@ jobs:
             ssh git@github.com git-lfs-authenticate "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}" download
             git lfs pull
       - run:
-          name: Install Requirements (may contain pinned versions)
+          name: Install Requirements
           command: |
-            pyenv local 3.6.5
             python -m pip install -r requirements.txt
       - run:
           name: Install pynets
@@ -247,7 +248,7 @@ jobs:
           command: |
             wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C tests
       - run:
-          name: Examples
+          name: Run unit tests
           no_output_timeout: 720m
           command: |
             python -m pytest -s -q tests/test_thresholding.py
