@@ -7,7 +7,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/tests/test_estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_estimation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -46,8 +46,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/tests/test_estimation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="508">
-              <caret line="428" column="34" lean-forward="true" selection-start-line="428" selection-start-column="34" selection-end-line="428" selection-end-column="34" />
+            <state relative-caret-position="268">
+              <caret line="412" column="20" selection-start-line="412" selection-start-column="20" selection-end-line="412" selection-end-column="20" />
               <folding>
                 <element signature="e#131#144#0" expanded="true" />
               </folding>
@@ -445,12 +445,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="91968000" />
+      <workItem from="1589906893238" duration="92247000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1063274000" />
+    <option name="totallyTimeSpent" value="1063553000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -934,8 +934,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_estimation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="508">
-          <caret line="428" column="34" lean-forward="true" selection-start-line="428" selection-start-column="34" selection-end-line="428" selection-end-column="34" />
+        <state relative-caret-position="268">
+          <caret line="412" column="20" selection-start-line="412" selection-start-column="20" selection-end-line="412" selection-end-column="20" />
           <folding>
             <element signature="e#131#144#0" expanded="true" />
           </folding>

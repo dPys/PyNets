@@ -6,10 +6,29 @@ python:
   - 3.7
   - 3.6
 
+services:
+  - docker
+
+addons:
+  apt:
+    packages:
+      - docker-ce
+
+env:
+  - PARALLELIZE=true
+  global:
+    - FSLDIR=/usr/share/fsl/5.0
+
 before_install:
+  # make local input and output directories to attach to container
+  - mkdir -m 777 ../input ../output
+
+  # useful log checks
+  - readlink -f ../input
+  - docker version
+
   - sudo bash -c "echo 'Acquire::ForceIPv4 \"true\";' > /etc/apt/apt.conf.d/99force-ipv4"
-  - |
-    wget -qO- "https://github.com/crazy-max/travis-wait-enhanced/releases/download/v1.2.0/travis-wait-enhanced_1.2.0_linux_x86_64.tar.gz" | tar -zxvf - travis-wait-enhanced
+  - wget -qO- "https://github.com/crazy-max/travis-wait-enhanced/releases/download/v1.2.0/travis-wait-enhanced_1.2.0_linux_x86_64.tar.gz" | tar -zxvf - travis-wait-enhanced
     mv travis-wait-enhanced /home/travis/bin/
     travis-wait-enhanced --version
   - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
@@ -17,23 +36,28 @@ before_install:
   - sudo apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates
   - PYTHONPATH=$PYTHONPATH:$(pwd)
   - travis_retry wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 -c -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C $TRAVIS_BUILD_DIR/tests
+  - mv examples/BIDS/sub-0025427 ../inputs
+  # grab pynets' travis docker image, run it with local branch attached as a volume
+  - docker pull dpys/pynets:latest
+  - docker images
+  - cd pynets
+  - docker run -t -d --name travis -e MPLCONFIGDIR=/tmp/matplotlib -v $(pwd):/pynets -v $(readlink -f ../output):/output --entrypoint /bin/bash dpys/pynets:latest
+  - docker ps
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
-  - pip install --upgrade pip
-  - pip install -U pytest
-  - pip install -r requirements.txt
-  - python setup.py install
-  - pip install git+https://github.com/dPys/nilearn.git
-  - pip install codecov pytest-cov pytest-travis-fold
-env:
-  - PARALLELIZE=true
-  global:
-    - FSLDIR=/usr/share/fsl/5.0
+  - docker exec -w /pynets travis pip install --upgrade pip
+  - docker exec -w /pynets travis pip install -U pytest
+  - docker exec -w /pynets travis pip install -r requirements.txt
+  - docker exec -w /pynets travis python setup.py install
+  - docker exec -w /pynets travis pip install git+https://github.com/dPys/nilearn.git
 
 # command to run tests, e.g. python setup.py test
 script:
-   - travis-wait-enhanced --interval=1m --timeout=720m -- ./script_with_folds.sh
+  - while sleep 9m; do echo "=====[ $SECONDS seconds still running ]====="; done &
+  - docker exec -w /pynets travis pynets_bids /inputs /outputs participant func dwi --participant_label 0025427 --session_label 1
+  - kill %1
 
-after_script:
-  - codecov
+  # generate an identifier for this travis branch run using date_SP_MOD_commit_ID
+  - rand=$(date +'%m-%d-%Y'-$SP-$MOD-${TRAVIS_COMMIT:0:7})
+
