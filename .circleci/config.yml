@@ -173,12 +173,13 @@ jobs:
             sudo apt-get update
             sudo apt-get install python3.6-tk tk-dev
             pyenv install --force 3.6.5
-            pyenv global 3.6.5
+            pyenv local 3.6.5
       - run:
           name: Check Python version and upgrade pip
           command: |
             curl https://bootstrap.pypa.io/get-pip.py | sudo python3.6
             python -m pip install -U pip
+            python --version
       - run:
           name: Install pytest
           command: python -m pip install pytest
