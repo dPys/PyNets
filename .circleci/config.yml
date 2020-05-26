@@ -186,6 +186,9 @@ jobs:
             python -m pip install --upgrade pip setuptools
             python -m pip install virtualenv
             python -m virtualenv env
+            mkdir testing
+            cd testing
+            pyenv virtualenv 3.6.5 venv_testing
       - run:
           name: Install pytest
           command: python -m pip install pytest
@@ -249,18 +252,20 @@ jobs:
           name: Examples
           no_output_timeout: 720m
           command: |
-            python -m pytest -s -q tests/test_thresholding.py
-            python -m pytest -s -q tests/test_utils.py
-            python -m pytest -s -q tests/test_netstats.py
-            python -m pytest -s -q tests/test_nodemaker.py
-            python -m pytest -s -q tests/test_plotting.py
-            python -m pytest -s -q tests/test_refs.py
-            python -m pytest -s -q tests/test_clustering.py
-            python -m pytest -s -q tests/test_dmri_utils.py
-            python -m pytest -s -q tests/test_track.py
-            python -m pytest -s -q tests/test_estimation.py
-            python -m pytest -s -q tests/test_reg_utils.py
-            python -m pytest -s -q tests/test_workflows.py
+            pyenv local 3.6.5
+            pyenv activate venv_testing
+            pytest -s -q tests/test_thresholding.py
+            pytest -s -q tests/test_utils.py
+            pytest -s -q tests/test_netstats.py
+            pytest -s -q tests/test_nodemaker.py
+            pytest -s -q tests/test_plotting.py
+            pytest -s -q tests/test_refs.py
+            pytest -s -q tests/test_clustering.py
+            pytest -s -q tests/test_dmri_utils.py
+            pytest -s -q tests/test_track.py
+            pytest -s -q tests/test_estimation.py
+            pytest -s -q tests/test_reg_utils.py
+            pytest -s -q tests/test_workflows.py
       - store_test_results:
           path: test-results
 
