@@ -160,12 +160,14 @@ jobs:
     environment:
       - FSLDIR: /usr/local/fsl
       - FSLOUTPUTTYPE: 'NIFTI'
+      - PYTHONUNBUFFERED: 1
     resource_class: medium
     steps:
       - checkout
       - run:
-          name: "Switch to Python v3.7"
+          name: "Switch to Python v3.6"
           command: |
+            pyenv uninstall 3.6.5 || true
             sudo add-apt-repository ppa:deadsnakes/ppa
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
@@ -173,14 +175,16 @@ jobs:
             sudo apt-get install -y make build-essential
             sudo apt-get install -y software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
             sudo apt-get upgrade
-            pyenv rehash
-            pyenv global 3.7.0
+            pyenv install 3.6.5 || true
+            eval "$(pyenv init -)"
+            pyenv global 3.6.5
       - run:
           name: Check Python version and upgrade pip
           command: |
             python -m pip install -U pip
             python -m pip install --upgrade pip setuptools
-            python --version
+            python -m pip install virtualenv
+            python -m virtualenv env
       - run:
           name: Install pytest
           command: python -m pip install pytest
@@ -244,7 +248,6 @@ jobs:
           name: Examples
           no_output_timeout: 720m
           command: |
-            export PYTHONUNBUFFERED=1
             python -m pytest -s -q tests/test_thresholding.py
             python -m pytest -s -q tests/test_utils.py
             python -m pytest -s -q tests/test_netstats.py
