@@ -25,10 +25,6 @@ before_install:
   - wget -qO- "https://github.com/crazy-max/travis-wait-enhanced/releases/download/v1.2.0/travis-wait-enhanced_1.2.0_linux_x86_64.tar.gz" | tar -zxvf - travis-wait-enhanced
   - mv travis-wait-enhanced /home/travis/bin/
   - travis-wait-enhanced --version
-  - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
-  - sudo apt-get update -qq
-  - sudo apt-get install -y --no-install-recommends fsl-core fsl-atlases fsl-mni-structural-atlas fsl-mni152-templates
-  - PYTHONPATH=$PYTHONPATH:$(pwd)
   - travis_retry wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 -c -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C $TRAVIS_BUILD_DIR/tests
   - mv $TRAVIS_BUILD_DIR/tests/examples/BIDS/sub-0025427 ../inputs
   - docker pull dpys/pynets:latest
@@ -36,14 +32,8 @@ before_install:
   - cd pynets
   - docker run -t -d --name travis -e MPLCONFIGDIR=/tmp/matplotlib -v $(pwd):/pynets -v $(readlink -f ../output):/output --entrypoint /bin/bash dpys/pynets:latest
   - docker ps
-install:
-  - docker exec -w /pynets travis pip install --upgrade pip
-  - docker exec -w /pynets travis pip install -U pytest
-  - docker exec -w /pynets travis pip install -r requirements.txt
-  - docker exec -w /pynets travis python setup.py install
-  - docker exec -w /pynets travis pip install git+https://github.com/dPys/nilearn.git
 script:
   - while sleep 9m; do echo "=====[ $SECONDS seconds still running ]====="; done &
-  - docker exec -w /pynets travis pynets_bids /inputs /outputs participant func dwi --participant_label 0025427 --session_label 1
+  - docker exec -w /pynets travis pynets_bids ../inputs ../outputs participant func dwi --participant_label 0025427 --session_label 1 -config $TRAVIS_BUILD_DIR/pynets/config/bids_config_test.json
   - kill %1
   - rand=$(date +'%m-%d-%Y'-$SP-$MOD-${TRAVIS_COMMIT:0:7})
