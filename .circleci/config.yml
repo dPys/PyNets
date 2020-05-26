@@ -178,8 +178,8 @@ jobs:
       - run:
           name: Check Python version and upgrade pip
           command: |
-            sudo python -m pip install -U pip
-            sudo python -m pip install --upgrade pip setuptools
+            python -m pip install -U pip
+            python -m pip install --upgrade pip setuptools
             python --version
       - run:
           name: Install pytest
@@ -205,8 +205,8 @@ jobs:
       - run:
           name: Install pynets
           command: |
-            sudo python setup.py install
-            sudo python -m pip install git+https://github.com/dPys/nilearn.git
+            python setup.py install
+            python -m pip install git+https://github.com/dPys/nilearn.git
             python -c "from matplotlib import font_manager"
             sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
             mkdir -p ~/.nipype
