@@ -27,7 +27,7 @@ before_install:
   - mv travis-wait-enhanced /home/travis/bin/
   - travis-wait-enhanced --version
   - travis_retry wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 -c -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C $TRAVIS_BUILD_DIR/tests
-  - mv $TRAVIS_BUILD_DIR/tests/examples/BIDS
+  - mv $TRAVIS_BUILD_DIR/tests/examples/BIDS/ /home/travis/build/dPys/input
   - docker pull dpys/pynets:latest
   - docker images
   - cd pynets
