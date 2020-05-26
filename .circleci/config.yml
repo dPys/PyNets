@@ -153,44 +153,48 @@ jobs:
          key: data-v0-{{ .Revision }}-{{ epoch }}
          paths:
             - /tmp/data
-
   unit_tests:
     machine:
       image: ubuntu-1604:201903-01
     working_directory: /tmp/src/pynets
     environment:
-      - FSLDIR: /usr/share/fsl/5.0
+      - FSLDIR: /usr/local/fsl
       - FSLOUTPUTTYPE: 'NIFTI'
+      - PYTHONUNBUFFERED: 1
     resource_class: medium
     steps:
       - checkout
       - run:
           name: "Switch to Python v3.6"
           command: |
+            pyenv local --unset
+            pyenv uninstall -f 3.6.5 || true
             sudo add-apt-repository ppa:deadsnakes/ppa
+            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
+            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
             sudo apt-get update
-            sudo apt-get install -y make build-essential curl software-properties-common
-            sudo apt-get update
-            sudo apt-get install python3.6-tk tk-dev
-            pyenv install --force 3.6.5
+            sudo apt-get install -y make build-essential
+            sudo apt-get install -y software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
+            sudo apt-get upgrade
+            pyenv install -f 3.6.5 || true
+            eval "$(pyenv init -)"
             pyenv global 3.6.5
+            echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
+            echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
+            source $BASH_ENV
       - run:
           name: Check Python version and upgrade pip
           command: |
-            curl https://bootstrap.pypa.io/get-pip.py | sudo python3.6
             python -m pip install -U pip
+            python -m pip install --upgrade pip setuptools
       - run:
           name: Install pytest
           command: python -m pip install pytest
       - run:
-          name: Install core dependencies
+          name: Install system dependencies and LFS
           command: |
-            set -e
-            sudo apt update && sudo apt upgrade -y
-            curl -L https://packagecloud.io/circleci/trusty/gpgkey | sudo apt-key add -
-            curl -L https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
             sudo apt-get update
-            sudo apt-get install -y --no-install-recommends tcl-dev apt-transport-https ca-certificates gnupg-agent graphviz sqlite3 libsqlite3-dev dc libquadmath0 zip unzip libglu1 zlib1g-dev libssl-dev libbz2-dev libreadline-dev wget llvm libncurses5-dev libncursesw5-dev xz-utils libffi-dev liblzma-dev libfreetype6-dev pkg-config libgsl0-dev g++ git libgomp1 libpng-dev libgl1-mesa-glx libxtst6 libgtk2.0-bin libxft2 lib32ncurses5 libxmu-dev bzip2 gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa
+            sudo apt-get install -y tcl-dev apt-transport-https ca-certificates gnupg-agent graphviz sqlite3 dc libquadmath0 zip unzip libglu1 zlib1g-dev libssl-dev libreadline-dev wget libncursesw5-dev xz-utils libffi-dev libfreetype6-dev pkg-config libgsl0-dev g++ git libgomp1 libpng-dev libgl1-mesa-glx libxtst6 libgtk2.0-bin libxft2 lib32ncurses5 libxmu-dev bzip2 gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa
             curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
             curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
             sudo apt-get update
@@ -202,8 +206,9 @@ jobs:
             ssh git@github.com git-lfs-authenticate "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}" download
             git lfs pull
       - run:
-          name: Install Requirements (may contain pinned versions)
-          command: python -m pip install -r requirements.txt
+          name: Install Requirements
+          command: |
+            python -m pip install -r requirements.txt
       - run:
           name: Install pynets
           command: |
@@ -219,22 +224,23 @@ jobs:
           command: |
             sudo sh -c 'echo `curl -sSL "http://neuro.debian.net/lists/stretch.us-ca.full"` >> /etc/apt/sources.list.d/neurodebian.sources.list'
             sudo apt-key add docker/files/neurodebian.gpg && (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
-            sudo wget -O- http://neuro.debian.net/lists/bionic.cn-hf.full | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
-            sudo apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
             sudo apt-get update -qq
             sudo apt-get upgrade
             sudo chmod 777 /usr/local
             sudo curl -sSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.2-centos7_64.tar.gz | sudo tar xz -C /usr/local --exclude='fsl/doc' --exclude='fsl/data/first' --exclude='fsl/data/atlases' --exclude='fsl/data/possum' --exclude='fsl/src' --exclude='fsl/extras/src' --exclude='fsl/bin/fslview*' --exclude='fsl/bin/FSLeyes' --exclude='fsl/bin/*_gpu*' --exclude='fsl/bin/*_cuda*'
             sudo chmod 777 -R /usr/local/fsl/bin
-            sudo apt-get clean -y
-            sudo apt-get autoclean -y
       - run:
           name: Update PATH and Define Environment Variable at Runtime
           command: |
              echo '# Path to FSL' >> $BASH_ENV
-             echo 'FSLDIR=/usr/share/fsl/5.0' >> $BASH_ENV
-             echo '. ${FSLDIR}/etc/fslconf/fsl.sh' >> $BASH_ENV
-             echo 'PATH=${FSLDIR}/bin:${PATH}' >> $BASH_ENV
+             echo 'FSLDIR=/usr/local/fsl' >> $BASH_ENV
+             echo 'FSLOUTPUTTYPE=NIFTI_GZ' >> $BASH_ENV
+             echo "PATH=/usr/local/fsl/bin:"$PATH"" >> $BASH_ENV
+             echo 'FSLMULTIFILEQUIT=TRUE' >> $BASH_ENV
+             echo "LD_LIBRARY_PATH="/usr/local/fsl":$LD_LIBRARY_PATH" >> $BASH_ENV
+             echo 'FSLTCLSH=/usr/bin/tclsh' >> $BASH_ENV
+             echo 'FSLWISH=/usr/bin/wish' >> $BASH_ENV
+             echo 'FSLBROWSER=/etc/alternatives/x-www-browser' >> $BASH_ENV
              echo 'export FSLDIR PATH' >> $BASH_ENV
              source $BASH_ENV
       - run:
@@ -242,10 +248,9 @@ jobs:
           command: |
             wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C tests
       - run:
-          name: Examples
+          name: Run unit tests
           no_output_timeout: 720m
           command: |
-            export PYTHONUNBUFFERED=1
             python -m pytest -s -q tests/test_thresholding.py
             python -m pytest -s -q tests/test_utils.py
             python -m pytest -s -q tests/test_netstats.py
@@ -258,8 +263,6 @@ jobs:
             python -m pytest -s -q tests/test_estimation.py
             python -m pytest -s -q tests/test_reg_utils.py
             python -m pytest -s -q tests/test_workflows.py
-      - store_test_results:
-          path: test-results
 
   deploy_docker_patches:
     machine:

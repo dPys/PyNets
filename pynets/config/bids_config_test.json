@@ -2,7 +2,7 @@
     "dwi": {
             "dg": "['clos']",
             "ml": "['20']",
-            "mod": "['csd', 'ten', 'sfm']",
+            "mod": "['csd']",
             "s": 10000,
             "tc": "['cmc']",
             "tt": "['particle']"

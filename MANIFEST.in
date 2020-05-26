@@ -13,6 +13,7 @@ recursive-include * *.txt
 recursive-include * *.csv
 recursive-include pynets/cli *
 recursive-include pynets/core *
+recursive-include pynets/config *
 recursive-include pynets/core/labelcharts *
 recursive-include pynets/registration *
 recursive-include pynets/fmri *
