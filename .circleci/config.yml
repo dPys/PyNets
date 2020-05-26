@@ -179,15 +179,12 @@ jobs:
             pyenv install -f 3.6.5 || true
             export PATH="~/.pyenv/bin:$PATH"
             eval "$(pyenv init -)"
-            eval "$(pyenv virtualenv-init -)"
             pyenv global 3.6.5
       - run:
           name: Check Python version and upgrade pip
           command: |
             python -m pip install -U pip
             python -m pip install --upgrade pip setuptools
-            python -m pip install virtualenv
-            python -m virtualenv env
       - run:
           name: Install pytest
           command: python -m pip install pytest
@@ -210,7 +207,6 @@ jobs:
           name: Install Requirements (may contain pinned versions)
           command: |
             pyenv local 3.6.5
-            pyenv activate my-virtualenv
             python -m pip install -r requirements.txt
       - run:
           name: Install pynets
@@ -254,18 +250,18 @@ jobs:
           name: Examples
           no_output_timeout: 720m
           command: |
-            pytest -s -q tests/test_thresholding.py
-            pytest -s -q tests/test_utils.py
-            pytest -s -q tests/test_netstats.py
-            pytest -s -q tests/test_nodemaker.py
-            pytest -s -q tests/test_plotting.py
-            pytest -s -q tests/test_refs.py
-            pytest -s -q tests/test_clustering.py
-            pytest -s -q tests/test_dmri_utils.py
-            pytest -s -q tests/test_track.py
-            pytest -s -q tests/test_estimation.py
-            pytest -s -q tests/test_reg_utils.py
-            pytest -s -q tests/test_workflows.py
+            python -m pytest -s -q tests/test_thresholding.py
+            python -m pytest -s -q tests/test_utils.py
+            python -m pytest -s -q tests/test_netstats.py
+            python -m pytest -s -q tests/test_nodemaker.py
+            python -m pytest -s -q tests/test_plotting.py
+            python -m pytest -s -q tests/test_refs.py
+            python -m pytest -s -q tests/test_clustering.py
+            python -m pytest -s -q tests/test_dmri_utils.py
+            python -m pytest -s -q tests/test_track.py
+            python -m pytest -s -q tests/test_estimation.py
+            python -m pytest -s -q tests/test_reg_utils.py
+            python -m pytest -s -q tests/test_workflows.py
       - store_test_results:
           path: test-results
 
