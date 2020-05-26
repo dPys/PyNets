@@ -167,6 +167,7 @@ jobs:
           name: "Switch to Python v3.7"
           command: |
             sudo add-apt-repository ppa:deadsnakes/ppa
+            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
             sudo apt-get update
             sudo apt-get install -y make build-essential
             sudo apt-get install -y software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
