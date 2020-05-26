@@ -153,32 +153,31 @@ jobs:
          key: data-v0-{{ .Revision }}-{{ epoch }}
          paths:
             - /tmp/data
-
   unit_tests:
     machine:
       image: ubuntu-1604:201903-01
     working_directory: /tmp/src/pynets
     environment:
-      - FSLDIR: /usr/share/fsl/5.0
+      - FSLDIR: /usr/local/fsl
       - FSLOUTPUTTYPE: 'NIFTI'
     resource_class: medium
     steps:
       - checkout
       - run:
-          name: "Switch to Python v3.6"
+          name: "Switch to Python v3.7"
           command: |
             sudo add-apt-repository ppa:deadsnakes/ppa
             sudo apt-get update
-            sudo apt-get install -y make build-essential curl software-properties-common
-            sudo apt-get update
-            sudo apt-get install python3.6-tk tk-dev
-            pyenv install --force 3.6.5
-            pyenv local 3.6.5
+            sudo apt-get install -y make build-essential
+            sudo apt-get install -y software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
+            sudo apt-get upgrade
+            pyenv rehash
+            pyenv global 3.7.0
       - run:
           name: Check Python version and upgrade pip
           command: |
-            curl https://bootstrap.pypa.io/get-pip.py | sudo python3.6
-            python -m pip install -U pip
+            sudo python -m pip install -U pip
+            sudo python -m pip install --upgrade pip setuptools
             python --version
       - run:
           name: Install pytest
@@ -191,7 +190,7 @@ jobs:
             curl -L https://packagecloud.io/circleci/trusty/gpgkey | sudo apt-key add -
             curl -L https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
             sudo apt-get update
-            sudo apt-get install -y --no-install-recommends tcl-dev apt-transport-https ca-certificates gnupg-agent graphviz sqlite3 libsqlite3-dev dc libquadmath0 zip unzip libglu1 zlib1g-dev libssl-dev libbz2-dev libreadline-dev wget llvm libncurses5-dev libncursesw5-dev xz-utils libffi-dev liblzma-dev libfreetype6-dev pkg-config libgsl0-dev g++ git libgomp1 libpng-dev libgl1-mesa-glx libxtst6 libgtk2.0-bin libxft2 lib32ncurses5 libxmu-dev bzip2 gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa
+            sudo apt-get install -y --no-install-recommends tcl-dev apt-transport-https ca-certificates gnupg-agent graphviz sqlite3 dc libquadmath0 zip unzip libglu1 zlib1g-dev libssl-dev libreadline-dev wget libncursesw5-dev xz-utils libffi-dev libfreetype6-dev pkg-config libgsl0-dev g++ git libgomp1 libpng-dev libgl1-mesa-glx libxtst6 libgtk2.0-bin libxft2 lib32ncurses5 libxmu-dev bzip2 gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa
             curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
             curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
             sudo apt-get update
@@ -208,8 +207,8 @@ jobs:
       - run:
           name: Install pynets
           command: |
-            python setup.py install
-            python -m pip install git+https://github.com/dPys/nilearn.git
+            sudo python setup.py install
+            sudo python -m pip install git+https://github.com/dPys/nilearn.git
             python -c "from matplotlib import font_manager"
             sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
             mkdir -p ~/.nipype
@@ -225,8 +224,6 @@ jobs:
             sudo chmod 777 /usr/local
             sudo curl -sSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.2-centos7_64.tar.gz | sudo tar xz -C /usr/local --exclude='fsl/doc' --exclude='fsl/data/first' --exclude='fsl/data/atlases' --exclude='fsl/data/possum' --exclude='fsl/src' --exclude='fsl/extras/src' --exclude='fsl/bin/fslview*' --exclude='fsl/bin/FSLeyes' --exclude='fsl/bin/*_gpu*' --exclude='fsl/bin/*_cuda*'
             sudo chmod 777 -R /usr/local/fsl/bin
-            sudo apt-get clean -y
-            sudo apt-get autoclean -y
       - run:
           name: Update PATH and Define Environment Variable at Runtime
           command: |
