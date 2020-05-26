@@ -177,7 +177,9 @@ jobs:
             sudo apt-get install -y software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
             sudo apt-get upgrade
             pyenv install -f 3.6.5 || true
+            export PATH="~/.pyenv/bin:$PATH"
             eval "$(pyenv init -)"
+            eval "$(pyenv virtualenv-init -)"
             pyenv global 3.6.5
       - run:
           name: Check Python version and upgrade pip
@@ -186,9 +188,6 @@ jobs:
             python -m pip install --upgrade pip setuptools
             python -m pip install virtualenv
             python -m virtualenv env
-            mkdir testing
-            cd testing
-            pyenv virtualenv 3.6.5 venv_testing
       - run:
           name: Install pytest
           command: python -m pip install pytest
@@ -209,7 +208,10 @@ jobs:
             git lfs pull
       - run:
           name: Install Requirements (may contain pinned versions)
-          command: python -m pip install -r requirements.txt
+          command: |
+            pyenv local 3.6.5
+            pyenv activate my-virtualenv
+            python -m pip install -r requirements.txt
       - run:
           name: Install pynets
           command: |
@@ -252,8 +254,6 @@ jobs:
           name: Examples
           no_output_timeout: 720m
           command: |
-            pyenv local 3.6.5
-            pyenv activate venv_testing
             pytest -s -q tests/test_thresholding.py
             pytest -s -q tests/test_utils.py
             pytest -s -q tests/test_netstats.py
