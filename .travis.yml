@@ -15,7 +15,6 @@ addons:
       - docker-ce
 
 env:
-  - PARALLELIZE=true
   global:
     - FSLDIR=/usr/share/fsl/5.0
 
