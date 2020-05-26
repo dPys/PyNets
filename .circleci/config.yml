@@ -263,8 +263,6 @@ jobs:
             python -m pytest -s -q tests/test_estimation.py
             python -m pytest -s -q tests/test_reg_utils.py
             python -m pytest -s -q tests/test_workflows.py
-      - store_test_results:
-          path: test-results
 
   deploy_docker_patches:
     machine:
