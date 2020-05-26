@@ -179,8 +179,8 @@ jobs:
             pyenv install -f 3.6.5 || true
             eval "$(pyenv init -)"
             pyenv global 3.6.5
-            echo "export PATH=~/.pyenv/bin:"$PATH"" >> $BASH_ENV
-            echo "export PATH=~/.pyenv/libexec:"$PATH"" >> $BASH_ENV
+            echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
+            echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
             source $BASH_ENV
       - run:
           name: Check Python version and upgrade pip
