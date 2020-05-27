@@ -6,11 +6,11 @@ PyNets™
 
 About
 -----
-PyNets harnesses the power of Nipype, Nilearn, Dipy, and Networkx packages to automatically generate graphical ensembles on a subject-by-subject basis, using any combination of graph-generating hyperparameters. PyNets utilities can be integrated with any existing preprocessing workflow, and a docker container is provided to facilitate complete reproducibility of executions.
+PyNets leverages the Nipype workflow engine, along with Nilearn and Dipy fMRI and dMRI libraries, to sample individual structural and functional connectomes. Uniquely, PyNets enables the user to specify any of a variety of methodological choices (i.e. that impact node and/or edge definitions) and sampling the resulting connectome estimates in a massively scalable and parallel framework. PyNets is a post-processing workflow, which means that it can be run manually on virtually any preprocessed fMRI or dMRI data. Further, it can be deployed as a BIDS application that takes BIDS derivatives and makes BIDS derivatives. Docker and Singularity containers are further available to facilitate reproducibility of executions. Cloud computing with AWS batch and S3 is also supported.
 
 Documentation
 -------------
-Official installation, user-guide, and API docs now live here: https://pynets.readthedocs.io/en/latest/
+Explore official installation instruction, user-guide, API, and examples: https://pynets.readthedocs.io/en/latest/
 
 Citing
 ------
