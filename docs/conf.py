@@ -143,12 +143,14 @@ todo_include_todos = False
 # html_theme = 'sphinx_rtd_theme'
 # html_theme = 'alabaster'
 # html_style = '_static/nature.css'
-html_style = '_static/default.css'
-
+# html_style = '_static/default.css'
+html_css_files = [
+    '_static/rtd_dark.css',
+]
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {"relbarbgcolor": "black"}
+#html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
