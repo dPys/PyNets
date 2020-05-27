@@ -1,4 +1,7 @@
 .. include:: links.rst
+.. role:: bash(code)
+   :language: bash
+.. role:: orange
 
 #####
 Usage
@@ -81,22 +84,25 @@ In this case, the input dataset should be in `BIDS (Brain Imaging Data Structure
 The `runconfig.yml` file in the base directory includes parameter presets, but all General_File_Inputs_ that are included with the `pynets` cli are also exposed to the `pynets_bids` cli.
 
 The common parts of the command follow the `BIDS-Apps <https://github.com/BIDS-Apps>`_ definition.
-Example: ::
+Example:
+.. code-block:: bash:: orange ::
 
-    pynets_bids 's3://hnu/HNU' '/Users/derekpisner/Downloads' func --participant_label 0025427 --session_label 1 --push_location s3://hnu/outputs -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz'
+    pynets_bids 's3://hnu/HNU' '~/outputs' func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz'
 
 
 Docker and AWS
 ==============
 
 PyNets now includes an API for running pynets_bids in a Docker container as well as using AWS Batch. The latter assumes a dataset with BIDS derivatives is stored in an S3 bucket.
-Docker Example: ::
+Docker Example:
+.. code-block:: bash:: orange ::
 
-    docker run -ti --rm --privileged -v $HOME/.aws/credentials:/home/neuro/.aws/credentials dpys/pynets:latest 's3://hnu/HNU' /outputs func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz' -plug 'MultiProc' -pm '8,12' -work '/working'
+    docker run -ti --rm --privileged -v '~/.aws/credentials:/home/neuro/.aws/credentials' dpys/pynets:latest 's3://hnu/HNU' '/outputs' func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz' -plug 'MultiProc' -pm '8,12' -work '/working'
 
-AWS Batch Example: ::
+AWS Batch Example:
+.. code-block:: bash:: orange ::
 
-    pynets_cloud --bucket hnu --dataset HNU func --participant_label 0025427 --session_label 1 --push_location s3://hnu/outputs --jobdir '/Users/derekpisner/.pynets/jobs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz' -pm '30,110'
+    pynets_cloud --bucket 'hnu' --dataset 'HNU' func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' --jobdir '/Users/derekpisner/.pynets/jobs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz' -pm '30,110'
 
 *****************
 Parametric Inputs
@@ -166,9 +172,11 @@ EXAMPLES
 ========
 
 
-You have a preprocessed (minimally -- normalized and skull stripped) functional fMRI dataset called "002.nii.gz" where you assign an arbitrary subject id of 002, you wish to analyze a whole-brain network, using the nilearn atlas 'coords_dosenbach_2010', thresholding the connectivity graph proportionally to retain 0.20% of the strongest connections, and you wish to use partial correlation model estimation: ::
+You have a preprocessed (minimally -- normalized and skull stripped) functional fMRI dataset called "002.nii.gz" where you assign an arbitrary subject id of 002, you wish to analyze a whole-brain network, using the nilearn atlas 'coords_dosenbach_2010', thresholding the connectivity graph proportionally to retain 0.20% of the strongest connections, and you wish to use partial correlation model estimation:
 
-    pynets -id '002' /Users/dPys/outputs \
+.. code-block:: bash:: orange ::
+
+    pynets -id '002' '/Users/dPys/outputs' \
     -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' \ # The fMRI BOLD image data.
     -a 'coords_dosenbach_2010' \ # A spherical atlas.
     -mod 'partcorr' \ # The connectivity model.
@@ -177,7 +185,8 @@ You have a preprocessed (minimally -- normalized and skull stripped) functional 
     -m '/Users/dPys/PyNets/tests/examples/002/fmri/002_mask.nii.gz' # A brain mask for the fMRI BOLD image data.
 
 
-Building upon the previous example, let's say you now wish to analyze the Default network for this same subject's data, but now also using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011', you wish to threshold the graph to achieve a target density of 0.3, and you define your nodes based on spheres with radii at two resolutions (2 and 4 mm), you wish to fit a sparse inverse covariance model in addition to partial correlation, and you wish to plot the results: ::
+Building upon the previous example, let's say you now wish to analyze the Default network for this same subject's data, but now also using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011', you wish to threshold the graph to achieve a target density of 0.3, and you define your nodes based on spheres with radii at two resolutions (2 and 4 mm), you wish to fit a sparse inverse covariance model in addition to partial correlation, and you wish to plot the results:
+.. code-block:: bash:: orange ::
 
     pynets -id '002' /Users/dPys/outputs \
     -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' \ # The fMRI BOLD image data.
@@ -189,9 +198,10 @@ Building upon the previous example, let's say you now wish to analyze the Defaul
     -plt # Activate plotting.
 
 
-Building upon the previous examples, let's say you now wish to analyze the Default and Executive Control Networks for this subject, but this time based on a custom atlas (DesikanKlein2012.nii.gz), this time defining your nodes as parcels (as opposed to spheres), you wish to fit a partial correlation model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), and you wish to prune disconnected nodes: ::
+Building upon the previous examples, let's say you now wish to analyze the Default and Executive Control Networks for this subject, but this time based on a custom atlas (DesikanKlein2012.nii.gz), this time defining your nodes as parcels (as opposed to spheres), you wish to fit a partial correlation model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), and you wish to prune disconnected nodes:
+.. code-block:: bash:: orange ::
 
-    pynets -id '002' /Users/dPys/outputs \
+    pynets -id '002' '/Users/dPys/outputs' \
     -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' \ # The fMRI BOLD image data.
     -ua '/Users/dPys/PyNets/pynets/atlases/DesikanKlein2012.nii.gz' \ # A user-supplied atlas parcellation.
     -mod 'partcorr' \ # The connectivity model.
@@ -203,9 +213,10 @@ Building upon the previous examples, let's say you now wish to analyze the Defau
 .. note::
     In general, parcels are preferable to spheres as nodes because parcels more closely respect atlas or cluster topology.
 
-Building upon the previous examples, let's say you now wish to create a subject-specific atlas based on the subject's unique spatial-temporal profile. In this case, you can specify the path to a binarized mask within which to performed spatially-constrained spectral clustering, and you want to try this at multiple resolutions of k clusters/nodes (i.e. k=50,100,150). You again also wish to define your nodes spherically with radii at both 2 and 4 mm, fitting a partial correlation and sparse inverse covariance model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), you wish to prune disconnected nodes, and you wish to plot your results: ::
+Building upon the previous examples, let's say you now wish to create a subject-specific atlas based on the subject's unique spatial-temporal profile. In this case, you can specify the path to a binarized mask within which to performed spatially-constrained spectral clustering, and you want to try this at multiple resolutions of k clusters/nodes (i.e. k=50,100,150). You again also wish to define your nodes spherically with radii at both 2 and 4 mm, fitting a partial correlation and sparse inverse covariance model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), you wish to prune disconnected nodes, and you wish to plot your results:
+.. code-block:: bash:: orange ::
 
-    pynets -id '002' /Users/dPys/outputs \
+    pynets -id '002' '/Users/dPys/outputs' \
     -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' \ # The fMRI BOLD image data.
     -mod 'partcorr' 'sps' \ # The connectivity models.
     -cm '/Users/dPys/PyNets/tests/examples/pDMN_3_bin.nii.gz' -k 50 100 150 -ct 'ward' \ # Node-making specification with spatially-constrained clustering.
@@ -213,9 +224,10 @@ Building upon the previous examples, let's say you now wish to create a subject-
     -plt -names # Activate plotting with automated node labeling by coordinate reference.
 
 
-You wish to generate a structural connectome, using probabilistic ensemble tractography with 1,000,000 streamlines, based on both constrained-spherical deconvolution (csd) and tensor models, bootstrapped tracking, and direct normalization of streamlines. You wish to use atlas parcels as defined by both DesikanKlein2012, and AALTzourioMazoyer2002, exploring only those nodes belonging to the Default Mode Network, and iterate over a range of densities (i.e. 0.05-0.10 with 1% step), and prune disconnected nodes: ::
+You wish to generate a structural connectome, using probabilistic ensemble tractography with 1,000,000 streamlines, based on both constrained-spherical deconvolution (csd) and tensor models, bootstrapped tracking, and direct normalization of streamlines. You wish to use atlas parcels as defined by both DesikanKlein2012, and AALTzourioMazoyer2002, exploring only those nodes belonging to the Default Mode Network, and iterate over a range of densities (i.e. 0.05-0.10 with 1% step), and prune disconnected nodes:
+.. code-block:: bash:: orange ::
 
-    pynets -id 0021001 /Users/dPys/outputs \
+    pynets -id '0021001' '/Users/dPys/outputs' \
     -dwi '/Users/dPys/PyNets/tests/examples/002/dmri/iso_eddy_corrected_data_denoised.nii.gz' \ # The dMRI diffusion-weighted image data.
     -bval '/Users/dPys/PyNets/tests/examples/002/dmri/bval.bval' \ # The b-values.
     -bvec '/Users/dPys/PyNets/tests/examples/002/dmri/bvec.bvec' \ # The b-vectors.
@@ -240,7 +252,9 @@ There are many other runtime options than these examples demonstrate. To explore
 Interpreting outputs
 ********************
 
-Within each subject's derivative directory which contained the initial image(s) fed into the workflow, PyNets will write a series of 'meta-derivatives', organized into several directories. Each unique resolution (i.e. number) of nodes gets its own subdirectory. Typically these will be named by atlas, but can be named by clustering type and resolution in the case that clustering was used to define nodes. Within each of these subdirectories, are at least two further subdirectories (`graphs` -- which contain the output graphs; `netmetrics` -- which contain several version of the output graph theory measures for the network generated). Depending on options specified at runtime, various other directories may be created such as `figures`, `timeseries`, `parcellations`, and `tractography`. File naming follows a programmatic specification that identifies both the file's defining characteristic (i.e. 'what' it is) along with the hyperparameters used in the creation of the network from which the particular file was derived (i.e. 'how' it was generated). Below is an example of the files contained within these directories following a pynets run using fmri data: ::
+Within each subject's derivative directory which contained the initial image(s) fed into the workflow, PyNets will write a series of 'meta-derivatives', organized into several directories. Each unique resolution (i.e. number) of nodes gets its own subdirectory. Typically these will be named by atlas, but can be named by clustering type and resolution in the case that clustering was used to define nodes. Within each of these subdirectories, are at least two further subdirectories (`graphs` -- which contain the output graphs; `netmetrics` -- which contain several version of the output graph theory measures for the network generated). Depending on options specified at runtime, various other directories may be created such as `figures`, `timeseries`, `parcellations`, and `tractography`. File naming follows a programmatic specification that identifies both the file's defining characteristic (i.e. 'what' it is) along with the hyperparameters used in the creation of the network from which the particular file was derived (i.e. 'how' it was generated). Below is an example of the files contained within these directories following a pynets run using fmri data:
+
+.. code-block:: bash:: orange ::
 
     0205
         ├── figures

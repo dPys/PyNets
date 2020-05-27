@@ -1,4 +1,7 @@
 .. include:: links.rst
+.. role:: bash(code)
+   :language: bash
+.. role:: orange
 
 ------------
 Installation
@@ -15,7 +18,9 @@ Docker Container
 
 In order to run pynets in a Docker container, Docker must be `installed
 <https://docs.docker.com/engine/installation/>`_.
-Once Docker is installed, you can build a container and test it interactively as follows: ::
+Once Docker is installed, you can build a container and test it interactively as follows:
+
+.. code-block:: bash:: orange ::
 
     BUILDIR=$(pwd)
     mkdir -p ${BUILDIR}/pynets_images
@@ -23,9 +28,10 @@ Once Docker is installed, you can build a container and test it interactively as
 
     docker run -ti --rm --privileged \
         --entrypoint /bin/bash
-        -v /tmp:/tmp \
-        -v /var/tmp:/var/tmp \
-        -v /input_files_local:/inputs \
+        -v '/tmp':'/tmp' \
+        -v '/var/tmp':'/var/tmp' \
+        -v '/input_files_local':'/inputs' \
+        -v '/output_files_local':'/outputs' \
         pynets
 
 See `External Dependencies`_ for more information (e.g., specific versions) on what is included in the latest Docker images.
@@ -41,9 +47,10 @@ Preparing a Singularity image (Singularity version >= 2.5)
 ----------------------------------------------------------
 If the version of Singularity on your HPC is modern enough you can create Singularity
 image directly on the HCP.
-This is as simple as: ::
+This is as simple as:
+.. code-block:: bash:: orange ::
 
-    $ singularity build /my_images/pynets-<version>.simg docker://dpys/pynets:<version>
+    singularity build /my_images/pynets-<version>.simg docker://dpys/pynets:<version>
 
 Where ``<version>`` should be replaced with the desired version of PyNets that you want to download.
 
@@ -53,11 +60,12 @@ Preparing a Singularity image (Singularity version < 2.5)
 In this case, start with a machine (e.g., your personal computer) with Docker installed.
 Use `docker2singularity <https://github.com/singularityware/docker2singularity>`_ to
 create a singularity image.
-You will need an active internet connection and some time. ::
+You will need an active internet connection and some time.
+.. code-block:: bash:: orange ::
 
-    $ docker run --privileged -t --rm \
-        -v /var/run/docker.sock:/var/run/docker.sock \
-        -v D:\host\path\where\to\output\singularity\image:/output \
+    docker run --privileged -t --rm \
+        -v '/var/run/docker.sock':'/var/run/docker.sock' \
+        -v 'D:\host\path\where\to\output\singularity\image:/output' \
         singularityware/docker2singularity \
         dpys/pynets:<version>
 
@@ -65,25 +73,29 @@ Where ``<version>`` should be replaced with the desired version of PyNets that y
 to download.
 
 Beware of the back slashes, expected for Windows systems.
-For \*nix users the command translates as follows: ::
+For \*nix users the command translates as follows:
+.. code-block:: bash:: orange ::
 
-    $ docker run --privileged -t --rm \
-        -V /var/run/docker.sock:/var/run/docker.sock \
-        -v /absolute/path/to/output/folder:/output \
+    docker run --privileged -t --rm \
+        -V '/var/run/docker.sock':'/var/run/docker.sock' \
+        -v '/absolute/path/to/output/folder':'/outputs' \
         singularityware/docker2singularity \
         dpys/pynets:<version>
 
-Transfer the resulting Singularity image to the HPC, for example, using ``scp``. ::
+Transfer the resulting Singularity image to the HPC, for example, using ``scp``.
+.. code-block:: bash:: orange ::
 
-    $ scp pynets*.img user@hcpserver.edu:/my_images
+    scp pynets*.img user@hcpserver.edu:/my_images
 
 Running a Singularity Image
 ---------------------------
 
-If the data to be preprocessed is also on the HPC, you are ready to run pynets. ::
+If the data to be preprocessed is also on the HPC, you are ready to run pynets.
+.. code-block:: bash:: orange ::
 
-    $ singularity run -w \
-     /scratch/04171/dpisner/pynets_singularity_latest-2020-02-07-eccf145ea766.img \
+    singularity run -w \
+     '/scratch/04171/dpisner/pynets_singularity_latest-2020-02-07-eccf145ea766.img' \
+     pynets /outputs \
      -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
      -k 100 200 -pm "24,48" \
      -b 100 -bs 12 -norm 6 -cc 'tcorr' \
@@ -101,9 +113,11 @@ If the data to be preprocessed is also on the HPC, you are ready to run pynets. 
    Because of this your host libraries (such as nipype) could be accidentally used
    instead of the ones inside the container - if they are included in ``PYTHONPATH``.
    To avoid such situation we recommend using the ``--cleanenv`` singularity flag
-   in production use. For example: ::
+   in production use. For example:
+.. code-block:: bash:: orange ::
 
-      $ singularity run --no-home --cleanenv ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
+      singularity run --no-home --cleanenv '~/pynets_latest-2016-12-04-5b74ad9a4c4d.img' \
+        pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
         -k 100 200 -pm "24,48" \
         -b 100 -bs 12 -norm 6 -cc 'tcorr' \
@@ -114,9 +128,11 @@ If the data to be preprocessed is also on the HPC, you are ready to run pynets. 
         -m "/inputs/sub-"$PARTIC"/ses-"$ses"/func/sub-"$PARTIC"_ses-"$ses"_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz" \
         -id ""$PARTIC"_run"$ses"" -plug 'MultiProc' -work '/tmp'
 
-   or, unset the ``PYTHONPATH`` variable before running: ::
+   or, unset the ``PYTHONPATH`` variable before running:
+.. code-block:: bash:: orange ::
 
-      $ unset PYTHONPATH; singularity run ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
+      unset PYTHONPATH; singularity run ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
+        pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
         -k 100 200 -pm "24,48" \
         -b 100 -bs 12 -norm 6 -cc 'tcorr' \
@@ -133,10 +149,12 @@ If the data to be preprocessed is also on the HPC, you are ready to run pynets. 
    automatically bind (mount or expose) host folders to the container.
    If this is not done automatically you will need to bind the necessary folders using
    the ``-B <host_folder>:<container_folder>`` Singularity argument.
-   For example: ::
+   For example:
+.. code-block:: bash:: orange ::
 
-      $ singularity run --cleanenv -B /work:/work ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
-        -B /scratch/04171/dpisner/pynets_out:/inputs,/scratch/04171/dpisner/masks/"$PARTIC"_triple_network_masks_"$ses":/outputs \
+      singularity run --cleanenv -B /work:/work ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
+        -B "/scratch/04171/dpisner/pynets_out:/inputs,/scratch/04171/dpisner/masks/"$PARTIC"_triple_network_masks_"$ses"":"/outputs" \
+        pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
         -k 100 200 -pm "24,48" \
         -b 100 -bs 12 -norm 6 -cc 'tcorr' \
@@ -162,9 +180,10 @@ A relatively interpretable description of how your environment can be set-up
 is found in the `Dockerfile <https://github.com/dPys/PyNets/blob/master/Dockerfile>`_.
 
 On a functional Python 3.5 (or above) environment with ``pip`` installed,
-PyNets can be installed using the habitual command ::
+PyNets can be installed using the habitual command:
+.. code-block:: bash:: orange ::
 
-    $ pip install pynets
+    pip install pynets
 
 
 External Dependencies

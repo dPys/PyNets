@@ -30,7 +30,6 @@
   code.literal
   {
     background-color: #383838 !important;
-    color: darkorange !important;
     border: 1px solid #6d6d6d !important;
   }
 
@@ -48,7 +47,14 @@
   {
     background-color: #121212 !important;
   }
-
+  .wy-side-nav-search, .wy-nav-top
+  {
+    background-color: #000000 !important;
+  }
+  .wy-nav-side
+  {
+    background-color: #000000 !important;
+  }
   .xref, .py-meth
   {
     color: #000000 !important;
