@@ -2,7 +2,7 @@
 {
   a:visited
   {
-    color: #849fd8;
+    color: #3b74ed;
   }
 
   pre
@@ -30,6 +30,7 @@
   code.literal
   {
     background-color: #383838 !important;
+    color: darkorange !important;
     border: 1px solid #6d6d6d !important;
   }
 
