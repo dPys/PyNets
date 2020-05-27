@@ -21,8 +21,8 @@ setup(
     name='pynets',
     version=__version__,
     cmdclass=cmdclass,
-    description="A Fully-Automated Workflow for Reproducible Ensemble Sampling of Functional and Structural "
-                "Connectomes",
+    description=f"A Reproducible Workflow for Structural-Functional Connectome Sampling, Ensembles, Optimization, and "
+    f"Analysis",
     author="Derek Pisner",
     author_email='dpisner@utexas.edu',
     url='https://github.com/dPys/pynets',

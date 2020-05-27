@@ -251,18 +251,13 @@ jobs:
           name: Run unit tests
           no_output_timeout: 720m
           command: |
-            python -m pytest -s -q tests/test_thresholding.py
-            python -m pytest -s -q tests/test_utils.py
-            python -m pytest -s -q tests/test_netstats.py
-            python -m pytest -s -q tests/test_nodemaker.py
-            python -m pytest -s -q tests/test_plotting.py
-            python -m pytest -s -q tests/test_refs.py
-            python -m pytest -s -q tests/test_clustering.py
-            python -m pytest -s -q tests/test_dmri_utils.py
-            python -m pytest -s -q tests/test_track.py
-            python -m pytest -s -q tests/test_estimation.py
-            python -m pytest -s -q tests/test_reg_utils.py
-            python -m pytest -s -q tests/test_workflows.py
+            python -m pip install coverage
+            coverage run -m pytest --cov-config .coveragerc -s -q tests/test_thresholding.py tests/test_utils.py tests/test_netstats.py tests/test_nodemaker.py tests/test_plotting.py tests/test_refs.py tests/test_clustering.py tests/test_dmri_utils.py tests/test_track.py tests/test_estimation.py tests/test_reg_utils.py tests/test_workflows.py
+            coverage xml
+      - run:
+          name: Update codecov
+          command: |
+            bash <(curl https://codecov.io/bash) -t d62ad7b3-39a6-4657-a2e3-6acf2362d36d -f coverage.xml -F pynets
 
   deploy_docker_patches:
     machine:
