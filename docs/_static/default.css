@@ -2,7 +2,7 @@
 {
   a:visited
   {
-    color: #bf84d8;
+    color: #849fd8;
   }
 
   pre
@@ -12,13 +12,13 @@
 
   .wy-nav-content
   {
-    background: #3c3c3c;
+    background: #383838;
     color: aliceblue;
   }
 
   .method dt, .class dt, .data dt, .attribute dt, .function dt, .descclassname, .descname
   {
-    background-color: #525252 !important;
+    background-color: #383838 !important;
     color: white !important;
   }
 
@@ -29,7 +29,7 @@
 
   code.literal
   {
-    background-color: #2d2d2d !important;
+    background-color: #383838 !important;
     border: 1px solid #6d6d6d !important;
   }
 
@@ -45,16 +45,16 @@
 
   .sidebar-title
   {
-    background-color: #2b2b2b !important;
+    background-color: #121212 !important;
   }
 
   .xref, .py-meth
   {
-    color: #7ec3e6 !important;
+    color: #000000 !important;
   }
 
   .admonition, .note
   {
-    background-color: #2d2d2d !important;
+    background-color: #121212 !important;
   }
 }
