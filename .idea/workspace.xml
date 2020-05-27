@@ -6,14 +6,7 @@
     <bookmark url="file://$PROJECT_DIR$/tests/test_refs.py" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.circleci/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.circleci/config.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.codecov.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.codecov.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.zenodo.json" beforeDir="false" afterPath="$PROJECT_DIR$/.zenodo.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.rst" beforeDir="false" afterPath="$PROJECT_DIR$/README.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/conf.py" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conf.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
-    </list>
+    <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,8 +37,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/docs/conf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="445">
-              <caret line="148" column="34" selection-start-line="148" selection-start-column="34" selection-end-line="148" selection-end-column="34" />
+            <state relative-caret-position="370">
+              <caret line="143" column="23" selection-start-line="143" selection-start-column="23" selection-end-line="143" selection-end-column="23" />
               <folding>
                 <element signature="e#419#428#0" expanded="true" />
               </folding>
@@ -191,7 +184,7 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
+  <component name="ProjectFrameBounds">
     <option name="x" value="212" />
     <option name="y" value="23" />
     <option name="width" value="1346" />
@@ -371,12 +364,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="104458000" />
+      <workItem from="1589906893238" duration="104583000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1075764000" />
+    <option name="totallyTimeSpent" value="1075889000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -794,8 +787,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/docs/conf.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="445">
-          <caret line="148" column="34" selection-start-line="148" selection-start-column="34" selection-end-line="148" selection-end-column="34" />
+        <state relative-caret-position="370">
+          <caret line="143" column="23" selection-start-line="143" selection-start-column="23" selection-end-line="143" selection-end-column="23" />
           <folding>
             <element signature="e#419#428#0" expanded="true" />
           </folding>
