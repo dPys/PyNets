@@ -1,7 +1,4 @@
 .. include:: links.rst
-.. role:: bash(code)
-   :language: bash
-.. role:: orange
 
 #####
 Usage
@@ -81,11 +78,10 @@ BIDS Derivatives
 PyNets now includes an API for running single-subject and group workflows on BIDS derivatives (e.g. produced using popular BIDS apps like fmriprep/cpac and dmriprep/qsiprep).
 In this case, the input dataset should be in `BIDS (Brain Imaging Data Structure)` format, and it must include at least one fMRI image or dMRI image.
 
-The `runconfig.yml` file in the base directory includes parameter presets, but all General_File_Inputs_ that are included with the `pynets` cli are also exposed to the `pynets_bids` cli.
+The `runconfig.yml` file in the base directory includes parameter presets, but all file input options that are included with the `pynets` cli are also exposed to the `pynets_bids` cli.
 
 The common parts of the command follow the `BIDS-Apps <https://github.com/BIDS-Apps>`_ definition.
-Example:
-.. code-block:: bash:: orange ::
+Example: ::
 
     pynets_bids 's3://hnu/HNU' '~/outputs' func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz'
 
@@ -94,13 +90,11 @@ Docker and AWS
 ==============
 
 PyNets now includes an API for running pynets_bids in a Docker container as well as using AWS Batch. The latter assumes a dataset with BIDS derivatives is stored in an S3 bucket.
-Docker Example:
-.. code-block:: bash:: orange ::
+Docker Example: ::
 
     docker run -ti --rm --privileged -v '~/.aws/credentials:/home/neuro/.aws/credentials' dpys/pynets:latest 's3://hnu/HNU' '/outputs' func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz' -plug 'MultiProc' -pm '8,12' -work '/working'
 
-AWS Batch Example:
-.. code-block:: bash:: orange ::
+AWS Batch Example: ::
 
     pynets_cloud --bucket 'hnu' --dataset 'HNU' func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' --jobdir '/Users/derekpisner/.pynets/jobs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz' -pm '30,110'
 
@@ -185,7 +179,7 @@ You have a preprocessed (minimally -- normalized and skull stripped) functional 
 
 Building upon the previous example, let's say you now wish to analyze the Default network for this same subject's data, but now also using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011', you wish to threshold the graph to achieve a target density of 0.3, and you define your nodes based on spheres with radii at two resolutions (2 and 4 mm), you wish to fit a sparse inverse covariance model in addition to partial correlation, and you wish to plot the results: ::
 
-    pynets -id '002' /Users/dPys/outputs \
+    pynets -id '002' '/Users/dPys/outputs' \
     -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' \ # The fMRI BOLD image data.
     -a 'coords_dosenbach_2010' 'coords_power_2011' # Multiple spherical atlases.
     -mod 'partcorr' 'sps' \ # The connectivity models.

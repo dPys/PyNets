@@ -7,8 +7,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/docs/conf.py" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conf.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/installation.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/installation.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/usage.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/usage.rst" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -44,12 +43,12 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/docs/usage.rst">
           <provider selected="true" editor-type-id="restructured-text-editor" />
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/docs/installation.rst">
           <provider selected="true" editor-type-id="restructured-text-editor" />
         </entry>
@@ -65,8 +64,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>block_size</find>
-      <find>fill_confound_nans</find>
       <find>conf</find>
       <find>indexed_gzip</find>
       <find>import nibabel as nib</find>
@@ -95,6 +92,8 @@
       <find>s follows:</find>
       <find>PARTIC</find>
       <find>$</find>
+      <find>$PROJECT_DIR$/../../../dPys/outputs \</find>
+      <find>bash</find>
     </findStrings>
     <replaceStrings>
       <replace>'icc'</replace>
@@ -186,9 +185,9 @@
         <option value="$PROJECT_DIR$/docs/_static/default.css" />
         <option value="$PROJECT_DIR$/docs/_static/rtd_dark.css" />
         <option value="$PROJECT_DIR$/docs/_static/css/rtd_dark.css" />
-        <option value="$PROJECT_DIR$/docs/usage.rst" />
         <option value="$PROJECT_DIR$/docs/conf.py" />
         <option value="$PROJECT_DIR$/docs/installation.rst" />
+        <option value="$PROJECT_DIR$/docs/usage.rst" />
       </list>
     </option>
   </component>
@@ -387,12 +386,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="118004000" />
+      <workItem from="1589906893238" duration="118490000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1089310000" />
+    <option name="totallyTimeSpent" value="1089796000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -766,10 +765,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/docs/usage.rst">
+    <entry file="file://$PROJECT_DIR$/docs/installation.rst">
       <provider selected="true" editor-type-id="restructured-text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/docs/installation.rst">
+    <entry file="file://$PROJECT_DIR$/docs/usage.rst">
       <provider selected="true" editor-type-id="restructured-text-editor" />
     </entry>
   </component>
