@@ -18,7 +18,11 @@ Docker Container
 
 In order to run pynets in a Docker container, Docker must be `installed
 <https://docs.docker.com/engine/installation/>`_.
-Once Docker is installed, you can build a container and test it interactively as follows: ::
+Once Docker is installed, you can simply pull a pre-built image from dockerhub as follows: ::
+
+    docker pull dpys/pynets:latest
+
+or you can build a container yourself and test it interactively as follows: ::
 
     BUILDIR=$(pwd)
     mkdir -p ${BUILDIR}/pynets_images

@@ -140,16 +140,17 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-# html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_rtd_theme'
 # html_theme = 'alabaster'
 # html_style = '_static/nature.css'
 # html_style = '_static/default.css'
-html_style = '_static/rtd_dark.css'
-
+html_css_files = [
+    'css/rtd_dark.css',
+]
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
+# html_theme_options = {"relbarbgcolor": "black"}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -174,6 +175,11 @@ html_favicon = '_static/favicon.ico'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+# THIS OVERRIDES ALL CSS :-)
+html_context = {
+    'css_files': ['_static/rtd_dark.css'],
+}
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
