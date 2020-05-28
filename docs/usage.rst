@@ -168,7 +168,7 @@ Alternatively, more comprehensive solutions such as `Datalad <http://www.datalad
 Quickstart
 **********
 
-EXAMPLES
+Examples
 ========
 
 
@@ -245,34 +245,4 @@ There are many other runtime options than these examples demonstrate. To explore
 ********************
 Interpreting outputs
 ********************
-
-Within each subject's derivative directory which contained the initial image(s) fed into the workflow, PyNets will write a series of 'meta-derivatives', organized into several directories. Each unique resolution (i.e. number) of nodes gets its own subdirectory. Typically these will be named by atlas, but can be named by clustering type and resolution in the case that clustering was used to define nodes. Within each of these subdirectories, are at least two further subdirectories (`graphs` -- which contain the output graphs; `netmetrics` -- which contain several version of the output graph theory measures for the network generated). Depending on options specified at runtime, various other directories may be created such as `figures`, `timeseries`, `parcellations`, and `tractography`. File naming follows a programmatic specification that identifies both the file's defining characteristic (i.e. 'what' it is) along with the hyperparameters used in the creation of the network from which the particular file was derived (i.e. 'how' it was generated). Below is an example of the files contained within these directories following a pynets run using fmri data: ::
-
-    0205
-        ├── figures
-    │   ├── 0205_connectogram_sps.js
-    │   ├── 0205_connectogram_sps.json
-    │   ├── 0205_coords_dosenbach_2010_func_adj_mat_sps_1.0_4mm_nb_.png
-    │   ├── 0205_coords_dosenbach_2010_sps_1.0_4mm_nb_func_glass_viz.png
-    │   ├── 0205_coords_dosenbach_2010_sps_sub-0205_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold_mask_mask_1.0_4mm_nb_func_glass_viz.png
-    │   ├── 0205_coords_dosenbach_2010_sub-0205_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold_mask_mask_func_adj_mat_sps_1.0_4mm_nb.png
-    │   ├── 0205_fdg_sps.js
-    │   ├── 0205_fdg_sps.json
-    │   ├── coords_plotting.pkl
-    │   ├── coords_sub-0205_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold_mask_mask_plotting.pkl
-    │   ├── index.html
-    │   ├── labelnames_plotting.pkl
-    │   └── labelnames_sub-0205_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold_mask_mask_plotting.pkl
-    ├── graphs
-    │   ├── 0205_est_sps_1.0prop_4mm_func.npy
-    │   ├── 0205_est_sps_1.0prop_4mm_func_pruned_mat.ssv
-    │   ├── 0205_raw_sps_4mm_func.npy
-    │   ├── 0205_sub-0205_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold_mask_mask_est_sps_1.0prop_4mm_func.npy
-    │   ├── 0205_sub-0205_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold_mask_mask_est_sps_1.0prop_4mm_func_pruned_mat.ssv
-    │   └── 0205_sub-0205_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold_mask_mask_raw_sps_4mm_func.npy
-    ├── netmetrics
-    │   ├── 0205_net_mets_sps_1.0_4mm_neat.csv
-    │   └── 0205_net_mets_sub-0205_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold_mask_mask_sps_1.0_4mm_neat.csv
-    └── timeseries
-        ├── 0205_rsn_net_ts.npy
-        └── 0205_sub-0205_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold_mask_mask_rsn_net_ts.npy
+(IN CONSTRUCTION)
