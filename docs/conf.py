@@ -178,7 +178,7 @@ html_static_path = ['_static']
 
 # THIS OVERRIDES ALL CSS :-)
 html_context = {
-    'css_files': ['_static/rtd_dark.css'],
+    'css_files': ['_static/css/rtd_dark.css'],
 }
 
 # Add any extra paths that contain custom files (such as robots.txt or
