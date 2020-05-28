@@ -85,7 +85,6 @@ Example: ::
 
     pynets_bids 's3://hnu/HNU' '~/outputs' func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz'
 
-
 Docker and AWS
 ==============
 
@@ -176,7 +175,6 @@ You have a preprocessed (minimally -- normalized and skull stripped) functional 
     -thr 0.20 \ # A single proportional threshold to apply post-hoc.
     -m '/Users/dPys/PyNets/tests/examples/002/fmri/002_mask.nii.gz' # A brain mask for the fMRI BOLD image data.
 
-
 Building upon the previous example, let's say you now wish to analyze the Default network for this same subject's data, but now also using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011', you wish to threshold the graph to achieve a target density of 0.3, and you define your nodes based on spheres with radii at two resolutions (2 and 4 mm), you wish to fit a sparse inverse covariance model in addition to partial correlation, and you wish to plot the results: ::
 
     pynets -id '002' '/Users/dPys/outputs' \
@@ -188,7 +186,6 @@ Building upon the previous example, let's say you now wish to analyze the Defaul
     -n 'Default' \ # The resting-state network definition to restrict node-making from each of the input atlas.
     -plt # Activate plotting.
 
-
 Building upon the previous examples, let's say you now wish to analyze the Default and Executive Control Networks for this subject, but this time based on a custom atlas (DesikanKlein2012.nii.gz), this time defining your nodes as parcels (as opposed to spheres), you wish to fit a partial correlation model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), and you wish to prune disconnected nodes: ::
 
     pynets -id '002' '/Users/dPys/outputs' \
@@ -197,8 +194,6 @@ Building upon the previous examples, let's say you now wish to analyze the Defau
     -mod 'partcorr' \ # The connectivity model.
     -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings.
     -n 'Default' 'Cont' # The resting-state network definitions to restrict node-making from each of the input atlas.
-
-
 
 .. note::
     In general, parcels are preferable to spheres as nodes because parcels more closely respect atlas or cluster topology.
@@ -212,7 +207,6 @@ Building upon the previous examples, let's say you now wish to create a subject-
     -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings.
     -plt -names # Activate plotting with automated node labeling by coordinate reference.
 
-
 You wish to generate a structural connectome, using probabilistic ensemble tractography with 1,000,000 streamlines, based on both constrained-spherical deconvolution (csd) and tensor models, bootstrapped tracking, and direct normalization of streamlines. You wish to use atlas parcels as defined by both DesikanKlein2012, and AALTzourioMazoyer2002, exploring only those nodes belonging to the Default Mode Network, and iterate over a range of densities (i.e. 0.05-0.10 with 1% step), and prune disconnected nodes: ::
 
     pynets -id '0021001' '/Users/dPys/outputs' \
@@ -225,7 +219,6 @@ You wish to generate a structural connectome, using probabilistic ensemble tract
     -anat '/Users/dPys/PyNets/tests/examples/002/anat/s002_anat_brain.nii.gz' \ # The T1w anatomical image.
     -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings.
     -n 'Default' # The resting-state network definition to restrict node-making from each of the input atlases.
-
 
 .. note::
     Spherical nodes can be used by triggering the `-spheres` flag, but this approach is **not** recommended for dMRI connectometry.

@@ -93,14 +93,14 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
      '/scratch/04171/dpisner/pynets_singularity_latest-2020-02-07-eccf145ea766.img' \
      pynets /outputs \
      -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
-     -k 100 200 -pm "24,48" \
+     -k 100 200 -pm '24,48' \
      -b 100 -bs 12 -norm 6 -cc 'tcorr' \
      -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
-     -anat "/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz" \
-     -func "/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz" \
-     -conf "/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_desc-confounds_regressors.tsv" \
-     -m "/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz" \
-     -id "PARTICIPANT_runSESSION" -plug 'MultiProc' -work '/tmp'
+     -anat '/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz' \
+     -func '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz' \
+     -conf '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_desc-confounds_regressors.tsv' \
+     -m '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz' \
+     -id 'PARTICIPANT_runSESSION' -plug 'MultiProc' -work '/tmp'
 
 .. note::
 
@@ -114,28 +114,28 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
       singularity run --no-home --cleanenv '~/pynets_latest-2016-12-04-5b74ad9a4c4d.img' \
         pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
-        -k 100 200 -pm "24,48" \
+        -k 100 200 -pm '24,48' \
         -b 100 -bs 12 -norm 6 -cc 'tcorr' \
         -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
-        -anat "/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz" \
-        -func "/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz" \
-        -conf "/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_desc-confounds_regressors.tsv" \
-        -m "/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz" \
-        -id "PARTICIPANT_runSESSION" -plug 'MultiProc' -work '/tmp'
+        -anat '/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz' \
+        -func '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz' \
+        -conf '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_desc-confounds_regressors.tsv' \
+        -m '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz' \
+        -id 'PARTICIPANT_runSESSION' -plug 'MultiProc' -work '/tmp'
 
    or, unset the ``PYTHONPATH`` variable before running: ::
 
       unset PYTHONPATH; singularity run ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
         pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
-        -k 100 200 -pm "24,48" \
+        -k 100 200 -pm '24,48' \
         -b 100 -bs 12 -norm 6 -cc 'tcorr' \
         -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
-        -anat "/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz" \
-        -func "/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz" \
-        -conf "/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_desc-confounds_regressors.tsv" \
-        -m "/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz" \
-        -id "PARTICIPANT_runSESSION" -plug 'MultiProc' -work '/tmp'
+        -anat '/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz' \
+        -func '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz' \
+        -conf '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_desc-confounds_regressors.tsv' \
+        -m '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz' \
+        -id 'PARTICIPANT_runSESSION' -plug 'MultiProc' -work '/tmp'
 
 .. note::
 
@@ -146,18 +146,17 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
    For example: ::
 
       singularity run --cleanenv -B /work:/work ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
-        -B "/scratch/04171/dpisner/pynets_out:/inputs,/scratch/04171/dpisner/masks/PARTICIPANT_triple_network_masks_SESSION":"/outputs" \
+        -B '/scratch/04171/dpisner/pynets_out:/inputs,/scratch/04171/dpisner/masks/PARTICIPANT_triple_network_masks_SESSION':'/outputs' \
         pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
-        -k 100 200 -pm "24,48" \
+        -k 100 200 -pm '24,48' \
         -b 100 -bs 12 -norm 6 -cc 'tcorr' \
         -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
-        -anat "/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz" \
-        -func "/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz" \
-        -conf "/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_desc-confounds_regressors.tsv" \
-        -m "/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz" \
-        -id "PARTICIPANT_runSESSION" -plug 'MultiProc' -work '/tmp'
-
+        -anat '/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-MNI152NLin2009cAsym_desc-preproc_T1w_brain.nii.gz' \
+        -func '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_masked.nii.gz' \
+        -conf '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_desc-confounds_regressors.tsv' \
+        -m '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz' \
+        -id 'PARTICIPANT_runSESSION' -plug 'MultiProc' -work '/tmp'
 
 Manually Prepared Environment (Python 3.5+)
 ===========================================
