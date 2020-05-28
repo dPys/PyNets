@@ -13,6 +13,7 @@ from nipype.interfaces.base import (BaseInterface, BaseInterfaceInputSpec, Trait
                                     Directory)
 warnings.filterwarnings("ignore")
 
+
 class NetworkAnalysisInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for NetworkAnalysis"""
     ID = traits.Any(mandatory=True)
