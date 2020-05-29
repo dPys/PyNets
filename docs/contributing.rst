@@ -106,6 +106,6 @@ Before you submit a pull request, check that it meets these guidelines:
 Tips
 ----
 
-To run a subset of tests::
+To run a subset of tests ::
 
-$ py.test tests.test_pynets
+    py.test tests.test_pynets
