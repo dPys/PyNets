@@ -99,7 +99,6 @@ def test_ni_parcellate(clust_type):
     base_dir = str(Path(__file__).parent/"examples")
     out_dir = f"{base_dir}/outputs/sub-0025427/ses-1/func"
     tmpdir = tempfile.TemporaryDirectory()
-    os.chdir(str(tmpdir.name))
     if clust_type != 'ncut':
         local_corr = 'allcorr'
     else:
@@ -132,7 +131,6 @@ def test_ni_parcellate_mult_conn_comps(clust_type):
     base_dir = str(Path(__file__).parent/"examples")
     out_dir = f"{base_dir}/outputs/sub-0025427/ses-1/func"
     tmpdir = tempfile.TemporaryDirectory()
-    os.chdir(str(tmpdir.name))
 
     k = 150
     if clust_type != 'ncut':

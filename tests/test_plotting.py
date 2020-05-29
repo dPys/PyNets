@@ -30,7 +30,6 @@ def test_plot_conn_mat_nonet_no_mask():
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
 
     network = None
     ID = '002'
@@ -62,7 +61,6 @@ def test_plot_conn_mat_nonet_mask():
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
     network = None
     ID = '002'
     thr = 0.95
@@ -93,7 +91,6 @@ def test_plot_all_nonet_no_mask():
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
     network = None
     ID = '002'
     thr = 0.95
@@ -132,7 +129,6 @@ def test_plot_all_nonet_with_mask():
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
 
     network = None
     ID = '002'
@@ -172,7 +168,6 @@ def test_plot_connectogram():
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
 
     network = None
     ID = '002'
@@ -197,7 +192,6 @@ def test_plot_timeseries():
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
 
     network = None
     ID = '002'

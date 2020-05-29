@@ -217,7 +217,6 @@ jobs:
           no_output_timeout: 30m
           command: |
             python setup.py install
-            python -m pip install git+https://github.com/dPys/nilearn.git
             python -c "from matplotlib import font_manager"
             sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
             mkdir -p ~/.nipype
@@ -256,11 +255,18 @@ jobs:
           name: Run unit tests
           no_output_timeout: 6h
           command: |
-            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -s -q tests/
+            set -e
+            mkdir test-results
+            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -s --junitxml="test-results/junit.xml"
       - run:
           name: Update codecov
           command: |
-            bash <(curl https://codecov.io/bash) -t d62ad7b3-39a6-4657-a2e3-6acf2362d36d -f coverage.xml -F pynets
+            bash <(curl https://codecov.io/bash) -t d62ad7b3-39a6-4657-a2e3-6acf2362d36d -f coverage.xml -F unittests
+          when: always
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
 
   deploy_docker_patches:
     machine:
