@@ -251,7 +251,7 @@ jobs:
           name: Run unit tests
           no_output_timeout: 720m
           command: |
-            python -m pytest --cov-config .coveragerc --cov=./ --cov-report xml -s -q tests/test_thresholding.py tests/test_utils.py tests/test_netstats.py tests/test_nodemaker.py tests/test_plotting.py tests/test_refs.py tests/test_clustering.py tests/test_dmri_utils.py tests/test_track.py tests/test_estimation.py tests/test_reg_utils.py tests/test_workflows.py
+            python -m pytest --cov-config .coveragerc --cov=./ --cov-report xml:coverage.xml -s -q tests/test_thresholding.py tests/test_utils.py tests/test_netstats.py tests/test_nodemaker.py tests/test_plotting.py tests/test_refs.py tests/test_clustering.py tests/test_dmri_utils.py tests/test_track.py tests/test_estimation.py tests/test_reg_utils.py tests/test_workflows.py
       - run:
           name: Update codecov
           command: |
