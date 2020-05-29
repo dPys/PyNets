@@ -57,7 +57,7 @@ resource_dict:
       - 'extract_ts_node':
         - (2, 4)
       - 'clustering_node':
-        - (4, 4)
+        - (2, 6)
       - 'get_conn_matrix_node':
         - (1, 2)
       - 'thresh_func_node':
@@ -69,7 +69,7 @@ resource_dict:
       - 'get_fa_node':
         - (1, 2)
       - 'run_tracking_node':
-        - (4, 4)
+        - (2, 6)
       - 'thresh_diff_node':
         - (1, 0.5)
       - 'dsn_node':
@@ -77,7 +77,7 @@ resource_dict:
       - 'plot_all_node':
         - (1, 1)
       - 'streams2graph_node':
-        - (4, 4)
+        - (2, 6)
 execution_dict:
     - 'stop_on_first_crash':
         - False

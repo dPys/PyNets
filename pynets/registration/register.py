@@ -454,29 +454,26 @@ class DmriReg(object):
         import shutil
 
         # Apply brain mask if detected as a separate file
-        try:
-            anat_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
-            if op.isfile(anat_mask_existing) and not self.mask and overwrite is False:
-                anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.basedir_path,
-                                                                    self.vox_size)
+        anat_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')
+        if len(anat_mask_existing) > 0 and not self.mask and overwrite is False:
+            anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing[0], self.basedir_path, self.vox_size)
+            try:
+                os.system(f"fslmaths {self.t1w_brain} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
+            except:
                 try:
+                    from nilearn.image import resample_to_img
+                    nib.save(resample_to_img(nib.load(anat_mask_existing), nib.load(self.t1w_brain)),
+                             anat_mask_existing)
                     os.system(f"fslmaths {self.t1w_brain} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
-                except:
-                    try:
-                        from nilearn.image import resample_to_img
-                        nib.save(resample_to_img(nib.load(anat_mask_existing), nib.load(self.t1w_brain)),
-                                 anat_mask_existing)
-                        os.system(f"fslmaths {self.t1w_brain} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
-                    except ValueError:
-                        print('Cannot coerce mask to shape of T1w anatomical.')
-
+                except ValueError:
+                    print('Cannot coerce mask to shape of T1w anatomical.')
             # Segment the t1w brain into probability maps
             gm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
             wm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-WM_probseg.nii.gz')[0]
             csf_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-CSF_probseg.nii.gz')[0]
-        except:
+        else:
             import tensorflow as tf
-            tf.logging.set_verbosity(tf.logging.ERROR)
+            tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
             from deepbrain import Extractor
             os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -870,25 +867,23 @@ class FmriReg(object):
         import os.path as op
 
         # Apply brain mask if detected as a separate file
-        try:
-            anat_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')[0]
-            if op.isfile(anat_mask_existing) and not self.mask and overwrite is False:
-                anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing, self.basedir_path,
-                                                                    self.vox_size)
+        anat_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')
+        if len(anat_mask_existing) > 0 and not self.mask and overwrite is False:
+            anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing[0], self.basedir_path, self.vox_size)
+            try:
+                os.system(f"fslmaths {self.t1w_brain} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
+            except:
                 try:
+                    from nilearn.image import resample_to_img
+                    nib.save(resample_to_img(nib.load(anat_mask_existing), nib.load(self.t1w_brain)),
+                             anat_mask_existing)
                     os.system(f"fslmaths {self.t1w_brain} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
-                except:
-                    try:
-                        from nilearn.image import resample_to_img
-                        nib.save(resample_to_img(nib.load(anat_mask_existing), nib.load(self.t1w_brain)),
-                                 anat_mask_existing)
-                        os.system(f"fslmaths {self.t1w_brain} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
-                    except ValueError:
-                        print('Cannot coerce mask to shape of T1w anatomical.')
+                except ValueError:
+                    print('Cannot coerce mask to shape of T1w anatomical.')
 
             # Segment the t1w brain into probability maps
             gm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
-        except:
+        else:
             import tensorflow as tf
             tf.logging.set_verbosity(tf.logging.ERROR)
             from deepbrain import Extractor
