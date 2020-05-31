@@ -34,8 +34,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="664">
-              <caret line="261" column="151" selection-start-line="261" selection-start-column="151" selection-end-line="261" selection-end-column="151" />
+            <state relative-caret-position="443">
+              <caret line="241" column="64" lean-forward="true" selection-start-line="241" selection-start-column="64" selection-end-line="241" selection-end-column="64" />
             </state>
           </provider>
         </entry>
@@ -47,11 +47,6 @@
               <caret line="689" selection-start-line="689" selection-end-line="690" selection-end-column="42" />
             </state>
           </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/docs/contributing.rst">
-          <provider selected="true" editor-type-id="restructured-text-editor" />
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
@@ -455,12 +450,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="137532000" />
+      <workItem from="1589906893238" duration="138241000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1108838000" />
+    <option name="totallyTimeSpent" value="1109547000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -886,8 +881,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="664">
-          <caret line="261" column="151" selection-start-line="261" selection-start-column="151" selection-end-line="261" selection-end-column="151" />
+        <state relative-caret-position="443">
+          <caret line="241" column="64" lean-forward="true" selection-start-line="241" selection-start-column="64" selection-end-line="241" selection-end-column="64" />
         </state>
       </provider>
     </entry>

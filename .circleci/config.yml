@@ -162,7 +162,6 @@ jobs:
       - FSLOUTPUTTYPE: 'NIFTI'
       - PYTHONUNBUFFERED: 1
     resource_class: medium
-    parallelism: 2
     steps:
       - checkout
       - run:
@@ -259,7 +258,7 @@ jobs:
             set -e
             mkdir test-results
             export PYTHONUNBUFFERED=1
-            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -n 2 -s --verbose --junitxml="test-results/junit.xml" $(circleci tests glob "tests/*" | circleci tests split --split-by=timings)
+            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -s --verbose --junitxml="test-results/junit.xml" $(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
       - run:
           name: Update codecov
           command: |
