@@ -177,7 +177,7 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
                                                mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
                                                hpass_list, template, template_mask, vox_size, local_corr, outdir)
 
-    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
+#    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = fmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
@@ -315,7 +315,7 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
                                                mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
                                                hpass_list, template, template_mask, vox_size, local_corr, outdir)
 
-    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
+#    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = fmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
@@ -479,7 +479,7 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
                                                runtime_dict, execution_dict, multi_directget, template, template_mask,
                                                vox_size, waymask, min_length_list, outdir)
 
-    dmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
+#    dmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(dmri_connectometry_wf._graph) is True
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = dmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)

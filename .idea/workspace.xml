@@ -8,6 +8,7 @@
   <component name="ChangeListManager">
     <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.circleci/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.circleci/config.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_workflows.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -34,8 +35,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="694">
-              <caret line="260" column="105" selection-start-line="260" selection-start-column="105" selection-end-line="260" selection-end-column="105" />
+            <state relative-caret-position="573">
+              <caret line="260" column="121" selection-start-line="260" selection-start-column="121" selection-end-line="260" selection-end-column="121" />
             </state>
           </provider>
         </entry>
@@ -113,8 +114,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tests/test_workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-4939">
-              <caret line="107" column="25" selection-start-line="107" selection-start-column="25" selection-end-line="107" selection-end-column="25" />
+            <state relative-caret-position="2685">
+              <caret line="179" column="1" selection-start-line="179" selection-start-column="1" selection-end-line="179" selection-end-column="1" />
             </state>
           </provider>
         </entry>
@@ -251,8 +252,8 @@
         <option value="$PROJECT_DIR$/tests/test_dmri_utils.py" />
         <option value="$PROJECT_DIR$/tests/test_plotting.py" />
         <option value="$PROJECT_DIR$/tests/test_utils.py" />
-        <option value="$PROJECT_DIR$/tests/test_workflows.py" />
         <option value="$PROJECT_DIR$/docs/contributing.rst" />
+        <option value="$PROJECT_DIR$/tests/test_workflows.py" />
         <option value="$PROJECT_DIR$/.circleci/config.yml" />
       </list>
     </option>
@@ -279,18 +280,6 @@
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
               <item name="pynets" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
-              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
-              <item name="pynets" type="462c0819:PsiDirectoryNode" />
-              <item name="stats" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
-              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
-              <item name="pynets" type="462c0819:PsiDirectoryNode" />
-              <item name="templates" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
@@ -450,12 +439,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="138560000" />
+      <workItem from="1589906893238" duration="139978000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1109866000" />
+    <option name="totallyTimeSpent" value="1111284000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -871,8 +860,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_workflows.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-4939">
-          <caret line="107" column="25" selection-start-line="107" selection-start-column="25" selection-end-line="107" selection-end-column="25" />
+        <state relative-caret-position="2685">
+          <caret line="179" column="1" selection-start-line="179" selection-start-column="1" selection-end-line="179" selection-end-column="1" />
         </state>
       </provider>
     </entry>
@@ -881,8 +870,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="694">
-          <caret line="260" column="105" selection-start-line="260" selection-start-column="105" selection-end-line="260" selection-end-column="105" />
+        <state relative-caret-position="573">
+          <caret line="260" column="121" selection-start-line="260" selection-start-column="121" selection-end-line="260" selection-end-column="121" />
         </state>
       </provider>
     </entry>

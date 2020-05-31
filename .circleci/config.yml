@@ -190,7 +190,7 @@ jobs:
             python -m pip install --upgrade pip setuptools
       - run:
           name: Install pytest
-          command: python -m pip install pytest pytest-cov pytest-sugar pytest-xdist
+          command: python -m pip install pytest pytest-cov pytest-sugar pytest-xdist pytest-parallel
       - run:
           name: Install system dependencies and LFS
           no_output_timeout: 30m
@@ -258,7 +258,7 @@ jobs:
             set -e
             mkdir test-results
             export PYTHONUNBUFFERED=1
-            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -n auto -s --verbose --junitxml="test-results/junit.xml" $(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
+            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml --tests-per-worker auto -s --verbose --junitxml="test-results/junit.xml" tests/test_*.py
       - run:
           name: Update codecov
           command: |
