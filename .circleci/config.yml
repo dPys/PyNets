@@ -162,6 +162,7 @@ jobs:
       - FSLOUTPUTTYPE: 'NIFTI'
       - PYTHONUNBUFFERED: 1
     resource_class: medium
+    parallelism: 2
     steps:
       - checkout
       - run:
@@ -190,7 +191,7 @@ jobs:
             python -m pip install --upgrade pip setuptools
       - run:
           name: Install pytest
-          command: python -m pip install pytest pytest-cov pytest-sugar
+          command: python -m pip install pytest pytest-cov pytest-sugar pytest-xdist
       - run:
           name: Install system dependencies and LFS
           no_output_timeout: 30m
@@ -253,11 +254,12 @@ jobs:
             wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C tests
       - run:
           name: Run unit tests
-          no_output_timeout: 6h
+          no_output_timeout: 5h
           command: |
+            set -e
             mkdir test-results
             export PYTHONUNBUFFERED=1
-            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -s --verbose --junitxml="test-results/junit.xml"
+            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -n 2 -s --verbose --junitxml="test-results/junit.xml" $(circleci tests glob "tests/*" | circleci tests split --split-by=timings)
       - run:
           name: Update codecov
           command: |

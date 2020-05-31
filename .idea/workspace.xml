@@ -34,8 +34,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="498">
-              <caret line="262" column="20" lean-forward="true" selection-start-line="262" selection-start-column="20" selection-end-line="262" selection-end-column="20" />
+            <state relative-caret-position="664">
+              <caret line="261" column="151" selection-start-line="261" selection-start-column="151" selection-end-line="261" selection-end-column="151" />
             </state>
           </provider>
         </entry>
@@ -455,12 +455,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="136171000" />
+      <workItem from="1589906893238" duration="137532000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1107477000" />
+    <option name="totallyTimeSpent" value="1108838000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -475,7 +475,7 @@
     <frame x="339" y="23" width="1190" height="983" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.48963133" visible="true" weight="0.29616725" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.48963133" visible="true" weight="0.20296167" />
       <window_info id="Structure" order="1" sideWeight="0.50863063" side_tool="true" weight="0.18287243" />
       <window_info id="aws.explorer" order="2" sideWeight="0.51036865" side_tool="true" weight="0.16421568" />
       <window_info id="Favorites" order="3" side_tool="true" />
@@ -886,8 +886,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="498">
-          <caret line="262" column="20" lean-forward="true" selection-start-line="262" selection-start-column="20" selection-end-line="262" selection-end-column="20" />
+        <state relative-caret-position="664">
+          <caret line="261" column="151" selection-start-line="261" selection-start-column="151" selection-end-line="261" selection-end-column="151" />
         </state>
       </provider>
     </entry>
