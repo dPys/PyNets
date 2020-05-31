@@ -190,7 +190,6 @@ ENV OMP_NUM_THREADS=1
 ENV USE_SIMPLE_THREADED_LEVEL3=1
 
 EXPOSE 22
-CMD ["/usr/sbin/sshd", "-D"]
 
 # and add it as an entrypoint
 #ENTRYPOINT ["pynets_bids"]

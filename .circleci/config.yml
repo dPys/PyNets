@@ -190,7 +190,7 @@ jobs:
             python -m pip install --upgrade pip setuptools
       - run:
           name: Install pytest
-          command: python -m pip install pytest pytest-cov
+          command: python -m pip install pytest pytest-cov pytest-sugar
       - run:
           name: Install system dependencies and LFS
           no_output_timeout: 30m
@@ -255,9 +255,9 @@ jobs:
           name: Run unit tests
           no_output_timeout: 6h
           command: |
-            set -e
             mkdir test-results
-            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -s --junitxml="test-results/junit.xml"
+            export PYTHONUNBUFFERED=1
+            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -s --verbose --junitxml="test-results/junit.xml"
       - run:
           name: Update codecov
           command: |
