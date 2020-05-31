@@ -258,7 +258,7 @@ jobs:
             set -e
             mkdir test-results
             export PYTHONUNBUFFERED=1
-            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -s --verbose --junitxml="test-results/junit.xml" $(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
+            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -n auto -s --verbose --junitxml="test-results/junit.xml" $(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
       - run:
           name: Update codecov
           command: |

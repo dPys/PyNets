@@ -34,8 +34,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="443">
-              <caret line="241" column="64" lean-forward="true" selection-start-line="241" selection-start-column="64" selection-end-line="241" selection-end-column="64" />
+            <state relative-caret-position="694">
+              <caret line="260" column="105" selection-start-line="260" selection-start-column="105" selection-end-line="260" selection-end-column="105" />
             </state>
           </provider>
         </entry>
@@ -261,7 +261,7 @@
     <option name="x" value="339" />
     <option name="y" value="23" />
     <option name="width" value="1190" />
-    <option name="height" value="983" />
+    <option name="height" value="982" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -450,12 +450,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="138241000" />
+      <workItem from="1589906893238" duration="138560000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1109547000" />
+    <option name="totallyTimeSpent" value="1109866000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -467,7 +467,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="339" y="23" width="1190" height="983" extended-state="0" />
+    <frame x="339" y="23" width="1190" height="982" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.48963133" visible="true" weight="0.20296167" />
@@ -881,8 +881,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="443">
-          <caret line="241" column="64" lean-forward="true" selection-start-line="241" selection-start-column="64" selection-end-line="241" selection-end-column="64" />
+        <state relative-caret-position="694">
+          <caret line="260" column="105" selection-start-line="260" selection-start-column="105" selection-end-line="260" selection-end-column="105" />
         </state>
       </provider>
     </entry>
