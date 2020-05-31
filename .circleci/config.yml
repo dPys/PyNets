@@ -162,7 +162,7 @@ jobs:
       - FSLOUTPUTTYPE: 'NIFTI'
       - PYTHONUNBUFFERED: 1
     resource_class: medium
-    parallelism: 10
+    parallelism: 4
     steps:
       - checkout
       - run:
