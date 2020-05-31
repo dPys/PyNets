@@ -8,7 +8,7 @@
   <component name="ChangeListManager">
     <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.circleci/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.circleci/config.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_workflows.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -35,8 +35,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="573">
-              <caret line="260" column="121" selection-start-line="260" selection-start-column="121" selection-end-line="260" selection-end-column="121" />
+            <state relative-caret-position="288">
+              <caret line="193" column="100" selection-start-line="193" selection-start-column="100" selection-end-line="193" selection-end-column="100" />
             </state>
           </provider>
         </entry>
@@ -439,12 +439,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="139978000" />
+      <workItem from="1589906893238" duration="140658000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1111284000" />
+    <option name="totallyTimeSpent" value="1111964000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -459,9 +459,9 @@
     <frame x="339" y="23" width="1190" height="982" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.48963133" visible="true" weight="0.20296167" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.48904267" visible="true" weight="0.20296167" />
       <window_info id="Structure" order="1" sideWeight="0.50863063" side_tool="true" weight="0.18287243" />
-      <window_info id="aws.explorer" order="2" sideWeight="0.51036865" side_tool="true" weight="0.16421568" />
+      <window_info active="true" id="aws.explorer" order="2" sideWeight="0.5109573" side_tool="true" visible="true" weight="0.20296167" />
       <window_info id="Favorites" order="3" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.35368663" />
@@ -870,8 +870,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="573">
-          <caret line="260" column="121" selection-start-line="260" selection-start-column="121" selection-end-line="260" selection-end-column="121" />
+        <state relative-caret-position="288">
+          <caret line="193" column="100" selection-start-line="193" selection-start-column="100" selection-end-line="193" selection-end-column="100" />
         </state>
       </provider>
     </entry>

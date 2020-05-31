@@ -162,6 +162,7 @@ jobs:
       - FSLOUTPUTTYPE: 'NIFTI'
       - PYTHONUNBUFFERED: 1
     resource_class: medium
+    parallelism: 10
     steps:
       - checkout
       - run:
@@ -190,7 +191,7 @@ jobs:
             python -m pip install --upgrade pip setuptools
       - run:
           name: Install pytest
-          command: python -m pip install pytest pytest-cov pytest-sugar pytest-xdist pytest-parallel
+          command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized
       - run:
           name: Install system dependencies and LFS
           no_output_timeout: 30m
@@ -258,7 +259,7 @@ jobs:
             set -e
             mkdir test-results
             export PYTHONUNBUFFERED=1
-            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml --tests-per-worker auto -s --verbose --junitxml="test-results/junit.xml" tests/test_*.py
+            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
       - run:
           name: Update codecov
           command: |
