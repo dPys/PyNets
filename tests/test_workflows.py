@@ -80,7 +80,6 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
     Test functional connectometry
     """
     import os
-    import tempfile
     import networkx as nx
     import ast
     import yaml
@@ -89,9 +88,6 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
     from multiprocessing import cpu_count
 
     base_dir = str(Path(__file__).parent/"examples")
-    tmpdir = tempfile.TemporaryDirectory()
-    os.chdir(str(tmpdir.name))
-
     conf = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_desc-confounds_regressors.tsv"
     func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
     anat_file = f"{base_dir}/BIDS/sub-0025427/ses-1/anat/sub-0025427_desc-preproc_T1w.nii.gz"
@@ -236,7 +232,6 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
     Test functional connectometry with clustering
     """
     import os
-    import tempfile
     import networkx as nx
     import ast
     import yaml
@@ -245,8 +240,6 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
     from multiprocessing import cpu_count
 
     base_dir = str(Path(__file__).parent/"examples")
-    tmpdir = tempfile.TemporaryDirectory()
-    os.chdir(str(tmpdir.name))
     conf = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_desc-confounds_regressors.tsv"
     func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
     anat_file = f"{base_dir}/BIDS/sub-0025427/ses-1/anat/sub-0025427_desc-preproc_T1w.nii.gz"
@@ -395,7 +388,6 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
     Test structural connectometry
     """
     import os
-    import tempfile
     import networkx as nx
     import ast
     import yaml
@@ -404,9 +396,6 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
     from multiprocessing import cpu_count
 
     base_dir = str(Path(__file__).parent/"examples")
-    tmpdir = tempfile.TemporaryDirectory()
-    os.chdir(str(tmpdir.name))
-
     dwi_file = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_bval.bval"
     fbval = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_bvec.bvec"
     fbvec = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_preprocessed_dwi.nii.gz"

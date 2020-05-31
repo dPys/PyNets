@@ -31,7 +31,6 @@ def test_save_RSN_coords_and_labels_to_pickle():
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
     coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
     coord_file = open(coord_file_path, 'rb')
     coords = pickle.load(coord_file)
@@ -54,7 +53,6 @@ def test_save_nifti_parcels_map():
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
     ID = '002'
     roi = None
     network = None
@@ -74,7 +72,6 @@ def test_save_ts_to_file():
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
     base_dir = str(Path(__file__).parent/"examples")
     roi = None
     smooth = None
@@ -192,7 +189,6 @@ def test_create_est_path_func(node_size, hpass, smooth, parc):
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
     network = 'Default'
     ID = '002'
     conn_model = 'corr'
@@ -216,7 +212,6 @@ def test_create_est_path_diff(node_size, parc):
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
     network = 'Default'
     ID = '002'
     roi = None
@@ -243,7 +238,6 @@ def test_create_csv_path():
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
 
     # fmri case
     network = 'Default'
@@ -273,7 +267,6 @@ def test_save_mat(fmt):
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
 
     est_path = f"{dir_path}/G_out"
     conn_matrix = np.random.rand(10, 10)
@@ -297,7 +290,6 @@ def test_create_unthr_path(node_size, hpass, smooth, parc):
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
     network = 'Default'
     ID = '002'
     conn_model = 'corr'
@@ -335,7 +327,6 @@ def test_do_dir_path(atlas, input):
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
     base_dir = str(Path(__file__).parent/"examples")
 
     if input == 'fmri':
@@ -400,7 +391,6 @@ def test_pass_meta_ins():
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
     base_dir = str(Path(__file__).parent/"examples")
     conn_model = 'corr'
     est_path = f"{base_dir}/miscellaneous/0021001_modality-dwi_rsn-Default_est-tensor_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_thrtype-DENS_thr-0.09.npy"
@@ -615,7 +605,6 @@ def test_build_hp_dict(modality):
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    os.chdir(dir_path)
     base_dir = str(Path(__file__).parent / "examples")
     atlas = 'Power'
 

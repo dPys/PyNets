@@ -115,10 +115,6 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
         openblas \
     && conda clean -tipsy \
     && pip install skggm \
-    # Install forked version of nilearn
-    && git clone -b master https://github.com/dPys/nilearn.git /home/neuro/nilearn && \
-    cd /home/neuro/nilearn && \
-    python setup.py install \
     && pip install python-dateutil==2.8.0 \
     && sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
@@ -132,7 +128,6 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && pip uninstall -y pandas \
     && pip install pandas -U \
     && rm -rf /home/neuro/PyNets \
-    && rm -rf /home/neuro/nilearn \
     && rm -rf /home/neuro/.cache
 
 # Handle permissions, cleanup, and create mountpoints
@@ -195,7 +190,6 @@ ENV OMP_NUM_THREADS=1
 ENV USE_SIMPLE_THREADED_LEVEL3=1
 
 EXPOSE 22
-CMD ["/usr/sbin/sshd", "-D"]
 
 # and add it as an entrypoint
 #ENTRYPOINT ["pynets_bids"]

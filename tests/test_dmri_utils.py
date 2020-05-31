@@ -20,11 +20,7 @@ logger.setLevel(50)
 
 
 def test_extract_b0():
-    import tempfile
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
-    os.chdir(dir_path)
     base_dir = str(Path(__file__).parent/"examples")
     dwi_path = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_preprocessed_dwi.nii.gz"
     fbval = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_bval.bval"
@@ -34,12 +30,8 @@ def test_extract_b0():
 
 
 def test_make_median_b0():
-    import tempfile
 
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
-    os.chdir(dir_path)
     dwi_file = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_preprocessed_dwi.nii.gz"
     mean_file_out = dmriutils.median(dwi_file)
 
