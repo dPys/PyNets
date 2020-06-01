@@ -311,7 +311,6 @@ jobs:
             python -m coverage report
             python -m coverage html
             python -m coverage xml
-            python -m codecov
             bash <(curl https://codecov.io/bash) -f coverage.xml
 
   deploy_docker_patches:

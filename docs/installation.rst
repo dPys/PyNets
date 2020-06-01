@@ -7,8 +7,8 @@
 Installation
 ------------
 
-There are three ways to use pynets: in a `Docker Container`_,
-in a `Singularity Container`_, or in a `Manually
+There are many ways to use pynets: in a `Docker Container`_,
+in a `Singularity Container`_, using `AWS Batch`_, or in a `Manually
 Prepared Environment (Python 3.6+)`_.
 Using a local container method is highly recommended.
 Once you are ready to run pynets, see Usage_ for details.
@@ -86,7 +86,7 @@ Transfer the resulting Singularity image to the HPC, for example, using ``scp``.
 Running a Singularity Image
 ---------------------------
 
-If the data to be preprocessed is also on the HPC, you are ready to run pynets, either manually or as a BIDS application.
+If the data to be preprocessed is also on an HPC server, you are ready to run pynets, either manually or as a BIDS application.
 For example, where PARTICIPANT is a subject identifier and SESSION is a given scan session, we could sample an ensemble of connectomes manually as follows ::
 
     singularity run -w \
