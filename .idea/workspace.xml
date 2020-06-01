@@ -8,7 +8,6 @@
   <component name="ChangeListManager">
     <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.circleci/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.circleci/config.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -44,8 +43,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="534">
-              <caret line="492" column="28" lean-forward="true" selection-start-line="492" selection-start-column="28" selection-end-line="492" selection-end-column="28" />
+            <state relative-caret-position="141">
+              <caret line="280" column="30" selection-start-line="280" selection-start-column="30" selection-end-line="280" selection-end-column="30" />
             </state>
           </provider>
         </entry>
@@ -108,7 +107,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>bids_config.json</find>
       <find>Default</find>
       <find>343131</find>
       <find>css</find>
@@ -138,6 +136,7 @@
       <find>extract_b0</find>
       <find>connected_com</find>
       <find>workspace</find>
+      <find>unit_test</find>
     </findStrings>
     <replaceStrings>
       <replace>2&gt;/dev/null</replace>
@@ -411,12 +410,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="143883000" />
+      <workItem from="1589906893238" duration="144211000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1115189000" />
+    <option name="totallyTimeSpent" value="1115517000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -839,8 +838,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="534">
-          <caret line="492" column="28" lean-forward="true" selection-start-line="492" selection-start-column="28" selection-end-line="492" selection-end-column="28" />
+        <state relative-caret-position="141">
+          <caret line="280" column="30" selection-start-line="280" selection-start-column="30" selection-end-line="280" selection-end-column="30" />
         </state>
       </provider>
     </entry>
