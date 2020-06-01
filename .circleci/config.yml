@@ -139,20 +139,17 @@ jobs:
   get_data:
     machine:
       image: ubuntu-1604:201903-01
-    working_directory: /home/circleci/data
+    working_directory: /tmp/src/pynets
     steps:
-      - restore_cache:
-          keys:
-            - data-v0-{{ .Revision }}
-            - data-v0-
       - run:
           name: Download OSF test data
           command: |
-            wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C /home/circleci/data
-      - save_cache:
-         key: data-v0-{{ .Revision }}-{{ epoch }}
-         paths:
-            - /tmp/data
+            wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C tests
+      - persist_to_workspace:
+          root: /tmp/src/pynets
+          paths:
+            - tests/*
+
   unit_tests:
     machine:
       image: ubuntu-1604:201903-01
@@ -165,6 +162,8 @@ jobs:
     parallelism: 4
     steps:
       - checkout
+      - attach_workspace:
+          at: /tmp/src/pynets
       - run:
           name: "Switch to Python v3.6"
           no_output_timeout: 30m
@@ -249,10 +248,6 @@ jobs:
              echo 'export FSLDIR PATH' >> $BASH_ENV
              source $BASH_ENV
       - run:
-          name: Fetch example data
-          command: |
-            wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C tests
-      - run:
           name: Run unit tests
           no_output_timeout: 5h
           command: |
@@ -260,21 +255,62 @@ jobs:
             mkdir test-results
             export PYTHONUNBUFFERED=1
             python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
-      - run:
-          name: Update codecov
-          command: |
-            sudo python -m pip install codecov --user
-            python -m codecov
-            bash <(curl https://codecov.io/bash) -f coverage.xml
-          when: always
       - persist_to_workspace:
-          root: /tmp
+          root: /tmp/src/pynets
           paths:
-            - src/pynets
+            - coverage.xml
+            - .coverage
+            - .coveragerc
+      - save_cache:
+          key: unittests
+          paths:
+            - ~/test_cache
       - store_test_results:
           path: test-results
       - store_artifacts:
           path: test-results
+
+  coverage:
+    machine:
+      image: ubuntu-1604:201903-01
+    working_directory: /tmp/src/pynets
+    steps:
+      - checkout
+      - restore_cache:
+          key: unittests
+      - attach_workspace:
+          at: /tmp/src/pynets
+      - run:
+          name: "Switch to Python v3.6"
+          no_output_timeout: 30m
+          command: |
+            pyenv local --unset
+            pyenv uninstall -f 3.6.5 || true
+            sudo add-apt-repository ppa:deadsnakes/ppa
+            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
+            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
+            sudo apt-get update
+            sudo apt-get install -y make build-essential
+            sudo apt-get install -y software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
+            sudo apt-get upgrade
+            pyenv install -f 3.6.5 || true
+            eval "$(pyenv init -)"
+            pyenv global 3.6.5
+            echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
+            echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Check Python version and upgrade pip
+          command: |
+            python -m pip install -U pip
+            python -m pip install --upgrade pip setuptools
+      - run:
+          name: Update codecov
+          command: |
+            python -m pip install codecov
+            python -m codecov
+            bash <(curl https://codecov.io/bash) -f coverage.xml
+          when: always
 
   deploy_docker_patches:
     machine:
@@ -466,6 +502,13 @@ workflows:
             tags:
               only: /.*/
       - unit_tests:
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+            tags:
+              only: /.*/
+      - coverage:
           filters:
             branches:
               ignore:
