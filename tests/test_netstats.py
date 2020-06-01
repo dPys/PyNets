@@ -247,7 +247,7 @@ def test_subgraph_number_of_cliques_for_all():
 
     cliques = netstats.subgraph_number_of_cliques_for_all(G)
 
-    assert cliques is not None
+    assert cliques > 0
 
 
 def test_smallworldness():
@@ -286,14 +286,19 @@ def test_participation_coef_sign():
     assert len(Pneg) == ci_dim
 
 
-def test_weighted_transitivity():
+@pytest.mark.parametrize("binarize", [True, False])
+def test_weighted_transitivity(binarize):
     """ Test weighted_transitivity computation
     """
+    from pynets.core.thresholding import binarize
 
     base_dir = str(Path(__file__).parent/"examples")
     est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
 
     in_mat = np.load(est_path)
+    if binarize:
+        in_mat = binarize(in_mat)
+
     G = nx.from_numpy_array(in_mat)
 
     transitivity = netstats.weighted_transitivity(G)
@@ -446,8 +451,10 @@ def test_get_metrics(metric):
 @pytest.mark.parametrize("sql_out", [True, False])
 @pytest.mark.parametrize("nc_collect", [True, False])
 @pytest.mark.parametrize("create_summary", [True, False])
-@pytest.mark.parametrize("graph_num", [1, 2])
-
+@pytest.mark.parametrize("graph_num", [-1,
+                                       pytest.param(0, marks=pytest.mark.xfail(raises=IndexError)),
+                                       1,
+                                       2])
 def test_collect_pandas_df_make(plot_switch, sql_out, nc_collect, create_summary, graph_num):
     """
     """
@@ -456,18 +463,21 @@ def test_collect_pandas_df_make(plot_switch, sql_out, nc_collect, create_summary
     ID = '002'
     plot_switch = False
 
-    if graph_num == 1:
-        net_mets_csv_list = [f"{base_dir}/miscellaneous/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.3_net_mets.csv"]
+    if graph_num == -1:
+        # This should raise an error but doesn't.
+        net_mets_csv_list = [f"{base_dir}/miscellaneous/002_parcels_Default.nii.gz"]
+    elif graph_num == 0:
+        net_mets_csv_list = []
+    elif graph_num == 1:
+        net_mets_csv_list = [f"{base_dir}/netmetrics/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv"]
     else:
-        net_mets_csv_list = [f"{base_dir}/miscellaneous/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.3_net_mets.csv",
-                             f"{base_dir}/miscellaneous/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv"]
+        # This was breaking.
+        net_mets_csv_list = [f"{base_dir}/netmetrics/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv",
+                             f"{base_dir}/netmetrics/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.3_net_mets.csv"]
 
-    # This is very lazyy and deeds revision.
-    try:
-        combination_complete = netstats.collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch,
-                                                               nc_collect=nc_collect, create_summary=create_summary,
-                                                               sql_out=sql_out)
-    except:
-        return
+    combination_complete = netstats.collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch,
+                                                           nc_collect=nc_collect, create_summary=create_summary,
+                                                           sql_out=sql_out)
+
 
     assert combination_complete is True
