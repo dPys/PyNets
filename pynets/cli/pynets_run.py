@@ -152,13 +152,32 @@ def get_parser():
                         nargs='+',
                         choices=['atlas_aal', 'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe',
                                  'atlas_harvard_oxford', 'atlas_destrieux_2009', 'atlas_msdl', 'coords_dosenbach_2010',
-                                 'coords_power_2011', 'atlas_pauli_2017'],
-                        help='(Hyperparameter): Specify a coordinate atlas parcellation from those made publically '
-                             'available in nilearn. If you wish to iterate your pynets run over multiple nilearn '
+                                 'coords_power_2011', 'atlas_pauli_2017', 'destrieux2009_rois',
+                                 'BrainnetomeAtlasFan2016', 'VoxelwiseParcellationt0515kLeadDBS',
+                                 'Juelichgmthr252mmEickhoff2005',
+                                 'CorticalAreaParcellationfromRestingStateCorrelationsGordon2014',
+                                 'whole_brain_cluster_labels_PCA100', 'AICHAreorderedJoliot2015',
+                                 'HarvardOxfordThr252mmWholeBrainMakris2006', 'VoxelwiseParcellationt058kLeadDBS',
+                                 'MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics',
+                                 'Hammers_mithAtlasn30r83Hammers2003Gousias2008', 'AALTzourioMazoyer2002',
+                                 'DesikanKlein2012', 'AAL2zourioMazoyer2002', 'VoxelwiseParcellationt0435kLeadDBS',
+                                 'AICHAJoliot2015', 'whole_brain_cluster_labels_PCA200',
+                                 'RandomParcellationsc05meanalll43Craddock2011'],
+                        help='(Hyperparameter): Specify an atlas parcellation from nilearn or local libraries. '
+                             'If you wish to iterate your pynets run over multiple '
                              'atlases, separate them by space. Available nilearn atlases are:'
                              '\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\n'
                              'atlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl\ncoords_dosenbach_2010\n'
-                             'coords_power_2011\natlas_pauli_2017.\n')
+                             'coords_power_2011\natlas_pauli_2017.\n\nAvailable local atlases are:'
+                             '\n\ndestrieux2009_rois\nBrainnetomeAtlasFan2016\nVoxelwiseParcellationt0515kLeadDBS\n'
+                             'Juelichgmthr252mmEickhoff2005\n'
+                             'CorticalAreaParcellationfromRestingStateCorrelationsGordon2014\n'
+                             'whole_brain_cluster_labels_PCA100\nAICHAreorderedJoliot2015\n'
+                             'HarvardOxfordThr252mmWholeBrainMakris2006\nVoxelwiseParcellationt058kLeadDBS\n'
+                             'MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics\n'
+                             'Hammers_mithAtlasn30r83Hammers2003Gousias2008\nAALTzourioMazoyer2002\nDesikanKlein2012\n'
+                             'AAL2zourioMazoyer2002\nVoxelwiseParcellationt0435kLeadDBS\nAICHAJoliot2015\n'
+                             'whole_brain_cluster_labels_PCA200\nRandomParcellationsc05meanalll43Craddock2011')
     parser.add_argument('-ns',
                         metavar='Spherical centroid node size',
                         default=4,
@@ -709,6 +728,7 @@ def build_workflow(args, retval):
             nilearn_parc_atlases = hardcoded_params['nilearn_parc_atlases']
             nilearn_coord_atlases = hardcoded_params['nilearn_coord_atlases']
             nilearn_prob_atlases = hardcoded_params['nilearn_prob_atlases']
+            local_atlases = hardcoded_params['local_atlases']
             runtime_dict = {}
             execution_dict = {}
             for i in range(len(hardcoded_params['resource_dict'])):
@@ -1255,7 +1275,7 @@ def build_workflow(args, retval):
                 retval['return_code'] = 1
                 return retval
             else:
-                print(f"\nNilearn atlas: {atlas}")
+                print(f"\nAtlas: {atlas}")
 
         if target_samples:
             print(f"Using {target_samples} streamline samples...")

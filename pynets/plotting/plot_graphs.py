@@ -178,7 +178,7 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            cmap_name = hardcoded_params['plotting']['functional']['color_theme']
+            cmap_name = hardcoded_params['plotting']['functional']['color_theme'][0]
         except KeyError:
             print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
             sys.exit(0)
@@ -288,7 +288,7 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, 
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            cmap_name = hardcoded_params['plotting']['structural']['color_theme']
+            cmap_name = hardcoded_params['plotting']['structural']['color_theme'][0]
         except KeyError:
             print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
             sys.exit(0)

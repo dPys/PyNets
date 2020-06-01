@@ -783,6 +783,7 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
     import time
     from pathlib import Path
     import os.path as op
+    import glob
 
     base_path = utils.get_file()
     # Test if atlas is a nilearn atlas. If so, fetch coords, labels, and/or networks.
@@ -790,6 +791,9 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
                             'atlas_talairach_ba', 'atlas_talairach_lobe']
     nilearn_coords_atlases = ['coords_power_2011', 'coords_dosenbach_2010']
     nilearn_prob_atlases = ['atlas_msdl', 'atlas_pauli_2017']
+    local_atlases = [op.basename(i).split('.nii')[0] for i in
+                     glob.glob(f"{str(Path(base_path).parent)}{'/atlases/*.nii.gz'}") if '_4d' not in i]
+
     if uatlas is None and atlas in nilearn_parc_atlases:
         [labels, networks_list, uatlas] = nodemaker.nilearn_atlas_helper(atlas, parc)
         if uatlas:
@@ -824,8 +828,27 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
             else:
                 parcel_list = None
         else:
-            raise ValueError(f"\nERROR: Atlas file for {atlas} not found!")
+            raise ValueError(f"\nAtlas file for {atlas} not found!")
         par_max = None
+    elif uatlas is None and atlas in local_atlases:
+        uatlas = f"{str(Path(base_path).parent)}/atlases/{atlas}.nii.gz"
+        try:
+            # Fetch user-specified atlas coords
+            [coords, atlas, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
+            if parc is True:
+                parcel_list = nodemaker.gen_img_list(uatlas)
+            else:
+                parcel_list = None
+            # Describe user atlas coords
+            print(f"\n{atlas} comes with {par_max} parcels\n")
+        except ValueError:
+            print('Either you have specified the name of an atlas that does not exist in the nilearn or local '
+                  'repository or you have not supplied a 3d atlas parcellation image!')
+            parcel_list = None
+            par_max = None
+            coords = None
+        labels = None
+        networks_list = None
     elif uatlas:
         if clustering is True:
             while True:
@@ -845,30 +868,28 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
             # Describe user atlas coords
             print(f"\n{atlas} comes with {par_max} parcels\n")
         except ValueError:
-            print('\n\nError: Either you have specified the name of a nilearn atlas that does not exist or '
-                  'you have not supplied a 3d atlas parcellation image!\n\n')
+            print('Either you have specified the name of an atlas that does not exist in the nilearn or local '
+                  'repository or you have not supplied a 3d atlas parcellation image!')
             parcel_list = None
             par_max = None
             coords = None
         labels = None
         networks_list = None
     else:
-        networks_list = None
-        labels = None
-        parcel_list = None
-        par_max = None
-        coords = None
+        raise ValueError('Either you have specified the name of an atlas that does not exist in the nilearn or local '
+                         'repository or you have not supplied a 3d atlas parcellation image!')
 
     # Labels prep
     if atlas:
-        if labels:
+        if labels is not None:
             pass
         else:
             if (ref_txt is not None) and (op.exists(ref_txt)) and (use_AAL_naming is False):
                 labels = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])['Region'].tolist()
             else:
-                try:
+                if atlas in local_atlases:
                     ref_txt = f"{str(Path(base_path).parent)}{'/labelcharts/'}{atlas}{'.txt'}"
+                try:
                     if op.exists(ref_txt) and (use_AAL_naming is False):
                         try:
                             labels = pd.read_csv(ref_txt,
@@ -905,7 +926,7 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
     if len(coords) != len(labels):
         labels = len(coords) * [np.nan]
         if len(coords) != len(labels):
-            raise ValueError('ERROR: length of coordinates is not equal to length of label names')
+            raise ValueError('Length of coordinates is not equal to length of label names')
 
     return labels, coords, atlas, networks_list, parcel_list, par_max, uatlas, dir_path
 

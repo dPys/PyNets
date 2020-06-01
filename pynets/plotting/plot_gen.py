@@ -419,11 +419,11 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            color_theme = hardcoded_params['plotting']['functional']['color_theme']
-            node_color = hardcoded_params['plotting']['functional']['node_color']
-            connectogram = hardcoded_params['plotting']['connectogram']
-            glassbrain = hardcoded_params['plotting']['glassbrain']
-            adjacency = hardcoded_params['plotting']['adjacency']
+            color_theme = hardcoded_params['plotting']['functional']['color_theme'][0]
+            node_color = hardcoded_params['plotting']['functional']['node_color'][0]
+            connectogram = hardcoded_params['plotting']['connectogram'][0]
+            glassbrain = hardcoded_params['plotting']['glassbrain'][0]
+            adjacency = hardcoded_params['plotting']['adjacency'][0]
         except KeyError:
             print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
             sys.exit(0)
@@ -638,11 +638,11 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            node_color = hardcoded_params['plotting']['structural']['node_color']
-            color_theme = hardcoded_params['plotting']['structural']['color_theme']
-            connectogram = hardcoded_params['plotting']['connectogram']
-            glassbrain = hardcoded_params['plotting']['glassbrain']
-            adjacency = hardcoded_params['plotting']['adjacency']
+            node_color = hardcoded_params['plotting']['structural']['node_color'][0]
+            color_theme = hardcoded_params['plotting']['structural']['color_theme'][0]
+            connectogram = hardcoded_params['plotting']['connectogram'][0]
+            glassbrain = hardcoded_params['plotting']['glassbrain'][0]
+            adjacency = hardcoded_params['plotting']['adjacency'][0]
         except KeyError:
             print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
             sys.exit(0)
