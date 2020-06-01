@@ -255,7 +255,7 @@ jobs:
             set -e
             mkdir test-results
             export PYTHONUNBUFFERED=1
-            coverage run -p --rcfile=.coveragerc -m pytest -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
+            python -m coverage run -p --rcfile=.coveragerc -m pytest -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
       - persist_to_workspace:
           root: /tmp/src/pynets
           paths:

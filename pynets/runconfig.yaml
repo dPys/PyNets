@@ -38,6 +38,12 @@ available_models:
       - 'csa'
       - 'csd'
 plotting:
+    connectogram:
+        - False
+    glassbrain:
+        - True
+    adjacency:
+        - True
     functional:
         color_theme:
           - 'Blues'

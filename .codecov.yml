@@ -28,6 +28,7 @@ coverage:
     - "pynets/core/atlases/*"
     - "pynets/core/labelcharts/*"
     - "pynets/runconfig.yaml"
+    - "pynets/conftest.py"
     - "pynets/cloudconfig.json"
     - "pynets/bidsconfig.json"
     - "pynets/stats/nodal_graph_measures.yaml"

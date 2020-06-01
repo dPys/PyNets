@@ -421,6 +421,9 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         try:
             color_theme = hardcoded_params['plotting']['functional']['color_theme']
             node_color = hardcoded_params['plotting']['functional']['node_color']
+            connectogram = hardcoded_params['plotting']['connectogram']
+            glassbrain = hardcoded_params['plotting']['glassbrain']
+            adjacency = hardcoded_params['plotting']['adjacency']
         except KeyError:
             print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
             sys.exit(0)
@@ -466,7 +469,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
             os.makedirs(namer_dir, exist_ok=True)
 
         # Plot connectogram
-        if len(conn_matrix) > 20:
+        if len(conn_matrix) > 20 and connectogram is True:
             try:
                 plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
             except RuntimeWarning:
@@ -477,75 +480,79 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         # Plot adj. matrix based on determined inputs
         if not node_size or node_size == 'None':
             node_size = 'parc'
-        plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels, roi, thr,
-                                       node_size, smooth, hpass)
 
-        # Plot connectome
-        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
-                                                           '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                                   network is not None else ''),
-                                                           '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0],
-                                                                               '_') if roi is not None else ''),
-                                                           'est-', conn_model, '_',
-                                                           '%s' % (
-                                                               "%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
-                                                               ((node_size != 'parc') and (node_size is not None))
-                                                               else 'nodetype-parc_'),
-                                                           "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
-                                                                   float(smooth) > 0 else ''),
-                                                           "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
-                                                                   hpass is not None else ''),
-                                                           '_thr-', thr, '_glass_viz.png')
-        if roi:
-            # Save coords to pickle
-            coord_path = f"{namer_dir}{'/coords_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
-            with open(coord_path, 'wb') as f:
-                pickle.dump(coords, f, protocol=2)
+        if adjacency is True:
+            plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels, roi, thr,
+                                           node_size, smooth, hpass)
 
-            # Save labels to pickle
-            labels_path = f"{namer_dir}{'/labelnames_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
-            with open(labels_path, 'wb') as f:
-                pickle.dump(labels, f, protocol=2)
+        if glassbrain is True:
+            # Plot connectome
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
+                                                               '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                       network is not None else ''),
+                                                               '%s' % ("%s%s%s" %
+                                                                       ('roi-', op.basename(roi).split('.')[0],
+                                                                        '_') if roi is not None else ''),
+                                                               'est-', conn_model, '_',
+                                                               '%s' % (
+                                                                   "%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
+                                                                   ((node_size != 'parc') and (node_size is not None))
+                                                                   else 'nodetype-parc_'),
+                                                               "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                                       float(smooth) > 0 else ''),
+                                                               "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                                       hpass is not None else ''),
+                                                               '_thr-', thr, '_glass_viz.png')
+            if roi:
+                # Save coords to pickle
+                coord_path = f"{namer_dir}{'/coords_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
+                with open(coord_path, 'wb') as f:
+                    pickle.dump(coords, f, protocol=2)
 
-        else:
-            # Save coords to pickle
-            coord_path = f"{namer_dir}{'/coords_plotting.pkl'}"
-            with open(coord_path, 'wb') as f:
-                pickle.dump(coords, f, protocol=2)
+                # Save labels to pickle
+                labels_path = f"{namer_dir}{'/labelnames_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
+                with open(labels_path, 'wb') as f:
+                    pickle.dump(labels, f, protocol=2)
 
-            # Save labels to pickle
-            labels_path = f"{namer_dir}{'/labelnames_plotting.pkl'}"
-            with open(labels_path, 'wb') as f:
-                pickle.dump(labels, f, protocol=2)
-
-        connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
-        connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
-        conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
-        [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
-        if node_size == 'parc':
-            node_size_plot = int(6)
-        else:
-            node_size_plot = int(node_size)
-        if len(coords) != conn_matrix.shape[0]:
-            raise RuntimeWarning('\nWARNING: Number of coordinates does not match conn_matrix dimensions. If you are '
-                                 'using disparity filtering, try relaxing the α threshold.')
-        else:
-            if node_color != 'auto':
-                norm = colors.Normalize(vmin=0, vmax=1)
-                clust_pal = sns.color_palette(node_color, conn_matrix.shape[0])
-                clust_colors = colors.to_rgba_array(clust_pal)
             else:
-                clust_colors = node_color
-            connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold,
-                                 edge_cmap=plt.get_cmap(color_theme),
-                                 edge_vmax=float(z_max), edge_vmin=float(z_min), node_size=node_size_plot,
-                                 node_color=clust_colors, edge_kwargs={'alpha': 0.45})
-            connectome.savefig(out_path_fig, dpi=dpi_resolution)
-    else:
-        raise RuntimeError('\nERROR: no coordinates to plot! Are you running plotting outside of pynets\'s internal '
-                           'estimation schemes?')
+                # Save coords to pickle
+                coord_path = f"{namer_dir}{'/coords_plotting.pkl'}"
+                with open(coord_path, 'wb') as f:
+                    pickle.dump(coords, f, protocol=2)
 
-    plt.close('all')
+                # Save labels to pickle
+                labels_path = f"{namer_dir}{'/labelnames_plotting.pkl'}"
+                with open(labels_path, 'wb') as f:
+                    pickle.dump(labels, f, protocol=2)
+
+            connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
+            connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
+            conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
+            [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
+            if node_size == 'parc':
+                node_size_plot = int(6)
+            else:
+                node_size_plot = int(node_size)
+            if len(coords) != conn_matrix.shape[0]:
+                raise RuntimeWarning('\nWARNING: Number of coordinates does not match conn_matrix dimensions. If you '
+                                     'are using disparity filtering, try relaxing the α threshold.')
+            else:
+                if node_color != 'auto':
+                    norm = colors.Normalize(vmin=0, vmax=1)
+                    clust_pal = sns.color_palette(node_color, conn_matrix.shape[0])
+                    clust_colors = colors.to_rgba_array(clust_pal)
+                else:
+                    clust_colors = node_color
+                connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold,
+                                     edge_cmap=plt.get_cmap(color_theme),
+                                     edge_vmax=float(z_max), edge_vmin=float(z_min), node_size=node_size_plot,
+                                     node_color=clust_colors, edge_kwargs={'alpha': 0.45})
+                connectome.savefig(out_path_fig, dpi=dpi_resolution)
+        else:
+            raise RuntimeError('\nERROR: no coordinates to plot! Are you running plotting outside of pynets\'s '
+                               'internal estimation schemes?')
+
+        plt.close('all')
 
     return
 
@@ -633,6 +640,9 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         try:
             node_color = hardcoded_params['plotting']['structural']['node_color']
             color_theme = hardcoded_params['plotting']['structural']['color_theme']
+            connectogram = hardcoded_params['plotting']['connectogram']
+            glassbrain = hardcoded_params['plotting']['glassbrain']
+            adjacency = hardcoded_params['plotting']['adjacency']
         except KeyError:
             print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
             sys.exit(0)
@@ -677,7 +687,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
             os.makedirs(namer_dir, exist_ok=True)
 
         # Plot connectogram
-        if len(conn_matrix) > 20:
+        if len(conn_matrix) > 20 and connectogram is True:
             try:
                 plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
             except RuntimeWarning:
@@ -688,80 +698,83 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         # Plot adj. matrix based on determined inputs
         if not node_size or node_size == 'None':
             node_size = 'parc'
-        plot_graphs.plot_conn_mat_struct(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels, roi, thr,
-                                         node_size, target_samples, track_type, directget, min_length)
 
-        # Plot connectome
-        out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-dwi_',
-                                                                     '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                                             network is not None else ''),
-                                                                     '%s' % ("%s%s%s" % ('roi-',
-                                                                                         op.basename(roi).split(
-                                                                                             '.')[0],
-                                                                                         '_') if roi is not
-                                                                                                 None else ''),
-                                                                     'est-', conn_model, '_',
-                                                                     '%s' % (
-                                                                         "%s%s%s" % ('nodetype-spheres-', node_size,
-                                                                                     'mm_')
-                                                                         if ((node_size != 'parc') and
-                                                                             (node_size is not None))
-                                                                         else 'nodetype-parc_'),
-                                                                     "%s" % ("%s%s%s" % (
-                                                                         'samples-', int(target_samples),
-                                                                         'streams_')
-                                                                             if float(target_samples) > 0 else '_'),
-                                                                     'tt-', track_type, '_dg-', directget,
-                                                                     '_ml-', min_length,
-                                                                     '_thr-', thr, '_glass_viz.png')
-        if roi:
-            # Save coords to pickle
-            coord_path = f"{namer_dir}{'/coords_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
-            with open(coord_path, 'wb') as f:
-                pickle.dump(coords, f, protocol=2)
+        if adjacency is True:
+            plot_graphs.plot_conn_mat_struct(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels, roi, thr,
+                                             node_size, target_samples, track_type, directget, min_length)
 
-            # Save labels to pickle
-            labels_path = f"{namer_dir}{'/labelnames_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
-            with open(labels_path, 'wb') as f:
-                pickle.dump(labels, f, protocol=2)
-        else:
-            # Save coords to pickle
-            coord_path = f"{namer_dir}{'/coords_plotting.pkl'}"
-            with open(coord_path, 'wb') as f:
-                pickle.dump(coords, f, protocol=2)
+        if glassbrain is True:
+            # Plot connectome
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-dwi_',
+                                                                         '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                                 network is not None else ''),
+                                                                         '%s' % ("%s%s%s" % ('roi-',
+                                                                                             op.basename(roi).split(
+                                                                                                 '.')[0],
+                                                                                             '_') if roi is not
+                                                                                                     None else ''),
+                                                                         'est-', conn_model, '_',
+                                                                         '%s' % (
+                                                                             "%s%s%s" % ('nodetype-spheres-', node_size,
+                                                                                         'mm_')
+                                                                             if ((node_size != 'parc') and
+                                                                                 (node_size is not None))
+                                                                             else 'nodetype-parc_'),
+                                                                         "%s" % ("%s%s%s" % (
+                                                                             'samples-', int(target_samples),
+                                                                             'streams_')
+                                                                                 if float(target_samples) > 0 else '_'),
+                                                                         'tt-', track_type, '_dg-', directget,
+                                                                         '_ml-', min_length,
+                                                                         '_thr-', thr, '_glass_viz.png')
+            if roi:
+                # Save coords to pickle
+                coord_path = f"{namer_dir}{'/coords_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
+                with open(coord_path, 'wb') as f:
+                    pickle.dump(coords, f, protocol=2)
 
-            # Save labels to pickle
-            labels_path = f"{namer_dir}{'/labelnames_plotting.pkl'}"
-            with open(labels_path, 'wb') as f:
-                pickle.dump(labels, f, protocol=2)
-
-        connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
-        connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
-        conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
-        [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
-        if node_size == 'parc':
-            node_size_plot = int(6)
-        else:
-            node_size_plot = int(node_size)
-        if len(coords) != conn_matrix.shape[0]:
-            raise RuntimeWarning('\nWARNING: Number of coordinates does not match conn_matrix dimensions.')
-        else:
-            if node_color != 'auto':
-                norm = colors.Normalize(vmin=0, vmax=1)
-                clust_pal = sns.color_palette(node_color, conn_matrix.shape[0])
-                clust_colors = colors.to_rgba_array(clust_pal)
+                # Save labels to pickle
+                labels_path = f"{namer_dir}{'/labelnames_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
+                with open(labels_path, 'wb') as f:
+                    pickle.dump(labels, f, protocol=2)
             else:
-                clust_colors = node_color
-            connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold,
-                                 edge_cmap=plt.get_cmap(color_theme),
-                                 edge_vmax=float(z_max), edge_vmin=0, node_size=node_size_plot,
-                                 node_color=clust_colors, edge_kwargs={'alpha': 0.10})
-            connectome.savefig(out_path_fig, dpi=dpi_resolution)
-    else:
-        raise RuntimeError('\nERROR: no coordinates to plot! Are you running plotting outside of pynets\'s internal '
-                           'estimation schemes?')
+                # Save coords to pickle
+                coord_path = f"{namer_dir}{'/coords_plotting.pkl'}"
+                with open(coord_path, 'wb') as f:
+                    pickle.dump(coords, f, protocol=2)
 
-    plt.close('all')
+                # Save labels to pickle
+                labels_path = f"{namer_dir}{'/labelnames_plotting.pkl'}"
+                with open(labels_path, 'wb') as f:
+                    pickle.dump(labels, f, protocol=2)
+
+            connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
+            connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
+            conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
+            [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
+            if node_size == 'parc':
+                node_size_plot = int(6)
+            else:
+                node_size_plot = int(node_size)
+            if len(coords) != conn_matrix.shape[0]:
+                raise RuntimeWarning('\nWARNING: Number of coordinates does not match conn_matrix dimensions.')
+            else:
+                if node_color != 'auto':
+                    norm = colors.Normalize(vmin=0, vmax=1)
+                    clust_pal = sns.color_palette(node_color, conn_matrix.shape[0])
+                    clust_colors = colors.to_rgba_array(clust_pal)
+                else:
+                    clust_colors = node_color
+                connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold,
+                                     edge_cmap=plt.get_cmap(color_theme),
+                                     edge_vmax=float(z_max), edge_vmin=0, node_size=node_size_plot,
+                                     node_color=clust_colors, edge_kwargs={'alpha': 0.10})
+                connectome.savefig(out_path_fig, dpi=dpi_resolution)
+        else:
+            raise RuntimeError('\nERROR: no coordinates to plot! Are you running plotting outside of pynets\'s '
+                               'internal estimation schemes?')
+
+        plt.close('all')
 
     return
 

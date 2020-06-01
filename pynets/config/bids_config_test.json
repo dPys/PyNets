@@ -16,7 +16,7 @@
             "sm": "['0']"
         },
     "gen": {
-            "a":  "['coords_dosenbach_2010']",
+            "a":  "['DesikanKlein2012']",
             "bin":  "False",
             "df":  "False",
             "dt":  "False",
@@ -28,10 +28,10 @@
             "n":  "['Default']",
             "names":  "False",
             "norm": "6",
-            "ns":  "8",
+            "ns":  "None",
             "p":  "['3']",
             "plt":  "True",
-            "spheres":  "True",
+            "spheres":  "False",
             "step_thr":  "None",
             "thr":  1.0,
             "vox":  "'2mm'"
