@@ -1,5 +1,4 @@
 version: 2
-
 jobs:
   build:
     environment:
@@ -310,10 +309,10 @@ jobs:
           name: Update codecov
           command: |
             python -m pip install codecov coverage
-            coverage combine
-            coverage report
-            coverage html
-            coverage xml
+            python -m coverage combine
+            python -m coverage report
+            python -m coverage html
+            python -m coverage xml
             python -m codecov
             bash <(curl https://codecov.io/bash) -f coverage.xml
           when: always
