@@ -30,8 +30,6 @@ def batch_submit(
     user_atlas,
     cluster_mask,
     roi,
-    templ,
-    templm,
     ref,
     way,
     plugin,
@@ -63,8 +61,6 @@ def batch_submit(
         user_atlas,
         cluster_mask,
         roi,
-        templ,
-        templm,
         ref,
         way,
         plugin,
@@ -160,8 +156,6 @@ def create_json(
     user_atlas,
     cluster_mask,
     roi,
-    templ,
-    templm,
     ref,
     way,
     plugin,
@@ -215,14 +209,6 @@ def create_json(
     if roi is not None:
         cmd.append('-roi')
         for i in roi:
-            cmd.append(i)
-    if templ is not None:
-        cmd.append('-templ')
-        for i in templ:
-            cmd.append(i)
-    if templm is not None:
-        cmd.append('-templm')
-        for i in templm:
             cmd.append(i)
     if ref is not None:
         cmd.append('-ref')
@@ -399,16 +385,6 @@ def main():
                         nargs='+',
                         help='Optionally specify a binarized ROI mask and retain only those nodes '
                              'of a parcellation contained within that mask for connectome estimation.\n')
-    parser.add_argument('-templ',
-                        metavar='Path to template file',
-                        default=None,
-                        help='Optionally specify a path to a template Nifti1Image file. If none is specified, then '
-                             'will use the MNI152 template by default.\n')
-    parser.add_argument('-templm',
-                        metavar='Path to template mask file',
-                        default=None,
-                        help='Optionally specify a path to a template mask Nifti1Image file. If none is specified, '
-                             'then will use the MNI152 template mask by default.\n')
     parser.add_argument('-ref',
                         metavar='Atlas reference file path',
                         default=None,
@@ -469,8 +445,6 @@ def main():
     user_atlas = result.ua
     cluster_mask = result.cm
     roi = result.roi
-    templ = result.templ
-    templm = result.templm
     ref = result.ref
     way = result.way
 
@@ -492,8 +466,6 @@ def main():
         user_atlas=user_atlas,
         cluster_mask=cluster_mask,
         roi=roi,
-        templ=templ,
-        templm=templm,
         ref=ref,
         way=way,
         plugin=plugin,

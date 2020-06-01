@@ -169,8 +169,7 @@ def test_most_important():
     assert Gt is not None
     assert pruned_nodes is not None
 
-#@pytest.mark.parametrize("prune", ['0'])
-#def test_extractnetstats(prune):
+
 @pytest.mark.parametrize("binary", ['True', 'False'])
 @pytest.mark.parametrize("prune", ['0', '1', '2'])
 @pytest.mark.parametrize("norm", ['0', '1', '2', '3', '4', '5', '6'])
@@ -212,6 +211,7 @@ def test_extractnetstats(binary, prune, norm):
                                             norm, binary)
     except PermissionError:
         pass
+
 
 def test_raw_mets():
     """
@@ -262,10 +262,8 @@ def test_smallworldness():
 
     omega = netstats.smallworldness(G, niter=5, nrand=5)
 
-    # The dosctring states omega should be between 1 and -1, but it is around -2 here.
-    # assert omega >= -1
-    # assert omega <= 1
-    assert omega is not None
+    # A network is smallworld if omega > 1
+    assert omega > 1
 
 
 def test_participation_coef_sign():

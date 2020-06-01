@@ -45,6 +45,7 @@ nosetests.xml
 *,cover
 .hypothesis/
 tests/examples*
+tests/summary*
 pynets/.idea/*
 .idea/*
 

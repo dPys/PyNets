@@ -230,11 +230,6 @@ def smallworldness(G, niter=10, nrand=100):
     of an equivalent random graph and Cl is the average clustering coefficient
     of an equivalent lattice graph.
 
-    The small-world coefficient (omega) ranges between -1 and 1. Values close
-    to 0 means the G features small-world characteristics. Values close to -1
-    means G has a lattice shape whereas values close to 1 means G is a random
-    graph.
-
     Parameters
     ----------
     G : NetworkX graph

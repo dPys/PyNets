@@ -733,7 +733,7 @@ def AAL_naming(coords):
     return labels
 
 
-def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming, outdir, clustering=False):
+def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming, outdir, vox_size, clustering=False):
     """
     General API for fetching, identifying, and defining atlas nodes based on coordinates and/or labels.
 
@@ -755,6 +755,8 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
         coordinates.
     outdir : str
         Path to base derivatives directory.
+    vox_size : str
+        Voxel size in mm. (e.g. 2mm).
     clustering : bool
         Indicates whether clustering was performed. Default is False.
 
@@ -831,7 +833,10 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
             raise ValueError(f"\nAtlas file for {atlas} not found!")
         par_max = None
     elif uatlas is None and atlas in local_atlases:
-        uatlas = f"{str(Path(base_path).parent)}/atlases/{atlas}.nii.gz"
+        from pynets.registration.reg_utils import check_orient_and_dims
+        uatlas_pre = f"{str(Path(base_path).parent)}/atlases/{atlas}.nii.gz"
+        uatlas = check_orient_and_dims(uatlas_pre, outdir, vox_size)
+
         try:
             # Fetch user-specified atlas coords
             [coords, atlas, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)

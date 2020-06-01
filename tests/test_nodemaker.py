@@ -345,11 +345,12 @@ def test_WB_fetch_nodes_and_labels1():
     use_AAL_naming = True
     ref_txt = None
     parc = True
+    vox_size = '2mm'
 
     start_time = time.time()
     [_, coords, atlas_name, _, parcel_list, par_max, parlistfile,
      dir_path] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc, func_file, use_AAL_naming,
-                                                  dir_path)
+                                                  dir_path, vox_size)
     print("%s%s%s" % ('WB_fetch_nodes_and_labels (Parcel Nodes) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -374,9 +375,12 @@ def test_WB_fetch_nodes_and_labels2():
     ref_txt = None
     parc = False
     use_AAL_naming = True
+    vox_size = '2mm'
+
     start_time = time.time()
     [_, coords, atlas_name, _, _, par_max, parlistfile,
-     _] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc, func_file, use_AAL_naming, dir_path)
+     _] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc, func_file, use_AAL_naming, dir_path,
+                                           vox_size)
     print("%s%s%s" % ('WB_fetch_nodes_and_labels (Spherical Nodes) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -399,11 +403,12 @@ def test_RSN_fetch_nodes_and_labels1():
     ref_txt = None
     parc = True
     use_AAL_naming = True
+    vox_size = '2mm'
 
     start_time = time.time()
     [RSN_labels, RSN_coords, atlas_name, _, parcel_list, par_max,
      parlistfile, _] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc,
-                                                        func_file, use_AAL_naming, dir_path)
+                                                        func_file, use_AAL_naming, dir_path, vox_size)
     print("%s%s%s" % ('RSN_fetch_nodes_and_labels (Parcel Nodes) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -428,11 +433,12 @@ def test_RSN_fetch_nodes_and_labels2():
     ref_txt = None
     parc = False
     use_AAL_naming = True
+    vox_size = '2mm'
 
     start_time = time.time()
     [RSN_labels, RSN_coords, atlas_name, _, _,
      par_max, parlistfile, _] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc, func_file,
-                                                                 use_AAL_naming, dir_path)
+                                                                 use_AAL_naming, dir_path, vox_size)
     print("%s%s%s" % ('RSN_fetch_nodes_and_labels (Spherical Nodes) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
 

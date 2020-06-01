@@ -82,7 +82,7 @@ def get_parser():
                         help='Specify either a path to a binarized brain mask Nifti1Image in MNI152 space '
                              'OR multiple paths to multiple brain mask Nifti1Image files in the case of running '
                              'multiple participants, in which case paths should be separated by a space. If no brain '
-                             'mask is supplied, a default MNI152 template mask will be used\n')
+                             'mask is supplied, the template mask will be used (see runconfig.yaml).\n')
     parser.add_argument('-conf',
                         metavar='Confound regressor file (.tsv/.csv format)',
                         default=None,
@@ -103,16 +103,6 @@ def get_parser():
                         nargs='+',
                         help='Optionally specify a binarized ROI mask and retain only those nodes '
                              'of a parcellation contained within that mask for connectome estimation.\n')
-    parser.add_argument('-templ',
-                        metavar='Path to template file',
-                        default=None,
-                        help='Optionally specify a path to a template Nifti1Image file. If none is specified, then '
-                             'will use the MNI152 template by default.\n')
-    parser.add_argument('-templm',
-                        metavar='Path to template mask file',
-                        default=None,
-                        help='Optionally specify a path to a template mask Nifti1Image file. If none is specified, '
-                             'then will use the MNI152 template mask by default.\n')
     parser.add_argument('-ref',
                         metavar='Atlas reference file path',
                         default=None,
@@ -518,8 +508,6 @@ def build_workflow(args, retval):
     else:
         hpass_list = None
     roi = args.roi
-    template = args.templ
-    template_mask = args.templm
     conn_model = args.mod
     if conn_model:
         if (type(conn_model) is list) and (len(conn_model) > 1):
@@ -729,6 +717,8 @@ def build_workflow(args, retval):
             nilearn_coord_atlases = hardcoded_params['nilearn_coord_atlases']
             nilearn_prob_atlases = hardcoded_params['nilearn_prob_atlases']
             local_atlases = hardcoded_params['local_atlases']
+
+            # Set paths to templates
             runtime_dict = {}
             execution_dict = {}
             for i in range(len(hardcoded_params['resource_dict'])):
@@ -1275,12 +1265,12 @@ def build_workflow(args, retval):
                 retval['return_code'] = 1
                 return retval
             else:
-                print(f"\nAtlas: {atlas}")
+                print(f"\nUsing curated atlas: {atlas}")
 
         if target_samples:
-            print(f"Using {target_samples} streamline samples...")
+            print(f"\nUsing {target_samples} streamline samples...")
         if min_length:
-            print(f"Using {min_length}mm minimum streamline length...")
+            print(f"\nUsing {min_length}mm minimum streamline length...")
 
     if (dwi_file or dwi_file_list) and not (func_file or func_file_list):
         print('\nRunning dmri connectometry only...')
@@ -1415,8 +1405,6 @@ def build_workflow(args, retval):
     retval['tiss_class'] = tiss_class
     retval['directget'] = directget
     retval['multi_directget'] = multi_directget
-    retval['template'] = template
-    retval['template_mask'] = template_mask
     retval['func_file'] = func_file
     retval['dwi_file'] = dwi_file
     retval['fbval'] = fbval
@@ -1476,8 +1464,6 @@ def build_workflow(args, retval):
     # print("%s%s" % ('tiss_class: ', tiss_class))
     # print("%s%s" % ('directget: ', directget))
     # print("%s%s" % ('multi_directget: ', multi_directget))
-    # print("%s%s" % ('template: ', template))
-    # print("%s%s" % ('template_mask: ', template_mask))
     # print("%s%s" % ('func_file: ', func_file))
     # print("%s%s" % ('dwi_file: ', dwi_file))
     # print("%s%s" % ('fbval: ', fbval))
@@ -1512,8 +1498,7 @@ def build_workflow(args, retval):
                                clust_type_list, mask, norm, binary, fbval, fbvec, target_samples,
                                curv_thr_list, step_list, overlap_thr, track_type, min_length, maxcrossing, directget,
                                tiss_class, runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass,
-                               hpass_list, template, template_mask, vox_size, multiplex, waymask, local_corr,
-                               min_length_list, outdir):
+                               hpass_list, vox_size, multiplex, waymask, local_corr, min_length_list, outdir):
         """A function interface for generating a single-subject workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1574,8 +1559,7 @@ def build_workflow(args, retval):
                                         fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                         track_type, min_length, maxcrossing, directget, tiss_class, runtime_dict,
                                         execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
-                                        template, template_mask, vox_size, multiplex, waymask, local_corr,
-                                        min_length_list, outdir)
+                                        vox_size, multiplex, waymask, local_corr, min_length_list, outdir)
             meta_wf._n_procs = procmem[0]
             meta_wf._mem_gb = procmem[1]
             meta_wf.n_procs = procmem[0]
@@ -1692,8 +1676,8 @@ def build_workflow(args, retval):
                          smooth, smooth_list, disp_filt, clust_type, clust_type_list, mask, norm,
                          binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr, track_type,
                          min_length, maxcrossing, directget, tiss_class, runtime_dict, execution_dict, embed,
-                         multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex,
-                         waymask, local_corr, min_length_list, outdir):
+                         multi_directget, multimodal, hpass, hpass_list, vox_size, multiplex, waymask, local_corr,
+                         min_length_list, outdir):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1759,8 +1743,8 @@ def build_workflow(args, retval):
                 overlap_thr=overlap_thr, track_type=track_type, min_length=min_length, maxcrossing=maxcrossing,
                 directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, execution_dict=execution_dict,
                 embed=embed, multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
-                template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex, waymask=waymask,
-                local_corr=local_corr, min_length_list=min_length_list, outdir=subj_dir)
+                vox_size=vox_size, multiplex=multiplex, waymask=waymask, local_corr=local_corr,
+                min_length_list=min_length_list, outdir=subj_dir)
             wf_single_subject._n_procs = procmem[0]
             wf_single_subject._mem_gb = procmem[1]
             wf_single_subject.n_procs = procmem[0]
@@ -1841,7 +1825,7 @@ def build_workflow(args, retval):
                                               binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
                                               overlap_thr, track_type, min_length, maxcrossing, directget, tiss_class,
                                               runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass,
-                                              hpass_list, template, template_mask, vox_size, multiplex, waymask,
+                                              hpass_list, vox_size, multiplex, waymask,
                                               local_corr, min_length_list, outdir)
         import warnings
         warnings.filterwarnings("ignore")
@@ -1941,8 +1925,8 @@ def build_workflow(args, retval):
                                     smooth_list, disp_filt, clust_type, clust_type_list, mask,
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     track_type, min_length, maxcrossing, directget, tiss_class, runtime_dict,
-                                    execution_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
-                                    template_mask, vox_size, multiplex, waymask, local_corr, min_length_list, subj_dir)
+                                    execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
+                                    vox_size, multiplex, waymask, local_corr, min_length_list, subj_dir)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
