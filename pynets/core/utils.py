@@ -1110,6 +1110,6 @@ class build_sql_db(object):
         import pandas as pd
         df_summary_auc_ext = pd.concat([pd.DataFrame.from_dict(hyperparam_dict, orient='index').transpose(),
                                         df_summary_auc], axis=1)
-        df_summary_auc_ext.to_sql(self.modality, con=self.engine, index=False, chunksize=1000, if_exists='append')
+        df_summary_auc_ext.to_sql(self.modality, con=self.engine, index=False, chunksize=1000, if_exists='replace')
         return
 
