@@ -37,6 +37,17 @@ available_models:
     struct_models:
       - 'csa'
       - 'csd'
+plotting:
+    functional:
+        color_theme:
+          - 'Blues'
+        node_color:
+          - 'auto'
+    structural:
+        color_theme:
+          - 'binary'
+        node_color:
+          - 'copper'
 resource_dict:
       - 'fetch_nodes_and_labels_node':
         - (2, 2)

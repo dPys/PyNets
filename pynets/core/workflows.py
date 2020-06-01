@@ -46,6 +46,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
         except KeyError:
             print('ERROR: available structural models not successfully extracted from runconfig.yaml')
             sys.exit(0)
+    stream.close()
 
     # Handle modality logic
     if (func_file is not None) and (dwi_file is not None):

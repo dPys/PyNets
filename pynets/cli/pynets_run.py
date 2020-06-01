@@ -719,6 +719,7 @@ def build_workflow(args, retval):
                     hardcoded_params['execution_dict'][i].values())[0][0]
         except FileNotFoundError:
             print('Failed to parse runconfig.yaml')
+    stream.close()
 
     if (min_thr is not None) and (max_thr is not None) and (step_thr is not None):
         multi_thr = True

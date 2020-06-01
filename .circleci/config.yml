@@ -1,6 +1,6 @@
 version: 2
-jobs:
 
+jobs:
   build:
     environment:
       TZ: "/usr/share/zoneinfo/America/Chicago"
@@ -191,7 +191,7 @@ jobs:
             python -m pip install --upgrade pip setuptools
       - run:
           name: Install pytest
-          command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized
+          command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized coverage
       - run:
           name: Install system dependencies and LFS
           no_output_timeout: 30m
@@ -255,13 +255,12 @@ jobs:
             set -e
             mkdir test-results
             export PYTHONUNBUFFERED=1
-            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
+            coverage run -p --rcfile=.coveragerc -m pytest -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
       - persist_to_workspace:
           root: /tmp/src/pynets
           paths:
-            - coverage.xml
-            - .coverage
-            - .coveragerc
+            - .coverage*
+            - htmlcov/*
       - save_cache:
           key: unittests
           paths:
@@ -269,7 +268,9 @@ jobs:
       - store_test_results:
           path: test-results
       - store_artifacts:
-          path: test-results
+          path:
+            - test-results
+            - htmlcov
 
   coverage:
     machine:
@@ -292,7 +293,7 @@ jobs:
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
             sudo apt-get update
             sudo apt-get install -y make build-essential
-            sudo apt-get install -y software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
+            sudo apt-get install -y software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev
             sudo apt-get upgrade
             pyenv install -f 3.6.5 || true
             eval "$(pyenv init -)"
@@ -308,7 +309,11 @@ jobs:
       - run:
           name: Update codecov
           command: |
-            python -m pip install codecov
+            python -m pip install codecov coverage
+            coverage combine
+            coverage report
+            coverage html
+            coverage xml
             python -m codecov
             bash <(curl https://codecov.io/bash) -f coverage.xml
           when: always
@@ -485,14 +490,6 @@ workflows:
   version: 2
   build_test_deploy:
     jobs:
-      - build:
-          filters:
-            branches:
-              ignore:
-                - /docs?\/.*/
-            tags:
-              only: /.*/
-
       - get_data:
           filters:
             branches:
@@ -505,7 +502,6 @@ workflows:
       - unit_tests:
           requires:
             - get_data
-            - build
           filters:
             branches:
               ignore:
@@ -522,9 +518,19 @@ workflows:
                 - /docs?\/.*/
             tags:
               only: /.*/
+      - build:
+          requires:
+            - get_data
+            - unit_tests
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+            tags:
+              only: /.*/
+
       - test_deploy_pypi:
           requires:
-            - build
             - get_data
             - unit_tests
           filters:
@@ -538,6 +544,7 @@ workflows:
       - deploy_docker_patches:
           requires:
             - build
+            - test_deploy_pypi
           filters:
             branches:
               only: /docker\/.*/

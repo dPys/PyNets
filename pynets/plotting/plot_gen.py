@@ -395,6 +395,8 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
     import os
+    import yaml
+    import sys
     import os.path as op
     import matplotlib
     matplotlib.use('agg')
@@ -402,6 +404,8 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
     from nilearn import plotting as niplot
     import pkg_resources
     import networkx as nx
+    from matplotlib import colors
+    import seaborn as sns
     from pynets.core import thresholding
     from pynets.plotting import plot_gen, plot_graphs
     from pynets.stats.netstats import most_important, prune_disconnected
@@ -411,6 +415,16 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         import _pickle as pickle
 
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
+
+    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            color_theme = hardcoded_params['plotting']['functional']['color_theme']
+            node_color = hardcoded_params['plotting']['functional']['node_color']
+        except KeyError:
+            print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
+            sys.exit(0)
+    stream.close()
 
     if not isinstance(coords, list):
         coords = list(coords)
@@ -506,7 +520,6 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
 
         connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
         connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
-        #connectome.add_overlay(ch2better_loc, alpha=0.35, cmap=plt.cm.gray)
         conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
         [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
         if node_size == 'parc':
@@ -517,13 +530,16 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
             raise RuntimeWarning('\nWARNING: Number of coordinates does not match conn_matrix dimensions. If you are '
                                  'using disparity filtering, try relaxing the α threshold.')
         else:
-            color_theme = 'Blues'
-            #color_theme = 'Greens'
-            #color_theme = 'Reds'
-            node_color = 'auto'
-            connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap=color_theme,
+            if node_color != 'auto':
+                norm = colors.Normalize(vmin=0, vmax=1)
+                clust_pal = sns.color_palette(node_color, conn_matrix.shape[0])
+                clust_colors = colors.to_rgba_array(clust_pal)
+            else:
+                clust_colors = node_color
+            connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold,
+                                 edge_cmap=plt.get_cmap(color_theme),
                                  edge_vmax=float(z_max), edge_vmin=float(z_min), node_size=node_size_plot,
-                                 node_color=node_color, edge_kwargs={'alpha': 0.45})
+                                 node_color=clust_colors, edge_kwargs={'alpha': 0.45})
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
     else:
         raise RuntimeError('\nERROR: no coordinates to plot! Are you running plotting outside of pynets\'s internal '
@@ -593,6 +609,8 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
     import matplotlib
     matplotlib.use('agg')
     import os
+    import yaml
+    import sys
     import os.path as op
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
@@ -609,6 +627,16 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         import _pickle as pickle
 
     ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
+
+    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            node_color = hardcoded_params['plotting']['structural']['node_color']
+            color_theme = hardcoded_params['plotting']['structural']['color_theme']
+        except KeyError:
+            print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
+            sys.exit(0)
+    stream.close()
 
     if not isinstance(coords, list):
         coords = list(coords)
@@ -709,7 +737,6 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
 
         connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
         connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
-        #connectome.add_overlay(ch2better_loc, alpha=0.35, cmap=plt.cm.gray)
         conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
         [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
         if node_size == 'parc':
@@ -719,15 +746,14 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         if len(coords) != conn_matrix.shape[0]:
             raise RuntimeWarning('\nWARNING: Number of coordinates does not match conn_matrix dimensions.')
         else:
-            norm = colors.Normalize(vmin=-1, vmax=1)
-            clust_pal = sns.color_palette("Blues_r", conn_matrix.shape[0])
-            clust_colors = colors.to_rgba_array(clust_pal)
-            fa_path = dir_path + '/../reg_dmri/dmri_tmp/DSN/Warped.nii.gz'
-            if os.path.isfile(fa_path):
-                connectome.add_overlay(img=fa_path,
-                                       threshold=0.01, alpha=0.25, cmap=plt.cm.copper)
-
-            connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold, edge_cmap=plt.cm.binary,
+            if node_color != 'auto':
+                norm = colors.Normalize(vmin=0, vmax=1)
+                clust_pal = sns.color_palette(node_color, conn_matrix.shape[0])
+                clust_colors = colors.to_rgba_array(clust_pal)
+            else:
+                clust_colors = node_color
+            connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold,
+                                 edge_cmap=plt.get_cmap(color_theme),
                                  edge_vmax=float(z_max), edge_vmin=0, node_size=node_size_plot,
                                  node_color=clust_colors, edge_kwargs={'alpha': 0.10})
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
@@ -755,149 +781,6 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
 #     return
 #
 #
-# def pad_im(image, max_dim, pad_val=255, rgb=False):
-#     """
-#     Pads an image to be same dimensions as given max_dim
-#
-#     Parameters
-#     -----------
-#     image: np array
-#         image object can be multiple dimensional or a slice.
-#     max_dim: int
-#         dimension to pad up to
-#     pad_val: int
-#         value to pad with. default is 255 (white) background
-#     rgb: boolean
-#         flag to indicate if RGB and last dimension should not be padded
-#     Returns
-#     -----------
-#     padded_image: np array
-#         image with padding
-#     """
-#     pad_width = []
-#     for i in range(image.ndim):
-#         pad_width.append(((max_dim - image.shape[i]) // 2, (max_dim - image.shape[i]) // 2))
-#     if rgb:
-#         pad_width[-1] = (0, 0)
-#
-#     pad_width = tuple(pad_width)
-#     padded_image = np.pad(image, pad_width=pad_width, mode='constant', constant_values=pad_val)
-#
-#     return padded_image
-#
-#
-# def qa_fast_png(csf, gm, wm, outdir):
-#     import matplotlib.pyplot as plt
-#     from scipy import ndimage
-#     from matplotlib.colors import LinearSegmentedColormap
-#     """
-#     FAST (FMRIB's Automated Segmentation Tool)
-#     segments a 3D image of the brain into different tissue types (Grey Matter, White Matter, CSF, etc.)
-#     Mark different colors of white matter, gray matter, cerebrospinal fluid in a '3 by 3' picture, i.e. QA for FAST
-#
-#     Parameters
-#     ---------------
-#     csf: str
-#     the path of csf nifti image
-#     gm: str
-#     the path of gm nifti image
-#     wm: str
-#     the path of wm nifti image
-#     outdir: str
-#     the path to save QA graph
-#     """
-#
-#     # load data
-#     gm_data = nib.load(gm).get_data()
-#     csf_data = nib.load(csf).get_data()
-#     wm_data = nib.load(wm).get_data()
-#
-#     # set Color map
-#     cmap1 = LinearSegmentedColormap.from_list('mycmap1', ['white', 'blue'])
-#     cmap2 = LinearSegmentedColormap.from_list('mycmap2', ['white', 'magenta'])
-#     cmap3 = LinearSegmentedColormap.from_list('mycmap2', ['white', 'green'])
-#
-#     overlay = plt.figure()
-#     overlay.set_size_inches(12.5, 10.5, forward=True)
-#     plt.title(
-#         f'Qa for FAST(segments a 3D image of the brain into different tissue types)\n (scan volume:{gm_data.shape}) \n',
-#         fontsize=22)
-#     plt.xticks([])
-#     plt.yticks([])
-#     plt.axis('off')
-#
-#     # Set the 3D matrix cutting position in three directions
-#     shape = csf_data.shape
-#     index = [0.35, 0.51, 0.65]
-#     x = [int(shape[0] * index[0]), int(shape[0] * index[1]), int(shape[0] * index[2])]
-#     y = [int(shape[1] * index[0]), int(shape[1] * index[1]), int(shape[1] * index[2])]
-#     z = [int(shape[2] * index[0]), int(shape[2] * index[1]), int(shape[2] * index[2])]
-#     coords = (x, y, z)
-#
-#     # Set labels for the y-axis
-#     labs = [
-#         "Sagittal Slice",
-#         "Coronal Slice",
-#         "Axial Slice",
-#     ]
-#
-#     var = ["X", "Y", "Z"]
-#
-#     # Generate 3 by 3 picture
-#     idx = 0
-#     for i, coord in enumerate(coords):
-#         for pos in coord:
-#             idx += 1
-#             ax = overlay.add_subplot(3, 3, idx)
-#             ax.set_title(var[i] + " = " + str(pos))
-#             if i == 0:
-#                 csf_slice = ndimage.rotate(csf_data[pos, :, :], 90)
-#                 gm_slice = ndimage.rotate(gm_data[pos, :, :], 90)
-#                 wm_slice = ndimage.rotate(wm_data[pos, :, :], 90)
-#             elif i == 1:
-#                 csf_slice = ndimage.rotate(csf_data[:, pos, :], 90)
-#                 gm_slice = ndimage.rotate(gm_data[:, pos, :], 90)
-#                 wm_slice = ndimage.rotate(wm_data[:, pos, :], 90)
-#             else:
-#                 csf_slice = ndimage.rotate(csf_data[:, :, pos], 90)
-#                 gm_slice = ndimage.rotate(gm_data[:, :, pos], 90)
-#                 wm_slice = ndimage.rotate(wm_data[:, :, pos], 90)
-#
-#             # set y labels
-#             if idx % 3 == 1:
-#                 plt.ylabel(labs[i])
-#
-#             #  padding pictures to make them the same size
-#             csf_slice = (csf_slice * 255).astype(np.uint8)
-#             gm_slice = (gm_slice * 255).astype(np.uint8)
-#             wm_slice = (wm_slice * 255).astype(np.uint8)
-#             csf_slice = pad_im(csf_slice, max(shape), 0, False)
-#             gm_slice = pad_im(gm_slice, max(shape), 0, False)
-#             wm_slice = pad_im(wm_slice, max(shape), 0, False)
-#
-#             # hide axes
-#             ax.set_xticks([])
-#             ax.set_yticks([])
-#             ax.spines['top'].set_visible(False)
-#             ax.spines['right'].set_visible(False)
-#             ax.spines['bottom'].set_visible(False)
-#             ax.spines['left'].set_visible(False)
-#
-#             # display image
-#             ax.imshow(csf_slice, interpolation="none", cmap=cmap1, alpha=1)
-#             ax.imshow(gm_slice, interpolation="none", cmap=cmap2, alpha=0.5)
-#             ax.imshow(wm_slice, interpolation="none", cmap=cmap3, alpha=0.3)
-#
-#             # Legend of white matter(WM), gray matter(GM) and cerebrospinal fluid(csf)
-#             if idx == 3:
-#                 plt.plot(0, 0, "-", c='green', label='wm')
-#                 plt.plot(0, 0, "-", c='pink', label='gm')
-#                 plt.plot(0, 0, "-", c='blue', label='csf')
-#                 plt.legend(loc='upper right', fontsize=15, bbox_to_anchor=(1.5, 1.2))
-#
-#     # save figure
-#     overlay.savefig(f"{outdir}", format="png")
-#     return
 
 
 def plot_graph_measure_hists(df_concat, measures, net_pick_file):
