@@ -116,7 +116,14 @@ def test_diversity_coef_sign():
     assert Hneg is not None
 
 
-def test_link_communities():
+@pytest.mark.parametrize("clustering",
+    [
+        'single',
+        'complete',
+        pytest.param(None, marks=pytest.mark.xfail(raises=UnboundLocalError))
+    ]
+)
+def test_link_communities(clustering):
     """
     Test for link_communities functionality
     """
@@ -124,7 +131,7 @@ def test_link_communities():
     in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_est-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
 
     start_time = time.time()
-    M = netstats.link_communities(in_mat, type_clustering='single')
+    M = netstats.link_communities(in_mat, type_clustering=clustering)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
     assert M is not None
@@ -162,7 +169,8 @@ def test_most_important():
     assert Gt is not None
     assert pruned_nodes is not None
 
-
+#@pytest.mark.parametrize("prune", ['0'])
+#def test_extractnetstats(prune):
 @pytest.mark.parametrize("binary", ['True', 'False'])
 @pytest.mark.parametrize("prune", ['0', '1', '2'])
 @pytest.mark.parametrize("norm", ['0', '1', '2', '3', '4', '5', '6'])
@@ -182,11 +190,28 @@ def test_extractnetstats(binary, prune, norm):
     roi = None
 
     start_time = time.time()
-    out_path = netstats.extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, binary)
+    out_path = netstats.extractnetstats(ID, network, thr, conn_model, est_path, roi, prune,
+                                        norm, binary)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
     assert out_path is not None
 
+    # Cover exceptions. This can definiely be improved. It increases coverage, but not as throughly
+    # as I hoped.
+    from tempfile import NamedTemporaryFile
+    f_temp =NamedTemporaryFile(mode='w+', suffix='.npy')
+
+    nan_array = np.empty((5, 5))
+    nan_array[:] = np.nan
+
+    np.save(f_temp.name, nan_array)
+    est_path = f_temp.name
+
+    try:
+        out_path = netstats.extractnetstats(ID, network, thr, conn_model, est_path, roi, prune,
+                                            norm, binary)
+    except PermissionError:
+        pass
 
 def test_raw_mets():
     """
@@ -209,3 +234,250 @@ def test_raw_mets():
         print(i)
         print(net_met_val)
         assert net_met_val is not np.nan
+
+
+def test_subgraph_number_of_cliques_for_all():
+    """
+    Test cliques computation
+    """
+    base_dir = str(Path(__file__).parent/"examples")
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_est-cov_nodety"
+                     f"pe-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+    G = nx.from_numpy_array(in_mat)
+
+    cliques = netstats.subgraph_number_of_cliques_for_all(G)
+
+    assert cliques > 0
+
+
+def test_smallworldness():
+    """
+    Test small-world coefficient (omega) computation
+    """
+    base_dir = str(Path(__file__).parent/"examples")
+    est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+
+    in_mat = np.load(est_path)
+    G = nx.from_numpy_array(in_mat)
+
+    omega = netstats.smallworldness(G, niter=5, nrand=5)
+
+    # The dosctring states omega should be between 1 and -1, but it is around -2 here.
+    # assert omega >= -1
+    # assert omega <= 1
+    assert omega is not None
+
+
+def test_participation_coef_sign():
+    """
+    Test participation coefficient computation
+    """
+    base_dir = str(Path(__file__).parent/"examples")
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_est-cov_nodety"
+                     f"pe-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+
+    ci = np.ones(in_mat.shape[0])
+    ci_dim = int(np.shape(ci)[0])
+    W = np.random.rand(ci_dim, ci_dim)
+
+    Ppos, Pneg = netstats.participation_coef_sign(W, ci)
+
+    assert len(Ppos) == ci_dim
+    assert len(Pneg) == ci_dim
+
+
+@pytest.mark.parametrize("binarize", [True, False])
+def test_weighted_transitivity(binarize):
+    """ Test weighted_transitivity computation
+    """
+    from pynets.core.thresholding import binarize
+
+    base_dir = str(Path(__file__).parent/"examples")
+    est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+
+    in_mat = np.load(est_path)
+    if binarize:
+        in_mat = binarize(in_mat)
+
+    G = nx.from_numpy_array(in_mat)
+
+    transitivity = netstats.weighted_transitivity(G)
+
+    assert transitivity <= 3
+    assert transitivity >= 0
+
+
+def test_connected_component_subgraphs():
+    """ Test weighted_transitivity computation
+    """
+
+    base_dir = str(Path(__file__).parent/"examples")
+    est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+
+    in_mat = np.load(est_path)
+    G = nx.from_numpy_array(in_mat)
+
+    next(netstats.connected_component_subgraphs(G))
+
+
+@pytest.mark.parametrize("fmt", ['npy', 'txt'])
+@pytest.mark.parametrize("conn_model", ['corr', 'partcorr', 'cov', 'sps'])
+@pytest.mark.parametrize("prune", [pytest.param(0, marks=pytest.mark.xfail(raises=UnboundLocalError)), 1, 2, 3])
+@pytest.mark.parametrize("norm", [i for i in range(1, 7)])
+def test_clean_graphs(fmt, conn_model, prune, norm):
+    """
+    Test all combination of parameters for the CleanGraphs class
+    """
+    base_dir = str(Path(__file__).parent/"examples")
+
+    if fmt == 'npy':
+        est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+        in_mat = np.load(est_path)
+    else:
+        est_path = f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-sps_thrtype-PROP_thr-0.94.txt"
+        in_mat = np.genfromtxt(est_path)
+
+    clean = netstats.CleanGraphs(0.5, conn_model, est_path, prune, norm)
+    clean.normalize_graph()
+    clean.print_summary()
+    clean.create_length_matrix()
+    clean.binarize_graph()
+
+    # The docstring says prune should be a bool, but it is evaulated as an int.
+    #   there is also a bug (final_mat_path can't be returned), when prune == 0.
+    clean.prune_graph()
+
+    G = nx.from_numpy_array(in_mat)
+    assert len(clean.G) >= 0
+    assert len(clean.G) <= len(G)
+
+
+def test_save_netmets():
+    """ Test save netmets functionality using dummy metrics
+    """
+    import tempfile
+    dir_path = str(tempfile.TemporaryDirectory().name)
+
+    base_dir = str(Path(__file__).parent/"examples")
+    est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+
+    metric_list_names = ['metric_a', 'metric_b', 'metric_c']
+    net_met_val_list_final = [1, 2, 3]
+
+    netstats.save_netmets(dir_path, est_path, metric_list_names, net_met_val_list_final)
+
+
+@pytest.mark.parametrize("true_metric", [True, False])
+def test_iterate_nx_global_measures(true_metric):
+    """ Test iterating over net metric list
+    """
+    from networkx.algorithms import average_shortest_path_length
+
+    base_dir = str(Path(__file__).parent/"examples")
+    est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+
+    in_mat = np.load(est_path)
+    G = nx.from_numpy_array(in_mat)
+
+    if true_metric:
+        metric_list_glob = [average_shortest_path_length]
+    else:
+        metric_list_glob = ['<function fake_func at 0x7f8b7129b700>']
+
+    netstats.iterate_nx_global_measures(G, metric_list_glob)
+
+
+@pytest.mark.parametrize("sim_num_comms", [1, 5, 10])
+@pytest.mark.parametrize("sim_size", [1, 5, 10])
+def test_community_resolution_selection(sim_num_comms, sim_size):
+    """ Test community resolution selection
+
+    Note: It is impossible to enter or cover the second while loop in
+          netstats.community_resolution_selection.
+    """
+    G = nx.caveman_graph(sim_num_comms, sim_size)
+    node_ci, ci, resolution, num_comms = netstats.community_resolution_selection(G)
+
+    assert len(node_ci) == len(ci)
+    assert num_comms == sim_num_comms
+    assert resolution is not None
+
+
+#@pytest.mark.parametrize("metric", ['rich_club_coeff'])
+@pytest.mark.parametrize("metric", ['participation', 'diversity', 'local_efficiency',
+                                    'comm_centrality', 'rich_club_coeff'])
+def test_get_metrics(metric):
+    """
+    Test various wrappers for getting nx graph metrics
+    """
+    base_dir = str(Path(__file__).parent/"examples")
+    est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+
+    in_mat = np.load(est_path)
+    G = nx.from_numpy_array(in_mat)
+    ci = np.ones(in_mat.shape[0])
+    metric_list_names = []
+    net_met_val_list_final = []
+
+
+    if metric == 'participation':
+        metric_list_names, net_met_val_list_final = \
+            netstats.get_participation(in_mat, ci, metric_list_names, net_met_val_list_final)
+        assert len(metric_list_names) == len(netstats.participation_coef(in_mat, ci))+1
+        assert len(net_met_val_list_final) == len(netstats.participation_coef(in_mat, ci))+1
+    elif metric == 'diversity':
+        metric_list_names, net_met_val_list_final = \
+            netstats.get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final)
+        assert len(metric_list_names) == np.shape(netstats.diversity_coef_sign(in_mat, ci))[1]+1
+        assert len(net_met_val_list_final) == np.shape(netstats.diversity_coef_sign(in_mat, ci))[1]+1
+    elif metric == 'local_efficiency':
+        metric_list_names, net_met_val_list_final = \
+            netstats.get_local_efficiency(G, metric_list_names, net_met_val_list_final)
+        assert len(metric_list_names) == len(netstats.local_efficiency(G))+1
+        assert len(net_met_val_list_final) == len(netstats.local_efficiency(G))+1
+    elif metric == 'comm_centrality':
+        metric_list_names, net_met_val_list_final = \
+            netstats.get_comm_centrality(G, metric_list_names, net_met_val_list_final)
+        assert len(metric_list_names) == len(nx.algorithms.communicability_betweenness_centrality(G))+1
+        assert len(net_met_val_list_final) == len(nx.algorithms.communicability_betweenness_centrality(G))+1
+    elif metric == 'rich_club_coeff':
+        metric_list_names, net_met_val_list_final = \
+            netstats.get_rich_club_coeff(G, metric_list_names, net_met_val_list_final)
+        assert len(metric_list_names) == len(nx.algorithms.rich_club_coefficient(G))+1
+        assert len(net_met_val_list_final) == len(nx.algorithms.rich_club_coefficient(G))+1
+
+
+@pytest.mark.parametrize("plot_switch", [True, False])
+@pytest.mark.parametrize("sql_out", [True, False])
+@pytest.mark.parametrize("nc_collect", [True, False])
+@pytest.mark.parametrize("create_summary", [True, False])
+@pytest.mark.parametrize("graph_num", [-1,
+                                       pytest.param(0, marks=pytest.mark.xfail(raises=IndexError)),
+                                       1,
+                                       2])
+def test_collect_pandas_df_make(plot_switch, sql_out, nc_collect, create_summary, graph_num):
+    """
+    """
+    base_dir = str(Path(__file__).parent/"examples")
+    network = None
+    ID = '002'
+    plot_switch = False
+
+    if graph_num == -1:
+        # This should raise an error but doesn't.
+        net_mets_csv_list = [f"{base_dir}/miscellaneous/002_parcels_Default.nii.gz"]
+    elif graph_num == 0:
+        net_mets_csv_list = []
+    elif graph_num == 1:
+        net_mets_csv_list = [f"{base_dir}/netmetrics/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv"]
+    else:
+        # This was breaking.
+        net_mets_csv_list = [f"{base_dir}/netmetrics/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv",
+                             f"{base_dir}/netmetrics/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.3_net_mets.csv"]
+
+    combination_complete = netstats.collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch,
+                                                           nc_collect=nc_collect, create_summary=create_summary,
+                                                           sql_out=sql_out)
+
+
+    assert combination_complete is True
