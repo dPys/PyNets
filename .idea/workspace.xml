@@ -8,6 +8,7 @@
   <component name="ChangeListManager">
     <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.circleci/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.circleci/config.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -31,38 +32,20 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-3935">
-              <caret line="201" column="60" lean-forward="true" selection-start-line="201" selection-start-column="60" selection-end-line="201" selection-end-column="60" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/.travis.yml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="645">
-              <caret line="43" lean-forward="true" selection-start-line="43" selection-end-line="43" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/config/bids_config_test.json">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="420">
-              <caret line="28" column="30" lean-forward="true" selection-start-line="28" selection-start-column="30" selection-end-line="28" selection-end-column="30" />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="306">
-              <caret line="689" selection-start-line="689" selection-end-line="690" selection-end-column="42" />
+            <state relative-caret-position="214">
+              <caret line="681" column="11" lean-forward="true" selection-start-line="681" selection-start-column="11" selection-end-line="681" selection-end-column="11" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="534">
+              <caret line="492" column="28" lean-forward="true" selection-start-line="492" selection-start-column="28" selection-end-line="492" selection-end-column="28" />
             </state>
           </provider>
         </entry>
@@ -75,8 +58,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/dmri/dmri_utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="264">
-              <caret line="103" column="14" selection-start-line="103" selection-start-column="4" selection-end-line="103" selection-end-column="14" />
+            <state relative-caret-position="292">
+              <caret line="103" column="14" selection-start-line="103" selection-start-column="14" selection-end-line="103" selection-end-column="14" />
               <folding>
                 <element signature="e#139#154#0" expanded="true" />
               </folding>
@@ -125,7 +108,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>s1</find>
       <find>bids_config.json</find>
       <find>Default</find>
       <find>343131</find>
@@ -152,9 +134,10 @@
       <find>To run a subset of tests:</find>
       <find>bet</find>
       <find>self.ap_path</find>
+      <find>docker pu</find>
       <find>extract_b0</find>
       <find>connected_com</find>
-      <find>docker pu</find>
+      <find>workspace</find>
     </findStrings>
     <replaceStrings>
       <replace>2&gt;/dev/null</replace>
@@ -274,17 +257,6 @@
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
               <item name=".circleci" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
-              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
-              <item name="pynets" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
-              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
-              <item name="pynets" type="462c0819:PsiDirectoryNode" />
-              <item name="config" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -439,12 +411,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="142244000" />
+      <workItem from="1589906893238" duration="143883000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1113550000" />
+    <option name="totallyTimeSpent" value="1115189000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -775,26 +747,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/dmri/dmri_utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="264">
-          <caret line="103" column="14" selection-start-line="103" selection-start-column="4" selection-end-line="103" selection-end-column="14" />
-          <folding>
-            <element signature="e#139#154#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="597">
-          <caret line="856" column="32" lean-forward="true" selection-start-line="856" selection-start-column="32" selection-end-line="856" selection-end-column="32" />
-          <folding>
-            <element signature="e#139#154#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/docs/_static/glass_brain_communities.png">
       <provider selected="true" editor-type-id="images" />
     </entry>
@@ -817,22 +769,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="306">
-          <caret line="689" selection-start-line="689" selection-end-line="690" selection-end-column="42" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_workflows.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2685">
           <caret line="179" column="1" selection-start-line="179" selection-start-column="1" selection-end-line="179" selection-end-column="1" />
         </state>
       </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
-      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/.gitattributes">
       <provider selected="true" editor-type-id="text-editor">
@@ -851,12 +793,28 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/.travis.yml">
+    <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="645">
-          <caret line="43" lean-forward="true" selection-start-line="43" selection-end-line="43" />
+        <state relative-caret-position="597">
+          <caret line="856" column="32" lean-forward="true" selection-start-line="856" selection-start-column="32" selection-end-line="856" selection-end-column="32" />
+          <folding>
+            <element signature="e#139#154#0" expanded="true" />
+          </folding>
         </state>
       </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/dmri/dmri_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="292">
+          <caret line="103" column="14" selection-start-line="103" selection-start-column="14" selection-end-line="103" selection-end-column="14" />
+          <folding>
+            <element signature="e#139#154#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/config/bids_config_test.json">
       <provider selected="true" editor-type-id="text-editor">
@@ -865,10 +823,24 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/.travis.yml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="660">
+          <caret line="44" column="14" lean-forward="true" selection-start-line="44" selection-start-column="14" selection-end-line="44" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="214">
+          <caret line="681" column="11" lean-forward="true" selection-start-line="681" selection-start-column="11" selection-end-line="681" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3935">
-          <caret line="201" column="60" lean-forward="true" selection-start-line="201" selection-start-column="60" selection-end-line="201" selection-end-column="60" />
+        <state relative-caret-position="534">
+          <caret line="492" column="28" lean-forward="true" selection-start-line="492" selection-start-column="28" selection-end-line="492" selection-end-column="28" />
         </state>
       </provider>
     </entry>

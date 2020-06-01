@@ -191,7 +191,7 @@ jobs:
             python -m pip install --upgrade pip setuptools
       - run:
           name: Install pytest
-          command: python -m pip install pytest codecov pytest-cov pytest-sugar pytest-circleci-parallelized
+          command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized
       - run:
           name: Install system dependencies and LFS
           no_output_timeout: 30m
@@ -260,16 +260,28 @@ jobs:
             mkdir test-results
             export PYTHONUNBUFFERED=1
             python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
-      - run:
-          name: Update codecov
-          command: |
-            codecov
-            bash <(curl https://codecov.io/bash) -f coverage.xml
-          when: always
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - src/pynets
       - store_test_results:
           path: test-results
       - store_artifacts:
           path: test-results
+
+  codecoverage:
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - attach_workspace:
+          at: /tmp/src/pynets
+      - run:
+          name: Update codecov
+          command: |
+            sudo python -m pip install codecov --user
+            python -m codecov
+            bash <(curl https://codecov.io/bash) -f coverage.xml
+          when: always
 
   deploy_docker_patches:
     machine:
@@ -461,6 +473,13 @@ workflows:
             tags:
               only: /.*/
       - unit_tests:
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+            tags:
+              only: /.*/
+      - codecoverage:
           filters:
             branches:
               ignore:
