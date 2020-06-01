@@ -43,8 +43,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="704">
-              <caret line="516" column="24" lean-forward="true" selection-start-line="516" selection-start-column="24" selection-end-line="516" selection-end-column="24" />
+            <state relative-caret-position="370">
+              <caret line="151" column="21" lean-forward="true" selection-start-line="151" selection-start-column="21" selection-end-line="151" selection-end-column="21" />
             </state>
           </provider>
         </entry>
@@ -107,7 +107,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>Default</find>
       <find>343131</find>
       <find>css</find>
       <find>pre.li</find>
@@ -137,6 +136,7 @@
       <find>connected_com</find>
       <find>workspace</find>
       <find>unit_test</find>
+      <find>tests</find>
     </findStrings>
     <replaceStrings>
       <replace>2&gt;/dev/null</replace>
@@ -235,7 +235,7 @@
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="339" />
+    <option name="x" value="338" />
     <option name="y" value="23" />
     <option name="width" value="1190" />
     <option name="height" value="982" />
@@ -395,12 +395,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="147001000" />
+      <workItem from="1589906893238" duration="147266000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1118307000" />
+    <option name="totallyTimeSpent" value="1118572000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -412,7 +412,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="339" y="23" width="1190" height="982" extended-state="0" />
+    <frame x="338" y="23" width="1190" height="982" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.48904267" visible="true" weight="0.20905924" />
@@ -823,8 +823,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="704">
-          <caret line="516" column="24" lean-forward="true" selection-start-line="516" selection-start-column="24" selection-end-line="516" selection-end-column="24" />
+        <state relative-caret-position="370">
+          <caret line="151" column="21" lean-forward="true" selection-start-line="151" selection-start-column="21" selection-end-line="151" selection-end-column="21" />
         </state>
       </provider>
     </entry>
