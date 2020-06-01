@@ -1,4 +1,5 @@
 version: 2
+
 jobs:
   build:
     environment:
@@ -259,7 +260,6 @@ jobs:
           root: /tmp/src/pynets
           paths:
             - .coverage*
-            - htmlcov/*
       - save_cache:
           key: unittests
           paths:
@@ -267,9 +267,7 @@ jobs:
       - store_test_results:
           path: test-results
       - store_artifacts:
-          path:
-            - test-results
-            - htmlcov
+          path: test-results
 
   coverage:
     machine:
@@ -315,7 +313,6 @@ jobs:
             python -m coverage xml
             python -m codecov
             bash <(curl https://codecov.io/bash) -f coverage.xml
-          when: always
 
   deploy_docker_patches:
     machine:
