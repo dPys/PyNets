@@ -260,6 +260,13 @@ jobs:
             mkdir test-results
             export PYTHONUNBUFFERED=1
             python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
+      - run:
+          name: Update codecov
+          command: |
+            sudo python -m pip install codecov --user
+            python -m codecov
+            bash <(curl https://codecov.io/bash) -f coverage.xml
+          when: always
       - persist_to_workspace:
           root: /tmp
           paths:
@@ -268,57 +275,6 @@ jobs:
           path: test-results
       - store_artifacts:
           path: test-results
-
-  codecoverage:
-    machine:
-      image: ubuntu-1604:201903-01
-    steps:
-      - attach_workspace:
-          at: /tmp/src/pynets
-      - checkout
-      - run:
-          name: "Switch to Python v3.6"
-          no_output_timeout: 30m
-          command: |
-            pyenv local --unset
-            pyenv uninstall -f 3.6.5 || true
-            sudo add-apt-repository ppa:deadsnakes/ppa
-            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
-            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
-            sudo apt-get update
-            sudo apt-get install -y make build-essential
-            sudo apt-get install -y software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
-            sudo apt-get upgrade
-            pyenv install -f 3.6.5 || true
-            eval "$(pyenv init -)"
-            pyenv global 3.6.5
-            echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
-            echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
-            source $BASH_ENV
-      - run:
-          name: Check Python version and upgrade pip
-          command: |
-            python -m pip install -U pip
-            python -m pip install --upgrade pip setuptools
-      - run:
-          name: Install pytest
-          command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized
-      - run:
-          name: Install system dependencies
-          no_output_timeout: 10m
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y tcl-dev apt-transport-https ca-certificates gnupg-agent graphviz sqlite3 dc libquadmath0 zip unzip libglu1 zlib1g-dev libssl-dev libreadline-dev wget libncursesw5-dev xz-utils libffi-dev libfreetype6-dev pkg-config libgsl0-dev g++ git libgomp1 libpng-dev libgl1-mesa-glx libxtst6 libgtk2.0-bin libxft2 lib32ncurses5 libxmu-dev bzip2 gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-            sudo apt-get update
-            sudo apt-get upgrade
-      - run:
-          name: Update codecov
-          command: |
-            sudo python -m pip install codecov --user
-            python -m codecov
-            bash <(curl https://codecov.io/bash) -f coverage.xml
-          when: always
 
   deploy_docker_patches:
     machine:
@@ -510,13 +466,6 @@ workflows:
             tags:
               only: /.*/
       - unit_tests:
-          filters:
-            branches:
-              ignore:
-                - /docs?\/.*/
-            tags:
-              only: /.*/
-      - codecoverage:
           filters:
             branches:
               ignore:
