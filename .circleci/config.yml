@@ -503,6 +503,9 @@ workflows:
             tags:
               only: /.*/
       - unit_tests:
+          requires:
+            - get_data
+            - build
           filters:
             branches:
               ignore:
@@ -510,6 +513,9 @@ workflows:
             tags:
               only: /.*/
       - coverage:
+          requires:
+            - get_data
+            - unit_tests
           filters:
             branches:
               ignore:
@@ -517,6 +523,10 @@ workflows:
             tags:
               only: /.*/
       - test_deploy_pypi:
+          requires:
+            - build
+            - get_data
+            - unit_tests
           filters:
             branches:
               ignore:
