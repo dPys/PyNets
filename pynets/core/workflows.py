@@ -97,9 +97,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
 
     # Workflow 1: Structural connectome
     if dwi_file is not None:
-        outdir = f"{outdir}/dwi"
-        os.makedirs(outdir, exist_ok=True)
-
         sub_struct_wf = workflows.dmri_connectometry(ID, atlas, network, node_size, roi,
                                                      uatlas, plot_switch, parc, ref_txt, procmem,
                                                      dwi_file, fbval, fbvec, anat_file, thr, dens_thresh,
@@ -121,9 +118,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
 
     # Workflow 2: Functional connectome
     if func_file is not None:
-        outdir = f"{outdir}/func"
-        os.makedirs(outdir, exist_ok=True)
-
         sub_func_wf = workflows.fmri_connectometry(func_file, ID, atlas, network, node_size,
                                                    roi, thr, uatlas, conn_model_func, dens_thresh, conf,
                                                    plot_switch, parc, ref_txt, procmem,
@@ -648,6 +642,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                        template_name, vox_size, waymask, min_length_list, outdir):
     """A function interface for generating a dMRI nested workflow"""
     import itertools
+    import os
     import pkg_resources
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -657,6 +652,9 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     from pynets.dmri import estimation
     from pynets.core.interfaces import PlotStruct, RegisterDWI, Tracking, MakeGtabBmask
     import os.path as op
+
+    outdir = f"{outdir}/dwi"
+    os.makedirs(outdir, exist_ok=True)
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]
@@ -1612,6 +1610,9 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
     from pynets.core.interfaces import ExtractTimeseries, PlotFunc, RegisterFunc
+
+    outdir = f"{outdir}/func"
+    os.makedirs(outdir, exist_ok=True)
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]

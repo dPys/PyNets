@@ -203,7 +203,7 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
     """
     import os
     if (node_size is None) and (parc is True):
-        node_size = '_parc'
+        node_size = 'parc'
 
     namer_dir = f'{dir_path}/graphs'
     if not os.path.isdir(namer_dir):
@@ -265,7 +265,7 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
     """
     import os
     if (node_size is None) and (parc is True):
-        node_size = '_parc'
+        node_size = 'parc'
 
     namer_dir = f'{dir_path}/graphs'
     if not os.path.isdir(namer_dir):
@@ -492,8 +492,8 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr
                                              multimodal, embed)
 
     if (float(multiplex) > 0) and (multimodal is True):
-        multigraph_list_all = netmotifs.build_multigraphs(list(flatten(est_path_iterlist)),
-                                                          list(flatten(ID_iterlist))[0])
+        raws = list(set([i.split('_thrtype')[0] + '_raw.npy' for i in list(flatten(est_path_iterlist))]))
+        multigraph_list_all = netmotifs.build_multigraphs(raws, list(flatten(ID_iterlist))[0])
 
     return (conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
             roi_iterlist, norm_iterlist, binary_iterlist)
