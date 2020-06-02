@@ -66,15 +66,23 @@ plotting:
     adjacency:
         - True
     functional:
-        color_theme:
-          - 'Blues'
-        node_color:
-          - 'auto'
+        glassbrain:
+            color_theme:
+              - 'Blues'
+            node_color:
+              - 'auto'
+        adjacency:
+            color_theme:
+                - 'PuBuGn'
     structural:
-        color_theme:
-          - 'binary'
-        node_color:
-          - 'copper'
+        glassbrain:
+            color_theme:
+              - 'binary'
+            node_color:
+              - 'copper'
+        adjacency:
+            color_theme:
+                - 'YlGnBu'
 resource_dict:
       - 'fetch_nodes_and_labels_node':
         - (2, 2)

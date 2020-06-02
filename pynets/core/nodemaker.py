@@ -783,6 +783,7 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
     from pynets.core import utils, nodemaker
     import pandas as pd
     import time
+    import re
     from pathlib import Path
     import os.path as op
     import glob
@@ -839,7 +840,7 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
 
         try:
             # Fetch user-specified atlas coords
-            [coords, atlas, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
+            [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
             if parc is True:
                 parcel_list = nodemaker.gen_img_list(uatlas)
             else:
@@ -862,7 +863,7 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
                 else:
                     print('Waiting for atlas file...')
                     time.sleep(15)
-        atlas = uatlas.split('/')[-1].split('.')[0]
+
         try:
             # Fetch user-specified atlas coords
             [coords, atlas, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
@@ -870,6 +871,12 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
                 parcel_list = nodemaker.gen_img_list(uatlas)
             else:
                 parcel_list = None
+
+            if 'reor-RAS' in str(atlas):
+                atlas = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(atlas))
+            if 'res-' in str(atlas):
+                atlas = re.sub(r"_res\-*[0-4]mm", "", str(atlas))
+
             # Describe user atlas coords
             print(f"\n{atlas} comes with {par_max} parcels\n")
         except ValueError:
@@ -885,34 +892,21 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
                          'repository or you have not supplied a 3d atlas parcellation image!')
 
     # Labels prep
-    if atlas:
-        if labels is not None:
-            pass
+    # Labels prep
+    if atlas and not labels:
+        if (ref_txt is not None) and (op.exists(ref_txt)) and (use_AAL_naming is False):
+            labels = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])['Region'].tolist()
         else:
-            if (ref_txt is not None) and (op.exists(ref_txt)) and (use_AAL_naming is False):
-                labels = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])['Region'].tolist()
-            else:
-                if atlas in local_atlases:
-                    ref_txt = f"{str(Path(base_path).parent)}{'/labelcharts/'}{atlas}{'.txt'}"
-                try:
-                    if op.exists(ref_txt) and (use_AAL_naming is False):
-                        try:
-                            labels = pd.read_csv(ref_txt,
-                                                 sep="\t", header=None, names=["Index", "Region"])['Region'].tolist()
-                        except:
-                            labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-                    else:
-                        if use_AAL_naming is True:
-                            try:
-                                labels = nodemaker.AAL_naming(coords)
-                            except:
-                                print('AAL reference labeling failed!')
-                                labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-                        else:
-                            print('Using generic index labels...')
-                            labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-                except:
-                    print("Label reference file not found. Attempting AAL naming...")
+            if atlas in local_atlases:
+                ref_txt = f"{str(Path(base_path).parent)}{'/labelcharts/'}{atlas}{'.txt'}"
+            try:
+                if op.exists(ref_txt) and (use_AAL_naming is False):
+                    try:
+                        labels = pd.read_csv(ref_txt,
+                                             sep=" ", header=None, names=["Index", "Region"])['Region'].tolist()
+                    except:
+                        labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                else:
                     if use_AAL_naming is True:
                         try:
                             labels = nodemaker.AAL_naming(coords)
@@ -922,16 +916,27 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
                     else:
                         print('Using generic index labels...')
                         labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+            except:
+                print("Label reference file not found. Attempting AAL naming...")
+                if use_AAL_naming is True:
+                    try:
+                        labels = nodemaker.AAL_naming(coords)
+                    except:
+                        print('AAL reference labeling failed!')
+                        labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                else:
+                    print('Using generic index labels...')
+                    labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
     else:
-        print('WARNING: No labels available since atlas name is not specified!')
+        print('Using generic index labels...')
+        labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
     print(f"Labels:\n{labels}")
     dir_path = utils.do_dir_path(atlas, outdir)
 
     if len(coords) != len(labels):
+        print('Length of coordinates is not equal to length of label names! Replacing with nan\'s instead...')
         labels = len(coords) * [np.nan]
-        if len(coords) != len(labels):
-            raise ValueError('Length of coordinates is not equal to length of label names')
 
     return labels, coords, atlas, networks_list, parcel_list, par_max, uatlas, dir_path
 

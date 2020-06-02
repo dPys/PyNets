@@ -419,8 +419,8 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            color_theme = hardcoded_params['plotting']['functional']['color_theme'][0]
-            node_color = hardcoded_params['plotting']['functional']['node_color'][0]
+            color_theme = hardcoded_params['plotting']['functional']['glassbrain']['color_theme'][0]
+            node_color = hardcoded_params['plotting']['functional']['glassbrain']['node_color'][0]
             connectogram = hardcoded_params['plotting']['connectogram'][0]
             glassbrain = hardcoded_params['plotting']['glassbrain'][0]
             adjacency = hardcoded_params['plotting']['adjacency'][0]
@@ -469,13 +469,14 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
             os.makedirs(namer_dir, exist_ok=True)
 
         # Plot connectogram
-        if len(conn_matrix) > 20 and connectogram is True:
-            try:
-                plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
-            except RuntimeWarning:
-                print('\n\n\nWarning: Connectogram plotting failed!')
-        else:
-            print('Warning: Cannot plot connectogram for graphs smaller than 20 x 20!')
+        if connectogram is True:
+            if len(conn_matrix) > 20:
+                try:
+                    plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
+                except RuntimeWarning:
+                    print('\n\n\nWarning: Connectogram plotting failed!')
+            else:
+                print('Warning: Cannot plot connectogram for graphs smaller than 20 x 20!')
 
         # Plot adj. matrix based on determined inputs
         if not node_size or node_size == 'None':
@@ -638,8 +639,8 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            node_color = hardcoded_params['plotting']['structural']['node_color'][0]
-            color_theme = hardcoded_params['plotting']['structural']['color_theme'][0]
+            node_color = hardcoded_params['plotting']['structural']['glassbrain']['node_color'][0]
+            color_theme = hardcoded_params['plotting']['structural']['glassbrain']['color_theme'][0]
             connectogram = hardcoded_params['plotting']['connectogram'][0]
             glassbrain = hardcoded_params['plotting']['glassbrain'][0]
             adjacency = hardcoded_params['plotting']['adjacency'][0]
@@ -687,13 +688,14 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
             os.makedirs(namer_dir, exist_ok=True)
 
         # Plot connectogram
-        if len(conn_matrix) > 20 and connectogram is True:
-            try:
-                plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
-            except RuntimeWarning:
-                print('\n\n\nWarning: Connectogram plotting failed!')
-        else:
-            print('Warning: Cannot plot connectogram for graphs smaller than 20 x 20!')
+        if connectogram is True:
+            if len(conn_matrix) > 20:
+                try:
+                    plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
+                except RuntimeWarning:
+                    print('\n\n\nWarning: Connectogram plotting failed!')
+            else:
+                print('Warning: Cannot plot connectogram for graphs smaller than 20 x 20!')
 
         # Plot adj. matrix based on determined inputs
         if not node_size or node_size == 'None':
@@ -767,7 +769,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
                     clust_colors = node_color
                 connectome.add_graph(conn_matrix, coords, edge_threshold=edge_threshold,
                                      edge_cmap=plt.get_cmap(color_theme),
-                                     edge_vmax=float(z_max), edge_vmin=0, node_size=node_size_plot,
+                                     edge_vmax=float(z_max), edge_vmin=float(z_max), node_size=node_size_plot,
                                      node_color=clust_colors, edge_kwargs={'alpha': 0.10})
                 connectome.savefig(out_path_fig, dpi=dpi_resolution)
         else:

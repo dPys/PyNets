@@ -78,7 +78,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     return out_path
 
 
-def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
+def build_embedded_connectome(est_path_iterlist, ID, multimodal):
     """
     Embeds ensemble population of graphs into an embedded ensemble feature vector.
 
@@ -90,8 +90,6 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
         A subject id or other unique identifier.
     multimodal : list
         List of booleans indicating whether multiple modalities of input data have been specified.
-    embed : str
-        Specifies which type of ensemble embedding will be performed. Options include `omni` and `mase`.
     """
     import yaml
     from pathlib import Path
@@ -170,13 +168,7 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
                             if len(list(set([i.shape for i in pop_rsn_list]))) > 1:
                                 raise RuntimeWarning('ERROR: Inconsistent number of vertices in graph population '
                                                      'that precludes embedding')
-                            if embed == 'omni':
-                                out_path = _omni_embed(pop_list, atlas, graph_path, ID, rsns[i])
-                            elif embed == 'mase':
-                                out_path = _mase_embed(pop_list, atlas, graph_path, ID, rsns[i])
-                            else:
-                                raise ValueError('Embedding type not recognized. Presently supported options include: '
-                                                 'omni or mase')
+                            out_path = _mase_embed(pop_list, atlas, graph_path, ID, rsns[i])
                         else:
                             print('WARNING: Only one graph sampled, omnibus embedding not appropriate.')
                             pass
@@ -187,13 +179,7 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
                 if len(list(set([i.shape for i in pop_list]))) > 1:
                     raise RuntimeWarning('ERROR: Inconsistent number of vertices in graph population that '
                                          'precludes embedding')
-                if embed == 'omni':
-                    out_path = _omni_embed(pop_list, atlas, graph_path, ID)
-                elif embed == 'mase':
-                    out_path = _mase_embed(pop_list, atlas, graph_path, ID)
-                else:
-                    raise ValueError('Embedding type not recognized. Presently supported options include: '
-                                     'omni or mase')
+                out_path = _mase_embed(pop_list, atlas, graph_path, ID)
             else:
                 print('WARNING: Only one graph sampled, omnibus embedding not appropriate.')
                 pass
@@ -212,13 +198,7 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
                             if len(list(set([i.shape for i in pop_rsn_list]))) > 1:
                                 raise RuntimeWarning('ERROR: Inconsistent number of vertices in graph population '
                                                      'that precludes embedding')
-                            if embed == 'omni':
-                                out_path = _omni_embed(pop_list, atlas, graph_path, ID, rsns[i])
-                            elif embed == 'mase':
-                                out_path = _mase_embed(pop_list, atlas, graph_path, ID, rsns[i])
-                            else:
-                                raise ValueError('Embedding type not recognized. Presently supported options include: '
-                                                 'omni or mase')
+                            out_path = _mase_embed(pop_list, atlas, graph_path, ID, rsns[i])
                         else:
                             print('WARNING: Only one graph sampled, omnibus embedding not appropriate.')
                             pass
@@ -229,13 +209,7 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
                 if len(list(set([i.shape for i in pop_list]))) > 1:
                     raise RuntimeWarning('ERROR: Inconsistent number of vertices in graph population that '
                                          'precludes embedding')
-                if embed == 'omni':
-                    out_path = _omni_embed(pop_list, atlas, graph_path, ID)
-                elif embed == 'mase':
-                    out_path = _mase_embed(pop_list, atlas, graph_path, ID)
-                else:
-                    raise ValueError('Embedding type not recognized. Presently supported options include: '
-                                     'omni or mase')
+                out_path = _mase_embed(pop_list, atlas, graph_path, ID)
             else:
                 print('WARNING: Only one graph sampled, omnibus embedding not appropriate.')
                 pass
@@ -287,13 +261,7 @@ def build_embedded_connectome(est_path_iterlist, ID, multimodal, embed):
                 if len(list(set([i.shape for i in pop_list]))) > 1:
                     raise RuntimeWarning('ERROR: Inconsistent number of vertices in graph population that '
                                          'precludes embedding')
-                if embed == 'omni':
-                    out_path = _omni_embed(pop_list, atlas, graph_path, ID)
-                elif embed == 'mase':
-                    out_path = _mase_embed(pop_list, atlas, graph_path, ID)
-                else:
-                    raise ValueError('Embedding type not recognized. Presently supported options include: '
-                                     'omni or mase')
+                out_path = _omni_embed(pop_list, atlas, graph_path, ID)
             else:
                 print('WARNING: Only one graph sampled, omnibus embedding not appropriate.')
                 pass

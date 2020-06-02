@@ -93,7 +93,6 @@ def compare_motifs(struct_mat, func_mat, name, bins=20, N=4):
     from pynets.core.thresholding import standardize
     from scipy import spatial
     import pandas as pd
-    from py3plex.core import multinet
     import gc
 
     mlib = ['1113', '1122', '1223', '2222', '2233', '3333']
@@ -214,11 +213,7 @@ def compare_motifs(struct_mat, func_mat, name, bins=20, N=4):
         best_mats.append((func_mat_tmp, struct_mat_tmp))
 
         G = build_nx_multigraph(func_mat, struct_mat, key)
-        #best_graphs.append(G)
-
-        B = multinet.multi_layer_network(network_type="multiplex", directed=False)
-        B.add_edges([[x, 1, y, 2, z] for x, y, z in list(G.edges)], input_type="list")
-        best_multigraphs.append(B)
+        best_multigraphs.append(G)
 
     mg_dict = dict(zip(best_threshes, best_multigraphs))
 
@@ -253,6 +248,7 @@ def build_multigraphs(est_path_iterlist, ID):
         List of path strings to multilayer graph edgelists.
     """
     import yaml
+    import re
     import os
     import networkx as nx
     from sklearn.metrics.pairwise import cosine_similarity
@@ -323,7 +319,7 @@ def build_multigraphs(est_path_iterlist, ID):
         for res in list(set([i for i in parcel_dict_dwi.keys() if i in parcel_dict_func.keys()])):
             parcel_dict[res] = list(set(itertools.product(parcel_dict_dwi[res], parcel_dict_func[res])))
 
-        dir_path = str(Path(os.path.dirname(est_path_iterlist_dwi[0])).parent)
+        dir_path = str(Path(os.path.dirname(est_path_iterlist_dwi[0])).parent.parent.parent)
         namer_dir = f"{dir_path}/graphs_multilayer"
         if not os.path.isdir(namer_dir):
             os.mkdir(namer_dir)
@@ -363,8 +359,12 @@ def build_multigraphs(est_path_iterlist, ID):
                 comm_mask = np.equal.outer(struct_comm, func_comm).astype(bool)
                 struct_mat[~comm_mask] = 0
                 func_mat[~comm_mask] = 0
-                name = f"{ID}_{res}_multigraph_LAYER1_{struct_graph_path.split('/')[-1].split('.npy')[0][:15]}_LAYER2" \
-                    f"_{func_graph_path.split('/')[-1].split('.npy')[0][:15]}"
+                # Truncate names
+                struct_name = re.sub(r'^(.{25}).*$', '\g<1>...',
+                                     struct_graph_path.split('/')[-1].split('_raw.npy')[0])
+                func_name = re.sub(r'^(.{25}).*$', '\g<1>...',
+                                   func_graph_path.split('/')[-1].split('_raw.npy')[0])
+                name = f"{ID}_{res}_multigraph_LAYER1_{struct_name}_LAYER2_{func_name}"
 
                 struct_mat = np.maximum(struct_mat, struct_mat.T)
                 func_mat = np.maximum(func_mat, func_mat.T)
@@ -373,10 +373,8 @@ def build_multigraphs(est_path_iterlist, ID):
                 for thr in list(mldict.keys()):
                     multigraph = mldict[thr]
                     out_path = f"{namer_dir}/struct_func_mtlayer_{atlas}_{name}_motif-{thr[0]}_{thr[1]}.edgelist"
-                    multigraph.save_network(out_path)
+                    nx.write_edgelist(multigraph, out_path)
                     ml_graph_path_list.append(out_path)
         multigraph_list_all.append(ml_graph_path_list)
 
     return multigraph_list_all
-
-

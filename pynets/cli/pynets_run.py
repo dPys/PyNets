@@ -328,22 +328,21 @@ def get_parser():
                         help='Optionally use this flag if you wish to apply local thresholding via the disparity '
                              'filter approach. -thr values in this case correspond to α.\n')
     parser.add_argument('-mplx',
-                        metavar='Perform various levels of multiplex graph analysis if both structural and diffusion '
-                                'connectomes are provided.',
+                        metavar='Perform various levels of multiplex graph analysis ONLY IF both structural and '
+                                'diffusion connectomes are provided.',
                         default=0,
                         nargs=1,
-                        choices=['0', '1', '2', '3'],
+                        choices=['0', '1', '2'],
                         help='Include this flag to perform multiplex graph analysis across structural-functional '
-                             'connectome modalities. Options include level (1) Create an ensemble of multiplex graphs '
+                             'connectome modalities. Options include level (1) Create multiplex graphs '
                              'using motif-matched adaptive thresholding; (2) Additionally perform multiplex graph '
-                             'embedding and analysis; (3) Additionally perform plotting. '
+                             'embedding and analysis.'
                              'Default is (0) which is no multiplex analysis.\n')
     parser.add_argument('-embed',
-                        default=None,
-                        nargs=1,
-                        choices=[None, 'omni', 'mase'],
+                        default=False,
+                        action='store_true',
                         help='Optionally use this flag if you wish to embed the ensemble(s) produced into '
-                             'feature vector(s). Options include: omni or mase. Default is None.\n')
+                             'feature vector(s).\n')
     parser.add_argument('-spheres',
                         default=False,
                         action='store_true',
@@ -694,8 +693,6 @@ def build_workflow(args, retval):
     else:
         multi_directget = None
     embed = args.embed
-    if embed is not None:
-        embed = embed[0]
     multiplex = args.mplx
     if type(multiplex) is list:
         multiplex = multiplex[0]

@@ -97,6 +97,9 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
 
     # Workflow 1: Structural connectome
     if dwi_file is not None:
+        outdir_mod_struct = f"{outdir}/dwi"
+        os.makedirs(outdir_mod_struct, exist_ok=True)
+        outdir_mod_func = None
         sub_struct_wf = workflows.dmri_connectometry(ID, atlas, network, node_size, roi,
                                                      uatlas, plot_switch, parc, ref_txt, procmem,
                                                      dwi_file, fbval, fbvec, anat_file, thr, dens_thresh,
@@ -108,7 +111,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                      track_type, min_length, maxcrossing, directget,
                                                      tiss_class, runtime_dict, execution_dict, multi_directget,
                                                      template_name, vox_size, waymask, min_length_list,
-                                                     outdir)
+                                                     outdir_mod_struct)
         if func_file is None:
             sub_func_wf = None
         sub_struct_wf._n_procs = procmem[0]
@@ -118,6 +121,10 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
 
     # Workflow 2: Functional connectome
     if func_file is not None:
+        outdir_mod_func = f"{outdir}/func"
+        os.makedirs(outdir_mod_func, exist_ok=True)
+        if not outdir_mod_struct:
+            outdir_mod_struct = None
         sub_func_wf = workflows.fmri_connectometry(func_file, ID, atlas, network, node_size,
                                                    roi, thr, uatlas, conn_model_func, dens_thresh, conf,
                                                    plot_switch, parc, ref_txt, procmem,
@@ -128,7 +135,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                    smooth_list, disp_filt, prune, multi_nets, clust_type,
                                                    clust_type_list, plugin_type, mask,
                                                    norm, binary, anat_file, runtime_dict, execution_dict, hpass,
-                                                   hpass_list, template_name, vox_size, local_corr, outdir)
+                                                   hpass_list, template_name, vox_size, local_corr, outdir_mod_func)
         if dwi_file is None:
             sub_struct_wf = None
         sub_func_wf._n_procs = procmem[0]
@@ -177,7 +184,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                            'directget', 'tiss_class', 'embed', 'multi_directget',
                                                            'multimodal', 'hpass', 'hpass_list', 'template_name',
                                                            'vox_size', 'multiplex', 'waymask',
-                                                           'local_corr', 'min_length_list', 'outdir']),
+                                                           'local_corr', 'min_length_list', 'outdir_mod_func',
+                                                           'outdir_mod_struct']),
                              name='meta_inputnode')
     meta_inputnode.inputs.func_file = func_file
     meta_inputnode.inputs.ID = ID
@@ -249,7 +257,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     meta_inputnode.inputs.waymask = waymask
     meta_inputnode.inputs.local_corr = local_corr
     meta_inputnode.inputs.min_length_list = min_length_list
-    meta_inputnode.inputs.outdir = outdir
+    meta_inputnode.inputs.outdir_mod_func = outdir_mod_func
+    meta_inputnode.inputs.outdir_mod_struct = outdir_mod_struct
 
     if multimodal is True:
         # Create input/output nodes
@@ -324,7 +333,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                           ('vox_size', 'inputnode.vox_size'),
                                                           ('waymask', 'inputnode.waymask'),
                                                           ('min_length_list', 'inputnode.min_length_list'),
-                                                          ('outdir', 'inputnode.outdir')
+                                                          ('outdir_mod_struct', 'inputnode.outdir')
                                                           ])
                          ])
         meta_wf.connect([(meta_inputnode, sub_func_wf, [('func_file', 'inputnode.func_file'),
@@ -371,7 +380,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                         ('template_name', 'inputnode.template_name'),
                                                         ('vox_size', 'inputnode.vox_size'),
                                                         ('local_corr', 'inputnode.local_corr'),
-                                                        ('outdir', 'inputnode.outdir')])
+                                                        ('outdir_mod_func', 'inputnode.outdir')])
                          ])
 
         # Connect outputs of nested workflow to parent wf
@@ -462,7 +471,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                               ('vox_size', 'inputnode.vox_size'),
                                                               ('waymask', 'inputnode.waymask'),
                                                               ('min_length_list', 'inputnode.min_length_list'),
-                                                              ('outdir', 'inputnode.outdir')
+                                                              ('outdir_mod_struct', 'inputnode.outdir')
                                                               ])
                              ])
 
@@ -534,7 +543,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                             ('template_name', 'inputnode.template_name'),
                                                             ('vox_size', 'inputnode.vox_size'),
                                                             ('local_corr', 'inputnode.local_corr'),
-                                                            ('outdir', 'inputnode.outdir')])
+                                                            ('outdir_mod_func', 'inputnode.outdir')])
                              ])
 
             # Connect outputs of nested workflow to parent wf
@@ -652,9 +661,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     from pynets.dmri import estimation
     from pynets.core.interfaces import PlotStruct, RegisterDWI, Tracking, MakeGtabBmask
     import os.path as op
-
-    outdir = f"{outdir}/dwi"
-    os.makedirs(outdir, exist_ok=True)
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]
@@ -1610,9 +1616,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
     from pynets.core.interfaces import ExtractTimeseries, PlotFunc, RegisterFunc
-
-    outdir = f"{outdir}/func"
-    os.makedirs(outdir, exist_ok=True)
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]
