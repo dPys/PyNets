@@ -492,7 +492,8 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr
                                              multimodal, embed)
 
     if (float(multiplex) > 0) and (multimodal is True):
-        multigraph_list_all = netmotifs.build_multigraphs(est_path_iterlist, list(flatten(ID_iterlist))[0])
+        multigraph_list_all = netmotifs.build_multigraphs(list(flatten(est_path_iterlist)),
+                                                          list(flatten(ID_iterlist))[0])
 
     return (conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
             roi_iterlist, norm_iterlist, binary_iterlist)

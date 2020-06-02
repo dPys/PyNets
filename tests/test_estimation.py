@@ -368,13 +368,13 @@ def test_sfm_mod_est():
     b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
     gtab_bvals[b0_thr_ixs] = 0
     gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()[28:84, 28:84, 18:57]
+    data = nib.load(dwi_file).get_fdata()[28:40, 28:40, 18:30]
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
     B0_mask_patch = f"{dir_path}/mean_B0_bet_mask_patch.nii.gz"
     mask_img = nib.load(B0_mask)
-    mask_data = mask_img.get_fdata()[28:84, 28:84, 18:57]
+    mask_data = mask_img.get_fdata()[28:40, 28:40, 18:30]
     nib.save(nib.Nifti1Image(mask_data, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
 
     [sf_odf, model] = dmri_estimation.sfm_mod_est(gtab, data, B0_mask_patch)

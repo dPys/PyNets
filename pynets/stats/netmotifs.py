@@ -134,9 +134,12 @@ def compare_motifs(struct_mat, func_mat, name, bins=20, N=4):
             del motif_dict[k]
 
     for k, v in list(motif_dict.items()):
-        motif_dict[k]['dist'] = spatial.distance.cosine(at_struct, v)
+        motif_dict[k] = spatial.distance.cosine(at_struct, v)
 
-    df = pd.DataFrame(motif_dict).T
+    df = pd.DataFrame(motif_dict.items()).T
+    new_header = df.iloc[0]
+    df = df[1:]
+    df.columns = new_header
 
     df['struct_func_3333'] = np.zeros(len(df))
     df['struct_func_2233'] = np.zeros(len(df))
@@ -365,6 +368,9 @@ def build_multigraphs(est_path_iterlist, ID):
                 name = "%s%s%s%s%s%s%s" % (ID, '_', res, '_multigraph_LAYER1_',
                                            struct_graph_path.split('/')[-1].split('.npy')[0],
                                            '_LAYER2_', func_graph_path.split('/')[-1].split('.npy')[0])
+
+                struct_mat = np.maximum(struct_mat, struct_mat.T)
+                func_mat = np.maximum(func_mat, func_mat.T)
                 mldict = compare_motifs(struct_mat, func_mat, name)
                 multigraph_list.append(mldict)
                 for thr in list(mldict.keys()):
