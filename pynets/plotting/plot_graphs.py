@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 matplotlib.use('agg')
 
 
-def plot_conn_mat(conn_matrix, labels, out_path_fig):
+def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap):
     """
     Plot a connectivity matrix.
 
@@ -38,7 +38,7 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig):
     [z_min, z_max] = -np.abs(conn_matrix).max()*0.5, np.abs(conn_matrix).max()*0.5
     try:
         plot_matrix(conn_matrix, figure=(10, 10), labels=labels, vmax=z_max, vmin=z_min,
-                    reorder='average', auto_fit=True, grid=False, colorbar=False)
+                    reorder='average', auto_fit=True, grid=False, colorbar=False, cmap=cmap)
     except RuntimeWarning:
         print('Connectivity matrix too sparse for plotting...')
     plt.savefig(out_path_fig, dpi=dpi_resolution)
@@ -46,7 +46,7 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig):
     return
 
 
-def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_aff):
+def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_aff, cmap):
     """
     Plot a community-parcellated connectivity matrix.
 
@@ -73,7 +73,6 @@ def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_af
 
     dpi_resolution = 300
 
-    #conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
     sorting_array = sorted(range(len(community_aff)), key=lambda k: community_aff[k])
     sorted_conn_matrix = conn_matrix[sorting_array, :]
     sorted_conn_matrix = sorted_conn_matrix[:, sorting_array]
@@ -82,13 +81,13 @@ def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_af
     if rois_num < 100:
         try:
             plot_matrix(conn_matrix, figure=(10, 10), labels=labels, vmax=z_max, vmin=z_min,
-                        reorder=False, auto_fit=True, grid=False, colorbar=False)
+                        reorder=False, auto_fit=True, grid=False, colorbar=False, cmap=cmap)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')
     else:
         try:
             plot_matrix(conn_matrix, figure=(10, 10), vmax=z_max, vmin=z_min, auto_fit=True,
-                        grid=False, colorbar=False)
+                        grid=False, colorbar=False, cmap=cmap)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')
 
@@ -149,6 +148,10 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     """
+    import matplotlib.pyplot as plt
+    import pkg_resources
+    import yaml
+    import sys
     import networkx as nx
     import os.path as op
     from pynets.plotting import plot_graphs
@@ -172,7 +175,16 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
                                                                hpass is not None else ''),
                                                        '_thr-', thr, '_adj_mat.png')
 
-    plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig)
+    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            cmap_name = hardcoded_params['plotting']['functional']['adjacency']['color_theme'][0]
+        except KeyError:
+            print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
+            sys.exit(0)
+    stream.close()
+
+    plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name))
 
     # Plot community adj. matrix
     try:
@@ -197,7 +209,8 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
                                                                 "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
                                                                         hpass is not None else ''),
                                                                 '_thr-', thr, '_adj_mat_comm.png')
-        plot_graphs.plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, node_comm_aff_mat)
+        plot_graphs.plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, node_comm_aff_mat,
+                                            cmap=plt.get_cmap(cmap_name))
     except:
         print('\nWARNING: Louvain community detection failed. Cannot plot community matrix...')
 
@@ -245,6 +258,10 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, 
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
     """
+    import matplotlib.pyplot as plt
+    import pkg_resources
+    import yaml
+    import sys
     from pynets.plotting import plot_graphs
     import networkx as nx
     import os.path as op
@@ -267,7 +284,17 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, 
                                                                  'tt-', track_type, '_dg-', directget,
                                                                  '_ml-', min_length,
                                                                  '_thr-', thr, '_adj_mat.png')
-    plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig)
+
+    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            cmap_name = hardcoded_params['plotting']['structural']['adjacency']['color_theme'][0]
+        except KeyError:
+            print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
+            sys.exit(0)
+    stream.close()
+
+    plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name))
 
     # Plot community adj. matrix
     try:
@@ -296,7 +323,8 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, 
                                                                           'tt-', track_type, '_dg-', directget,
                                                                           '_ml-', min_length,
                                                                           '_thr-', thr, '_adj_mat_comm.png')
-        plot_graphs.plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, node_comm_aff_mat)
+        plot_graphs.plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, node_comm_aff_mat,
+                                            cmap=plt.get_cmap(cmap_name))
     except:
         print('\nWARNING: Louvain community detection failed. Cannot plot community matrix...')
 

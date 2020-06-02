@@ -82,7 +82,7 @@ def get_parser():
                         help='Specify either a path to a binarized brain mask Nifti1Image in MNI152 space '
                              'OR multiple paths to multiple brain mask Nifti1Image files in the case of running '
                              'multiple participants, in which case paths should be separated by a space. If no brain '
-                             'mask is supplied, a default MNI152 template mask will be used\n')
+                             'mask is supplied, the template mask will be used (see runconfig.yaml).\n')
     parser.add_argument('-conf',
                         metavar='Confound regressor file (.tsv/.csv format)',
                         default=None,
@@ -103,16 +103,6 @@ def get_parser():
                         nargs='+',
                         help='Optionally specify a binarized ROI mask and retain only those nodes '
                              'of a parcellation contained within that mask for connectome estimation.\n')
-    parser.add_argument('-templ',
-                        metavar='Path to template file',
-                        default=None,
-                        help='Optionally specify a path to a template Nifti1Image file. If none is specified, then '
-                             'will use the MNI152 template by default.\n')
-    parser.add_argument('-templm',
-                        metavar='Path to template mask file',
-                        default=None,
-                        help='Optionally specify a path to a template mask Nifti1Image file. If none is specified, '
-                             'then will use the MNI152 template mask by default.\n')
     parser.add_argument('-ref',
                         metavar='Atlas reference file path',
                         default=None,
@@ -152,13 +142,32 @@ def get_parser():
                         nargs='+',
                         choices=['atlas_aal', 'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe',
                                  'atlas_harvard_oxford', 'atlas_destrieux_2009', 'atlas_msdl', 'coords_dosenbach_2010',
-                                 'coords_power_2011', 'atlas_pauli_2017'],
-                        help='(Hyperparameter): Specify a coordinate atlas parcellation from those made publically '
-                             'available in nilearn. If you wish to iterate your pynets run over multiple nilearn '
+                                 'coords_power_2011', 'atlas_pauli_2017', 'destrieux2009_rois',
+                                 'BrainnetomeAtlasFan2016', 'VoxelwiseParcellationt0515kLeadDBS',
+                                 'Juelichgmthr252mmEickhoff2005',
+                                 'CorticalAreaParcellationfromRestingStateCorrelationsGordon2014',
+                                 'whole_brain_cluster_labels_PCA100', 'AICHAreorderedJoliot2015',
+                                 'HarvardOxfordThr252mmWholeBrainMakris2006', 'VoxelwiseParcellationt058kLeadDBS',
+                                 'MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics',
+                                 'Hammers_mithAtlasn30r83Hammers2003Gousias2008', 'AALTzourioMazoyer2002',
+                                 'DesikanKlein2012', 'AAL2zourioMazoyer2002', 'VoxelwiseParcellationt0435kLeadDBS',
+                                 'AICHAJoliot2015', 'whole_brain_cluster_labels_PCA200',
+                                 'RandomParcellationsc05meanalll43Craddock2011'],
+                        help='(Hyperparameter): Specify an atlas parcellation from nilearn or local libraries. '
+                             'If you wish to iterate your pynets run over multiple '
                              'atlases, separate them by space. Available nilearn atlases are:'
                              '\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\n'
                              'atlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl\ncoords_dosenbach_2010\n'
-                             'coords_power_2011\natlas_pauli_2017.\n')
+                             'coords_power_2011\natlas_pauli_2017.\n\nAvailable local atlases are:'
+                             '\n\ndestrieux2009_rois\nBrainnetomeAtlasFan2016\nVoxelwiseParcellationt0515kLeadDBS\n'
+                             'Juelichgmthr252mmEickhoff2005\n'
+                             'CorticalAreaParcellationfromRestingStateCorrelationsGordon2014\n'
+                             'whole_brain_cluster_labels_PCA100\nAICHAreorderedJoliot2015\n'
+                             'HarvardOxfordThr252mmWholeBrainMakris2006\nVoxelwiseParcellationt058kLeadDBS\n'
+                             'MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics\n'
+                             'Hammers_mithAtlasn30r83Hammers2003Gousias2008\nAALTzourioMazoyer2002\nDesikanKlein2012\n'
+                             'AAL2zourioMazoyer2002\nVoxelwiseParcellationt0435kLeadDBS\nAICHAJoliot2015\n'
+                             'whole_brain_cluster_labels_PCA200\nRandomParcellationsc05meanalll43Craddock2011')
     parser.add_argument('-ns',
                         metavar='Spherical centroid node size',
                         default=4,
@@ -319,22 +328,21 @@ def get_parser():
                         help='Optionally use this flag if you wish to apply local thresholding via the disparity '
                              'filter approach. -thr values in this case correspond to α.\n')
     parser.add_argument('-mplx',
-                        metavar='Perform various levels of multiplex graph analysis if both structural and diffusion '
-                                'connectomes are provided.',
+                        metavar='Perform various levels of multiplex graph analysis ONLY IF both structural and '
+                                'diffusion connectomes are provided.',
                         default=0,
                         nargs=1,
-                        choices=['0', '1', '2', '3'],
+                        choices=['0', '1', '2'],
                         help='Include this flag to perform multiplex graph analysis across structural-functional '
-                             'connectome modalities. Options include level (1) Create an ensemble of multiplex graphs '
+                             'connectome modalities. Options include level (1) Create multiplex graphs '
                              'using motif-matched adaptive thresholding; (2) Additionally perform multiplex graph '
-                             'embedding and analysis; (3) Additionally perform plotting. '
+                             'embedding and analysis.'
                              'Default is (0) which is no multiplex analysis.\n')
     parser.add_argument('-embed',
-                        default=None,
-                        nargs=1,
-                        choices=[None, 'omni', 'mase'],
+                        default=False,
+                        action='store_true',
                         help='Optionally use this flag if you wish to embed the ensemble(s) produced into '
-                             'feature vector(s). Options include: omni or mase. Default is None.\n')
+                             'feature vector(s).\n')
     parser.add_argument('-spheres',
                         default=False,
                         action='store_true',
@@ -499,8 +507,6 @@ def build_workflow(args, retval):
     else:
         hpass_list = None
     roi = args.roi
-    template = args.templ
-    template_mask = args.templm
     conn_model = args.mod
     if conn_model:
         if (type(conn_model) is list) and (len(conn_model) > 1):
@@ -687,8 +693,6 @@ def build_workflow(args, retval):
     else:
         multi_directget = None
     embed = args.embed
-    if embed is not None:
-        embed = embed[0]
     multiplex = args.mplx
     if type(multiplex) is list:
         multiplex = multiplex[0]
@@ -709,6 +713,9 @@ def build_workflow(args, retval):
             nilearn_parc_atlases = hardcoded_params['nilearn_parc_atlases']
             nilearn_coord_atlases = hardcoded_params['nilearn_coord_atlases']
             nilearn_prob_atlases = hardcoded_params['nilearn_prob_atlases']
+            local_atlases = hardcoded_params['local_atlases']
+
+            # Set paths to templates
             runtime_dict = {}
             execution_dict = {}
             for i in range(len(hardcoded_params['resource_dict'])):
@@ -719,6 +726,7 @@ def build_workflow(args, retval):
                     hardcoded_params['execution_dict'][i].values())[0][0]
         except FileNotFoundError:
             print('Failed to parse runconfig.yaml')
+    stream.close()
 
     if (min_thr is not None) and (max_thr is not None) and (step_thr is not None):
         multi_thr = True
@@ -1254,12 +1262,12 @@ def build_workflow(args, retval):
                 retval['return_code'] = 1
                 return retval
             else:
-                print(f"\nNilearn atlas: {atlas}")
+                print(f"\nUsing curated atlas: {atlas}")
 
         if target_samples:
-            print(f"Using {target_samples} streamline samples...")
+            print(f"\nUsing {target_samples} streamline samples...")
         if min_length:
-            print(f"Using {min_length}mm minimum streamline length...")
+            print(f"\nUsing {min_length}mm minimum streamline length...")
 
     if (dwi_file or dwi_file_list) and not (func_file or func_file_list):
         print('\nRunning dmri connectometry only...')
@@ -1394,8 +1402,6 @@ def build_workflow(args, retval):
     retval['tiss_class'] = tiss_class
     retval['directget'] = directget
     retval['multi_directget'] = multi_directget
-    retval['template'] = template
-    retval['template_mask'] = template_mask
     retval['func_file'] = func_file
     retval['dwi_file'] = dwi_file
     retval['fbval'] = fbval
@@ -1455,8 +1461,6 @@ def build_workflow(args, retval):
     # print("%s%s" % ('tiss_class: ', tiss_class))
     # print("%s%s" % ('directget: ', directget))
     # print("%s%s" % ('multi_directget: ', multi_directget))
-    # print("%s%s" % ('template: ', template))
-    # print("%s%s" % ('template_mask: ', template_mask))
     # print("%s%s" % ('func_file: ', func_file))
     # print("%s%s" % ('dwi_file: ', dwi_file))
     # print("%s%s" % ('fbval: ', fbval))
@@ -1491,8 +1495,7 @@ def build_workflow(args, retval):
                                clust_type_list, mask, norm, binary, fbval, fbvec, target_samples,
                                curv_thr_list, step_list, overlap_thr, track_type, min_length, maxcrossing, directget,
                                tiss_class, runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass,
-                               hpass_list, template, template_mask, vox_size, multiplex, waymask, local_corr,
-                               min_length_list, outdir):
+                               hpass_list, vox_size, multiplex, waymask, local_corr, min_length_list, outdir):
         """A function interface for generating a single-subject workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1553,8 +1556,7 @@ def build_workflow(args, retval):
                                         fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                         track_type, min_length, maxcrossing, directget, tiss_class, runtime_dict,
                                         execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
-                                        template, template_mask, vox_size, multiplex, waymask, local_corr,
-                                        min_length_list, outdir)
+                                        vox_size, multiplex, waymask, local_corr, min_length_list, outdir)
             meta_wf._n_procs = procmem[0]
             meta_wf._mem_gb = procmem[1]
             meta_wf.n_procs = procmem[0]
@@ -1671,8 +1673,8 @@ def build_workflow(args, retval):
                          smooth, smooth_list, disp_filt, clust_type, clust_type_list, mask, norm,
                          binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr, track_type,
                          min_length, maxcrossing, directget, tiss_class, runtime_dict, execution_dict, embed,
-                         multi_directget, multimodal, hpass, hpass_list, template, template_mask, vox_size, multiplex,
-                         waymask, local_corr, min_length_list, outdir):
+                         multi_directget, multimodal, hpass, hpass_list, vox_size, multiplex, waymask, local_corr,
+                         min_length_list, outdir):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1738,8 +1740,8 @@ def build_workflow(args, retval):
                 overlap_thr=overlap_thr, track_type=track_type, min_length=min_length, maxcrossing=maxcrossing,
                 directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, execution_dict=execution_dict,
                 embed=embed, multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
-                template=template, template_mask=template_mask, vox_size=vox_size, multiplex=multiplex, waymask=waymask,
-                local_corr=local_corr, min_length_list=min_length_list, outdir=subj_dir)
+                vox_size=vox_size, multiplex=multiplex, waymask=waymask, local_corr=local_corr,
+                min_length_list=min_length_list, outdir=subj_dir)
             wf_single_subject._n_procs = procmem[0]
             wf_single_subject._mem_gb = procmem[1]
             wf_single_subject.n_procs = procmem[0]
@@ -1820,7 +1822,7 @@ def build_workflow(args, retval):
                                               binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
                                               overlap_thr, track_type, min_length, maxcrossing, directget, tiss_class,
                                               runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass,
-                                              hpass_list, template, template_mask, vox_size, multiplex, waymask,
+                                              hpass_list, vox_size, multiplex, waymask,
                                               local_corr, min_length_list, outdir)
         import warnings
         warnings.filterwarnings("ignore")
@@ -1920,8 +1922,8 @@ def build_workflow(args, retval):
                                     smooth_list, disp_filt, clust_type, clust_type_list, mask,
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     track_type, min_length, maxcrossing, directget, tiss_class, runtime_dict,
-                                    execution_dict, embed, multi_directget, multimodal, hpass, hpass_list, template,
-                                    template_mask, vox_size, multiplex, waymask, local_corr, min_length_list, subj_dir)
+                                    execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
+                                    vox_size, multiplex, waymask, local_corr, min_length_list, subj_dir)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil

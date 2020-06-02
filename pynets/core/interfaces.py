@@ -438,6 +438,7 @@ class _RegisterDWIInputSpec(BaseInterfaceInputSpec):
     gtab_file = File(exists=True, mandatory=True)
     dwi_file = File(exists=True, mandatory=True)
     vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
+    template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
     waymask = traits.Any(mandatory=False)
     mask = traits.Any(mandatory=False)
     simple = traits.Bool(False, usedefault=True)
@@ -493,6 +494,7 @@ class RegisterDWI(SimpleInterface):
                                anat_file=anat_file_tmp_path,
                                mask=self.inputs.mask,
                                vox_size=self.inputs.vox_size,
+                               template_name=self.inputs.template_name,
                                simple=self.inputs.simple)
 
         if (self.inputs.overwrite is True) or ((op.isfile(reg.wm_mask_thr) is False) and
@@ -538,6 +540,7 @@ class _RegisterFuncInputSpec(BaseInterfaceInputSpec):
     anat_file = File(exists=True, mandatory=True)
     mask = traits.Any(mandatory=False)
     vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
+    template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
     simple = traits.Bool(False, usedefault=True)
     overwrite = traits.Bool(True, usedefault=True)
 
@@ -571,6 +574,7 @@ class RegisterFunc(SimpleInterface):
                                anat_file=self.inputs.anat_file,
                                mask=mask_tmp_path,
                                vox_size=self.inputs.vox_size,
+                               template_name=self.inputs.template_name,
                                simple=self.inputs.simple)
 
         if (self.inputs.overwrite is True) or (op.isfile(reg.gm_mask_thr) is False):

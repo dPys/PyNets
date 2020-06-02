@@ -181,10 +181,19 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
     from dipy.io.streamline import save_tractogram
     # from pynets.plotting import plot_gen
     import pkg_resources
+    import yaml
     import os.path as op
     from nilearn.image import resample_to_img
     from dipy.io.streamline import load_tractogram
     from pynets.core.utils import missing_elements
+
+    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+        try:
+            hardcoded_params = yaml.load(stream)
+            template_name = hardcoded_params['template'][0]
+        except FileNotFoundError:
+            print('Failed to parse runconfig.yaml')
+    stream.close()
 
     dsn_dir = f"{basedir_path}/dmri_reg_tmp/DSN"
     if not op.isdir(dsn_dir):
@@ -201,7 +210,7 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
     vox_size = fa_img.header.get_zooms()[0]
     template_path = pkg_resources.resource_filename("pynets", f"templates/FA_{int(vox_size)}mm.nii.gz")
     template_anat_path = pkg_resources.resource_filename("pynets",
-                                                         f"templates/MNI152_T1_{int(vox_size)}mm_brain.nii.gz")
+                                                         f"templates/{template_name}_brain_{int(vox_size)}mm.nii.gz")
     template_img = nib.load(template_path)
     brain_mask = np.asarray(template_img.dataobj).astype('bool')
     template_img.uncache()
@@ -361,7 +370,7 @@ class DmriReg(object):
     A Class for Registering an atlas to a subject's MNI-aligned T1w image in native diffusion space.
     """
 
-    def __init__(self, basedir_path, fa_path, ap_path, B0_mask, anat_file, mask, vox_size, simple):
+    def __init__(self, basedir_path, fa_path, ap_path, B0_mask, anat_file, mask, vox_size, template_name, simple):
         import pkg_resources
         import os.path as op
         self.simple = simple
@@ -371,6 +380,7 @@ class DmriReg(object):
         self.t1w = anat_file
         self.mask = mask
         self.vox_size = vox_size
+        self.template_name = template_name
         self.t1w_name = 't1w'
         self.dwi_name = 'dwi'
         self.basedir_path = basedir_path
@@ -419,10 +429,13 @@ class DmriReg(object):
         self.vent_csf_in_dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_vent_csf_in_dwi.nii.gz'}"
         self.vent_mask_mni = f"{self.reg_path_img}{'/vent_mask_mni.nii.gz'}"
         self.vent_mask_t1w = f"{self.reg_path_img}{'/vent_mask_t1w.nii.gz'}"
-        self.input_mni = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_{vox_size}.nii.gz")
-        self.input_mni_brain = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_{vox_size}_brain.nii.gz")
+        self.input_mni = pkg_resources.resource_filename("pynets", f"templates/{self.template_name}_{vox_size}.nii.gz")
+        self.input_mni_brain = pkg_resources.resource_filename("pynets",
+                                                               f"templates/{self.template_name}_"
+                                                               f"brain_{vox_size}.nii.gz")
         self.input_mni_mask = pkg_resources.resource_filename("pynets",
-                                                              f"templates/MNI152_T1_{vox_size}_brain_mask.nii.gz")
+                                                              f"templates/{self.template_name}_"
+                                                              f"brain_mask_{vox_size}.nii.gz")
         self.mni_atlas = pkg_resources.resource_filename("pynets",
                                                          f"core/atlases/HarvardOxford-sub-prob-{vox_size}.nii.gz")
         self.wm_gm_int_in_dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm_gm_int_in_dwi.nii.gz'}"
@@ -472,28 +485,31 @@ class DmriReg(object):
             wm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-WM_probseg.nii.gz')[0]
             csf_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-CSF_probseg.nii.gz')[0]
         else:
-            import tensorflow as tf
-            tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-            from deepbrain import Extractor
-            os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
+            # Check if already skull-stripped. If not, strip it.
             img = nib.load(self.t1w_brain)
             t1w_data = img.get_fdata()
-            ext = Extractor()
-            prob = ext.run(t1w_data)
-            mask = prob > 0.5
-            deeb_brain_mask = op.dirname(self.t1w) + '/deep_brain_mask.nii.gz'
-            nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), deeb_brain_mask)
-            try:
-                os.system(f"fslmaths {self.t1w_brain} -mas {deeb_brain_mask} {self.t1w_brain} 2>/dev/null")
-            except:
+            perc_nonzero = np.count_nonzero(t1w_data) / np.count_nonzero(t1w_data == 0)
+            # TODO find a better heuristic for determining whether a t1w image has already been skull-stripped
+            if perc_nonzero > 0.25:
+                import tensorflow as tf
+                tf.logging.set_verbosity(tf.logging.ERROR)
+                from deepbrain import Extractor
+                os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+                ext = Extractor()
+                prob = ext.run(t1w_data)
+                mask = prob > 0.5
+                deeb_brain_mask = op.dirname(self.t1w_brain) + '/deep_brain_mask.nii.gz'
+                nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), deeb_brain_mask)
                 try:
-                    from nilearn.image import resample_to_img
-                    nib.save(resample_to_img(nib.load(deeb_brain_mask), nib.load(self.t1w_brain)),
-                             deeb_brain_mask)
                     os.system(f"fslmaths {self.t1w_brain} -mas {deeb_brain_mask} {self.t1w_brain} 2>/dev/null")
-                except ValueError:
-                    print('Cannot coerce mask to shape of T1w anatomical.')
+                except:
+                    try:
+                        from nilearn.image import resample_to_img
+                        nib.save(resample_to_img(nib.load(deeb_brain_mask), nib.load(self.t1w_brain)),
+                                 deeb_brain_mask)
+                        os.system(f"fslmaths {self.t1w_brain} -mas {deeb_brain_mask} {self.t1w_brain} 2>/dev/null")
+                    except ValueError:
+                        print('Cannot coerce mask to shape of T1w anatomical.')
 
             anat_mask_existing = None
             wm_mask_existing = None
@@ -812,12 +828,13 @@ class FmriReg(object):
     A Class for Registering an atlas to a subject's MNI-aligned T1w image.
     """
 
-    def __init__(self, basedir_path, anat_file, mask, vox_size, simple):
+    def __init__(self, basedir_path, anat_file, mask, vox_size, template_name, simple):
         import os.path as op
         import pkg_resources
         self.t1w = anat_file
         self.mask = mask
         self.vox_size = vox_size
+        self.template_name = template_name
         self.t1w_name = 't1w'
         self.simple = simple
         self.basedir_path = basedir_path
@@ -842,11 +859,13 @@ class FmriReg(object):
         self.gm_mask = f"{self.anat_path}{'/'}{self.t1w_name}{'_gm.nii.gz'}"
         self.gm_mask_thr = f"{self.anat_path}{'/'}{self.t1w_name}{'_gm_thr.nii.gz'}"
         self.input_mni = pkg_resources.resource_filename("pynets",
-                                                         f"templates/MNI152_T1_{vox_size}.nii.gz")
+                                                         f"templates/{self.template_name}_{vox_size}.nii.gz")
         self.input_mni_brain = pkg_resources.resource_filename("pynets",
-                                                               f"templates/MNI152_T1_{vox_size}_brain.nii.gz")
+                                                               f"templates/{self.template_name}_"
+                                                               f"brain_{vox_size}.nii.gz")
         self.input_mni_mask = pkg_resources.resource_filename("pynets",
-                                                              f"templates/MNI152_T1_{vox_size}_brain_mask.nii.gz")
+                                                              f"templates/{self.template_name}_"
+                                                              f"brain_mask_{vox_size}.nii.gz")
 
         # Create empty tmp directories that do not yet exist
         reg_dirs = [self.tmp_path, self.reg_path, self.anat_path, self.reg_path_mat, self.reg_path_warp,
@@ -884,28 +903,31 @@ class FmriReg(object):
             # Segment the t1w brain into probability maps
             gm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
         else:
-            import tensorflow as tf
-            tf.logging.set_verbosity(tf.logging.ERROR)
-            from deepbrain import Extractor
-            os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
+            # Check if already skull-stripped. If not, strip it.
             img = nib.load(self.t1w_brain)
             t1w_data = img.get_fdata()
-            ext = Extractor()
-            prob = ext.run(t1w_data)
-            mask = prob > 0.5
-            deeb_brain_mask = op.dirname(self.t1w_brain) + '/deep_brain_mask.nii.gz'
-            nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), deeb_brain_mask)
-            try:
-                os.system(f"fslmaths {self.t1w_brain} -mas {deeb_brain_mask} {self.t1w_brain} 2>/dev/null")
-            except:
+            perc_nonzero = np.count_nonzero(t1w_data) / np.count_nonzero(t1w_data == 0)
+            # TODO find a better heuristic for determining whether a t1w image has already been skull-stripped
+            if perc_nonzero > 0.25:
+                import tensorflow as tf
+                tf.logging.set_verbosity(tf.logging.ERROR)
+                from deepbrain import Extractor
+                os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+                ext = Extractor()
+                prob = ext.run(t1w_data)
+                mask = prob > 0.5
+                deeb_brain_mask = op.dirname(self.t1w_brain) + '/deep_brain_mask.nii.gz'
+                nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), deeb_brain_mask)
                 try:
-                    from nilearn.image import resample_to_img
-                    nib.save(resample_to_img(nib.load(deeb_brain_mask), nib.load(self.t1w_brain)),
-                             deeb_brain_mask)
                     os.system(f"fslmaths {self.t1w_brain} -mas {deeb_brain_mask} {self.t1w_brain} 2>/dev/null")
-                except ValueError:
-                    print('Cannot coerce mask to shape of T1w anatomical.')
+                except:
+                    try:
+                        from nilearn.image import resample_to_img
+                        nib.save(resample_to_img(nib.load(deeb_brain_mask), nib.load(self.t1w_brain)),
+                                 deeb_brain_mask)
+                        os.system(f"fslmaths {self.t1w_brain} -mas {deeb_brain_mask} {self.t1w_brain} 2>/dev/null")
+                    except ValueError:
+                        print('Cannot coerce mask to shape of T1w anatomical.')
             anat_mask_existing = None
             gm_mask_existing = None
             img.uncache()
@@ -1011,7 +1033,7 @@ class FmriReg(object):
 
 def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, fa_path, ap_path, B0_mask, anat_file,
                        coords, labels, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, gtab_file, dwi_file, mask,
-                       vox_size, simple=False):
+                       vox_size, template_name, simple=False):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 
@@ -1054,6 +1076,8 @@ def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, f
         Path to a brain mask to apply to the anatomical Nifti1Image.
     vox_size : str
         Voxel size in mm. (e.g. 2mm).
+    template_name : str
+        Name of the MNI template being used for registrations. Default is MNI152_T1.
     simple : bool
         Indicates whether to use non-linear registration and BBR (True) or entirely linear methods (False).
         Default is False.
@@ -1096,7 +1120,7 @@ def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, f
     from pynets.registration.register import DmriReg
     # from pynets.core.utils import missing_elements
 
-    reg = DmriReg(basedir_path, fa_path, ap_path, B0_mask, anat_file, mask, vox_size, simple)
+    reg = DmriReg(basedir_path, fa_path, ap_path, B0_mask, anat_file, mask, vox_size, template_name, simple)
 
     if node_size is not None:
         atlas = f"{atlas}{'_'}{node_size}"
@@ -1120,7 +1144,7 @@ def register_atlas_dwi(uatlas, uatlas_parcels, atlas, node_size, basedir_path, f
 
 
 def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, coords, labels, vox_size, mask,
-                        reg_fmri_complete, simple=False):
+                        reg_fmri_complete, template_name, simple=False):
     """
     A Function to register an atlas to T1w-warped MNI-space, and restrict the atlas to grey-matter only.
 
@@ -1142,6 +1166,8 @@ def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, 
         List of string labels corresponding to graph nodes.
     vox_size : str
         Voxel size in mm. (e.g. 2mm).
+    template_name : str
+        Name of the MNI template being used for registrations. Default is MNI152_T1.
     mask : str
         Path to a brain mask to apply to the anatomical Nifti1Image.
     reg_fmri_complete : bool
@@ -1162,7 +1188,7 @@ def register_atlas_fmri(uatlas, uatlas_parcels, atlas, basedir_path, anat_file, 
     from pynets.registration.register import FmriReg
     # from pynets.core.utils import missing_elements
 
-    reg = FmriReg(basedir_path, anat_file, mask, vox_size, simple)
+    reg = FmriReg(basedir_path, anat_file, mask, vox_size, template_name, simple)
 
     # Apply warps/coregister atlas to t1w_mni
     aligned_atlas_t1mni_gm = reg.atlas2t1wmni_align(uatlas, uatlas_parcels, atlas)

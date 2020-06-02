@@ -3,7 +3,7 @@
             "dg": "['clos']",
             "ml": "['0']",
             "mod": "['csa']",
-            "s": 1000,
+            "s": 500,
             "tc": "['bin']",
             "tt": "['local']"
         },
@@ -16,24 +16,24 @@
             "sm": "['0']"
         },
     "gen": {
-            "a":  "['DesikanKlein2012']",
+            "a":  "['coords_power_2011']",
             "bin":  "False",
             "df":  "False",
             "dt":  "False",
             "embed":  "None",
             "max_thr":  "None",
-            "min_thr":  "None",
+            "min_thr": "None",
             "mplx":  0,
             "mst":  "True",
-            "n":  "['Default']",
+            "n":  "['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default', 'VisCent', 'VisPeri']",
             "names":  "False",
             "norm": "['6']",
-            "ns":  "None",
+            "ns":  "['4']",
             "p":  "['3']",
             "plt":  "True",
-            "spheres":  "False",
+            "spheres":  "True",
             "step_thr":  "None",
-            "thr":  1.0,
+            "thr":  1.00,
             "vox":  "'2mm'"
         }
 }

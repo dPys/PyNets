@@ -84,7 +84,7 @@ def adaptivethresh(in_mat, thr, mlib, N):
     try:
         mf = np.array([mf[k] for k in mlib])
     except:
-        mf = np.zeros(N)
+        mf = np.zeros(len(mlib))
     return mf
 
 
@@ -93,7 +93,6 @@ def compare_motifs(struct_mat, func_mat, name, bins=20, N=4):
     from pynets.core.thresholding import standardize
     from scipy import spatial
     import pandas as pd
-    from py3plex.core import multinet
     import gc
 
     mlib = ['1113', '1122', '1223', '2222', '2233', '3333']
@@ -119,24 +118,25 @@ def compare_motifs(struct_mat, func_mat, name, bins=20, N=4):
     # Count motifs
     print("%s%s%s%s" % ('Mining ', N, '-node motifs: ', mlib))
     motif_dict = {}
+    motif_dict['struct'] = {}
+    motif_dict['func'] = {}
     for thr_func in threshes_func:
         # Count
         at_func = adaptivethresh(func_mat, float(thr_func), mlib, N)
-        motif_dict["%s%s" % ('struct_func_', np.round(thr_func, 4))] = at_func
+        motif_dict['struct']["%s%s" % ('struct_func_', np.round(thr_func, 4))] = at_struct
+        motif_dict['func']["%s%s" % ('struct_func_', np.round(thr_func, 4))] = at_func
 
         print("%s%s%s%s%s" % ('Layer 2 (functional) with absolute threshold of: ',
                               np.round(thr_func, 2), ' yields ',
                               np.sum(at_func), ' total motifs'))
         gc.collect()
 
-    for k, v in list(motif_dict.items()):
-        if np.sum(at_struct) == 0 or np.sum(v) == 0:
-            del motif_dict[k]
+    df = pd.DataFrame(motif_dict)
 
-    for k, v in list(motif_dict.items()):
-        motif_dict[k]['dist'] = spatial.distance.cosine(at_struct, v)
+    for idx in range(len(df)):
+        df.set_value(df.index[idx], 'dist', spatial.distance.cosine(df['struct'][idx], df['func'][idx]))
 
-    df = pd.DataFrame(motif_dict).T
+    df = df[pd.notnull(df['dist'])]
 
     df['struct_func_3333'] = np.zeros(len(df))
     df['struct_func_2233'] = np.zeros(len(df))
@@ -183,9 +183,9 @@ def compare_motifs(struct_mat, func_mat, name, bins=20, N=4):
     df['struct_func_1122'] = np.abs(df['struct_1122'] - df['func_1122'])
     df['struct_func_1113'] = np.abs(df['struct_1113'] - df['func_1113'])
 
-    df = df[(df.struct_3333 != 0) & (df.func_3333 != 0) & (df.struct_2233 != 0) & (df.func_2233 != 0) &
-            (df.struct_2222 != 0) & (df.func_2222 != 0) & (df.struct_1223 != 0) & (df.func_1223 != 0) &
-            (df.struct_1122 != 0) & (df.func_1122 != 0) & (df.struct_1113 != 0) & (df.func_1113 != 0)]
+    df = df.drop(columns=['struct', 'func'])
+
+    df = df.loc[~(df==0).all(axis=1)]
 
     df = df.sort_values(by=['dist', 'struct_func_3333', 'struct_func_2233', 'struct_func_2222', 'struct_func_1223',
                             'struct_func_1122', 'struct_func_1113', 'struct_3333', 'func_3333', 'struct_2233',
@@ -196,28 +196,24 @@ def compare_motifs(struct_mat, func_mat, name, bins=20, N=4):
                                                                                  False, False, False])
 
     # Take the top 25th percentile
-    df = df[df['dist'] < df['dist'].quantile(0.25)]
+    df = df[df['dist'] <= df['dist'].quantile(0.25)]
     best_threshes = []
     best_mats = []
     #best_graphs = []
     best_multigraphs = []
-    for str in list(df.index):
+    for key in list(df.index):
         func_mat_tmp = func_mat.copy()
         struct_mat_tmp = struct_mat.copy()
-        struct_thr = float(str.split('_')[1])
-        func_thr = float(str.split('_')[3])
+        struct_thr = float(key.split('_')[-1])
+        func_thr = float(key.split('_')[-1])
         best_threshes.append((struct_thr, func_thr))
 
         func_mat_tmp[func_mat_tmp < func_thr] = 0
         struct_mat_tmp[struct_mat_tmp < struct_thr] = 0
         best_mats.append((func_mat_tmp, struct_mat_tmp))
 
-        G = build_nx_multigraph(func_mat, struct_mat, str)
-        #best_graphs.append(G)
-
-        B = multinet.multi_layer_network(network_type="multiplex", directed=False)
-        B.add_edges([[x, 1, y, 2, z] for x, y, z in list(G.edges)], input_type="list")
-        best_multigraphs.append(B)
+        G = build_nx_multigraph(func_mat, struct_mat, key)
+        best_multigraphs.append(G)
 
     mg_dict = dict(zip(best_threshes, best_multigraphs))
 
@@ -252,6 +248,7 @@ def build_multigraphs(est_path_iterlist, ID):
         List of path strings to multilayer graph edgelists.
     """
     import yaml
+    import re
     import os
     import networkx as nx
     from sklearn.metrics.pairwise import cosine_similarity
@@ -322,8 +319,8 @@ def build_multigraphs(est_path_iterlist, ID):
         for res in list(set([i for i in parcel_dict_dwi.keys() if i in parcel_dict_func.keys()])):
             parcel_dict[res] = list(set(itertools.product(parcel_dict_dwi[res], parcel_dict_func[res])))
 
-        dir_path = str(Path(os.path.dirname(est_path_iterlist_dwi[0])).parent)
-        namer_dir = "%s%s" % (dir_path, '/graphs_multilayer')
+        dir_path = str(Path(os.path.dirname(est_path_iterlist_dwi[0])).parent.parent.parent)
+        namer_dir = f"{dir_path}/graphs_multilayer"
         if not os.path.isdir(namer_dir):
             os.mkdir(namer_dir)
         ml_graph_path_list = []
@@ -362,19 +359,22 @@ def build_multigraphs(est_path_iterlist, ID):
                 comm_mask = np.equal.outer(struct_comm, func_comm).astype(bool)
                 struct_mat[~comm_mask] = 0
                 func_mat[~comm_mask] = 0
-                name = "%s%s%s%s%s%s%s" % (ID, '_', res, '_multigraph_LAYER1_',
-                                           struct_graph_path.split('/')[-1].split('.npy')[0],
-                                           '_LAYER2_', func_graph_path.split('/')[-1].split('.npy')[0])
+                # Truncate names
+                struct_name = re.sub(r'^(.{25}).*$', '\g<1>...',
+                                     struct_graph_path.split('/')[-1].split('_raw.npy')[0])
+                func_name = re.sub(r'^(.{25}).*$', '\g<1>...',
+                                   func_graph_path.split('/')[-1].split('_raw.npy')[0])
+                name = f"{ID}_{res}_multigraph_LAYER1_{struct_name}_LAYER2_{func_name}"
+
+                struct_mat = np.maximum(struct_mat, struct_mat.T)
+                func_mat = np.maximum(func_mat, func_mat.T)
                 mldict = compare_motifs(struct_mat, func_mat, name)
                 multigraph_list.append(mldict)
                 for thr in list(mldict.keys()):
                     multigraph = mldict[thr]
-                    out_path = "%s%s%s%s%s%s%s%s" % (namer_dir, '/struct_func_mtlayer_', atlas, '_', name, '_thr',
-                                                     thr, '.edgelist')
-                    multigraph.save_network(out_path)
+                    out_path = f"{namer_dir}/struct_func_mtlayer_{atlas}_{name}_motif-{thr[0]}_{thr[1]}.edgelist"
+                    nx.write_edgelist(multigraph, out_path)
                     ml_graph_path_list.append(out_path)
         multigraph_list_all.append(ml_graph_path_list)
 
     return multigraph_list_all
-
-

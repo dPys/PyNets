@@ -24,6 +24,25 @@ nilearn_coord_atlases:
 nilearn_prob_atlases:
     - 'atlas_msdl'
     - 'atlas_pauli_2017'
+local_atlases:
+    - 'destrieux2009_rois'
+    - 'BrainnetomeAtlasFan2016'
+    - 'VoxelwiseParcellationt0515kLeadDBS'
+    - 'Juelichgmthr252mmEickhoff2005'
+    - 'CorticalAreaParcellationfromRestingStateCorrelationsGordon2014'
+    - 'whole_brain_cluster_labels_PCA100'
+    - 'AICHAreorderedJoliot2015'
+    - 'HarvardOxfordThr252mmWholeBrainMakris2006'
+    - 'VoxelwiseParcellationt058kLeadDBS'
+    - 'MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics'
+    - 'Hammers_mithAtlasn30r83Hammers2003Gousias2008'
+    - 'AALTzourioMazoyer2002'
+    - 'DesikanKlein2012'
+    - 'AAL2zourioMazoyer2002'
+    - 'VoxelwiseParcellationt0435kLeadDBS'
+    - 'AICHAJoliot2015'
+    - 'whole_brain_cluster_labels_PCA200'
+    - 'RandomParcellationsc05meanalll43Craddock2011'
 available_models:
     func_models:
       - 'corr'
@@ -37,6 +56,33 @@ available_models:
     struct_models:
       - 'csa'
       - 'csd'
+template:
+    - 'MNI152_T1'
+plotting:
+    connectogram:
+        - False
+    glassbrain:
+        - True
+    adjacency:
+        - True
+    functional:
+        glassbrain:
+            color_theme:
+              - 'Blues'
+            node_color:
+              - 'auto'
+        adjacency:
+            color_theme:
+                - 'PuBuGn'
+    structural:
+        glassbrain:
+            color_theme:
+              - 'binary'
+            node_color:
+              - 'copper'
+        adjacency:
+            color_theme:
+                - 'YlGnBu'
 resource_dict:
       - 'fetch_nodes_and_labels_node':
         - (2, 2)

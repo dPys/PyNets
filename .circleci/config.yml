@@ -1,6 +1,6 @@
 version: 2
-jobs:
 
+jobs:
   build:
     environment:
       TZ: "/usr/share/zoneinfo/America/Chicago"
@@ -139,20 +139,18 @@ jobs:
   get_data:
     machine:
       image: ubuntu-1604:201903-01
-    working_directory: /home/circleci/data
+    working_directory: /tmp/src/pynets
     steps:
-      - restore_cache:
-          keys:
-            - data-v0-{{ .Revision }}
-            - data-v0-
       - run:
           name: Download OSF test data
           command: |
-            wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C /home/circleci/data
-      - save_cache:
-         key: data-v0-{{ .Revision }}-{{ epoch }}
-         paths:
-            - /tmp/data
+            mkdir -p tests
+            wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C /tmp/src/pynets/tests
+      - persist_to_workspace:
+          root: /tmp/src/pynets
+          paths:
+            - tests/*
+
   unit_tests:
     machine:
       image: ubuntu-1604:201903-01
@@ -162,8 +160,11 @@ jobs:
       - FSLOUTPUTTYPE: 'NIFTI'
       - PYTHONUNBUFFERED: 1
     resource_class: medium
+    parallelism: 4
     steps:
       - checkout
+      - attach_workspace:
+          at: /tmp/src/pynets
       - run:
           name: "Switch to Python v3.6"
           no_output_timeout: 30m
@@ -190,7 +191,7 @@ jobs:
             python -m pip install --upgrade pip setuptools
       - run:
           name: Install pytest
-          command: python -m pip install pytest pytest-cov pytest-sugar pytest-xdist
+          command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized coverage
       - run:
           name: Install system dependencies and LFS
           no_output_timeout: 30m
@@ -248,27 +249,69 @@ jobs:
              echo 'export FSLDIR PATH' >> $BASH_ENV
              source $BASH_ENV
       - run:
-          name: Fetch example data
-          command: |
-            wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C tests
-      - run:
           name: Run unit tests
           no_output_timeout: 5h
           command: |
             set -e
             mkdir test-results
             export PYTHONUNBUFFERED=1
-            python -m pytest --cov-config .coveragerc --cov=pynets --cov-report xml:coverage.xml -s --verbose --junitxml="test-results/junit.xml" $(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
-      - run:
-          name: Update codecov
-          command: |
-            codecov
-            bash <(curl https://codecov.io/bash) -f coverage.xml
-          when: always
+            python -m coverage run -p --rcfile=.coveragerc -m pytest -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
+      - persist_to_workspace:
+          root: /tmp/src/pynets
+          paths:
+            - .coverage*
+      - save_cache:
+          key: unittests
+          paths:
+            - ~/test_cache
       - store_test_results:
           path: test-results
       - store_artifacts:
           path: test-results
+
+  coverage:
+    machine:
+      image: ubuntu-1604:201903-01
+    working_directory: /tmp/src/pynets
+    steps:
+      - checkout
+      - restore_cache:
+          key: unittests
+      - attach_workspace:
+          at: /tmp/src/pynets
+      - run:
+          name: "Switch to Python v3.6"
+          no_output_timeout: 30m
+          command: |
+            pyenv local --unset
+            pyenv uninstall -f 3.6.5 || true
+            sudo add-apt-repository ppa:deadsnakes/ppa
+            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
+            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
+            sudo apt-get update
+            sudo apt-get install -y make build-essential
+            sudo apt-get install -y software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev
+            sudo apt-get upgrade
+            pyenv install -f 3.6.5 || true
+            eval "$(pyenv init -)"
+            pyenv global 3.6.5
+            echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
+            echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Check Python version and upgrade pip
+          command: |
+            python -m pip install -U pip
+            python -m pip install --upgrade pip setuptools
+      - run:
+          name: Update codecov
+          command: |
+            python -m pip install codecov coverage
+            python -m coverage combine
+            python -m coverage report
+            python -m coverage html
+            python -m coverage xml
+            bash <(curl https://codecov.io/bash) -f coverage.xml
 
   deploy_docker_patches:
     machine:
@@ -442,14 +485,6 @@ workflows:
   version: 2
   build_test_deploy:
     jobs:
-      - build:
-          filters:
-            branches:
-              ignore:
-                - /docs?\/.*/
-            tags:
-              only: /.*/
-
       - get_data:
           filters:
             branches:
@@ -460,13 +495,39 @@ workflows:
             tags:
               only: /.*/
       - unit_tests:
+          requires:
+            - get_data
           filters:
             branches:
               ignore:
                 - /docs?\/.*/
             tags:
               only: /.*/
+      - coverage:
+          requires:
+            - get_data
+            - unit_tests
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+            tags:
+              only: /.*/
+      - build:
+          requires:
+            - get_data
+            - unit_tests
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+            tags:
+              only: /.*/
+
       - test_deploy_pypi:
+          requires:
+            - get_data
+            - unit_tests
           filters:
             branches:
               ignore:
@@ -478,6 +539,7 @@ workflows:
       - deploy_docker_patches:
           requires:
             - build
+            - test_deploy_pypi
           filters:
             branches:
               only: /docker\/.*/

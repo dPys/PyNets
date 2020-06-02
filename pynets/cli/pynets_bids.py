@@ -241,16 +241,6 @@ def get_bids_parser():
                         nargs='+',
                         help='Optionally specify a binarized ROI mask and retain only those nodes '
                              'of a parcellation contained within that mask for connectome estimation.\n')
-    parser.add_argument('-templ',
-                        metavar='Path to template file',
-                        default=None,
-                        help='Optionally specify a path to a template Nifti1Image file. If none is specified, then '
-                             'will use the MNI152 template by default.\n')
-    parser.add_argument('-templm',
-                        metavar='Path to template mask file',
-                        default=None,
-                        help='Optionally specify a path to a template mask Nifti1Image file. If none is specified, '
-                             'then will use the MNI152 template mask by default.\n')
     parser.add_argument('-ref',
                         metavar='Atlas reference file path',
                         default=None,
@@ -341,6 +331,7 @@ def main():
         with open(f"{str(Path(__file__).parent.parent)}/config/bids_config_test.json", 'r') as stream:
         # with open('/Users/derekpisner/Applications/PyNets/pynets/config/bids_config_test.json') as stream:
             arg_dict = json.load(stream)
+        stream.close()
 
     # Available functional and structural connectivity models
     with open(f"{str(Path(__file__).parent.parent)}/runconfig.yaml", 'r') as stream:
@@ -356,6 +347,7 @@ def main():
         except KeyError:
             print('ERROR: available structural models not successfully extracted from runconfig.yaml')
             sys.exit()
+    stream.close()
 
     space = 'MNI152NLin2009cAsym'
     func_desc = 'smoothAROMAnonaggr'
@@ -391,14 +383,6 @@ def main():
                 print('Downloading tractography waymask: ', i, ' from S3...')
                 sec_s3_objs.append(i)
 
-    if bids_args.templ:
-        if bids_args.templ.startswith("s3://"):
-            print('Downloading brain template: ', bids_args.templ, ' from S3...')
-            sec_s3_objs.append(bids_args.templ)
-    if bids_args.templm:
-        if bids_args.templm.startswith("s3://"):
-            print('Downloading brain template mask: ', bids_args.templm, ' from S3...')
-            sec_s3_objs.append(bids_args.templm)
     if bids_args.ref:
         if bids_args.ref.startswith("s3://"):
             print('Downloading atlas labeling reference file: ', bids_args.ref, ' from S3...')
@@ -480,12 +464,6 @@ def main():
                         local_way[local_way.index(i)] = f"{sec_dir}/{os.path.basename(i)}"
                 bids_args.way = local_way
 
-            if bids_args.templ:
-                if bids_args.templ.startswith("s3://"):
-                    bids_args.templ = f"{sec_dir}/{os.path.basename(bids_args.templ)}"
-            if bids_args.templm:
-                if bids_args.templm.startswith("s3://"):
-                    bids_args.templm = f"{sec_dir}/{os.path.basename(bids_args.templm)}"
             if bids_args.ref:
                 if bids_args.ref.startswith("s3://"):
                     bids_args.ref = f"{sec_dir}/{os.path.basename(bids_args.ref)}"
@@ -639,8 +617,6 @@ def main():
     args_dict_all['ua'] = bids_args.ua
     args_dict_all['ref'] = bids_args.ref
     args_dict_all['roi'] = bids_args.roi
-    args_dict_all['templ'] = bids_args.templ
-    args_dict_all['templm'] = bids_args.templm
     if ('func' in modality) and (bids_args.cm is not None):
         args_dict_all['cm'] = bids_args.cm
     else:

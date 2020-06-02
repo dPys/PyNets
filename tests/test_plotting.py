@@ -218,7 +218,7 @@ def test_plot_conn_mat_rois_gt_100():
     out_path_fig = '/tmp/fig'
 
     start_time = time.time()
-    plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig)
+    plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig, cmap='Blues')
     print("%s%s%s" % ('plot_timeseries --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 
@@ -232,7 +232,7 @@ def test_plot_conn_mat_rois_gt_100():
 #     out_path_fig = '/tmp/'
 #
 #     start_time = time.time()
-#     plotting.plot_conn_mat(conn_matrix, labels, out_path_fig)
+#     plotting.plot_conn_mat(conn_matrix, labels, out_path_fig, cmap='Blues')
 #     print("%s%s%s" % ('plot_timeseries --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 

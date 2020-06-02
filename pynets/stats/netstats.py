@@ -230,11 +230,6 @@ def smallworldness(G, niter=10, nrand=100):
     of an equivalent random graph and Cl is the average clustering coefficient
     of an equivalent lattice graph.
 
-    The small-world coefficient (omega) ranges between -1 and 1. Values close
-    to 0 means the G features small-world characteristics. Values close to -1
-    means G has a lattice shape whereas values close to 1 means G is a random
-    graph.
-
     Parameters
     ----------
     G : NetworkX graph
@@ -691,11 +686,13 @@ def prune_disconnected(G):
     components.sort(key=len, reverse=True)
     components_connected = list(components[0])
 
+    isolates = [n for (n, d) in G.degree() if d == 0]
+
     # Remove disconnected nodes
     pruned_nodes = []
     s = 0
     for node in list(G.nodes()):
-        if node not in components_connected:
+        if node not in components_connected or node in isolates:
             G.remove_node(node)
             pruned_nodes.append(s)
         s = s + 1
@@ -739,10 +736,12 @@ def most_important(G):
     components.sort(key=len, reverse=True)
     components_connected = list(components[0])
 
+    isolates = [n for (n, d) in Gt.degree() if d == 0]
+
     # Remove disconnected nodes
     s = 0
     for node in list(Gt.nodes()):
-        if node not in components_connected:
+        if node not in components_connected or node in isolates:
             Gt.remove_node(node)
             pruned_nodes.append(s)
         s = s + 1

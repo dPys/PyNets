@@ -203,7 +203,7 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
     """
     import os
     if (node_size is None) and (parc is True):
-        node_size = '_parc'
+        node_size = 'parc'
 
     namer_dir = f'{dir_path}/graphs'
     if not os.path.isdir(namer_dir):
@@ -265,7 +265,7 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
     """
     import os
     if (node_size is None) and (parc is True):
-        node_size = '_parc'
+        node_size = 'parc'
 
     namer_dir = f'{dir_path}/graphs'
     if not os.path.isdir(namer_dir):
@@ -280,12 +280,15 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
     est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
                                                '%s' % ("%s%s%s" % ('rsn-', network, '_') if
                                                        network is not None else ''),
-                                               '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0], '_') if
-                                                       roi is not None else ''),
-                                               'raw_est-', conn_model, '_',
-                                               '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
-                                                       ((node_size != 'parc') and (node_size is not None)) else
-                                                       'nodetype-parc_'),
+                                               '%s' % ("%s%s%s" % ('roi-',
+                                                                   op.basename(roi).split('.')[0],
+                                                                   '_') if roi is not None else ''),
+                                               'est-', conn_model, '_',
+                                               '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size,
+                                                                   'mm_')
+                                                       if ((node_size != 'parc') and
+                                                           (node_size is not None))
+                                                       else 'nodetype-parc_'),
                                                "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_')),
                                                "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_')),
                                                'raw.npy')
@@ -343,12 +346,15 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
     est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-dwi_',
                                                          '%s' % ("%s%s%s" % ('rsn-', network, '_') if
                                                          network is not None else ''),
-                                                         '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0],
+                                                         '%s' % ("%s%s%s" % ('roi-',
+                                                                             op.basename(roi).split('.')[0],
                                                                              '_') if roi is not None else ''),
-                                                         'raw_est-', conn_model, '_',
-                                                         '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
-                                                                 ((node_size != 'parc') and (node_size is not None))
-                                                                 else 'parc_'),
+                                                         'est-', conn_model, '_',
+                                                         '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size,
+                                                                             'mm_')
+                                                                 if ((node_size != 'parc') and
+                                                                     (node_size is not None))
+                                                                 else 'nodetype-parc_'),
                                                          "%s" % ("%s%s%s" % ('samples-', int(target_samples),
                                                                              'streams_') if float(target_samples) > 0
                                                                  else ''), 'tt-', track_type, '_dg-', directget,
@@ -449,8 +455,8 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr
         Indicates method of normalizing resulting graph.
     binary_iterlist : list
         List of booleans indicating whether resulting graph edges to form an unweighted graph were binarized.
-    embed : str
-        Embed the ensemble(s) produced into feature vector(s). Options include: omni or mase.
+    embed : bool
+        Embed the ensemble(s) produced into feature vector(s).
     multimodal : bool
         Boolean indicating whether multiple modalities of input data have been specified.
     multiplex : int
@@ -487,12 +493,14 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr
     from pynets.core.utils import flatten
     from pynets.stats import netmotifs, embeddings
 
-    if embed is not None:
-        embeddings.build_embedded_connectome(list(flatten(est_path_iterlist)), list(flatten(ID_iterlist))[0],
-                                             multimodal, embed)
-
     if (float(multiplex) > 0) and (multimodal is True):
-        multigraph_list_all = netmotifs.build_multigraphs(est_path_iterlist, list(flatten(ID_iterlist))[0])
+        raws = list(set([i.split('_thrtype')[0] + '_raw.npy' for i in list(flatten(est_path_iterlist))]))
+        multigraph_list_all = netmotifs.build_multigraphs(raws, list(flatten(ID_iterlist))[0])
+        multigraph_list_all = list(flatten(multigraph_list_all))
+
+    if embed is True:
+        embeddings.build_embedded_connectome(list(flatten(est_path_iterlist)), list(flatten(ID_iterlist))[0],
+                                             multimodal)
 
     return (conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
             roi_iterlist, norm_iterlist, binary_iterlist)
@@ -1110,6 +1118,6 @@ class build_sql_db(object):
         import pandas as pd
         df_summary_auc_ext = pd.concat([pd.DataFrame.from_dict(hyperparam_dict, orient='index').transpose(),
                                         df_summary_auc], axis=1)
-        df_summary_auc_ext.to_sql(self.modality, con=self.engine, index=False, chunksize=1000, if_exists='append')
+        df_summary_auc_ext.to_sql(self.modality, con=self.engine, index=False, chunksize=1000, if_exists='replace')
         return
 

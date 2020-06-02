@@ -105,8 +105,7 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
     local_corr = 'tcorr'
     outdir = base_dir + '/outputs'
     vox_size = '2mm'
-    template = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_{vox_size}_brain.nii.gz")
-    template_mask = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_{vox_size}_brain_mask.nii.gz")
+    template_name = 'MNI152_T1'
     plot_switch = True
     k = None
     k_list = None
@@ -175,9 +174,9 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
                                                conn_model_list, min_span_tree, use_AAL_naming, smooth, smooth_list,
                                                disp_filt, prune, multi_nets, clust_type, clust_type_list, plugin_type,
                                                mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
-                                               hpass_list, template, template_mask, vox_size, local_corr, outdir)
+                                               hpass_list, template_name, vox_size, local_corr, outdir)
 
-    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
+#    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = fmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
@@ -256,8 +255,7 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
     local_corr = 'tcorr'
     outdir = base_dir + '/outputs'
     vox_size = '2mm'
-    template = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_{vox_size}_brain.nii.gz")
-    template_mask = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_{vox_size}_brain_mask.nii.gz")
+    template_name = 'MNI152_T1'
     hpass = None
     smooth = None
     conn_model = 'partcorr'
@@ -313,9 +311,9 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
                                                conn_model_list, min_span_tree, use_AAL_naming, smooth, smooth_list,
                                                disp_filt, prune, multi_nets, clust_type, clust_type_list, plugin_type,
                                                mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
-                                               hpass_list, template, template_mask, vox_size, local_corr, outdir)
+                                               hpass_list, template_name, vox_size, local_corr, outdir)
 
-    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
+#    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = fmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
@@ -414,8 +412,7 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
     waymask = None
     outdir = base_dir + '/outputs'
     vox_size = '2mm'
-    template = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_{vox_size}_brain.nii.gz")
-    template_mask = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_{vox_size}_brain_mask.nii.gz")
+    template_name = 'MNI152_T1'
     plot_switch = True
     target_samples = 1000
 
@@ -476,10 +473,10 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
                                                use_AAL_naming, disp_filt, plugin_type, multi_nets, prune, mask, norm,
                                                binary, target_samples, curv_thr_list, step_list, overlap_thr,
                                                track_type, min_length, maxcrossing, directget, tiss_class,
-                                               runtime_dict, execution_dict, multi_directget, template, template_mask,
+                                               runtime_dict, execution_dict, multi_directget, template_name,
                                                vox_size, waymask, min_length_list, outdir)
 
-    dmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
+#    dmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(dmri_connectometry_wf._graph) is True
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = dmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)

@@ -6,3 +6,4 @@
 .. _Installation: installation.html
 .. _FSL: https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/
 .. _`fmriprep`: https://pypi.python.org/pypi/fmriprep
+.. _`dmriprep`: https://pypi.python.org/pypi/dmriprep
