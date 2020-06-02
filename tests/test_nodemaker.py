@@ -455,7 +455,7 @@ def test_create_spherical_roi_volumes():
     """
     import pkg_resources
     node_size = 2
-    template_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_2mm_brain_mask.nii.gz")
+    template_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_brain_mask_2mm.nii.gz")
     [parcel_list, _, _, _] = nodemaker.create_spherical_roi_volumes(node_size, [(0, 0, 0), (5, 5, 5)],
                                                                                      template_mask)
     assert len(parcel_list) > 0
@@ -483,7 +483,7 @@ def test_mask_roi():
     Test mask_roi functionality
     """
     import pkg_resources
-    mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_2mm_brain_mask.nii.gz")
+    mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_brain_mask_2mm.nii.gz")
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
     func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
