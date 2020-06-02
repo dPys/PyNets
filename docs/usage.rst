@@ -65,10 +65,6 @@ Secondary File Inputs
 
 :`-ref`: (*fMRI + dMRI*) An atlas reference .txt file that indices intensities corresponding to atlas labels of the parcellation specified with the `-ua` flag. This label map is used only to delineate node labels manually. Automated node labeling via AAL can alternatively be used by including the `-names` flag. Otherwise, sequential numeric labels will be used by default.
 
-:`-templ`: (*fMRI + dMRI*) A template image to override normalization in place of the MNI152 template.
-
-:`-templm`: (*fMRI + dMRI*) A template image mask to override mask normalization in place of the MNI152 mask template.
-
 .. note::
     All general image inputs are assumed to be normalized to MNI space. Image orientation and voxel resolution are not relevant, as PyNets will create necessary working copies with standardized RAS+ orientations and either 1mm or 2mm voxel resolution reslicing, depending on that which is specified with the `-vox` flag.
 

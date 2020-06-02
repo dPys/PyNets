@@ -33,7 +33,7 @@ def test_align():
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = f"{base_dir}/003/anat"
     inp = f"{anat_dir}/sub-003_T1w_brain.nii.gz"
-    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_2mm_brain.nii.gz")
+    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
     out = f"{anat_dir}/highres2standard.nii.gz"
     xfm_out = f"{anat_dir}/highres2standard.mat"
 
@@ -55,7 +55,7 @@ def test_applyxfm():
     
     ## First test: Apply xfm from test_align to orig anat img.
     inp = f"{anat_dir}/sub-003_T1w_brain.nii.gz"
-    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_2mm_brain.nii.gz")
+    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
     xfm = f"{anat_dir}/highres2standard.mat"
     aligned = f"{anat_dir}/highres2standard_2.nii.gz"
     reg_utils.applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6)
@@ -93,7 +93,7 @@ def test_align_nonlinear():
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = f"{base_dir}/003/anat"
     inp = f"{anat_dir}/sub-003_T1w.nii.gz"
-    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_2mm_brain.nii.gz")
+    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
     out = f"{anat_dir}/highres2standard_nonlinear.nii.gz"
     warp = f"{anat_dir}/highres2standard_warp"
     # affine mat created from test_align above.
@@ -137,7 +137,7 @@ def test_apply_warp():
     # Warp original anat to standard space using warp img (had to invwarp first) and linear mats
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = f"{base_dir}/003/anat"
-    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_2mm_brain.nii.gz")
+    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
     inp = f"{anat_dir}/sub-003_T1w.nii.gz"
     out = f"{anat_dir}/highres2standard_test_apply_warp.nii.gz"
     warp = f"{anat_dir}/highres2standard_warp.nii.gz"

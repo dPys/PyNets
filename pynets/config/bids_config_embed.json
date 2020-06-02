@@ -3,7 +3,7 @@
             "dg": "['clos']",
             "ml": "['0']",
             "mod": "['csa']",
-            "s": 1000,
+            "s": 10000,
             "tc": "['bin']",
             "tt": "['local']"
         },
@@ -20,10 +20,10 @@
             "bin":  "False",
             "df":  "False",
             "dt":  "False",
-            "embed":  "None",
-            "max_thr":  "None",
-            "min_thr":  "None",
-            "mplx":  0,
+            "embed":  "['omni']",
+            "max_thr":  1.00,
+            "min_thr":  0.50,
+            "mplx":  2,
             "mst":  "True",
             "n":  "['Default']",
             "names":  "False",
@@ -32,7 +32,7 @@
             "p":  "['3']",
             "plt":  "True",
             "spheres":  "False",
-            "step_thr":  "None",
+            "step_thr":  0.05,
             "thr":  1.0,
             "vox":  "'2mm'"
         }

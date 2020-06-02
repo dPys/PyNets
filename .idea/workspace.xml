@@ -7,9 +7,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.circleci/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.circleci/config.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/installation.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/installation.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/stats/global_graph_measures.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/stats/global_graph_measures.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/links.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/links.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/usage.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/usage.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/config/bids_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/config/bids_config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/config/bids_config_rsns.json" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/config/bids_config_rsns.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/config/bids_config_test.json" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/config/bids_config_test.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_reg_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_reg_utils.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -34,10 +39,45 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pynets/cli/pynets_run.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="292">
+              <caret line="194" column="82" selection-start-line="194" selection-start-column="82" selection-end-line="194" selection-end-column="82" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/config/bids_config_test.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="195">
-              <caret line="13" column="16" selection-start-line="13" selection-start-column="16" selection-end-line="13" selection-end-column="16" />
+            <state relative-caret-position="375">
+              <caret line="25" column="20" selection-start-line="25" selection-start-column="20" selection-end-line="25" selection-end-column="23" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pynets/config/cloud_config.json">
+          <provider selected="true" editor-type-id="text-editor" />
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pynets/cli/pynets_bids.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="717">
+              <caret line="601" column="36" selection-start-line="601" selection-start-column="36" selection-end-line="601" selection-end-column="36" />
+              <folding>
+                <element signature="e#24#35#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pynets/config/bids_config_embed.json">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="525">
+              <caret line="35" column="23" selection-start-line="35" selection-start-column="23" selection-end-line="35" selection-end-column="23" />
             </state>
           </provider>
         </entry>
@@ -45,8 +85,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="44">
-              <caret line="3" column="35" lean-forward="true" selection-start-line="3" selection-start-column="35" selection-end-line="3" selection-end-column="35" />
+            <state relative-caret-position="795">
+              <caret line="53" column="11" selection-start-line="53" selection-start-column="11" selection-end-line="53" selection-end-column="11" />
               <folding>
                 <element signature="e#132#151#0" expanded="true" />
               </folding>
@@ -54,19 +94,44 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/docs/installation.rst">
-          <provider selected="true" editor-type-id="restructured-text-editor" />
-        </entry>
-      </file>
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/stats/embeddings.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="240">
-              <caret line="16" column="45" lean-forward="true" selection-start-line="16" selection-start-column="45" selection-end-line="16" selection-end-column="45" />
+            <state relative-caret-position="424">
+              <caret line="45" column="30" selection-start-line="45" selection-start-column="30" selection-end-line="45" selection-end-column="30" />
               <folding>
                 <element signature="e#132#141#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/tests/test_reg_utils.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="492">
+              <caret line="334" column="4" lean-forward="true" selection-start-line="334" selection-start-column="4" selection-end-line="334" selection-end-column="4" />
+              <folding>
+                <element signature="e#96#114#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pynets/config/bids_config.json">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="450">
+              <caret line="30" column="23" selection-start-line="30" selection-start-column="23" selection-end-line="30" selection-end-column="23" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pynets/config/bids_config_rsns.json">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="390">
+              <caret line="26" column="26" selection-start-line="26" selection-start-column="26" selection-end-line="26" selection-end-column="26" />
             </state>
           </provider>
         </entry>
@@ -82,12 +147,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>tempfile</find>
-      <find>self.t1w_brain</find>
-      <find>weighted_tr</find>
-      <find>streamline samples</find>
-      <find>fetch_nodes_and_labels</find>
-      <find>copyfile</find>
       <find>vox_size</find>
       <find>arg_dict</find>
       <find>arg_dict['gen']</find>
@@ -112,6 +171,12 @@
       <find>register_atlas_node</find>
       <find>docker push</find>
       <find>inputnode, register_atlas_node</find>
+      <find>-embed</find>
+      <find>ast.literal_eval(val)</find>
+      <find>-mplx</find>
+      <find>-thr</find>
+      <find>thr</find>
+      <find>mds_fit</find>
     </findStrings>
     <replaceStrings>
       <replace>discriminability</replace>
@@ -155,15 +220,12 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/pynets/dmri/dmri_utils.py" />
-        <option value="$PROJECT_DIR$/pynets/fmri/clustools.py" />
         <option value="$PROJECT_DIR$/LICENSE" />
         <option value="$PROJECT_DIR$/tests/test_thresholding.py" />
         <option value="$PROJECT_DIR$/tests/test_refs.py" />
         <option value="$PROJECT_DIR$/pynets/fmri/estimation.py" />
         <option value="$PROJECT_DIR$/pynets/dmri/track.py" />
         <option value="$PROJECT_DIR$/pynets/core/thresholding.py" />
-        <option value="$PROJECT_DIR$/tests/test_reg_utils.py" />
         <option value="$PROJECT_DIR$/tests/test_track.py" />
         <option value="$PROJECT_DIR$/tests/test_estimation.py" />
         <option value="$PROJECT_DIR$/README.md" />
@@ -174,7 +236,6 @@
         <option value="$PROJECT_DIR$/docs/_static/rtd_dark.css" />
         <option value="$PROJECT_DIR$/docs/_static/css/rtd_dark.css" />
         <option value="$PROJECT_DIR$/docs/conf.py" />
-        <option value="$PROJECT_DIR$/docs/usage.rst" />
         <option value="$PROJECT_DIR$/.travis.yml" />
         <option value="$PROJECT_DIR$/tests/test_clustering.py" />
         <option value="$PROJECT_DIR$/tests/test_dmri_utils.py" />
@@ -183,9 +244,7 @@
         <option value="$PROJECT_DIR$/tests/test_workflows.py" />
         <option value="$PROJECT_DIR$/tox.ini" />
         <option value="$PROJECT_DIR$/.coveragerc" />
-        <option value="$PROJECT_DIR$/pynets/config/bids_config_rsns.json" />
         <option value="$PROJECT_DIR$/tests/test_plotting.py" />
-        <option value="$PROJECT_DIR$/pynets/config/bids_config_test.json" />
         <option value="$PROJECT_DIR$/.codecov.yml" />
         <option value="$PROJECT_DIR$/pynets/plotting/plot_gen.py" />
         <option value="$PROJECT_DIR$/pynets/plotting/plot_graphs.py" />
@@ -198,20 +257,26 @@
         <option value="$PROJECT_DIR$/.gitignore" />
         <option value="$PROJECT_DIR$/pynets/cli/pynets_cloud.py" />
         <option value="$PROJECT_DIR$/pynets/core/interfaces.py" />
-        <option value="$PROJECT_DIR$/pynets/config/bids_config.json" />
         <option value="$PROJECT_DIR$/pynets/cli/pynets_bids.py" />
-        <option value="$PROJECT_DIR$/pynets/cli/pynets_run.py" />
         <option value="$PROJECT_DIR$/pynets/registration/register.py" />
         <option value="$PROJECT_DIR$/pynets/core/workflows.py" />
         <option value="$PROJECT_DIR$/.circleci/config.yml" />
         <option value="$PROJECT_DIR$/pynets/stats/global_graph_measures.yaml" />
         <option value="$PROJECT_DIR$/docs/installation.rst" />
+        <option value="$PROJECT_DIR$/docs/usage.rst" />
+        <option value="$PROJECT_DIR$/docs/links.rst" />
+        <option value="$PROJECT_DIR$/pynets/config/bids_config.json" />
+        <option value="$PROJECT_DIR$/pynets/config/bids_config_rsns.json" />
+        <option value="$PROJECT_DIR$/pynets/config/bids_config_test.json" />
+        <option value="$PROJECT_DIR$/pynets/cli/pynets_run.py" />
+        <option value="$PROJECT_DIR$/pynets/config/bids_config_embed.json" />
+        <option value="$PROJECT_DIR$/tests/test_reg_utils.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="590" />
-    <option name="y" value="24" />
+    <option name="x" value="247" />
+    <option name="y" value="23" />
     <option name="width" value="1417" />
     <option name="height" value="982" />
   </component>
@@ -230,7 +295,30 @@
             <path>
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
-              <item name="docs" type="462c0819:PsiDirectoryNode" />
+              <item name="pynets" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="pynets" type="462c0819:PsiDirectoryNode" />
+              <item name="cli" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="pynets" type="462c0819:PsiDirectoryNode" />
+              <item name="config" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="pynets" type="462c0819:PsiDirectoryNode" />
+              <item name="stats" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="tests" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -385,12 +473,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="170582000" />
+      <workItem from="1589906893238" duration="172430000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1141888000" />
+    <option name="totallyTimeSpent" value="1143736000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -402,7 +490,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="590" y="24" width="1417" height="982" extended-state="0" />
+    <frame x="247" y="23" width="1417" height="982" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.48904267" visible="true" weight="0.19563636" />
@@ -479,78 +567,6 @@
     </expressions>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/tests/test_refs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="452">
-          <caret line="32" column="7" selection-start-line="32" selection-start-column="7" selection-end-line="32" selection-end-column="7" />
-          <folding>
-            <element signature="e#129#150#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_reg_utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="536">
-          <caret line="335" column="29" selection-start-line="335" selection-start-column="29" selection-end-line="335" selection-end-column="29" />
-          <folding>
-            <element signature="e#96#114#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_thresholding.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="347">
-          <caret line="35" column="35" selection-start-line="35" selection-start-column="35" selection-end-line="35" selection-end-column="35" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_track.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="440">
-          <caret line="180" column="37" selection-start-line="180" selection-start-column="37" selection-end-line="180" selection-end-column="37" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="247">
-          <caret line="237" selection-start-line="237" selection-end-line="237" />
-          <folding>
-            <element signature="e#107#125#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/.coverage">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/docs/contributing.rst">
-      <provider selected="true" editor-type-id="restructured-text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/docs/_static/glass_brain_communities.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/docs/_static/structural_adj_mat.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/docs/_static/triple.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/docs/_static/perspectivism.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/docs/_static/IMG_5484_accented.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_workflows.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2685">
-          <caret line="179" column="1" selection-start-line="179" selection-start-column="1" selection-end-line="179" selection-end-column="1" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/MANIFEST.in">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -565,13 +581,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="660">
           <caret line="44" column="58" selection-start-line="44" selection-start-column="58" selection-end-line="44" selection-end-column="58" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/config/bids_config_rsns.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="585">
-          <caret line="39" selection-start-line="39" selection-end-line="39" />
         </state>
       </provider>
     </entry>
@@ -735,23 +744,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/config/bids_config.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="540">
-          <caret line="36" column="27" lean-forward="true" selection-start-line="36" selection-start-column="27" selection-end-line="36" selection-end-column="27" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/cli/pynets_bids.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="127">
-          <caret line="248" column="31" selection-start-line="248" selection-start-column="31" selection-end-line="248" selection-end-column="31" />
-          <folding>
-            <element signature="e#24#35#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="621">
@@ -779,13 +771,6 @@
           <folding>
             <element signature="e#139#156#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/cli/pynets_run.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="427">
-          <caret line="93" column="29" selection-start-line="93" selection-start-column="29" selection-end-line="93" selection-end-column="29" />
         </state>
       </provider>
     </entry>
@@ -835,35 +820,122 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/config/bids_config_test.json">
+    <entry file="file://$PROJECT_DIR$/docs/links.rst">
+      <provider selected="true" editor-type-id="restructured-text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/usage.rst">
+      <provider selected="true" editor-type-id="restructured-text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/installation.rst">
+      <provider selected="true" editor-type-id="restructured-text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/index.rst">
+      <provider selected="true" editor-type-id="restructured-text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/contributing.rst">
+      <provider selected="true" editor-type-id="restructured-text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/conf.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="195">
-          <caret line="13" column="16" selection-start-line="13" selection-start-column="16" selection-end-line="13" selection-end-column="16" />
+        <state>
+          <folding>
+            <element signature="e#419#428#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/stats/embeddings.py">
+    <entry file="file://$PROJECT_DIR$/docs/authors.rst">
+      <provider selected="true" editor-type-id="restructured-text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/Makefile">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/.gitignore">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/_config.yml">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/environment.yml">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/cli/pynets_bids.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="240">
-          <caret line="16" column="45" lean-forward="true" selection-start-line="16" selection-start-column="45" selection-end-line="16" selection-end-column="45" />
+        <state relative-caret-position="717">
+          <caret line="601" column="36" selection-start-line="601" selection-start-column="36" selection-end-line="601" selection-end-column="36" />
           <folding>
-            <element signature="e#132#141#0" expanded="true" />
+            <element signature="e#24#35#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/config/bids_config.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="450">
+          <caret line="30" column="23" selection-start-line="30" selection-start-column="23" selection-end-line="30" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/config/bids_config_rsns.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="390">
+          <caret line="26" column="26" selection-start-line="26" selection-start-column="26" selection-end-line="26" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/config/bids_config_test.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="375">
+          <caret line="25" column="20" selection-start-line="25" selection-start-column="20" selection-end-line="25" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/config/cloud_config.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/config/bids_config_embed.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="525">
+          <caret line="35" column="23" selection-start-line="35" selection-start-column="23" selection-end-line="35" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/cli/pynets_run.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="292">
+          <caret line="194" column="82" selection-start-line="194" selection-start-column="82" selection-end-line="194" selection-end-column="82" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pynets/stats/netstats.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="44">
-          <caret line="3" column="35" lean-forward="true" selection-start-line="3" selection-start-column="35" selection-end-line="3" selection-end-column="35" />
+        <state relative-caret-position="795">
+          <caret line="53" column="11" selection-start-line="53" selection-start-column="11" selection-end-line="53" selection-end-column="11" />
           <folding>
             <element signature="e#132#151#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/docs/installation.rst">
-      <provider selected="true" editor-type-id="restructured-text-editor" />
+    <entry file="file://$PROJECT_DIR$/pynets/stats/embeddings.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="424">
+          <caret line="45" column="30" selection-start-line="45" selection-start-column="30" selection-end-line="45" selection-end-column="30" />
+          <folding>
+            <element signature="e#132#141#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_reg_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="492">
+          <caret line="334" column="4" lean-forward="true" selection-start-line="334" selection-start-column="4" selection-end-line="334" selection-end-column="4" />
+          <folding>
+            <element signature="e#96#114#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
     </entry>
   </component>
 </project>
