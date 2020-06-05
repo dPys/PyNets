@@ -19,5 +19,3 @@ Citing
 ------
 A manuscript is in preparation, but for now, please cite all uses with reference
 to the github repository: https://github.com/dPys/PyNets
-
-.. image:: /_static/multimodalconnectome.png

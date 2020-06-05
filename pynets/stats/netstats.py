@@ -263,10 +263,7 @@ def smallworldness(G, niter=10, nrand=100):
         del Gr, Gl
 
     C = weighted_transitivity(G)
-    try:
-        L = nx.average_shortest_path_length(G, weight='weight')
-    except:
-        L = average_shortest_path_length_for_all(G)
+    L = nx.average_shortest_path_length(G, weight='weight')
     Cl = np.mean(randMetrics["C"])
     Lr = np.mean(randMetrics["L"])
 
@@ -749,7 +746,7 @@ def most_important(G):
     return Gt, pruned_nodes
 
 
-@timeout(1200)
+@timeout(1800)
 def raw_mets(G, i):
     """
     API that iterates across NetworkX algorithms for a G.
@@ -1359,6 +1356,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     import os.path as op
     import yaml
     import random
+    import pkg_resources
     import networkx
     import pynets.stats.netstats
     try:
@@ -1386,7 +1384,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     dir_path = op.dirname(op.realpath(est_path))
 
     # Load netstats config and parse graph algorithms as objects
-    with open(f"{str(Path(__file__).parent)}{'/global_graph_measures.yaml'}", 'r') as stream:
+    with open(pkg_resources.resource_filename("pynets", "stats/global_graph_measures.yaml"), 'r') as stream:
         try:
             nx_algs = ['degree_assortativity_coefficient', 'average_clustering', 'average_shortest_path_length',
                        'graph_number_of_cliques']
@@ -1406,7 +1404,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
         except FileNotFoundError:
             print('Failed to parse global_graph_measures.yaml')
 
-    with open(f"{str(Path(__file__).parent)}{'/nodal_graph_measures.yaml'}", 'r') as stream:
+    with open(pkg_resources.resource_filename("pynets", "stats/nodal_graph_measures.yaml"), 'r') as stream:
         try:
             metric_dict_nodal = yaml.load(stream)
             metric_list_nodal = metric_dict_nodal['metric_list_nodal']

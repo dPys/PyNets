@@ -427,8 +427,7 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
 
 
 def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist,
-                   prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed,
-                   multimodal, multiplex):
+                   prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist):
     """
     Passes lists of iterable parameters as metadata.
 
@@ -455,12 +454,6 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr
         Indicates method of normalizing resulting graph.
     binary_iterlist : list
         List of booleans indicating whether resulting graph edges to form an unweighted graph were binarized.
-    embed : bool
-        Embed the ensemble(s) produced into feature vector(s).
-    multimodal : bool
-        Boolean indicating whether multiple modalities of input data have been specified.
-    multiplex : int
-        Switch indicating approach to multiplex graph analysis if multimodal is also True.
 
     Returns
     -------
@@ -490,17 +483,6 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr
     multimodal_iterlist : list
         List of booleans indicating whether multiple modalities of input data have been specified.
     """
-    from pynets.core.utils import flatten
-    from pynets.stats import netmotifs, embeddings
-
-    if (float(multiplex) > 0) and (multimodal is True):
-        raws = list(set([i.split('_thrtype')[0] + '_raw.npy' for i in list(flatten(est_path_iterlist))]))
-        multigraph_list_all = netmotifs.build_multigraphs(raws, list(flatten(ID_iterlist))[0])
-        multigraph_list_all = list(flatten(multigraph_list_all))
-
-    if embed is True:
-        embeddings.build_embedded_connectome(list(flatten(est_path_iterlist)), list(flatten(ID_iterlist))[0],
-                                             multimodal)
 
     return (conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
             roi_iterlist, norm_iterlist, binary_iterlist)
@@ -735,7 +717,6 @@ def proportional(k, voxels_list):
             n -= 1
             if n == 0:
                 return res
-    raise
 
 
 def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal):

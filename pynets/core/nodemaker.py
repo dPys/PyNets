@@ -9,6 +9,8 @@ import warnings
 import numpy as np
 import indexed_gzip
 import nibabel as nib
+import yaml
+from pathlib import Path
 warnings.filterwarnings("ignore")
 
 
@@ -733,6 +735,105 @@ def AAL_naming(coords):
     return labels
 
 
+def psycho_naming(coords, node_size):
+    """
+    Perform Automated Sentiment Labeling of each coordinate from a list of MNI coordinates.
+
+    Parameters
+    ----------
+    coords : list
+        List of (x, y, z) tuples in voxel-space corresponding to a coordinate atlas used or
+        which represent the center-of-mass of each parcellation node.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's for tracking.
+
+    Returns
+    -------
+    labels : list
+        List of string labels corresponding to each coordinate-corresponding psychological topic.
+    """
+    import liwc
+    import pkg_resources
+    import nimare
+    import nltk
+    from collections import Counter
+    from nltk.corpus import sentiwordnet as swn
+    from pynets.core.utils import flatten
+    from nltk.stem import WordNetLemmatizer
+
+    try:
+        swn.senti_synsets('TEST')
+    except:
+        nltk.download('sentiwordnet')
+        nltk.download('wordnet')
+
+    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            LIWC_file = hardcoded_params['sentiment_labeling']['liwc_file'][0]
+        except FileNotFoundError:
+            print('LIWC file not found. Check runconfig.yaml.')
+        try:
+            neurosynth_dset_file = hardcoded_params['sentiment_labeling']['neurosynth_db'][0]
+        except FileNotFoundError:
+            print('Neurosynth dataset .pkl file not found. Check runconfig.yaml.')
+    stream.close()
+
+    try:
+        dset = nimare.dataset.Dataset.load(neurosynth_dset_file)
+    except FileNotFoundError:
+        print('Loading neurosynth dictionary failed!')
+
+    try:
+        parse, category_names = liwc.load_token_parser(LIWC_file)
+    except FileNotFoundError:
+        print('Loading LIWC dictionary failed!')
+
+    labels = []
+    print('Building coordinate labels...')
+    for coord in coords:
+        print(coord)
+        roi_ids = dset.get_studies_by_coordinate(np.array(coord).reshape(1, -1), node_size)
+        labs = dset.get_labels(ids=roi_ids)
+        labs_filt = list(flatten([list([i for j in swn.senti_synsets(i) if
+                                        j.pos_score() > 0.75 or j.neg_score() > 0.75]) for i in labs]))
+        st = WordNetLemmatizer()
+        labs_filt = list(set([st.lemmatize(k) for k in labs_filt]))
+        liwc_counts = dict(Counter(top.split(' (')[0] for token in labs_filt for top in parse(token) if
+                                   (top.split(' (')[0].lower() != 'bio') and (top.split(' (')[0].lower() != 'adj') and
+                      (top.split(' (')[0].lower() != 'verb') and (top.split(' (')[0].lower() != 'conj') and
+                                   (top.split(' (')[0].lower() != 'adverb') and
+                      (top.split(' (')[0].lower() != 'auxverb') and (top.split(' (')[0].lower() != 'prep') and
+                                   (top.split(' (')[0].lower() != 'article') and
+                      (top.split(' (')[0].lower() != 'ipron') and (top.split(' (')[0].lower() != 'ppron') and
+                                   (top.split(' (')[0].lower() != 'pronoun') and
+                      (top.split(' (')[0].lower() != 'function') and (top.split(' (')[0].lower() != 'affect') and
+                                   (top.split(' (')[0].lower() != 'cogproc')))
+        liwc_counts_ordered = dict(sorted(liwc_counts.items(), key=lambda x: x[1], reverse=True))
+
+        if 'posemo' and 'negemo' in liwc_counts_ordered.keys():
+            if liwc_counts_ordered['posemo'] > liwc_counts_ordered['negemo']:
+                del liwc_counts_ordered['negemo']
+            else:
+                del liwc_counts_ordered['posemo']
+        liwc_counts_ordered_ratios = {}
+        for i in liwc_counts_ordered:
+            liwc_counts_ordered_ratios[i] = float(liwc_counts_ordered[i]) / float(sum(liwc_counts_ordered.values()))
+
+        lab = ' '.join(map(str, [key + ' ' + str(np.round(100*val, 2)) + '%' for key, val in
+                                 liwc_counts_ordered_ratios.items()]))
+        print(lab)
+        if len(lab) > 0:
+            labels.append(lab)
+        else:
+            labels.append(np.nan)
+        del roi_ids, labs_filt, lab, liwc_counts_ordered, liwc_counts, labs
+        print('\n')
+
+    return labels
+
+
 def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming, outdir, vox_size, clustering=False):
     """
     General API for fetching, identifying, and defining atlas nodes based on coordinates and/or labels.
@@ -891,7 +992,6 @@ def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming
         raise ValueError('Either you have specified the name of an atlas that does not exist in the nilearn or local '
                          'repository or you have not supplied a 3d atlas parcellation image!')
 
-    # Labels prep
     # Labels prep
     if atlas and not labels:
         if (ref_txt is not None) and (op.exists(ref_txt)) and (use_AAL_naming is False):

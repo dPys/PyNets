@@ -424,6 +424,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
             connectogram = hardcoded_params['plotting']['connectogram'][0]
             glassbrain = hardcoded_params['plotting']['glassbrain'][0]
             adjacency = hardcoded_params['plotting']['adjacency'][0]
+            dpi_resolution = hardcoded_params['plotting']['dpi'][0]
         except KeyError:
             print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
             sys.exit(0)
@@ -436,7 +437,6 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         labels = list(labels)
 
     if len(coords) > 0:
-        dpi_resolution = 500
         if '\'b' in atlas:
             atlas = atlas.decode('utf-8')
         if (prune == 1 or prune == 2) and len(coords) == conn_matrix.shape[0]:
@@ -529,7 +529,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
             connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
             connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
             conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
-            [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
+            [z_min, z_max] = np.abs(conn_matrix).min(), np.abs(conn_matrix).max()
             if node_size == 'parc':
                 node_size_plot = int(6)
             else:
@@ -644,6 +644,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
             connectogram = hardcoded_params['plotting']['connectogram'][0]
             glassbrain = hardcoded_params['plotting']['glassbrain'][0]
             adjacency = hardcoded_params['plotting']['adjacency'][0]
+            dpi_resolution = hardcoded_params['plotting']['dpi'][0]
         except KeyError:
             print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
             sys.exit(0)
@@ -656,7 +657,6 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         labels = list(labels)
 
     if len(coords) > 0:
-        dpi_resolution = 500
         if '\'b' in atlas:
             atlas = atlas.decode('utf-8')
         if (prune == 1 or prune == 2) and len(coords) == conn_matrix.shape[0]:
@@ -753,7 +753,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
             connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
             connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
             conn_matrix = np.array(np.array(thresholding.autofix(conn_matrix)))
-            [z_min, z_max] = -np.abs(conn_matrix).max(), np.abs(conn_matrix).max()
+            [z_min, z_max] = np.abs(conn_matrix).min(), np.abs(conn_matrix).max()
             if node_size == 'parc':
                 node_size_plot = int(6)
             else:
@@ -780,6 +780,138 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
 
     return
 
+
+def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
+    import numpy as np
+    import multinetx as mx
+    import matplotlib
+    matplotlib.use('agg')
+    import pkg_resources
+    import networkx as nx
+    import yaml
+    import sys
+    import seaborn as sns
+    from matplotlib import pyplot as plt
+    from nilearn import plotting as niplot
+    from pynets.core import thresholding
+    from matplotlib import colors
+    from sklearn.preprocessing import minmax_scale
+    from pynets.stats.netstats import community_resolution_selection
+    from random import randint
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import _pickle as pickle
+
+    with open(metadata['coords'], 'rb') as file_:
+        coords = pickle.load(file_)
+
+    with open(metadata['labels'], 'rb') as file_:
+        labels = pickle.load(file_)
+
+    ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
+
+    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            glassbrain = hardcoded_params['plotting']['glassbrain'][0]
+            adjacency = hardcoded_params['plotting']['adjacency'][0]
+            dpi_resolution = hardcoded_params['plotting']['dpi'][0]
+        except KeyError:
+            print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
+            sys.exit(0)
+    stream.close()
+
+    [struct_mat_path, func_mat_path] = modality_paths
+    struct_mat, func_mat = [np.load(struct_mat_path), np.load(func_mat_path)]
+
+    if adjacency is True:
+        # Multiplex adjacency
+        mG = nx.read_gpickle(mG_path)
+
+        fig = plt.figure(figsize=(15, 5))
+        ax1 = fig.add_subplot(121)
+        adj = thresholding.standardize(mx.adjacency_matrix(mG, weight='weight').todense())
+        [z_min, z_max] = np.abs(adj).min(), np.abs(adj).max()
+
+        adj[adj == 0] = np.nan
+
+        ax1.imshow(adj, origin='lower', interpolation='nearest', cmap=plt.cm.RdBu, vmin=0.01, vmax=z_max)
+        ax1.set_title('Supra-Adjacency Matrix')
+
+        ax2 = fig.add_subplot(122)
+        ax2.axis('off')
+        ax2.set_title(f"Functional-Structural Multiplex Connectome")
+
+        pos = mx.get_position(mG, mx.fruchterman_reingold_layout(mG.get_layer(0)),
+                              layer_vertical_shift=1.0,
+                              layer_horizontal_shift=0.0,
+                              proj_angle=7)
+        edge_intensities = []
+        for a, b, w in mG.edges(data=True):
+            if w != {}:
+                edge_intensities.append(w['weight'])
+            else:
+                edge_intensities.append(0)
+
+        node_intensities = list(nx.algorithms.eigenvector_centrality(mG, weight='weight').values())
+        mx.draw_networkx(mG, pos=pos, ax=ax2, node_size=100, with_labels=False,
+                         edge_color=edge_intensities,
+                         node_color=node_intensities,
+                         edge_vmin=1.25*z_min, edge_vmax=0.75*z_max, dim=3, font_size=6, widths=3, alpha=0.7,
+                         cmap=plt.cm.RdBu)
+        plt.savefig(f"{namer_dir}/{name[:200]}_supra_adj.png", dpi=dpi_resolution)
+
+    if glassbrain is True:
+        # Multiplex glass brain
+        connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
+        connectome.add_overlay(ch2better_loc, alpha=0.50, cmap=plt.cm.gray)
+
+        struct_mat = np.array(np.array(thresholding.autofix(struct_mat)))
+        [_, z_max] = -np.abs(struct_mat).max(), np.abs(struct_mat).max()
+        connectome.add_graph(struct_mat, coords, edge_threshold='50%', edge_cmap=plt.cm.binary, node_size=1,
+                             edge_kwargs={'alpha': 0.10}, node_kwargs={'alpha': 0.95}, edge_vmax=float(z_max),
+                             edge_vmin=float(z_max))
+
+        G = nx.from_numpy_matrix(np.abs(struct_mat))
+        node_intensities = list(nx.algorithms.eigenvector_centrality(G, weight='weight').values())
+        node_intensities_norm = minmax_scale(node_intensities, feature_range=(1, 12))
+        _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(G)
+
+        color_dict = {k: [] for k in 'rgb'}
+        for i in range(num_comms):
+            temp = {k: randint(0, 255) for k in 'rgb'}
+            for k in temp:
+                while 1:
+                    c = temp[k]
+                    t = set(j for j in range(c - 25, c + 25) if 0 <= j <= 255)
+                    if t.intersection(color_dict[k]):
+                        temp[k] = randint(0, 255)
+                    else:
+                        break
+                color_dict[k].append(temp[k])
+
+        flatui = ['#{:02x}{:02x}{:02x}'.format(color_dict['r'][i], color_dict['g'][i], color_dict['b'][i]) for
+                  i in range(num_comms)]
+
+        cmap = colors.LinearSegmentedColormap.from_list(node_comm_aff_mat, sns.color_palette(flatui,
+                                                                                             n_colors=num_comms))
+        matplotlib.cm.register_cmap("community", cmap)
+        clust_pal = sns.color_palette("community", n_colors=struct_mat.shape[0])
+        clust_colors = colors.to_rgba_array(clust_pal)
+
+        func_mat = np.array(np.array(thresholding.autofix(func_mat)))
+        [z_min, z_max] = np.abs(func_mat).min(), np.abs(func_mat).max()
+        norm = colors.Normalize(vmin=z_min, vmax=z_max)
+        clust_pal_edges = colors.ListedColormap(sns.color_palette("Reds").as_hex())
+
+        connectome.add_graph(func_mat, coords, edge_cmap=clust_pal_edges, edge_kwargs={'alpha': 0.75},
+                             edge_vmax=float(z_max), edge_vmin=float(z_min), node_size=np.array(node_intensities_norm),
+                             node_color=clust_colors)
+
+        connectome.savefig(f"{namer_dir}/{name[:200]}_glassbrain_mplx.png", dpi=dpi_resolution)
+
+    return
 
 # def show_template_bundles(final_streamlines, template_path, fname):
 #     import nibabel as nib

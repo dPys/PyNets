@@ -33,6 +33,11 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     from nipype.interfaces import utility as niu
     from pynets.core.utils import pass_meta_ins, pass_meta_outs, pass_meta_ins_multi
 
+    import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import indexed_gzip",
+                   "import nibabel as nib", "import warnings", "warnings.filterwarnings(\"ignore\")",
+                   "np.warnings.filterwarnings(\"ignore\")", "warnings.simplefilter(\"ignore\")",
+                   "from pathlib import Path", "import yaml"]
+
     # Available functional and structural connectivity models
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
@@ -556,17 +561,24 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     pass_meta_outs_node = pe.Node(niu.Function(input_names=['conn_model_iterlist', 'est_path_iterlist',
                                                             'network_iterlist', 'thr_iterlist', 'prune_iterlist',
                                                             'ID_iterlist', 'roi_iterlist', 'norm_iterlist',
-                                                            'binary_iterlist', 'embed', 'multimodal', 'multiplex'],
+                                                            'binary_iterlist'],
                                                output_names=['conn_model_iterlist', 'est_path_iterlist',
                                                              'network_iterlist', 'thr_iterlist', 'prune_iterlist',
                                                              'ID_iterlist', 'roi_iterlist', 'norm_iterlist',
                                                              'binary_iterlist'],
                                                function=pass_meta_outs), name='pass_meta_outs_node')
 
-    meta_wf.connect([(meta_inputnode, pass_meta_outs_node, [('embed', 'embed'),
-                                                            ('multimodal', 'multimodal'),
-                                                            ('multiplex', 'multiplex')])
-                     ])
+    if embed is True:
+        from pynets.stats import embedding
+        omni_embedding_node = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
+                                                   output_names=['out_paths_dwi', 'out_paths_func'],
+                                                   function=embedding.build_omnetome),
+                                      name='omni_embedding_node', imports=import_list)
+        if multimodal is True:
+            mase_embedding_node = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
+                                                       output_names=['out_paths'],
+                                                       function=embedding.build_masetome),
+                                          name='mase_embedding_node', imports=import_list)
 
     if (func_file and not dwi_file) or (dwi_file and not func_file):
         if func_file and not dwi_file:
@@ -581,6 +593,11 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                ('norm_iterlist', 'norm_iterlist'),
                                ('binary_iterlist', 'binary_iterlist')])
                              ])
+            if embed is True:
+                meta_wf.connect([(pass_meta_ins_func_node, omni_embedding_node,
+                                  [('est_path_iterlist', 'est_path_iterlist')]),
+                                 (meta_inputnode, omni_embedding_node, [('ID', 'ID')])
+                                 ])
         elif dwi_file and not func_file:
             meta_wf.connect([(pass_meta_ins_struct_node, pass_meta_outs_node,
                               [('conn_model_iterlist', 'conn_model_iterlist'),
@@ -593,6 +610,11 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                ('norm_iterlist', 'norm_iterlist'),
                                ('binary_iterlist', 'binary_iterlist')])
                              ])
+            if embed is True:
+                meta_wf.connect([(pass_meta_ins_struct_node, omni_embedding_node,
+                                  [('est_path_iterlist', 'est_path_iterlist')]),
+                                 (meta_inputnode, omni_embedding_node, [('ID', 'ID')])
+                                 ])
     elif func_file and dwi_file:
         meta_wf.connect([(pass_meta_ins_multi_node, pass_meta_outs_node,
                           [('conn_model_iterlist', 'conn_model_iterlist'),
@@ -605,9 +627,44 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                            ('norm_iterlist', 'norm_iterlist'),
                            ('binary_iterlist', 'binary_iterlist')])
                          ])
+
+        if float(multiplex) > 0:
+            from pynets.stats import netmotifs
+            build_multigraphs_node = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
+                                                          output_names=['multigraph_list_all',
+                                                                        'graph_path_list_top', 'namer_dir',
+                                                                        'name_list', 'metadata_list'],
+                                                          function=netmotifs.build_multigraphs),
+                                             name='build_multigraphs_node', imports=import_list)
+            meta_wf.connect([(pass_meta_ins_multi_node, build_multigraphs_node,
+                              [('est_path_iterlist', 'est_path_iterlist')]),
+                             (meta_inputnode, build_multigraphs_node, [('ID', 'ID')])
+                             ])
+
+            if plot_switch is True:
+                from pynets.plotting.plot_gen import plot_all_struct_func
+                plot_all_struct_func_node = pe.MapNode(niu.Function(input_names=['mG_path', 'namer_dir', 'name',
+                                                                                 'modality_paths', 'metadata'],
+                                                                    function=plot_all_struct_func),
+                                                       iterfield=['mG_path', 'namer_dir', 'name',
+                                                                  'modality_paths', 'metadata'],
+                                                       name='plot_all_struct_func_node',
+                                                       imports=import_list)
+                meta_wf.connect([(build_multigraphs_node, plot_all_struct_func_node,
+                                  [('name_list', 'name'), ('namer_dir', 'namer_dir'),
+                                   ('multigraph_list_all', 'mG_path'),
+                                   ('graph_path_list_top', 'modality_paths'),
+                                   ('metadata_list', 'metadata')])
+                                 ])
+
+            if embed is True:
+                meta_wf.connect([(build_multigraphs_node, mase_embedding_node,
+                                  [('graph_path_list_top', 'est_path_iterlist')]),
+                                 (meta_inputnode, mase_embedding_node, [('ID', 'ID')])
+                                 ])
+
     else:
         raise ValueError('ERROR: meta-workflow options not defined.')
-        sys.exit(0)
 
     # Set resource restrictions at level of the meta wf
     if func_file:

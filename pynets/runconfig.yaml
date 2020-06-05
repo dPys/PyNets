@@ -58,6 +58,11 @@ available_models:
       - 'csd'
 template:
     - 'MNI152_T1'
+sentiment_labeling:
+    liwc_file:
+        - '/Users/derekpisner/Documents/LIWC2015_English.dic'
+    neurosynth_db:
+        - '/Users/derekpisner/Documents/neurosynth_nimare_with_abstracts.pkl.gz'
 plotting:
     connectogram:
         - False
@@ -65,6 +70,8 @@ plotting:
         - True
     adjacency:
         - True
+    dpi:
+        - 300
     functional:
         glassbrain:
             color_theme:
