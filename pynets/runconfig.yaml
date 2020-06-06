@@ -1,14 +1,14 @@
-maxcrossing:
+maxcrossing: # Maximum crossing fibers per voxel in tractography
     - 2
-overlap_thr:
+overlap_thr: # Tractography/ node overlap in units of voxels
     - 1
-step_list: # Should never exceed the voxel size.
+step_list: # Ensemble tractography, should never exceed the voxel size.
     - 0.1
     - 0.2
     - 0.3
     - 0.4
     - 0.5
-curv_thr_list: # Should be [0, 90] degrees.
+curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
     - 40
     - 30
 nilearn_parc_atlases:
@@ -30,7 +30,6 @@ local_atlases:
     - 'VoxelwiseParcellationt0515kLeadDBS'
     - 'Juelichgmthr252mmEickhoff2005'
     - 'CorticalAreaParcellationfromRestingStateCorrelationsGordon2014'
-    - 'whole_brain_cluster_labels_PCA100'
     - 'AICHAreorderedJoliot2015'
     - 'HarvardOxfordThr252mmWholeBrainMakris2006'
     - 'VoxelwiseParcellationt058kLeadDBS'
@@ -41,6 +40,7 @@ local_atlases:
     - 'AAL2zourioMazoyer2002'
     - 'VoxelwiseParcellationt0435kLeadDBS'
     - 'AICHAJoliot2015'
+    - 'whole_brain_cluster_labels_PCA100'
     - 'whole_brain_cluster_labels_PCA200'
     - 'RandomParcellationsc05meanalll43Craddock2011'
 available_models:
@@ -56,13 +56,13 @@ available_models:
     struct_models:
       - 'csa'
       - 'csd'
-template:
+template: # Custom templates should reside in the pynets/templates directory and be accoompanied by two additional versions with _brain.nii.gz and brain_mask.nii.gz suffices.
     - 'MNI152_T1'
 sentiment_labeling:
     liwc_file:
-        - '/Users/derekpisner/Documents/LIWC2015_English.dic'
+        - '/Users/derekpisner/Documents/LIWC2015_English.dic' # Must be purchased and licensed.
     neurosynth_db:
-        - '/Users/derekpisner/Documents/neurosynth_nimare_with_abstracts.pkl.gz'
+        - '/Users/derekpisner/Documents/neurosynth_nimare_with_abstracts.pkl.gz' # https://nimare.readthedocs.io/
 plotting:
     connectogram:
         - False
@@ -75,22 +75,18 @@ plotting:
     functional:
         glassbrain:
             color_theme:
-              - 'Blues'
-            node_color:
-              - 'auto'
+              - 'Blues_d'
         adjacency:
             color_theme:
-                - 'PuBuGn'
+                - 'RdBu'
     structural:
         glassbrain:
             color_theme:
-              - 'binary'
-            node_color:
-              - 'copper'
+              - 'binary' # Recommend keeping the default here, as it produces white edges resembling white-matter fibers
         adjacency:
             color_theme:
-                - 'YlGnBu'
-resource_dict:
+                - 'RdBu_r'
+resource_dict: # Nipype workflow resource settings
       - 'fetch_nodes_and_labels_node':
         - (2, 2)
       - 'save_nifti_parcels_node':
@@ -131,7 +127,15 @@ resource_dict:
         - (1, 1)
       - 'streams2graph_node':
         - (2, 6)
-execution_dict:
+      - 'build_multigraphs_node':
+        - (2, 6)
+      - 'plot_all_struct_func_node':
+        - (1, 2)
+      - 'mase_embedding_node':
+        - (2, 4)
+      - 'omni_embedding_node':
+        - (2, 4)
+execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
         - False
     - 'crashfile_format':

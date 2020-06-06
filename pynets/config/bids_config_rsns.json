@@ -25,7 +25,7 @@
             "min_thr": "None",
             "mplx":  0,
             "mst":  "True",
-            "n":  "['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default', 'VisCent', 'VisPeri']",
+            "n":  "['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default']",
             "names":  "False",
             "norm": "['6']",
             "ns":  "['4']",

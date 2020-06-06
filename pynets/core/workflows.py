@@ -104,7 +104,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     if dwi_file is not None:
         outdir_mod_struct = f"{outdir}/dwi"
         os.makedirs(outdir_mod_struct, exist_ok=True)
-        outdir_mod_func = None
         sub_struct_wf = workflows.dmri_connectometry(ID, atlas, network, node_size, roi,
                                                      uatlas, plot_switch, parc, ref_txt, procmem,
                                                      dwi_file, fbval, fbvec, anat_file, thr, dens_thresh,
@@ -123,13 +122,13 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
         sub_struct_wf._mem_gb = procmem[1]
         sub_struct_wf.n_procs = procmem[0]
         sub_struct_wf.mem_gb = procmem[1]
+    else:
+        outdir_mod_struct = None
 
     # Workflow 2: Functional connectome
     if func_file is not None:
         outdir_mod_func = f"{outdir}/func"
         os.makedirs(outdir_mod_func, exist_ok=True)
-        if not outdir_mod_struct:
-            outdir_mod_struct = None
         sub_func_wf = workflows.fmri_connectometry(func_file, ID, atlas, network, node_size,
                                                    roi, thr, uatlas, conn_model_func, dens_thresh, conf,
                                                    plot_switch, parc, ref_txt, procmem,
@@ -147,6 +146,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
         sub_func_wf._mem_gb = procmem[1]
         sub_func_wf.n_procs = procmem[0]
         sub_func_wf.mem_gb = procmem[1]
+    else:
+        outdir_mod_func = None
 
     # Create meta-workflow to organize graph simulation sets in prep for analysis
     base_dirname = f"{'meta_wf_'}{ID}"
@@ -616,6 +617,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                  (meta_inputnode, omni_embedding_node, [('ID', 'ID')])
                                  ])
     elif func_file and dwi_file:
+        # Multiplex magic happens in the meta-workflow space.
         meta_wf.connect([(pass_meta_ins_multi_node, pass_meta_outs_node,
                           [('conn_model_iterlist', 'conn_model_iterlist'),
                            ('est_path_iterlist', 'est_path_iterlist'),
@@ -1289,8 +1291,9 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
 
         no_iters = False
     else:
-        # Minimal case of no iterables
-        print('\nNo iterables...\n')
+        if not multi_nets:
+            # Minimal case of no iterables
+            print('\nNo iterables...\n')
         join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
         dmri_connectometry_wf.connect([(streams2graph_node, join_iters_node,
                                         [x for x in map_connects if x != ('thr', 'thr')]),
@@ -2408,14 +2411,17 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
         no_iters = False
     else:
-        # Minimal case of no iterables
-        print('\nNo iterables...\n')
+        if not multi_nets:
+            # Minimal case of no iterables
+            print('\nNo iterables...\n')
+            no_iters = True
+        else:
+            no_iters = False
         join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
         fmri_connectometry_wf.connect([(get_conn_matrix_node, join_iters_node,
                                         [x for x in map_connects if x != ('thr', 'thr')]),
                                        (thr_info_node, join_iters_node, [('thr', 'thr')])
                                        ])
-        no_iters = True
 
     # Create final thresh_func node that performs the thresholding
     thr_func_fields = ['dens_thresh', 'thr', 'conn_matrix', 'conn_model', 'network', 'ID', 'dir_path', 'roi',
@@ -2496,13 +2502,23 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         plot_fields = ['conn_matrix', 'conn_model', 'atlas', 'dir_path', 'ID', 'network', 'labels', 'roi',
                        'coords', 'thr', 'node_size', 'edge_threshold', 'smooth', 'prune', 'uatlas',
                        'norm', 'binary', 'hpass']
+
         # Plotting iterable graph solutions
         if conn_model_list or node_size_list or smooth_list or multi_thr or user_atlas_list or multi_atlas or \
-            float(k_clustering) > 1 or flexi_atlas is True or hpass_list:
-            plot_all_node = pe.MapNode(PlotFunc(), iterfield=plot_fields, name="plot_all_node", nested=True)
+            float(k_clustering) > 1 or flexi_atlas is True or hpass_list or multi_nets:
+
+            plot_all_node = pe.MapNode(PlotFunc(), iterfield=plot_fields, name="plot_all_node",
+                                       nested=True)
         else:
             # Plotting singular graph solution
             plot_all_node = pe.Node(PlotFunc(), name="plot_all_node")
+
+        if user_atlas_list or multi_atlas or multi_nets:
+            edge_color_override = True
+        else:
+            edge_color_override = False
+
+        plot_all_node.inputs.edge_color_override = edge_color_override
 
         # Connect thr_out_node outputs to plotting node
         fmri_connectometry_wf.connect([(thr_out_node, plot_all_node, [('ID', 'ID'),

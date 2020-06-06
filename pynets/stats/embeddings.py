@@ -41,7 +41,7 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    out_path = f"{namer_dir}/{list(flatten(ID))[0]}_omnetome_{atlas}_{subgraph_name}.npy"
+    out_path = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_omnetome.npy"
     print('Saving...')
     np.save(out_path, mds_fit)
     del mds, mds_fit, omni, omni_fit
@@ -71,7 +71,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    out_path = f"{namer_dir}/{list(flatten(ID))[0]}_masetome_{atlas}_{subgraph_name}.npy"
+    out_path = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_masetome.npy"
     print('Saving...')
     np.save(out_path, mase.scores_)
     del mase, mase_fit

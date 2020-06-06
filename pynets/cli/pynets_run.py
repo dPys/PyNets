@@ -2051,6 +2051,7 @@ def main():
         pynets_wf = retval.get('workflow', None)
         work_dir = retval.get('work_dir')
         plugin_settings = retval.get('plugin_settings', None)
+        plugin_settings = retval.get('plugin_settings', None)
         execution_dict = retval.get('execution_dict', None)
         run_uuid = retval.get('run_uuid', None)
 

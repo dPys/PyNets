@@ -387,6 +387,7 @@ class _PlotFuncInputSpec(BaseInterfaceInputSpec):
     norm = traits.Any()
     binary = traits.Bool()
     hpass = traits.Any()
+    edge_color_override = traits.Bool()
 
 
 class _PlotFuncOutputSpec(BaseInterfaceInputSpec):
@@ -422,7 +423,8 @@ class PlotFunc(SimpleInterface):
                                    self.inputs.uatlas,
                                    self.inputs.norm,
                                    self.inputs.binary,
-                                   self.inputs.hpass)
+                                   self.inputs.hpass,
+                                   self.inputs.edge_color_override)
 
         self._results['out'] = 'None'
 
