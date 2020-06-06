@@ -947,7 +947,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             connectome.axes[view].ax.lines = mod_lines
 
         [func_mat, clust_pal_edges, clust_pal_nodes, node_sizes, edge_sizes_func,
-         z_min, z_max] = create_gb_palette(func_mat, color_theme_func, coords, labels)
+         z_min, z_max, coords, labels] = create_gb_palette(func_mat, color_theme_func, coords, labels)
         connectome.add_graph(func_mat, coords, edge_threshold='50%', edge_cmap=clust_pal_edges,
                              edge_kwargs={'alpha': 0.75},
                              edge_vmax=float(z_max), edge_vmin=float(z_min), node_size=node_sizes,
