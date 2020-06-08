@@ -115,6 +115,7 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
     clust_type = None
     clust_type_list = None
     extract_strategy = 'mean'
+    extract_strategy_list = None
 
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
@@ -176,7 +177,7 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
                                                disp_filt, prune, multi_nets, clust_type, clust_type_list, plugin_type,
                                                mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
                                                hpass_list, template_name, vox_size, local_corr, extract_strategy,
-                                               outdir)
+                                               extract_strategy_list, outdir)
 
 #    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
@@ -267,6 +268,7 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
     min_thr = None
     step_thr = None
     extract_strategy = 'mean'
+    extract_strategy_list = None
 
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
@@ -315,7 +317,7 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
                                                disp_filt, prune, multi_nets, clust_type, clust_type_list, plugin_type,
                                                mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
                                                hpass_list, template_name, vox_size, local_corr, extract_strategy,
-                                               outdir)
+                                               extract_strategy_list, outdir)
 
 #    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
