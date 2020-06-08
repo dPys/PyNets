@@ -88,7 +88,8 @@ def as_directory(dir_, remove=False, return_as_path=False):
     return str(p)
 
 
-def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, thr_type, hpass, parc):
+def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, thr_type, hpass, parc,
+                         extract_strategy):
     """
     Name the thresholded functional connectivity matrix file based on relevant graph-generating parameters.
 
@@ -120,6 +121,8 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
         High-pass filter values (Hz) to apply to node-extracted time-series.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
+    extract_strategy : str
+        The name of a valid function used to reduce the time-series region extraction.
 
     Returns
     -------
@@ -140,19 +143,24 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
     if smooth is None:
         smooth = 0
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
-                                                       '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                               network is not None else ''),
-                                                       '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0],
-                                                                           '_') if roi is not None else ''),
-                                                       'est-', conn_model, '_',
-                                                       '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
-                                                               ((node_size != 'parc') and (node_size is not None))
-                                                               else 'nodetype-parc_'),
-                                                       "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_')),
-                                                       "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_')),
-                                                       'thrtype-', thr_type, '_thr-', thr,
-                                                       '.npy')
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
+                                                         '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                 network is not None else ''),
+                                                         '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0],
+                                                                             '_') if roi is not None else ''),
+                                                         'est-', conn_model, '_',
+                                                         '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
+                                                                 ((node_size != 'parc') and (node_size is not None))
+                                                                 else 'nodetype-parc_'),
+                                                         "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                                 float(smooth) > 0 else ''),
+                                                         "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                                 hpass is not None else ''),
+                                                         "%s" % ("%s%s%s" %
+                                                                 ('extract-', extract_strategy, '_') if
+                                                                 extract_strategy is not None else ''),
+                                                         'thrtype-', thr_type, '_thr-', thr,
+                                                         '.npy')
 
     return est_path
 
@@ -230,7 +238,7 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
     return est_path
 
 
-def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth, hpass, parc):
+def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth, hpass, parc, extract_strategy):
     """
     Name the raw functional connectivity matrix file based on relevant graph-generating parameters.
 
@@ -257,6 +265,8 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
         High-pass filter values (Hz) to apply to node-extracted time-series.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
+    extract_strategy : str
+        The name of a valid function used to reduce the time-series region extraction.
 
     Returns
     -------
@@ -277,21 +287,26 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
     if smooth is None:
         smooth = 0
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
-                                               '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                       network is not None else ''),
-                                               '%s' % ("%s%s%s" % ('roi-',
-                                                                   op.basename(roi).split('.')[0],
-                                                                   '_') if roi is not None else ''),
-                                               'est-', conn_model, '_',
-                                               '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size,
-                                                                   'mm_')
-                                                       if ((node_size != 'parc') and
-                                                           (node_size is not None))
-                                                       else 'nodetype-parc_'),
-                                               "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_')),
-                                               "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_')),
-                                               'raw.npy')
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
+                                                 '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                         network is not None else ''),
+                                                 '%s' % ("%s%s%s" % ('roi-',
+                                                                     op.basename(roi).split('.')[0],
+                                                                     '_') if roi is not None else ''),
+                                                 'est-', conn_model, '_',
+                                                 '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size,
+                                                                     'mm_')
+                                                         if ((node_size != 'parc') and
+                                                             (node_size is not None))
+                                                         else 'nodetype-parc_'),
+                                                 "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                         float(smooth) > 0 else ''),
+                                                 "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                         hpass is not None else ''),
+                                                 "%s" % ("%s%s%s" %
+                                                         ('extract-', extract_strategy, '_') if
+                                                         extract_strategy is not None else ''),
+                                                 'raw.npy')
 
     return est_path
 
@@ -744,14 +759,14 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
     combination_complete : bool
         If True, then collect_pandas_df completed successfully
     """
-    from pathlib import Path
     import yaml
+    import pkg_resources
+    from pathlib import Path
     from pynets.core.utils import flatten
     from pynets.stats.netstats import collect_pandas_df_make
 
     # Available functional and structural connectivity models
-    #with open('/Users/derekpisner/Applications/PyNets/pynets/runconfig.yaml') as stream:
-    with open(f"{str(Path(__file__).parent.parent)}{'/runconfig.yaml'}", 'r') as stream:
+    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
             func_models = hardcoded_params['available_models']['func_models']
@@ -924,7 +939,7 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
     return net_parcels_nii_path
 
 
-def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, node_size):
+def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, node_size, extract_strategy):
     """
     This function saves the time-series 4D numpy array to disk as a .npy file.
 
@@ -949,6 +964,8 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, 
     node_size : int
         Spherical centroid node size in the case that coordinate-based centroids
         are used as ROI's for time-series extraction.
+    extract_strategy : str
+        The name of a valid function used to reduce the time-series region extraction.
 
     Returns
     -------
@@ -967,16 +984,21 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, 
         smooth = 0
 
     # Save time series as npy file
-    out_path_ts = "%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
-                                            '%s' % ("%s%s%s" % ('rsn-', network, '_') if network is not None else ''),
-                                            '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0], '_') if
-                                                    roi is not None else ''),
-                                            '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
-                                                    ((node_size != 'parc') and (node_size is not None)) else
-                                                    'parc_'),
-                                            "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_')),
-                                            "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_')),
-                                            'node_ts.npy')
+    out_path_ts = "%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
+                                              '%s' % ("%s%s%s" % ('rsn-', network, '_') if network is not None else ''),
+                                              '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0], '_') if
+                                                      roi is not None else ''),
+                                              '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
+                                                      ((node_size != 'parc') and (node_size is not None)) else
+                                                      'parc_'),
+                                              "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                      float(smooth) > 0 else ''),
+                                              "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                      hpass is not None else ''),
+                                              "%s" % ("%s%s%s" %
+                                                      ('extract-', extract_strategy, '_') if
+                                                      extract_strategy is not None else ''),
+                                              'node_ts.npy')
 
     np.save(out_path_ts, ts_within_nodes)
     return out_path_ts

@@ -253,13 +253,14 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     uatlas = None
     norm = 1
     binary = False
-    hpass = False 
+    hpass = False
+    extract_strategy = 'mean'
                                                
     conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, \
-        prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, hpass = \
+        prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy = \
         thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, 
                                  roi, node_size, min_span_tree, smooth, disp_filt, parc, prune, 
-                                 atlas, uatlas, labels, coords, norm, binary, hpass)
+                                 atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy)
                                  
     assert conn_matrix_thr is not None
     if min_span_tree is False and disp_filt is False and dens_thresh is True:

@@ -28,6 +28,8 @@ base_dir = str(Path(__file__).parent/"examples")
         pytest.param(None, 0.80, 0.20, 0.10, True, 'prop'),
     ]
 )
+@pytest.mark.parametrize("plot_switch", [True, False])
+@pytest.mark.parametrize("anat_file", [f"{base_dir}/BIDS/sub-0025427/ses-1/anat/sub-0025427_desc-preproc_T1w.nii.gz", None])
 @pytest.mark.parametrize("parc,node_size,node_size_list,atlas,multi_atlas,uatlas,user_atlas_list",
     [
         pytest.param(False, None, [4, 8], None, None, None, None, marks=pytest.mark.xfail),
@@ -74,8 +76,8 @@ base_dir = str(Path(__file__).parent/"examples")
                       f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"])
     ]
 )
-def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atlas, multi_atlas, network,
-                  thr, max_thr, min_thr, step_thr, multi_thr, thr_type, node_size, node_size_list):
+def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atlas, multi_atlas, network, thr, max_thr,
+                  min_thr, step_thr, multi_thr, thr_type, node_size, node_size_list, plot_switch, anat_file):
     """
     Test functional connectometry
     """
@@ -90,7 +92,6 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
     base_dir = str(Path(__file__).parent/"examples")
     conf = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_desc-confounds_regressors.tsv"
     func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
-    anat_file = f"{base_dir}/BIDS/sub-0025427/ses-1/anat/sub-0025427_desc-preproc_T1w.nii.gz"
     mask = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz"
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
     ID = '0025427_1'
@@ -106,7 +107,6 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
     outdir = base_dir + '/outputs'
     vox_size = '2mm'
     template_name = 'MNI152_T1'
-    plot_switch = True
     k = None
     k_list = None
     k_clustering = 0
@@ -114,6 +114,7 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
     clust_mask_list = None
     clust_type = None
     clust_type_list = None
+    extract_strategy = 'mean'
 
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
@@ -174,7 +175,8 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
                                                conn_model_list, min_span_tree, use_AAL_naming, smooth, smooth_list,
                                                disp_filt, prune, multi_nets, clust_type, clust_type_list, plugin_type,
                                                mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
-                                               hpass_list, template_name, vox_size, local_corr, outdir)
+                                               hpass_list, template_name, vox_size, local_corr, extract_strategy,
+                                               outdir)
 
 #    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
@@ -264,6 +266,7 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
     max_thr = None
     min_thr = None
     step_thr = None
+    extract_strategy = 'mean'
 
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
@@ -311,7 +314,8 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
                                                conn_model_list, min_span_tree, use_AAL_naming, smooth, smooth_list,
                                                disp_filt, prune, multi_nets, clust_type, clust_type_list, plugin_type,
                                                mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
-                                               hpass_list, template_name, vox_size, local_corr, outdir)
+                                               hpass_list, template_name, vox_size, local_corr, extract_strategy,
+                                               outdir)
 
 #    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
@@ -328,6 +332,9 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
 )
 @pytest.mark.parametrize("directget", ['prob', ['det', 'boot']])
 @pytest.mark.parametrize("min_length", [0, 5, [0, 5]])
+@pytest.mark.parametrize("plot_switch", [True, False])
+@pytest.mark.parametrize("mask", [None, f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_"
+f"space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz"])
 @pytest.mark.parametrize("track_type,tiss_class,conn_model,conn_model_list",
     [
         pytest.param('local', 'wb', 'csd', None),
@@ -381,7 +388,7 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
 )
 def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, min_thr,
                     step_thr, multi_thr, thr_type, tiss_class, directget, min_length, track_type, node_size_list,
-                    atlas, multi_atlas, uatlas, user_atlas_list, network):
+                    atlas, multi_atlas, uatlas, user_atlas_list, network, plot_switch, mask):
     """
     Test structural connectometry
     """
@@ -398,7 +405,6 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
     fbval = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_bvec.bvec"
     fbvec = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_preprocessed_dwi.nii.gz"
     anat_file = f"{base_dir}/BIDS/sub-0025427/ses-1/anat/sub-0025427_desc-preproc_T1w.nii.gz"
-    mask = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz"
     roi = None
     ID = '0025427_1'
     ref_txt = None
@@ -413,7 +419,6 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
     outdir = base_dir + '/outputs'
     vox_size = '2mm'
     template_name = 'MNI152_T1'
-    plot_switch = True
     target_samples = 1000
 
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:

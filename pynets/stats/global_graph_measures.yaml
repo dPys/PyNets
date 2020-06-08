@@ -6,4 +6,4 @@ metric_list_global:
     - 'average_shortest_path_length'
 #    - 'graph_number_of_cliques'
     - 'smallworldness'
-#    - 'transitivity'
+    - 'transitivity'

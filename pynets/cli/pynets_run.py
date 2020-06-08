@@ -210,6 +210,14 @@ def get_parser():
                              'time-series for fMRI. Default is None. If you wish to iterate the pipeline across '
                              'multiple high-pass filter thresholds, values, separate the list by space '
                              '(e.g. 0.008 0.01).\n')
+    parser.add_argument('-es',
+                        metavar='Node extraction strategy',
+                        default='mean',
+                        nargs='+',
+                        choices=['sum', 'mean', 'median', 'mininum', 'maximum', 'variance', 'standard_deviation'],
+                        help='Include this flag if you are running functional connectometry using parcel labels and '
+                             'wish to specify the name of a specific function (i.e. other than the mean) to reduce the '
+                             'region\'s time-series.\n')
     parser.add_argument('-k',
                         metavar='Number of k clusters',
                         default=None,
@@ -506,6 +514,22 @@ def build_workflow(args, retval):
             hpass_list = None
     else:
         hpass_list = None
+    extract_strategy = args.es
+    if extract_strategy:
+        if (type(extract_strategy) is list) and (len(extract_strategy) > 1):
+            extract_strategy_list = extract_strategy
+            extract_strategy = None
+        elif extract_strategy == ['None']:
+            extract_strategy = None
+            extract_strategy_list = None
+        elif type(extract_strategy) is list:
+            extract_strategy = extract_strategy[0]
+            extract_strategy_list = None
+        else:
+            extract_strategy = None
+            extract_strategy_list = None
+    else:
+        extract_strategy_list = None
     roi = args.roi
     conn_model = args.mod
     if conn_model:
@@ -1007,6 +1031,14 @@ def build_workflow(args, retval):
             else:
                 hpass = None
 
+            if extract_strategy_list and (parc is True):
+                print(f"\nExtracting node signal using multiple strategies: "
+                      f"{str(', '.join(str(n) for n in extract_strategy_list))}...")
+            elif (extract_strategy is not None) and (parc is True):
+                print(f"\nExtracting node signal using a {extract_strategy} strategy...")
+            else:
+                extract_strategy = None
+
         if conn_model_list:
             print(f"\nIterating graph estimation across multiple connectivity models: "
                   f"{str(', '.join(str(n) for n in conn_model_list))}...")
@@ -1292,6 +1324,8 @@ def build_workflow(args, retval):
         k_clustering = None
         clust_mask_list = None
         hpass = None
+        smooth = None
+        extract_strategy = None
         clust_type = None
         local_corr = None
         clust_type_list = None
@@ -1362,9 +1396,13 @@ def build_workflow(args, retval):
     retval['atlas'] = atlas
     retval['network'] = network
     retval['node_size'] = node_size
+    retval['node_size_list'] = node_size_list
     retval['smooth'] = smooth
+    retval['smooth_list'] = smooth_list
     retval['hpass'] = hpass
     retval['hpass_list'] = hpass_list
+    retval['extract_strategy'] = extract_strategy
+    retval['extract_strategy_list'] = extract_strategy_list
     retval['roi'] = roi
     retval['thr'] = thr
     retval['uatlas'] = uatlas
@@ -1391,8 +1429,6 @@ def build_workflow(args, retval):
     retval['local_corr'] = local_corr
     retval['clust_type_list'] = clust_type_list
     retval['prune'] = prune
-    retval['node_size_list'] = node_size_list
-    retval['smooth_list'] = smooth_list
     retval['mask'] = mask
     retval['norm'] = norm
     retval['binary'] = binary
@@ -1473,6 +1509,8 @@ def build_workflow(args, retval):
     # print("%s%s" % ('fbval_list: ', fbval_list))
     # print("%s%s" % ('conf_list: ', conf_list))
     # print("%s%s" % ('anat_file_list: ', anat_file_list))
+    # print("%s%s" % ('extract_strategy: ', extract_strategy))
+    # print("%s%s" % ('extract_strategy_list: ', extract_strategy_list))
     # print('\n\n\n\n\n')
     # import sys
     # sys.exit(0)
@@ -1495,7 +1533,8 @@ def build_workflow(args, retval):
                                clust_type_list, mask, norm, binary, fbval, fbvec, target_samples,
                                curv_thr_list, step_list, overlap_thr, track_type, min_length, maxcrossing, directget,
                                tiss_class, runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass,
-                               hpass_list, vox_size, multiplex, waymask, local_corr, min_length_list, outdir):
+                               hpass_list, vox_size, multiplex, waymask, local_corr, min_length_list, extract_strategy,
+                               extract_strategy_list, outdir):
         """A function interface for generating a single-subject workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1557,7 +1596,8 @@ def build_workflow(args, retval):
                                         fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                         track_type, min_length, maxcrossing, directget, tiss_class, runtime_dict,
                                         execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
-                                        vox_size, multiplex, waymask, local_corr, min_length_list, outdir)
+                                        vox_size, multiplex, waymask, local_corr, min_length_list, extract_strategy,
+                                        extract_strategy_list, outdir)
             meta_wf._n_procs = procmem[0]
             meta_wf._mem_gb = procmem[1]
             meta_wf.n_procs = procmem[0]
@@ -1675,7 +1715,7 @@ def build_workflow(args, retval):
                          binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr, track_type,
                          min_length, maxcrossing, directget, tiss_class, runtime_dict, execution_dict, embed,
                          multi_directget, multimodal, hpass, hpass_list, vox_size, multiplex, waymask, local_corr,
-                         min_length_list, outdir):
+                         min_length_list, extract_strategy, extract_strategy_list, outdir):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         import warnings
         warnings.filterwarnings("ignore")
@@ -1742,7 +1782,8 @@ def build_workflow(args, retval):
                 directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict, execution_dict=execution_dict,
                 embed=embed, multi_directget=multi_directget, multimodal=multimodal, hpass=hpass, hpass_list=hpass_list,
                 vox_size=vox_size, multiplex=multiplex, waymask=waymask, local_corr=local_corr,
-                min_length_list=min_length_list, outdir=subj_dir)
+                min_length_list=min_length_list, extract_strategy=extract_strategy,
+                extract_strategy_list=extract_strategy_list, outdir=subj_dir)
             wf_single_subject._n_procs = procmem[0]
             wf_single_subject._mem_gb = procmem[1]
             wf_single_subject.n_procs = procmem[0]
@@ -1823,8 +1864,8 @@ def build_workflow(args, retval):
                                               binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
                                               overlap_thr, track_type, min_length, maxcrossing, directget, tiss_class,
                                               runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass,
-                                              hpass_list, vox_size, multiplex, waymask,
-                                              local_corr, min_length_list, outdir)
+                                              hpass_list, vox_size, multiplex, waymask, local_corr, min_length_list,
+                                              extract_strategy, extract_strategy_list, outdir)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil
@@ -1924,7 +1965,8 @@ def build_workflow(args, retval):
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                                     track_type, min_length, maxcrossing, directget, tiss_class, runtime_dict,
                                     execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
-                                    vox_size, multiplex, waymask, local_corr, min_length_list, subj_dir)
+                                    vox_size, multiplex, waymask, local_corr, min_length_list, extract_strategy,
+                                    extract_strategy_list, subj_dir)
         import warnings
         warnings.filterwarnings("ignore")
         import shutil

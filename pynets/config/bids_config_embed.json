@@ -13,7 +13,8 @@
             "hp": "['0']",
             "k": "None",
             "mod": "['partcorr']",
-            "sm": "['0']"
+            "sm": "['0']",
+            "es": "['mean']"
         },
     "gen": {
             "a":  "['DesikanKlein2012']",

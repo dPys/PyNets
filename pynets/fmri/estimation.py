@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 
 def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
                     disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
-                    hpass):
+                    hpass, extract_strategy):
     """
     Computes a functional connectivity matrix based on a node-extracted time-series array.
     Includes a library of routines across Nilearn, scikit-learn, and skggm packages, among others.
@@ -69,6 +69,8 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         unweighted graph.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
+    extract_strategy : str 
+        The name of a valid function used to reduce the time-series region extraction.
 
     Returns
     -------
@@ -120,6 +122,8 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         unweighted graph.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
+    extract_strategy : str 
+        The name of a valid function used to reduce the time-series region extraction.
     """
     from nilearn.connectome import ConnectivityMeasure
     from sklearn.covariance import GraphicalLassoCV
@@ -260,7 +264,7 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
     del time_series
 
     return (conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-            disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, hpass)
+            disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy)
 
 
 def timeseries_bootstrap(tseries, block_size):
@@ -321,7 +325,7 @@ class TimeseriesExtraction(object):
     Class for implementing various time-series extracting routines.
     """
     def __init__(self, net_parcels_nii_path, node_size, conf, func_file, coords, roi, dir_path, ID, network, smooth,
-                 atlas, uatlas, labels, hpass, mask):
+                 atlas, uatlas, labels, hpass, mask, extract_strategy):
         self.net_parcels_nii_path = net_parcels_nii_path
         self.node_size = node_size
         self.conf = conf
@@ -337,6 +341,7 @@ class TimeseriesExtraction(object):
         self.labels = labels
         self.mask = mask
         self.hpass = hpass
+        self.extract_strategy = extract_strategy
         self.ts_within_nodes = None
         self._mask_img = None
         self._mask_path = None
@@ -453,7 +458,8 @@ class TimeseriesExtraction(object):
                                                            standardize=True, smoothing_fwhm=float(self.smooth),
                                                            high_pass=self.hpass, detrend=self._detrending,
                                                            t_r=self._t_r, verbose=2, resampling_target='data',
-                                                           dtype='auto', mask_img=self._mask_img)
+                                                           dtype='auto', mask_img=self._mask_img,
+                                                           strategy=self.extract_strategy)
         if self.conf is not None:
             import pandas as pd
             confounds = pd.read_csv(self.conf, sep='\t')
@@ -481,7 +487,7 @@ class TimeseriesExtraction(object):
 
         # Save time series as file
         utils.save_ts_to_file(self.roi, self.network, self.ID, self.dir_path, self.ts_within_nodes,
-                              self.smooth, self.hpass, self.node_size)
+                              self.smooth, self.hpass, self.node_size, self.extract_strategy)
 
         if self._mask_path is not None:
             self._mask_img.uncache()

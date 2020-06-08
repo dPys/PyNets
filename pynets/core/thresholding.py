@@ -739,7 +739,7 @@ def perform_thresholding(conn_matrix, coords, labels, thr, thr_perc, min_span_tr
 
 def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
                 smooth, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
-                hpass):
+                hpass, extract_strategy):
     """
     Threshold a functional connectivity matrix using any of a variety of methods.
 
@@ -795,6 +795,8 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         unweighted graph.
     hpass : float
         High-pass filter values (Hz) to apply to node-extracted time-series.
+    extract_strategy : str
+        The name of a valid function used to reduce the time-series region extraction.
 
     Returns
     -------
@@ -842,6 +844,8 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         unweighted graph.
     hpass : float
         High-pass filter values (Hz) to apply to node-extracted time-series.
+    extract_strategy : str
+        The name of a valid function used to reduce the time-series region extraction.
     """
     import gc
     from pynets.core import utils, thresholding
@@ -855,7 +859,7 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
 
     # Save unthresholded
     utils.save_mat(conn_matrix, utils.create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth,
-                                                           hpass, parc))
+                                                           hpass, parc, extract_strategy))
 
     [thr_type, edge_threshold, conn_matrix_thr, coords, labels] = thresholding.perform_thresholding(conn_matrix, coords,
                                                                                                     labels, thr,
@@ -869,13 +873,13 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
 
     # Save thresholded mat
     est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, thr_type,
-                                          hpass, parc)
+                                          hpass, parc, extract_strategy)
 
     utils.save_mat(conn_matrix_thr, est_path)
     gc.collect()
 
     return (conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID,
-            dir_path, atlas, uatlas, labels, coords, norm, binary, hpass)
+            dir_path, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy)
 
 
 def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,

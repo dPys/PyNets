@@ -13,17 +13,18 @@
             "hp": "['0']",
             "k": "None",
             "mod": "['partcorr']",
-            "sm": "['0']"
+            "sm": "['0']",
+            "es": "['mean']"
         },
     "gen": {
-            "a":  "['coords_power_2011']",
+            "a":  "['DesikanKlein2012']",
             "bin":  "False",
             "df":  "False",
             "dt":  "False",
             "embed":  "None",
             "max_thr":  "None",
             "min_thr": "None",
-            "mplx":  0,
+            "mplx":  2,
             "mst":  "True",
             "n":  "['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default']",
             "names":  "False",
@@ -31,7 +32,7 @@
             "ns":  "['4']",
             "p":  "['3']",
             "plt":  "True",
-            "spheres":  "True",
+            "spheres":  "False",
             "step_thr":  "None",
             "thr":  1.00,
             "vox":  "'2mm'"

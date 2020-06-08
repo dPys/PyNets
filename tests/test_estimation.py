@@ -47,6 +47,7 @@ def test_get_conn_matrix_cov(conn_model):
     prune = 1
     norm = 1
     binary = False
+    extract_strategy = 'mean'
     atlas = 'whole_brain_cluster_labels_PCA200'
     uatlas = None
     coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
@@ -59,9 +60,9 @@ def test_get_conn_matrix_cov(conn_model):
     start_time = time.time()
     [conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network,
     ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas,
-    labels, coords, norm, binary, hpass] = fmri_estimation.get_conn_matrix(time_series, conn_model,
+    labels, coords, norm, binary, hpass, extract_strategy] = fmri_estimation.get_conn_matrix(time_series, conn_model,
     dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-    disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, hpass)
+    disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy)
     print("%s%s%s" %
     ('get_conn_matrix --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -114,7 +115,7 @@ def test_extract_ts_rsn_parc():
     te = fmri_estimation.TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
                                               conf=conf, func_file=func_file, coords=coords, roi=roi, dir_path=dir_path,
                                               ID=ID, network=network, smooth=smooth, atlas=atlas, uatlas=uatlas,
-                                              labels=labels, hpass=hpass, mask=mask)
+                                              labels=labels, hpass=hpass, mask=mask, extract_strategy='mean')
 
     te.prepare_inputs()
 
@@ -159,7 +160,7 @@ def test_extract_ts_rsn_coords(node_size, smooth):
                                               conf=conf, func_file=func_file, coords=coords, roi=roi, dir_path=dir_path,
                                               ID=ID, network=network, smooth=smooth, atlas=atlas, uatlas=uatlas,
                                               labels=labels, hpass=hpass,
-                                              mask=mask)
+                                              mask=mask, extract_strategy=None)
 
     te.prepare_inputs()
 

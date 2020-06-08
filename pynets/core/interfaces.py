@@ -209,6 +209,7 @@ class _ExtractTimeseriesInputSpec(BaseInterfaceInputSpec):
     parc = traits.Bool()
     node_size = traits.Any(mandatory=False)
     net_parcels_nii_path = traits.Any(mandatory=False)
+    extract_strategy = traits.Any(mandatory=False)
 
 
 class _ExtractTimeseriesOutputSpec(TraitedSpec):
@@ -223,6 +224,7 @@ class _ExtractTimeseriesOutputSpec(TraitedSpec):
     coords = traits.Any(mandatory=True)
     hpass = traits.Any(mandatory=True)
     roi = traits.Any(mandatory=True)
+    extract_strategy = traits.Any(mandatory=False)
 
 
 class ExtractTimeseries(SimpleInterface):
@@ -269,7 +271,8 @@ class ExtractTimeseries(SimpleInterface):
                                              uatlas=self.inputs.uatlas,
                                              labels=self.inputs.labels,
                                              hpass=self.inputs.hpass,
-                                             mask=out_name_mask)
+                                             mask=out_name_mask,
+                                             extract_strategy=self.inputs.extract_strategy)
 
         te.prepare_inputs()
         if self.inputs.parc is False:
@@ -288,6 +291,7 @@ class ExtractTimeseries(SimpleInterface):
         self._results['ts_within_nodes'] = te.ts_within_nodes
         self._results['node_size'] = te.node_size
         self._results['smooth'] = te.smooth
+        self._results['extract_strategy'] = te.extract_strategy
         self._results['dir_path'] = te.dir_path
         self._results['atlas'] = te.atlas
         self._results['uatlas'] = te.uatlas
@@ -387,6 +391,7 @@ class _PlotFuncInputSpec(BaseInterfaceInputSpec):
     norm = traits.Any()
     binary = traits.Bool()
     hpass = traits.Any()
+    extract_strategy = traits.Any()
     edge_color_override = traits.Bool()
 
 
@@ -424,6 +429,7 @@ class PlotFunc(SimpleInterface):
                                    self.inputs.norm,
                                    self.inputs.binary,
                                    self.inputs.hpass,
+                                   self.inputs.extract_strategy,
                                    self.inputs.edge_color_override)
 
         self._results['out'] = 'None'
@@ -537,6 +543,145 @@ class RegisterDWI(SimpleInterface):
         return runtime
 
 
+class _RegisterAtlasDWIInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for RegisterAtlasDWI"""
+    atlas = traits.Any()
+    network = traits.Any()
+    uatlas_parcels = traits.Any()
+    uatlas = traits.Any()
+    basedir_path = Directory(exists=True, mandatory=True)
+    node_size = traits.Any()
+    fa_path = File(exists=True, mandatory=True)
+    ap_path = File(exists=True, mandatory=True)
+    B0_mask = File(exists=True, mandatory=True)
+    anat_file = File(exists=True, mandatory=True)
+    coords = traits.Any(mandatory=True)
+    labels = traits.Any(mandatory=True)
+    gm_in_dwi = File(exists=True, mandatory=True)
+    vent_csf_in_dwi = File(exists=True, mandatory=True)
+    wm_in_dwi = File(exists=True, mandatory=True)
+    gtab_file = File(exists=True, mandatory=True)
+    dwi_file = File(exists=True, mandatory=True)
+    mask = traits.Any(mandatory=False)
+    vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
+    template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
+    simple = traits.Bool(False, usedefault=True)
+
+
+class _RegisterAtlasDWIOutputSpec(TraitedSpec):
+    """Output interface wrapper for RegisterAtlasDWI"""
+    dwi_aligned_atlas_wmgm_int = File(exists=True, mandatory=True)
+    dwi_aligned_atlas = File(exists=True, mandatory=True)
+    aligned_atlas_t1mni = File(exists=True, mandatory=True)
+    node_size = traits.Any()
+    atlas = traits.Any(mandatory=True)
+    uatlas_parcels = traits.Any(mandatory=False)
+    uatlas = traits.Any(mandatory=False)
+    coords = traits.Any(mandatory=True)
+    labels = traits.Any(mandatory=True)
+    wm_in_dwi = File(exists=True, mandatory=True)
+    gm_in_dwi = File(exists=True, mandatory=True)
+    vent_csf_in_dwi = File(exists=True, mandatory=True)
+    B0_mask = File(exists=True, mandatory=True)
+    ap_path = File(exists=True, mandatory=True)
+    gtab_file = File(exists=True, mandatory=True)
+    dwi_file = File(exists=True, mandatory=True)
+
+
+class RegisterAtlasDWI(SimpleInterface):
+    """Interface wrapper for RegisterAtlasDWI."""
+    input_spec = _RegisterAtlasDWIInputSpec
+    output_spec = _RegisterAtlasDWIOutputSpec
+
+    def _run_interface(self, runtime):
+        import shutil
+        import gc
+        import os
+        from pynets.registration import register
+        from nipype.utils.filemanip import fname_presuffix, copyfile
+
+        if self.inputs.uatlas is None:
+            uatlas_tmp_path = self.inputs.uatlas
+        else:
+            uatlas_tmp_path = fname_presuffix(self.inputs.uatlas, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.uatlas, uatlas_tmp_path, copy=True, use_hardlink=False)
+
+        uatlas_parcels_tmp_path = fname_presuffix(self.inputs.uatlas_parcels, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.uatlas_parcels, uatlas_parcels_tmp_path, copy=True, use_hardlink=False)
+
+        fa_tmp_path = fname_presuffix(self.inputs.fa_path, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.fa_path, fa_tmp_path, copy=True, use_hardlink=False)
+
+        ap_tmp_path = fname_presuffix(self.inputs.ap_path, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.ap_path, ap_tmp_path, copy=True, use_hardlink=False)
+
+        B0_mask_tmp_path = fname_presuffix(self.inputs.B0_mask, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.B0_mask, B0_mask_tmp_path, copy=True, use_hardlink=False)
+
+        anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
+        if self.inputs.mask:
+            mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
+        else:
+            mask_tmp_path = None
+
+        if self.inputs.network is None:
+            atlas_name = self.inputs.atlas
+            base_dir_tmp = runtime.cwd
+        else:
+            atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
+            base_dir_tmp = f"{runtime.cwd}/atlas_{self.inputs.network}"
+            shutil.copytree(self.inputs.basedir_path, base_dir_tmp)
+
+        reg = register.DmriReg(basedir_path=base_dir_tmp,
+                               fa_path=fa_tmp_path,
+                               ap_path=ap_tmp_path,
+                               B0_mask=B0_mask_tmp_path,
+                               anat_file=anat_file_tmp_path,
+                               mask=mask_tmp_path,
+                               vox_size=self.inputs.vox_size,
+                               template_name=self.inputs.template_name,
+                               simple=self.inputs.simple)
+
+        if self.inputs.node_size is not None:
+            atlas_name = f"{atlas_name}{'_'}{self.inputs.node_size}"
+
+        # Apply warps/coregister atlas to dwi
+        [dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas,
+         aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas_tmp_path, uatlas_parcels_tmp_path, atlas_name)
+
+        if self.inputs.uatlas is None:
+            uatlas_out = self.inputs.uatlas_parcels
+        else:
+            uatlas_out = self.inputs.uatlas
+
+        # Cleanup
+        if self.inputs.network is None:
+            shutil.rmtree(base_dir_tmp, ignore_errors=True)
+
+        self._results['dwi_aligned_atlas_wmgm_int'] = dwi_aligned_atlas_wmgm_int
+        self._results['dwi_aligned_atlas'] = dwi_aligned_atlas
+        self._results['aligned_atlas_t1mni'] = aligned_atlas_t1mni
+        self._results['node_size'] = self.inputs.node_size
+        self._results['atlas'] = self.inputs.atlas
+        self._results['uatlas_parcels'] = uatlas_parcels_tmp_path
+        self._results['uatlas'] = uatlas_out
+        self._results['coords'] = self.inputs.coords
+        self._results['labels'] = self.inputs.labels
+        self._results['wm_in_dwi'] = reg.wm_in_dwi
+        self._results['gm_in_dwi'] = reg.gm_in_dwi
+        self._results['vent_csf_in_dwi'] = reg.vent_csf_in_dwi
+        self._results['B0_mask'] = self.inputs.B0_mask
+        self._results['ap_path'] = self.inputs.ap_path
+        self._results['gtab_file'] = self.inputs.gtab_file
+        self._results['dwi_file'] = self.inputs.dwi_file
+
+        gc.collect()
+
+        return runtime
+
+
 class _RegisterFuncInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for RegisterFunc"""
     anat_file = File(exists=True, mandatory=True)
@@ -554,7 +699,7 @@ class _RegisterFuncOutputSpec(TraitedSpec):
 
 
 class RegisterFunc(SimpleInterface):
-    """Interface wrapper for RegisterDWI to create Func->T1w->MNI mappings."""
+    """Interface wrapper for RegisterFunc to create Func->T1w->MNI mappings."""
     input_spec = _RegisterFuncInputSpec
     output_spec = _RegisterFuncOutputSpec
 
@@ -564,8 +709,8 @@ class RegisterFunc(SimpleInterface):
         from pynets.registration import register
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
-        # anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
-        # copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
+        anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
         if self.inputs.mask:
             mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
             copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
@@ -573,7 +718,7 @@ class RegisterFunc(SimpleInterface):
             mask_tmp_path = None
 
         reg = register.FmriReg(basedir_path=runtime.cwd,
-                               anat_file=self.inputs.anat_file,
+                               anat_file=anat_file_tmp_path,
                                mask=mask_tmp_path,
                                vox_size=self.inputs.vox_size,
                                template_name=self.inputs.template_name,
@@ -589,6 +734,90 @@ class RegisterFunc(SimpleInterface):
 
         self._results['reg_fmri_complete'] = True
         self._results['basedir_path'] = runtime.cwd
+
+        gc.collect()
+
+        return runtime
+
+
+class _RegisterAtlasFuncInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for RegisterAtlasFunc"""
+    atlas = traits.Any()
+    network = traits.Any()
+    uatlas_parcels = traits.Any()
+    uatlas = traits.Any()
+    basedir_path = Directory(exists=True, mandatory=True)
+    anat_file = File(exists=True, mandatory=True)
+    coords = traits.Any(mandatory=True)
+    labels = traits.Any(mandatory=True)
+    vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
+    mask = traits.Any(mandatory=False)
+    reg_fmri_complete = traits.Bool()
+    template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
+    simple = traits.Bool(False, usedefault=True)
+
+
+class _RegisterAtlasFuncOutputSpec(TraitedSpec):
+    """Output interface wrapper for RegisterAtlasFunc"""
+    aligned_atlas_t1mni_gm = File(exists=True, mandatory=True)
+    coords = traits.Any(mandatory=True)
+    labels = traits.Any(mandatory=True)
+
+
+class RegisterAtlasFunc(SimpleInterface):
+    """Interface wrapper for RegisterAtlasFunc."""
+    input_spec = _RegisterAtlasFuncInputSpec
+    output_spec = _RegisterAtlasFuncOutputSpec
+
+    def _run_interface(self, runtime):
+        import gc
+        import shutil
+        import os
+        from pynets.registration import register
+        from nipype.utils.filemanip import fname_presuffix, copyfile
+
+        if self.inputs.uatlas is None:
+            uatlas_tmp_path = self.inputs.uatlas
+        else:
+            uatlas_tmp_path = fname_presuffix(self.inputs.uatlas, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.uatlas, uatlas_tmp_path, copy=True, use_hardlink=False)
+
+        uatlas_parcels_tmp_path = fname_presuffix(self.inputs.uatlas_parcels, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.uatlas_parcels, uatlas_parcels_tmp_path, copy=True, use_hardlink=False)
+
+        anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
+        if self.inputs.mask:
+            mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
+        else:
+            mask_tmp_path = None
+
+        if self.inputs.network is None:
+            atlas_name = self.inputs.atlas
+            base_dir_tmp = runtime.cwd
+        else:
+            atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
+            base_dir_tmp = f"{runtime.cwd}/atlas_{self.inputs.network}"
+            shutil.copytree(self.inputs.basedir_path, base_dir_tmp)
+
+        reg = register.FmriReg(basedir_path=base_dir_tmp,
+                               anat_file=anat_file_tmp_path,
+                               mask=mask_tmp_path,
+                               vox_size=self.inputs.vox_size,
+                               template_name=self.inputs.template_name,
+                               simple=self.inputs.simple)
+
+        aligned_atlas_t1mni_gm = reg.atlas2t1wmni_align(uatlas_tmp_path, uatlas_parcels_tmp_path,
+                                                        atlas_name)
+
+        # Cleanup
+        if self.inputs.network is None:
+            shutil.rmtree(base_dir_tmp, ignore_errors=True)
+
+        self._results['aligned_atlas_t1mni_gm'] = aligned_atlas_t1mni_gm
+        self._results['coords'] = self.inputs.coords
+        self._results['labels'] = self.inputs.labels
 
         gc.collect()
 

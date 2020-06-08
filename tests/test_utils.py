@@ -78,10 +78,12 @@ def test_save_ts_to_file():
     hpass = None
     network = None
     node_size = 'parc'
+    extract_strategy = 'mean'
     ID = '002'
     ts_within_nodes = f"{base_dir}/miscellaneous/002_Default_rsn_net_ts.npy"
 
-    out_path_ts = utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, node_size)
+    out_path_ts = utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, node_size,
+                                        extract_strategy)
     assert os.path.isfile(out_path_ts) is True
 
 
@@ -195,10 +197,11 @@ def test_create_est_path_func(node_size, hpass, smooth, parc):
     roi = None
     thr_type = 'prop'
     thr = 0.75
+    extract_strategy = 'mean'
 
     est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi,
                                           dir_path, node_size, smooth,
-                                          thr_type, hpass, parc)
+                                          thr_type, hpass, parc, extract_strategy)
     assert est_path is not None
 
 
@@ -250,10 +253,11 @@ def test_create_csv_path():
     parc = True
     thr = 0.75
     thr_type = 'prop'
+    extract_strategy = 'mean'
 
     est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi,
                                           dir_path, node_size, smooth,
-                                          thr_type, hpass, parc)
+                                          thr_type, hpass, parc, extract_strategy)
     out_path = utils.create_csv_path(dir_path, est_path)
     assert out_path is not None
 
@@ -294,10 +298,11 @@ def test_create_unthr_path(node_size, hpass, smooth, parc):
     ID = '002'
     conn_model = 'corr'
     roi = None
+    extract_strategy = 'mean'
 
     unthr_path_func = utils.create_raw_path_func(ID, network, conn_model, roi,
                                                  dir_path, node_size, smooth,
-                                                 hpass, parc)
+                                                 hpass, parc, extract_strategy)
     assert unthr_path_func is not None
 
     network = 'Default'
