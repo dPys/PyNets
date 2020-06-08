@@ -16,6 +16,7 @@ from pynets.core.utils import flatten
 
 def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     from graspy.embed import OmnibusEmbed, ClassicalMDS
+    from joblib import dump
     variance_threshold = VarianceThreshold(threshold=0.00001)
     diags = np.array([np.triu(pop_array[i]) for i in range(len(pop_array))])
     graphs_ix_keep = variance_threshold.fit(diags.reshape(diags.shape[0],
@@ -42,6 +43,11 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_omnetome.npy"
+
+    out_path_est = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_masetome_estimator.joblib"
+
+    dump(omni_fit, out_path_est)
+
     print('Saving...')
     np.save(out_path, mds_fit)
     del mds, mds_fit, omni, omni_fit
@@ -50,6 +56,7 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
 
 def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     from graspy.embed import MultipleASE
+    from joblib import dump
 
     variance_threshold = VarianceThreshold(threshold=0.00001)
     diags = np.array([np.triu(pop_array[i]) for i in range(len(pop_array))])
@@ -72,6 +79,10 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_masetome.npy"
+    out_path_est = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_masetome_estimator.joblib"
+
+    dump(mase_fit, out_path_est)
+
     print('Saving...')
     np.save(out_path, mase.scores_)
     del mase, mase_fit

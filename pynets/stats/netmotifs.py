@@ -275,6 +275,7 @@ def motif_matching(paths, ID, atlas, namer_dir, name_list, metadata_list, multig
     from pynets.stats.netmotifs import compare_motifs
     from sklearn.metrics.pairwise import cosine_similarity
     from pynets.stats.netstats import community_resolution_selection
+    from graspy.match import GraphMatch as GMP
     try:
         import cPickle as pickle
     except ImportError:
@@ -310,18 +311,23 @@ def motif_matching(paths, ID, atlas, namer_dir, name_list, metadata_list, multig
     if func_mat.shape == struct_mat.shape:
         func_mat[~struct_mat.astype('bool')] = 0
         struct_mat[~func_mat.astype('bool')] = 0
+        print("Number of edge disagreements after matching: ", sum(sum(abs(func_mat - struct_mat))))
+
         metadata = {}
         metadata['coords'] = func_coords
         metadata['labels'] = func_labels
         metadata_list.append(metadata)
 
-        struct_mat = nx.to_numpy_array(sorted(nx.connected_component_subgraphs(nx.from_numpy_matrix(
-            struct_mat)), key=len, reverse=True)[0])
+        struct_mat = np.maximum(struct_mat, struct_mat.T)
+        func_mat = np.maximum(func_mat, func_mat.T)
+
+        # struct_mat = nx.to_numpy_array(sorted(nx.connected_component_subgraphs(nx.from_numpy_matrix(
+        #     struct_mat)), key=len, reverse=True)[0])
 
         struct_mat = thresholding.standardize(struct_mat)
 
-        func_mat = nx.to_numpy_array(sorted(nx.connected_component_subgraphs(nx.from_numpy_matrix(
-            func_mat)), key=len, reverse=True)[0])
+        # func_mat = nx.to_numpy_array(sorted(nx.connected_component_subgraphs(nx.from_numpy_matrix(
+        #     func_mat)), key=len, reverse=True)[0])
 
         func_mat = thresholding.standardize(func_mat)
 
@@ -350,8 +356,6 @@ def motif_matching(paths, ID, atlas, namer_dir, name_list, metadata_list, multig
         func_name = func_graph_path.split('/')[-1].split('_raw.npy')[0]
         name = f"{ID}_{atlas}_mplx_Layer-1_{struct_name}_Layer-2_{func_name}"
         name_list.append(name)
-        struct_mat = np.maximum(struct_mat, struct_mat.T)
-        func_mat = np.maximum(func_mat, func_mat.T)
         [mldict, g_dict] = compare_motifs(struct_mat, func_mat, name, namer_dir)
         multigraph_list_all.append(list(mldict.values())[0])
         graph_path_list = []

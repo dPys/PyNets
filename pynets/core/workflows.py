@@ -2330,10 +2330,12 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                         [('network', 'network')]),
                                        (get_node_membership_node, get_conn_matrix_node,
                                         [('network', 'network')]),
-                                       (get_node_membership_node, save_nifti_parcels_node,
-                                        [('network', 'network')]),
                                        (get_node_membership_node, register_atlas_node, [('network', 'network')])
                                        ])
+        if parc is True:
+            fmri_connectometry_wf.connect([(get_node_membership_node, save_nifti_parcels_node,
+                                            [('network', 'network')]),
+                                           ])
     else:
         fmri_connectometry_wf.connect([(fetch_nodes_and_labels_node, node_gen_node,
                                         [('coords', 'coords'), ('labels', 'labels'),
@@ -2342,10 +2344,12 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                        (inputnode, extract_ts_node,
                                         [('network', 'network')]),
                                        (inputnode, get_conn_matrix_node,
-                                        [('network', 'network')]),
-                                       (inputnode, save_nifti_parcels_node,
                                         [('network', 'network')])
                                        ])
+        if parc is True:
+            fmri_connectometry_wf.connect([(inputnode, save_nifti_parcels_node,
+                                            [('network', 'network')]),
+                                           ])
 
     # Begin joinnode chaining
     # Set lists of fields and connect statements for repeated use throughout joins
