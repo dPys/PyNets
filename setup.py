@@ -35,8 +35,8 @@ setup(
         ]
     },
     include_package_data=True,
-    install_requires=['nilearn==0.7.0a', 'deepbrain==0.1.0'] + requirements,
-    dependency_links=['git+https://github.com/dPys/nilearn.git@enh/parc_conn#egg=nilearn-0.7.0b0',
+    install_requires=['nilearn==0.7.0a0', 'deepbrain==0.1.0'] + requirements,
+    dependency_links=['git+https://github.com/dPys/nilearn.git@enh/parc_conn#egg=nilearn-0.7.0a0',
                       'git+https://github.com/dPys/deepbrain.git@master#egg=deepbrain-0.1.0'],
     license="GNU General Public License v3",
     zip_safe=False,

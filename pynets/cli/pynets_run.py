@@ -564,13 +564,9 @@ def build_workflow(args, retval):
             clust_type_list = None
     else:
         clust_type_list = None
-    # local_corr = args.cc
-    # if type(local_corr) is list:
-    #     local_corr = local_corr[0]
-    local_corr = 'allcorr'
-
-    # adapt_thresh=args.at
-    adapt_thresh = False
+    local_corr = args.cc
+    if type(local_corr) is list:
+        local_corr = local_corr[0]
     plot_switch = args.plt
     min_thr = args.min_thr
     max_thr = args.max_thr
@@ -1525,7 +1521,7 @@ def build_workflow(args, retval):
     from pynets.core.workflows import workflow_selector
 
     def init_wf_single_subject(ID, func_file, atlas, network, node_size, roi, thr, uatlas,
-                               multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
+                               multi_nets, conn_model, dens_thresh, conf, plot_switch, dwi_file,
                                multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_file, parc, ref_txt, procmem, k,
                                clust_mask, k_list, k_clustering, user_atlas_list, clust_mask_list, prune,
                                node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
@@ -1587,7 +1583,7 @@ def build_workflow(args, retval):
 
         if func_file or dwi_file:
             meta_wf = workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas,
-                                        multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
+                                        multi_nets, conn_model, dens_thresh, conf, plot_switch, dwi_file,
                                         anat_file, parc, ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr,
                                         step_thr, k, clust_mask, k_list, k_clustering, user_atlas_list,
                                         clust_mask_list, prune, node_size_list, num_total_samples, conn_model_list,
@@ -1707,7 +1703,7 @@ def build_workflow(args, retval):
     # Multi-subject pipeline
     def wf_multi_subject(ID, func_file_list, dwi_file_list, mask_list, fbvec_list, fbval_list, conf_list,
                          anat_file_list, atlas, network, node_size, roi, thr, uatlas, multi_nets, conn_model,
-                         dens_thresh, conf, adapt_thresh, plot_switch, dwi_file, multi_thr, multi_atlas, min_thr,
+                         dens_thresh, conf, plot_switch, dwi_file, multi_thr, multi_atlas, min_thr,
                          max_thr, step_thr, anat_file, parc, ref_txt, procmem, k, clust_mask, k_list,
                          k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, num_total_samples,
                          graph, conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph,
@@ -1767,7 +1763,7 @@ def build_workflow(args, retval):
                 ID=ID[i], func_file=func_file, atlas=atlas,
                 network=network, node_size=node_size, roi=roi, thr=thr, uatlas=uatlas,
                 multi_nets=multi_nets, conn_model=conn_model, dens_thresh=dens_thresh, conf=conf_sub,
-                adapt_thresh=adapt_thresh, plot_switch=plot_switch, dwi_file=dwi_file, multi_thr=multi_thr,
+                plot_switch=plot_switch, dwi_file=dwi_file, multi_thr=multi_thr,
                 multi_atlas=multi_atlas, min_thr=min_thr, max_thr=max_thr, step_thr=step_thr, anat_file=anat_file,
                 parc=parc, ref_txt=ref_txt, procmem=procmem, k=k, clust_mask=clust_mask, k_list=k_list,
                 k_clustering=k_clustering, user_atlas_list=user_atlas_list,
@@ -1854,7 +1850,7 @@ def build_workflow(args, retval):
         wf_multi, dir_list = wf_multi_subject(ID, func_file_list, dwi_file_list, mask_list, fbvec_list, fbval_list,
                                               conf_list, anat_file_list, atlas, network, node_size, roi,
                                               thr, uatlas, multi_nets, conn_model, dens_thresh,
-                                              conf, adapt_thresh, plot_switch, dwi_file, multi_thr,
+                                              conf, plot_switch, dwi_file, multi_thr,
                                               multi_atlas, min_thr, max_thr, step_thr, anat_file, parc,
                                               ref_txt, procmem, k, clust_mask, k_list,
                                               k_clustering, user_atlas_list, clust_mask_list, prune,
@@ -1956,7 +1952,7 @@ def build_workflow(args, retval):
 
         # Single-subject pipeline
         wf = init_wf_single_subject(ID, func_file, atlas, network, node_size, roi, thr, uatlas,
-                                    multi_nets, conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file,
+                                    multi_nets, conn_model, dens_thresh, conf, plot_switch, dwi_file,
                                     multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_file, parc, ref_txt,
                                     procmem, k, clust_mask, k_list, k_clustering, user_atlas_list,
                                     clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,

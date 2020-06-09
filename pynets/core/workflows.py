@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 
 
 def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas, multi_nets,
-                      conn_model, dens_thresh, conf, adapt_thresh, plot_switch, dwi_file, anat_file, parc,
+                      conn_model, dens_thresh, conf, plot_switch, dwi_file, anat_file, parc,
                       ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                       clust_mask, k_list, k_clustering, user_atlas_list, clust_mask_list, prune,
                       node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
@@ -176,7 +176,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     meta_inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID', 'atlas', 'network', 'thr',
                                                            'node_size', 'roi', 'uatlas', 'multi_nets',
                                                            'conn_model_func', 'conn_model_dwi', 'dens_thresh',
-                                                           'conf', 'adapt_thresh', 'plot_switch', 'dwi_file',
+                                                           'conf', 'plot_switch', 'dwi_file',
                                                            'anat_file', 'parc', 'ref_txt', 'procmem', 'multi_thr',
                                                            'multi_atlas', 'max_thr', 'min_thr', 'step_thr', 'k',
                                                            'clust_mask', 'k_list', 'k_clustering',
@@ -209,7 +209,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     meta_inputnode.inputs.conn_model_dwi = conn_model_dwi
     meta_inputnode.inputs.dens_thresh = dens_thresh
     meta_inputnode.inputs.conf = conf
-    meta_inputnode.inputs.adapt_thresh = adapt_thresh
     meta_inputnode.inputs.plot_switch = plot_switch
     meta_inputnode.inputs.dwi_file = dwi_file
     meta_inputnode.inputs.fbval = fbval
