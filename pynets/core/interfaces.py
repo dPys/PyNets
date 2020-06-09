@@ -209,7 +209,7 @@ class _ExtractTimeseriesInputSpec(BaseInterfaceInputSpec):
     parc = traits.Bool()
     node_size = traits.Any(mandatory=False)
     net_parcels_nii_path = traits.Any(mandatory=False)
-    extract_strategy = traits.Any(mandatory=False)
+    extract_strategy = traits.Str('mean', mandatory=False, usedefault=True)
 
 
 class _ExtractTimeseriesOutputSpec(TraitedSpec):

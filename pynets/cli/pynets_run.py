@@ -252,7 +252,7 @@ def get_parser():
 
     # dMRI hyperparameters
     parser.add_argument('-ml',
-                        metavar='Maximum fiber length for tracking',
+                        metavar='Minimum fiber length for tracking',
                         default=20,
                         nargs='+',
                         help='(Hyperparameter): Include this flag to manually specify a minimum tract length (mm) for '
@@ -518,15 +518,15 @@ def build_workflow(args, retval):
     if extract_strategy:
         if (type(extract_strategy) is list) and (len(extract_strategy) > 1):
             extract_strategy_list = extract_strategy
-            extract_strategy = None
+            extract_strategy = 'mean'
         elif extract_strategy == ['None']:
-            extract_strategy = None
+            extract_strategy = 'mean'
             extract_strategy_list = None
         elif type(extract_strategy) is list:
             extract_strategy = extract_strategy[0]
             extract_strategy_list = None
         else:
-            extract_strategy = None
+            extract_strategy = 'mean'
             extract_strategy_list = None
     else:
         extract_strategy_list = None

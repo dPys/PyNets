@@ -2204,7 +2204,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                            'network', 'smooth', 'atlas', 'uatlas', 'labels', 'hpass', 'mask', 'parc',
                                            'node_size', 'net_parcels_nii_path', 'extract_strategy'],
                               output_names=['ts_within_nodes', 'node_size', 'smooth', 'dir_path', 'atlas', 'uatlas',
-                                            'labels', 'coords', 'hpass', 'roi'], imports=import_list,
+                                            'labels', 'coords', 'hpass', 'roi', 'extract_strategy'],
+                              imports=import_list,
                               name="extract_ts_node")
 
     extract_ts_node.interface.n_procs = runtime_dict['extract_ts_node'][0]
@@ -2280,8 +2281,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     else:
         fmri_connectometry_wf.connect([(inputnode, extract_ts_info_node, [('hpass', 'hpass')])])
 
-    if hpass_list or smooth_list or node_size_list:
-        # print("%s%s" % ('Expanding within-node iterable combos:\n', extract_ts_info_iters))
+    if hpass_list or smooth_list or node_size_list or extract_strategy_list:
+        print("%s%s" % ('Expanding within-node iterable combos:\n', extract_ts_info_iters))
         extract_ts_info_node.iterables = extract_ts_info_iters
 
     extract_ts_info_node.synchronize = True
