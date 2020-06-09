@@ -2256,7 +2256,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         # Coordinate case
         extract_ts_node.inputs.parc = False
         extract_ts_node.inputs.net_parcels_nii_path = None
-        extract_ts_node.inputs.extract_strategy = None
+        extract_ts_node.inputs.extract_strategy = 'None'
         # Set extract_ts iterables
         if node_size_list:
             if not smooth_list and hpass_list:
