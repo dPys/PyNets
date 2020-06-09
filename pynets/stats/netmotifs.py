@@ -275,7 +275,6 @@ def motif_matching(paths, ID, atlas, namer_dir, name_list, metadata_list, multig
     from pynets.stats.netmotifs import compare_motifs
     from sklearn.metrics.pairwise import cosine_similarity
     from pynets.stats.netstats import community_resolution_selection
-    from graspy.match import GraphMatch as GMP
     try:
         import cPickle as pickle
     except ImportError:
@@ -286,15 +285,15 @@ def motif_matching(paths, ID, atlas, namer_dir, name_list, metadata_list, multig
     func_mat = np.load(func_graph_path)
 
     if rsn is not None:
-        struct_coords_path = glob.glob(f"{str(Path(struct_graph_path).parent.parent)}/nodes/{rsn}_coords*.pkl")[0]
-        func_coords_path = glob.glob(f"{str(Path(func_graph_path).parent.parent)}/nodes/{rsn}_coords*.pkl")[0]
-        struct_labels_path = glob.glob(f"{str(Path(struct_graph_path).parent.parent)}/nodes/{rsn}_labels*.pkl")[0]
-        func_labels_path = glob.glob(f"{str(Path(func_graph_path).parent.parent)}/nodes/{rsn}_labels*.pkl")[0]
+        struct_coords_path = glob.glob(f"{str(Path(struct_graph_path).parent.parent)}/nodes/{rsn}_coords_rsn.pkl")[0]
+        func_coords_path = glob.glob(f"{str(Path(func_graph_path).parent.parent)}/nodes/{rsn}_coords_rsn.pkl")[0]
+        struct_labels_path = glob.glob(f"{str(Path(struct_graph_path).parent.parent)}/nodes/{rsn}_labels_rsn.pkl")[0]
+        func_labels_path = glob.glob(f"{str(Path(func_graph_path).parent.parent)}/nodes/{rsn}_labels_rsn.pkl")[0]
     else:
-        struct_coords_path = glob.glob(f"{str(Path(struct_graph_path).parent.parent)}/nodes/*coords*.pkl")[0]
-        func_coords_path = glob.glob(f"{str(Path(func_graph_path).parent.parent)}/nodes/*coords*.pkl")[0]
-        struct_labels_path = glob.glob(f"{str(Path(struct_graph_path).parent.parent)}/nodes/*labels*.pkl")[0]
-        func_labels_path = glob.glob(f"{str(Path(func_graph_path).parent.parent)}/nodes/*labels*.pkl")[0]
+        struct_coords_path = glob.glob(f"{str(Path(struct_graph_path).parent.parent)}/nodes/*coords.pkl")[0]
+        func_coords_path = glob.glob(f"{str(Path(func_graph_path).parent.parent)}/nodes/*coords.pkl")[0]
+        struct_labels_path = glob.glob(f"{str(Path(struct_graph_path).parent.parent)}/nodes/*labels.pkl")[0]
+        func_labels_path = glob.glob(f"{str(Path(func_graph_path).parent.parent)}/nodes/*labels.pkl")[0]
 
     with open(struct_coords_path, 'rb') as file_:
         struct_coords = pickle.load(file_)
@@ -305,30 +304,20 @@ def motif_matching(paths, ID, atlas, namer_dir, name_list, metadata_list, multig
     with open(func_labels_path, 'rb') as file_:
         func_labels = pickle.load(file_)
 
-    assert len(struct_coords) == len(func_coords)
-    assert len(struct_labels) == len(func_labels)
-
     if func_mat.shape == struct_mat.shape:
         func_mat[~struct_mat.astype('bool')] = 0
         struct_mat[~func_mat.astype('bool')] = 0
         print("Number of edge disagreements after matching: ", sum(sum(abs(func_mat - struct_mat))))
 
         metadata = {}
-        metadata['coords'] = func_coords
-        metadata['labels'] = func_labels
+        assert len(struct_coords) == len(struct_labels) == len(func_coords) == len(func_labels) == func_mat.shape[0]
+        metadata['coords'] = struct_coords
+        metadata['labels'] = struct_labels
         metadata_list.append(metadata)
 
         struct_mat = np.maximum(struct_mat, struct_mat.T)
         func_mat = np.maximum(func_mat, func_mat.T)
-
-        # struct_mat = nx.to_numpy_array(sorted(nx.connected_component_subgraphs(nx.from_numpy_matrix(
-        #     struct_mat)), key=len, reverse=True)[0])
-
         struct_mat = thresholding.standardize(struct_mat)
-
-        # func_mat = nx.to_numpy_array(sorted(nx.connected_component_subgraphs(nx.from_numpy_matrix(
-        #     func_mat)), key=len, reverse=True)[0])
-
         func_mat = thresholding.standardize(func_mat)
 
         struct_node_comm_aff_mat = community_resolution_selection(
@@ -356,6 +345,8 @@ def motif_matching(paths, ID, atlas, namer_dir, name_list, metadata_list, multig
         func_name = func_graph_path.split('/')[-1].split('_raw.npy')[0]
         name = f"{ID}_{atlas}_mplx_Layer-1_{struct_name}_Layer-2_{func_name}"
         name_list.append(name)
+        struct_mat = np.maximum(struct_mat, struct_mat.T)
+        func_mat = np.maximum(func_mat, func_mat.T)
         [mldict, g_dict] = compare_motifs(struct_mat, func_mat, name, namer_dir)
         multigraph_list_all.append(list(mldict.values())[0])
         graph_path_list = []
@@ -440,14 +431,14 @@ def build_multigraphs(est_path_iterlist, ID):
     multigraph_list_all = []
     graph_path_list_all = []
     for atlas in atlases:
-        if len(func_subnets) > 1:
+        if len(func_subnets) >= 1:
             parcel_dict_func[atlas] = {}
             for sub_net in func_subnets:
                 parcel_dict_func[atlas][sub_net] = []
         else:
             parcel_dict_func[atlas] = []
 
-        if len(dwi_subnets) > 1:
+        if len(dwi_subnets) >= 1:
             parcel_dict_dwi[atlas] = {}
             for sub_net in dwi_subnets:
                 parcel_dict_dwi[atlas][sub_net] = []
@@ -456,7 +447,7 @@ def build_multigraphs(est_path_iterlist, ID):
 
         for graph_path in est_path_iterlist_dwi:
             if atlas in graph_path:
-                if len(dwi_subnets) > 1:
+                if len(dwi_subnets) >= 1:
                     for sub_net in dwi_subnets:
                         if sub_net in graph_path:
                             parcel_dict_dwi[atlas][sub_net].append(graph_path)
@@ -465,7 +456,7 @@ def build_multigraphs(est_path_iterlist, ID):
 
         for graph_path in est_path_iterlist_func:
             if atlas in graph_path:
-                if len(func_subnets) > 1:
+                if len(func_subnets) >= 1:
                     for sub_net in func_subnets:
                         if sub_net in graph_path:
                             parcel_dict_func[atlas][sub_net].append(graph_path)
@@ -475,7 +466,7 @@ def build_multigraphs(est_path_iterlist, ID):
         parcel_dict = {}
         # Create dictionary of all possible pairs of structural-functional graphs for each unique resolution
         # of vertices
-        if len(dwi_subnets) > 1 and len(func_subnets) > 1:
+        if len(dwi_subnets) >= 1 and len(func_subnets) >= 1:
             parcel_dict[atlas] = {}
             dwi_subnets.sort(key=lambda x: x.split('_rsn-')[1])
             func_subnets.sort(key=lambda x: x.split('_rsn-')[1])

@@ -10,28 +10,18 @@ import numpy as np
 import warnings
 warnings.filterwarnings("ignore")
 from pathlib import Path
-from sklearn.feature_selection import VarianceThreshold
 from pynets.core.utils import flatten
 
 
 def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     from graspy.embed import OmnibusEmbed, ClassicalMDS
     from joblib import dump
-    variance_threshold = VarianceThreshold(threshold=0.00001)
-    diags = np.array([np.triu(pop_array[i]) for i in range(len(pop_array))])
-    graphs_ix_keep = variance_threshold.fit(diags.reshape(diags.shape[0],
-                                                          diags.shape[1] *
-                                                          diags.shape[2]).T).get_support(indices=True)
-    pop_array_red = [pop_array[i] for i in graphs_ix_keep]
 
-    # Omnibus embedding -- random dot product graph (rdpg)
+    # Omnibus embedding
     print(f"{'Embedding unimodal omnetome for atlas: '}{atlas}{' and '}{subgraph_name}{'...'}")
     omni = OmnibusEmbed(check_lcc=False)
     mds = ClassicalMDS()
-    try:
-        omni_fit = omni.fit_transform(pop_array_red)
-    except:
-        omni_fit = omni.fit_transform(pop_array)
+    omni_fit = omni.fit_transform(pop_array)
 
     # Transform omnibus tensor into dissimilarity feature
     mds_fit = mds.fit_transform(omni_fit)
@@ -44,9 +34,11 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
 
     out_path = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_omnetome.npy"
 
-    out_path_est = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_masetome_estimator.joblib"
+    out_path_est_omni = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_masetome_estimator_omni.joblib"
+    out_path_est_mds = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_masetome_estimator_mds.joblib"
 
-    dump(omni_fit, out_path_est)
+    dump(omni, out_path_est_omni)
+    dump(omni, out_path_est_mds)
 
     print('Saving...')
     np.save(out_path, mds_fit)
@@ -58,20 +50,10 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     from graspy.embed import MultipleASE
     from joblib import dump
 
-    variance_threshold = VarianceThreshold(threshold=0.00001)
-    diags = np.array([np.triu(pop_array[i]) for i in range(len(pop_array))])
-    graphs_ix_keep = variance_threshold.fit(diags.reshape(diags.shape[0],
-                                                          diags.shape[1] *
-                                                          diags.shape[2]).T).get_support(indices=True)
-    pop_array_red = [pop_array[i] for i in graphs_ix_keep]
-
-    # Omnibus embedding -- random dot product graph (rdpg)
+    # Multiple Adjacency Spectral embedding
     print(f"{'Embedding multimodal masetome for atlas: '}{atlas}{' and '}{subgraph_name}{'...'}")
     mase = MultipleASE()
-    try:
-        mase_fit = mase.fit_transform(pop_array_red)
-    except:
-        mase_fit = mase.fit_transform(pop_array)
+    mase_fit = mase.fit_transform(pop_array)
 
     dir_path = str(Path(os.path.dirname(graph_path)))
     namer_dir = dir_path + '/embeddings'
@@ -81,13 +63,69 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     out_path = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_masetome.npy"
     out_path_est = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_masetome_estimator.joblib"
 
-    dump(mase_fit, out_path_est)
+    dump(mase, out_path_est)
 
     print('Saving...')
     np.save(out_path, mase.scores_)
     del mase, mase_fit
 
     return out_path
+
+
+def _ase_embed(mat, atlas, graph_path, ID, subgraph_name='whole_brain'):
+    from graspy.embed import AdjacencySpectralEmbed
+    from joblib import dump
+
+    # Adjacency Spectral embedding
+    print(f"{'Embedding unimod asetome for atlas: '}{atlas}{' and '}{subgraph_name}{'...'}")
+    ase = AdjacencySpectralEmbed()
+    ase_fit = ase.fit_transform(mat)
+
+    dir_path = str(Path(os.path.dirname(graph_path)).parent)
+
+    namer_dir = dir_path + '/embeddings'
+    if not os.path.isdir(namer_dir):
+        os.makedirs(namer_dir, exist_ok=True)
+
+    out_path = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_asetome.npy"
+    out_path_est = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_asetome_estimator.joblib"
+
+    dump(ase, out_path_est)
+
+    print('Saving...')
+    np.save(out_path, ase_fit)
+    del ase, ase_fit
+
+    return out_path
+
+
+def build_asetomes(est_path_iterlist, ID):
+    """
+    Embeds single graphs using the ASE algorithm.
+
+    Parameters
+    ----------
+    est_path_iterlist : list
+        List of file paths to .npy files, each containing a graph.
+    ID : str
+        A subject id or other unique identifier.
+    """
+    from pynets.core.utils import prune_suffices
+    from pynets.stats.embeddings import _ase_embed
+
+    out_paths = []
+    for file_ in list(flatten(est_path_iterlist)):
+        mat = np.load(file_)
+        atlas = prune_suffices(file_.split('/')[-3])
+        res = prune_suffices('_'.join(file_.split('/')[-1].split('modality')[1].split('_')[1:]).split('_est')[0])
+        if 'rsn' in res:
+            subgraph = res.split('rsn-')[1]
+        else:
+            subgraph = 'whole_brain'
+        out_path = _ase_embed(mat, atlas, file_, ID, subgraph_name=subgraph)
+        out_paths.append(out_path)
+
+    return out_paths
 
 
 def build_masetome(est_path_iterlist, ID):
@@ -102,6 +140,7 @@ def build_masetome(est_path_iterlist, ID):
     ID : str
         A subject id or other unique identifier.
     """
+    from pynets.core.utils import prune_suffices
     from pynets.stats.embeddings import _mase_embed
 
     out_paths = []
@@ -109,12 +148,13 @@ def build_masetome(est_path_iterlist, ID):
         pop_list = []
         for _file in pairs:
             pop_list.append(np.load(_file))
-        res = '_'.join(pairs[0].split('/')[-1].split('_')[1:]).split('_est')[0]
+        atlas = prune_suffices(pairs[0].split('/')[-3])
+        res = prune_suffices('_'.join(pairs[0].split('/')[-1].split('modality')[1].split('_')[1:]).split('_est')[0])
         if 'rsn' in res:
-            subgraph = res.split('_rsn-')[1]
+            subgraph = res.split('rsn-')[1]
         else:
             subgraph = 'whole_brain'
-        out_path = _mase_embed(pop_list, res.split('_')[0], _file, ID, subgraph_name=subgraph)
+        out_path = _mase_embed(pop_list, atlas, pairs[0], ID, subgraph_name=subgraph)
         out_paths.append(out_path)
 
     return out_paths
@@ -127,7 +167,7 @@ def build_omnetome(est_path_iterlist, ID):
     Parameters
     ----------
     est_path_iterlist : list
-        List of file paths to .npy file containing graph without thresholding applied.
+        List of file paths to .npy file containing graph.
     ID : str
         A subject id or other unique identifier.
     """
@@ -164,14 +204,14 @@ def build_omnetome(est_path_iterlist, ID):
     out_paths_func = []
     out_paths_dwi = []
     for atlas in atlases:
-        if len(func_subnets) > 1:
+        if len(func_subnets) >= 1:
             parcel_dict_func[atlas] = {}
             for sub_net in func_subnets:
                 parcel_dict_func[atlas][sub_net] = []
         else:
             parcel_dict_func[atlas] = []
 
-        if len(dwi_subnets) > 1:
+        if len(dwi_subnets) >= 1:
             parcel_dict_dwi[atlas] = {}
             for sub_net in dwi_subnets:
                 parcel_dict_dwi[atlas][sub_net] = []
@@ -180,7 +220,7 @@ def build_omnetome(est_path_iterlist, ID):
 
         for graph_path in est_path_iterlist_dwi:
             if atlas in graph_path:
-                if len(dwi_subnets) > 1:
+                if len(dwi_subnets) >= 1:
                     for sub_net in dwi_subnets:
                         if sub_net in graph_path:
                             parcel_dict_dwi[atlas][sub_net].append(graph_path)
@@ -189,7 +229,7 @@ def build_omnetome(est_path_iterlist, ID):
 
         for graph_path in est_path_iterlist_func:
             if atlas in graph_path:
-                if len(func_subnets) > 1:
+                if len(func_subnets) >= 1:
                     for sub_net in func_subnets:
                         if sub_net in graph_path:
                             parcel_dict_func[atlas][sub_net].append(graph_path)

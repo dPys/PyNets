@@ -585,48 +585,57 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                    output_names=['out_paths_dwi', 'out_paths_func'],
                                                    function=embedding.build_omnetome),
                                       name='omni_embedding_node', imports=import_list)
+        ase_embedding_node = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
+                                                  output_names=['out_paths'],
+                                                  function=embedding.build_asetome),
+                                     name='ase_embedding_node', imports=import_list)
         if multimodal is True:
             mase_embedding_node = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
                                                        output_names=['out_paths'],
                                                        function=embedding.build_masetome),
                                           name='mase_embedding_node', imports=import_list)
 
-    if (func_file and not dwi_file) or (dwi_file and not func_file):
-        if func_file and not dwi_file:
-            meta_wf.connect([(pass_meta_ins_func_node, pass_meta_outs_node,
-                              [('conn_model_iterlist', 'conn_model_iterlist'),
-                               ('est_path_iterlist', 'est_path_iterlist'),
-                               ('network_iterlist', 'network_iterlist'),
-                               ('thr_iterlist', 'thr_iterlist'),
-                               ('prune_iterlist', 'prune_iterlist'),
-                               ('ID_iterlist', 'ID_iterlist'),
-                               ('roi_iterlist', 'roi_iterlist'),
-                               ('norm_iterlist', 'norm_iterlist'),
-                               ('binary_iterlist', 'binary_iterlist')])
+    if func_file and not dwi_file:
+        meta_wf.connect([(pass_meta_ins_func_node, pass_meta_outs_node,
+                          [('conn_model_iterlist', 'conn_model_iterlist'),
+                           ('est_path_iterlist', 'est_path_iterlist'),
+                           ('network_iterlist', 'network_iterlist'),
+                           ('thr_iterlist', 'thr_iterlist'),
+                           ('prune_iterlist', 'prune_iterlist'),
+                           ('ID_iterlist', 'ID_iterlist'),
+                           ('roi_iterlist', 'roi_iterlist'),
+                           ('norm_iterlist', 'norm_iterlist'),
+                           ('binary_iterlist', 'binary_iterlist')])
+                         ])
+        if embed is True:
+            meta_wf.connect([(pass_meta_ins_func_node, omni_embedding_node,
+                              [('est_path_iterlist', 'est_path_iterlist')]),
+                             (meta_inputnode, omni_embedding_node, [('ID', 'ID')]),
+                             (pass_meta_ins_struct_node, ase_embedding_node,
+                              [('est_path_iterlist', 'est_path_iterlist')]),
+                             (meta_inputnode, ase_embedding_node, [('ID', 'ID')])
                              ])
-            if embed is True:
-                meta_wf.connect([(pass_meta_ins_func_node, omni_embedding_node,
-                                  [('est_path_iterlist', 'est_path_iterlist')]),
-                                 (meta_inputnode, omni_embedding_node, [('ID', 'ID')])
-                                 ])
-        elif dwi_file and not func_file:
-            meta_wf.connect([(pass_meta_ins_struct_node, pass_meta_outs_node,
-                              [('conn_model_iterlist', 'conn_model_iterlist'),
-                               ('est_path_iterlist', 'est_path_iterlist'),
-                               ('network_iterlist', 'network_iterlist'),
-                               ('thr_iterlist', 'thr_iterlist'),
-                               ('prune_iterlist', 'prune_iterlist'),
-                               ('ID_iterlist', 'ID_iterlist'),
-                               ('roi_iterlist', 'roi_iterlist'),
-                               ('norm_iterlist', 'norm_iterlist'),
-                               ('binary_iterlist', 'binary_iterlist')])
+    if dwi_file and not func_file:
+        meta_wf.connect([(pass_meta_ins_struct_node, pass_meta_outs_node,
+                          [('conn_model_iterlist', 'conn_model_iterlist'),
+                           ('est_path_iterlist', 'est_path_iterlist'),
+                           ('network_iterlist', 'network_iterlist'),
+                           ('thr_iterlist', 'thr_iterlist'),
+                           ('prune_iterlist', 'prune_iterlist'),
+                           ('ID_iterlist', 'ID_iterlist'),
+                           ('roi_iterlist', 'roi_iterlist'),
+                           ('norm_iterlist', 'norm_iterlist'),
+                           ('binary_iterlist', 'binary_iterlist')])
+                         ])
+        if embed is True:
+            meta_wf.connect([(pass_meta_ins_struct_node, omni_embedding_node,
+                              [('est_path_iterlist', 'est_path_iterlist')]),
+                             (meta_inputnode, omni_embedding_node, [('ID', 'ID')]),
+                             (pass_meta_ins_struct_node, ase_embedding_node,
+                              [('est_path_iterlist', 'est_path_iterlist')]),
+                             (meta_inputnode, ase_embedding_node, [('ID', 'ID')])
                              ])
-            if embed is True:
-                meta_wf.connect([(pass_meta_ins_struct_node, omni_embedding_node,
-                                  [('est_path_iterlist', 'est_path_iterlist')]),
-                                 (meta_inputnode, omni_embedding_node, [('ID', 'ID')])
-                                 ])
-    elif func_file and dwi_file:
+    if func_file and dwi_file:
         # Multiplex magic happens in the meta-workflow space.
         meta_wf.connect([(pass_meta_ins_multi_node, pass_meta_outs_node,
                           [('conn_model_iterlist', 'conn_model_iterlist'),
@@ -672,7 +681,19 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
             if embed is True:
                 meta_wf.connect([(build_multigraphs_node, mase_embedding_node,
                                   [('graph_path_list_top', 'est_path_iterlist')]),
-                                 (meta_inputnode, mase_embedding_node, [('ID', 'ID')])
+                                 (meta_inputnode, mase_embedding_node, [('ID', 'ID')]),
+                                 (pass_meta_ins_multi_node, omni_embedding_node,
+                                  [('est_path_iterlist', 'est_path_iterlist')]),
+                                 (meta_inputnode, omni_embedding_node, [('ID', 'ID')]),
+                                 (pass_meta_ins_multi_node, ase_embedding_node,
+                                  [('est_path_iterlist', 'est_path_iterlist')]),
+                                 (meta_inputnode, ase_embedding_node, [('ID', 'ID')]),
+                                 (pass_meta_ins_multi_node, omni_embedding_node,
+                                  [('est_path_iterlist', 'est_path_iterlist')]),
+                                 (meta_inputnode, omni_embedding_node, [('ID', 'ID')]),
+                                 (pass_meta_ins_multi_node, ase_embedding_node,
+                                  [('est_path_iterlist', 'est_path_iterlist')]),
+                                 (meta_inputnode, ase_embedding_node, [('ID', 'ID')])
                                  ])
 
     else:

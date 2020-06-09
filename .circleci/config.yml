@@ -420,6 +420,7 @@ jobs:
             virtualenv --python=python sdist
             source sdist/bin/activate
             pip install --upgrade "pip>=19.1" numpy
+            pip install git+https://github.com/dPys/nilearn.git@enh/parc_conn
             pip install dist/pynets*.tar.gz
             which pynets | grep sdist\\/bin
             INSTALLED_VERSION=$(pynets --version)

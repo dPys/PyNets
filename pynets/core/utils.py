@@ -21,6 +21,19 @@ def get_file():
     return base_path
 
 
+def prune_suffices(res):
+    import re
+    if 'reor-RAS' in str(res):
+        res = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(res))
+    if 'res-' in str(res):
+        res = re.sub(r"_res\-*[0-4]mm", "", str(res))
+    if 'noreor-RAS' in str(res):
+        res = re.sub(r"_noreor\-*[A-Z][A-Z][A-Z]", "", str(res))
+    if 'nores-' in str(res):
+        res = re.sub(r"_nores\-*[0-4]mm", "", str(res))
+    return res
+
+
 def do_dir_path(atlas, outdir):
     """
     Creates an atlas subdirectory from the base directory of the given subject's input file.
@@ -40,10 +53,7 @@ def do_dir_path(atlas, outdir):
     if atlas:
         if os.path.isfile(atlas):
             atlas = os.path.basename(atlas)
-        if 'reor-RAS' in str(atlas):
-            atlas = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(atlas))
-        if 'res-' in str(atlas):
-            atlas = re.sub(r"_res\-*[0-4]mm", "", str(atlas))
+        atlas = prune_suffices(atlas)
         if atlas.endswith('.nii.gz'):
            atlas = atlas.replace('.nii.gz', '')
 
@@ -785,7 +795,7 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
             net_mets_csv_list = list(set([i for i in net_mets_csv_list_nets if network in i]))
             if multimodal is True:
                 net_mets_csv_list_dwi = list(set([i for i in net_mets_csv_list if i.split('est-')[1].split('_')[0]
-                                                   in struct_models]))
+                                                  in struct_models]))
                 combination_complete_dwi = collect_pandas_df_make(net_mets_csv_list_dwi, ID, network, plot_switch)
                 net_mets_csv_list_func = list(set([i for i in net_mets_csv_list if
                                                     i.split('est-')[1].split('_')[0] in func_models]))
@@ -800,10 +810,10 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
     else:
         if multimodal is True:
             net_mets_csv_list_dwi = list(set([i for i in net_mets_csv_list if i.split('est-')[1].split('_')[0] in
-                                               struct_models]))
+                                              struct_models]))
             combination_complete_dwi = collect_pandas_df_make(net_mets_csv_list_dwi, ID, network, plot_switch)
             net_mets_csv_list_func = list(set([i for i in net_mets_csv_list if i.split('est-')[1].split('_')[0]
-                                                in func_models]))
+                                               in func_models]))
             combination_complete_func = collect_pandas_df_make(net_mets_csv_list_func, ID, network, plot_switch)
 
             if combination_complete_dwi is True and combination_complete_func is True:
