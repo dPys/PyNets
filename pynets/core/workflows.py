@@ -696,9 +696,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                  (meta_inputnode, ase_embedding_node, [('ID', 'ID')])
                                  ])
 
-    else:
-        raise ValueError('ERROR: meta-workflow options not defined.')
-
     # Set resource restrictions at level of the meta wf
     if func_file:
         wf_selected = f"{'fmri_connectometry_'}{ID}"
