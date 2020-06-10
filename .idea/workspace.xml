@@ -8,8 +8,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/pynets/cli/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/cli/pynets_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/core/workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/workflows.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_static/0025427_1_DesikanKlein2012_mplx_Layer-1_0025427_1_modality-dwi_rsn-Vis_est-csa_nodetype-parc_samples-500streams_tt-local_dg-clos_ml-0_Layer-2_0025427_1_modality-func_rsn-Vis_roi-sub-0025427_ses-1_taskglassbrain_mplx.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_static/glassbrain_mplx.png" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -49,7 +49,7 @@
         <entry file="file://$PROJECT_DIR$/pynets/core/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="424">
-              <caret line="1763" column="42" lean-forward="true" selection-start-line="1763" selection-start-column="42" selection-end-line="1763" selection-end-column="42" />
+              <caret line="1763" column="42" selection-start-line="1763" selection-start-column="42" selection-end-line="1763" selection-end-column="42" />
               <folding>
                 <element signature="e#139#154#0" expanded="true" />
               </folding>
@@ -57,13 +57,18 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/config/bids_config.json">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="165">
               <caret line="11" column="25" selection-start-line="11" selection-start-column="25" selection-end-line="11" selection-end-column="25" />
             </state>
           </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/docs/_static/glassbrain_mplx.png">
+          <provider selected="true" editor-type-id="images" />
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
@@ -265,6 +270,17 @@
             <path>
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="docs" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="docs" type="462c0819:PsiDirectoryNode" />
+              <item name="_static" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
@@ -479,12 +495,12 @@
       <workItem from="1587485176820" duration="80699000" />
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
-      <workItem from="1589906893238" duration="370606000" />
+      <workItem from="1589906893238" duration="371214000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1341912000" />
+    <option name="totallyTimeSpent" value="1342520000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -625,9 +641,6 @@
       <provider selected="true" editor-type-id="images" />
     </entry>
     <entry file="file://$PROJECT_DIR$/docs/_static/yeo7mosaic.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/docs/_static/0025427_1_DesikanKlein2012_mplx_Layer-1_0025427_1_modality-dwi_rsn-Vis_est-csa_nodetype-parc_samples-500streams_tt-local_dg-clos_ml-0_Layer-2_0025427_1_modality-func_rsn-Vis_roi-sub-0025427_ses-1_taskglassbrain_mplx.png">
       <provider selected="true" editor-type-id="images" />
     </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_clustering.py">
@@ -935,7 +948,7 @@
     <entry file="file://$PROJECT_DIR$/pynets/core/workflows.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="424">
-          <caret line="1763" column="42" lean-forward="true" selection-start-line="1763" selection-start-column="42" selection-end-line="1763" selection-end-column="42" />
+          <caret line="1763" column="42" selection-start-line="1763" selection-start-column="42" selection-end-line="1763" selection-end-column="42" />
           <folding>
             <element signature="e#139#154#0" expanded="true" />
           </folding>
@@ -948,6 +961,9 @@
           <caret line="11" column="25" selection-start-line="11" selection-start-column="25" selection-end-line="11" selection-end-column="25" />
         </state>
       </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/_static/glassbrain_mplx.png">
+      <provider selected="true" editor-type-id="images" />
     </entry>
   </component>
 </project>

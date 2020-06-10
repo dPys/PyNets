@@ -439,6 +439,8 @@ jobs:
             twine check dist/pynets*.whl
             virtualenv --python=python wheel
             source wheel/bin/activate
+            pip install --upgrade "pip>=19.1" numpy
+            pip install git+https://github.com/dPys/nilearn.git@enh/parc_conn
             pip install dist/pynets*.whl
             which pynets | grep wheel\\/bin
             INSTALLED_VERSION=$(pynets --version)
