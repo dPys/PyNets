@@ -626,13 +626,13 @@ class RegisterAtlasDWI(SimpleInterface):
         else:
             mask_tmp_path = None
 
-        if self.inputs.network is None:
-            atlas_name = self.inputs.atlas
-            base_dir_tmp = runtime.cwd
-        else:
+        if self.inputs.network:
             atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
             base_dir_tmp = f"{runtime.cwd}/atlas_{self.inputs.network}"
             shutil.copytree(self.inputs.basedir_path, base_dir_tmp)
+        else:
+            atlas_name = self.inputs.atlas
+            base_dir_tmp = self.inputs.basedir_path
 
         reg = register.DmriReg(basedir_path=base_dir_tmp,
                                fa_path=fa_tmp_path,
@@ -656,9 +656,10 @@ class RegisterAtlasDWI(SimpleInterface):
         else:
             uatlas_out = self.inputs.uatlas
 
-        # Cleanup
-        if self.inputs.network is None:
-            shutil.rmtree(base_dir_tmp, ignore_errors=True)
+        # # Cleanup
+        # if self.inputs.network:
+        #     print('Cleaning up...')
+        #     shutil.rmtree(base_dir_tmp, ignore_errors=True)
 
         self._results['dwi_aligned_atlas_wmgm_int'] = dwi_aligned_atlas_wmgm_int
         self._results['dwi_aligned_atlas'] = dwi_aligned_atlas
@@ -793,13 +794,13 @@ class RegisterAtlasFunc(SimpleInterface):
         else:
             mask_tmp_path = None
 
-        if self.inputs.network is None:
-            atlas_name = self.inputs.atlas
-            base_dir_tmp = runtime.cwd
-        else:
+        if self.inputs.network:
             atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
             base_dir_tmp = f"{runtime.cwd}/atlas_{self.inputs.network}"
             shutil.copytree(self.inputs.basedir_path, base_dir_tmp)
+        else:
+            atlas_name = self.inputs.atlas
+            base_dir_tmp = self.inputs.basedir_path
 
         reg = register.FmriReg(basedir_path=base_dir_tmp,
                                anat_file=anat_file_tmp_path,
@@ -811,9 +812,10 @@ class RegisterAtlasFunc(SimpleInterface):
         aligned_atlas_t1mni_gm = reg.atlas2t1wmni_align(uatlas_tmp_path, uatlas_parcels_tmp_path,
                                                         atlas_name)
 
-        # Cleanup
-        if self.inputs.network is None:
-            shutil.rmtree(base_dir_tmp, ignore_errors=True)
+        # # Cleanup
+        # if self.inputs.network:
+        #     print('Cleaning up...')
+        #     shutil.rmtree(base_dir_tmp, ignore_errors=True)
 
         self._results['aligned_atlas_t1mni_gm'] = aligned_atlas_t1mni_gm
         self._results['coords'] = self.inputs.coords

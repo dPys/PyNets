@@ -22,6 +22,7 @@ Citing
 A manuscript is in preparation, but for now, please cite all uses with reference
 to the github repository: https://github.com/dPys/PyNets
 
-![](docs/_static/structural_functional_multiplex.png)
-![](docs/_static/triple.png)
-![](docs/_static/graph.png)
+![Multiplex Layers](docs/_static/structural_functional_multiplex.png)
+![Multiplex Glass](docs/_static/glassbrain_mplx.png)
+![Yeo7](docs/_static/yeo7_mosaic.png)
+![Workflow DAG](docs/_static/graph.png)
