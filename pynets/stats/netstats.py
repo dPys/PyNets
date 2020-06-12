@@ -780,8 +780,9 @@ def raw_mets(G, i):
                 [H, _] = prune_disconnected(G)
                 net_met_val = float(i(H))
             except:
-                np.save(f"{'/tmp/average_shortest_path_length'}{random.randint(1, 400)}{'.npy'}",
-                        np.array(nx.to_numpy_matrix(H)))
+                print(f"{'WARNING: '}{net_name}{' failed for G.'}")
+                # np.save(f"{'/tmp/average_shortest_path_length'}{random.randint(1, 400)}{'.npy'}",
+                #         np.array(nx.to_numpy_matrix(H)))
     elif 'graph_number_of_cliques' in net_name:
         if nx.is_connected(G) is True:
             try:
@@ -793,8 +794,9 @@ def raw_mets(G, i):
                 [H, _] = prune_disconnected(G)
                 net_met_val = float(i(H))
             except:
-                np.save(f"{'/tmp/graph_num_cliques'}{random.randint(1, 400)}{'.npy'}",
-                        np.array(nx.to_numpy_matrix(H)))
+                print(f"{'WARNING: '}{net_name}{' failed for G.'}")
+                # np.save(f"{'/tmp/graph_num_cliques'}{random.randint(1, 400)}{'.npy'}",
+                #         np.array(nx.to_numpy_matrix(H)))
     elif 'smallworldness' in net_name:
         try:
             net_met_val = float(i(G))
@@ -803,8 +805,9 @@ def raw_mets(G, i):
                 [H, _] = prune_disconnected(G)
                 net_met_val = float(i(H))
             except:
-                np.save(f"{'/tmp/smallworldness'}{random.randint(1, 400)}{'.npy'}",
-                        np.array(nx.to_numpy_matrix(H)))
+                print(f"{'WARNING: '}{net_name}{' failed for G.'}")
+                # np.save(f"{'/tmp/smallworldness'}{random.randint(1, 400)}{'.npy'}",
+                #         np.array(nx.to_numpy_matrix(H)))
     elif 'degree_assortativity_coefficient' in net_name:
             H = G.copy()
             for u, v, d in H.edges(data=True):
@@ -820,8 +823,9 @@ def raw_mets(G, i):
                         from networkx.algorithms.assortativity import degree_pearson_correlation_coefficient
                         net_met_val = float(degree_pearson_correlation_coefficient(H, weight='weight'))
                     except:
-                        np.save(f"{'/tmp/degree_assortativity_coefficient'}{random.randint(1, 400)}{'.npy'}",
-                                np.array(nx.to_numpy_matrix(H)))
+                        print(f"{'WARNING: '}{net_name}{' failed for G.'}")
+                        # np.save(f"{'/tmp/degree_assortativity_coefficient'}{random.randint(1, 400)}{'.npy'}",
+                        #         np.array(nx.to_numpy_matrix(H)))
     else:
         net_met_val = float(i(G))
 
@@ -858,6 +862,7 @@ class CleanGraphs(object):
         Path to .csv file where graph analysis results are saved.
     """
     def __init__(self, thr, conn_model, est_path, prune, norm, out_fmt='edgelist_ssv'):
+        from pynets.core import utils
         self.thr = thr
         self.conn_model = conn_model
         self.est_path = est_path
@@ -865,13 +870,9 @@ class CleanGraphs(object):
         self.norm = norm
         self.out_fmt = out_fmt
         self.in_mat = None
-        self._est_path_fmt = f"{'.'}{self.est_path.split('.')[-1]}"
 
         # Load and threshold matrix
-        if self._est_path_fmt == '.txt':
-            self.in_mat_raw = np.array(np.genfromtxt(self.est_path))
-        else:
-            self.in_mat_raw = np.array(np.load(self.est_path))
+        self.in_mat_raw = utils.load_mat(self.est_path)
 
         # De-diagnal and remove nan's and inf's, ensure edge weights are positive
         self.in_mat = np.array(np.abs(np.array(thresholding.autofix(self.in_mat_raw))))
@@ -1355,14 +1356,10 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     import gc
     import os.path as op
     import yaml
-    import random
+    # import random
     import pkg_resources
     import networkx
     import pynets.stats.netstats
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
     from pathlib import Path
 
     cg = CleanGraphs(thr, conn_model, est_path, prune, norm)

@@ -28,7 +28,7 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
 
     dir_path = str(Path(os.path.dirname(graph_path)).parent)
 
-    namer_dir = dir_path + '/embeddings'
+    namer_dir = f"{dir_path}/embeddings"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -56,7 +56,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     mase_fit = mase.fit_transform(pop_array)
 
     dir_path = str(Path(os.path.dirname(graph_path)))
-    namer_dir = dir_path + '/embeddings'
+    namer_dir = f"{dir_path}/mplx_embeddings"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 

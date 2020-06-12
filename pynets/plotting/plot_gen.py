@@ -366,13 +366,13 @@ def create_gb_palette(mat, edge_cmap, coords, labels, node_size='auto', node_cma
     node_cmap: colormap
         colormap used for representing the community assignment of the nodes.
     """
+    import random
     import seaborn as sns
     import networkx as nx
     from pynets.core import thresholding
     from matplotlib import colors
     from sklearn.preprocessing import minmax_scale
     from pynets.stats.netstats import community_resolution_selection, prune_disconnected
-    from random import randint
 
     mat = np.array(np.array(thresholding.autofix(mat)))
     if prune is True:
@@ -412,22 +412,24 @@ def create_gb_palette(mat, edge_cmap, coords, labels, node_size='auto', node_cma
 
     # Nodes
     if not node_cmap:
-        color_dict = {k: [] for k in 'rgb'}
-        for i in range(num_comms):
-            temp = {k: randint(0, 255) for k in 'rgb'}
-            for k in temp:
-                while 1:
-                    c = temp[k]
-                    t = set(j for j in range(c - 25, c + 25) if 0 <= j <= 255)
-                    if t.intersection(color_dict[k]):
-                        temp[k] = randint(0, 255)
-                    else:
-                        break
-                color_dict[k].append(temp[k])
+        # Generate as many randomly distinct colors as num_comms
+        def random_color(n):
+            ret = []
+            r = int(random.random() * 256)
+            g = int(random.random() * 256)
+            b = int(random.random() * 256)
+            step = 256 / n
+            for i in range(n):
+                r += step
+                g += step
+                b += step
+                r = int(r) % 256
+                g = int(g) % 256
+                b = int(b) % 256
+                ret.append((r, g, b))
+            return ret
 
-        flatui = ['#{:02x}{:02x}{:02x}'.format(color_dict['r'][i], color_dict['g'][i], color_dict['b'][i]) for
-                  i in range(num_comms)]
-
+        flatui = ['#{:02x}{:02x}{:02x}'.format(i[0], i[1], i[2]) for i in random_color(num_comms)]
 
         try:
             ls_cmap = colors.LinearSegmentedColormap.from_list(node_comm_aff_mat,
@@ -435,7 +437,7 @@ def create_gb_palette(mat, edge_cmap, coords, labels, node_size='auto', node_cma
             matplotlib.cm.register_cmap("community", ls_cmap)
             clust_pal = sns.color_palette("community", n_colors=mat.shape[0])
         except:
-            clust_pal = sns.color_palette("Set2")
+            clust_pal = sns.color_palette("Set2", n_colors=mat.shape[0])
     else:
         clust_pal = sns.color_palette(node_cmap, n_colors=mat.shape[0])
     clust_pal_nodes = colors.to_rgba_array(clust_pal)

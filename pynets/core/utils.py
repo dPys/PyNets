@@ -416,20 +416,74 @@ def create_csv_path(dir_path, est_path):
     return out_path
 
 
+def load_mat(est_path):
+    """
+    Load an adjacency matrix using any of a variety of methods.
+
+    Parameters
+    ----------
+    est_path : str
+        File path to .npy file containing graph with thresholding applied.
+    """
+    import numpy as np
+    import networkx as nx
+    import os.path as op
+
+    fmt = op.splitext(est_path)[1]
+
+    if fmt == '.edgelist_csv' or fmt == '.csv':
+        with open(est_path, 'rb') as stream:
+            G = nx.read_weighted_edgelist(stream, delimiter=",")
+        stream.close()
+    elif fmt == '.edgelist_ssv' or fmt == '.ssv':
+        with open(est_path, 'rb') as stream:
+            G = nx.read_weighted_edgelist(stream, delimiter=" ")
+        stream.close()
+    elif fmt == '.edgelist_tsv' or fmt == '.tsv':
+        with open(est_path, 'rb') as stream:
+            G = nx.read_weighted_edgelist(stream, delimiter="\t")
+    elif fmt == '.gpickle':
+        G = nx.read_gpickle(est_path)
+    elif fmt == '.graphml':
+        G = nx.read_graphml(est_path)
+    elif fmt == '.txt':
+        G = nx.from_numpy_array(np.genfromtxt(est_path))
+    elif fmt == '.npy':
+        G = nx.from_numpy_array(np.load(est_path))
+    else:
+        raise ValueError('\nERROR: File format not supported!')
+
+    G.graph['ecount'] = nx.number_of_edges(G)
+    G = nx.convert_node_labels_to_integers(G, first_label=1)
+
+    return nx.to_numpy_matrix(G, weight='weight')
+
+
+def load_mat_ext(est_path, ID, network, conn_model, roi, prune, norm, binary, min_span_tree, dens_thresh,
+                 disp_filt):
+    from pynets.core.utils import load_mat
+
+    conn_matrix = load_mat(est_path)
+    return conn_matrix, est_path, ID, network, conn_model, roi, prune, norm, binary, min_span_tree, dens_thresh, \
+           disp_filt
+
+
 def save_mat(conn_matrix, est_path, fmt='npy'):
     """
-    Threshold a diffusion structural connectivity matrix using any of a variety of methods.
+   Save an adjacency matrix using any of a variety of methods.
 
     Parameters
     ----------
     conn_matrix : array
         Adjacency matrix stored as an m x n array of nodes and edges.
     est_path : str
-        File path to .npy file containing graph with thresholding applied.
+        File path to .npy file containing graph.
     fmt : str
         Format to save connectivity matrix/graph (e.g. .npy, .pkl, .graphml, .txt, .ssv, .csv). Default is .npy.
     """
+    import numpy as np
     import networkx as nx
+
     G = nx.from_numpy_array(conn_matrix)
     G.graph['ecount'] = nx.number_of_edges(G)
     G = nx.convert_node_labels_to_integers(G, first_label=1)
@@ -449,6 +503,17 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
         raise ValueError('\nERROR: File format not supported!')
 
     return
+
+
+def save_mat_thresholded(conn_matrix, est_path_orig, thr_type, ID, network, thr, conn_model, roi,
+                         prune, norm, binary):
+    from pynets.core.utils import save_mat
+    from nipype.utils.filemanip import fname_presuffix
+
+    est_path = fname_presuffix(est_path_orig, suffix=f"_thrtype-{thr_type}_thr-{thr}")
+    save_mat(conn_matrix, est_path, fmt='npy')
+
+    return est_path, ID, network, thr, conn_model, roi, prune, norm, binary
 
 
 def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist,

@@ -744,7 +744,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     from pynets.registration import register
     from pynets.registration import reg_utils as regutils
     from pynets.dmri import estimation
-    from pynets.core.interfaces import PlotStruct, RegisterDWI, Tracking, MakeGtabBmask, RegisterAtlasDWI
+    from pynets.core.interfaces import PlotStruct, RegisterDWI, Tracking, MakeGtabBmask, RegisterAtlasDWI, \
+        FetchNodesLabels
     import os.path as op
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
@@ -875,13 +876,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                            imports=import_list),
                                               name="check_orient_and_dims_anat_node")
 
-    fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas', 'uatlas', 'ref_txt', 'parc',
-                                                                    'in_file', 'use_AAL_naming', 'outdir', 'vox_size'],
-                                                       output_names=['labels', 'coords', 'atlas',
-                                                                     'networks_list', 'parcel_list', 'par_max',
-                                                                     'uatlas', 'dir_path'],
-                                                       function=nodemaker.fetch_nodes_and_labels,
-                                                       imports=import_list), name="fetch_nodes_and_labels_node")
+    fetch_nodes_and_labels_node = pe.Node(FetchNodesLabels(), name="fetch_nodes_and_labels_node")
 
     fetch_nodes_and_labels_node.synchronize = True
 
@@ -1684,14 +1679,13 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     """A function interface for generating an fMRI nested workflow"""
     import itertools
     import pkg_resources
-    import re
     import os.path as op
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core import nodemaker, utils, thresholding
     from pynets.fmri import estimation
     from pynets.registration import reg_utils as regutils
-    from pynets.core.interfaces import ExtractTimeseries, PlotFunc, RegisterFunc, RegisterAtlasFunc
+    from pynets.core.interfaces import ExtractTimeseries, PlotFunc, RegisterFunc, RegisterAtlasFunc, FetchNodesLabels
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]
@@ -1866,10 +1860,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         # clustering_node iterables and names
         if k_clustering == 1:
             mask_name = op.basename(clust_mask).split('.nii')[0]
-            if 'reor-RAS' in str(mask_name):
-                mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
-            if 'res-' in str(mask_name):
-                mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
+            mask_name = atlas = utils.prune_suffices(mask_name)
             cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
             cluster_atlas_file = f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_{clust_type}_k" \
                 f"{str(k)}.nii.gz"
@@ -1887,10 +1878,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for k in k_list:
                 mask_name = op.basename(clust_mask).split('.nii')[0]
-                if 'reor-RAS' in str(mask_name):
-                    mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
-                if 'res-' in str(mask_name):
-                    mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
+                mask_name = atlas = utils.prune_suffices(mask_name)
                 cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
@@ -1907,10 +1895,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for clust_mask in clust_mask_list:
                 mask_name = op.basename(clust_mask).split('.nii')[0]
-                if 'reor-RAS' in str(mask_name):
-                    mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
-                if 'res-' in str(mask_name):
-                    mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
+                mask_name = atlas = utils.prune_suffices(mask_name)
                 cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
@@ -1931,10 +1916,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             for clust_mask in clust_mask_list:
                 for k in k_list:
                     mask_name = op.basename(clust_mask).split('.nii')[0]
-                    if 'reor-RAS' in str(mask_name):
-                        mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
-                    if 'res-' in str(mask_name):
-                        mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
+                    mask_name = atlas = utils.prune_suffices(mask_name)
                     cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
@@ -1951,10 +1933,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
                 mask_name = op.basename(clust_mask).split('.nii')[0]
-                if 'reor-RAS' in str(mask_name):
-                    mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
-                if 'res-' in str(mask_name):
-                    mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
+                mask_name = atlas = utils.prune_suffices(mask_name)
                 cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
@@ -1975,10 +1954,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             for clust_type in clust_type_list:
                 for k in k_list:
                     mask_name = op.basename(clust_mask).split('.nii')[0]
-                    if 'reor-RAS' in str(mask_name):
-                        mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
-                    if 'res-' in str(mask_name):
-                        mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
+                    mask_name = atlas = utils.prune_suffices(mask_name)
                     cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
@@ -1996,10 +1972,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             for clust_type in clust_type_list:
                 for clust_mask in clust_mask_list:
                     mask_name = op.basename(clust_mask).split('.nii')[0]
-                    if 'reor-RAS' in str(mask_name):
-                        mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
-                    if 'res-' in str(mask_name):
-                        mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
+                    mask_name = atlas = utils.prune_suffices(mask_name)
                     cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
@@ -2022,10 +1995,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                 for clust_mask in clust_mask_list:
                     for k in k_list:
                         mask_name = op.basename(clust_mask).split('.nii')[0]
-                        if 'reor-RAS' in str(mask_name):
-                            mask_name = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(mask_name))
-                        if 'res-' in str(mask_name):
-                            mask_name = re.sub(r"_res\-*[0-4]mm", "", str(mask_name))
+                        mask_name = atlas = utils.prune_suffices(mask_name)
                         cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                         cluster_atlas_name_list.append(cluster_atlas_name)
                         cluster_atlas_file_list.append(f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
@@ -2039,14 +2009,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
     # Define nodes
     # Create node definitions Node
-    fetch_nodes_and_labels_node = pe.Node(niu.Function(input_names=['atlas', 'uatlas', 'ref_txt',
-                                                                    'parc', 'in_file', 'use_AAL_naming', 'outdir',
-                                                                    'vox_size', 'clustering'],
-                                                       output_names=['labels', 'coords', 'atlas',
-                                                                     'networks_list', 'parcel_list', 'par_max',
-                                                                     'uatlas', 'dir_path'],
-                                                       function=nodemaker.fetch_nodes_and_labels,
-                                                       imports=import_list), name="fetch_nodes_and_labels_node")
+    fetch_nodes_and_labels_node = pe.Node(FetchNodesLabels(), name="fetch_nodes_and_labels_node")
     fetch_nodes_and_labels_node.synchronize = True
 
     # Connect clustering solutions to node definition Node
@@ -2750,3 +2713,247 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             fmri_connectometry_wf.config[key][setting] = value
 
     return fmri_connectometry_wf
+
+
+def raw_graph_workflow(multi_thr, thr, multi_graph, graph, ID, network, conn_model, roi, prune, norm, binary,
+                       min_span_tree, dens_thresh, disp_filt, min_thr, max_thr, step_thr, wf, net_mets_node):
+    import numpy as np
+    from pynets.core.utils import load_mat, load_mat_ext, save_mat_thresholded
+    from pynets.core.thresholding import thresh_raw_graph
+    from nipype.pipeline import engine as pe
+    from nipype.interfaces import utility as niu
+
+    import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
+                   "import numpy as np", "import networkx as nx", "import nibabel as nib"]
+
+    if multi_thr is True or float(thr) != 1.0:
+        thresholding_node = pe.Node(niu.Function(input_names=['conn_matrix', 'thr', 'min_span_tree',
+                                                              'dens_thresh', 'disp_filt', 'est_path'],
+                                                 output_names=['thr_type', 'edge_threshold',
+                                                               'conn_matrix_thr', 'thr', 'est_path'],
+                                                 function=thresh_raw_graph), name="thresholding_node",
+                                    imports=import_list)
+
+        thr_info_node = pe.Node(niu.IdentityInterface(fields=['conn_matrix', 'thr', 'min_span_tree',
+                                                              'dens_thresh', 'disp_filt', 'ID', 'network',
+                                                              'conn_model', 'roi', 'prune', 'norm', 'binary',
+                                                              'est_path']),
+                                name='thr_info_node')
+
+        save_mat_thresholded_node = pe.Node(niu.Function(input_names=['conn_matrix', 'est_path_orig',
+                                                                      'thr_type', 'ID',
+                                                                      'network', 'thr', 'conn_model', 'roi',
+                                                                      'prune', 'norm', 'binary'],
+                                                         output_names=['est_path', 'ID', 'network', 'thr',
+                                                                       'conn_model', 'roi', 'prune', 'norm',
+                                                                       'binary'],
+                                                         function=save_mat_thresholded),
+                                            name="save_mat_thresholded_node",
+                                            imports=import_list)
+
+    if multi_graph:
+        inputinfo = pe.Node(interface=niu.IdentityInterface(fields=['ID', 'network', 'conn_model',
+                                                                    'est_path', 'roi', 'prune', 'norm',
+                                                                    'binary', 'thr',
+                                                                    'min_span_tree', 'dens_thresh',
+                                                                    'disp_filt']),
+                            name="inputinfo")
+
+        inputinfo.iterables = ("est_path", multi_graph)
+        inputinfo.inputs.ID = ID
+        inputinfo.inputs.roi = roi
+        inputinfo.inputs.thr = thr
+        inputinfo.inputs.prune = prune
+        inputinfo.inputs.network = network
+        inputinfo.inputs.conn_model = conn_model
+        inputinfo.inputs.norm = norm
+        inputinfo.inputs.binary = binary
+        inputinfo.inputs.min_span_tree = min_span_tree
+        inputinfo.inputs.dens_thresh = dens_thresh
+        inputinfo.inputs.disp_filt = disp_filt
+
+        join_iters_node_g = pe.JoinNode(niu.IdentityInterface(fields=['est_path', 'network', 'ID', 'thr',
+                                                                      'conn_model', 'roi', 'prune',
+                                                                      'norm', 'binary']),
+                                        name='join_iters_node_g',
+                                        joinsource=inputinfo, joinfield=['est_path', 'network', 'ID', 'thr',
+                                                                         'conn_model', 'roi', 'prune',
+                                                                         'norm', 'binary'])
+        if multi_thr is True or float(thr) != 1.0:
+            load_mat_node = pe.Node(niu.Function(input_names=['est_path', 'ID', 'network', 'conn_model', 'roi',
+                                                              'prune', 'norm', 'binary', 'min_span_tree',
+                                                              'dens_thresh', 'disp_filt'],
+                                                 output_names=['conn_matrix', 'est_path', 'ID', 'network',
+                                                               'conn_model', 'roi', 'prune', 'norm', 'binary',
+                                                               'min_span_tree', 'dens_thresh', 'disp_filt'],
+                                                 function=load_mat_ext), name="load_mat_ext_node",
+                                    imports=import_list)
+
+            wf.connect([(inputinfo, load_mat_node, [('est_path', 'est_path'),
+                                                    ('min_span_tree', 'min_span_tree'),
+                                                    ('dens_thresh', 'dens_thresh'), ('disp_filt', 'disp_filt'),
+                                                    ('network', 'network'),
+                                                    ('ID', 'ID'), ('conn_model', 'conn_model'), ('roi', 'roi'),
+                                                    ('prune', 'prune'), ('norm', 'norm'), ('binary', 'binary')]),
+                        (load_mat_node, thr_info_node, [('conn_matrix', 'conn_matrix'), ('est_path', 'est_path'),
+                                                        ('min_span_tree', 'min_span_tree'),
+                                                        ('dens_thresh', 'dens_thresh'),
+                                                        ('disp_filt', 'disp_filt'), ('network', 'network'),
+                                                        ('ID', 'ID'), ('conn_model', 'conn_model'),
+                                                        ('roi', 'roi'), ('prune', 'prune'), ('norm', 'norm'),
+                                                        ('binary', 'binary')]),
+                        ])
+
+    else:
+        inputinfo = pe.Node(interface=niu.IdentityInterface(fields=['ID', 'network', 'conn_model',
+                                                                    'est_path', 'roi', 'prune', 'norm',
+                                                                    'binary', 'thr',
+                                                                    'min_span_tree', 'dens_thresh',
+                                                                    'disp_filt']),
+                            name="inputinfo")
+
+        inputinfo.inputs.est_path = graph
+        inputinfo.inputs.ID = ID
+        inputinfo.inputs.roi = roi
+        inputinfo.inputs.thr = thr
+        inputinfo.inputs.prune = prune
+        inputinfo.inputs.network = network
+        inputinfo.inputs.conn_model = conn_model
+        inputinfo.inputs.norm = norm
+        inputinfo.inputs.binary = binary
+        inputinfo.inputs.min_span_tree = min_span_tree
+        inputinfo.inputs.dens_thresh = dens_thresh
+        inputinfo.inputs.disp_filt = disp_filt
+
+        if multi_thr is True or float(thr) != 1.0:
+            load_mat_node = pe.Node(niu.Function(input_names=['est_path'], output_names=['conn_matrix'],
+                                                 function=load_mat), name="load_mat_node", imports=import_list)
+
+            wf.connect([(inputinfo, load_mat_node, [('est_path', 'est_path')]),
+                        (load_mat_node, thr_info_node, [('conn_matrix', 'conn_matrix')]),
+                        (inputinfo, thr_info_node, [('min_span_tree', 'min_span_tree'),
+                                                    ('dens_thresh', 'dens_thresh'),
+                                                    ('disp_filt', 'disp_filt'), ('est_path', 'est_path'),
+                                                    ('network', 'network'), ('ID', 'ID'),
+                                                    ('conn_model', 'conn_model'), ('roi', 'roi'),
+                                                    ('prune', 'prune'), ('norm', 'norm'), ('binary', 'binary')]),
+                        ])
+
+    if multi_thr is True:
+        iter_thresh = sorted(list(set([str(i) for i in np.round(np.arange(float(min_thr), float(max_thr),
+                                                                          float(step_thr)),
+                                                                decimals=2).tolist()] +
+                                      [str(float(max_thr))])))
+
+        join_iters_node_thr = pe.JoinNode(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'conn_model',
+                                                                        'est_path', 'roi', 'prune', 'norm',
+                                                                        'binary']),
+                                          name='join_iters_node_thr',
+                                          joinsource=thr_info_node,
+                                          joinfield=['ID', 'network', 'thr', 'conn_model', 'est_path', 'roi',
+                                                     'prune', 'norm', 'binary'])
+
+        thr_info_node.iterables = ("thr", iter_thresh)
+        thr_info_node.synchronize = True
+        wf.connect([(thr_info_node, thresholding_node, [('thr', 'thr'), ('min_span_tree', 'min_span_tree'),
+                                                        ('dens_thresh', 'dens_thresh'),
+                                                        ('disp_filt', 'disp_filt'),
+                                                        ('conn_matrix', 'conn_matrix'),
+                                                        ('est_path', 'est_path')]),
+                    (thr_info_node, save_mat_thresholded_node, [('network', 'network'), ('ID', 'ID'),
+                                                                ('conn_model', 'conn_model'),
+                                                                ('roi', 'roi'), ('prune', 'prune'),
+                                                                ('norm', 'norm'), ('binary', 'binary')]),
+                    (thresholding_node, save_mat_thresholded_node, [('est_path', 'est_path_orig'),
+                                                                    ('conn_matrix_thr', 'conn_matrix'),
+                                                                    ('thr_type', 'thr_type'), ('thr', 'thr')]),
+                    (save_mat_thresholded_node, join_iters_node_thr, [('est_path', 'est_path'),
+                                                                      ('network', 'network'),
+                                                                      ('ID', 'ID'),
+                                                                      ('thr', 'thr'),
+                                                                      ('conn_model', 'conn_model'),
+                                                                      ('roi', 'roi'),
+                                                                      ('prune', 'prune'),
+                                                                      ('norm', 'norm'),
+                                                                      ('binary', 'binary')]),
+                    ])
+        if multi_graph:
+            wf.connect([(join_iters_node_thr, join_iters_node_g, [('est_path', 'est_path'),
+                                                                  ('network', 'network'), ('ID', 'ID'),
+                                                                  ('thr', 'thr'), ('conn_model', 'conn_model'),
+                                                                  ('roi', 'roi'), ('prune', 'prune'),
+                                                                  ('norm', 'norm'), ('binary', 'binary')]),
+                        (join_iters_node_g, net_mets_node, [('est_path', 'est_path'), ('network', 'network'),
+                                                            ('ID', 'ID'), ('thr', 'thr'),
+                                                            ('conn_model', 'conn_model'), ('roi', 'roi'),
+                                                            ('prune', 'prune'), ('norm', 'norm'),
+                                                            ('binary', 'binary')])
+                        ])
+        else:
+            wf.connect([(join_iters_node_thr, net_mets_node, [('est_path', 'est_path'), ('network', 'network'),
+                                                              ('ID', 'ID'), ('thr', 'thr'),
+                                                              ('conn_model', 'conn_model'), ('roi', 'roi'),
+                                                              ('prune', 'prune'), ('norm', 'norm'),
+                                                              ('binary', 'binary')])
+                        ])
+    elif float(thr) != 1.0:
+        thr_info_node.iterables = ("thr", [thr])
+        wf.connect([(thr_info_node, thresholding_node, [('thr', 'thr'), ('min_span_tree', 'min_span_tree'),
+                                                        ('dens_thresh', 'dens_thresh'),
+                                                        ('disp_filt', 'disp_filt'),
+                                                        ('conn_matrix', 'conn_matrix'),
+                                                        ('est_path', 'est_path')]),
+                    (thr_info_node, save_mat_thresholded_node, [('network', 'network'), ('ID', 'ID'),
+                                                                ('conn_model', 'conn_model'),
+                                                                ('roi', 'roi'), ('prune', 'prune'),
+                                                                ('norm', 'norm'), ('binary', 'binary')]),
+                    (thresholding_node, save_mat_thresholded_node, [('est_path', 'est_path_orig'),
+                                                                    ('conn_matrix_thr', 'conn_matrix'),
+                                                                    ('thr_type', 'thr_type'), ('thr', 'thr')]),
+                    ])
+        if multi_graph:
+            wf.connect([(save_mat_thresholded_node, join_iters_node_g, [('est_path', 'est_path')]),
+                        (thr_info_node, join_iters_node_g, [('network', 'network'), ('ID', 'ID'),
+                                                            ('thr', 'thr'), ('conn_model', 'conn_model'),
+                                                            ('roi', 'roi'), ('prune', 'prune'),
+                                                            ('norm', 'norm'), ('binary', 'binary')]),
+                        (join_iters_node_g, net_mets_node, [('est_path', 'est_path'), ('network', 'network'),
+                                                            ('ID', 'ID'),
+                                                            ('thr', 'thr'),
+                                                            ('conn_model', 'conn_model'),
+                                                            ('roi', 'roi'),
+                                                            ('prune', 'prune'),
+                                                            ('norm', 'norm'),
+                                                            ('binary', 'binary')])
+                        ])
+        else:
+            wf.connect([(thr_info_node, net_mets_node, [('network', 'network'),
+                                                        ('ID', 'ID'),
+                                                        ('thr', 'thr'),
+                                                        ('conn_model', 'conn_model'),
+                                                        ('roi', 'roi'),
+                                                        ('prune', 'prune'),
+                                                        ('norm', 'norm'),
+                                                        ('binary', 'binary')]),
+                        (save_mat_thresholded_node, net_mets_node, [('est_path', 'est_path')]),
+                        ])
+    else:
+        if multi_graph:
+            wf.connect([(inputinfo, join_iters_node_g, [('est_path', 'est_path'),
+                                                        ('network', 'network'), ('ID', 'ID'),
+                                                        ('thr', 'thr'), ('conn_model', 'conn_model'),
+                                                        ('roi', 'roi'), ('prune', 'prune'),
+                                                        ('norm', 'norm'), ('binary', 'binary')]),
+                        (join_iters_node_g, net_mets_node, [('est_path', 'est_path'), ('network', 'network'),
+                                                            ('ID', 'ID'), ('thr', 'thr'),
+                                                            ('conn_model', 'conn_model'), ('roi', 'roi'),
+                                                            ('prune', 'prune'), ('norm', 'norm'),
+                                                            ('binary', 'binary')])
+                        ])
+        else:
+            wf.connect([(inputinfo, net_mets_node, [('est_path', 'est_path'), ('network', 'network'),
+                                                    ('ID', 'ID'), ('thr', 'thr'), ('conn_model', 'conn_model'),
+                                                    ('roi', 'roi'), ('prune', 'prune'), ('norm', 'norm'),
+                                                    ('binary', 'binary')])
+                        ])
+    return wf

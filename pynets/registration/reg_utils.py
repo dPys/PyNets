@@ -463,7 +463,7 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
     from pynets.registration.reg_utils import normalize_xform
     fname = dwi_prep
     bvec_fname = bvecs
-    out_bvec_fname = f"{out_dir}/bvecs_reor.bvec"
+    out_bvec_fname = f"{out_dir}/{dwi_prep.split('/')[-1].split('.nii')[0]}_bvecs_reor.bvec"
 
     input_img = nib.load(fname)
     input_axcodes = nib.aff2axcodes(input_img.affine)
@@ -566,6 +566,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
     img_file : str
         File path to resampled Nifti1Image.
     """
+    import os
     from dipy.align.reslice import reslice
 
     # Check dimensions
@@ -587,6 +588,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
             print(f"Reslicing image {img_file} to {vox_size}...")
             data2, affine2 = reslice(np.asarray(img.dataobj), img.affine, zooms, new_zooms)
             nib.save(nib.Nifti1Image(np.nan_to_num(data2), affine=affine2), img_file_res)
+            os.remove(img_file)
             img_file = img_file_res
             del data2
     else:

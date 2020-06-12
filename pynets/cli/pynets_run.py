@@ -17,8 +17,8 @@ def get_parser():
     verstr = f'PyNets v{__version__}'
 
     # Parse args
-    parser = argparse.ArgumentParser(description='PyNets: A Fully-Automated Workflow for Reproducible Ensemble '
-                                                 'Sampling of Functional and Structural Connectomes')
+    parser = argparse.ArgumentParser(description='PyNets: A Reproducible Workflow for Structural and Functional '
+                                                 'Connectome Ensemble Learning')
     parser.add_argument("output_dir",
                         default=str(Path.home()),
                         help='The directory to store pynets derivatives.')
@@ -95,8 +95,12 @@ def get_parser():
                         metavar='Path to graph file input.',
                         default=None,
                         nargs='+',
-                        help='In either .txt or .npy format. This skips fMRI and dMRI graph estimation workflows and '
-                             'begins at the graph analysis stage. Multiple graph files should be separated by space.\n')
+                        help='In either .txt, .npy, .graphml, .csv, .ssv, .tsv, or .gpickle format. '
+                             'This skips fMRI and dMRI graph estimation workflows and '
+                             'begins at the thresholding and graph analysis stage. '
+                             'Multiple graph files should be separated by space. If the `-g` flag is used, then '
+                             'consider also including the `-id`, `-thr`, `-mod` flags and secondarily `-p`, '
+                             'and `-norm` flags if graph defragementation or normalization are used.\n')
     parser.add_argument('-roi',
                         metavar='Path to binarized Region-of-Interest (ROI) Nifti1Image',
                         default=None,
@@ -118,7 +122,7 @@ def get_parser():
     # Modality-independent hyperparameters
     parser.add_argument('-mod',
                         metavar='Connectivity estimation/reconstruction method',
-                        default='partcorr',
+                        default='?',
                         nargs='+',
                         choices=['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
                                  'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso', 'csa', 'csd', 'ten', 'sfm'],
@@ -1045,38 +1049,25 @@ def build_workflow(args, retval):
     elif graph or multi_graph:
         from pynets.core.utils import do_dir_path
         network = 'custom_graph'
-        thr = 0
         roi = 'None'
         k_clustering = 0
         node_size = 'None'
         hpass = 'None'
-        conn_model = 'None'
+        if not conn_model:
+            conn_model = 'None'
         if multi_graph:
             print('\nUsing multiple custom input graphs...')
-            conn_model = None
             conn_model_list = []
             i = 1
             for graph in multi_graph:
                 conn_model_list.append(str(i))
-                if '.txt' in graph:
-                    graph_name = op.basename(graph).split('.txt')[0]
-                elif '.npy' in graph:
-                    graph_name = op.basename(graph).split('.npy')[0]
-                else:
-                    print('Error: input graph file format not recognized. See `-help` for supported formats.')
-                    sys.exit(0)
+                graph_name = op.basename(graph).split(op.splitext(graph)[1])[0]
                 print(graph_name)
                 atlas = f"{graph_name}_{ID}"
                 do_dir_path(atlas, outdir)
                 i = i + 1
         else:
-            if '.txt' in graph:
-                graph_name = op.basename(graph).split('.txt')[0]
-            elif '.npy' in graph:
-                graph_name = op.basename(graph).split('.npy')[0]
-            else:
-                print('Error: input graph file format not recognized. See `-help` for supported formats.')
-                sys.exit(0)
+            graph_name = op.basename(graph).split(op.splitext(graph)[1])[0]
             print('\nUsing single custom graph input...')
             print(graph_name)
             atlas = f"{graph_name}_{ID}"
@@ -1653,28 +1644,10 @@ def build_workflow(args, retval):
 
         # Raw graph case
         if graph or multi_graph:
-            # Multiple raw graphs
-            if multi_graph:
-                net_mets_node.inputs.est_path = multi_graph
-                net_mets_node.inputs.ID = [ID] * len(multi_graph)
-                net_mets_node.inputs.roi = [roi] * len(multi_graph)
-                net_mets_node.inputs.thr = [thr] * len(multi_graph)
-                net_mets_node.inputs.prune = [prune] * len(multi_graph)
-                net_mets_node.inputs.network = [network] * len(multi_graph)
-                net_mets_node.inputs.conn_model = conn_model_list
-                net_mets_node.inputs.norm = [norm] * len(multi_graph)
-                net_mets_node.inputs.binary = [binary] * len(multi_graph)
-            else:
-                wf.connect([(inputnode, net_mets_node, [('network', 'network'),
-                                                        ('ID', 'ID'),
-                                                        ('thr', 'thr'),
-                                                        ('conn_model', 'conn_model'),
-                                                        ('roi', 'roi'),
-                                                        ('prune', 'prune'),
-                                                        ('graph', 'est_path'),
-                                                        ('norm', 'norm'),
-                                                        ('binary', 'binary')])
-                            ])
+            from pynets.core.workflows import raw_graph_workflow
+            wf = raw_graph_workflow(multi_thr, thr, multi_graph, graph, ID, network, conn_model, roi, prune, norm,
+                                    binary, min_span_tree, dens_thresh, disp_filt, min_thr, max_thr, step_thr, wf,
+                                    net_mets_node)
         else:
             wf.connect([
                 (meta_wf.get_node('pass_meta_outs_node'), net_mets_node, [('est_path_iterlist', 'est_path'),

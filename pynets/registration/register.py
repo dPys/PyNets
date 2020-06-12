@@ -195,7 +195,7 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
             print('Failed to parse runconfig.yaml')
     stream.close()
 
-    dsn_dir = f"{basedir_path}/dmri_reg_tmp/DSN"
+    dsn_dir = f"{basedir_path}/dmri_reg/DSN"
     if not op.isdir(dsn_dir):
         os.mkdir(dsn_dir)
 
@@ -384,8 +384,8 @@ class DmriReg(object):
         self.t1w_name = 't1w'
         self.dwi_name = 'dwi'
         self.basedir_path = basedir_path
-        self.tmp_path = f"{basedir_path}{'/dmri_reg_tmp'}"
-        self.reg_path = f"{basedir_path}{'/dmri_reg_tmp/reg'}"
+        self.tmp_path = f"{basedir_path}{'/dmri_reg'}"
+        self.reg_path = f"{basedir_path}{'/dmri_reg/reg'}"
         self.anat_path = f"{basedir_path}{'/anat_reg'}"
         self.reg_path_mat = f"{self.reg_path}{'/mats'}"
         self.reg_path_warp = f"{self.reg_path}{'/warps'}"
@@ -418,7 +418,8 @@ class DmriReg(object):
         self.csf_mask = f"{self.anat_path}{'/'}{self.t1w_name}{'_csf.nii.gz'}"
         self.gm_mask = f"{self.anat_path}{'/'}{self.t1w_name}{'_gm.nii.gz'}"
         self.xfm_roi2mni_init = f"{self.reg_path_mat}{'/roi_2_mni.mat'}"
-        self.mni_vent_loc = pkg_resources.resource_filename("pynets", f"templates/LateralVentricles_{vox_size}.nii.gz")
+        self.mni_vent_loc = pkg_resources.resource_filename("pynets",
+                                                            f"templates/LateralVentricles_{vox_size}.nii.gz")
         self.csf_mask_dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_csf_mask_dwi.nii.gz'}"
         self.gm_in_dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_gm_in_dwi.nii.gz'}"
         self.wm_in_dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm_in_dwi.nii.gz'}"

@@ -90,7 +90,7 @@ WORKDIR /home/neuro
 
 # Install Miniconda, python, and basic packages.
 ARG miniconda_version="4.3.27"
-ENV PATH=/opt/conda/bin:$PATH
+ENV PATH="/opt/conda/bin":$PATH
 RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_version}-Linux-x86_64.sh \
     && bash Miniconda3-${miniconda_version}-Linux-x86_64.sh -b -p /opt/conda \
     && conda config --system --prepend channels conda-forge \
@@ -167,13 +167,9 @@ RUN chown -R neuro /opt \
 
 USER neuro
 
-# Python ENV Config
+# ENV Config
 ENV LD_LIBRARY_PATH="/opt/conda/lib":$LD_LIBRARY_PATH
-
-# PyNets ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
-
-# FSL ENV Config
 ENV FSLDIR=/usr/local/fsl
 ENV FSLOUTPUTTYPE=NIFTI_GZ
 ENV PATH=/usr/local/fsl/bin:$PATH
@@ -183,8 +179,6 @@ ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
 ENV FSLBROWSER=/etc/alternatives/x-www-browser
 ENV LD_LIBRARY_PATH="/usr/lib/openblas-base":$LD_LIBRARY_PATH
-
-# Misc environment vars
 ENV PYTHONWARNINGS ignore
 ENV OMP_NUM_THREADS=1
 ENV USE_SIMPLE_THREADED_LEVEL3=1

@@ -230,7 +230,7 @@ def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
         struct_mat_tmp[struct_mat_tmp < struct_thr] = 0
         best_mats.append((func_mat_tmp, struct_mat_tmp))
 
-        mG = build_mx_multigraph(func_mat, struct_mat, key, namer_dir)
+        mG = build_mx_multigraph(func_mat, struct_mat, f"{name}_{key}", namer_dir)
         best_multigraphs.append(mG)
 
     mg_dict = dict(zip(best_threshes, best_multigraphs))
@@ -260,7 +260,10 @@ def build_mx_multigraph(func_mat, struct_mat, name, namer_dir):
     mg.name = name
 
     # Save mG to pickle
-    mG_path = f"{namer_dir}/{name}_mG.pkl"
+    graph_dir = f"{namer_dir}/mplx_graphs"
+    if not os.path.isdir(graph_dir):
+        os.mkdir(graph_dir)
+    mG_path = f"{graph_dir}/{name[:200]}_mG.pkl"
     nx.write_gpickle(mg, mG_path, protocol=2)
 
     return mG_path
