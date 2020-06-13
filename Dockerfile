@@ -1,7 +1,7 @@
 FROM debian:stretch-slim
 
-# Pre-cache neurodebian key
-COPY docker/files/neurodebian.gpg /root/.neurodebian.gpg
+# Pre-cache dpisnerdebian key
+COPY docker/files/dpisnerdebian.gpg /root/.dpisnerdebian.gpg
 
 ARG DEBIAN_FRONTEND="noninteractive"
 
@@ -66,27 +66,27 @@ RUN apt-get update -qq \
     && curl -o /tmp/libxp6.deb -sSL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
     && dpkg -i /tmp/libxp6.deb && rm -f /tmp/libxp6.deb \
     # Add new user.
-    && useradd --no-user-group --create-home --shell /bin/bash neuro \
+    && useradd --no-user-group --create-home --shell /bin/bash dpisner \
     && chmod a+s /opt \
     && chmod 777 -R /opt \
     && apt-get clean -y && apt-get autoclean -y && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && curl -sSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.2-centos7_64.tar.gz | tar xz -C /usr/local \
        --exclude='fsl/doc' \
-       --exclude='fsl/data/first' \    
+       --exclude='fsl/data/first' \
        --exclude='fsl/data/atlases' \
-       --exclude='fsl/data/possum' \    
-       --exclude='fsl/src' \    
-       --exclude='fsl/extras/src' \    
+       --exclude='fsl/data/possum' \
+       --exclude='fsl/src' \
+       --exclude='fsl/extras/src' \
        --exclude='fsl/bin/fslview*' \
        --exclude='fsl/bin/FSLeyes' \
        --exclude='fsl/bin/*_gpu*' \
        --exclude='fsl/bin/*_cuda*' \
     && chmod 777 -R /usr/local/fsl/bin \
-    && chown -R neuro /usr/local/fsl 
+    && chown -R dpisner /usr/local/fsl
 
-USER neuro
-WORKDIR /home/neuro
+USER dpisner
+WORKDIR /home/dpisner
 
 # Install Miniconda, python, and basic packages.
 ARG miniconda_version="4.3.27"
@@ -103,8 +103,8 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && conda clean -tipsy \
     && pip install numpy requests psutil sqlalchemy \
     # Install pynets
-    && git clone -b development https://github.com/dPys/PyNets /home/neuro/PyNets && \
-    cd /home/neuro/PyNets && \
+    && git clone -b development https://github.com/dPys/PyNets /home/dpisner/PyNets && \
+    cd /home/dpisner/PyNets && \
     pip install -r requirements.txt && \
     python setup.py install \
     # Install skggm
@@ -127,16 +127,16 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && echo "enabled = true" >> ~/.nipype/nipype.cfg \
     && pip uninstall -y pandas \
     && pip install pandas -U \
-    && rm -rf /home/neuro/PyNets \
-    && rm -rf /home/neuro/.cache
+    && rm -rf /home/dpisner/PyNets \
+    && rm -rf /home/dpisner/.cache
 
 # Handle permissions, cleanup, and create mountpoints
 USER root
-RUN chown -R neuro /opt \
+RUN chown -R dpisner /opt \
     && chmod 777 /opt/conda/bin/pynets \
-    && mkdir -p /home/neuro/.pynets \
-    && chmod 777 -R /home/neuro/.pynets \
-    && chown -R neuro /home/neuro/.pynets \
+    && mkdir -p /home/dpisner/.pynets \
+    && chmod 777 -R /home/dpisner/.pynets \
+    && chown -R dpisner /home/dpisner/.pynets \
     && chmod a+s -R /opt \
     && chmod 775 -R /opt/conda/lib/python3.6/site-packages \
     && chmod 777 /opt/conda/bin/pynets \
@@ -165,7 +165,7 @@ RUN chown -R neuro /opt \
     && mkdir /working && \
     chmod -R 777 /working
 
-USER neuro
+USER dpisner
 
 # ENV Config
 ENV LD_LIBRARY_PATH="/opt/conda/lib":$LD_LIBRARY_PATH

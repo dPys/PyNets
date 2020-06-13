@@ -2175,11 +2175,6 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     extract_ts_node._n_procs = runtime_dict['extract_ts_node'][0]
     extract_ts_node._mem_gb = runtime_dict['extract_ts_node'][1]
 
-    if smooth_list and hpass_list:
-        smooth_hpass_combo = list(itertools.product(hpass_list, smooth_list))
-        hpass_list = [i[0] for i in smooth_hpass_combo]
-        smooth_list = [i[1] for i in smooth_hpass_combo]
-
     if parc is True:
         # Parcels case
         extract_ts_node.inputs.parc = True
@@ -2200,16 +2195,26 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                         [('net_parcels_nii_path', 'net_parcels_nii_path')])
                                        ])
         # Set extract_ts iterables
+        if not smooth_list and hpass_list and extract_strategy_list:
+            extract_strategy_hpass_combo = list(itertools.product(hpass_list, extract_strategy_list))
+            hpass_list = [i[0] for i in extract_strategy_hpass_combo]
+            extract_strategy_list = [i[1] for i in extract_strategy_hpass_combo]
+        elif smooth_list and not hpass_list and extract_strategy_list:
+            extract_strategy_smooth_combo = list(itertools.product(smooth_list, extract_strategy_list))
+            smooth_list = [i[0] for i in extract_strategy_smooth_combo]
+            extract_strategy_list = [i[1] for i in extract_strategy_smooth_combo]
+        elif smooth_list and hpass_list and extract_strategy_list:
+            extract_strategy_smooth_hpass_combo = list(itertools.product(smooth_list, extract_strategy_list, hpass_list))
+            smooth_list = [i[0] for i in extract_strategy_smooth_hpass_combo]
+            extract_strategy_list = [i[1] for i in extract_strategy_smooth_hpass_combo]
+            hpass_list = [i[2] for i in extract_strategy_smooth_hpass_combo]
+        elif smooth_list and hpass_list and not extract_strategy_list:
+            smooth_hpass_combo = list(itertools.product(hpass_list, smooth_list))
+            hpass_list = [i[0] for i in smooth_hpass_combo]
+            smooth_list = [i[1] for i in smooth_hpass_combo]
+
         if extract_strategy_list:
-            if not smooth_list and hpass_list:
-                extract_strategy_hpass_combo = list(itertools.product(hpass_list, extract_strategy_list))
-                hpass_list = [i[0] for i in extract_strategy_hpass_combo]
-                extract_strategy_list = [i[1] for i in extract_strategy_hpass_combo]
-            elif smooth_list and not hpass_list:
-                extract_strategy_smooth_combo = list(itertools.product(smooth_list, extract_strategy_list))
-                smooth_list = [i[0] for i in extract_strategy_smooth_combo]
-                extract_strategy_list = [i[1] for i in extract_strategy_smooth_combo]
-            extract_ts_info_iters.append(("extract_strategy", extract_strategy_list))
+            extract_ts_info_iters.append(('extract_strategy', extract_strategy_list))
         else:
             fmri_connectometry_wf.connect([(inputnode, extract_ts_info_node, [('extract_strategy',
                                                                                'extract_strategy')])])
@@ -2219,16 +2224,27 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         extract_ts_node.inputs.parc = False
         extract_ts_node.inputs.net_parcels_nii_path = None
         extract_ts_node.inputs.extract_strategy = 'None'
+
         # Set extract_ts iterables
+        if not smooth_list and hpass_list and node_size_list:
+            node_size_hpass_combo = list(itertools.product(hpass_list, node_size_list))
+            hpass_list = [i[0] for i in node_size_hpass_combo]
+            node_size_list = [i[1] for i in node_size_hpass_combo]
+        elif smooth_list and not hpass_list and node_size_list:
+            node_size_smooth_combo = list(itertools.product(smooth_list, node_size_list))
+            smooth_list = [i[0] for i in node_size_smooth_combo]
+            node_size_list = [i[1] for i in node_size_smooth_combo]
+        elif smooth_list and hpass_list and node_size_list:
+            node_size_smooth_hpass_combo = list(itertools.product(smooth_list, node_size_list, hpass_list))
+            smooth_list = [i[0] for i in node_size_smooth_hpass_combo]
+            node_size_list = [i[1] for i in node_size_smooth_hpass_combo]
+            hpass_list = [i[2] for i in node_size_smooth_hpass_combo]
+        elif smooth_list and hpass_list and not node_size_list:
+            smooth_hpass_combo = list(itertools.product(hpass_list, smooth_list))
+            hpass_list = [i[0] for i in smooth_hpass_combo]
+            smooth_list = [i[1] for i in smooth_hpass_combo]
+
         if node_size_list:
-            if not smooth_list and hpass_list:
-                node_size_hpass_combo = list(itertools.product(hpass_list, node_size_list))
-                hpass_list = [i[0] for i in node_size_hpass_combo]
-                node_size_list = [i[1] for i in node_size_hpass_combo]
-            elif smooth_list and not hpass_list:
-                node_size_smooth_combo = list(itertools.product(smooth_list, node_size_list))
-                smooth_list = [i[0] for i in node_size_smooth_combo]
-                node_size_list = [i[1] for i in node_size_smooth_combo]
             extract_ts_info_iters.append(("node_size", node_size_list))
         else:
             fmri_connectometry_wf.connect([(inputnode, extract_ts_info_node, [('node_size', 'node_size')])])
