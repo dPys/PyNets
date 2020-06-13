@@ -1,7 +1,7 @@
 FROM debian:stretch-slim
 
-# Pre-cache dpisnerdebian key
-COPY docker/files/dpisnerdebian.gpg /root/.dpisnerdebian.gpg
+# Pre-cache neurodebian key
+COPY docker/files/neurodebian.gpg /root/.neurodebian.gpg
 
 ARG DEBIAN_FRONTEND="noninteractive"
 
