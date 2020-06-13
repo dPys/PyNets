@@ -873,7 +873,8 @@ class RegisterAtlasDWI(SimpleInterface):
         reg_persist = [dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni, reg.wm_in_dwi,
                        reg.gm_in_dwi, reg.vent_csf_in_dwi, reg.wm_gm_int_in_dwi, reg.t1w2dwi]
         for i in reg_persist:
-            copyfile(i, f"{reg_dir}/{os.path.basename(i)}", copy=True, use_hardlink=False)
+            if os.path.isfile(i):
+                copyfile(i, f"{reg_dir}/{os.path.basename(i)}_{self.inputs.atlas}", copy=True, use_hardlink=False)
 
         reg_tmp = [anat_file_tmp_path, B0_mask_tmp_path, ap_tmp_path, fa_tmp_path]
         for j in reg_tmp:
@@ -1036,7 +1037,8 @@ class RegisterAtlasFunc(SimpleInterface):
 
         reg_persist = [aligned_atlas_t1mni_gm, reg.t1_aligned_mni, reg.gm_mask_thr]
         for i in reg_persist:
-            copyfile(i, f"{reg_dir}/{os.path.basename(i)}", copy=True, use_hardlink=False)
+            if os.path.isfile(i):
+                copyfile(i, f"{reg_dir}/{os.path.basename(i)}_{self.inputs.atlas}", copy=True, use_hardlink=False)
 
         reg_tmp = [anat_file_tmp_path, uatlas_parcels_tmp_path]
         for j in reg_tmp:
