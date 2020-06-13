@@ -2204,9 +2204,10 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
             smooth_list = [i[0] for i in extract_strategy_smooth_combo]
             extract_strategy_list = [i[1] for i in extract_strategy_smooth_combo]
         elif smooth_list and hpass_list and extract_strategy_list:
-            extract_strategy_smooth_combo = list(itertools.product(smooth_list, extract_strategy_list, hpass_list))
-            smooth_list = [i[0] for i in extract_strategy_smooth_combo]
-            extract_strategy_list = [i[1] for i in extract_strategy_smooth_combo]
+            extract_strategy_smooth_hpass_combo = list(itertools.product(smooth_list, extract_strategy_list, hpass_list))
+            smooth_list = [i[0] for i in extract_strategy_smooth_hpass_combo]
+            extract_strategy_list = [i[1] for i in extract_strategy_smooth_hpass_combo]
+            hpass_list = [i[2] for i in extract_strategy_smooth_hpass_combo]
         elif smooth_list and hpass_list and not extract_strategy_list:
             smooth_hpass_combo = list(itertools.product(hpass_list, smooth_list))
             hpass_list = [i[0] for i in smooth_hpass_combo]
