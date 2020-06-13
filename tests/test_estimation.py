@@ -15,7 +15,6 @@ try:
     import cPickle as pickle
 except ImportError:
     import _pickle as pickle
-from pynets.fmri import estimation as fmri_estimation
 from pynets.dmri import estimation as dmri_estimation
 from pathlib import Path
 import logging
@@ -23,185 +22,226 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
+from dipy.io import save_pickle
+import tempfile
+from inspect import getargspec
+import pandas as pd
+
+from pynets.fmri.estimation import (get_conn_matrix, timeseries_bootstrap,
+                                    fill_confound_nans, TimeseriesExtraction)
+
 
 # fMRI
-@pytest.mark.parametrize("conn_model", ['corr', 'sps', 'cov', 'partcorr'])
-def test_get_conn_matrix_cov(conn_model):
-    """
-    Test for get_conn_matrix functionality
-    """
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
-    time_series_file = f"{base_dir}/miscellaneous/002_rsn-Default_net_ts.npy"
-    time_series = np.load(time_series_file)
-    node_size = 2
-    smooth = 2
-    dens_thresh = False
-    network = 'Default'
-    ID = '002'
-    roi = None
-    min_span_tree = False
-    disp_filt = False
-    hpass = None
-    parc = None
-    prune = 1
-    norm = 1
-    binary = False
-    extract_strategy = 'mean'
-    atlas = 'whole_brain_cluster_labels_PCA200'
-    uatlas = None
-    coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
-    coord_file = open(coord_file_path, 'rb')
-    coords = pickle.load(coord_file)
-    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
-    labels_file = open(labels_file_path, 'rb')
-    labels = pickle.load(labels_file)
+@pytest.mark.parametrize("conn_model_in",
+    [
+        # Standard models
+        'corr', 'partcorr', 'cov', 'sps',
 
-    start_time = time.time()
-    [conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network,
-    ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas,
-    labels, coords, norm, binary, hpass, extract_strategy] = fmri_estimation.get_conn_matrix(time_series, conn_model,
-    dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-    disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy)
-    print("%s%s%s" %
-    ('get_conn_matrix --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
+        # These models require skggm and will fail if not installed
+        pytest.param('QuicGraphicalLasso', marks=pytest.mark.xfail),
+        pytest.param('QuicGraphicalLassoCV', marks=pytest.mark.xfail),
+        pytest.param('QuicGraphicalLassoEBIC', marks=pytest.mark.xfail),
+        pytest.param('AdaptiveQuicGraphicalLasso', marks=pytest.mark.xfail),
+        pytest.param( None, marks=pytest.mark.xfail(raises=ValueError))
+    ]
+)
+@pytest.mark.parametrize("time_series",
+    [
+        np.random.rand(5, 5),
+        pytest.param(np.ones((10, 10)), marks=pytest.mark.xfail)
+    ]
+)
+def test_get_conn_matrix(conn_model_in, time_series):
+    """ Test computing a functional connectivity matrix."""
 
-    assert conn_matrix is not None
-    assert conn_model is not None
-    assert dir_path is not None
-    assert node_size is not None
-    assert smooth is not None
-    assert dens_thresh is not None
-    assert network is not None
-    assert ID is not None
-    #assert roi is not None
-    assert min_span_tree is not None
-    assert disp_filt is not None
-    #assert parc is not None
-    assert prune is not None
-    assert atlas is not None
-    #assert uatlas is not None
-    #assert labels is not None
-    assert coords is not None
+    pass_args = np.random.rand(len(getargspec(get_conn_matrix).args)-2)
 
+    outs = get_conn_matrix(time_series, conn_model_in, *pass_args)
 
-def test_extract_ts_rsn_parc():
-    """
-    Test for extract_ts_parc functionality
-    """
-    # Set example inputs
-    base_dir = str(Path(__file__).parent/"examples")
-    net_parcels_map_nifti_file = f"{base_dir}/miscellaneous/002_parcels_Default.nii.gz"
-    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
-    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
-    roi = None
-    network = 'Default'
-    ID = '002'
-    smooth = 2
-    conf = None
-    coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
-    coord_file = open(coord_file_path, 'rb')
-    coords = pickle.load(coord_file)
-    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
-    labels_file = open(labels_file_path, 'rb')
-    labels = pickle.load(labels_file)
-    atlas = 'whole_brain_cluster_labels_PCA200'
-    uatlas = None
-    mask = None
-    node_size = None
-    hpass = None
-    start_time = time.time()
+    conn_matrix_out, conn_model_out = outs[0], outs[1]
 
-    te = fmri_estimation.TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
-                                              conf=conf, func_file=func_file, coords=coords, roi=roi, dir_path=dir_path,
-                                              ID=ID, network=network, smooth=smooth, atlas=atlas, uatlas=uatlas,
-                                              labels=labels, hpass=hpass, mask=mask, extract_strategy='mean')
-
-    te.prepare_inputs()
-
-    te.extract_ts_parc()
-
-    te.save_and_cleanup()
-
-    print("%s%s%s" % ('extract_ts_parc --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
-    assert te.ts_within_nodes is not None
-    #assert node_size is not None
-    #node_size is none
-
-
-@pytest.mark.parametrize("node_size", [pytest.param(0, marks=pytest.mark.xfail), '2', '8'])
-@pytest.mark.parametrize("smooth", ['0', '2'])
-def test_extract_ts_rsn_coords(node_size, smooth):
-    """
-    Test for extract_ts_coords functionality
-    """
-    # Set example inputs
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
-    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
-    roi = None
-    network = 'Default'
-    ID = '002'
-    conf = None
-    node_size = 2
-    smooth = 2
-    coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
-    coord_file = open(coord_file_path, 'rb')
-    coords = pickle.load(coord_file)
-    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
-    labels_file = open(labels_file_path, 'rb')
-    labels = pickle.load(labels_file)
-    atlas = 'whole_brain_cluster_labels_PCA200'
-    uatlas = None
-    mask = None
-    hpass = None
-    start_time = time.time()
-    te = fmri_estimation.TimeseriesExtraction(net_parcels_nii_path=None, node_size=node_size,
-                                              conf=conf, func_file=func_file, coords=coords, roi=roi, dir_path=dir_path,
-                                              ID=ID, network=network, smooth=smooth, atlas=atlas, uatlas=uatlas,
-                                              labels=labels, hpass=hpass,
-                                              mask=mask, extract_strategy=None)
-
-    te.prepare_inputs()
-
-    te.extract_ts_coords()
-
-    te.save_and_cleanup()
-
-    print("%s%s%s" % ('extract_ts_coords --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
-    assert te.ts_within_nodes is not None
-    assert te.node_size is not None
-    assert te.smooth is not None
-    assert te.dir_path is not None
+    assert isinstance(conn_matrix_out, np.ndarray)
+    assert np.shape(conn_matrix_out) == np.shape(time_series)
+    assert conn_model_in == conn_model_out
+    assert (pass_args == outs[2:]).all()
 
 
 def test_timeseries_bootstrap():
-    from nilearn.masking import apply_mask
-    from pynets.registration import reg_utils
+    """Test bootstrapping a sample of time series."""
 
-    blocklength = 1
-    base_dir = str(Path(__file__).parent/"examples")
-    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
-    roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
-    roi_mask_img_RAS = reg_utils.reorient_img(roi, f"{base_dir}/outputs")
+    tseries = np.random.rand(100, 10)
+    bseries = timeseries_bootstrap(tseries, 5)
 
-    func_img = nib.load(func_file)
-    ts_data = apply_mask(func_img, roi_mask_img_RAS)
-    block_size = int(int(np.sqrt(ts_data.shape[0])) * blocklength)
-
-    boot_series = fmri_estimation.timeseries_bootstrap(ts_data, block_size)[0]
-    assert boot_series.shape == ts_data.shape
+    assert np.shape(bseries[0]) == np.shape(tseries)
+    assert len(bseries[1]) == len(tseries)
 
 
 def test_fill_confound_nans():
-    import pandas as pd
+    """ Testing filling pd dataframe np.nan values with mean."""
+
+    confounds = np.ones((5, 5))
+    confounds[0][0] = np.nan
+    confounds = pd.DataFrame({'Column1': [np.nan, 2, 4]})
+    with tempfile.TemporaryDirectory() as dir_path:
+        conf_corr = fill_confound_nans(confounds, dir_path)
+        conf_corr = np.genfromtxt(conf_corr, delimiter='\t', skip_header=True)
+
+    # Removed pd index column
+    conf_corr = conf_corr[:, 1]
+
+    assert not np.isnan(conf_corr).any()
+    assert conf_corr[0] == np.mean(conf_corr[1:])
+
+
+@pytest.mark.parametrize("conf", [True, pytest.param(False, marks=pytest.mark.xfail)])
+@pytest.mark.parametrize("hpass", [None, 100, -1])
+@pytest.mark.parametrize("mask", [True, None])
+@pytest.mark.parametrize("func_file", [True, pytest.param(None, marks=pytest.mark.xfail)])
+@pytest.mark.parametrize("dim", [3, 4])
+def test_timseries_extraction_prepare_inputs(conf, hpass, mask, func_file, dim):
+    """ Test preparing inputs method of the TimeseriesExtraction class."""
 
     base_dir = str(Path(__file__).parent/"examples")
+    net_parcels_map_nifti_file = f"{base_dir}/miscellaneous/002_parcels_Default.nii.gz"
     dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
-    conf = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_desc-confounds_regressors.tsv"
-    conf_corr = fmri_estimation.fill_confound_nans(pd.read_csv(conf, sep='\t'), dir_path)
-    assert not pd.read_csv(conf_corr, sep='\t').isnull().values.any()
 
+    if func_file:
+        func_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+        if dim == 4:
+            img_data = np.random.rand(50, 50, 50, 20)
+        else:
+            img_data = np.random.rand(50, 50, 50)
+        img = nib.Nifti1Image(img_data, np.eye(4))
+        img.to_filename(func_tmp.name)
+        func_file = func_tmp.name
+    else:
+        func_file = "missing/file"
+
+    if mask:
+        mask_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+        mask_data = np.zeros(np.shape(img_data))
+        mask_img = nib.Nifti1Image(mask_data, np.eye(4))
+        mask_img.to_filename(mask_tmp.name)
+        mask = mask_tmp.name
+
+    if conf:
+        conf_mat = np.random.rand(20)
+        conf_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.tsv')
+        conf_df = pd.DataFrame({'Column1': conf_mat})
+        conf_df.to_csv(conf_tmp.name)
+        conf = conf_tmp.name
+    else:
+        conf = "missing/file"
+
+    smooth = 1
+    network = 'Default'
+    ID = '002'
+    smooth = 2
+    coords = [[10]*3, [15]*3, [20]*3]
+    node_size = 8
+    extract_strategy = 'zscore'
+    roi, labels, atlas, uatlas = [None]*4
+
+    te = TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
+                              conf=conf, func_file=func_file, coords=coords, roi=roi,
+                              dir_path=dir_path, ID=ID, network=network, smooth=smooth, atlas=atlas,
+                              uatlas=uatlas, labels=labels, hpass=hpass, mask=mask,
+                              extract_strategy=extract_strategy)
+    te.prepare_inputs()
+
+    assert np.shape(te._func_img) == np.shape(img_data)
+
+    if hpass and hpass > 0:
+        assert te.hpass == hpass
+        assert te._detrending is False
+    else:
+        assert te.hpass is None
+        assert te._detrending is True
+
+    if hpass and dim == 4:
+        assert te._t_r == img.header.get_zooms()[-1]
+    else:
+        assert te._t_r == None
+
+    if mask:
+        assert np.shape(te._mask_img) == np.shape(img_data)
+
+    if func_file:
+        func_tmp.close()
+    if conf:
+        conf_tmp.close()
+    if mask:
+        mask_tmp.close()
+
+@pytest.mark.parametrize("conf", [True, None])
+def test_timseries_extraction_extract(conf):
+    """Test timeseries extraction and save methods of the TimeseriesExtraction class."""
+
+    dir_path_tmp = tempfile.TemporaryDirectory()
+    dir_path = dir_path_tmp.name
+
+    func_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+    img_data = np.random.rand(50, 50, 50, 20)
+    img = nib.Nifti1Image(img_data, np.eye(4))
+    img.to_filename(func_file.name)
+
+    # Create a temp parcel file
+    parcels_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+    parcels = np.zeros((50, 50, 50))
+    parcels[10:20, 0, 0], parcels[0, 10:20, 0], parcels[0, 0, 10:20] = 1, 2, 3
+    nib.Nifti1Image(parcels, np.eye(4)).to_filename(parcels_tmp.name)
+    net_parcels_map_nifti_file = parcels_tmp.name
+
+    # Create empty mask file
+    mask_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+    mask = np.zeros((50, 50, 50))
+    nib.Nifti1Image(parcels, np.eye(4)).to_filename(mask_tmp.name)
+    mask = mask_tmp.name
+
+    if conf:
+        conf_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.tsv')
+        conf_mat = np.random.rand(20)
+        conf_df = pd.DataFrame({'Conf1': conf_mat, "Conf2": [np.nan]*len(conf_mat)})
+        conf_df.to_csv(conf_file.name, sep='\t', index=False)
+        conf = conf_file.name
+
+    smooth = 1
+    network = 'Default'
+    ID = '002'
+    smooth = 2
+    hpass = 100
+    coords = [[10]*3, [15]*3, [20]*3]
+    node_size = 2
+    extract_strategy = 'mean'
+
+    roi, labels, atlas, uatlas = [None]*4
+
+    te = TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
+                              conf=conf, func_file=func_file.name, coords=coords,
+                              roi=roi, dir_path=dir_path, ID=ID, network=network, smooth=smooth,
+                              atlas=atlas, uatlas=uatlas, labels=labels, hpass=hpass, mask=mask,
+                              extract_strategy=extract_strategy)
+    te.prepare_inputs()
+
+    # Test coords extraction
+    te.extract_ts_coords()
+    assert np.shape(te.ts_within_nodes) == (np.shape(img_data)[-1], len(coords))
+
+    # Test parc extraction
+    te.extract_ts_parc()
+    assert np.shape(te.ts_within_nodes) == (np.shape(img_data)[-1], len(np.unique(parcels)) - 1)
+
+    # Test save and clean up
+    te._mask_path = te._mask_img
+    te.save_and_cleanup()
+    assert '_spheres_masker' not in te.__dict__.keys()
+    assert '_parcel_masker' not in te.__dict__.keys()
+
+    func_file.close()
+    parcels_tmp.close()
+    mask_tmp.close()
+    if conf:
+        conf_file.close()
 
 # dMRI
 def test_create_anisopowermap():
