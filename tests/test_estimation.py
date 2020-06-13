@@ -15,7 +15,7 @@ try:
     import cPickle as pickle
 except ImportError:
     import _pickle as pickle
-from pynets.dmri import estimation as dmri_estimation
+
 from pathlib import Path
 import logging
 
@@ -29,6 +29,8 @@ import pandas as pd
 
 from pynets.fmri.estimation import (get_conn_matrix, timeseries_bootstrap,
                                     fill_confound_nans, TimeseriesExtraction)
+from pynets.dmri.estimation import (create_anisopowermap, tens_mod_fa_est, tens_mod_est,
+                                    csa_mod_est, csd_mod_est, streams2graph, sfm_mod_est)
 
 
 # fMRI
@@ -244,184 +246,132 @@ def test_timseries_extraction_extract(conf):
         conf_file.close()
 
 # dMRI
-def test_create_anisopowermap():
-    from dipy.core.gradients import gradient_table
-    from dipy.io import save_pickle
+def test_create_anisopowermap(dmri_estimation_data):
+    """ Test creating an anisotropic power map."""
 
-    base_dir = str(Path(__file__).parent/"examples")
-    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
-    dir_path = f"{base_dir}/003/dmri"
-    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
-    bvals = f"{dir_path}/sub-003_dwi.bval"
-    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
-    gtab_file = f"{base_dir}/gtab.pkl"
-    gtab = gradient_table(bvals, bvecs)
-    gtab.b0_threshold = 50
-    gtab_bvals = gtab.bvals.copy()
-    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
-    gtab_bvals[b0_thr_ixs] = 0
-    gtab.b0s_mask = gtab_bvals == 0
-    save_pickle(gtab_file, gtab)
+    gtab = dmri_estimation_data['gtab']
+    dwi_img = dmri_estimation_data['dwi_img']
+    B0_mask_img = dmri_estimation_data['B0_mask_img']
 
-    [anisopwr_path, _, _, _] = dmri_estimation.create_anisopowermap(gtab_file, dwi_file, B0_mask)
+    gtab_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.pkl')
+    dwi_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+    B0_mask_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+
+    save_pickle(gtab_file.name, gtab)
+    nib.save(dwi_img, dwi_file.name)
+    nib.save(B0_mask_img, B0_mask_file.name)
+
+    [anisopwr_path, _, _, _] = \
+        create_anisopowermap(gtab_file.name, dwi_file.name, B0_mask_file.name)
 
     assert os.path.isfile(anisopwr_path)
 
+    gtab_file.close()
+    dwi_file.close()
+    B0_mask_file.close()
 
-def test_tens_mod_fa_est():
-    from dipy.core.gradients import gradient_table
-    from dipy.io import save_pickle
-    import tempfile
 
-    base_dir = str(Path(__file__).parent/"examples")
-    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
-    dir_path = f"{base_dir}/003/dmri"
-    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
-    bvals = f"{dir_path}/sub-003_dwi.bval"
-    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
-    gtab_file = f"{base_dir}/gtab.pkl"
-    gtab = gradient_table(bvals, bvecs)
-    gtab.b0_threshold = 50
-    gtab_bvals = gtab.bvals.copy()
-    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
-    gtab_bvals[b0_thr_ixs] = 0
-    gtab.b0s_mask = gtab_bvals == 0
-    save_pickle(gtab_file, gtab)
+def test_tens_mod_fa_est(dmri_estimation_data):
+    """Test tensor FA image estimation."""
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
-    B0_mask_patch = f"{dir_path}/mean_B0_bet_mask_patch.nii.gz"
-    mask_img = nib.load(B0_mask)
-    mask_data = mask_img.get_fdata()
-    nib.save(nib.Nifti1Image(mask_data, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
+    gtab = dmri_estimation_data['gtab']
+    dwi_img = dmri_estimation_data['dwi_img']
+    B0_mask_img = dmri_estimation_data['B0_mask_img']
 
-    [fa_path, _, _, _] = dmri_estimation.tens_mod_fa_est(gtab_file, dwi_file, B0_mask)
+    gtab_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.pkl')
+    dwi_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+    B0_mask_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+
+    save_pickle(gtab_file.name, gtab)
+    nib.save(dwi_img, dwi_file.name)
+    nib.save(B0_mask_img, B0_mask_file.name)
+
+    [fa_path, _, _, _] = \
+        tens_mod_fa_est(gtab_file.name, dwi_file.name, B0_mask_file.name)
 
     assert os.path.isfile(fa_path)
 
+    gtab_file.close()
+    dwi_file.close()
+    B0_mask_file.close()
 
-def test_tens_mod_est():
-    from dipy.core.gradients import gradient_table
-    import tempfile
 
-    base_dir = str(Path(__file__).parent/"examples")
-    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
-    dir_path = f"{base_dir}/003/dmri"
-    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
-    bvals = f"{dir_path}/sub-003_dwi.bval"
-    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
-    gtab = gradient_table(bvals, bvecs)
-    gtab.b0_threshold = 50
-    gtab_bvals = gtab.bvals.copy()
-    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
-    gtab_bvals[b0_thr_ixs] = 0
-    gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()[28:84, 28:84, 18:57]
+def test_tens_mod_est(dmri_estimation_data):
+    """Test tensor ODF model estimation."""
+    gtab = dmri_estimation_data['gtab']
+    dwi_img = dmri_estimation_data['dwi_img']
+    B0_mask_img = dmri_estimation_data['B0_mask_img']
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
-    B0_mask_patch = f"{dir_path}/mean_B0_bet_mask_patch.nii.gz"
-    mask_img = nib.load(B0_mask)
-    mask_data = mask_img.get_fdata()[28:84, 28:84, 18:57]
-    nib.save(nib.Nifti1Image(mask_data, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
+    B0_mask_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
 
-    [mod_odf, model] = dmri_estimation.tens_mod_est(gtab, data, B0_mask_patch)
+    nib.save(B0_mask_img, B0_mask_file.name)
+    dwi_data = dwi_img.get_fdata()
+
+    [mod_odf, model] = \
+        tens_mod_est(gtab, dwi_data, B0_mask_file.name)
 
     assert mod_odf is not None
     assert model is not None
 
+    B0_mask_file.close()
 
-def test_csa_mod_est():
-    from dipy.core.gradients import gradient_table
-    import tempfile
 
-    base_dir = str(Path(__file__).parent/"examples")
-    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
-    dir_path = f"{base_dir}/003/dmri"
-    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
-    bvals = f"{dir_path}/sub-003_dwi.bval"
-    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
-    gtab = gradient_table(bvals, bvecs)
-    gtab.b0_threshold = 50
-    gtab_bvals = gtab.bvals.copy()
-    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
-    gtab_bvals[b0_thr_ixs] = 0
-    gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()[28:84, 28:84, 18:57]
+def test_csa_mod_est(dmri_estimation_data):
+    """Test CSA model estmation."""
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
-    B0_mask_patch = f"{dir_path}/mean_B0_bet_mask_patch.nii.gz"
-    mask_img = nib.load(B0_mask)
-    mask_data = mask_img.get_fdata()[28:84, 28:84, 18:57]
-    nib.save(nib.Nifti1Image(mask_data, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
+    gtab = dmri_estimation_data['gtab']
+    dwi_img = dmri_estimation_data['dwi_img']
+    B0_mask_img = dmri_estimation_data['B0_mask_img']
 
-    [csa_mod, model] = dmri_estimation.csa_mod_est(gtab, data, B0_mask_patch)
+    B0_mask_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+    dwi_data = dwi_img.get_fdata()
+    nib.save(B0_mask_img, B0_mask_file.name)
+
+    [csa_mod, model] = \
+        csa_mod_est(gtab, dwi_data, B0_mask_file.name, sh_order=0)
 
     assert csa_mod is not None
     assert model is not None
 
+    B0_mask_file.close()
 
-def test_csd_mod_est():
-    from dipy.core.gradients import gradient_table
-    import tempfile
 
-    base_dir = str(Path(__file__).parent/"examples")
-    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
-    dir_path = f"{base_dir}/003/dmri"
-    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
-    bvals = f"{dir_path}/sub-003_dwi.bval"
-    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
-    gtab = gradient_table(bvals, bvecs)
-    gtab.b0_threshold = 50
-    gtab_bvals = gtab.bvals.copy()
-    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
-    gtab_bvals[b0_thr_ixs] = 0
-    gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()[28:84, 28:84, 18:57]
+def test_csd_mod_est(dmri_estimation_data):
+    """Test CSD model estimation."""
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
-    B0_mask_patch = f"{dir_path}/mean_B0_bet_mask_patch.nii.gz"
-    mask_img = nib.load(B0_mask)
-    mask_data = mask_img.get_fdata()[28:84, 28:84, 18:57]
-    nib.save(nib.Nifti1Image(mask_data, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
+    gtab = dmri_estimation_data['gtab']
+    dwi_img = dmri_estimation_data['dwi_img']
+    B0_mask_img = dmri_estimation_data['B0_mask_img']
 
-    [csd_mod, model] = dmri_estimation.csd_mod_est(gtab, data, B0_mask_patch)
+    B0_mask_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+    nib.save(B0_mask_img, B0_mask_file.name)
+    dwi_data = dwi_img.get_fdata()
+
+    [csd_mod, model] = csd_mod_est(gtab, dwi_data, B0_mask_file.name, sh_order=0)
 
     assert csd_mod is not None
     assert model is not None
 
+    B0_mask_file.close()
 
-def test_sfm_mod_est():
-    from dipy.core.gradients import gradient_table
-    import tempfile
 
-    base_dir = str(Path(__file__).parent/"examples")
-    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
-    dir_path = f"{base_dir}/003/dmri"
-    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
-    bvals = f"{dir_path}/sub-003_dwi.bval"
-    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
-    gtab = gradient_table(bvals, bvecs)
-    gtab.b0_threshold = 50
-    gtab_bvals = gtab.bvals.copy()
-    b0_thr_ixs = np.where(gtab_bvals < gtab.b0_threshold)[0]
-    gtab_bvals[b0_thr_ixs] = 0
-    gtab.b0s_mask = gtab_bvals == 0
-    data = nib.load(dwi_file).get_fdata()[28:40, 28:40, 18:30]
+def test_sfm_mod_est(dmri_estimation_data):
+    """Test SFM model estimation."""
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
-    B0_mask_patch = f"{dir_path}/mean_B0_bet_mask_patch.nii.gz"
-    mask_img = nib.load(B0_mask)
-    mask_data = mask_img.get_fdata()[28:40, 28:40, 18:30]
-    nib.save(nib.Nifti1Image(mask_data, header=mask_img.header, affine=mask_img.affine), B0_mask_patch)
+    gtab = dmri_estimation_data['gtab']
+    dwi_data = dmri_estimation_data['dwi_img']
+    B0_mask_img = dmri_estimation_data['B0_mask_img']
 
-    [sf_odf, model] = dmri_estimation.sfm_mod_est(gtab, data, B0_mask_patch)
+    B0_mask_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+    nib.save(B0_mask_img, B0_mask_file.name)
+    dwi_data = dwi_data.get_fdata()
+
+    [sf_odf, model] = sfm_mod_est(gtab, dwi_data, B0_mask_file.name)
 
     assert sf_odf is not None
     assert model is not None
+
+    B0_mask_file.close()
 
 
 @pytest.mark.parametrize("fa_wei", [True, False])
@@ -473,10 +423,10 @@ def test_streams2graph(fa_wei):
     gtab.b0s_mask = gtab_bvals == 0
     save_pickle(gtab_file, gtab)
     # Not actually normalized to mni-space in this test.
-    warped_fa = dmri_estimation.tens_mod_fa_est(gtab_file, dwi_file, B0_mask)[0]
+    warped_fa = tens_mod_fa_est(gtab_file, dwi_file, B0_mask)[0]
 
-    conn_matrix = dmri_estimation.streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples,
-                                                conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
-                                                disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
-                                                directget, warped_fa, error_margin, min_length, fa_wei)[2]
+    conn_matrix = streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples,
+                                conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
+                                disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
+                                directget, warped_fa, error_margin, min_length, fa_wei)[2]
     assert conn_matrix is not None
