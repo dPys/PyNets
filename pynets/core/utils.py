@@ -459,8 +459,7 @@ def load_mat(est_path):
     return nx.to_numpy_matrix(G, weight='weight')
 
 
-def load_mat_ext(est_path, ID, network, conn_model, roi, prune, norm, binary, min_span_tree, dens_thresh,
-                 disp_filt):
+def load_mat_ext(est_path, ID, network, conn_model, roi, prune, norm, binary, min_span_tree, dens_thresh, disp_filt):
     from pynets.core.utils import load_mat
 
     conn_matrix = load_mat(est_path)
