@@ -9,9 +9,8 @@
   <component name="ChangeListManager">
     <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/cli/pynets_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/cli/pynets_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/core/nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/nodemaker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_nodemaker.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_nodemaker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/usage.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/usage.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pynets/registration/register.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/registration/register.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -53,8 +52,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="278">
-              <caret line="347" column="28" selection-start-line="347" selection-start-column="28" selection-end-line="347" selection-end-column="97" />
+            <state relative-caret-position="226">
+              <caret line="351" lean-forward="true" selection-start-line="351" selection-end-line="351" />
               <folding>
                 <element signature="e#139#154#0" expanded="true" />
               </folding>
@@ -63,15 +62,8 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/core/thresholding.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="627">
-              <caret line="1027" column="21" selection-start-line="1027" selection-start-column="21" selection-end-line="1027" selection-end-column="86" />
-              <folding>
-                <element signature="e#139#154#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
+        <entry file="file://$PROJECT_DIR$/docs/usage.rst">
+          <provider selected="true" editor-type-id="restructured-text-editor" />
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
@@ -90,37 +82,28 @@
         <entry file="file://$PROJECT_DIR$/pynets/cli/pynets_run.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="264">
-              <caret line="1688" column="29" selection-start-line="1688" selection-start-column="29" selection-end-line="1688" selection-end-column="79" />
+              <caret line="338" column="40" selection-start-line="338" selection-start-column="38" selection-end-line="338" selection-end-column="40" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tests/test_nodemaker.py">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="685">
-              <caret line="154" column="33" selection-start-line="154" selection-start-column="33" selection-end-line="154" selection-end-column="33" />
+            <state relative-caret-position="733">
+              <caret line="925" column="20" lean-forward="true" selection-start-line="925" selection-start-column="20" selection-end-line="925" selection-end-column="20" />
               <folding>
-                <element signature="e#131#144#0" expanded="true" />
+                <element signature="e#132#141#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tests/test_thresholding.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="717">
-              <caret line="279" column="28" selection-start-line="279" selection-start-column="28" selection-end-line="279" selection-end-column="28" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pynets/core/nodemaker.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="723">
-              <caret line="688" column="96" selection-start-line="688" selection-start-column="96" selection-end-line="688" selection-end-column="96" />
+            <state relative-caret-position="9825">
+              <caret line="655" column="18" lean-forward="true" selection-start-line="655" selection-start-column="18" selection-end-line="655" selection-end-column="18" />
               <folding>
                 <element signature="e#132#147#0" expanded="true" />
               </folding>
@@ -160,8 +143,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>min_span_tree</find>
-      <find>thr_out_node</find>
       <find>MapNode</find>
       <find>load_mat_node</find>
       <find>os.path</find>
@@ -170,7 +151,6 @@
       <find>'thr'</find>
       <find>save_mat_thresholded_node</find>
       <find>network</find>
-      <find>perform_thresholding</find>
       <find>thresholding_node</find>
       <find>join_iters_node_thr</find>
       <find>flatten</find>
@@ -190,6 +170,9 @@
       <find>func_file_list</find>
       <find>multi_graph</find>
       <find>splitext</find>
+      <find>perform_thresholding</find>
+      <find>T1w</find>
+      <find>-p</find>
     </findStrings>
     <replaceStrings>
       <replace>self.map_name</replace>
@@ -234,7 +217,6 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/docs/installation.rst" />
-        <option value="$PROJECT_DIR$/docs/usage.rst" />
         <option value="$PROJECT_DIR$/docs/links.rst" />
         <option value="$PROJECT_DIR$/tests/test_reg_utils.py" />
         <option value="$PROJECT_DIR$/tests/test_refs.py" />
@@ -275,7 +257,6 @@
         <option value="$PROJECT_DIR$/pynets/stats/netmotifs.py" />
         <option value="$PROJECT_DIR$/pynets/core/interfaces.py" />
         <option value="$PROJECT_DIR$/pynets/registration/reg_utils.py" />
-        <option value="$PROJECT_DIR$/pynets/registration/register.py" />
         <option value="$PROJECT_DIR$/pynets/plotting/plot_gen.py" />
         <option value="$PROJECT_DIR$/pynets/core/utils.py" />
         <option value="$PROJECT_DIR$/pynets/core/thresholding.py" />
@@ -284,6 +265,8 @@
         <option value="$PROJECT_DIR$/pynets/cli/pynets_run.py" />
         <option value="$PROJECT_DIR$/tests/test_nodemaker.py" />
         <option value="$PROJECT_DIR$/pynets/core/nodemaker.py" />
+        <option value="$PROJECT_DIR$/docs/usage.rst" />
+        <option value="$PROJECT_DIR$/pynets/registration/register.py" />
       </list>
     </option>
   </component>
@@ -309,6 +292,11 @@
             <path>
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="docs" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
               <item name="pynets" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -320,7 +308,8 @@
             <path>
               <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
-              <item name="tests" type="462c0819:PsiDirectoryNode" />
+              <item name="pynets" type="462c0819:PsiDirectoryNode" />
+              <item name="registration" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -504,12 +493,12 @@
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
       <workItem from="1589906893238" duration="377717000" />
-      <workItem from="1591893225907" duration="46455000" />
+      <workItem from="1591893225907" duration="48480000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1395478000" />
+    <option name="totallyTimeSpent" value="1397503000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -524,7 +513,7 @@
     <frame x="417" y="23" width="1292" height="982" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.48904267" visible="true" weight="0.2008" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.48904267" visible="true" weight="0.1704" />
       <window_info id="Structure" order="1" sideWeight="0.5109573" side_tool="true" weight="0.16165718" />
       <window_info id="aws.explorer" order="2" sideWeight="0.5109573" side_tool="true" weight="0.16165718" />
       <window_info id="Favorites" order="3" sideWeight="0.5109573" side_tool="true" weight="0.14690909" />
@@ -666,9 +655,6 @@
           <caret line="31" column="27" selection-start-line="31" selection-start-column="27" selection-end-line="31" selection-end-column="27" />
         </state>
       </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/docs/usage.rst">
-      <provider selected="true" editor-type-id="restructured-text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/docs/index.rst">
       <provider selected="true" editor-type-id="restructured-text-editor" />
@@ -831,16 +817,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-6059">
-          <caret line="421" column="60" selection-start-line="421" selection-start-column="60" selection-end-line="421" selection-end-column="60" />
-          <folding>
-            <element signature="e#132#141#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/registration/reg_utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="685">
@@ -878,26 +854,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="278">
-          <caret line="347" column="28" selection-start-line="347" selection-start-column="28" selection-end-line="347" selection-end-column="97" />
-          <folding>
-            <element signature="e#139#154#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/core/thresholding.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="627">
-          <caret line="1027" column="21" selection-start-line="1027" selection-start-column="21" selection-end-line="1027" selection-end-column="86" />
-          <folding>
-            <element signature="e#139#154#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pynets/core/utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="616">
@@ -905,13 +861,6 @@
           <folding>
             <element signature="e#139#154#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_thresholding.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="717">
-          <caret line="279" column="28" selection-start-line="279" selection-start-column="28" selection-end-line="279" selection-end-column="28" />
         </state>
       </provider>
     </entry>
@@ -925,10 +874,20 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/cli/pynets_run.py">
+    <entry file="file://$PROJECT_DIR$/pynets/core/nodemaker.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="264">
-          <caret line="1688" column="29" selection-start-line="1688" selection-start-column="29" selection-end-line="1688" selection-end-column="79" />
+        <state relative-caret-position="9825">
+          <caret line="655" column="18" lean-forward="true" selection-start-line="655" selection-start-column="18" selection-end-line="655" selection-end-column="18" />
+          <folding>
+            <element signature="e#132#147#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_thresholding.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="717">
+          <caret line="279" column="28" selection-start-line="279" selection-start-column="28" selection-end-line="279" selection-end-column="28" />
         </state>
       </provider>
     </entry>
@@ -942,12 +901,42 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/core/nodemaker.py">
+    <entry file="file://$PROJECT_DIR$/pynets/core/thresholding.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="723">
-          <caret line="688" column="96" selection-start-line="688" selection-start-column="96" selection-end-line="688" selection-end-column="96" />
+        <state relative-caret-position="655">
+          <caret line="1027" column="21" selection-start-line="1027" selection-start-column="21" selection-end-line="1027" selection-end-column="86" />
           <folding>
-            <element signature="e#132#147#0" expanded="true" />
+            <element signature="e#139#154#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="226">
+          <caret line="351" lean-forward="true" selection-start-line="351" selection-end-line="351" />
+          <folding>
+            <element signature="e#139#154#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/usage.rst">
+      <provider selected="true" editor-type-id="restructured-text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/cli/pynets_run.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="264">
+          <caret line="338" column="40" selection-start-line="338" selection-start-column="38" selection-end-line="338" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="733">
+          <caret line="925" column="20" lean-forward="true" selection-start-line="925" selection-start-column="20" selection-end-line="925" selection-end-column="20" />
+          <folding>
+            <element signature="e#132#141#0" expanded="true" />
           </folding>
         </state>
       </provider>

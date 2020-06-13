@@ -493,8 +493,10 @@ class DmriReg(object):
             # TODO find a better heuristic for determining whether a t1w image has already been skull-stripped
             if perc_nonzero > 0.25:
                 import tensorflow as tf
-                tf.logging.set_verbosity(tf.logging.ERROR)
+                import logging
                 from deepbrain import Extractor
+                logger = tf.get_logger()
+                logger.setLevel(logging.ERROR)
                 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
                 ext = Extractor()
                 prob = ext.run(t1w_data)
@@ -911,8 +913,10 @@ class FmriReg(object):
             # TODO find a better heuristic for determining whether a t1w image has already been skull-stripped
             if perc_nonzero > 0.25:
                 import tensorflow as tf
-                tf.logging.set_verbosity(tf.logging.ERROR)
+                import logging
                 from deepbrain import Extractor
+                logger = tf.get_logger()
+                logger.setLevel(logging.ERROR)
                 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
                 ext = Extractor()
                 prob = ext.run(t1w_data)

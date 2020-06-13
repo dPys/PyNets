@@ -52,7 +52,7 @@ In the case of a single subject, several combinations of input files can be used
     All formats are assumed to be Nifti1Image (i.e. .nii or .nii.gz file suffix), except for a raw graph which can be in .txt, .npy, .csv, .tsv, or .ssv.
 
 .. note::
-    T1w input images should be skull-stripped and un-resampled (i.e. *not* normalized to MNI).
+    T1w input images need not be skull-stripped. If brain masking has been applied already, `PyNets` will attempt to detect this, else apply `deepbrain` extraction to the image automatically. T1w image should *not*, however, be normalized to an MNI template yet.
 
 Secondary File Inputs
 =====================
@@ -66,7 +66,7 @@ Secondary File Inputs
 :`-ref`: (*fMRI + dMRI*) An atlas reference .txt file that indices intensities corresponding to atlas labels of the parcellation specified with the `-ua` flag. This label map is used only to delineate node labels manually. Automated node labeling via AAL can alternatively be used by including the `-names` flag. Otherwise, sequential numeric labels will be used by default.
 
 .. note::
-    All general image inputs are assumed to be normalized to MNI space. Image orientation and voxel resolution are not relevant, as PyNets will create necessary working copies with standardized RAS+ orientations and either 1mm or 2mm voxel resolution reslicing, depending on that which is specified with the `-vox` flag.
+    All general image inputs are assumed to be normalized to MNI space. Image orientation and voxel resolution are not relevant, as PyNets will create necessary working copies with standardized RAS+ orientations and either 1mm or 2mm voxel resolution reslicing, depending on the runtime.config default or possible override with the `-vox` flag.
 
 BIDS Derivatives
 ================
