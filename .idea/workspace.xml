@@ -8,8 +8,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="356b1b5b-d676-4675-902d-7ed99cfc261e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pynets/core/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/pynets/core/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_workflows.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_workflows.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -39,8 +38,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pynets/core/workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="15">
-              <caret line="1382" column="31" selection-start-line="1382" selection-start-column="31" selection-end-line="1382" selection-end-column="50" />
+            <state relative-caret-position="718">
+              <caret line="1427" column="41" selection-start-line="1427" selection-start-column="41" selection-end-line="1427" selection-end-column="41" />
               <folding>
                 <element signature="e#139#154#0" expanded="true" />
               </folding>
@@ -49,84 +48,22 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
+        <entry file="file://$PROJECT_DIR$/tests/conftest.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="226">
-              <caret line="351" selection-start-line="351" selection-end-line="351" />
+            <state relative-caret-position="120">
+              <caret line="8" lean-forward="true" selection-start-line="8" selection-end-line="8" />
               <folding>
-                <element signature="e#139#154#0" expanded="true" />
+                <element signature="e#49#73#0" expanded="true" />
               </folding>
             </state>
           </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/docs/usage.rst">
-          <provider selected="true" editor-type-id="restructured-text-editor" />
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/pynets/core/utils.py">
+        <entry file="file://$PROJECT_DIR$/tests/test_workflows.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="575">
-              <caret line="464" column="18" lean-forward="true" selection-start-line="464" selection-start-column="18" selection-end-line="464" selection-end-column="36" />
-              <folding>
-                <element signature="e#139#154#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/cli/pynets_run.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="264">
-              <caret line="338" column="40" selection-start-line="338" selection-start-column="38" selection-end-line="338" selection-end-column="40" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/registration/register.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="8508">
-              <caret line="925" column="20" selection-start-line="925" selection-start-column="20" selection-end-line="925" selection-end-column="20" />
-              <folding>
-                <element signature="e#132#141#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/core/nodemaker.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="9825">
-              <caret line="655" column="18" selection-start-line="655" selection-start-column="18" selection-end-line="655" selection-end-column="18" />
-              <folding>
-                <element signature="e#132#147#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/config/bids_config_dwi.json">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="390">
-              <caret line="26" column="23" selection-start-line="26" selection-start-column="23" selection-end-line="26" selection-end-column="23" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pynets/plotting/plot_gen.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="240">
-              <caret line="434" column="48" selection-start-line="434" selection-start-column="48" selection-end-line="434" selection-end-column="48" />
-              <folding>
-                <element signature="e#139#154#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="182">
+              <caret line="362" column="21" selection-start-line="362" selection-start-column="21" selection-end-line="362" selection-end-column="21" />
             </state>
           </provider>
         </entry>
@@ -169,9 +106,9 @@
       <find>multi_graph</find>
       <find>splitext</find>
       <find>perform_thresholding</find>
-      <find>T1w</find>
-      <find>-p</find>
       <find>load_</find>
+      <find>-p</find>
+      <find>T1w</find>
     </findStrings>
     <replaceStrings>
       <replace>self.map_name</replace>
@@ -237,7 +174,6 @@
         <option value="$PROJECT_DIR$/tests/test_estimation.py" />
         <option value="$PROJECT_DIR$/tests/test_plotting.py" />
         <option value="$PROJECT_DIR$/tests/test_utils.py" />
-        <option value="$PROJECT_DIR$/tests/test_workflows.py" />
         <option value="$PROJECT_DIR$/.circleci/config.yml" />
         <option value="$PROJECT_DIR$/README.rst" />
         <option value="$PROJECT_DIR$/setup.py" />
@@ -266,6 +202,7 @@
         <option value="$PROJECT_DIR$/docs/usage.rst" />
         <option value="$PROJECT_DIR$/pynets/registration/register.py" />
         <option value="$PROJECT_DIR$/pynets/core/utils.py" />
+        <option value="$PROJECT_DIR$/tests/test_workflows.py" />
       </list>
     </option>
   </component>
@@ -309,6 +246,11 @@
               <item name="PyNets" type="462c0819:PsiDirectoryNode" />
               <item name="pynets" type="462c0819:PsiDirectoryNode" />
               <item name="registration" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PyNets" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PyNets" type="462c0819:PsiDirectoryNode" />
+              <item name="tests" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -492,12 +434,12 @@
       <workItem from="1588360538523" duration="7195000" />
       <workItem from="1589407297410" duration="2636000" />
       <workItem from="1589906893238" duration="377717000" />
-      <workItem from="1591893225907" duration="48735000" />
+      <workItem from="1591893225907" duration="48929000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1397758000" />
+    <option name="totallyTimeSpent" value="1397952000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -587,22 +529,6 @@
     </expressions>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/tests/test_workflows.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="405">
-          <caret line="191" column="56" lean-forward="true" selection-start-line="191" selection-start-column="56" selection-end-line="191" selection-end-column="56" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/cli/pynets_bids.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-8302">
-          <folding>
-            <element signature="e#24#35#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/setup.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="300">
@@ -846,33 +772,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/config/bids_config_dwi.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="390">
-          <caret line="26" column="23" selection-start-line="26" selection-start-column="23" selection-end-line="26" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/core/workflows.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="1382" column="31" selection-start-line="1382" selection-start-column="31" selection-end-line="1382" selection-end-column="50" />
-          <folding>
-            <element signature="e#139#154#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/core/nodemaker.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="9825">
-          <caret line="655" column="18" selection-start-line="655" selection-start-column="18" selection-end-line="655" selection-end-column="18" />
-          <folding>
-            <element signature="e#132#147#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_thresholding.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="717">
@@ -900,23 +799,30 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
+    <entry file="file://$PROJECT_DIR$/pynets/core/utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="226">
-          <caret line="351" selection-start-line="351" selection-end-line="351" />
+        <state relative-caret-position="650">
+          <caret line="469" column="47" selection-start-line="469" selection-start-column="47" selection-end-line="469" selection-end-column="47" />
           <folding>
             <element signature="e#139#154#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/docs/usage.rst">
-      <provider selected="true" editor-type-id="restructured-text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/cli/pynets_run.py">
+    <entry file="file://$PROJECT_DIR$/pynets/config/bids_config_dwi.json">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="264">
-          <caret line="338" column="40" selection-start-line="338" selection-start-column="38" selection-end-line="338" selection-end-column="40" />
+        <state relative-caret-position="390">
+          <caret line="26" column="23" selection-start-line="26" selection-start-column="23" selection-end-line="26" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/core/nodemaker.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="9825">
+          <caret line="655" column="18" selection-start-line="655" selection-start-column="18" selection-end-line="655" selection-end-column="18" />
+          <folding>
+            <element signature="e#132#147#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -930,13 +836,50 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pynets/core/utils.py">
+    <entry file="file://$PROJECT_DIR$/pynets/cli/pynets_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="575">
-          <caret line="464" column="18" lean-forward="true" selection-start-line="464" selection-start-column="18" selection-end-line="464" selection-end-column="36" />
+        <state relative-caret-position="264">
+          <caret line="338" column="40" selection-start-line="338" selection-start-column="38" selection-end-line="338" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/usage.rst">
+      <provider selected="true" editor-type-id="restructured-text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/core/interfaces.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="226">
+          <caret line="351" selection-start-line="351" selection-end-line="351" />
           <folding>
             <element signature="e#139#154#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pynets/core/workflows.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="718">
+          <caret line="1427" column="41" selection-start-line="1427" selection-start-column="41" selection-end-line="1427" selection-end-column="41" />
+          <folding>
+            <element signature="e#139#154#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/conftest.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="120">
+          <caret line="8" lean-forward="true" selection-start-line="8" selection-end-line="8" />
+          <folding>
+            <element signature="e#49#73#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_workflows.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="182">
+          <caret line="362" column="21" selection-start-line="362" selection-start-column="21" selection-end-line="362" selection-end-column="21" />
         </state>
       </provider>
     </entry>

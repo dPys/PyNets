@@ -29,7 +29,8 @@ base_dir = str(Path(__file__).parent/"examples")
     ]
 )
 @pytest.mark.parametrize("plot_switch", [True, False])
-@pytest.mark.parametrize("anat_file", [f"{base_dir}/BIDS/sub-0025427/ses-1/anat/sub-0025427_desc-preproc_T1w.nii.gz", None])
+@pytest.mark.parametrize("anat_file", [f"{base_dir}/BIDS/sub-0025427/ses-1/anat/sub-0025427_desc-preproc_T1w.nii.gz",
+                                       None])
 @pytest.mark.parametrize("parc,node_size,node_size_list,atlas,multi_atlas,uatlas,user_atlas_list",
     [
         pytest.param(False, None, [4, 8], None, None, None, None, marks=pytest.mark.xfail),
@@ -39,7 +40,8 @@ base_dir = str(Path(__file__).parent/"examples")
         pytest.param(False, 4, None, None, ['coords_dosenbach_2010', 'coords_power_2011'], None, None),
         pytest.param(False, 4, None, None, None, None, None, marks=pytest.mark.xfail),
         pytest.param(True, None, None, None, None, None, None),
-        pytest.param(False, None, [4, 8], None, None, f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz", None),
+        pytest.param(False, None, [4, 8], None, None, f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
+                     None),
         pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None,
                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz", None),
         pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010', 'coords_power_2011'],
@@ -207,7 +209,8 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
                      'ward', None),
     ]
 )
-@pytest.mark.parametrize("mask", [f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz", None])
+@pytest.mark.parametrize("mask", [f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz",
+                                  None])
 @pytest.mark.parametrize("roi", [f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz", None])
 @pytest.mark.parametrize("network", ['Default', ['Default', 'Limbic'], None])
 @pytest.mark.parametrize("parc,node_size,node_size_list,atlas,multi_atlas,uatlas,user_atlas_list",
@@ -356,7 +359,8 @@ f"space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz"])
         pytest.param(False, 4, None, None, ['coords_dosenbach_2010', 'coords_power_2011'], None, None),
         pytest.param(False, 4, None, None, None, None, None, marks=pytest.mark.xfail),
         pytest.param(True, None, None, None, None, None, None),
-        pytest.param(False, None, [4, 8], None, None, f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz", None),
+        pytest.param(False, None, [4, 8], None, None, f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
+                     None),
         pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None, f"{base_dir}/miscellaneous/whole_brain_cluster_labels_"
         f"PCA200.nii.gz", None),
         pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010', 'coords_power_2011'], f"{base_dir}/miscellaneous/whole_"
@@ -365,8 +369,10 @@ f"space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz"])
         f"nii.gz", None),
         pytest.param(False, 4, None, None, ['coords_dosenbach_2010', 'coords_power_2011'], f"{base_dir}/miscellaneous/whole_brain_"
         f"cluster_labels_PCA200.nii.gz", None),
-        pytest.param(False, 4, None, None, None, f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz", None),
-        pytest.param(True, None, None, None, None, f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz", None),
+        pytest.param(False, 4, None, None, None, f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
+                     None),
+        pytest.param(True, None, None, None, None, f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
+                     None),
         pytest.param(False, None, [4, 8], None, None, None, [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
                                                              f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"]),
         pytest.param(False, None, [4, 8], 'coords_dosenbach_2010',
