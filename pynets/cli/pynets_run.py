@@ -224,7 +224,8 @@ def get_parser():
                         choices=['sum', 'mean', 'median', 'mininum', 'maximum', 'variance', 'standard_deviation'],
                         help='Include this flag if you are running functional connectometry using parcel labels and '
                              'wish to specify the name of a specific function (i.e. other than the mean) to reduce the '
-                             'region\'s time-series.\n')
+                             'region\'s time-series. Options are: `sum`, `mean`, `median`, `mininum`, `maximum`, '
+                             '`variance`, `standard_deviation`.\n')
     parser.add_argument('-k',
                         metavar='Number of k clusters',
                         default=None,
