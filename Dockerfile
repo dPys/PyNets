@@ -186,4 +186,4 @@ ENV USE_SIMPLE_THREADED_LEVEL3=1
 EXPOSE 22
 
 # and add it as an entrypoint
-#ENTRYPOINT ["pynets_bids"]
+ENTRYPOINT ["pynets_bids"]
