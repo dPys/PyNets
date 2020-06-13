@@ -294,6 +294,7 @@ def main():
     import itertools
     from types import SimpleNamespace
     from pathlib import Path
+    import pkg_resources
     from pynets.core.utils import flatten
     from pynets.cli.pynets_run import build_workflow
     from multiprocessing import set_start_method, Process, Manager
@@ -328,14 +329,12 @@ def main():
         with open(bids_config, 'r') as stream:
             arg_dict = json.load(stream)
     else:
-        with open(f"{str(Path(__file__).parent.parent)}/config/bids_config_test.json", 'r') as stream:
-        # with open('/Users/derekpisner/Applications/PyNets/pynets/config/bids_config_test.json') as stream:
+        with open(pkg_resources.resource_filename("pynets", "config/bids_config_test.json"), 'r') as stream:
             arg_dict = json.load(stream)
         stream.close()
 
     # Available functional and structural connectivity models
-    with open(f"{str(Path(__file__).parent.parent)}/runconfig.yaml", 'r') as stream:
-    # with open('/Users/derekpisner/Applications/PyNets/pynets/runconfig.yaml') as stream:
+    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
             func_models = hardcoded_params['available_models']['func_models']
@@ -345,7 +344,7 @@ def main():
         try:
             struct_models = hardcoded_params['available_models']['struct_models']
         except KeyError:
-            print('ERROR: available structural models not successfully extracted from runconfig.yaml')
+            print('ERROR: available structural models not successfully extracted from s.yaml')
             sys.exit()
     stream.close()
 

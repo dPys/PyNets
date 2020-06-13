@@ -16,7 +16,6 @@ seaborn>=0.7.1
 matplotlib>=2.2.0
 pytest>=3.3.1
 networkx>=2.0
-git+https://github.com/dPys/nilearn.git@enh/parc_conn
 nipype==1.2.0
 scikit_learn>=0.22.0
 dipy>=1.1.0
@@ -26,11 +25,15 @@ pybids>=0.6.4
 colorama>=0.3.9
 python-louvain==0.13
 scikit-image==0.14.2
-fury>=0.2.0
-git+https://github.com/dPys/deepbrain.git@master
-#skggm>=0.2.7
 graspy>=0.0.2
-#py3plex>=0.67
 sqlalchemy>=1.3.1
 python-dateutil==2.8.0
 docutils==0.14.0
+git+https://github.com/dPys/nilearn.git@enh/parc_conn
+git+https://github.com/dPys/deepbrain.git@master
+# git+https://github.com/nkoub/multinetx.git@master
+# fury>=0.2.0
+# skggm>=0.2.7
+# nltk>=3.4
+# liwc>=0.5.0
+# nimare>=0.0.2

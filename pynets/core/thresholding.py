@@ -590,7 +590,7 @@ def knn(conn_matrix, k):
     return gra
 
 
-def local_thresholding_prop(conn_matrix, coords, labels, thr):
+def local_thresholding_prop(conn_matrix, thr):
     """
     Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
     successive N-nearest neighbour degree graphs to achieve target proportional threshold.
@@ -608,23 +608,10 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
         Weighted, MST local-thresholded, NxN matrix.
     """
     from pynets.core import thresholding
-    from pynets.stats import netstats
 
     fail_tol = 100
     conn_matrix = np.nan_to_num(conn_matrix)
     G = nx.from_numpy_matrix(np.abs(conn_matrix))
-    if not nx.is_connected(G):
-        [G, pruned_nodes] = netstats.prune_disconnected(G)
-        pruned_nodes.sort(reverse=True)
-        coords_pre = list(coords)
-        labels_pre = list(labels)
-        if len(pruned_nodes) > 0:
-            for j in pruned_nodes:
-                labels_pre.pop(j)
-                coords_pre.pop(j)
-            conn_matrix = nx.to_numpy_array(G)
-            labels = labels_pre
-            coords = coords_pre
 
     maximum_edges = G.number_of_edges()
     min_t = nx.minimum_spanning_tree(thresholding.weight_to_distance(G), weight="distance")
@@ -637,7 +624,7 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
         print(f"Warning: The minimum spanning tree already has: {len_edges} edges, select more edges. Local Threshold "
               f"will be applied by just retaining the Minimum Spanning Tree")
         conn_matrix_thr = nx.to_numpy_array(G)
-        return conn_matrix_thr, coords, labels
+        return conn_matrix_thr
 
     k = 1
     len_edge_list = []
@@ -689,18 +676,23 @@ def local_thresholding_prop(conn_matrix, coords, labels, thr):
     else:
         conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
 
-    return conn_matrix_thr, coords, labels
+    return conn_matrix_thr
 
 
-def perform_thresholding(conn_matrix, coords, labels, thr, thr_perc, min_span_tree, dens_thresh, disp_filt):
+def perform_thresholding(conn_matrix, thr, min_span_tree, dens_thresh, disp_filt):
+    import numpy as np
+    import networkx as nx
     from pynets.core import thresholding
+
+    thr_perc = 100 - np.abs(100 * float(thr))
+
     if min_span_tree is True:
         print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is True:
             print('Ignoring -dt flag since local density thresholding is not currently supported.')
         thr_type = 'MST'
         edge_threshold = f"{str(thr_perc)}%"
-        [conn_matrix_thr, coords, labels] = thresholding.local_thresholding_prop(conn_matrix, coords, labels, thr)
+        conn_matrix_thr = thresholding.local_thresholding_prop(conn_matrix, thr)
     elif disp_filt is True:
         thr_type = 'DISPARITY'
         edge_threshold = f"{str(thr_perc)}%"
@@ -734,12 +726,12 @@ def perform_thresholding(conn_matrix, coords, labels, thr, thr_perc, min_span_tr
             edge_threshold = None
             print(f"\nThresholding to achieve density of: {thr_perc}% ...\n")
             conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
-    return thr_type, edge_threshold, conn_matrix_thr, coords, labels
+    return thr_type, edge_threshold, conn_matrix_thr
 
 
 def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
                 smooth, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
-                hpass):
+                hpass, extract_strategy):
     """
     Threshold a functional connectivity matrix using any of a variety of methods.
 
@@ -795,6 +787,8 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         unweighted graph.
     hpass : float
         High-pass filter values (Hz) to apply to node-extracted time-series.
+    extract_strategy : str
+        The name of a valid function used to reduce the time-series region extraction.
 
     Returns
     -------
@@ -842,11 +836,12 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         unweighted graph.
     hpass : float
         High-pass filter values (Hz) to apply to node-extracted time-series.
+    extract_strategy : str
+        The name of a valid function used to reduce the time-series region extraction.
     """
     import gc
     from pynets.core import utils, thresholding
 
-    thr_perc = 100-np.abs(100 * float(thr))
     if parc is True:
         node_size = 'parc'
 
@@ -855,27 +850,23 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
 
     # Save unthresholded
     utils.save_mat(conn_matrix, utils.create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth,
-                                                           hpass, parc))
+                                                           hpass, parc, extract_strategy))
 
-    [thr_type, edge_threshold, conn_matrix_thr, coords, labels] = thresholding.perform_thresholding(conn_matrix, coords,
-                                                                                                    labels, thr,
-                                                                                                    thr_perc,
-                                                                                                    min_span_tree,
-                                                                                                    dens_thresh,
-                                                                                                    disp_filt)
+    [thr_type, edge_threshold, conn_matrix_thr] = thresholding.perform_thresholding(conn_matrix, thr, min_span_tree,
+                                                                                    dens_thresh, disp_filt)
 
     if not nx.is_connected(nx.from_numpy_matrix(conn_matrix_thr)):
         print('Warning: Fragmented graph')
 
     # Save thresholded mat
     est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, thr_type,
-                                          hpass, parc)
+                                          hpass, parc, extract_strategy)
 
     utils.save_mat(conn_matrix_thr, est_path)
     gc.collect()
 
     return (conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID,
-            dir_path, atlas, uatlas, labels, coords, norm, binary, hpass)
+            dir_path, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy)
 
 
 def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
@@ -1006,7 +997,6 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     import gc
     from pynets.core import utils, thresholding
 
-    thr_perc = 100 - np.abs(100 * float(thr))
     if parc is True:
         node_size = 'parc'
 
@@ -1017,12 +1007,8 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     utils.save_mat(conn_matrix, utils.create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size,
                                                            target_samples, track_type, parc, directget, min_length))
 
-    [thr_type, edge_threshold, conn_matrix_thr, coords, labels] = thresholding.perform_thresholding(conn_matrix,
-                                                                                                    coords, labels,
-                                                                                                    thr, thr_perc,
-                                                                                                    min_span_tree,
-                                                                                                    dens_thresh,
-                                                                                                    disp_filt)
+    [thr_type, edge_threshold, conn_matrix_thr] = thresholding.perform_thresholding(conn_matrix, thr, min_span_tree,
+                                                                                    dens_thresh, disp_filt)
 
     if not nx.is_connected(nx.from_numpy_matrix(conn_matrix_thr)):
         print('Warning: Fragmented graph')
@@ -1037,3 +1023,10 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     return (conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path,
             atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, atlas_mni, streams, directget,
             min_length)
+
+
+def thresh_raw_graph(conn_matrix, thr, min_span_tree, dens_thresh, disp_filt, est_path):
+    from pynets.core import thresholding
+    [thr_type, edge_threshold, conn_matrix_thr] = thresholding.perform_thresholding(conn_matrix, thr, min_span_tree,
+                                                                                    dens_thresh, disp_filt)
+    return thr_type, edge_threshold, conn_matrix_thr, thr, est_path

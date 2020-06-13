@@ -21,6 +21,19 @@ def get_file():
     return base_path
 
 
+def prune_suffices(res):
+    import re
+    if 'reor-RAS' in str(res):
+        res = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(res))
+    if 'res-' in str(res):
+        res = re.sub(r"_res\-*[0-4]mm", "", str(res))
+    if 'noreor-RAS' in str(res):
+        res = re.sub(r"_noreor\-*[A-Z][A-Z][A-Z]", "", str(res))
+    if 'nores-' in str(res):
+        res = re.sub(r"_nores\-*[0-4]mm", "", str(res))
+    return res
+
+
 def do_dir_path(atlas, outdir):
     """
     Creates an atlas subdirectory from the base directory of the given subject's input file.
@@ -40,10 +53,7 @@ def do_dir_path(atlas, outdir):
     if atlas:
         if os.path.isfile(atlas):
             atlas = os.path.basename(atlas)
-        if 'reor-RAS' in str(atlas):
-            atlas = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(atlas))
-        if 'res-' in str(atlas):
-            atlas = re.sub(r"_res\-*[0-4]mm", "", str(atlas))
+        atlas = prune_suffices(atlas)
         if atlas.endswith('.nii.gz'):
            atlas = atlas.replace('.nii.gz', '')
 
@@ -88,7 +98,8 @@ def as_directory(dir_, remove=False, return_as_path=False):
     return str(p)
 
 
-def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, thr_type, hpass, parc):
+def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, thr_type, hpass, parc,
+                         extract_strategy):
     """
     Name the thresholded functional connectivity matrix file based on relevant graph-generating parameters.
 
@@ -120,6 +131,8 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
         High-pass filter values (Hz) to apply to node-extracted time-series.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
+    extract_strategy : str
+        The name of a valid function used to reduce the time-series region extraction.
 
     Returns
     -------
@@ -140,19 +153,24 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
     if smooth is None:
         smooth = 0
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
-                                                       '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                               network is not None else ''),
-                                                       '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0],
-                                                                           '_') if roi is not None else ''),
-                                                       'est-', conn_model, '_',
-                                                       '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
-                                                               ((node_size != 'parc') and (node_size is not None))
-                                                               else 'nodetype-parc_'),
-                                                       "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_')),
-                                                       "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_')),
-                                                       'thrtype-', thr_type, '_thr-', thr,
-                                                       '.npy')
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
+                                                         '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                                 network is not None else ''),
+                                                         '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0],
+                                                                             '_') if roi is not None else ''),
+                                                         'est-', conn_model, '_',
+                                                         '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
+                                                                 ((node_size != 'parc') and (node_size is not None))
+                                                                 else 'nodetype-parc_'),
+                                                         "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                                 float(smooth) > 0 else ''),
+                                                         "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                                 hpass is not None else ''),
+                                                         "%s" % ("%s%s%s" %
+                                                                 ('extract-', extract_strategy, '_') if
+                                                                 extract_strategy is not None else ''),
+                                                         'thrtype-', thr_type, '_thr-', thr,
+                                                         '.npy')
 
     return est_path
 
@@ -230,7 +248,7 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
     return est_path
 
 
-def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth, hpass, parc):
+def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth, hpass, parc, extract_strategy):
     """
     Name the raw functional connectivity matrix file based on relevant graph-generating parameters.
 
@@ -257,6 +275,8 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
         High-pass filter values (Hz) to apply to node-extracted time-series.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
+    extract_strategy : str
+        The name of a valid function used to reduce the time-series region extraction.
 
     Returns
     -------
@@ -277,21 +297,26 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
     if smooth is None:
         smooth = 0
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
-                                               '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                       network is not None else ''),
-                                               '%s' % ("%s%s%s" % ('roi-',
-                                                                   op.basename(roi).split('.')[0],
-                                                                   '_') if roi is not None else ''),
-                                               'est-', conn_model, '_',
-                                               '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size,
-                                                                   'mm_')
-                                                       if ((node_size != 'parc') and
-                                                           (node_size is not None))
-                                                       else 'nodetype-parc_'),
-                                               "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_')),
-                                               "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_')),
-                                               'raw.npy')
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
+                                                 '%s' % ("%s%s%s" % ('rsn-', network, '_') if
+                                                         network is not None else ''),
+                                                 '%s' % ("%s%s%s" % ('roi-',
+                                                                     op.basename(roi).split('.')[0],
+                                                                     '_') if roi is not None else ''),
+                                                 'est-', conn_model, '_',
+                                                 '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size,
+                                                                     'mm_')
+                                                         if ((node_size != 'parc') and
+                                                             (node_size is not None))
+                                                         else 'nodetype-parc_'),
+                                                 "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                         float(smooth) > 0 else ''),
+                                                 "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                         hpass is not None else ''),
+                                                 "%s" % ("%s%s%s" %
+                                                         ('extract-', extract_strategy, '_') if
+                                                         extract_strategy is not None else ''),
+                                                 'raw.npy')
 
     return est_path
 
@@ -391,20 +416,73 @@ def create_csv_path(dir_path, est_path):
     return out_path
 
 
+def load_mat(est_path):
+    """
+    Load an adjacency matrix using any of a variety of methods.
+
+    Parameters
+    ----------
+    est_path : str
+        File path to .npy file containing graph with thresholding applied.
+    """
+    import numpy as np
+    import networkx as nx
+    import os.path as op
+
+    fmt = op.splitext(est_path)[1]
+
+    if fmt == '.edgelist_csv' or fmt == '.csv':
+        with open(est_path, 'rb') as stream:
+            G = nx.read_weighted_edgelist(stream, delimiter=",")
+        stream.close()
+    elif fmt == '.edgelist_ssv' or fmt == '.ssv':
+        with open(est_path, 'rb') as stream:
+            G = nx.read_weighted_edgelist(stream, delimiter=" ")
+        stream.close()
+    elif fmt == '.edgelist_tsv' or fmt == '.tsv':
+        with open(est_path, 'rb') as stream:
+            G = nx.read_weighted_edgelist(stream, delimiter="\t")
+    elif fmt == '.gpickle':
+        G = nx.read_gpickle(est_path)
+    elif fmt == '.graphml':
+        G = nx.read_graphml(est_path)
+    elif fmt == '.txt':
+        G = nx.from_numpy_array(np.genfromtxt(est_path))
+    elif fmt == '.npy':
+        G = nx.from_numpy_array(np.load(est_path))
+    else:
+        raise ValueError('\nERROR: File format not supported!')
+
+    G.graph['ecount'] = nx.number_of_edges(G)
+    G = nx.convert_node_labels_to_integers(G, first_label=1)
+
+    return nx.to_numpy_matrix(G, weight='weight')
+
+
+def load_mat_ext(est_path, ID, network, conn_model, roi, prune, norm, binary, min_span_tree, dens_thresh, disp_filt):
+    from pynets.core.utils import load_mat
+
+    conn_matrix = load_mat(est_path)
+    return conn_matrix, est_path, ID, network, conn_model, roi, prune, norm, binary, min_span_tree, dens_thresh, \
+           disp_filt
+
+
 def save_mat(conn_matrix, est_path, fmt='npy'):
     """
-    Threshold a diffusion structural connectivity matrix using any of a variety of methods.
+   Save an adjacency matrix using any of a variety of methods.
 
     Parameters
     ----------
     conn_matrix : array
         Adjacency matrix stored as an m x n array of nodes and edges.
     est_path : str
-        File path to .npy file containing graph with thresholding applied.
+        File path to .npy file containing graph.
     fmt : str
         Format to save connectivity matrix/graph (e.g. .npy, .pkl, .graphml, .txt, .ssv, .csv). Default is .npy.
     """
+    import numpy as np
     import networkx as nx
+
     G = nx.from_numpy_array(conn_matrix)
     G.graph['ecount'] = nx.number_of_edges(G)
     G = nx.convert_node_labels_to_integers(G, first_label=1)
@@ -426,9 +504,19 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
     return
 
 
+def save_mat_thresholded(conn_matrix, est_path_orig, thr_type, ID, network, thr, conn_model, roi,
+                         prune, norm, binary):
+    from pynets.core.utils import save_mat
+    from nipype.utils.filemanip import fname_presuffix
+
+    est_path = fname_presuffix(est_path_orig, suffix=f"_thrtype-{thr_type}_thr-{thr}")
+    save_mat(conn_matrix, est_path, fmt='npy')
+
+    return est_path, ID, network, thr, conn_model, roi, prune, norm, binary
+
+
 def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist,
-                   prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist, embed,
-                   multimodal, multiplex):
+                   prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist):
     """
     Passes lists of iterable parameters as metadata.
 
@@ -455,12 +543,6 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr
         Indicates method of normalizing resulting graph.
     binary_iterlist : list
         List of booleans indicating whether resulting graph edges to form an unweighted graph were binarized.
-    embed : bool
-        Embed the ensemble(s) produced into feature vector(s).
-    multimodal : bool
-        Boolean indicating whether multiple modalities of input data have been specified.
-    multiplex : int
-        Switch indicating approach to multiplex graph analysis if multimodal is also True.
 
     Returns
     -------
@@ -490,17 +572,6 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr
     multimodal_iterlist : list
         List of booleans indicating whether multiple modalities of input data have been specified.
     """
-    from pynets.core.utils import flatten
-    from pynets.stats import netmotifs, embeddings
-
-    if (float(multiplex) > 0) and (multimodal is True):
-        raws = list(set([i.split('_thrtype')[0] + '_raw.npy' for i in list(flatten(est_path_iterlist))]))
-        multigraph_list_all = netmotifs.build_multigraphs(raws, list(flatten(ID_iterlist))[0])
-        multigraph_list_all = list(flatten(multigraph_list_all))
-
-    if embed is True:
-        embeddings.build_embedded_connectome(list(flatten(est_path_iterlist)), list(flatten(ID_iterlist))[0],
-                                             multimodal)
 
     return (conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
             roi_iterlist, norm_iterlist, binary_iterlist)
@@ -735,7 +806,6 @@ def proportional(k, voxels_list):
             n -= 1
             if n == 0:
                 return res
-    raise
 
 
 def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal):
@@ -763,14 +833,14 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
     combination_complete : bool
         If True, then collect_pandas_df completed successfully
     """
-    from pathlib import Path
     import yaml
+    import pkg_resources
+    from pathlib import Path
     from pynets.core.utils import flatten
     from pynets.stats.netstats import collect_pandas_df_make
 
     # Available functional and structural connectivity models
-    #with open('/Users/derekpisner/Applications/PyNets/pynets/runconfig.yaml') as stream:
-    with open(f"{str(Path(__file__).parent.parent)}{'/runconfig.yaml'}", 'r') as stream:
+    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         try:
             func_models = hardcoded_params['available_models']['func_models']
@@ -789,7 +859,7 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
             net_mets_csv_list = list(set([i for i in net_mets_csv_list_nets if network in i]))
             if multimodal is True:
                 net_mets_csv_list_dwi = list(set([i for i in net_mets_csv_list if i.split('est-')[1].split('_')[0]
-                                                   in struct_models]))
+                                                  in struct_models]))
                 combination_complete_dwi = collect_pandas_df_make(net_mets_csv_list_dwi, ID, network, plot_switch)
                 net_mets_csv_list_func = list(set([i for i in net_mets_csv_list if
                                                     i.split('est-')[1].split('_')[0] in func_models]))
@@ -804,10 +874,10 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
     else:
         if multimodal is True:
             net_mets_csv_list_dwi = list(set([i for i in net_mets_csv_list if i.split('est-')[1].split('_')[0] in
-                                               struct_models]))
+                                              struct_models]))
             combination_complete_dwi = collect_pandas_df_make(net_mets_csv_list_dwi, ID, network, plot_switch)
             net_mets_csv_list_func = list(set([i for i in net_mets_csv_list if i.split('est-')[1].split('_')[0]
-                                                in func_models]))
+                                               in func_models]))
             combination_complete_func = collect_pandas_df_make(net_mets_csv_list_func, ID, network, plot_switch)
 
             if combination_complete_dwi is True and combination_complete_func is True:
@@ -943,7 +1013,7 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
     return net_parcels_nii_path
 
 
-def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, node_size):
+def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, node_size, extract_strategy):
     """
     This function saves the time-series 4D numpy array to disk as a .npy file.
 
@@ -968,6 +1038,8 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, 
     node_size : int
         Spherical centroid node size in the case that coordinate-based centroids
         are used as ROI's for time-series extraction.
+    extract_strategy : str
+        The name of a valid function used to reduce the time-series region extraction.
 
     Returns
     -------
@@ -986,16 +1058,21 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, 
         smooth = 0
 
     # Save time series as npy file
-    out_path_ts = "%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
-                                            '%s' % ("%s%s%s" % ('rsn-', network, '_') if network is not None else ''),
-                                            '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0], '_') if
-                                                    roi is not None else ''),
-                                            '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
-                                                    ((node_size != 'parc') and (node_size is not None)) else
-                                                    'parc_'),
-                                            "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_')),
-                                            "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_')),
-                                            'node_ts.npy')
+    out_path_ts = "%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
+                                              '%s' % ("%s%s%s" % ('rsn-', network, '_') if network is not None else ''),
+                                              '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0], '_') if
+                                                      roi is not None else ''),
+                                              '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
+                                                      ((node_size != 'parc') and (node_size is not None)) else
+                                                      'parc_'),
+                                              "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
+                                                      float(smooth) > 0 else ''),
+                                              "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
+                                                      hpass is not None else ''),
+                                              "%s" % ("%s%s%s" %
+                                                      ('extract-', extract_strategy, '_') if
+                                                      extract_strategy is not None else ''),
+                                              'node_ts.npy')
 
     np.save(out_path_ts, ts_within_nodes)
     return out_path_ts

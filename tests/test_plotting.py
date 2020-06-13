@@ -37,6 +37,7 @@ def test_plot_conn_mat_nonet_no_mask():
     node_size = 2
     smooth = 2
     hpass = 0.1
+    extract_strategy = 'mean'
     conn_model = 'sps'
     atlas = 'whole_brain_cluster_labels_PCA200'
     roi = None
@@ -47,7 +48,7 @@ def test_plot_conn_mat_nonet_no_mask():
 
     start_time = time.time()
     plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path,
-    ID, network, labels, roi, thr, node_size, smooth, hpass)
+    ID, network, labels, roi, thr, node_size, smooth, hpass, extract_strategy)
     print("%s%s%s" % ('plot_conn_mat_func --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -68,6 +69,7 @@ def test_plot_conn_mat_nonet_mask():
     smooth = 2
     hpass = 0.1
     conn_model = 'sps'
+    extract_strategy = 'mean'
     atlas = 'whole_brain_cluster_labels_PCA200'
     roi = None
     conn_matrix = np.genfromtxt(f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-sps_thrtype-PROP_thr-0.94.txt")
@@ -77,7 +79,7 @@ def test_plot_conn_mat_nonet_mask():
 
     start_time = time.time()
     plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path,
-    ID, network, labels, roi, thr, node_size, smooth, hpass)
+    ID, network, labels, roi, thr, node_size, smooth, hpass, extract_strategy)
     print("%s%s%s" % ('plot_conn_mat_func (Masking version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -104,6 +106,7 @@ def test_plot_all_nonet_no_mask():
     norm = 1
     hpass = 0.1
     binary = False
+    extract_strategy = 'mean'
     conn_matrix = np.genfromtxt(f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-sps_thrtype-PROP_thr-0.94.txt")
     edge_threshold = '99%'
     labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
@@ -116,7 +119,7 @@ def test_plot_all_nonet_no_mask():
     start_time = time.time()
     #coords already a list
     plot_gen.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, coords, edge_threshold,
-                           thr, node_size, smooth, prune, parlistfile, norm, binary, hpass)
+                           thr, node_size, smooth, prune, parlistfile, norm, binary, hpass, extract_strategy)
     print("%s%s%s" % ('plot_all --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 
@@ -143,6 +146,7 @@ def test_plot_all_nonet_with_mask():
     atlas = 'whole_brain_cluster_labels_PCA200'
     parlistfile = None
     roi = None
+    extract_strategy = 'mean'
     conn_matrix = np.genfromtxt(f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-sps_thrtype-PROP_thr-0.94.txt")
     edge_threshold = '99%'
     labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
@@ -155,7 +159,7 @@ def test_plot_all_nonet_with_mask():
     start_time = time.time()
     #coords already a list
     plot_gen.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, coords, edge_threshold,
-                           thr, node_size, smooth, prune, parlistfile, norm, binary, hpass)
+                           thr, node_size, smooth, prune, parlistfile, norm, binary, hpass, extract_strategy)
     print("%s%s%s" % ('plot_all (Masking version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
 

@@ -1,15 +1,28 @@
-* PyNets version:
-* Python version:
-* Operating System:
+### Summary
 
-### Description
+### Actual behavior
 
-Describe what you were trying to get done.
-Tell us what happened, what went wrong, and what you expected to happen.
+### Expected behavior
 
-### What I Did
+### How to replicate the behavior
+
+### Script/Workflow details
+
+Please put URL to code or code here (if not too long).
+
+### Platform details:
+
+<!-- Please run the following code from your shell and place the output between the triple ticks, below.
+python -c "import pynets; from pynets.__about__ import __version__; print(__version__)"
+-->
 
 ```
-Paste the command(s) you ran and the output.
-If there was a crash, please include the traceback here.
+
 ```
+
+### Execution environment
+
+Choose one
+- Container [Tag: ???]
+- My python environment inside container [Base Tag: ???]
+- My python environment outside container

@@ -5,5 +5,5 @@ metric_list_global:
     - 'average_clustering'
     - 'average_shortest_path_length'
 #    - 'graph_number_of_cliques'
-    - 'smallworldness'
-#    - 'transitivity'
+#    - 'smallworldness'
+    - 'transitivity'

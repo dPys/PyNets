@@ -14,6 +14,216 @@ from nipype.interfaces.base import (BaseInterface, BaseInterfaceInputSpec, Trait
 warnings.filterwarnings("ignore")
 
 
+class _FetchNodesLabelsInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for FetchNodesLabels"""
+    atlas = traits.Any()
+    uatlas = traits.Any()
+    ref_txt = traits.Any()
+    parc = traits.Bool()
+    in_file = File(exists=True, mandatory=True)
+    use_AAL_naming = traits.Bool(False, usedefault=True)
+    outdir = traits.Str(mandatory=True)
+    vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
+    clustering = traits.Bool(False, usedefault=True)
+
+
+class _FetchNodesLabelsOutputSpec(TraitedSpec):
+    """Output interface wrapper for FetchNodesLabels"""
+    labels = traits.Any(mandatory=True)
+    coords = traits.Any(mandatory=True)
+    atlas = traits.Any()
+    networks_list = traits.Any()
+    parcel_list = traits.Any()
+    par_max = traits.Any()
+    uatlas = traits.Any()
+    dir_path = traits.Any()
+
+
+class FetchNodesLabels(SimpleInterface):
+    """Interface wrapper for FetchNodesLabels."""
+    input_spec = _FetchNodesLabelsInputSpec
+    output_spec = _FetchNodesLabelsOutputSpec
+
+    def _run_interface(self, runtime):
+        from pynets.core import utils, nodemaker
+        import pandas as pd
+        import time
+        from pathlib import Path
+        import os.path as op
+        import glob
+
+        base_path = utils.get_file()
+        # Test if atlas is a nilearn atlas. If so, fetch coords, labels, and/or networks.
+        nilearn_parc_atlases = ['atlas_harvard_oxford', 'atlas_aal', 'atlas_destrieux_2009', 'atlas_talairach_gyrus',
+                                'atlas_talairach_ba', 'atlas_talairach_lobe']
+        nilearn_coords_atlases = ['coords_power_2011', 'coords_dosenbach_2010']
+        nilearn_prob_atlases = ['atlas_msdl', 'atlas_pauli_2017']
+        local_atlases = [op.basename(i).split('.nii')[0] for i in
+                         glob.glob(f"{str(Path(base_path).parent)}{'/atlases/*.nii.gz'}") if '_4d' not in i]
+
+        if self.inputs.uatlas is None and self.inputs.atlas in nilearn_parc_atlases:
+            [labels, networks_list, uatlas] = nodemaker.nilearn_atlas_helper(self.inputs.atlas, self.inputs.parc)
+            if uatlas:
+                if not isinstance(uatlas, str):
+                    nib.save(uatlas, f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}")
+                    uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
+                [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
+                if self.inputs.parc is True:
+                    parcel_list = nodemaker.gen_img_list(uatlas)
+                else:
+                    parcel_list = None
+            else:
+                raise ValueError(f"\nERROR: Atlas file for {self.inputs.atlas} not found!")
+            atlas = self.inputs.atlas
+            uatlas = None
+        elif self.inputs.uatlas is None and self.inputs.parc is False and self.inputs.atlas in nilearn_coords_atlases:
+            print('Fetching coords and labels from nilearn coordinate-based atlas library...')
+            # Fetch nilearn atlas coords
+            [coords, _, networks_list, labels] = nodemaker.fetch_nilearn_atlas_coords(self.inputs.atlas)
+            parcel_list = None
+            par_max = None
+            atlas = self.inputs.atlas
+            uatlas = None
+        elif self.inputs.uatlas is None and self.inputs.parc is False and self.inputs.atlas in nilearn_prob_atlases:
+            from nilearn.plotting import find_probabilistic_atlas_cut_coords
+            print('Fetching coords and labels from nilearn probabilistic atlas library...')
+            # Fetch nilearn atlas coords
+            [labels, networks_list, uatlas] = nodemaker.nilearn_atlas_helper(self.inputs.atlas, self.inputs.parc)
+            coords = find_probabilistic_atlas_cut_coords(maps_img=uatlas)
+            if uatlas:
+                if not isinstance(uatlas, str):
+                    nib.save(uatlas, f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}")
+                    uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
+                if self.inputs.parc is True:
+                    parcel_list = nodemaker.gen_img_list(uatlas)
+                else:
+                    parcel_list = None
+            else:
+                raise ValueError(f"\nAtlas file for {self.inputs.atlas} not found!")
+            par_max = None
+            atlas = self.inputs.atlas
+        elif self.inputs.uatlas is None and self.inputs.atlas in local_atlases:
+            from pynets.registration.reg_utils import check_orient_and_dims
+            uatlas_pre = f"{str(Path(base_path).parent)}/atlases/{self.inputs.atlas}.nii.gz"
+            uatlas = check_orient_and_dims(uatlas_pre, self.inputs.outdir, self.inputs.vox_size)
+
+            try:
+                # Fetch user-specified atlas coords
+                [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
+                if self.inputs.parc is True:
+                    parcel_list = nodemaker.gen_img_list(uatlas)
+                else:
+                    parcel_list = None
+                # Describe user atlas coords
+                print(f"\n{self.inputs.atlas} comes with {par_max} parcels\n")
+            except ValueError:
+                print('Either you have specified the name of an atlas that does not exist in the nilearn or local '
+                      'repository or you have not supplied a 3d atlas parcellation image!')
+                parcel_list = None
+                par_max = None
+                coords = None
+            labels = None
+            networks_list = None
+            atlas = self.inputs.atlas
+        elif self.inputs.uatlas:
+            if self.inputs.clustering is True:
+                while True:
+                    if op.isfile(self.inputs.uatlas):
+                        break
+                    else:
+                        print('Waiting for atlas file...')
+                        time.sleep(15)
+
+            try:
+                # Fetch user-specified atlas coords
+                [coords, atlas, par_max] = nodemaker.get_names_and_coords_of_parcels(self.inputs.uatlas)
+                if self.inputs.parc is True:
+                    parcel_list = nodemaker.gen_img_list(self.inputs.uatlas)
+                else:
+                    parcel_list = None
+
+                atlas = utils.prune_suffices(atlas)
+                uatlas = self.inputs.uatlas
+
+                # Describe user atlas coords
+                print(f"\n{atlas} comes with {par_max} parcels\n")
+            except ValueError:
+                print('Either you have specified the name of an atlas that does not exist in the nilearn or local '
+                      'repository or you have not supplied a 3d atlas parcellation image!')
+                parcel_list = None
+                par_max = None
+                coords = None
+                atlas = None
+                uatlas = None
+            labels = None
+            networks_list = None
+        else:
+            raise ValueError(
+                'Either you have specified the name of an atlas that does not exist in the nilearn or local '
+                'repository or you have not supplied a 3d atlas parcellation image!')
+
+        # Labels prep
+        if atlas and not labels:
+            if (self.inputs.ref_txt is not None) and (op.exists(self.inputs.ref_txt)) and (self.inputs.use_AAL_naming
+                                                                                           is False):
+                labels = pd.read_csv(self.inputs.ref_txt, sep=" ",
+                                     header=None, names=["Index", "Region"])['Region'].tolist()
+            else:
+                if atlas in local_atlases:
+                    ref_txt = f"{str(Path(base_path).parent)}{'/labelcharts/'}{atlas}{'.txt'}"
+                else:
+                    ref_txt = self.inputs.ref_txt
+                try:
+                    if op.exists(ref_txt) and (self.inputs.use_AAL_naming is False):
+                        try:
+                            labels = pd.read_csv(ref_txt,
+                                                 sep=" ", header=None, names=["Index", "Region"])['Region'].tolist()
+                        except:
+                            labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                    else:
+                        if self.inputs.use_AAL_naming is True:
+                            try:
+                                labels = nodemaker.AAL_naming(coords)
+                            except:
+                                print('AAL reference labeling failed!')
+                                labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                        else:
+                            print('Using generic index labels...')
+                            labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                except:
+                    if self.inputs.use_AAL_naming is True:
+                        print("Label reference file not found. Attempting AAL naming...")
+                        try:
+                            labels = nodemaker.AAL_naming(coords)
+                        except:
+                            print('AAL reference labeling failed!')
+                            labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+                    else:
+                        print('Using generic index labels...')
+                        labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+        else:
+            print('Using generic index labels...')
+            labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+
+        print(f"Labels:\n{labels}")
+        dir_path = utils.do_dir_path(atlas, self.inputs.outdir)
+
+        if len(coords) != len(labels):
+            print('Length of coordinates is not equal to length of label names! Replacing with nan\'s instead...')
+            labels = len(coords) * [np.nan]
+
+        self._results['labels'] = labels
+        self._results['coords'] = coords
+        self._results['atlas'] = atlas
+        self._results['networks_list'] = networks_list
+        self._results['parcel_list'] = parcel_list
+        self._results['par_max'] = par_max
+        self._results['uatlas'] = uatlas
+        self._results['dir_path'] = dir_path
+
+        return runtime
+
+
 class NetworkAnalysisInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for NetworkAnalysis"""
     ID = traits.Any(mandatory=True)
@@ -209,6 +419,7 @@ class _ExtractTimeseriesInputSpec(BaseInterfaceInputSpec):
     parc = traits.Bool()
     node_size = traits.Any(mandatory=False)
     net_parcels_nii_path = traits.Any(mandatory=False)
+    extract_strategy = traits.Str('mean', mandatory=False, usedefault=True)
 
 
 class _ExtractTimeseriesOutputSpec(TraitedSpec):
@@ -223,6 +434,7 @@ class _ExtractTimeseriesOutputSpec(TraitedSpec):
     coords = traits.Any(mandatory=True)
     hpass = traits.Any(mandatory=True)
     roi = traits.Any(mandatory=True)
+    extract_strategy = traits.Any(mandatory=False)
 
 
 class ExtractTimeseries(SimpleInterface):
@@ -269,7 +481,8 @@ class ExtractTimeseries(SimpleInterface):
                                              uatlas=self.inputs.uatlas,
                                              labels=self.inputs.labels,
                                              hpass=self.inputs.hpass,
-                                             mask=out_name_mask)
+                                             mask=out_name_mask,
+                                             extract_strategy=self.inputs.extract_strategy)
 
         te.prepare_inputs()
         if self.inputs.parc is False:
@@ -288,6 +501,7 @@ class ExtractTimeseries(SimpleInterface):
         self._results['ts_within_nodes'] = te.ts_within_nodes
         self._results['node_size'] = te.node_size
         self._results['smooth'] = te.smooth
+        self._results['extract_strategy'] = te.extract_strategy
         self._results['dir_path'] = te.dir_path
         self._results['atlas'] = te.atlas
         self._results['uatlas'] = te.uatlas
@@ -387,6 +601,8 @@ class _PlotFuncInputSpec(BaseInterfaceInputSpec):
     norm = traits.Any()
     binary = traits.Bool()
     hpass = traits.Any()
+    extract_strategy = traits.Any()
+    edge_color_override = traits.Bool()
 
 
 class _PlotFuncOutputSpec(BaseInterfaceInputSpec):
@@ -422,7 +638,9 @@ class PlotFunc(SimpleInterface):
                                    self.inputs.uatlas,
                                    self.inputs.norm,
                                    self.inputs.binary,
-                                   self.inputs.hpass)
+                                   self.inputs.hpass,
+                                   self.inputs.extract_strategy,
+                                   self.inputs.edge_color_override)
 
         self._results['out'] = 'None'
 
@@ -535,6 +753,154 @@ class RegisterDWI(SimpleInterface):
         return runtime
 
 
+class _RegisterAtlasDWIInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for RegisterAtlasDWI"""
+    atlas = traits.Any()
+    network = traits.Any()
+    uatlas_parcels = traits.Any()
+    uatlas = traits.Any()
+    basedir_path = Directory(exists=True, mandatory=True)
+    node_size = traits.Any()
+    fa_path = File(exists=True, mandatory=True)
+    ap_path = File(exists=True, mandatory=True)
+    B0_mask = File(exists=True, mandatory=True)
+    anat_file = File(exists=True, mandatory=True)
+    coords = traits.Any(mandatory=True)
+    labels = traits.Any(mandatory=True)
+    gm_in_dwi = File(exists=True, mandatory=True)
+    vent_csf_in_dwi = File(exists=True, mandatory=True)
+    wm_in_dwi = File(exists=True, mandatory=True)
+    gtab_file = File(exists=True, mandatory=True)
+    dwi_file = File(exists=True, mandatory=True)
+    mask = traits.Any(mandatory=False)
+    vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
+    template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
+    simple = traits.Bool(False, usedefault=True)
+
+
+class _RegisterAtlasDWIOutputSpec(TraitedSpec):
+    """Output interface wrapper for RegisterAtlasDWI"""
+    dwi_aligned_atlas_wmgm_int = File(exists=True, mandatory=True)
+    dwi_aligned_atlas = File(exists=True, mandatory=True)
+    aligned_atlas_t1mni = File(exists=True, mandatory=True)
+    node_size = traits.Any()
+    atlas = traits.Any(mandatory=True)
+    uatlas_parcels = traits.Any(mandatory=False)
+    uatlas = traits.Any(mandatory=False)
+    coords = traits.Any(mandatory=True)
+    labels = traits.Any(mandatory=True)
+    wm_in_dwi = File(exists=True, mandatory=True)
+    gm_in_dwi = File(exists=True, mandatory=True)
+    vent_csf_in_dwi = File(exists=True, mandatory=True)
+    B0_mask = File(exists=True, mandatory=True)
+    ap_path = File(exists=True, mandatory=True)
+    gtab_file = File(exists=True, mandatory=True)
+    dwi_file = File(exists=True, mandatory=True)
+
+
+class RegisterAtlasDWI(SimpleInterface):
+    """Interface wrapper for RegisterAtlasDWI."""
+    input_spec = _RegisterAtlasDWIInputSpec
+    output_spec = _RegisterAtlasDWIOutputSpec
+
+    def _run_interface(self, runtime):
+        import shutil
+        import gc
+        import os
+        from pynets.registration import register
+        from nipype.utils.filemanip import fname_presuffix, copyfile
+
+        if self.inputs.uatlas is None:
+            uatlas_tmp_path = self.inputs.uatlas
+        else:
+            uatlas_tmp_path = fname_presuffix(self.inputs.uatlas, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.uatlas, uatlas_tmp_path, copy=True, use_hardlink=False)
+
+        uatlas_parcels_tmp_path = fname_presuffix(self.inputs.uatlas_parcels, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.uatlas_parcels, uatlas_parcels_tmp_path, copy=True, use_hardlink=False)
+
+        fa_tmp_path = fname_presuffix(self.inputs.fa_path, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.fa_path, fa_tmp_path, copy=True, use_hardlink=False)
+
+        ap_tmp_path = fname_presuffix(self.inputs.ap_path, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.ap_path, ap_tmp_path, copy=True, use_hardlink=False)
+
+        B0_mask_tmp_path = fname_presuffix(self.inputs.B0_mask, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.B0_mask, B0_mask_tmp_path, copy=True, use_hardlink=False)
+
+        anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
+        if self.inputs.mask:
+            mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
+        else:
+            mask_tmp_path = None
+
+        if self.inputs.network:
+            atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
+            base_dir_tmp = f"{runtime.cwd}/atlas_{self.inputs.network}"
+            shutil.copytree(self.inputs.basedir_path, base_dir_tmp)
+        else:
+            atlas_name = self.inputs.atlas
+            base_dir_tmp = self.inputs.basedir_path
+
+        reg = register.DmriReg(basedir_path=base_dir_tmp,
+                               fa_path=fa_tmp_path,
+                               ap_path=ap_tmp_path,
+                               B0_mask=B0_mask_tmp_path,
+                               anat_file=anat_file_tmp_path,
+                               mask=mask_tmp_path,
+                               vox_size=self.inputs.vox_size,
+                               template_name=self.inputs.template_name,
+                               simple=self.inputs.simple)
+
+        if self.inputs.node_size is not None:
+            atlas_name = f"{atlas_name}{'_'}{self.inputs.node_size}"
+
+        # Apply warps/coregister atlas to dwi
+        [dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas,
+         aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas_tmp_path, uatlas_parcels_tmp_path, atlas_name)
+
+        if self.inputs.uatlas is None:
+            uatlas_out = self.inputs.uatlas_parcels
+        else:
+            uatlas_out = self.inputs.uatlas
+
+        reg_dir = f"{os.path.dirname(self.inputs.anat_file)}/reg"
+        if not os.path.isdir(reg_dir):
+            os.mkdir(reg_dir)
+
+        reg_persist = [dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni, reg.wm_in_dwi,
+                       reg.gm_in_dwi, reg.vent_csf_in_dwi, reg.wm_gm_int_in_dwi, reg.t1w2dwi]
+        for i in reg_persist:
+            copyfile(i, f"{reg_dir}/{os.path.basename(i)}", copy=True, use_hardlink=False)
+
+        reg_tmp = [anat_file_tmp_path, B0_mask_tmp_path, ap_tmp_path, fa_tmp_path]
+        for j in reg_tmp:
+            os.remove(j)
+
+        self._results['dwi_aligned_atlas_wmgm_int'] = dwi_aligned_atlas_wmgm_int
+        self._results['dwi_aligned_atlas'] = dwi_aligned_atlas
+        self._results['aligned_atlas_t1mni'] = aligned_atlas_t1mni
+        self._results['node_size'] = self.inputs.node_size
+        self._results['atlas'] = self.inputs.atlas
+        self._results['uatlas_parcels'] = uatlas_parcels_tmp_path
+        self._results['uatlas'] = uatlas_out
+        self._results['coords'] = self.inputs.coords
+        self._results['labels'] = self.inputs.labels
+        self._results['wm_in_dwi'] = reg.wm_in_dwi
+        self._results['gm_in_dwi'] = reg.gm_in_dwi
+        self._results['vent_csf_in_dwi'] = reg.vent_csf_in_dwi
+        self._results['B0_mask'] = self.inputs.B0_mask
+        self._results['ap_path'] = self.inputs.ap_path
+        self._results['gtab_file'] = self.inputs.gtab_file
+        self._results['dwi_file'] = self.inputs.dwi_file
+
+        gc.collect()
+
+        return runtime
+
+
 class _RegisterFuncInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for RegisterFunc"""
     anat_file = File(exists=True, mandatory=True)
@@ -552,7 +918,7 @@ class _RegisterFuncOutputSpec(TraitedSpec):
 
 
 class RegisterFunc(SimpleInterface):
-    """Interface wrapper for RegisterDWI to create Func->T1w->MNI mappings."""
+    """Interface wrapper for RegisterFunc to create Func->T1w->MNI mappings."""
     input_spec = _RegisterFuncInputSpec
     output_spec = _RegisterFuncOutputSpec
 
@@ -562,8 +928,8 @@ class RegisterFunc(SimpleInterface):
         from pynets.registration import register
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
-        # anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
-        # copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
+        anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
         if self.inputs.mask:
             mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
             copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
@@ -571,7 +937,7 @@ class RegisterFunc(SimpleInterface):
             mask_tmp_path = None
 
         reg = register.FmriReg(basedir_path=runtime.cwd,
-                               anat_file=self.inputs.anat_file,
+                               anat_file=anat_file_tmp_path,
                                mask=mask_tmp_path,
                                vox_size=self.inputs.vox_size,
                                template_name=self.inputs.template_name,
@@ -587,6 +953,98 @@ class RegisterFunc(SimpleInterface):
 
         self._results['reg_fmri_complete'] = True
         self._results['basedir_path'] = runtime.cwd
+
+        gc.collect()
+
+        return runtime
+
+
+class _RegisterAtlasFuncInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for RegisterAtlasFunc"""
+    atlas = traits.Any()
+    network = traits.Any()
+    uatlas_parcels = traits.Any()
+    uatlas = traits.Any()
+    basedir_path = Directory(exists=True, mandatory=True)
+    anat_file = File(exists=True, mandatory=True)
+    coords = traits.Any(mandatory=True)
+    labels = traits.Any(mandatory=True)
+    vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
+    mask = traits.Any(mandatory=False)
+    reg_fmri_complete = traits.Bool()
+    template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
+    simple = traits.Bool(False, usedefault=True)
+
+
+class _RegisterAtlasFuncOutputSpec(TraitedSpec):
+    """Output interface wrapper for RegisterAtlasFunc"""
+    aligned_atlas_t1mni_gm = File(exists=True, mandatory=True)
+    coords = traits.Any(mandatory=True)
+    labels = traits.Any(mandatory=True)
+
+
+class RegisterAtlasFunc(SimpleInterface):
+    """Interface wrapper for RegisterAtlasFunc."""
+    input_spec = _RegisterAtlasFuncInputSpec
+    output_spec = _RegisterAtlasFuncOutputSpec
+
+    def _run_interface(self, runtime):
+        import gc
+        import shutil
+        import os
+        from pynets.registration import register
+        from nipype.utils.filemanip import fname_presuffix, copyfile
+
+        if self.inputs.uatlas is None:
+            uatlas_tmp_path = self.inputs.uatlas
+        else:
+            uatlas_tmp_path = fname_presuffix(self.inputs.uatlas, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.uatlas, uatlas_tmp_path, copy=True, use_hardlink=False)
+
+        uatlas_parcels_tmp_path = fname_presuffix(self.inputs.uatlas_parcels, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.uatlas_parcels, uatlas_parcels_tmp_path, copy=True, use_hardlink=False)
+
+        anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
+        if self.inputs.mask:
+            mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
+        else:
+            mask_tmp_path = None
+
+        if self.inputs.network:
+            atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
+            base_dir_tmp = f"{runtime.cwd}/atlas_{self.inputs.network}"
+            shutil.copytree(self.inputs.basedir_path, base_dir_tmp)
+        else:
+            atlas_name = self.inputs.atlas
+            base_dir_tmp = self.inputs.basedir_path
+
+        reg = register.FmriReg(basedir_path=base_dir_tmp,
+                               anat_file=anat_file_tmp_path,
+                               mask=mask_tmp_path,
+                               vox_size=self.inputs.vox_size,
+                               template_name=self.inputs.template_name,
+                               simple=self.inputs.simple)
+
+        aligned_atlas_t1mni_gm = reg.atlas2t1wmni_align(uatlas_tmp_path, uatlas_parcels_tmp_path,
+                                                        atlas_name)
+
+        reg_dir = f"{os.path.dirname(self.inputs.anat_file)}/reg"
+        if not os.path.isdir(reg_dir):
+            os.mkdir(reg_dir)
+
+        reg_persist = [aligned_atlas_t1mni_gm, reg.t1_aligned_mni, reg.gm_mask_thr]
+        for i in reg_persist:
+            copyfile(i, f"{reg_dir}/{os.path.basename(i)}", copy=True, use_hardlink=False)
+
+        reg_tmp = [anat_file_tmp_path, uatlas_parcels_tmp_path]
+        for j in reg_tmp:
+            os.remove(j)
+
+        self._results['aligned_atlas_t1mni_gm'] = aligned_atlas_t1mni_gm
+        self._results['coords'] = self.inputs.coords
+        self._results['labels'] = self.inputs.labels
 
         gc.collect()
 
@@ -676,10 +1134,6 @@ class Tracking(SimpleInterface):
     def _run_interface(self, runtime):
         import gc
         import os
-        try:
-            import cPickle as pickle
-        except ImportError:
-            import _pickle as pickle
         from dipy.io import load_pickle
         from colorama import Fore, Style
         from dipy.data import get_sphere

@@ -10,11 +10,11 @@ import re
 import os
 import sys
 import json
+import pynets
 from copy import deepcopy
 from collections import OrderedDict
 from argparse import ArgumentParser
 from pathlib import Path
-import pynets
 from pynets.core.cloud_utils import get_credentials
 from pynets.core.cloud_utils import get_matching_s3_objects
 from pynets.core.cloud_utils import s3_client

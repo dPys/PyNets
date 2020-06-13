@@ -7,10 +7,10 @@ Copyright (C) 2017
 """
 import os
 import pandas as pd
-from nipype.pipeline import engine as pe
-from nipype.interfaces import utility as niu
 import warnings
 warnings.filterwarnings("ignore")
+from nipype.pipeline import engine as pe
+from nipype.interfaces import utility as niu
 
 
 def get_parser():
@@ -239,6 +239,7 @@ def build_collect_workflow(args, retval):
     import warnings
     warnings.filterwarnings("ignore")
     import ast
+    import pkg_resources
     from pathlib import Path
     import yaml
     try:
@@ -266,8 +267,7 @@ def build_collect_workflow(args, retval):
 
     wf = collect_all(working_path)
 
-    #with open('/opt/conda/lib/python3.6/site-packages/pynets-0.9.94-py3.6.egg/pynets/runconfig.yaml', 'r') as stream:
-    with open(f"{str(Path(__file__).parent.parent)}{'/runconfig.yaml'}", 'r') as stream:
+    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         try:
             hardcoded_params = yaml.load(stream)
             runtime_dict = {}

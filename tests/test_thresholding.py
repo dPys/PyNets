@@ -83,9 +83,9 @@ def test_conn_mat_operations(cp, thr):
             x_undir.remove_edge(0, i)
         x_undir = nx.to_numpy_matrix(x_undir)
 
-        conn_matrix_thr = thresholding.local_thresholding_prop(x, coords, labels, thr)
+        conn_matrix_thr = thresholding.local_thresholding_prop(x, thr)
         assert conn_matrix_thr is not None
-        conn_matrix_thr_undir = thresholding.local_thresholding_prop(x_undir, coords, labels, thr)
+        conn_matrix_thr_undir = thresholding.local_thresholding_prop(x_undir, thr)
         assert conn_matrix_thr_undir is not None    
 
     def test_knn(x, thr):
@@ -205,7 +205,7 @@ def test_edge_cases(thr):
         if idx < 10 and idx > 0:
             x[i][idx-1] = 1
             
-    conn_mat_edge_one = thresholding.local_thresholding_prop(x, coords, labels, thr)
+    conn_mat_edge_one = thresholding.local_thresholding_prop(x, thr)
     assert conn_mat_edge_one is not None
 
 
@@ -253,13 +253,14 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     uatlas = None
     norm = 1
     binary = False
-    hpass = False 
+    hpass = False
+    extract_strategy = 'mean'
                                                
     conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, \
-        prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, hpass = \
+        prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy = \
         thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, 
                                  roi, node_size, min_span_tree, smooth, disp_filt, parc, prune, 
-                                 atlas, uatlas, labels, coords, norm, binary, hpass)
+                                 atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy)
                                  
     assert conn_matrix_thr is not None
     if min_span_tree is False and disp_filt is False and dens_thresh is True:

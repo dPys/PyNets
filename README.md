@@ -5,6 +5,9 @@ PyNets™
 [![codecov](https://codecov.io/gh/dPys/PyNets/branch/master/graph/badge.svg)](https://codecov.io/gh/dPys/PyNets?branch=master)
 [![PyPI - Version](https://img.shields.io/pypi/v/omniduct.svg)](https://pypi.org/project/pynets/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pynets.svg)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
+![](docs/_static/logo.png)
 
 About
 -----
@@ -12,13 +15,14 @@ PyNets leverages the Nipype workflow engine, along with Nilearn and Dipy fMRI an
 
 Documentation
 -------------
-Explore official installation instruction, user-guide, API, and examples: https://pynets.readthedocs.io/en/latest/
+Explore official installation instruction, user-guide, API, and examples: <https://pynets.readthedocs.io/en/latest/>
 
 Citing
 ------
 A manuscript is in preparation, but for now, please cite all uses with reference
-to the github repository: https://github.com/dPys/PyNets
+to the github repository: <https://github.com/dPys/PyNets>
 
-![](docs/_static/graph.png)
-![](docs/_static/triple.png)
-![](docs/_static/link_communities.png)
+![Multiplex Layers](docs/_static/structural_functional_multiplex.png)
+![Multiplex Glass](docs/_static/glassbrain_mplx.png)
+![Yeo7](docs/_static/yeo7_mosaic.png)
+![Workflow DAG](docs/_static/graph.png)

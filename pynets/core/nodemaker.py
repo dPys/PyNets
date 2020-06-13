@@ -9,6 +9,8 @@ import warnings
 import numpy as np
 import indexed_gzip
 import nibabel as nib
+import yaml
+from pathlib import Path
 warnings.filterwarnings("ignore")
 
 
@@ -674,10 +676,9 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     net_parcels_concatted = concat_imgs(net_parcels)
     net_parcels_sum = np.sum((np.array(range(len(net_parcels))) + 1) * np.asarray(net_parcels_concatted.dataobj),
                              axis=3, dtype=np.uint16)
-    out_path = f"{dir_path}{'/'}{network}{'_parcels.nii.gz'}"
+    out_path = f"{dir_path}{'/'}{op.basename(uatlas).split(op.splitext(uatlas)[1])[0]}_{network}{'_parcels.nii.gz'}"
     nib.save(nib.Nifti1Image(net_parcels_sum, affine=np.eye(4)), out_path)
-    del net_parcels_concatted
-    del img_list
+    del net_parcels_concatted, img_list
     gc.collect()
 
     return out_path
@@ -733,212 +734,103 @@ def AAL_naming(coords):
     return labels
 
 
-def fetch_nodes_and_labels(atlas, uatlas, ref_txt, parc, in_file, use_AAL_naming, outdir, vox_size, clustering=False):
+def psycho_naming(coords, node_size):
     """
-    General API for fetching, identifying, and defining atlas nodes based on coordinates and/or labels.
+    Perform Automated Sentiment Labeling of each coordinate from a list of MNI coordinates.
 
     Parameters
     ----------
-    atlas : str
-        Name of a Nilearn-hosted coordinate or parcellation/label-based atlas supported for fetching.
-        See Nilearn's datasets.atlas module for more detailed reference.
-    uatlas : str
-        File path to atlas parcellation Nifti1Image in MNI template space.
-    ref_txt : str
-        Path to an atlas reference .txt file that maps labels to intensities corresponding to uatlas.
-    parc : bool
-        Indicates whether to use parcels instead of coordinates as ROI nodes.
-    in_file : str
-        File path to Nifti1Image object whose affine will provide sampling reference for fetching.
-    use_AAL_naming : bool
-        Indicates whether to perform Automated-Anatomical Labeling of each coordinate from a list of a voxel
-        coordinates.
-    outdir : str
-        Path to base derivatives directory.
-    vox_size : str
-        Voxel size in mm. (e.g. 2mm).
-    clustering : bool
-        Indicates whether clustering was performed. Default is False.
+    coords : list
+        List of (x, y, z) tuples in voxel-space corresponding to a coordinate atlas used or
+        which represent the center-of-mass of each parcellation node.
+    node_size : int
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's for tracking.
 
     Returns
     -------
     labels : list
-        List of string labels corresponding to ROI nodes.
-    coords : list
-        List of (x, y, z) tuples in mm-space corresponding to a coordinate atlas used or
-        which represent the center-of-mass of each parcellation node.
-    atlas : str
-        Name of atlas parcellation (can differ slightly from fetch API string).
-    networks_list : list
-        List of RSN's and their associated cooordinates, if predefined uniquely for a given atlas.
-    parcel_list : list
-        List of 3D boolean numpy arrays or binarized Nifti1Images corresponding to ROI masks.
-    par_max : int
-        The maximum label intensity in the parcellation image.
-    uatlas : str
-        File path to atlas parcellation Nifti1Image in MNI template space.
-    dir_path : str
-        Path to directory containing subject derivative data for given run.
+        List of string labels corresponding to each coordinate-corresponding psychological topic.
     """
-    from pynets.core import utils, nodemaker
-    import pandas as pd
-    import time
-    import re
-    from pathlib import Path
-    import os.path as op
-    import glob
+    import liwc
+    import pkg_resources
+    import nimare
+    import nltk
+    from collections import Counter
+    from nltk.corpus import sentiwordnet as swn
+    from pynets.core.utils import flatten
+    from nltk.stem import WordNetLemmatizer
 
-    base_path = utils.get_file()
-    # Test if atlas is a nilearn atlas. If so, fetch coords, labels, and/or networks.
-    nilearn_parc_atlases = ['atlas_harvard_oxford', 'atlas_aal', 'atlas_destrieux_2009', 'atlas_talairach_gyrus',
-                            'atlas_talairach_ba', 'atlas_talairach_lobe']
-    nilearn_coords_atlases = ['coords_power_2011', 'coords_dosenbach_2010']
-    nilearn_prob_atlases = ['atlas_msdl', 'atlas_pauli_2017']
-    local_atlases = [op.basename(i).split('.nii')[0] for i in
-                     glob.glob(f"{str(Path(base_path).parent)}{'/atlases/*.nii.gz'}") if '_4d' not in i]
+    try:
+        swn.senti_synsets('TEST')
+    except:
+        nltk.download('sentiwordnet')
+        nltk.download('wordnet')
 
-    if uatlas is None and atlas in nilearn_parc_atlases:
-        [labels, networks_list, uatlas] = nodemaker.nilearn_atlas_helper(atlas, parc)
-        if uatlas:
-            if not isinstance(uatlas, str):
-                nib.save(uatlas, f"{'/tmp/'}{atlas}{'.nii.gz'}")
-                uatlas = f"{'/tmp/'}{atlas}{'.nii.gz'}"
-            [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
-            if parc is True:
-                parcel_list = nodemaker.gen_img_list(uatlas)
-            else:
-                parcel_list = None
-        else:
-            raise ValueError(f"\nERROR: Atlas file for {atlas} not found!")
-    elif uatlas is None and parc is False and atlas in nilearn_coords_atlases:
-        print('Fetching coords and labels from nilearn coordinate-based atlas library...')
-        # Fetch nilearn atlas coords
-        [coords, _, networks_list, labels] = nodemaker.fetch_nilearn_atlas_coords(atlas)
-        parcel_list = None
-        par_max = None
-    elif uatlas is None and parc is False and atlas in nilearn_prob_atlases:
-        from nilearn.plotting import find_probabilistic_atlas_cut_coords
-        print('Fetching coords and labels from nilearn probabilistic atlas library...')
-        # Fetch nilearn atlas coords
-        [labels, networks_list, uatlas] = nodemaker.nilearn_atlas_helper(atlas, parc)
-        coords = find_probabilistic_atlas_cut_coords(maps_img=uatlas)
-        if uatlas:
-            if not isinstance(uatlas, str):
-                nib.save(uatlas, f"{'/tmp/'}{atlas}{'.nii.gz'}")
-                uatlas = f"{'/tmp/'}{atlas}{'.nii.gz'}"
-            if parc is True:
-                parcel_list = nodemaker.gen_img_list(uatlas)
-            else:
-                parcel_list = None
-        else:
-            raise ValueError(f"\nAtlas file for {atlas} not found!")
-        par_max = None
-    elif uatlas is None and atlas in local_atlases:
-        from pynets.registration.reg_utils import check_orient_and_dims
-        uatlas_pre = f"{str(Path(base_path).parent)}/atlases/{atlas}.nii.gz"
-        uatlas = check_orient_and_dims(uatlas_pre, outdir, vox_size)
-
+    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+        hardcoded_params = yaml.load(stream)
         try:
-            # Fetch user-specified atlas coords
-            [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
-            if parc is True:
-                parcel_list = nodemaker.gen_img_list(uatlas)
-            else:
-                parcel_list = None
-            # Describe user atlas coords
-            print(f"\n{atlas} comes with {par_max} parcels\n")
-        except ValueError:
-            print('Either you have specified the name of an atlas that does not exist in the nilearn or local '
-                  'repository or you have not supplied a 3d atlas parcellation image!')
-            parcel_list = None
-            par_max = None
-            coords = None
-        labels = None
-        networks_list = None
-    elif uatlas:
-        if clustering is True:
-            while True:
-                if op.isfile(uatlas):
-                    break
-                else:
-                    print('Waiting for atlas file...')
-                    time.sleep(15)
-
+            LIWC_file = hardcoded_params['sentiment_labeling']['liwc_file'][0]
+        except FileNotFoundError:
+            print('LIWC file not found. Check runconfig.yaml.')
         try:
-            # Fetch user-specified atlas coords
-            [coords, atlas, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
-            if parc is True:
-                parcel_list = nodemaker.gen_img_list(uatlas)
+            neurosynth_dset_file = hardcoded_params['sentiment_labeling']['neurosynth_db'][0]
+        except FileNotFoundError:
+            print('Neurosynth dataset .pkl file not found. Check runconfig.yaml.')
+    stream.close()
+
+    try:
+        dset = nimare.dataset.Dataset.load(neurosynth_dset_file)
+    except FileNotFoundError:
+        print('Loading neurosynth dictionary failed!')
+
+    try:
+        parse, category_names = liwc.load_token_parser(LIWC_file)
+    except FileNotFoundError:
+        print('Loading LIWC dictionary failed!')
+
+    labels = []
+    print('Building coordinate labels...')
+    for coord in coords:
+        print(coord)
+        roi_ids = dset.get_studies_by_coordinate(np.array(coord).reshape(1, -1), node_size)
+        labs = dset.get_labels(ids=roi_ids)
+        labs_filt = list(flatten([list([i for j in swn.senti_synsets(i) if
+                                        j.pos_score() > 0.75 or j.neg_score() > 0.75]) for i in labs]))
+        st = WordNetLemmatizer()
+        labs_filt = list(set([st.lemmatize(k) for k in labs_filt]))
+        liwc_counts = dict(Counter(top.split(' (')[0] for token in labs_filt for top in parse(token) if
+                                   (top.split(' (')[0].lower() != 'bio') and (top.split(' (')[0].lower() != 'adj') and
+                      (top.split(' (')[0].lower() != 'verb') and (top.split(' (')[0].lower() != 'conj') and
+                                   (top.split(' (')[0].lower() != 'adverb') and
+                      (top.split(' (')[0].lower() != 'auxverb') and (top.split(' (')[0].lower() != 'prep') and
+                                   (top.split(' (')[0].lower() != 'article') and
+                      (top.split(' (')[0].lower() != 'ipron') and (top.split(' (')[0].lower() != 'ppron') and
+                                   (top.split(' (')[0].lower() != 'pronoun') and
+                      (top.split(' (')[0].lower() != 'function') and (top.split(' (')[0].lower() != 'affect') and
+                                   (top.split(' (')[0].lower() != 'cogproc')))
+        liwc_counts_ordered = dict(sorted(liwc_counts.items(), key=lambda x: x[1], reverse=True))
+
+        if 'posemo' and 'negemo' in liwc_counts_ordered.keys():
+            if liwc_counts_ordered['posemo'] > liwc_counts_ordered['negemo']:
+                del liwc_counts_ordered['negemo']
             else:
-                parcel_list = None
+                del liwc_counts_ordered['posemo']
+        liwc_counts_ordered_ratios = {}
+        for i in liwc_counts_ordered:
+            liwc_counts_ordered_ratios[i] = float(liwc_counts_ordered[i]) / float(sum(liwc_counts_ordered.values()))
 
-            if 'reor-RAS' in str(atlas):
-                atlas = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(atlas))
-            if 'res-' in str(atlas):
-                atlas = re.sub(r"_res\-*[0-4]mm", "", str(atlas))
-
-            # Describe user atlas coords
-            print(f"\n{atlas} comes with {par_max} parcels\n")
-        except ValueError:
-            print('Either you have specified the name of an atlas that does not exist in the nilearn or local '
-                  'repository or you have not supplied a 3d atlas parcellation image!')
-            parcel_list = None
-            par_max = None
-            coords = None
-        labels = None
-        networks_list = None
-    else:
-        raise ValueError('Either you have specified the name of an atlas that does not exist in the nilearn or local '
-                         'repository or you have not supplied a 3d atlas parcellation image!')
-
-    # Labels prep
-    # Labels prep
-    if atlas and not labels:
-        if (ref_txt is not None) and (op.exists(ref_txt)) and (use_AAL_naming is False):
-            labels = pd.read_csv(ref_txt, sep=" ", header=None, names=["Index", "Region"])['Region'].tolist()
+        lab = ' '.join(map(str, [key + ' ' + str(np.round(100*val, 2)) + '%' for key, val in
+                                 liwc_counts_ordered_ratios.items()]))
+        print(lab)
+        if len(lab) > 0:
+            labels.append(lab)
         else:
-            if atlas in local_atlases:
-                ref_txt = f"{str(Path(base_path).parent)}{'/labelcharts/'}{atlas}{'.txt'}"
-            try:
-                if op.exists(ref_txt) and (use_AAL_naming is False):
-                    try:
-                        labels = pd.read_csv(ref_txt,
-                                             sep=" ", header=None, names=["Index", "Region"])['Region'].tolist()
-                    except:
-                        labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-                else:
-                    if use_AAL_naming is True:
-                        try:
-                            labels = nodemaker.AAL_naming(coords)
-                        except:
-                            print('AAL reference labeling failed!')
-                            labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-                    else:
-                        print('Using generic index labels...')
-                        labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-            except:
-                print("Label reference file not found. Attempting AAL naming...")
-                if use_AAL_naming is True:
-                    try:
-                        labels = nodemaker.AAL_naming(coords)
-                    except:
-                        print('AAL reference labeling failed!')
-                        labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-                else:
-                    print('Using generic index labels...')
-                    labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-    else:
-        print('Using generic index labels...')
-        labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+            labels.append(np.nan)
+        del roi_ids, labs_filt, lab, liwc_counts_ordered, liwc_counts, labs
+        print('\n')
 
-    print(f"Labels:\n{labels}")
-    dir_path = utils.do_dir_path(atlas, outdir)
-
-    if len(coords) != len(labels):
-        print('Length of coordinates is not equal to length of label names! Replacing with nan\'s instead...')
-        labels = len(coords) * [np.nan]
-
-    return labels, coords, atlas, networks_list, parcel_list, par_max, uatlas, dir_path
+    return labels
 
 
 def node_gen_masking(roi, coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas,
