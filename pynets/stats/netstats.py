@@ -931,7 +931,8 @@ class CleanGraphs(object):
             [self.G, _] = most_important(self.G)
         elif int(self.prune) == 3:
             print('Pruning all but the largest connected component subgraph...')
-            self.G = sorted(connected_component_subgraphs(self.G), key=len, reverse=True)[0]
+            Gcc = sorted(nx.connected_components(self.G), key=len, reverse=True)
+            self.G = self.G.subgraph(Gcc[0])
         else:
             print('Graph is connected...')
 

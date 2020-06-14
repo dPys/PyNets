@@ -614,8 +614,11 @@ def local_thresholding_prop(conn_matrix, thr):
     G = nx.from_numpy_matrix(np.abs(conn_matrix))
 
     maximum_edges = G.number_of_edges()
-    min_t = nx.minimum_spanning_tree(thresholding.weight_to_distance(min(nx.connected_component_subgraphs(G), key=len)),
-                                     weight="distance")
+
+    Gcc = sorted(nx.connected_components(G), key=len, reverse=True)
+    G0 = G.subgraph(Gcc[0])
+
+    min_t = nx.minimum_spanning_tree(thresholding.weight_to_distance(G0), weight="distance")
     len_edges = min_t.number_of_edges()
     upper_values = np.triu_indices(np.shape(conn_matrix)[0], k=1)
     weights = np.array(conn_matrix[upper_values])
