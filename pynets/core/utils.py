@@ -21,6 +21,11 @@ def get_file():
     return base_path
 
 
+def checkConsecutive(l):
+    n = len(l) - 1
+    return (sum(np.diff(sorted(l)) == 1) >= n)
+
+
 def prune_suffices(res):
     import re
     if 'reor-RAS' in str(res):

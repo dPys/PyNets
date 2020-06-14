@@ -1034,8 +1034,7 @@ class RegisterAtlasFunc(SimpleInterface):
                                template_name=self.inputs.template_name,
                                simple=self.inputs.simple)
 
-        aligned_atlas_t1mni_gm = reg.atlas2t1wmni_align(uatlas_tmp_path, uatlas_parcels_tmp_path,
-                                                        atlas_name)
+        aligned_atlas_t1mni_gm = reg.atlas2t1wmni_align(uatlas_tmp_path, uatlas_parcels_tmp_path, atlas_name)
 
         reg_dir = f"{os.path.dirname(self.inputs.anat_file)}/reg"
         if not os.path.isdir(reg_dir):

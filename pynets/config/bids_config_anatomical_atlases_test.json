@@ -17,7 +17,7 @@
             "es": "['mean', 'variance']"
         },
     "gen": {
-            "a":  "['atlas_aal', 'BrainnetomeAtlasFan2016']",
+            "a":  "['atlas_aal', 'DesikanKlein2012']",
             "bin":  "False",
             "df":  "False",
             "dt":  "False",

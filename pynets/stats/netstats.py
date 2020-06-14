@@ -832,11 +832,6 @@ def raw_mets(G, i):
     return net_met_val
 
 
-def connected_component_subgraphs(G):
-    for c in nx.connected_components(G):
-        yield G.subgraph(c)
-
-
 class CleanGraphs(object):
     """
     A Class for cleaning graphs in preparation for network analysis.
