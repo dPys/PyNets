@@ -546,8 +546,8 @@ def coords_masker(roi, coords, labels, error):
     try:
         for ix in sorted(indices, reverse=True):
             print(f"{'Removing: '}{labels[ix]}{' at '}{coords[ix]}")
-            labels.pop(ix)
-            coords.pop(ix)
+            del labels[ix], coords[ix]
+
     except RuntimeError:
         print('ERROR: Restrictive masking. No coords remain after masking with brain mask/roi...')
 

@@ -17,7 +17,7 @@ Documentation
 -------------
 Explore official installation instruction, user-guide, API, and examples: <https://pynets.readthedocs.io/en/latest/>
 
-```bash
+```
 usage: pynets [-h] -id A subject id or other unique identifier
               [A subject id or other unique identifier ...]
               [-func Path to input functional file required for functional connectomes) [Path to input functional file (required for functional connectomes) ...]]

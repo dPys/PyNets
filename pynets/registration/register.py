@@ -353,12 +353,13 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
     gc.collect()
 
     # Correct coords and labels
-    bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(atlas_mni).dataobj).astype('int'))))
+    intensities = list(np.unique(np.asarray(nib.load(atlas_mni).dataobj).astype('int')))
+    missing_labels = missing_elements(intensities)
+    bad_idxs = [intensities.index(val) for val in missing_labels]
     if len(bad_idxs) > 0:
         bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
         for j in bad_idxs:
-            labels.pop(j)
-            coords.pop(j)
+            del labels[j], coords[j]
 
     return (streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi,
             min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget,

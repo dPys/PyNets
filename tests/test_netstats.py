@@ -305,19 +305,6 @@ def test_weighted_transitivity(binarize):
     assert transitivity >= 0
 
 
-def test_connected_component_subgraphs():
-    """ Test weighted_transitivity computation
-    """
-
-    base_dir = str(Path(__file__).parent/"examples")
-    est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
-
-    in_mat = np.load(est_path)
-    G = nx.from_numpy_array(in_mat)
-
-    next(netstats.connected_component_subgraphs(G))
-
-
 @pytest.mark.parametrize("fmt", ['npy', 'txt'])
 @pytest.mark.parametrize("conn_model", ['corr', 'partcorr', 'cov', 'sps'])
 @pytest.mark.parametrize("prune", [pytest.param(0, marks=pytest.mark.xfail(raises=UnboundLocalError)), 1, 2, 3])
