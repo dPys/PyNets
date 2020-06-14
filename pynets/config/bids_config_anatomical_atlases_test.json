@@ -1,0 +1,40 @@
+{
+    "dwi": {
+            "dg": "['det', 'prob']",
+            "ml": "['0']",
+            "mod": "['csd', 'tensor']",
+            "s": 1000,
+            "tc": "['cmc']",
+            "tt": "['particle']"
+        },
+    "func": {
+            "cc": "['allcorr']",
+            "ct": "None",
+            "hp": "['0', '0.028']",
+            "k": "None",
+            "mod": "['partcorr']",
+            "sm": "['0', '4']",
+            "es": "['mean', 'variance']"
+        },
+    "gen": {
+            "a":  "['atlas_aal', 'DesikanKlein2012']",
+            "bin":  "False",
+            "df":  "False",
+            "dt":  "False",
+            "embed":  "None",
+            "max_thr":  0.80,
+            "min_thr":  0.20,
+            "mplx":  0,
+            "mst":  "True",
+            "n":  "None",
+            "names":  "False",
+            "norm": "['6']",
+            "ns":  "None",
+            "p":  "['1']",
+            "plt":  "False",
+            "spheres":  "False",
+            "step_thr":  0.10,
+            "thr":  1.0,
+            "vox":  "'2mm'"
+        }
+}

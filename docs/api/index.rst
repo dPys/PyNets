@@ -3,8 +3,10 @@ API
 ===
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
+   ../_modules/pynets.cli.rst
+   ../_modules/pynets.core.rst
    ../_modules/pynets.dmri.rst
    ../_modules/pynets.fmri.rst
    ../_modules/pynets.plotting.rst

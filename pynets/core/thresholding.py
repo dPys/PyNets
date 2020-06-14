@@ -614,7 +614,11 @@ def local_thresholding_prop(conn_matrix, thr):
     G = nx.from_numpy_matrix(np.abs(conn_matrix))
 
     maximum_edges = G.number_of_edges()
-    min_t = nx.minimum_spanning_tree(thresholding.weight_to_distance(G), weight="distance")
+
+    Gcc = sorted(nx.connected_components(G), key=len, reverse=True)
+    G0 = G.subgraph(Gcc[0])
+
+    min_t = nx.minimum_spanning_tree(thresholding.weight_to_distance(G0), weight="distance")
     len_edges = min_t.number_of_edges()
     upper_values = np.triu_indices(np.shape(conn_matrix)[0], k=1)
     weights = np.array(conn_matrix[upper_values])
@@ -657,24 +661,16 @@ def local_thresholding_prop(conn_matrix, thr):
             min_t.add_edges_from([edge])
             len_edges = min_t.number_of_edges()
             if len_edges >= edgenum:
-                print(len_edges)
+                #print(len_edges)
                 break
         k += 1
 
     conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64))
 
-    # Enforce original dimensionality by padding with zeros.
-    if conn_matrix_bin.shape != conn_matrix.shape:
-        if conn_matrix.shape[0] > conn_matrix_bin.shape[0]:
-            result = np.zeros(conn_matrix.shape)
-            result[:conn_matrix_bin.shape[0], :conn_matrix_bin.shape[1]] = conn_matrix_bin
-            conn_matrix_thr = np.multiply(conn_matrix, result)
-        else:
-            result = np.zeros(conn_matrix_bin.shape)
-            result[:conn_matrix.shape[0], :conn_matrix.shape[1]] = conn_matrix
-            conn_matrix_thr = np.multiply(conn_matrix_bin, result)
-    else:
+    try:
         conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
+    except ValueError:
+        print('Dimensionality inconsistent after MST thresholding. Check raw graph output manually for debugging.')
 
     return conn_matrix_thr
 

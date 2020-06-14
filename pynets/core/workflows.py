@@ -2260,7 +2260,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         fmri_connectometry_wf.connect([(inputnode, extract_ts_info_node, [('hpass', 'hpass')])])
 
     if hpass_list or smooth_list or node_size_list or extract_strategy_list:
-        print("%s%s" % ('Expanding within-node iterable combos:\n', extract_ts_info_iters))
+        # print("%s%s" % ('Expanding within-node iterable combos:\n', extract_ts_info_iters))
         extract_ts_info_node.iterables = extract_ts_info_iters
 
     extract_ts_info_node.synchronize = True
