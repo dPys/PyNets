@@ -164,7 +164,7 @@ RUN chmod a+s -R /opt \
     && mkdir /working && \
     chmod -R 777 /working
 
-USER dpisner
+#USER dpisner
 
 # ENV Config
 ENV LD_LIBRARY_PATH="/opt/conda/lib":$LD_LIBRARY_PATH

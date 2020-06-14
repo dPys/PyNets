@@ -661,7 +661,7 @@ def local_thresholding_prop(conn_matrix, thr):
             min_t.add_edges_from([edge])
             len_edges = min_t.number_of_edges()
             if len_edges >= edgenum:
-                print(len_edges)
+                #print(len_edges)
                 break
         k += 1
 

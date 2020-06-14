@@ -11,7 +11,7 @@ PyNets™
 
 About
 -----
-PyNets leverages the Nipype workflow engine, along with Nilearn and Dipy fMRI and dMRI libraries, to sample individual structural and functional connectomes. Uniquely, PyNets enables the user to specify any of a variety of methodological choices (i.e. that impact node and/or edge definitions) and sampling the resulting connectome estimates in a massively scalable and parallel framework. PyNets is a post-processing workflow, which means that it can be run manually on virtually any preprocessed fMRI or dMRI data. Further, it can be deployed as a BIDS application (See BIDSapp branch); PyNets takes BIDS derivatives and makes BIDS derivatives. Docker/Singularity containers are available to facilitate reproducibility of executions. Cloud computing with AWS batch and S3 is also supported.
+PyNets is a tool for sampling and analyzing varieties of individual structural and functional connectomes. PyNets enables the user to specify any of a variety of methodological choices impact node and/or edge definition, and then sample the prescribed connectome estimates in a massively parallel framework that is conducive to predictive optimization (i.e. grid-search). PyNets is a post-processing workflow, which means that it can be run manually on virtually any preprocessed fMRI or dMRI data. It relies on Dipy, Nilearn, and the Nipype workflow engine under-the0hood. As of recently, it can be deployed as a BIDS application. Uniquely, it accepts BIDS derivatives and produces derivatives of those derivatives.
 
 Documentation
 -------------
