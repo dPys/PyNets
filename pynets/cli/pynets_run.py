@@ -412,6 +412,10 @@ def get_parser():
                         default=False,
                         action='store_true',
                         help='Verbose print for debugging.\n')
+    parser.add_argument('-clean',
+                        default=False,
+                        action='store_true',
+                        help='Clean up temporary runtime directory after workflow termination.\n')
     parser.add_argument('-work',
                         metavar='Working directory',
                         default='/tmp/work',
@@ -1987,7 +1991,6 @@ def build_workflow(args, retval):
                             os.remove(file_)
                         except:
                             continue
-        # shutil.rmtree(work_dir, ignore_errors=True)
 
     # Single-subject workflow generator
     else:
@@ -2097,7 +2100,6 @@ def build_workflow(args, retval):
                         os.remove(file_)
                     except:
                         continue
-        # shutil.rmtree(work_dir, ignore_errors=True)
 
     print('\n\n------------FINISHED-----------')
     print('Subject: ', ID)
@@ -2109,6 +2111,7 @@ def build_workflow(args, retval):
 def main():
     """Initializes main script from command-line call to generate single-subject or multi-subject workflow(s)"""
     import gc
+    import os
     import sys
     import multiprocessing as mp
     try:
@@ -2148,6 +2151,11 @@ def main():
         gc.collect()
 
     mgr.shutdown()
+
+    if args.clean is True and os.path.isdir(retval['workflow'].basedir):
+        from shutil import rmtree
+        rmtree(retval['workflow'].basedir, ignore_errors=True)
+
     sys.exit(0)
 
 

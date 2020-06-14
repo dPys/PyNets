@@ -40,7 +40,7 @@ RUN apt-get update -qq \
         pkg-config \
         libgsl0-dev \
         openssl \
-	openssh-server \
+	    openssh-server \
         gsl-bin \
         libglu1-mesa-dev \
         libglib2.0-0 \
@@ -114,8 +114,7 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
         matplotlib \
         openblas \
     && conda clean -tipsy \
-    && pip install skggm \
-    && pip install python-dateutil==2.8.0 \
+    && pip install skggm python-dateutil==2.8.0 \
     && sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     # Precaching fonts, set 'Agg' as default backend for matplotlib
@@ -132,17 +131,17 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
 
 # Handle permissions, cleanup, and create mountpoints
 USER root
-RUN chown -R dpisner /opt \
-    && chmod 777 /opt/conda/bin/pynets \
+RUN chmod a+s -R /opt \
+    && chown -R dpisner /opt/conda/lib/python3.6/site-packages \
     && mkdir -p /home/dpisner/.pynets \
-    && chmod 777 -R /home/dpisner/.pynets \
     && chown -R dpisner /home/dpisner/.pynets \
-    && chmod a+s -R /opt \
-    && chmod 775 -R /opt/conda/lib/python3.6/site-packages \
+    && chmod 777 /opt/conda/bin/pynets \
+    && chmod 777 -R /home/dpisner/.pynets \
     && chmod 777 /opt/conda/bin/pynets \
     && chmod 777 /opt/conda/bin/pynets_bids \
     && chmod 777 /opt/conda/bin/pynets_collect \
     && chmod 777 /opt/conda/bin/pynets_cloud \
+    && find /opt/conda/lib/python3.6/site-packages -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.yaml" -exec chmod 777 {} \; \
     && apt-get purge -y --auto-remove \
@@ -186,4 +185,4 @@ ENV USE_SIMPLE_THREADED_LEVEL3=1
 EXPOSE 22
 
 # and add it as an entrypoint
-ENTRYPOINT ["pynets_bids"]
+#ENTRYPOINT ["pynets_bids"]

@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 matplotlib.use('agg')
 
 
-def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap):
+def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, dpi_resolution=300):
     """
     Plot a connectivity matrix.
 
@@ -32,12 +32,11 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap):
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
 
+    conn_matrix_bin = thresholding.binarize(conn_matrix)
     conn_matrix = thresholding.standardize(conn_matrix)
-
-    dpi_resolution = 300
-    [z_min, z_max] = -np.abs(conn_matrix).max()*0.5, np.abs(conn_matrix).max()*0.5
+    conn_matrix_plt = np.multiply(conn_matrix, conn_matrix_bin)
     try:
-        plot_matrix(conn_matrix, figure=(10, 10), labels=labels, vmax=z_max, vmin=z_min,
+        plot_matrix(conn_matrix_plt, figure=(10, 10), labels=labels, vmax=1, vmin=0,
                     reorder='average', auto_fit=True, grid=False, colorbar=False, cmap=cmap)
     except RuntimeWarning:
         print('Connectivity matrix too sparse for plotting...')
@@ -46,7 +45,7 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap):
     return
 
 
-def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_aff, cmap):
+def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_aff, cmap, dpi_resolution=300):
     """
     Plot a community-parcellated connectivity matrix.
 
@@ -69,24 +68,23 @@ def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_af
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
 
+    conn_matrix_bin = thresholding.binarize(conn_matrix)
     conn_matrix = thresholding.standardize(conn_matrix)
-
-    dpi_resolution = 300
+    conn_matrix_plt = np.multiply(conn_matrix, conn_matrix_bin)
 
     sorting_array = sorted(range(len(community_aff)), key=lambda k: community_aff[k])
     sorted_conn_matrix = conn_matrix[sorting_array, :]
     sorted_conn_matrix = sorted_conn_matrix[:, sorting_array]
-    [z_min, z_max] = -np.abs(sorted_conn_matrix).max()*0.5, np.abs(sorted_conn_matrix).max()*0.5
     rois_num = sorted_conn_matrix.shape[0]
     if rois_num < 100:
         try:
-            plot_matrix(conn_matrix, figure=(10, 10), labels=labels, vmax=z_max, vmin=z_min,
+            plot_matrix(conn_matrix_plt, figure=(10, 10), labels=labels, vmax=1.0, vmin=0,
                         reorder=False, auto_fit=True, grid=False, colorbar=False, cmap=cmap)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')
     else:
         try:
-            plot_matrix(conn_matrix, figure=(10, 10), vmax=z_max, vmin=z_min, auto_fit=True,
+            plot_matrix(conn_matrix_plt, figure=(10, 10), vmax=1.0, vmin=0, auto_fit=True,
                         grid=False, colorbar=False, cmap=cmap)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')

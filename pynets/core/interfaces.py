@@ -75,7 +75,6 @@ class FetchNodesLabels(SimpleInterface):
             else:
                 raise ValueError(f"\nERROR: Atlas file for {self.inputs.atlas} not found!")
             atlas = self.inputs.atlas
-            uatlas = None
         elif self.inputs.uatlas is None and self.inputs.parc is False and self.inputs.atlas in nilearn_coords_atlases:
             print('Fetching coords and labels from nilearn coordinate-based atlas library...')
             # Fetch nilearn atlas coords
@@ -103,10 +102,11 @@ class FetchNodesLabels(SimpleInterface):
             par_max = None
             atlas = self.inputs.atlas
         elif self.inputs.uatlas is None and self.inputs.atlas in local_atlases:
-            from pynets.registration.reg_utils import check_orient_and_dims
-            uatlas_pre = f"{str(Path(base_path).parent)}/atlases/{self.inputs.atlas}.nii.gz"
-            uatlas = check_orient_and_dims(uatlas_pre, self.inputs.outdir, self.inputs.vox_size)
+            from nipype.utils.filemanip import fname_presuffix, copyfile
 
+            uatlas_pre = f"{str(Path(base_path).parent)}/atlases/{self.inputs.atlas}.nii.gz"
+            uatlas = fname_presuffix(uatlas_pre, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(uatlas_pre, uatlas, copy=True, use_hardlink=False)
             try:
                 # Fetch user-specified atlas coords
                 [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
@@ -811,13 +811,16 @@ class RegisterAtlasDWI(SimpleInterface):
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
         if self.inputs.uatlas is None:
-            uatlas_tmp_path = self.inputs.uatlas
+            uatlas_tmp_path = None
         else:
             uatlas_tmp_path = fname_presuffix(self.inputs.uatlas, suffix='_tmp', newpath=runtime.cwd)
             copyfile(self.inputs.uatlas, uatlas_tmp_path, copy=True, use_hardlink=False)
 
-        uatlas_parcels_tmp_path = fname_presuffix(self.inputs.uatlas_parcels, suffix='_tmp', newpath=runtime.cwd)
-        copyfile(self.inputs.uatlas_parcels, uatlas_parcels_tmp_path, copy=True, use_hardlink=False)
+        if self.inputs.uatlas_parcels is None:
+            uatlas_parcels_tmp_path = None
+        else:
+            uatlas_parcels_tmp_path = fname_presuffix(self.inputs.uatlas_parcels, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.uatlas_parcels, uatlas_parcels_tmp_path, copy=True, use_hardlink=False)
 
         fa_tmp_path = fname_presuffix(self.inputs.fa_path, suffix='_tmp', newpath=runtime.cwd)
         copyfile(self.inputs.fa_path, fa_tmp_path, copy=True, use_hardlink=False)
@@ -997,13 +1000,16 @@ class RegisterAtlasFunc(SimpleInterface):
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
         if self.inputs.uatlas is None:
-            uatlas_tmp_path = self.inputs.uatlas
+            uatlas_tmp_path = None
         else:
             uatlas_tmp_path = fname_presuffix(self.inputs.uatlas, suffix='_tmp', newpath=runtime.cwd)
             copyfile(self.inputs.uatlas, uatlas_tmp_path, copy=True, use_hardlink=False)
 
-        uatlas_parcels_tmp_path = fname_presuffix(self.inputs.uatlas_parcels, suffix='_tmp', newpath=runtime.cwd)
-        copyfile(self.inputs.uatlas_parcels, uatlas_parcels_tmp_path, copy=True, use_hardlink=False)
+        if self.inputs.uatlas_parcels is None:
+            uatlas_parcels_tmp_path = None
+        else:
+            uatlas_parcels_tmp_path = fname_presuffix(self.inputs.uatlas_parcels, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.uatlas_parcels, uatlas_parcels_tmp_path, copy=True, use_hardlink=False)
 
         anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
         copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
@@ -1040,7 +1046,7 @@ class RegisterAtlasFunc(SimpleInterface):
             if os.path.isfile(i):
                 copyfile(i, f"{reg_dir}/{os.path.basename(i)}_{self.inputs.atlas}", copy=True, use_hardlink=False)
 
-        reg_tmp = [anat_file_tmp_path, uatlas_parcels_tmp_path]
+        reg_tmp = [anat_file_tmp_path]
         for j in reg_tmp:
             os.remove(j)
 
