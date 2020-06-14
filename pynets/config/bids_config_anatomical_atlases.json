@@ -1,0 +1,40 @@
+{
+    "dwi": {
+            "dg": "['det', 'prob', 'clos']",
+            "ml": "['0', '20', '40']",
+            "mod": "['csd', 'csa', 'tensor', 'sfm']",
+            "s": 50000,
+            "tc": "['cmc']",
+            "tt": "['particle']"
+        },
+    "func": {
+            "cc": "['allcorr']",
+            "ct": "None",
+            "hp": "['0', '0.028', '0.080']",
+            "k": "None",
+            "mod": "['partcorr', 'corr', 'cov']",
+            "sm": "['0', '2', '4']",
+            "es": "['mean', 'variance', 'median']"
+        },
+    "gen": {
+            "a":  "['atlas_aal', 'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe', 'atlas_harvard_oxford', 'atlas_destrieux_2009', 'destrieux2009_rois', 'BrainnetomeAtlasFan2016', 'Juelichgmthr252mmEickhoff2005', 'whole_brain_cluster_labels_PCA100', 'DesikanKlein2012', 'RandomParcellationsc05meanalll43Craddock2011']",
+            "bin":  "False",
+            "df":  "False",
+            "dt":  "False",
+            "embed":  "None",
+            "max_thr":  0.80,
+            "min_thr":  0.20,
+            "mplx":  0,
+            "mst":  "True",
+            "n":  "None",
+            "names":  "False",
+            "norm": "['6']",
+            "ns":  "None",
+            "p":  "['1']",
+            "plt":  "False",
+            "spheres":  "False",
+            "step_thr":  0.10,
+            "thr":  1.0,
+            "vox":  "'2mm'"
+        }
+}
