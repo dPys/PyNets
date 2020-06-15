@@ -344,8 +344,8 @@ def get_parser():
                         help='Optionally use this flag if you wish to apply local thresholding via the disparity '
                              'filter approach. -thr values in this case correspond to α.\n')
     parser.add_argument('-mplx',
-                        metavar='Perform various levels of multiplex graph analysis ONLY IF both structural and '
-                                'diffusion connectomes are provided.',
+                        metavar='Perform various levels of multiplex graph analysis (only) if both structural and '
+                                'diffusion connectometry is run simultaneously.',
                         default=0,
                         nargs=1,
                         choices=['0', '1', '2'],
