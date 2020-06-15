@@ -342,6 +342,7 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
     overlap_mask = np.invert(warped_uatlas_img_res_data.astype('bool') * uatlas_mni_data.astype('bool'))
     os.makedirs(f"{dir_path}/parcellations", exist_ok=True)
     atlas_mni = f"{dir_path}/parcellations/{op.basename(uatlas).split('.nii')[0]}_liberal.nii.gz"
+
     nib.save(nib.Nifti1Image(warped_uatlas_img_res_data * overlap_mask.astype('int') +
                              uatlas_mni_data * overlap_mask.astype('int') +
                              np.invert(overlap_mask).astype('int') *
@@ -354,11 +355,11 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
 
     # Correct coords and labels
     bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(atlas_mni).dataobj).astype('int'))))
+    bad_idxs = [i-1 for i in bad_idxs]
     if len(bad_idxs) > 0:
         bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
         for j in bad_idxs:
-            labels.pop(j)
-            coords.pop(j)
+            del labels[j], coords[j]
 
     return (streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi,
             min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget,
@@ -692,6 +693,7 @@ class DmriReg(object):
 
         dwi_aligned_atlas_wmgm_int_img = intersect_masks([wm_gm_mask_img, atlas_mask_img], threshold=0,
                                                          connected=False)
+
         nib.save(atlas_img_corr, dwi_aligned_atlas)
         nib.save(dwi_aligned_atlas_wmgm_int_img, dwi_aligned_atlas_wmgm_int)
 

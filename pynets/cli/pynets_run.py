@@ -1279,6 +1279,12 @@ def build_workflow(args, retval):
             retval['return_code'] = 1
             return retval
 
+        if (track_type == 'particle') and (conn_model == 'tensor' or tiss_class != 'cmc'):
+            print('Can only perform particle tracking with the `cmc` tissue classsifier and diffusion models '
+                  'other than tensor...')
+            retval['return_code'] = 1
+            return retval
+
         if user_atlas_list:
             print('\nIterating across multiple user atlases...')
             if dwi_file_list:

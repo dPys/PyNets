@@ -67,6 +67,7 @@ class FetchNodesLabels(SimpleInterface):
                 if not isinstance(uatlas, str):
                     nib.save(uatlas, f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}")
                     uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
+                uatlas = nodemaker.enforce_consecutive_labels(uatlas)
                 [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
@@ -93,6 +94,7 @@ class FetchNodesLabels(SimpleInterface):
                 if not isinstance(uatlas, str):
                     nib.save(uatlas, f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}")
                     uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
+                uatlas = nodemaker.enforce_consecutive_labels(uatlas)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
                 else:
@@ -108,6 +110,7 @@ class FetchNodesLabels(SimpleInterface):
             uatlas = fname_presuffix(uatlas_pre, suffix='_tmp', newpath=runtime.cwd)
             copyfile(uatlas_pre, uatlas, copy=True, use_hardlink=False)
             try:
+                uatlas = nodemaker.enforce_consecutive_labels(uatlas)
                 # Fetch user-specified atlas coords
                 [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
                 if self.inputs.parc is True:
@@ -136,9 +139,10 @@ class FetchNodesLabels(SimpleInterface):
 
             try:
                 # Fetch user-specified atlas coords
-                [coords, atlas, par_max] = nodemaker.get_names_and_coords_of_parcels(self.inputs.uatlas)
+                uatlas = nodemaker.enforce_consecutive_labels(self.inputs.uatlas)
+                [coords, atlas, par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
                 if self.inputs.parc is True:
-                    parcel_list = nodemaker.gen_img_list(self.inputs.uatlas)
+                    parcel_list = nodemaker.gen_img_list(uatlas)
                 else:
                     parcel_list = None
 

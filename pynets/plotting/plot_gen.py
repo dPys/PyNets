@@ -382,8 +382,7 @@ def create_gb_palette(mat, edge_cmap, coords, labels, node_size='auto', node_cma
         labels_pre = list(labels)
         if len(pruned_nodes) > 0:
             for j in pruned_nodes:
-                labels_pre.pop(j)
-                coords_pre.pop(j)
+                del labels_pre[j], coords_pre[j]
             mat = nx.to_numpy_array(G)
             labels = labels_pre
             coords = coords_pre
