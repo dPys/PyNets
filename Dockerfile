@@ -83,7 +83,7 @@ RUN apt-get update -qq \
        --exclude='fsl/bin/*_gpu*' \
        --exclude='fsl/bin/*_cuda*' \
     && chmod 777 -R /usr/local/fsl/bin \
-    && chown -R dpisner /usr/local/fsl
+    && chown -R dpisner:dpisner /usr/local/fsl
 
 USER dpisner
 WORKDIR /home/dpisner
@@ -132,9 +132,9 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
 # Handle permissions, cleanup, and create mountpoints
 USER root
 RUN chmod a+s -R /opt \
-    && chown -R dpisner /opt/conda/lib/python3.6/site-packages \
+    && chown -R dpisner:dpisner /opt/conda/lib/python3.6/site-packages \
     && mkdir -p /home/dpisner/.pynets \
-    && chown -R dpisner /home/dpisner/.pynets \
+    && chown -R dpisner:dpisner /home/dpisner/.pynets \
     && chmod 777 /opt/conda/bin/pynets \
     && chmod 777 -R /home/dpisner/.pynets \
     && chmod 777 /opt/conda/bin/pynets \
@@ -164,7 +164,7 @@ RUN chmod a+s -R /opt \
     && mkdir /working && \
     chmod -R 777 /working
 
-#USER dpisner
+USER dpisner
 
 # ENV Config
 ENV LD_LIBRARY_PATH="/opt/conda/lib":$LD_LIBRARY_PATH

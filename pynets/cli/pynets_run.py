@@ -2156,11 +2156,11 @@ def main():
         # Clean up master process before running workflow, which may create forks
         gc.collect()
 
-    mgr.shutdown()
-
     if args.clean is True and os.path.isdir(retval['workflow'].basedir):
         from shutil import rmtree
         rmtree(retval['workflow'].basedir, ignore_errors=True)
+
+    mgr.shutdown()
 
     sys.exit(0)
 
