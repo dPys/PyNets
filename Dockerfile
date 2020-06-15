@@ -66,7 +66,7 @@ RUN apt-get update -qq \
     && curl -o /tmp/libxp6.deb -sSL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
     && dpkg -i /tmp/libxp6.deb && rm -f /tmp/libxp6.deb \
     # Add new user.
-    && useradd --no-user-group --create-home --shell /bin/bash dpisner \
+    && groupadd -r dpisner && useradd --no-log-init --create-home --shell /bin/bash -r -g dpisner dpisner \
     && chmod a+s /opt \
     && chmod 777 -R /opt \
     && apt-get clean -y && apt-get autoclean -y && apt-get autoremove -y \
@@ -132,9 +132,9 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
 # Handle permissions, cleanup, and create mountpoints
 USER root
 RUN chmod a+s -R /opt \
-    && chown -R dpisner:dpisner /opt/conda/lib/python3.6/site-packages \
+    && chown -R dpisner /opt/conda/lib/python3.6/site-packages \
     && mkdir -p /home/dpisner/.pynets \
-    && chown -R dpisner:dpisner /home/dpisner/.pynets \
+    && chown -R dpisner /home/dpisner/.pynets \
     && chmod 777 /opt/conda/bin/pynets \
     && chmod 777 -R /home/dpisner/.pynets \
     && chmod 777 /opt/conda/bin/pynets \
