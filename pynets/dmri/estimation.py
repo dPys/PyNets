@@ -511,8 +511,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     if len(bad_idxs) > 0:
         bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
         for j in bad_idxs:
-            labels.pop(j)
-            coords.pop(j)
+            del labels[j], coords[j]
 
     coords = np.array(coords)
     labels = np.array(labels)

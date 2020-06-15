@@ -135,6 +135,8 @@ resource_dict: # Nipype workflow resource settings
         - (2, 4)
       - 'omni_embedding_node':
         - (2, 4)
+      - 'join_iters_node_thr':
+        - (1, 1)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
         - False

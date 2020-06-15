@@ -465,9 +465,7 @@ def parcel_masker(roi, coords, parcel_list, labels, dir_path, ID, perc_overlap):
     try:
         for ix in sorted(indices, reverse=True):
             print(f"{'Removing: '}{labels_adj[ix]}{' at '}{coords_adj[ix]}")
-            labels_adj.pop(ix)
-            coords_adj.pop(ix)
-            parcel_list_adj.pop(ix)
+            del labels_adj[ix], coords_adj[ix], parcel_list_adj[ix]
     except RuntimeError:
         print('ERROR: Restrictive masking. No parcels remain after masking with brain mask/roi...')
 
@@ -637,6 +635,13 @@ def gen_img_list(uatlas):
     gc.collect()
 
     return img_list
+
+
+def enforce_consecutive_labels(uatlas):
+    # Enforce consecutive labelings
+    atlas_img_corr = create_parcel_atlas(gen_img_list(uatlas))[0]
+    nib.save(atlas_img_corr, uatlas)
+    return uatlas
 
 
 def gen_network_parcels(uatlas, network, labels, dir_path):
