@@ -321,3 +321,99 @@ BETZEL2016 = """
   publisher={Elsevier}
 }
 """.strip()
+
+VAROQUAUX2013 = """
+@article{Varoquaux2013,
+  arxivId = {1304.3880},
+  author = {Varoquaux, Ga{\"{e}}l and Craddock, R. Cameron},
+  doi = {10.1016/j.neuroimage.2013.04.007},
+  journal = {NeuroImage},
+  pages = {405--415},
+  pmid = {23583357},
+  title = {{Learning and comparing functional connectomes across subjects}},
+  volume = {80},
+  year = {2013}
+}
+""".strip()
+
+YUEN2019 = """
+@article{Yuen2019,
+  author = {Yuen, Nicole H. and Osachoff, Nathaniel and Chen, J. Jean},
+  doi = {10.3389/fnins.2019.00900},
+  journal = {Frontiers in Neuroscience},
+  title = {{Intrinsic Frequencies of the Resting-State fMRI Signal: The Frequency Dependence of Functional Connectivity and the Effect of Mode Mixing}},
+  year = {2019}
+}
+""".strip()
+
+CRADDOCK2013 = """
+@article{Craddock2013a,
+  author = {Craddock, R Cameron and James, G Andrew and Iii, Paul E Holtzheimer and Hu, Xiaoping P and Mayberg, Helen S},
+  journal = {Human brain mapping},
+  number = {8},
+  pages = {1914--1928},
+  title = {{A whole brain fMRI atlas spatial Generated via Spatially Constrained Spectral Clustering{\_} Craddock, James 2011 .pdf}},
+  volume = {33},
+  year = {2013}
+}
+""".strip()
+
+XIANG2020 = """
+@article{Xiang2020,
+  author = {Xiang, Yu Tao and Yang, Yuan and Li, Wen and Zhang, Ling and Zhang, Qinge and Cheung, Teris and Ng, Chee H.},
+  booktitle = {The Lancet Psychiatry},
+  doi = {10.1016/S2215-0366(20)30046-8},
+  title = {{Timely mental health care for the 2019 novel coronavirus outbreak is urgently needed}},
+  year = {2020}
+}
+""".strip()
+
+BASSETT2017 = """
+@article{Bassett2017,
+  author = {Bassett, Danielle S. and Sporns, Olaf},
+  booktitle = {Nature Neuroscience},
+  doi = {10.1038/nn.4502},
+  title = {{Network neuroscience}},
+  year = {2017}
+}
+""".strip()
+
+SPORNS2012 = """
+@article{Sporns2012,
+  author = {Sporns, Olaf},
+  booktitle = {NeuroImage},
+  doi = {10.1016/j.neuroimage.2011.08.085},
+  title = {{From simple graphs to the connectome: Networks in neuroimaging}},
+  year = {2012}
+}
+""".strip()
+
+BULLMORE2009 = """
+@article{Bullmore2009,
+  author = {Bullmore, Ed and Sporns, Olaf},
+  booktitle = {Nature Reviews Neuroscience},
+  doi = {10.1038/nrn2575},
+  title = {{Complex brain networks: Graph theoretical analysis of structural and functional systems}},
+  year = {2009}
+}
+""".strip()
+
+GARCIAGARCIA2018 = """
+@article{Garcia-Garcia2018,
+  author = {Garcia-Garcia, Manuel and Nikolaidis, Aki and Bellec, Pierre and Craddock, R. Cameron and Cheung, Brian and Castellanos, Francisco X. and Milham, Michael P.},
+  doi = {10.1016/j.neuroimage.2017.07.029},
+  journal = {NeuroImage},
+  title = {{Detecting stable individual differences in the functional organization of the human basal ganglia}},
+  year = {2018}
+}
+""".strip()
+
+GREENE2017 = """
+@article{Greene2017,
+  author = {Greene, Clint and Cieslak, Matt and Grafton, Scott T.},
+  doi = {10.1162/netn_a_00035},
+  journal = {Network Neuroscience},
+  title = {{Effect of different spatial normalization approaches on tractography and structural brain networks}},
+  year = {2017}
+}
+""".strip()

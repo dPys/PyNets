@@ -557,7 +557,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
             g.edges[u, v].update({'weight': np.nanmean(vals)})
 
     # Convert to numpy matrix
-    conn_matrix_raw = nx.to_numpy_matrix(g)
+    conn_matrix_raw = nx.to_numpy_array(g)
 
     # Impose symmetry
     conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)

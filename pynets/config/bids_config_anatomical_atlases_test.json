@@ -17,7 +17,7 @@
             "es": "['mean']"
         },
     "gen": {
-            "a":  "['atlas_aal', 'BrainnetomeAtlasFan2016', 'Juelichgmthr252mmEickhoff2005', 'whole_brain_cluster_labels_PCA100', 'DesikanKlein2012', 'RandomParcellationsc05meanalll43Craddock2011']",
+            "a":  "['atlas_aal', 'BrainnetomeAtlasFan2016', 'Juelichgmthr252mmEickhoff2005', 'whole_brain_cluster_labels_PCA100', 'DesikanKlein2012']",
             "bin":  "False",
             "df":  "False",
             "dt":  "False",
@@ -31,7 +31,7 @@
             "norm": "['6']",
             "ns":  "None",
             "p":  "['1']",
-            "plt":  "False",
+            "plt":  "True",
             "spheres":  "False",
             "step_thr":  0.10,
             "thr":  1.0,
