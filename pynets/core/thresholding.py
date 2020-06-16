@@ -411,7 +411,7 @@ def autofix(W, copy=True):
     if np.allclose(W, W.T):
         W = np.around(W, decimals=5)
 
-    return W
+    return np.nan_to_num(W)
 
 
 def disparity_filter(G, weight='weight'):

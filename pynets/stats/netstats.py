@@ -909,7 +909,7 @@ class CleanGraphs(object):
        partcorr for partial correlation). sps type is used by default.
     est_path : str
         File path to the thresholded graph, conn_matrix_thr, saved as a numpy array in .npy format.
-    prune : bool
+    prune : int
         Indicates whether to prune final graph of disconnected nodes/isolates.
     norm : int
         Indicates method of normalizing resulting graph.
@@ -944,16 +944,16 @@ class CleanGraphs(object):
         self.in_mat_raw = utils.load_mat(self.est_path)
 
         # De-diagnal and remove nan's and inf's, ensure edge weights are positive
-        self.in_mat = np.array(np.abs(np.array(thresholding.autofix(self.in_mat_raw))))
+        self.in_mat = np.array(np.array(thresholding.autofix(np.abs(self.in_mat_raw))))
 
         # Load numpy matrix as networkx graph
-        self.G = nx.from_numpy_matrix(self.in_mat)
+        self.G = nx.from_numpy_array(self.in_mat)
 
     def normalize_graph(self):
 
         # Get hyperbolic tangent (i.e. fischer r-to-z transform) of matrix if non-covariance
         if (self.conn_model == 'corr') or (self.conn_model == 'partcorr'):
-            self.in_mat = np.nan_to_num(np.arctanh(self.in_mat))
+            self.in_mat = np.arctanh(self.in_mat)
 
         # Normalize connectivity matrix
         if self.norm == 3 or self.norm == 4 or self.norm == 5:
@@ -961,35 +961,33 @@ class CleanGraphs(object):
 
         # By maximum edge weight
         if self.norm == 1:
-            self.in_mat = thresholding.normalize(self.in_mat)
+            self.in_mat = thresholding.normalize(np.nan_to_num(self.in_mat))
         # Apply log10
         elif self.norm == 2:
-            self.in_mat = np.log10(self.in_mat)
+            self.in_mat = np.log10(np.nan_to_num(self.in_mat))
         # Apply PTR simple-nonzero
         elif self.norm == 3:
-            self.in_mat = pass_to_ranks(self.in_mat, method="simple-nonzero")
+            self.in_mat = pass_to_ranks(np.nan_to_num(self.in_mat), method="simple-nonzero")
         # Apply PTR simple-all
         elif self.norm == 4:
-            self.in_mat = pass_to_ranks(self.in_mat, method="simple-all")
+            self.in_mat = pass_to_ranks(np.nan_to_num(self.in_mat), method="simple-all")
         # Apply PTR zero-boost
         elif self.norm == 5:
-            self.in_mat = pass_to_ranks(self.in_mat, method="zero-boost")
+            self.in_mat = pass_to_ranks(np.nan_to_num(self.in_mat), method="zero-boost")
         # Apply standardization [0, 1]
         elif self.norm == 6:
-            self.in_mat = thresholding.standardize(self.in_mat)
+            self.in_mat = thresholding.standardize(np.nan_to_num(self.in_mat))
         else:
             pass
 
-        self.G = nx.from_numpy_matrix(self.in_mat)
+        self.in_mat = thresholding.autofix(self.in_mat)
+        self.G = nx.from_numpy_array(self.in_mat)
 
         return self.G
 
     def prune_graph(self):
         from pynets.core import utils
         from graspy.utils import remove_loops, symmetrize, get_lcc
-
-        # Load numpy matrix as networkx graph
-        self.G = nx.from_numpy_matrix(self.in_mat)
 
         # Prune irrelevant nodes (i.e. nodes who are fully disconnected
         # from the graph and/or those whose betweenness
@@ -1007,10 +1005,11 @@ class CleanGraphs(object):
         else:
             print('Graph is connected...')
 
-        self.G = symmetrize(remove_loops(self.G))
+        self.in_mat = symmetrize(remove_loops(nx.to_numpy_matrix(self.G)))
 
-        # Get corresponding matrix
-        self.in_mat = np.array(nx.to_numpy_matrix(self.G))
+        self.in_mat = thresholding.autofix(self.in_mat)
+
+        self.G = nx.from_numpy_array(self.in_mat)
 
         # Saved pruned
         if (self.prune != 0) and (self.prune is not None):
@@ -1034,14 +1033,14 @@ class CleanGraphs(object):
         in_mat_bin = thresholding.binarize(self.in_mat)
 
         # Load numpy matrix as networkx graph
-        G_bin = nx.from_numpy_matrix(in_mat_bin)
+        G_bin = nx.from_numpy_array(in_mat_bin)
         return in_mat_bin, G_bin
 
     def create_length_matrix(self):
         in_mat_len = thresholding.weight_conversion(self.in_mat, 'lengths')
 
         # Load numpy matrix as networkx graph
-        G_len = nx.from_numpy_matrix(in_mat_len)
+        G_len = nx.from_numpy_array(in_mat_len)
         return in_mat_len, G_len
 
 
@@ -1413,7 +1412,7 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
         File path to the thresholded graph, conn_matrix_thr, saved as a numpy array in .npy format.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
-    prune : bool
+    prune : int
         Indicates whether to prune final graph of disconnected nodes/isolates.
     norm : int
         Indicates method of normalizing resulting graph.
