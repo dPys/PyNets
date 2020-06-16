@@ -588,7 +588,6 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
             print(f"Reslicing image {img_file} to {vox_size}...")
             data2, affine2 = reslice(np.asarray(img.dataobj), img.affine, zooms, new_zooms)
             nib.save(nib.Nifti1Image(np.nan_to_num(data2), affine=affine2), img_file_res)
-            os.remove(img_file)
             img_file = img_file_res
             del data2
     else:

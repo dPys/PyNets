@@ -377,10 +377,10 @@ def get_parser():
                              'LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing '
                              'multiple RSNs, separate them by space. (e.g. -n \'Default\' \'Cont\' \'SalVentAttn\')\'.'
                              '\n')
-    parser.add_argument('-names',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to perform automated anatomical labeling of '
+    parser.add_argument('-nonames',
+                        default=True,
+                        action='store_false',
+                        help='Optionally use this flag if you wish to deactivate automated anatomical labeling of '
                              'nodes.\n')
     parser.add_argument('-vox',
                         default='2mm',
@@ -666,7 +666,7 @@ def build_workflow(args, retval):
     plugin_type = args.plug
     if type(plugin_type) is list:
         plugin_type = plugin_type[0]
-    use_AAL_naming = args.names
+    use_AAL_naming = args.nonames
     verbose = args.v
     clust_mask = args.cm
     if clust_mask:
