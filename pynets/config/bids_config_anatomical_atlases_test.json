@@ -31,7 +31,7 @@
             "norm": "['6']",
             "ns":  "None",
             "p":  "['1']",
-            "plt":  "False",
+            "plt":  "True",
             "spheres":  "False",
             "step_thr":  0.10,
             "thr":  1.0,

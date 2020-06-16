@@ -96,9 +96,9 @@ resource_dict: # Nipype workflow resource settings
       - 'check_orient_and_dims_mask_node':
         - (1, 1)
       - 'check_orient_and_dims_uatlas_node':
-        - (1, 1)
+        - (1, 2)
       - 'node_gen_node':
-        - (1, 3)
+        - (1, 4)
       - 'check_orient_and_dims_dwi_node':
         - (2, 2)
       - 'get_anisopwr_node':
@@ -114,7 +114,7 @@ resource_dict: # Nipype workflow resource settings
       - 'register_node':
         - (1, 3)
       - 'register_atlas_node':
-        - (1, 2)
+        - (1, 3)
       - 'get_fa_node':
         - (1, 2)
       - 'run_tracking_node':
