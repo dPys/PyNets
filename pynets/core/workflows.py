@@ -579,19 +579,19 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                function=pass_meta_outs), name='pass_meta_outs_node')
 
     if embed is True:
-        from pynets.stats import embedding
+        from pynets.stats import embeddings
         omni_embedding_node = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
                                                    output_names=['out_paths_dwi', 'out_paths_func'],
-                                                   function=embedding.build_omnetome),
+                                                   function=embeddings.build_omnetome),
                                       name='omni_embedding_node', imports=import_list)
         ase_embedding_node = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
                                                   output_names=['out_paths'],
-                                                  function=embedding.build_asetome),
+                                                  function=embeddings.build_asetome),
                                      name='ase_embedding_node', imports=import_list)
         if multimodal is True:
             mase_embedding_node = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
                                                        output_names=['out_paths'],
-                                                       function=embedding.build_masetome),
+                                                       function=embeddings.build_masetome),
                                           name='mase_embedding_node', imports=import_list)
 
     if func_file and not dwi_file:

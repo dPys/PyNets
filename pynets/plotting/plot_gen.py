@@ -594,8 +594,8 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
                                                                          float(smooth) > 0 else ''),
                                                                  "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
                                                                          hpass is not None else ''),
-                                                                 "%s" % ("%s%s%s" %
-                                                                         ('extract-', extract_strategy, '_') if
+                                                                 "%s" % ("%s%s" %
+                                                                         ('extract-', extract_strategy) if
                                                                          extract_strategy is not None else ''),
                                                                  '_thr-', thr, '_glass_viz.png')
 
@@ -627,9 +627,8 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
                 with open(labels_path, 'wb') as f:
                     pickle.dump(labels, f, protocol=2)
 
-            connectome.add_graph(conn_matrix, coords,
-                                 edge_cmap=clust_pal_edges,
-                                 edge_vmax=float(z_max), edge_vmin=float(z_min), node_size=node_sizes,
+            connectome.add_graph(conn_matrix, coords, edge_cmap=clust_pal_edges, edge_vmax=float(z_max),
+                                 edge_vmin=float(z_min), node_size=node_sizes,
                                  node_color=clust_pal_nodes, edge_kwargs={'alpha': 0.45})
             for view in views:
                 mod_lines = []
