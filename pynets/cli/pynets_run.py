@@ -2107,6 +2107,10 @@ def build_workflow(args, retval):
                     except:
                         continue
 
+    if args.clean is True and os.path.isdir(retval['workflow'].basedir):
+        from shutil import rmtree
+        rmtree(retval['workflow'].basedir, ignore_errors=True)
+
     print('\n\n------------FINISHED-----------')
     print('Subject: ', ID)
     print('Execution Time: ', str(timedelta(seconds=timeit.default_timer() - start_time)))
@@ -2156,10 +2160,6 @@ def main():
         # Clean up master process before running workflow, which may create forks
         gc.collect()
 
-    if args.clean is True and os.path.isdir(retval['workflow'].basedir):
-        from shutil import rmtree
-        rmtree(retval['workflow'].basedir, ignore_errors=True)
-
     mgr.shutdown()
 
     sys.exit(0)
@@ -2170,3 +2170,4 @@ if __name__ == '__main__':
     warnings.filterwarnings("ignore")
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     main()
+
