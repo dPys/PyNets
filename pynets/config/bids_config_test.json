@@ -14,7 +14,7 @@
             "k": "None",
             "mod": "['partcorr']",
             "sm": "['0']",
-            "es": "['mean', 'variance']"
+            "es": "['mean']"
         },
     "gen": {
             "a":  "['DesikanKlein2012']",
@@ -25,12 +25,12 @@
             "max_thr":  "None",
             "min_thr":  "None",
             "mplx":  0,
-            "mst":  "True",
-            "n":  "['Default']",
+            "mst":  "False",
+            "n":  "None",
             "names":  "False",
             "norm": "['6']",
             "ns":  "None",
-            "p":  "['3']",
+            "p":  "['2']",
             "plt":  "True",
             "spheres":  "False",
             "step_thr":  "None",

@@ -4,6 +4,14 @@ pynets.dmri package
 Submodules
 ----------
 
+pynets.dmri.dmri\_utils module
+------------------------------
+
+.. automodule:: pynets.dmri.dmri_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pynets.dmri.estimation module
 -----------------------------
 

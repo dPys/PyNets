@@ -137,6 +137,12 @@ resource_dict: # Nipype workflow resource settings
         - (2, 4)
       - 'join_iters_node_thr':
         - (1, 1)
+      - 'join_iters_node_nets':
+        - (1, 1)
+      - 'get_node_membership_node':
+        - (1, 1)
+      - 'clust_join_node':
+        - (1, 1)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
         - False

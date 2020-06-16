@@ -124,6 +124,13 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         High-pass filter values (Hz) to apply to node-extracted time-series.
     extract_strategy : str 
         The name of a valid function used to reduce the time-series region extraction.
+
+    References
+    ----------
+    .. [1] Varoquaux, G., & Craddock, R. C. (2013). Learning and comparing functional connectomes
+    across subjects. NeuroImage. https://doi.org/10.1016/j.neuroimage.2013.04.007
+    .. [2] Jason Laska, Manjari Narayan, 2017. skggm 0.2.7: A scikit-learn compatible package
+    for Gaussian and related Graphical Models. doi:10.5281/zenodo.830033
     """
     from nilearn.connectome import ConnectivityMeasure
     from sklearn.covariance import GraphicalLassoCV
@@ -287,9 +294,9 @@ def timeseries_bootstrap(tseries, block_size):
     References
     ----------
     .. [1] P. Bellec; G. Marrelec; H. Benali, A bootstrap test to investigate
-       changes in brain connectivity for functional MRI. Statistica Sinica,
-       special issue on Statistical Challenges and Advances in Brain Science,
-       2008, 18: 1253-1268.
+    changes in brain connectivity for functional MRI. Statistica Sinica,
+    special issue on Statistical Challenges and Advances in Brain Science,
+    2008, 18: 1253-1268.
     """
     # calculate number of blocks
     k = int(np.ceil(float(tseries.shape[0]) / block_size))

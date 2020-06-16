@@ -26,7 +26,7 @@
             "min_thr": "None",
             "mplx":  2,
             "mst":  "True",
-            "n":  "['DorsAttn', 'SalVentAttn', 'Cont']",
+            "n":  "['DorsAttn']",
             "names":  "False",
             "norm": "['6']",
             "ns":  "['4']",

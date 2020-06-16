@@ -35,7 +35,8 @@ def threshold_absolute(W, thr, copy=True):
 
     References
     ----------
-    .. Adapted from Adapted from bctpy
+    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
+    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
     '''
     if copy:
         W = W.copy()
@@ -66,10 +67,6 @@ def threshold_proportional(W, p, copy=True):
     W : np.ndarray
         thresholded connectivity matrix
 
-    References
-    ----------
-    .. Adapted from Adapted from bctpy
-
     Notes
     -----
     The proportion of elements set to 0 is a fraction of all elements
@@ -88,6 +85,11 @@ def threshold_proportional(W, p, copy=True):
     That is, the 50% thresholding of x_25 does nothing because >=50% of the
     elements in x_25 are aleady <=0. This behavior is the same as in BCT. Be
     careful with matrices that are both signed and sparse.
+
+    References
+    ----------
+    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
+    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
     '''
     if p > 1 or p < 0:
         raise ValueError('Threshold must be in range [0,1]')
@@ -125,7 +127,8 @@ def normalize(W):
 
     References
     ----------
-    .. Adapted from Adapted from bctpy
+    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
+    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
     '''
     W /= np.max(np.abs(W))
     return W
@@ -144,6 +147,11 @@ def standardize(W):
     -------
     W : np.ndarray
         standardized connectivity matrix
+
+    References
+    ----------
+    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
+    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
     '''
     W = (W - np.min(W)) / np.ptp(W)
     return W
@@ -171,7 +179,12 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
 
     References
     ----------
-    .. Adapted from Adapted from bctpy
+    .. [1] van Wijk, B. C. M., Stam, C. J., & Daffertshofer, A. (2010).
+    Comparing brain networks of different size and connectivity
+    density using graph theory. PLoS ONE.
+    https://doi.org/10.1371/journal.pone.0013701
+    .. [2] Complex network measures of brain connectivity: Uses and interpretations.
+    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
     """
     from pynets.core import thresholding
     np.fill_diagonal(conn_matrix, 0)
@@ -198,7 +211,11 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
 # Calculate density
 def est_density(in_mat):
     """
-    Calculates the density of a given graph.
+    Calculates the density of a given undirected graph.
+
+    .. math::
+
+       d = \frac{2m}{n(n-1)},
 
     Parameters
     ----------
@@ -210,9 +227,7 @@ def est_density(in_mat):
     density : float
         Density of the graph.
     """
-    fG = nx.from_numpy_matrix(in_mat)
-    density = nx.density(fG)
-    return density
+    return nx.density(nx.from_numpy_matrix(in_mat))
 
 
 def thr2prob(W, copy=True):
@@ -231,7 +246,8 @@ def thr2prob(W, copy=True):
 
     References
     ----------
-    .. Adapted from Adapted from bctpy
+    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
+    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
     """
     if copy:
         W = W.copy()
@@ -259,7 +275,8 @@ def binarize(W, copy=True):
 
     References
     ----------
-    .. Adapted from Adapted from bctpy
+    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
+    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
     '''
     if copy:
         W = W.copy()
@@ -289,7 +306,8 @@ def invert(W, copy=False):
 
     References
     ----------
-    .. Adapted from Adapted from bctpy
+    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
+    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
     '''
     if copy:
         W = W.copy()
@@ -337,15 +355,16 @@ def weight_conversion(W, wcm, copy=True):
     W : NxN np.ndarray
         connectivity matrix with specified changes
 
-    References
-    ----------
-    .. Adapted from Adapted from bctpy
-
     Notes
     -----
     This function is included for compatibility with BCT. But there are
     other functions binarize(), normalize() and invert() which are simpler to
     call directly.
+
+    References
+    ----------
+    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
+    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
     '''
     if wcm == 'binarize':
         return binarize(W, copy)
@@ -373,7 +392,8 @@ def autofix(W, copy=True):
 
     References
     ----------
-    .. Adapted from Adapted from bctpy
+    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
+    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
     '''
     if copy:
         W = W.copy()
@@ -414,7 +434,7 @@ def disparity_filter(G, weight='weight'):
     References
     ----------
     .. [1] M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks.
-       PNAS, 106:16, pp. 6483-6488.
+    PNAS, 106:16, pp. 6483-6488.
     """
     from scipy import integrate
 
@@ -494,7 +514,7 @@ def disparity_filter_alpha_cut(G, weight='weight', alpha_t=0.4, cut_mode='or'):
     References
     ----------
     .. [1] M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks.
-       PNAS, 106:16, pp. 6483-6488.
+    PNAS, 106:16, pp. 6483-6488.
     """
 
     if nx.is_directed(G):  # Directed case:
@@ -605,7 +625,17 @@ def local_thresholding_prop(conn_matrix, thr):
     Returns
     -------
     conn_matrix_thr : array
-        Weighted, MST local-thresholded, NxN matrix.
+        Weighted local-thresholding using MST, NxN matrix.
+
+    References
+    ----------
+    .. [1] Alexander-Bloch, A. F., Gogtay, N., Meunier, D., Birn, R., Clasen, L.,
+    Lalonde, F., … Bullmore, E. T. (2010). Disrupted modularity and local
+    connectivity of brain functional networks in childhood-onset schizophrenia.
+    Frontiers in Systems Neuroscience. https://doi.org/10.3389/fnsys.2010.00147
+    .. [2] Tewarie, P., van Dellen, E., Hillebrand, A., & Stam, C. J. (2015).
+    The minimum spanning tree: An unbiased method for brain network analysis.
+    NeuroImage. https://doi.org/10.1016/j.neuroimage.2014.10.015
     """
     from pynets.core import thresholding
 
@@ -619,6 +649,7 @@ def local_thresholding_prop(conn_matrix, thr):
     G0 = G.subgraph(Gcc[0])
 
     min_t = nx.minimum_spanning_tree(thresholding.weight_to_distance(G0), weight="distance")
+    min_t.add_nodes_from(G.nodes())
     len_edges = min_t.number_of_edges()
     upper_values = np.triu_indices(np.shape(conn_matrix)[0], k=1)
     weights = np.array(conn_matrix[upper_values])
@@ -665,17 +696,25 @@ def local_thresholding_prop(conn_matrix, thr):
                 break
         k += 1
 
-    conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(min_t, nodelist=sorted(min_t.nodes()), dtype=np.float64))
+    conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(min_t, nodelist=sorted(G.nodes()), dtype=np.float64))
 
     try:
         conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
-    except ValueError:
-        print('Dimensionality inconsistent after MST thresholding. Check raw graph output manually for debugging.')
+        return conn_matrix_thr
 
-    return conn_matrix_thr
+    except ValueError:
+        print('MST thresholding failed. Check raw graph output manually for debugging.')
 
 
 def perform_thresholding(conn_matrix, thr, min_span_tree, dens_thresh, disp_filt):
+    '''
+
+    References
+    ----------
+    .. [1] Fornito, A., Zalesky, A., & Bullmore, E. T. (2016).
+    Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network Analysis.
+    https://doi.org/10.1016/C2012-0-06036-X
+    '''
     import numpy as np
     import networkx as nx
     from pynets.core import thresholding
@@ -690,6 +729,7 @@ def perform_thresholding(conn_matrix, thr, min_span_tree, dens_thresh, disp_filt
         edge_threshold = f"{str(thr_perc)}%"
         conn_matrix_thr = thresholding.local_thresholding_prop(conn_matrix, thr)
     elif disp_filt is True:
+
         thr_type = 'DISPARITY'
         edge_threshold = f"{str(thr_perc)}%"
         G1 = thresholding.disparity_filter(nx.from_numpy_array(np.abs(conn_matrix)))
@@ -834,6 +874,13 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
         High-pass filter values (Hz) to apply to node-extracted time-series.
     extract_strategy : str
         The name of a valid function used to reduce the time-series region extraction.
+
+    References
+    ----------
+    .. [1] van Wijk, B. C. M., Stam, C. J., & Daffertshofer, A. (2010).
+    Comparing brain networks of different size and connectivity
+    density using graph theory. PLoS ONE.
+    https://doi.org/10.1371/journal.pone.0013701
     """
     import gc
     from pynets.core import utils, thresholding
@@ -989,6 +1036,13 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
         and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
+
+    References
+    ----------
+    .. [1] van Wijk, B. C. M., Stam, C. J., & Daffertshofer, A. (2010).
+    Comparing brain networks of different size and connectivity
+    density using graph theory. PLoS ONE.
+    https://doi.org/10.1371/journal.pone.0013701
     """
     import gc
     from pynets.core import utils, thresholding

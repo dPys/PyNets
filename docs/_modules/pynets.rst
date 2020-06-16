@@ -6,59 +6,40 @@ Subpackages
 
 .. toctree::
 
+    pynets.cli
+    pynets.core
     pynets.dmri
     pynets.fmri
     pynets.plotting
     pynets.registration
+    pynets.rsnrefs
     pynets.stats
+    pynets.templates
 
 Submodules
 ----------
 
-pynets.nodemaker module
+pynets.citations module
 -----------------------
 
-.. automodule:: pynets.nodemaker
+.. automodule:: pynets.citations
     :members:
     :undoc-members:
     :show-inheritance:
 
-pynets.pynets\_bids module
---------------------------
+pynets.due module
+-----------------
 
-.. automodule:: pynets.pynets_bids
+.. automodule:: pynets.due
     :members:
     :undoc-members:
     :show-inheritance:
 
-pynets.pynets\_run module
--------------------------
 
-.. automodule:: pynets.pynets_run
-    :members:
-    :undoc-members:
-    :show-inheritance:
+Module contents
+---------------
 
-pynets.thresholding module
---------------------------
-
-.. automodule:: pynets.thresholding
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pynets.utils module
--------------------
-
-.. automodule:: pynets.utils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pynets.workflows module
------------------------
-
-.. automodule:: pynets.workflows
+.. automodule:: pynets
     :members:
     :undoc-members:
     :show-inheritance:

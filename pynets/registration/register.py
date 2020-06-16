@@ -169,8 +169,9 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
         the center of each voxel and the corner of the voxel.
     References
     ----------
-    .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different spatial normalization approaches on
-           tractography and structural brain networks. Network Neuroscience, 1-19.
+    .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different
+    spatial normalization approaches on tractography and structural
+    brain networks. Network Neuroscience, 1-19.
     """
     import gc
     from dipy.tracking import utils
@@ -369,6 +370,18 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
 class DmriReg(object):
     """
     A Class for Registering an atlas to a subject's MNI-aligned T1w image in native diffusion space.
+
+    References
+    ----------
+    .. [1] Adluru, N., Zhang, H., Tromp, D. P. M., & Alexander, A. L. (2013).
+    Effects of DTI spatial normalization on white matter tract reconstructions.
+    Medical Imaging 2013: Image Processing. https://doi.org/10.1117/12.2007130
+    .. [2] Greve DN, Fischl B. Accurate and robust brain image alignment using
+    boundary-based registration. Neuroimage. 2009 Oct;48(1):63–72.
+    doi:10.1016/j.neuroimage.2009.06.060.
+    .. [3] Zhang Y, Brady M, Smith S. Segmentation of brain MR images through a
+    hidden Markov random field model and the expectation-maximization algorithm.
+    IEEE Trans Med Imaging. 2001 Jan;20(1):45–57. doi:10.1109/42.906424.
     """
 
     def __init__(self, basedir_path, fa_path, ap_path, B0_mask, anat_file, mask, vox_size, template_name, simple):
@@ -639,9 +652,9 @@ class DmriReg(object):
 
         template_img = nib.load(self.t1_aligned_mni)
         if uatlas_parcels:
-            uatlas_res_template = resample_to_img(nib.load(uatlas_parcels), template_img, interpolation='continuous')
+            uatlas_res_template = resample_to_img(nib.load(uatlas_parcels), template_img, interpolation='nearest')
         else:
-            uatlas_res_template = resample_to_img(nib.load(uatlas), template_img, interpolation='continuous')
+            uatlas_res_template = resample_to_img(nib.load(uatlas), template_img, interpolation='nearest')
         uatlas_res_template_data = np.asarray(uatlas_res_template.dataobj)
         uatlas_res_template_data[uatlas_res_template_data != uatlas_res_template_data.astype(int)] = 0
 
@@ -810,6 +823,15 @@ class DmriReg(object):
 class FmriReg(object):
     """
     A Class for Registering an atlas to a subject's MNI-aligned T1w image.
+
+    References
+    ----------
+    .. [1] Brett M, Leff AP, Rorden C, Ashburner J (2001) Spatial Normalization
+    of Brain Images with Focal Lesions Using Cost Function Masking.
+    NeuroImage 14(2) doi:10.006/nimg.2001.0845.
+    .. [2] Zhang Y, Brady M, Smith S. Segmentation of brain MR images through a
+    hidden Markov random field model and the expectation-maximization algorithm.
+    IEEE Trans Med Imaging. 2001 Jan;20(1):45–57. doi:10.1109/42.906424.
     """
 
     def __init__(self, basedir_path, anat_file, mask, vox_size, template_name, simple):
