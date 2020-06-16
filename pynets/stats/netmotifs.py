@@ -30,6 +30,11 @@ def countmotifs(A, N=4):
     -------
     umotifs : int
         Total count of size N motifs for graph A.
+
+    References
+    ----------
+    .. [1] Sporns, O., & Kötter, R. (2004). Motifs in Brain Networks.
+    PLoS Biology. https://doi.org/10.1371/journal.pbio.0020369
     '''
     import gc
     assert N in [3, 4], "Only motifs of size N=3,4 currently supported"
@@ -80,6 +85,12 @@ def adaptivethresh(in_mat, thr, mlib, N):
     mf : ndarray
         1D vector listing the total motifs of size N for each
         class of mlib.
+
+    References
+    ----------
+    .. [1] Battiston, F., Nicosia, V., Chavez, M., & Latora, V. (2017).
+    Multilayer motif analysis of brain networks. Chaos.
+    https://doi.org/10.1063/1.4979282
     '''
     from pynets.stats.netmotifs import countmotifs
     mf = countmotifs((in_mat > thr).astype(int), N=N)
@@ -91,6 +102,32 @@ def adaptivethresh(in_mat, thr, mlib, N):
 
 
 def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
+    '''
+    Compare motif structure and population across structural and functional
+    graphs to achieve a homeostatic absolute threshold of each that optimizes
+    multiplex community detection and analysis.
+
+    Parameters
+    ----------
+    in_mat : ndarray
+        M x M Connectivity matrix
+    thr : float
+        Absolute threshold [0, 1].
+    mlib : list
+        List of motif classes.
+
+    Returns
+    -------
+    mf : ndarray
+        1D vector listing the total motifs of size N for each
+        class of mlib.
+
+    References
+    ----------
+    .. [1] Battiston, F., Nicosia, V., Chavez, M., & Latora, V. (2017).
+    Multilayer motif analysis of brain networks. Chaos.
+    https://doi.org/10.1063/1.4979282
+    '''
     from pynets.stats.netmotifs import adaptivethresh
     from pynets.core.thresholding import threshold_absolute
     from pynets.core.thresholding import standardize
@@ -240,6 +277,39 @@ def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
 
 
 def build_mx_multigraph(func_mat, struct_mat, name, namer_dir):
+    '''
+    It creates a symmetric (undirected) MultilayerGraph object from
+    vertex-aligned structural and functional connectivity matrices.
+
+    Parameters:
+    -----------
+    func_mat : ndarray
+        Functional adjacency matrix of size N x N.
+    struct_mat : ndarray
+        Structural adjacency matrix of size N x N.
+    name : str
+        Intended name of the multiplex object.
+    namer_dir : str
+        Path to output directory.
+
+    Returns:
+    --------
+    mg_path : str
+        A filepath to a gpickled MultilayerGraph object
+
+    References
+    ----------
+    .. [1] R. Amato, N. E Kouvaris, M. San Miguel and A. Diaz-Guilera,
+    Opinion competition dynamics on multiplex networks, New J. Phys.
+    DOI: https://doi.org/10.1088/1367-2630/aa936a
+    .. [2] N. E. Kouvaris, S. Hata and A. Diaz-Guilera, Pattern formation
+    in multiplex networks, Scientific Reports 5, 10840 (2015).
+    http://www.nature.com/srep/2015/150604/srep10840/full/srep10840.html
+    .. [3] A. Sole-Ribata, M. De Domenico, N. E. Kouvaris, A. Diaz-Guilera, S.
+    Gomez and A. Arenas, Spectral properties of the Laplacian of a multiplex
+    network, Phys. Rev. E 88, 032807 (2013).
+    http://journals.aps.org/pre/abstract/10.1103/PhysRevE.88.032807
+    '''
     import networkx as nx
     import multinetx as mx
     try:
@@ -389,6 +459,14 @@ def build_multigraphs(est_path_iterlist, ID):
     graph_path_list_top : list
         List of lists consisting of pairs of most similar
         structural and functional connectomes for each unique node resolution.
+
+    References
+    ----------
+    .. [1] Bullmore, E., & Sporns, O. (2009). Complex brain networks: Graph
+    theoretical analysis of structural and functional systems.
+    Nature Reviews Neuroscience. https://doi.org/10.1038/nrn2575
+    .. [2] Vaiana, M., & Muldoon, S. F. (2018). Multilayer Brain Networks.
+    Journal of Nonlinear Science. https://doi.org/10.1007/s00332-017-9436-8
     """
     import pkg_resources
     import yaml

@@ -1,8 +1,8 @@
 {
     "dwi": {
-            "dg": "['det', 'prob']",
+            "dg": "['prob']",
             "ml": "['0']",
-            "mod": "['csd', 'csa']",
+            "mod": "['csd']",
             "s": 1000,
             "tc": "['cmc']",
             "tt": "['particle']"
@@ -10,22 +10,22 @@
     "func": {
             "cc": "['allcorr']",
             "ct": "None",
-            "hp": "['0', '0.028']",
+            "hp": "['0']",
             "k": "None",
             "mod": "['partcorr']",
             "sm": "['0', '4']",
-            "es": "['mean', 'variance']"
+            "es": "['mean']"
         },
     "gen": {
-            "a":  "['atlas_aal', 'DesikanKlein2012']",
+            "a":  "['atlas_aal', 'BrainnetomeAtlasFan2016', 'Juelichgmthr252mmEickhoff2005', 'whole_brain_cluster_labels_PCA100', 'DesikanKlein2012', 'RandomParcellationsc05meanalll43Craddock2011']",
             "bin":  "False",
             "df":  "False",
-            "dt":  "True",
+            "dt":  "False",
             "embed":  "None",
-            "max_thr":  0.90,
-            "min_thr":  0.70,
+            "max_thr":  0.80,
+            "min_thr":  0.20,
             "mplx":  0,
-            "mst":  "False",
+            "mst":  "True",
             "n":  "None",
             "names":  "False",
             "norm": "['6']",

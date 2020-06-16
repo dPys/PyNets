@@ -38,7 +38,8 @@ def get_sphere(coords, r, vox_dims, dims):
 
     References
     ----------
-    .. Adapted from NeuroSynth
+    .. [1] Tor D., W. (2011). NeuroSynth: a new platform for large-scale automated synthesis of
+    human functional neuroimaging data. Frontiers in Neuroinformatics.
     """
     r = float(r)
     xx, yy, zz = [slice(-r / vox_dims[i], r / vox_dims[i] + 0.01, 1) for i in range(len(coords))]
@@ -266,6 +267,16 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
     network : str
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
         brain subgraphs.
+
+    References
+    ----------
+    .. [1] Thomas Yeo, B. T., Krienen, F. M., Sepulcre, J., Sabuncu, M. R., Lashkari, D.,
+    Hollinshead, M., … Buckner, R. L. (2011). The organization of the human cerebral
+    cortex estimated by intrinsic functional connectivity. Journal of Neurophysiology.
+    https://doi.org/10.1152/jn.00338.2011
+    .. [2] Schaefer A, Kong R, Gordon EM, Laumann TO, Zuo XN, Holmes AJ, Eickhoff SB, Yeo BTT.
+    Local-Global parcellation of the human cerebral cortex from intrinsic functional
+    connectivity MRI, Cerebral Cortex, 29:3095-3114, 2018.
     """
     from nilearn.image import resample_img
     from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm
@@ -703,6 +714,13 @@ def AAL_naming(coords):
     -------
     labels : list
         List of string labels corresponding to each coordinates closest anatomical label based on AAL.
+
+    References
+    ----------
+    .. [1] N. Tzourio-Mazoyer; B. Landeau; D. Papathanassiou; F. Crivello; O. Etard; N. Delcroix;
+           Bernard Mazoyer & M. Joliot (January 2002). "Automated Anatomical Labeling of
+           activations in SPM using a Macroscopic Anatomical Parcellation of the MNI MRI
+           single-subject brain". NeuroImage. 15 (1): 273–289. doi:10.1006/nimg.2001.0978.
     """
     import pandas as pd
     import csv
@@ -756,6 +774,15 @@ def psycho_naming(coords, node_size):
     -------
     labels : list
         List of string labels corresponding to each coordinate-corresponding psychological topic.
+
+    References
+    ----------
+    .. [1] Tor D., W. (2011). NeuroSynth: a new platform for large-scale automated synthesis of
+    human functional neuroimaging data. Frontiers in Neuroinformatics.
+    https://doi.org/10.3389/conf.fninf.2011.08.00058
+    .. [2] Tausczik, Y. R., & Pennebaker, J. W. (2010). The psychological meaning of words:
+    LIWC and computerized text analysis methods. Journal of Language and Social Psychology.
+    https://doi.org/10.1177/0261927X09351676
     """
     import liwc
     import pkg_resources

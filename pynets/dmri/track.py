@@ -33,6 +33,12 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         Fitted connectivity reconstruction model.
     mod : obj
         Connectivity reconstruction model.
+
+    References
+    ----------
+    .. [1] Soares, J. M., Marques, P., Alves, V., & Sousa, N. (2013).
+    A hitchhiker’s guide to diffusion tensor imaging.
+    Frontiers in Neuroscience. https://doi.org/10.3389/fnins.2013.00031
     """
     try:
         import cPickle as pickle
@@ -78,6 +84,15 @@ def prep_tissues(t1_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
     -------
     tiss_classifier : obj
         Tissue classifier object.
+
+    References
+    ----------
+    .. [1] Zhang, Y., Brady, M. and Smith, S. Segmentation of Brain MR Images
+    Through a Hidden Markov Random Field Model and the Expectation-Maximization
+    Algorithm IEEE Transactions on Medical Imaging, 20(1): 45-56, 2001
+    .. [2] Avants, B. B., Tustison, N. J., Wu, J., Cook, P. A. and Gee, J. C.
+    An open source multivariate framework for n-tissue segmentation with
+    evaluation on public data. Neuroinformatics, 9(4): 381-400, 2011.
     """
     try:
         import cPickle as pickle
@@ -286,6 +301,12 @@ def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_
     -------
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
+
+    References
+    ----------
+    .. [1] Takemura, H., Caiafa, C. F., Wandell, B. A., & Pestilli, F. (2016).
+    Ensemble Tractography. PLoS Computational Biology.
+    https://doi.org/10.1371/journal.pcbi.1004692
     """
     import gc
     import time

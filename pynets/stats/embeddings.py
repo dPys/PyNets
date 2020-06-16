@@ -14,6 +14,43 @@ from pynets.core.utils import flatten
 
 
 def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
+    """
+    Omnibus embedding of arbitrary number of input graphs with matched vertex
+    sets.
+
+    Given :math:`A_1, A_2, ..., A_m` a collection of (possibly weighted) adjacency
+    matrices of a collection :math:`m` undirected graphs with matched vertices.
+    Then the :math:`(mn \times mn)` omnibus matrix, :math:`M`, has the subgraph where
+    :math:`M_{ij} = \frac{1}{2}(A_i + A_j)`. The omnibus matrix is then embedded
+    using adjacency spectral embedding.
+
+
+    Parameters
+    ----------
+    graphs : list of nx.Graph or ndarray, or ndarray
+        If list of nx.Graph, each Graph must contain same number of nodes.
+        If list of ndarray, each array must have shape (n_vertices, n_vertices).
+        If ndarray, then array must have shape (n_graphs, n_vertices, n_vertices).
+    atlas : str
+    graph_path : str
+    ID : str
+    subgraph_name : str
+
+    Returns
+    -------
+    out_path : str
+        File path to .npy file containing omni embedding tensor.
+
+    References
+    ----------
+    .. [1] Levin, K., Athreya, A., Tang, M., Lyzinski, V., & Priebe, C. E. (2017,
+    November). A central limit theorem for an omnibus embedding of multiple random
+    dot product graphs. In Data Mining Workshops (ICDMW), 2017 IEEE International
+    Conference on (pp. 964-967). IEEE.
+    .. [2] Chung, J., Pedigo, B. D., Bridgeford, E. W., Varjavand, B. K., Helm, H. S.,
+    & Vogelstein, J. T. (2019). Graspy: Graph statistics in python.
+    Journal of Machine Learning Research.
+    """
     from graspy.embed import OmnibusEmbed, ClassicalMDS
     from joblib import dump
 
@@ -47,6 +84,49 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
 
 
 def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
+    """
+    Multiple Adjacency Spectral Embedding (MASE) embeds arbitrary number of input
+    graphs with matched vertex sets.
+
+    For a population of undirected graphs, MASE assumes that the population of graphs
+    is sampled from :math:`VR^{(i)}V^T` where :math:`V \in \mathbb{R}^{n\times d}` and
+    :math:`R^{(i)} \in \mathbb{R}^{d\times d}`. Score matrices, :math:`R^{(i)}`, are
+    allowed to vary for each graph, but are symmetric. All graphs share a common a
+    latent position matrix :math:`V`.
+
+    For a population of directed graphs, MASE assumes that the population is sampled
+    from :math:`UR^{(i)}V^T` where :math:`U \in \mathbb{R}^{n\times d_1}`,
+    :math:`V \in \mathbb{R}^{n\times d_2}`, and
+    :math:`R^{(i)} \in \mathbb{R}^{d_1\times d_2}`. In this case, score matrices
+    :math:`R^{(i)}` can be assymetric and non-square, but all graphs still share a
+    common latent position matrices :math:`U` and :math:`V`.
+
+
+    Parameters
+    ----------
+    graphs : list of nx.Graph or ndarray, or ndarray
+        If list of nx.Graph, each Graph must contain same number of nodes.
+        If list of ndarray, each array must have shape (n_vertices, n_vertices).
+        If ndarray, then array must have shape (n_graphs, n_vertices, n_vertices).
+    atlas : str
+    graph_path : str
+    ID : str
+    subgraph_name : str
+
+    Returns
+    -------
+    out_path : str
+        File path to .npy file containing MASE embedding tensor.
+
+    References
+    ----------
+    .. [1] Inference for multiple heterogeneous networks with a common invariant subspace
+    J Arroyo, A Athreya, J Cape, G Chen, CE Priebe, JT Vogelstein
+    arXiv preprint arXiv:1906.10026
+    .. [2] Chung, J., Pedigo, B. D., Bridgeford, E. W., Varjavand, B. K., Helm, H. S.,
+    & Vogelstein, J. T. (2019). Graspy: Graph statistics in python.
+    Journal of Machine Learning Research.
+    """
     from graspy.embed import MultipleASE
     from joblib import dump
 
@@ -73,6 +153,49 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
 
 
 def _ase_embed(mat, atlas, graph_path, ID, subgraph_name='whole_brain'):
+    '''
+
+    Class for computing the adjacency spectral embedding of a graph.
+
+    The adjacency spectral embedding (ASE) is a k-dimensional Euclidean representation
+    of the graph based on its adjacency matrix. It relies on an SVD to reduce
+    the dimensionality to the specified k, or if k is unspecified, can find a number of
+    dimensions automatically
+
+    Parameters
+    ----------
+    graphs : list of nx.Graph or ndarray, or ndarray
+        If list of nx.Graph, each Graph must contain same number of nodes.
+        If list of ndarray, each array must have shape (n_vertices, n_vertices).
+        If ndarray, then array must have shape (n_graphs, n_vertices, n_vertices).
+    atlas : str
+    graph_path : str
+    ID : str
+    subgraph_name : str
+
+    Returns
+    -------
+    out_path : str
+        File path to .npy file containing ASE embedding tensor.
+
+    Notes
+    -----
+    The singular value decomposition:
+
+    .. math:: A = U \Sigma V^T
+
+    is used to find an orthonormal basis for a matrix, which in our case is the
+    adjacency matrix of the graph. These basis vectors (in the matrices U or V) are
+    ordered according to the amount of variance they explain in the original matrix.
+    By selecting a subset of these basis vectors (through our choice of dimensionality
+    reduction) we can find a lower dimensional space in which to represent the graph.
+
+    References
+    ----------
+    .. [1] Sussman, D.L., Tang, M., Fishkind, D.E., Priebe, C.E.  "A
+    Consistent Adjacency Spectral Embedding for Stochastic Blockmodel Graphs,"
+    Journal of the American Statistical Association, Vol. 107(499), 2012
+    '''
     from graspy.embed import AdjacencySpectralEmbed
     from joblib import dump
 
@@ -139,6 +262,13 @@ def build_masetome(est_path_iterlist, ID):
         structural and functional connectomes matched at a given node resolution.
     ID : str
         A subject id or other unique identifier.
+
+    References
+    ----------
+    .. [1] Rosenthal, G., Váša, F., Griffa, A., Hagmann, P., Amico, E., Goñi, J.,
+    … Sporns, O. (2018). Mapping higher-order relations between brain structure
+    and function with embedded vector representations of connectomes.
+    Nature Communications. https://doi.org/10.1038/s41467-018-04614-w
     """
     from pynets.core.utils import prune_suffices
     from pynets.stats.embeddings import _mase_embed
@@ -170,6 +300,16 @@ def build_omnetome(est_path_iterlist, ID):
         List of file paths to .npy file containing graph.
     ID : str
         A subject id or other unique identifier.
+
+    References
+    ----------
+    .. [1] Liu, Y., He, L., Cao, B., Yu, P. S., Ragin, A. B., & Leow, A. D. (2018).
+    Multi-view multi-graph embedding for brain network clustering analysis.
+    32nd AAAI Conference on Artificial Intelligence, AAAI 2018.
+    .. [2] Levin, K., Athreya, A., Tang, M., Lyzinski, V., & Priebe, C. E. (2017,
+    November). A central limit theorem for an omnibus embedding of multiple random
+    dot product graphs. In Data Mining Workshops (ICDMW), 2017 IEEE International
+    Conference on (pp. 964-967). IEEE.
     """
     import yaml
     import pkg_resources

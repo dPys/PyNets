@@ -111,7 +111,7 @@ Required
 Command-Line Arguments
 **********************
 .. argparse::
-   :ref: cli.pynets_run.get_parser
+   :ref: pynets.cli.pynets_run.get_parser
    :prog: pynets
    :nodefault:
    :nodefaultconst:
