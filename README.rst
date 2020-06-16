@@ -11,11 +11,20 @@ A Reproducible Workflow for Structural and Functional Connectome Ensemble Learni
 
 PyNets leverages the Nipype workflow engine, along with Nilearn and Dipy fMRI and dMRI libraries, to sample individual structural and functional connectomes. Uniquely, PyNets enables the user to specify any of a variety of methodological choices (i.e. that impact node and/or edge definitions) and sampling the resulting connectome estimates in a massively scalable and parallel framework. PyNets is a post-processing workflow, which means that it can be run manually on virtually any preprocessed fMRI or dMRI data. Further, it can be deployed as a BIDS application that takes BIDS derivatives and makes BIDS derivatives. Docker and Singularity containers are further available to facilitate reproducibility of executions. Cloud computing with AWS batch and S3 is also supported.
 
+.. image:: docs/_static/yeo7_mosaic.png
+
 Documentation
 -------------
 Official installation, user-guide, and API docs now live here: https://pynets.readthedocs.io/en/latest/
 
 Citing
 ------
-A manuscript is in preparation, but for now, please cite all uses with reference
-to the github repository: https://github.com/dPys/PyNets
+A manuscript is in preparation, but for now, please cite all uses with the following enty:
+@CONFERENCE{
+    title = {PyNets: A Reproducible Workflow for Structural and Functional Connectome Ensemble Learning},
+    author = {Pisner, D., Hammonds R.}
+    publisher = {Poster session presented at: Annual Meeting of the Organization for Human Brain Mapping}
+    url = {https://github.com/dPys/PyNets},
+    year = {2020},
+    month = {June}
+}
