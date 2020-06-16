@@ -72,8 +72,6 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     '''
     Estimate an anisotropic power map image to use for registrations.
 
-    :math:`rac{1}{2l+1} sum_{m=-l}^l{|a_{l,m}|^n}}`
-
     Parameters
     ----------
     gtab_file : str

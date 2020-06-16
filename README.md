@@ -362,8 +362,15 @@ optional arguments:
 
 Citing
 ------
-A manuscript is in preparation, but for now, please cite all uses with reference
-to the github repository: <https://github.com/dPys/PyNets>
+A manuscript is in preparation, but for now, please cite all uses with the following enty:
+@CONFERENCE{
+    title = {PyNets: A Reproducible Workflow for Structural and Functional Connectome Ensemble Learning},
+    author = {Pisner, D., Hammonds R.}
+    publisher = {Poster session presented at: Annual Meeting of the Organization for Human Brain Mapping}
+    url = {https://github.com/dPys/PyNets},
+    year = {2020},
+    month = {June}
+}
 
 ![Multiplex Layers](docs/_static/structural_functional_multiplex.png)
 ![Multiplex Glass](docs/_static/glassbrain_mplx.png)
