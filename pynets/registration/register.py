@@ -217,6 +217,8 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
     brain_mask = np.asarray(template_img.dataobj).astype('bool')
     template_img.uncache()
 
+    uatlas_mni_img = nib.load(uatlas)
+
     streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_',
                                                               '%s' % (network + '_' if network is not
                                                                                        None else ''),
@@ -313,7 +315,7 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
             streams_final_filt_final.append(sl)
 
     # Save streamlines
-    stf = StatefulTractogram(streams_final_filt_final, reference=warped_fa_img, space=Space.RASMM,
+    stf = StatefulTractogram(streams_final_filt_final, reference=uatlas_mni_img, space=Space.RASMM,
                              origin=Origin.TRACKVIS)
     stf.remove_invalid_streamlines()
     streams_final_filt_final = stf.streamlines
@@ -329,7 +331,6 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
 
     # Map parcellation from native space back to MNI-space and create an 'uncertainty-union' parcellation
     # with original mni-space uatlas
-    uatlas_mni_img = nib.load(uatlas)
 
     warped_uatlas = affine_map.transform_inverse(mapping.transform(np.asarray(atlas_img.dataobj).astype('int'),
                                                                    interpolation='nearestneighbour'),
@@ -348,7 +349,7 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
     nib.save(nib.Nifti1Image(warped_uatlas_img_res_data * overlap_mask.astype('int') +
                              uatlas_mni_data * overlap_mask.astype('int') +
                              np.invert(overlap_mask).astype('int') *
-                             warped_uatlas_img_res_data.astype('int'), affine=warped_fa_affine), atlas_mni)
+                             warped_uatlas_img_res_data.astype('int'), affine=uatlas_mni_img.affine), atlas_mni)
 
     del (tractogram, streamlines, warped_uatlas_img_res_data, uatlas_mni_data, overlap_mask, stf,
          streams_final_filt_final, streams_final_filt, streams_in_curr_grid, brain_mask, streams_in_brain)
