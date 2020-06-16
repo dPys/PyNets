@@ -1197,6 +1197,8 @@ class Tracking(SimpleInterface):
             raise ValueError('Direction-getting type not recognized!')
         print(Style.RESET_ALL)
 
+        dir_path = utils.do_dir_path(self.inputs.atlas, os.path.dirname(self.inputs.dwi_file))
+
         # Commence Ensemble Tractography
         streamlines = track_ensemble(self.inputs.target_samples, atlas_data_wm_gm_int,
                                      parcels, model,
@@ -1208,7 +1210,7 @@ class Tracking(SimpleInterface):
                                      int(self.inputs.roi_neighborhood_tol), self.inputs.min_length,
                                      self.inputs.waymask, self.inputs.B0_mask)
 
-        namer_dir = '{}/tractography'.format(self.inputs.dir_path)
+        namer_dir = '{}/tractography'.format(dir_path)
         if not os.path.isdir(namer_dir):
             os.mkdir(namer_dir)
 
@@ -1235,9 +1237,8 @@ class Tracking(SimpleInterface):
         copyfile(streams, streams_tmp_path, copy=True, use_hardlink=False)
 
         # Create streamline density map
-        [dir_path, dm_path] = create_density_map(dwi_img, utils.do_dir_path(self.inputs.atlas,
-                                                                            os.path.dirname(self.inputs.dwi_file)),
-                                                 streamlines, self.inputs.conn_model, self.inputs.target_samples,
+        [dir_path, dm_path] = create_density_map(dwi_img, dir_path, streamlines, self.inputs.conn_model,
+                                                 self.inputs.target_samples,
                                                  self.inputs.node_size, self.inputs.curv_thr_list,
                                                  self.inputs.step_list, self.inputs.network, self.inputs.roi,
                                                  self.inputs.directget, self.inputs.min_length, namer_dir)
