@@ -36,7 +36,8 @@ def threshold_absolute(W, thr, copy=True):
     References
     ----------
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+
     '''
     if copy:
         W = W.copy()
@@ -89,7 +90,8 @@ def threshold_proportional(W, p, copy=True):
     References
     ----------
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+
     '''
     if p > 1 or p < 0:
         raise ValueError('Threshold must be in range [0,1]')
@@ -128,7 +130,8 @@ def normalize(W):
     References
     ----------
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+
     '''
     W /= np.max(np.abs(W))
     return W
@@ -151,7 +154,8 @@ def standardize(W):
     References
     ----------
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+
     '''
     W = (W - np.min(W)) / np.ptp(W)
     return W
@@ -180,11 +184,12 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
     References
     ----------
     .. [1] van Wijk, B. C. M., Stam, C. J., & Daffertshofer, A. (2010).
-    Comparing brain networks of different size and connectivity
-    density using graph theory. PLoS ONE.
-    https://doi.org/10.1371/journal.pone.0013701
+      Comparing brain networks of different size and connectivity
+      density using graph theory. PLoS ONE.
+      https://doi.org/10.1371/journal.pone.0013701
     .. [2] Complex network measures of brain connectivity: Uses and interpretations.
-    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+
     """
     from pynets.core import thresholding
     np.fill_diagonal(conn_matrix, 0)
@@ -247,7 +252,8 @@ def thr2prob(W, copy=True):
     References
     ----------
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+
     """
     if copy:
         W = W.copy()
@@ -276,7 +282,8 @@ def binarize(W, copy=True):
     References
     ----------
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+
     '''
     if copy:
         W = W.copy()
@@ -307,7 +314,8 @@ def invert(W, copy=False):
     References
     ----------
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+
     '''
     if copy:
         W = W.copy()
@@ -364,7 +372,8 @@ def weight_conversion(W, wcm, copy=True):
     References
     ----------
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+
     '''
     if wcm == 'binarize':
         return binarize(W, copy)
@@ -393,7 +402,8 @@ def autofix(W, copy=True):
     References
     ----------
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-    Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+
     '''
     if copy:
         W = W.copy()
@@ -434,7 +444,8 @@ def disparity_filter(G, weight='weight'):
     References
     ----------
     .. [1] M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks.
-    PNAS, 106:16, pp. 6483-6488.
+      PNAS, 106:16, pp. 6483-6488.
+
     """
     from scipy import integrate
 
@@ -514,7 +525,8 @@ def disparity_filter_alpha_cut(G, weight='weight', alpha_t=0.4, cut_mode='or'):
     References
     ----------
     .. [1] M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks.
-    PNAS, 106:16, pp. 6483-6488.
+      PNAS, 106:16, pp. 6483-6488.
+
     """
 
     if nx.is_directed(G):  # Directed case:
@@ -630,12 +642,13 @@ def local_thresholding_prop(conn_matrix, thr):
     References
     ----------
     .. [1] Alexander-Bloch, A. F., Gogtay, N., Meunier, D., Birn, R., Clasen, L.,
-    Lalonde, F., … Bullmore, E. T. (2010). Disrupted modularity and local
-    connectivity of brain functional networks in childhood-onset schizophrenia.
-    Frontiers in Systems Neuroscience. https://doi.org/10.3389/fnsys.2010.00147
+      Lalonde, F., … Bullmore, E. T. (2010). Disrupted modularity and local
+      connectivity of brain functional networks in childhood-onset schizophrenia.
+      Frontiers in Systems Neuroscience. https://doi.org/10.3389/fnsys.2010.00147
     .. [2] Tewarie, P., van Dellen, E., Hillebrand, A., & Stam, C. J. (2015).
-    The minimum spanning tree: An unbiased method for brain network analysis.
-    NeuroImage. https://doi.org/10.1016/j.neuroimage.2014.10.015
+      The minimum spanning tree: An unbiased method for brain network analysis.
+      NeuroImage. https://doi.org/10.1016/j.neuroimage.2014.10.015
+
     """
     from pynets.core import thresholding
 
@@ -712,8 +725,9 @@ def perform_thresholding(conn_matrix, thr, min_span_tree, dens_thresh, disp_filt
     References
     ----------
     .. [1] Fornito, A., Zalesky, A., & Bullmore, E. T. (2016).
-    Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network Analysis.
-    https://doi.org/10.1016/C2012-0-06036-X
+      Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network Analysis.
+      https://doi.org/10.1016/C2012-0-06036-X
+
     '''
     import numpy as np
     import networkx as nx
@@ -878,9 +892,10 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     References
     ----------
     .. [1] van Wijk, B. C. M., Stam, C. J., & Daffertshofer, A. (2010).
-    Comparing brain networks of different size and connectivity
-    density using graph theory. PLoS ONE.
-    https://doi.org/10.1371/journal.pone.0013701
+      Comparing brain networks of different size and connectivity
+      density using graph theory. PLoS ONE.
+      https://doi.org/10.1371/journal.pone.0013701
+
     """
     import gc
     from pynets.core import utils, thresholding
@@ -1040,9 +1055,10 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
     References
     ----------
     .. [1] van Wijk, B. C. M., Stam, C. J., & Daffertshofer, A. (2010).
-    Comparing brain networks of different size and connectivity
-    density using graph theory. PLoS ONE.
-    https://doi.org/10.1371/journal.pone.0013701
+      Comparing brain networks of different size and connectivity
+      density using graph theory. PLoS ONE.
+      https://doi.org/10.1371/journal.pone.0013701
+
     """
     import gc
     from pynets.core import utils, thresholding

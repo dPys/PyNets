@@ -37,7 +37,7 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, dpi_resolution=300):
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
 
     try:
-        plot_matrix(conn_matrix_plt, figure=(10, 10), labels=labels, vmax=1, vmin=0,
+        plot_matrix(conn_matrix_plt, figure=(10, 10), labels=labels, vmax=1, vmin=-1,
                     reorder='average', auto_fit=True, grid=False, colorbar=False, cmap=cmap)
     except RuntimeWarning:
         print('Connectivity matrix too sparse for plotting...')
@@ -79,7 +79,7 @@ def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_af
     rois_num = sorted_conn_matrix.shape[0]
     if rois_num < 100:
         try:
-            plot_matrix(conn_matrix_plt, figure=(10, 10), labels=labels, vmax=1.0, vmin=0,
+            plot_matrix(conn_matrix_plt, figure=(10, 10), labels=labels, vmax=1.0, vmin=-1,
                         reorder=False, auto_fit=True, grid=False, colorbar=False, cmap=cmap)
         except RuntimeWarning:
             print('Connectivity matrix too sparse for plotting...')

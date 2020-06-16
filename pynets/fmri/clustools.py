@@ -91,13 +91,14 @@ def ncut(W, nbEigenValues):
     References
     ----------
     .. [1] Stella Yu and Jianbo Shi, "Understanding Popout through Repulsion," Computer
-    Vision and Pattern Recognition, December, 2001.
+      Vision and Pattern Recognition, December, 2001.
     .. [2] Shi, J., & Malik, J. (2000).  Normalized cuts and image segmentation. IEEE
-    Transactions on Pattern Analysis and Machine Intelligence, 22(8), 888-905.
-    doi: 10.1109/34.868688.
+      Transactions on Pattern Analysis and Machine Intelligence, 22(8), 888-905.
+      doi: 10.1109/34.868688.
     .. [3] Yu, S. X., & Shi, J. (2003). Multiclass spectral clustering. Proceedings Ninth
-    IEEE International Conference on Computer Vision, (1), 313-319 vol.1. Ieee.
-    doi: 10.1109/ICCV.2003.1238361
+      IEEE International Conference on Computer Vision, (1), 313-319 vol.1. Ieee.
+      doi: 10.1109/ICCV.2003.1238361
+
     """
     from scipy.sparse.linalg import eigsh
     from scipy.sparse import spdiags
@@ -177,13 +178,14 @@ def discretisation(eigen_vec):
     References
     ----------
     .. [1] Stella Yu and Jianbo Shi, "Understanding Popout through Repulsion," Computer
-    Vision and Pattern Recognition, December, 2001.
+      Vision and Pattern Recognition, December, 2001.
     .. [2] Shi, J., & Malik, J. (2000).  Normalized cuts and image segmentation. IEEE
-    Transactions on Pattern Analysis and Machine Intelligence, 22(8), 888-905.
-    doi: 10.1109/34.868688.
+      Transactions on Pattern Analysis and Machine Intelligence, 22(8), 888-905.
+      doi: 10.1109/34.868688.
     .. [3] Yu, S. X., & Shi, J. (2003). Multiclass spectral clustering. Proceedings Ninth
-    IEEE International Conference on Computer Vision, (1), 313-319 vol.1. Ieee.
-    doi: 10.1109/ICCV.2003.1238361
+      IEEE International Conference on Computer Vision, (1), 313-319 vol.1. Ieee.
+      doi: 10.1109/ICCV.2003.1238361
+
     """
     import scipy as sp
     from scipy.sparse import csc_matrix
@@ -274,9 +276,10 @@ def parcellate_ncut(W, k, mask_img):
     References
     ----------
     .. [1] Craddock, R. C., James, G. A., Holtzheimer, P. E., Hu, X. P., &
-    Mayberg, H. S. (2012). A whole brain fMRI atlas generated via
-    spatially constrained spectral clustering. Human Brain Mapping.
-    https://doi.org/10.1002/hbm.21333
+      Mayberg, H. S. (2012). A whole brain fMRI atlas generated via
+      spatially constrained spectral clustering. Human Brain Mapping.
+      https://doi.org/10.1002/hbm.21333
+
     """
     # We only have to calculate the eigendecomposition of the LaPlacian once,
     # for the largest number of clusters provided. This provides a significant
@@ -338,9 +341,10 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     References
     ----------
     .. [1] Craddock, R. C., James, G. A., Holtzheimer, P. E., Hu, X. P., &
-    Mayberg, H. S. (2012). A whole brain fMRI atlas generated via
-    spatially constrained spectral clustering. Human Brain Mapping.
-    https://doi.org/10.1002/hbm.21333
+      Mayberg, H. S. (2012). A whole brain fMRI atlas generated via
+      spatially constrained spectral clustering. Human Brain Mapping.
+      https://doi.org/10.1002/hbm.21333
+
     """
     from scipy.sparse import csc_matrix
     from scipy import prod
@@ -498,9 +502,10 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     References
     ----------
     .. [1] Craddock, R. C., James, G. A., Holtzheimer, P. E., Hu, X. P., &
-    Mayberg, H. S. (2012). A whole brain fMRI atlas generated via
-    spatially constrained spectral clustering. Human Brain Mapping.
-    https://doi.org/10.1002/hbm.21333
+      Mayberg, H. S. (2012). A whole brain fMRI atlas generated via
+      spatially constrained spectral clustering. Human Brain Mapping.
+      https://doi.org/10.1002/hbm.21333
+
     """
     from scipy.sparse import csc_matrix
     from scipy import prod
@@ -666,15 +671,16 @@ class NiParcellate(object):
         References
         ----------
         .. [1] Thirion, B., Varoquaux, G., Dohmatob, E., & Poline, J. B. (2014).
-        Which fMRI clustering gives good brain parcellations?
-        Frontiers in Neuroscience. https://doi.org/10.3389/fnins.2014.00167
+          Which fMRI clustering gives good brain parcellations?
+          Frontiers in Neuroscience. https://doi.org/10.3389/fnins.2014.00167
         .. [2] Bellec, P., Rosa-Neto, P., Lyttelton, O. C., Benali, H., & Evans, A. C. (2010).
-        Multi-level bootstrap analysis of stable clusters in resting-state fMRI.
-        NeuroImage. https://doi.org/10.1016/j.neuroimage.2010.02.082
+          Multi-level bootstrap analysis of stable clusters in resting-state fMRI.
+          NeuroImage. https://doi.org/10.1016/j.neuroimage.2010.02.082
         .. [3] Garcia-Garcia, M., Nikolaidis, A., Bellec, P., Craddock, R. C., Cheung, B.,
-        Castellanos, F. X., & Milham, M. P. (2018). Detecting stable individual
-        differences in the functional organization of the human basal ganglia.
-        NeuroImage. https://doi.org/10.1016/j.neuroimage.2017.07.029
+          Castellanos, F. X., & Milham, M. P. (2018). Detecting stable individual
+          differences in the functional organization of the human basal ganglia.
+          NeuroImage. https://doi.org/10.1016/j.neuroimage.2017.07.029
+
         """
         self.func_file = func_file
         self.clust_mask = clust_mask
