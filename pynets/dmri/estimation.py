@@ -95,8 +95,9 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     References
     ----------
     .. [1] Chen, D. Q., Dell’Acqua, F., Rokem, A., Garyfallidis, E., Hayes, D.,
-    Zhong, J., & Hodaie, M. (2018). Diffusion Weighted Image Co-registration:
-    Investigation of Best Practices. PLoS ONE.
+      Zhong, J., & Hodaie, M. (2018). Diffusion Weighted Image Co-registration:
+      Investigation of Best Practices. PLoS ONE.
+
     '''
     import os
     from dipy.io import load_pickle
@@ -156,10 +157,11 @@ def tens_mod_est(gtab, data, B0_mask):
     References
     ----------
     .. [1] Basser PJ, Mattielo J, LeBihan (1994). MR diffusion tensor
-    spectroscopy and imaging.
+      spectroscopy and imaging.
     .. [2] Pajevic S, Pierpaoli (1999). Color schemes to represent the
-    orientation of anisotropic tissues from diffusion tensor data:
-    application to white matter fiber tract mapping in the human brain.
+      orientation of anisotropic tissues from diffusion tensor data:
+      application to white matter fiber tract mapping in the human brain.
+
     '''
     from dipy.reconst.dti import TensorModel
     from dipy.data import get_sphere
@@ -199,7 +201,8 @@ def csa_mod_est(gtab, data, B0_mask, sh_order=8):
     References
     ----------
     .. [1] Aganj, I., et al. 2009. ODF Reconstruction in Q-Ball Imaging
-    with Solid Angle Consideration.
+      with Solid Angle Consideration.
+
     '''
     from dipy.reconst.shm import CsaOdfModel
     print('Fitting CSA model...')
@@ -235,16 +238,17 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     References
     ----------
     .. [1] Tournier, J.D., et al. NeuroImage 2007. Robust determination of
-    the fibre orientation distribution in diffusion MRI:
-    Non-negativity constrained super-resolved spherical
-    deconvolution
+      the fibre orientation distribution in diffusion MRI:
+      Non-negativity constrained super-resolved spherical
+      deconvolution
     .. [2] Descoteaux, M., et al. IEEE TMI 2009. Deterministic and
-    Probabilistic Tractography Based on Complex Fibre Orientation
-    Distributions
+      Probabilistic Tractography Based on Complex Fibre Orientation
+      Distributions
     .. [3] Côté, M-A., et al. Medical Image Analysis 2013. Tractometer:
-    Towards validation of tractography pipelines
+      Towards validation of tractography pipelines
     .. [4] Tournier, J.D, et al. Imaging Systems and Technology
-    2012. MRtrix: Diffusion Tractography in Crossing Fiber Regions
+      2012. MRtrix: Diffusion Tractography in Crossing Fiber Regions
+
     '''
     from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
     print('Fitting CSD model...')
@@ -282,12 +286,13 @@ def sfm_mod_est(gtab, data, B0_mask):
     References
     ----------
     .. [1] Ariel Rokem, Jason D. Yeatman, Franco Pestilli, Kendrick
-    N. Kay, Aviv Mezer, Stefan van der Walt, Brian A. Wandell
-    (2015). Evaluating the accuracy of diffusion MRI models in white
-    matter. PLoS ONE 10(4): e0123272. doi:10.1371/journal.pone.0123272
+      N. Kay, Aviv Mezer, Stefan van der Walt, Brian A. Wandell
+      (2015). Evaluating the accuracy of diffusion MRI models in white
+      matter. PLoS ONE 10(4): e0123272. doi:10.1371/journal.pone.0123272
     .. [2] Ariel Rokem, Kimberly L. Chan, Jason D. Yeatman, Franco
-    Pestilli,  Brian A. Wandell (2014). Evaluating the accuracy of diffusion
-    models at multiple b-values with cross-validation. ISMRM 2014.
+      Pestilli,  Brian A. Wandell (2014). Evaluating the accuracy of diffusion
+      models at multiple b-values with cross-validation. ISMRM 2014.
+
     '''
     from dipy.data import get_sphere
     import dipy.reconst.sfm as sfm
@@ -438,15 +443,16 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     References
     ----------
     .. [1] Sporns, O., Tononi, G., & Kötter, R. (2005). The human connectome:
-    A structural description of the human brain. PLoS Computational Biology.
-    https://doi.org/10.1371/journal.pcbi.0010042
+      A structural description of the human brain. PLoS Computational Biology.
+      https://doi.org/10.1371/journal.pcbi.0010042
     .. [2] Sotiropoulos, S. N., & Zalesky, A. (2019). Building connectomes
-    using diffusion MRI: why, how and but. NMR in Biomedicine.
-    https://doi.org/10.1002/nbm.3752
+      using diffusion MRI: why, how and but. NMR in Biomedicine.
+      https://doi.org/10.1002/nbm.3752
     .. [3] Chung, M. K., Hanson, J. L., Adluru, N., Alexander, A. L., Davidson,
-    R. J., & Pollak, S. D. (2017). Integrative Structural Brain Network
-    Analysis in Diffusion Tensor Imaging. Brain Connectivity.
-    https://doi.org/10.1089/brain.2016.0481
+      R. J., & Pollak, S. D. (2017). Integrative Structural Brain Network
+      Analysis in Diffusion Tensor Imaging. Brain Connectivity.
+      https://doi.org/10.1089/brain.2016.0481
+
     '''
     import gc
     import time

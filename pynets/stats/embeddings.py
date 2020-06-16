@@ -44,12 +44,13 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     References
     ----------
     .. [1] Levin, K., Athreya, A., Tang, M., Lyzinski, V., & Priebe, C. E. (2017,
-    November). A central limit theorem for an omnibus embedding of multiple random
-    dot product graphs. In Data Mining Workshops (ICDMW), 2017 IEEE International
-    Conference on (pp. 964-967). IEEE.
+      November). A central limit theorem for an omnibus embedding of multiple random
+      dot product graphs. In Data Mining Workshops (ICDMW), 2017 IEEE International
+      Conference on (pp. 964-967). IEEE.
     .. [2] Chung, J., Pedigo, B. D., Bridgeford, E. W., Varjavand, B. K., Helm, H. S.,
-    & Vogelstein, J. T. (2019). Graspy: Graph statistics in python.
-    Journal of Machine Learning Research.
+      & Vogelstein, J. T. (2019). Graspy: Graph statistics in python.
+      Journal of Machine Learning Research.
+
     """
     from graspy.embed import OmnibusEmbed, ClassicalMDS
     from joblib import dump
@@ -121,11 +122,12 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name='whole_brain'):
     References
     ----------
     .. [1] Inference for multiple heterogeneous networks with a common invariant subspace
-    J Arroyo, A Athreya, J Cape, G Chen, CE Priebe, JT Vogelstein
-    arXiv preprint arXiv:1906.10026
+      J Arroyo, A Athreya, J Cape, G Chen, CE Priebe, JT Vogelstein
+      arXiv preprint arXiv:1906.10026
     .. [2] Chung, J., Pedigo, B. D., Bridgeford, E. W., Varjavand, B. K., Helm, H. S.,
-    & Vogelstein, J. T. (2019). Graspy: Graph statistics in python.
-    Journal of Machine Learning Research.
+      & Vogelstein, J. T. (2019). Graspy: Graph statistics in python.
+      Journal of Machine Learning Research.
+
     """
     from graspy.embed import MultipleASE
     from joblib import dump
@@ -193,8 +195,9 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name='whole_brain'):
     References
     ----------
     .. [1] Sussman, D.L., Tang, M., Fishkind, D.E., Priebe, C.E.  "A
-    Consistent Adjacency Spectral Embedding for Stochastic Blockmodel Graphs,"
-    Journal of the American Statistical Association, Vol. 107(499), 2012
+      Consistent Adjacency Spectral Embedding for Stochastic Blockmodel Graphs,"
+      Journal of the American Statistical Association, Vol. 107(499), 2012
+
     '''
     from graspy.embed import AdjacencySpectralEmbed
     from joblib import dump
@@ -267,8 +270,9 @@ def build_masetome(est_path_iterlist, ID):
     ----------
     .. [1] Rosenthal, G., Váša, F., Griffa, A., Hagmann, P., Amico, E., Goñi, J.,
     … Sporns, O. (2018). Mapping higher-order relations between brain structure
-    and function with embedded vector representations of connectomes.
-    Nature Communications. https://doi.org/10.1038/s41467-018-04614-w
+      and function with embedded vector representations of connectomes.
+      Nature Communications. https://doi.org/10.1038/s41467-018-04614-w
+
     """
     from pynets.core.utils import prune_suffices
     from pynets.stats.embeddings import _mase_embed
@@ -304,12 +308,13 @@ def build_omnetome(est_path_iterlist, ID):
     References
     ----------
     .. [1] Liu, Y., He, L., Cao, B., Yu, P. S., Ragin, A. B., & Leow, A. D. (2018).
-    Multi-view multi-graph embedding for brain network clustering analysis.
-    32nd AAAI Conference on Artificial Intelligence, AAAI 2018.
+      Multi-view multi-graph embedding for brain network clustering analysis.
+      32nd AAAI Conference on Artificial Intelligence, AAAI 2018.
     .. [2] Levin, K., Athreya, A., Tang, M., Lyzinski, V., & Priebe, C. E. (2017,
-    November). A central limit theorem for an omnibus embedding of multiple random
-    dot product graphs. In Data Mining Workshops (ICDMW), 2017 IEEE International
-    Conference on (pp. 964-967). IEEE.
+      November). A central limit theorem for an omnibus embedding of multiple random
+      dot product graphs. In Data Mining Workshops (ICDMW), 2017 IEEE International
+      Conference on (pp. 964-967). IEEE.
+
     """
     import yaml
     import pkg_resources

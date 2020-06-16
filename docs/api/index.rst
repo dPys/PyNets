@@ -5,7 +5,6 @@ API
 .. toctree::
    :maxdepth: 4
 
-   ../_modules/pynets.cli.rst
    ../_modules/pynets.core.rst
    ../_modules/pynets.dmri.rst
    ../_modules/pynets.fmri.rst

@@ -58,24 +58,23 @@ def subgraph_number_of_cliques_for_all(G):
     References
     ----------
     .. [1] Bron, C. and Kerbosch, J.
-    "Algorithm 457: finding all cliques of an undirected graph".
-    *Communications of the ACM* 16, 9 (Sep. 1973), 575--577.
-    <http://portal.acm.org/citation.cfm?doid=362342.362367>
-
+      "Algorithm 457: finding all cliques of an undirected graph".
+      *Communications of the ACM* 16, 9 (Sep. 1973), 575--577.
+      <http://portal.acm.org/citation.cfm?doid=362342.362367>
     .. [2] Etsuji Tomita, Akira Tanaka, Haruhisa Takahashi,
-    "The worst-case time complexity for generating all maximal
-    cliques and computational experiments",
-    *Theoretical Computer Science*, Volume 363, Issue 1,
-    Computing and Combinatorics,
-    10th Annual International Conference on
-    Computing and Combinatorics (COCOON 2004), 25 October 2006, Pages 28--42
-    <https://doi.org/10.1016/j.tcs.2006.06.015>
-
+      "The worst-case time complexity for generating all maximal
+      cliques and computational experiments",
+      *Theoretical Computer Science*, Volume 363, Issue 1,
+      Computing and Combinatorics,
+      10th Annual International Conference on
+      Computing and Combinatorics (COCOON 2004), 25 October 2006, Pages 28--42
+      <https://doi.org/10.1016/j.tcs.2006.06.015>
     .. [3] F. Cazals, C. Karande,
-    "A note on the problem of reporting maximal cliques",
-    *Theoretical Computer Science*,
-    Volume 407, Issues 1--3, 6 November 2008, Pages 564--568,
-    <https://doi.org/10.1016/j.tcs.2008.05.010>
+      "A note on the problem of reporting maximal cliques",
+      *Theoretical Computer Science*,
+      Volume 407, Issues 1--3, 6 November 2008, Pages 564--568,
+      <https://doi.org/10.1016/j.tcs.2008.05.010>
+
     """
     import math
     connected_component_subgraphs = [G.subgraph(c) for c in nx.connected_components(G)]
@@ -121,6 +120,7 @@ def global_efficiency(G, weight='weight'):
        small-world networks. Physical Review Letters 87.
     .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
        in weighted networks. Eur Phys J B 32, 249-263.
+
     """
     N = len(G)
     if N < 2:
@@ -170,9 +170,10 @@ def local_efficiency(G, weight='weight'):
     ----------
     .. Adapted from NetworkX to incorporate weight parameter
     .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
-    small-world networks. Physical Review Letters 87.
+      small-world networks. Physical Review Letters 87.
     .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
-    in weighted networks. Eur Phys J B 32, 249-263.
+      in weighted networks. Eur Phys J B 32, 249-263.
+
     """
     if G.is_directed():
         new_graph = nx.DiGraph
@@ -219,9 +220,10 @@ def average_local_efficiency(G, weight='weight'):
     References
     ----------
     .. [1] Latora, V., and Marchiori, M. (2001). Efficient behavior of
-    small-world networks. Physical Review Letters 87.
+      small-world networks. Physical Review Letters 87.
     .. [2] Latora, V., and Marchiori, M. (2003). Economic small-world behavior
-    in weighted networks. Eur Phys J B 32, 249-263.
+      in weighted networks. Eur Phys J B 32, 249-263.
+
     """
     eff = local_efficiency(G, weight)
     total = sum(eff.values())
@@ -264,9 +266,10 @@ def smallworldness(G, niter=10, nrand=100):
     References
     ----------
     .. [1] Telesford, Joyce, Hayasaka, Burdette, and Laurienti (2011).
-    "The Ubiquity of Small-World Networks".
-    Brain Connectivity. 1 (0038): 367-75.  PMC 3604768. PMID 22432451.
-    doi:10.1089/brain.2011.0038.
+      "The Ubiquity of Small-World Networks".
+      Brain Connectivity. 1 (0038): 367-75.  PMC 3604768. PMID 22432451.
+      doi:10.1089/brain.2011.0038.
+
     """
 
     from networkx.algorithms.smallworld import random_reference, lattice_reference
@@ -309,9 +312,10 @@ def create_communities(node_comm_aff_mat, node_num):
     References
     ----------
     .. [1] Newman, M.E.J. & Girvan, M. Finding and evaluating community
-    structure in networks. Physical Review E 69, 26113(2004).
+      structure in networks. Physical Review E 69, 26113(2004).
     .. [2] Blondel, V.D. et al. Fast unfolding of communities in large
-    networks. J. Stat. Mech 10008, 1-12(2008).
+      networks. J. Stat. Mech 10008, 1-12(2008).
+
     """
     com_assign = np.zeros((node_num, 1))
     for i in range(len(node_comm_aff_mat)):
@@ -345,9 +349,10 @@ def participation_coef(W, ci, degree='undirected'):
     References
     ----------
     .. [1] Guimera, R., & Amaral, L. A. N. (2005). Functional cartography of
-    complex metabolic networks. Nature, 433, 895-900.
+      complex metabolic networks. Nature, 433, 895-900.
     .. [2] Rubinov, M., & Sporns, O. (2010). Complex network measures of brain
-    connectivity: Uses and interpretations. NeuroImage, 52, 1059-1069.
+      connectivity: Uses and interpretations. NeuroImage, 52, 1059-1069.
+
     '''
     if degree == 'in':
         W = W.T
@@ -391,9 +396,10 @@ def participation_coef_sign(W, ci):
     References
     ----------
     .. [1] Guimera, R., & Amaral, L. A. N. (2005). Functional cartography of
-    complex metabolic networks. Nature, 433, 895-900.
+      complex metabolic networks. Nature, 433, 895-900.
     .. [2] Rubinov, M., & Sporns, O. (2010). Complex network measures of brain
-    connectivity: Uses and interpretations. NeuroImage, 52, 1059-1069.
+      connectivity: Uses and interpretations. NeuroImage, 52, 1059-1069.
+
     '''
     _, ci = np.unique(ci, return_inverse=True)
     ci += 1
@@ -443,7 +449,8 @@ def diversity_coef_sign(W, ci):
     References
     ----------
     .. [1] Rubinov, M., & Sporns, O. (2010). Complex network measures of brain
-    connectivity: Uses and interpretations. NeuroImage, 52, 1059-1069.
+      connectivity: Uses and interpretations. NeuroImage, 52, 1059-1069.
+
     '''
 
     def entropy(w_):
@@ -497,9 +504,10 @@ def link_communities(W, type_clustering='single'):
     References
     ----------
     .. [1] de Reus, M. A., Saenger, V. M., Kahn, R. S., & van den Heuvel, M. P. (2014).
-    An edge-centric perspective on the human connectome: Link communities in the
-    brain. Philosophical Transactions of the Royal Society B: Biological Sciences.
-    https://doi.org/10.1098/rstb.2013.0527
+      An edge-centric perspective on the human connectome: Link communities in the
+      brain. Philosophical Transactions of the Royal Society B: Biological Sciences.
+      https://doi.org/10.1098/rstb.2013.0527
+
     '''
     from pynets.core.thresholding import normalize
 
@@ -694,10 +702,11 @@ def weighted_transitivity(G):
     References
     ----------
     .. [1] Wasserman, S., and Faust, K. (1994). Social Network Analysis: Methods and
-    Applications. Cambridge: Cambridge University Press.
+      Applications. Cambridge: Cambridge University Press.
     .. [2] Alain Barrat, Marc Barthelemy, Romualdo Pastor-Satorras, Alessandro Vespignani:
-    The architecture of complex weighted networks, Proc. Natl. Acad. Sci.
-    USA 101, 3747 (2004)
+      The architecture of complex weighted networks, Proc. Natl. Acad. Sci.
+      USA 101, 3747 (2004)
+
     """
     from networkx.algorithms.cluster import _weighted_triangles_and_degree_iter
     triangles = sum(t for v, d, t in _weighted_triangles_and_degree_iter(G))
@@ -724,12 +733,13 @@ def prune_disconnected(G):
     References
     ----------
     .. [1] Hayasaka, S. (2017). Anti-Fragmentation of Resting-State
-    Functional Magnetic Resonance Imaging Connectivity Networks
-    with Node-Wise Thresholding. Brain Connectivity.
-    https://doi.org/10.1089/brain.2017.0523
+      Functional Magnetic Resonance Imaging Connectivity Networks
+      with Node-Wise Thresholding. Brain Connectivity.
+      https://doi.org/10.1089/brain.2017.0523
     .. [2] Fornito, A., Zalesky, A., & Bullmore, E. T. (2016).
-    Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network Analysis.
-    https://doi.org/10.1016/C2012-0-06036-X
+      Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network Analysis.
+      https://doi.org/10.1016/C2012-0-06036-X
+
     """
     print('Pruning disconnected...')
 
@@ -772,9 +782,10 @@ def most_important(G):
     References
     ----------
     .. [1] Power, J. D., Schlaggar, B. L., Lessov-Schlaggar,
-    C. N., & Petersen, S. E. (2013). Evidence for hubs
-    in human functional brain networks. Neuron.
-    https://doi.org/10.1016/j.neuron.2013.07.035
+      C. N., & Petersen, S. E. (2013). Evidence for hubs
+      in human functional brain networks. Neuron.
+      https://doi.org/10.1016/j.neuron.2013.07.035
+
     """
     print('Pruning fully disconnected and low importance nodes (3 SD < M)...')
     ranking = nx.betweenness_centrality(G, weight='weight').items()
@@ -922,12 +933,12 @@ class CleanGraphs(object):
     References
     ----------
     .. [1] Qin, Tai, and Karl Rohe. "Regularized spectral clustering
-    under the degree-corrected stochastic blockmodel." In Advances
-    in Neural Information Processing Systems, pp. 3120-3128. 2013
-
+      under the degree-corrected stochastic blockmodel." In Advances
+      in Neural Information Processing Systems, pp. 3120-3128. 2013
     .. [2] Rohe, Karl, Tai Qin, and Bin Yu. "Co-clustering directed graphs to discover
-    asymmetries and directional communities." Proceedings of the National Academy
-    of Sciences 113.45 (2016): 12679-12684.
+      asymmetries and directional communities." Proceedings of the National Academy
+      of Sciences 113.45 (2016): 12679-12684.
+
     """
 
     def __init__(self, thr, conn_model, est_path, prune, norm, out_fmt='edgelist_ssv'):
@@ -1428,8 +1439,9 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     References
     ----------
     .. [1] Fornito, A., Zalesky, A., & Bullmore, E. T. (2016).
-    Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network Analysis.
-    https://doi.org/10.1016/C2012-0-06036-X
+      Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network Analysis.
+      https://doi.org/10.1016/C2012-0-06036-X
+
     """
     import time
     import gc
@@ -1664,9 +1676,10 @@ def collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch, nc_colle
     References
     ----------
     .. [1] Drakesmith, M., Caeyenberghs, K., Dutt, A., Lewis, G., David, A. S., &
-    Jones, D. K. (2015). Overcoming the effects of false positives and threshold
-    bias in graph theoretical analyses of neuroimaging data. NeuroImage.
-    https://doi.org/10.1016/j.neuroimage.2015.05.011
+      Jones, D. K. (2015). Overcoming the effects of false positives and threshold
+      bias in graph theoretical analyses of neuroimaging data. NeuroImage.
+      https://doi.org/10.1016/j.neuroimage.2015.05.011
+
     """
     import gc
     import os
