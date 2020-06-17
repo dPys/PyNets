@@ -276,6 +276,10 @@ def get_bids_parser():
                         default=False,
                         action='store_true',
                         help='Verbose print for debugging.\n')
+    parser.add_argument('-clean',
+                        default=False,
+                        action='store_true',
+                        help='Clean up temporary runtime directory after workflow termination.\n')
     parser.add_argument('-work',
                         metavar='Working directory',
                         default='/tmp/work',
@@ -317,6 +321,7 @@ def main():
     modality = bids_args.modality
     bids_config = bids_args.config
     analysis_level = bids_args.analysis_level
+    clean = bids_args.clean
 
     if analysis_level == 'group' and participant_label is not None:
         raise ValueError('Error: You have indicated a group analysis level run, but specified a participant label!')
@@ -583,6 +588,7 @@ def main():
     args_dict_all['plug'] = bids_args.plug
     args_dict_all['pm'] = bids_args.pm
     args_dict_all['v'] = bids_args.v
+    args_dict_all['clean'] = bids_args.clean
     if funcs is not None:
         args_dict_all['func'] = sorted(funcs)
     else:
@@ -651,10 +657,6 @@ def main():
         gc.collect()
 
     mgr.shutdown()
-
-    if args.clean is True and os.path.isdir(retval['workflow'].basedir):
-        from shutil import rmtree
-        rmtree(retval['workflow'].basedir, ignore_errors=True)
 
     if bids_args.push_location:
         print(f"Pushing to s3 at {bids_args.push_location}.")

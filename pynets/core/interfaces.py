@@ -1215,7 +1215,7 @@ class Tracking(SimpleInterface):
             os.mkdir(namer_dir)
 
         # Save streamlines to trk
-        streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_',
+        streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (runtime.cwd, '/streamlines_',
                                                             '%s' % (self.inputs.network + '_' if
                                                                     self.inputs.network is not None else ''),
                                                             '%s' % (op.basename(self.inputs.roi).split('.')[0] + '_'
@@ -1233,8 +1233,7 @@ class Tracking(SimpleInterface):
         save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, origin=Origin.TRACKVIS),
                         streams, bbox_valid_check=False)
 
-        streams_tmp_path = fname_presuffix(streams, suffix='_tmp', newpath=runtime.cwd)
-        copyfile(streams, streams_tmp_path, copy=True, use_hardlink=False)
+        copyfile(streams, f"{namer_dir}/{op.basename(streams)}", copy=True, use_hardlink=False)
 
         # Create streamline density map
         [dir_path, dm_path] = create_density_map(dwi_img, dir_path, streamlines, self.inputs.conn_model,
@@ -1243,7 +1242,7 @@ class Tracking(SimpleInterface):
                                                  self.inputs.step_list, self.inputs.network, self.inputs.roi,
                                                  self.inputs.directget, self.inputs.min_length, namer_dir)
 
-        self._results['streams'] = streams_tmp_path
+        self._results['streams'] = streams
         self._results['track_type'] = self.inputs.track_type
         self._results['target_samples'] = self.inputs.target_samples
         self._results['conn_model'] = self.inputs.conn_model
