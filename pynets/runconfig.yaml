@@ -99,6 +99,8 @@ resource_dict: # Nipype workflow resource settings
         - (1, 2)
       - 'node_gen_node':
         - (2, 4)
+      - get_node_membership_node:
+        - (1, 1)
       - 'check_orient_and_dims_dwi_node':
         - (2, 2)
       - 'get_anisopwr_node':
