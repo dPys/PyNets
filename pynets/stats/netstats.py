@@ -302,7 +302,7 @@ def smallworldness(G, niter=10, nrand=100, approach='clustering', reference='ran
         del Gr, Gl
 
     if approach == 'clustering':
-        C = weighted_transitivity(G, weight='weight')
+        C = weighted_transitivity(G)
     elif approach == 'transitivity':
         C = nx.average_clustering(G, weight='weight')
     else:
