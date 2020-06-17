@@ -2972,4 +2972,5 @@ def raw_graph_workflow(multi_thr, thr, multi_graph, graph, ID, network, conn_mod
                                                     ('roi', 'roi'), ('prune', 'prune'), ('norm', 'norm'),
                                                     ('binary', 'binary')])
                         ])
+
     return wf

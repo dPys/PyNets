@@ -456,3 +456,4 @@ if __name__ == '__main__':
         df_summary = df_summary.sort_values(by=['discriminability', 'icc'], ascending=False)
 
     df_summary.to_csv(working_dir + '/grid_clean_' + modality + '.csv')
+

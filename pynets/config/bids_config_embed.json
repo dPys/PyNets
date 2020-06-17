@@ -27,7 +27,7 @@
             "mplx":  2,
             "mst":  "True",
             "n":  "['Default']",
-            "names":  "False",
+            "names":  "True",
             "norm": "['6']",
             "ns":  "None",
             "p":  "['3']",
