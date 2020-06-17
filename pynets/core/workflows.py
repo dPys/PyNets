@@ -286,7 +286,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                                       'binary_iterlist'],
                                                         function=pass_meta_ins_multi),
                                            name='pass_meta_ins_multi_node')
-
+        pass_meta_ins_multi_node._mem_gb = 2
         meta_wf.add_nodes([sub_struct_wf])
         meta_wf.get_node(sub_struct_wf.name)._n_procs = procmem[0]
         meta_wf.get_node(sub_struct_wf.name)._mem_gb = procmem[1]
@@ -577,7 +577,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                              'ID_iterlist', 'roi_iterlist', 'norm_iterlist',
                                                              'binary_iterlist'],
                                                function=pass_meta_outs), name='pass_meta_outs_node')
-
+    pass_meta_outs_node._mem_gb = 2
     if embed is True:
         from pynets.stats import embeddings
         omni_embedding_node = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],

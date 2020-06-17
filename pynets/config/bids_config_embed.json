@@ -21,7 +21,7 @@
             "bin":  "False",
             "df":  "False",
             "dt":  "False",
-            "embed":  "['omni']",
+            "embed":  "True",
             "max_thr":  1.00,
             "min_thr":  0.50,
             "mplx":  2,

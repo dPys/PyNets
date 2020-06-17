@@ -1676,6 +1676,7 @@ def build_workflow(args, retval):
                                                             function=collectpandasjoin),
                                                name="AggregateOutputs",
                                                imports=import_list)
+        collect_pd_list_net_csv_node._mem_gb = 2
 
         # Combine dataframes across models
         combine_pandas_dfs_node = pe.Node(interface=CombineOutputs(), name="CombineOutputs", imports=import_list)

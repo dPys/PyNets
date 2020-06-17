@@ -1,8 +1,8 @@
 {
 "jobName": "<JOBNAME>",
-"jobQueue": "Queue",
+"jobQueue": "*FILL OUT AWS BATCH QUEUE NAME HERE*",
 "dependsOn": [],
-"jobDefinition": "FuncDefinition:8",
+"jobDefinition": "*FILL OUT AWS BATCH FUNCTIONAL DEFINITION HERE*",
 "parameters": {},
 "containerOverrides": {
   "vcpus": "<CORES>",

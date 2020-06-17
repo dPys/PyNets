@@ -232,17 +232,17 @@ def average_local_efficiency(G, weight='weight'):
 
 
 @timeout(720)
-def smallworldness(G, niter=10, nrand=100):
-    """Returns the small-world coefficient (omega) of a graph
+def smallworldness(G, niter=10, nrand=100, approach='clustering', reference='random'):
+    """Returns the small-world coefficient of a graph
 
     The small-world coefficient of a G is:
 
     omega = Lr/L - C/Cl
 
-    where C and L are respectively the average clustering coefficient and
-    average shortest path length of G. Lr is the average shortest path length
-    of an equivalent random graph and Cl is the average clustering coefficient
-    of an equivalent lattice graph.
+    where C and L are respectively the average clustering coefficient/transitivity
+    and average shortest path length of G. Lr is the average shortest path length
+    of an equivalent random graph and Cl is the average clustering
+    coefficient/transitivity of an equivalent lattice/random graph.
 
     Parameters
     ----------
@@ -256,12 +256,17 @@ def smallworldness(G, niter=10, nrand=100):
     nrand: integer (optional, default=100)
         Number of random graphs generated to compute the average clustering
         coefficient (Cr) and average shortest path length (Lr).
-
+    approach : str
+        Specifies whether to use clustering coefficient `clustering` or
+        `transitivity` method of counting triangles. Default is `clustering`.
+    reference : str
+        Specifies whether to use a random `random` or lattice
+        `lattice` reference for clustering/transitivity. Default is `random`.
 
     Returns
     -------
     omega : float
-        The small-work coefficient (omega)
+        The small-work coefficient
 
     References
     ----------
@@ -279,13 +284,31 @@ def smallworldness(G, niter=10, nrand=100):
     randMetrics = {"C": [], "L": []}
     for i in range(nrand):
         Gr = random_reference(G, niter=niter, seed=i)
-        Gl = lattice_reference(G, niter=niter, seed=i)
-        randMetrics["C"].append(weighted_transitivity(Gl))
+        if reference == 'random':
+            Gl = random_reference(G, niter=niter, seed=i)
+        elif reference == 'lattice':
+            Gl = lattice_reference(G, niter=niter, seed=i)
+        else:
+            raise ValueError(f"{reference}' graph type not recognized!")
+
+        if approach == 'clustering':
+            randMetrics["C"].append(nx.average_clustering(Gl, weight='weight'))
+        elif approach == 'transitivity':
+            randMetrics["C"].append(weighted_transitivity(Gl))
+        else:
+            raise ValueError(f"{approach}' approach not recognized!")
+
         randMetrics["L"].append(nx.average_shortest_path_length(Gr, weight='weight'))
         del Gr, Gl
 
-    C = weighted_transitivity(G)
-    L = nx.average_shortest_path_length(G, weight='weight')
+    if approach == 'clustering':
+        C = weighted_transitivity(G, weight='weight')
+    elif approach == 'transitivity':
+        C = nx.average_clustering(G, weight='weight')
+    else:
+        raise ValueError(f"{approach}' approach not recognized!")
+
+    L = nx.average_shortest_path_length(G)
     Cl = np.mean(randMetrics["C"])
     Lr = np.mean(randMetrics["L"])
 

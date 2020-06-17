@@ -21,7 +21,7 @@
             "bin":  "False",
             "df":  "False",
             "dt":  "False",
-            "embed":  "None",
+            "embed":  "False",
             "max_thr":  "None",
             "min_thr": "None",
             "mplx":  2,
