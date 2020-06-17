@@ -458,6 +458,8 @@ def build_workflow(args, retval):
     fbval = args.bval
     fbvec = args.bvec
     graph = args.g
+    clean = args.clean
+
     if graph:
         if len(graph) > 1:
             multi_subject_graph = graph
