@@ -140,7 +140,7 @@ def prep_tissues(t1_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class, cmc
 
 
 def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_samples, node_size, curv_thr_list, step_list,
-                       network, roi, directget, min_length):
+                       network, roi, directget, min_length, namer_dir):
     """
     Create a density map of the list of streamlines.
 
@@ -183,21 +183,14 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
     dm_path : str
         File path to fiber density map Nifti1Image.
     """
-    import os
     import os.path as op
     from dipy.tracking import utils
-    from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
-    from dipy.io.streamline import save_tractogram
 
     # Create density map
     dm = utils.density_map(streamlines, affine=np.eye(4), vol_dims=dwi_img.shape)
 
     # Save density map
     dm_img = nib.Nifti1Image(dm.astype('int'), dwi_img.affine)
-
-    namer_dir = '{}/tractography'.format(dir_path)
-    if not os.path.isdir(namer_dir):
-        os.mkdir(namer_dir)
 
     dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/density_map_',
                                                         '%s' % (network + '_' if network is not None else ''),
@@ -212,27 +205,10 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
                                                         '_ml-', min_length, '.nii.gz')
     dm_img.to_filename(dm_path)
 
-    # Save streamlines to trk
-    streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_',
-                                                        '%s' % (network + '_' if network is not None else ''),
-                                                        '%s' % (op.basename(roi).split('.')[0] + '_' if roi is not None
-                                                                else ''),
-                                                        conn_model, '_', target_samples, '_',
-                                                        '%s' % ("%s%s" % (node_size, 'mm_') if ((node_size != 'parc')
-                                                                                                and
-                                                                                                (node_size is not None))
-                                                                else 'parc_'),
-                                                        'curv-', str(curv_thr_list).replace(', ', '_'),
-                                                        '_step-', str(step_list).replace(', ', '_'), '_dg-', directget,
-                                                        '_ml-', min_length, '.trk')
-
-    save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, origin=Origin.TRACKVIS),
-                    streams, bbox_valid_check=False)
-
     del streamlines
     dm_img.uncache()
 
-    return streams, dir_path, dm_path
+    return dir_path, dm_path
 
 
 def track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, mod_fit, tiss_classifier, sphere, directget,

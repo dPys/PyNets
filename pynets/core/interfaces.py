@@ -1145,11 +1145,15 @@ class Tracking(SimpleInterface):
     def _run_interface(self, runtime):
         import gc
         import os
+        import os.path as op
         from dipy.io import load_pickle
         from colorama import Fore, Style
         from dipy.data import get_sphere
         from pynets.core import utils
         from pynets.dmri.track import prep_tissues, reconstruction, create_density_map, track_ensemble
+        from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
+        from dipy.io.streamline import save_tractogram
+        from nipype.utils.filemanip import fname_presuffix, copyfile
 
         # Load diffusion data
         dwi_img = nib.load(self.inputs.dwi_file)
@@ -1193,6 +1197,8 @@ class Tracking(SimpleInterface):
             raise ValueError('Direction-getting type not recognized!')
         print(Style.RESET_ALL)
 
+        dir_path = utils.do_dir_path(self.inputs.atlas, os.path.dirname(self.inputs.dwi_file))
+
         # Commence Ensemble Tractography
         streamlines = track_ensemble(self.inputs.target_samples, atlas_data_wm_gm_int,
                                      parcels, model,
@@ -1204,15 +1210,37 @@ class Tracking(SimpleInterface):
                                      int(self.inputs.roi_neighborhood_tol), self.inputs.min_length,
                                      self.inputs.waymask, self.inputs.B0_mask)
 
+        namer_dir = '{}/tractography'.format(dir_path)
+        if not os.path.isdir(namer_dir):
+            os.mkdir(namer_dir)
+
+        # Save streamlines to trk
+        streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (runtime.cwd, '/streamlines_',
+                                                            '%s' % (self.inputs.network + '_' if
+                                                                    self.inputs.network is not None else ''),
+                                                            '%s' % (op.basename(self.inputs.roi).split('.')[0] + '_'
+                                                                    if self.inputs.roi is not None else ''),
+                                                            self.inputs.conn_model, '_', self.inputs.target_samples,
+                                                            '_', '%s' % ("%s%s" % (self.inputs.node_size, 'mm_') if
+                                                                         ((self.inputs.node_size != 'parc') and
+                                                                          (self.inputs.node_size is not None))
+                                                                         else 'parc_'),
+                                                            'curv-', str(self.inputs.curv_thr_list).replace(', ', '_'),
+                                                            '_step-', str(self.inputs.step_list).replace(', ', '_'),
+                                                            '_dg-', self.inputs.directget,
+                                                            '_ml-', self.inputs.min_length, '.trk')
+
+        save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, origin=Origin.TRACKVIS),
+                        streams, bbox_valid_check=False)
+
+        copyfile(streams, f"{namer_dir}/{op.basename(streams)}", copy=True, use_hardlink=False)
+
         # Create streamline density map
-        [streams, dir_path, dm_path] = create_density_map(dwi_img,
-                                                          utils.do_dir_path(self.inputs.atlas,
-                                                                            os.path.dirname(self.inputs.dwi_file)),
-                                                          streamlines,
-                                                          self.inputs.conn_model, self.inputs.target_samples,
-                                                          self.inputs.node_size, self.inputs.curv_thr_list,
-                                                          self.inputs.step_list, self.inputs.network, self.inputs.roi,
-                                                          self.inputs.directget, self.inputs.min_length)
+        [dir_path, dm_path] = create_density_map(dwi_img, dir_path, streamlines, self.inputs.conn_model,
+                                                 self.inputs.target_samples,
+                                                 self.inputs.node_size, self.inputs.curv_thr_list,
+                                                 self.inputs.step_list, self.inputs.network, self.inputs.roi,
+                                                 self.inputs.directget, self.inputs.min_length, namer_dir)
 
         self._results['streams'] = streams
         self._results['track_type'] = self.inputs.track_type

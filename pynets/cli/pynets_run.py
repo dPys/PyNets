@@ -380,7 +380,7 @@ def get_parser():
     parser.add_argument('-names',
                         default=False,
                         action='store_true',
-                        help='Optionally use this flag if you wish to perform automated anatomical labeling of '
+                        help='Optionally use this flag if you wish to deactivate automated anatomical labeling of '
                              'nodes.\n')
     parser.add_argument('-vox',
                         default='2mm',
@@ -458,6 +458,8 @@ def build_workflow(args, retval):
     fbval = args.bval
     fbvec = args.bvec
     graph = args.g
+    clean = args.clean
+
     if graph:
         if len(graph) > 1:
             multi_subject_graph = graph
@@ -1674,6 +1676,7 @@ def build_workflow(args, retval):
                                                             function=collectpandasjoin),
                                                name="AggregateOutputs",
                                                imports=import_list)
+        collect_pd_list_net_csv_node._mem_gb = 2
 
         # Combine dataframes across models
         combine_pandas_dfs_node = pe.Node(interface=CombineOutputs(), name="CombineOutputs", imports=import_list)
