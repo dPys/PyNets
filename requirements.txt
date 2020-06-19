@@ -32,7 +32,7 @@ docutils==0.14.0
 duecredit>=0.8.0
 git+https://github.com/dPys/nilearn.git@enh/parc_conn
 git+https://github.com/dPys/deepbrain.git@master
-# git+https://github.com/nkoub/multinetx.git@master
+git+https://github.com/nkoub/multinetx.git@master
 # fury>=0.2.0
 # skggm>=0.2.7
 # nltk>=3.4
