@@ -29,8 +29,6 @@ base_dir = str(Path(__file__).parent/"examples")
     ]
 )
 @pytest.mark.parametrize("plot_switch", [True, False])
-@pytest.mark.parametrize("anat_file", [f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-preproc_T1w.nii.gz",
-                                       None])
 @pytest.mark.parametrize("parc,node_size,node_size_list,atlas,multi_atlas,uatlas,user_atlas_list",
     [
         pytest.param(False, None, [4, 8], None, None, None, None, marks=pytest.mark.xfail),
@@ -79,7 +77,7 @@ base_dir = str(Path(__file__).parent/"examples")
     ]
 )
 def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atlas, multi_atlas, network, thr, max_thr,
-                  min_thr, step_thr, multi_thr, thr_type, node_size, node_size_list, plot_switch, anat_file):
+                  min_thr, step_thr, multi_thr, thr_type, node_size, node_size_list, plot_switch):
     """
     Test functional connectometry
     """
@@ -96,6 +94,7 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
     func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
     mask = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_mask.nii.gz"
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
+    anat_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-preproc_T1w.nii.gz"
     ID = '25659_1'
     ref_txt = None
     nthreads = cpu_count()

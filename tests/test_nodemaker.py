@@ -268,27 +268,31 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     WB_labels = np.arange(len(WB_coords) + 1)[np.arange(len(WB_coords) + 1) != 0].tolist()
 
     start_time = time.time()
-    WB_parcel_list = nodemaker.gen_img_list(parlistfile)
-    [_, _, WB_parcel_list_masked] = nodemaker.parcel_masker(roi, WB_coords, WB_parcel_list, WB_labels, dir_path,
-                                                            ID, perc_overlap)
-    print("%s%s%s" % ('parcel_masker (Masking whole-brain version) --> finished: ',
-    np.round(time.time() - start_time, 1), 's'))
 
-    start_time = time.time()
-    [WB_parcels_map_nifti, parcel_list_exp] = nodemaker.create_parcel_atlas(WB_parcel_list_masked)
-    print("%s%s%s" % ('create_parcel_atlas (Masking whole-brain version) --> finished: ',
-    np.round(time.time() - start_time, 1), 's'))
+    parcels_map_nifti_image = nib.load(parlistfile)
+    WB_parcel_list = nodemaker.gen_img_list(parlistfile)
 
     start_time = time.time()
     [WB_net_parcels_map_nifti_unmasked, WB_coords_unmasked, _,
-     _, _, dir_path] = nodemaker.node_gen(WB_coords, WB_parcel_list, WB_labels, dir_path, ID, parc, atlas, parlistfile)
+     _, _, dir_path] = nodemaker.node_gen(WB_coords, WB_parcel_list, WB_labels, dir_path, ID, parc, atlas,
+                                          parlistfile)
     print("%s%s%s" % ('node_gen (Masking whole-brain version) --> finished: ',
+    np.round(time.time() - start_time, 1), 's'))
+
+    start_time = time.time()
+    [WB_parcels_map_nifti, parcel_list_exp] = nodemaker.create_parcel_atlas(WB_parcel_list)
+    print("%s%s%s" % ('create_parcel_atlas (Masking whole-brain version) --> finished: ',
     np.round(time.time() - start_time, 1), 's'))
 
     start_time = time.time()
     [WB_net_parcels_map_nifti_masked, WB_coords_masked, WB_labels_masked,
      _, _, _] = nodemaker.node_gen_masking(roi, WB_coords, WB_parcel_list, WB_labels, dir_path, ID, parc, atlas,
                                            parlistfile)
+
+    [_, _, WB_parcel_list_masked] = nodemaker.parcel_masker(roi, WB_coords_masked, WB_parcel_list, WB_labels_masked,
+                                                            dir_path, ID, perc_overlap)
+    print("%s%s%s" % ('parcel_masker (Masking whole-brain version) --> finished: ',
+    np.round(time.time() - start_time, 1), 's'))
 
     print("%s%s%s" % ('node_gen_masking (Masking whole-brain version) --> finished: ',
                       np.round(time.time() - start_time, 1), 's'))

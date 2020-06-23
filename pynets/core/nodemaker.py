@@ -405,7 +405,10 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
     if len(coords_mm) <= 1:
         raise ValueError(f"\nERROR: No coords from the specified atlas found within {network} network.")
 
-    assert len(coords_mm) == len(net_labels) == len(RSN_parcels)
+    if RSN_parcels:
+        assert len(coords_mm) == len(net_labels) == len(RSN_parcels)
+    else:
+        assert len(coords_mm) == len(net_labels)
 
     return coords_mm, RSN_parcels, net_labels, network
 
@@ -569,7 +572,6 @@ def coords_masker(roi, coords, labels, error):
         for ix in sorted(indices, reverse=True):
             print(f"{'Removing: '}{labels[ix]}{' at '}{coords[ix]}")
             del labels[ix], coords[ix]
-
     except RuntimeError:
         print('ERROR: Restrictive masking. No coords remain after masking with brain mask/roi...')
 

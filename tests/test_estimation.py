@@ -11,22 +11,20 @@ import numpy as np
 import time
 import nibabel as nib
 import os
+import tempfile
+import pandas as pd
+import logging
+from inspect import getargspec
+from dipy.io import save_pickle
 try:
     import cPickle as pickle
 except ImportError:
     import _pickle as pickle
 
 from pathlib import Path
-import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
-
-from dipy.io import save_pickle
-import tempfile
-from inspect import getargspec
-import pandas as pd
-
 from pynets.fmri.estimation import (get_conn_matrix, timeseries_bootstrap,
                                     fill_confound_nans, TimeseriesExtraction)
 from pynets.dmri.estimation import (create_anisopowermap, tens_mod_fa_est, tens_mod_est,
@@ -371,10 +369,14 @@ def test_sfm_mod_est(dmri_estimation_data):
     B0_mask_file.close()
 
 
+@pytest.mark.parametrize("dsn", [True, False])
 @pytest.mark.parametrize("fa_wei", [True, False])
-def test_streams2graph(fa_wei):
+def test_streams2graph(fa_wei, dsn):
     from dipy.core.gradients import gradient_table
+    from pynets.registration import register
+    from pynets.core import nodemaker
     from dipy.io import save_pickle
+    import os
 
     base_dir = str(Path(__file__).parent/"examples")
     dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
@@ -397,16 +399,10 @@ def test_streams2graph(fa_wei):
     node_size = None
     dens_thresh = False
     atlas = 'whole_brain_cluster_labels_PCA200'
-    uatlas = None
-    coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
-    coord_file = open(coord_file_path, 'rb')
-    coords = pickle.load(coord_file)
-    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
-    labels_file = open(labels_file_path, 'rb')
-    labels = pickle.load(labels_file)
-    # Not actually normalized to mni-space in this test.
-    atlas_mni = f"{base_dir}/003/dmri/whole_brain_cluster_labels_PCA200_dwi_track.nii.gz"
-    streams = f"{base_dir}/miscellaneous/003_streamlines_est-csd_nodetype-parc_samples-1000streams_tt-particle_dg-prob_ml-10.trk"
+    uatlas = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
+    atlas_dwi = f"{base_dir}/003/dmri/whole_brain_cluster_labels_PCA200_dwi_track.nii.gz"
+    streams = f"{base_dir}/miscellaneous/003_streamlines_est-csd_nodetype-parc_samples-1000streams_tt-particle_" \
+        f"dg-prob_ml-10.trk"
     B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
     dir_path = f"{base_dir}/003/dmri"
     bvals = f"{dir_path}/sub-003_dwi.bval"
@@ -419,11 +415,31 @@ def test_streams2graph(fa_wei):
     gtab_bvals[b0_thr_ixs] = 0
     gtab.b0s_mask = gtab_bvals == 0
     save_pickle(gtab_file, gtab)
-    # Not actually normalized to mni-space in this test.
-    warped_fa = tens_mod_fa_est(gtab_file, dwi_file, B0_mask)[0]
+    fa_path = tens_mod_fa_est(gtab_file, dwi_file, B0_mask)[0]
 
-    conn_matrix = streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples,
-                                conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
-                                disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
-                                directget, warped_fa, error_margin, min_length, fa_wei)[2]
+    coords = nodemaker.get_names_and_coords_of_parcels(uatlas)[0]
+    labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+
+    if dsn is True:
+        os.makedirs(f"{dir_path}/dmri_reg/DSN", exist_ok=True)
+        (streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi,
+         min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget,
+         warped_fa, min_length, error_margin) = register.direct_streamline_norm(streams, fa_path, fa_path, dir_path,
+                                                                                track_type, target_samples, conn_model,
+                                                                                network, node_size, dens_thresh, ID,
+                                                                                roi, min_span_tree, disp_filt, parc,
+                                                                                prune, atlas, atlas_dwi, uatlas,
+                                                                                labels, coords, norm, binary, uatlas,
+                                                                                dir_path, [0.1, 0.2], [40, 30],
+                                                                                directget, min_length, error_margin)
+
+        conn_matrix = streams2graph(atlas_mni, streams_mni, overlap_thr, dir_path, track_type, target_samples,
+                                    conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
+                                    disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
+                                    directget, warped_fa, error_margin, min_length, fa_wei)[2]
+    else:
+        conn_matrix = streams2graph(atlas_dwi, streams, overlap_thr, dir_path, track_type, target_samples,
+                                    conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
+                                    disp_filt, parc, prune, atlas, atlas_dwi, labels, coords, norm, binary,
+                                    directget, fa_path, error_margin, min_length, fa_wei)[2]
     assert conn_matrix is not None
