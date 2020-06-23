@@ -4,7 +4,7 @@ Sphinx>=1.4.8
 sphinx-argparse>=0.2.5
 sphinx-rtd-theme>=0.4.3
 psutil>=5.6.1
-scipy>=1.0.0
+scipy==1.4.1
 numpy>=1.16.0
 setuptools>=41.0.0
 click>=6.7
