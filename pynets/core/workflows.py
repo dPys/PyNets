@@ -14,7 +14,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                       conn_model, dens_thresh, conf, plot_switch, dwi_file, anat_file, parc,
                       ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr, step_thr, k,
                       clust_mask, k_list, k_clustering, user_atlas_list, clust_mask_list, prune,
-                      node_size_list, num_total_samples, conn_model_list, min_span_tree, verbose, plugin_type,
+                      node_size_list, conn_model_list, min_span_tree, verbose, plugin_type,
                       use_AAL_naming, smooth, smooth_list, disp_filt, clust_type, clust_type_list,
                       mask, norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
                       track_type, min_length, maxcrossing, directget, tiss_class, runtime_dict,
@@ -26,10 +26,11 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     import os
     import sys
     import yaml
-    from pathlib import Path
     import pkg_resources
+    from pathlib import Path
     from pynets.core import workflows
     from nipype import Workflow
+    from pynets.stats import embeddings
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core.utils import pass_meta_ins, pass_meta_outs, pass_meta_ins_multi
@@ -181,8 +182,8 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                            'multi_atlas', 'max_thr', 'min_thr', 'step_thr', 'k',
                                                            'clust_mask', 'k_list', 'k_clustering',
                                                            'user_atlas_list', 'clust_mask_list', 'prune',
-                                                           'node_size_list', 'num_total_samples',
-                                                           'func_model_list', 'dwi_model_list', 'min_span_tree',
+                                                           'node_size_list', 'func_model_list', 'dwi_model_list', 
+                                                           'min_span_tree',
                                                            'verbose', 'plugin_type', 'use_AAL_naming', 'smooth',
                                                            'smooth_list', 'disp_filt', 'clust_type',
                                                            'clust_type_list', 'mask',
@@ -230,7 +231,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
     meta_inputnode.inputs.clust_mask_list = clust_mask_list
     meta_inputnode.inputs.prune = prune
     meta_inputnode.inputs.node_size_list = node_size_list
-    meta_inputnode.inputs.num_total_samples = num_total_samples
     meta_inputnode.inputs.func_model_list = func_model_list
     meta_inputnode.inputs.dwi_model_list = dwi_model_list
     meta_inputnode.inputs.min_span_tree = min_span_tree
@@ -578,21 +578,6 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                                                              'binary_iterlist'],
                                                function=pass_meta_outs), name='pass_meta_outs_node')
     pass_meta_outs_node._mem_gb = 2
-    if embed is True:
-        from pynets.stats import embeddings
-        omni_embedding_node = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
-                                                   output_names=['out_paths_dwi', 'out_paths_func'],
-                                                   function=embeddings.build_omnetome),
-                                      name='omni_embedding_node', imports=import_list)
-        ase_embedding_node = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
-                                                  output_names=['out_paths'],
-                                                  function=embeddings.build_asetome),
-                                     name='ase_embedding_node', imports=import_list)
-        if multimodal is True:
-            mase_embedding_node = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
-                                                       output_names=['out_paths'],
-                                                       function=embeddings.build_masetome),
-                                          name='mase_embedding_node', imports=import_list)
 
     if func_file and not dwi_file:
         meta_wf.connect([(pass_meta_ins_func_node, pass_meta_outs_node,
@@ -607,12 +592,20 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                            ('binary_iterlist', 'binary_iterlist')])
                          ])
         if embed is True:
-            meta_wf.connect([(pass_meta_ins_func_node, omni_embedding_node,
+            omni_embedding_node_func = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
+                                                            output_names=['out_paths_dwi', 'out_paths_func'],
+                                                            function=embeddings.build_omnetome),
+                                               name='omni_embedding_node_func', imports=import_list)
+            ase_embedding_node_func = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
+                                                           output_names=['out_paths'],
+                                                           function=embeddings.build_asetomes),
+                                              name='ase_embedding_node_func', imports=import_list)
+            meta_wf.connect([(pass_meta_ins_func_node, omni_embedding_node_func,
                               [('est_path_iterlist', 'est_path_iterlist')]),
-                             (meta_inputnode, omni_embedding_node, [('ID', 'ID')]),
-                             (pass_meta_ins_struct_node, ase_embedding_node,
+                             (meta_inputnode, omni_embedding_node_func, [('ID', 'ID')]),
+                             (pass_meta_ins_func_node, ase_embedding_node_func,
                               [('est_path_iterlist', 'est_path_iterlist')]),
-                             (meta_inputnode, ase_embedding_node, [('ID', 'ID')])
+                             (meta_inputnode, ase_embedding_node_func, [('ID', 'ID')])
                              ])
     if dwi_file and not func_file:
         meta_wf.connect([(pass_meta_ins_struct_node, pass_meta_outs_node,
@@ -627,14 +620,27 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
                            ('binary_iterlist', 'binary_iterlist')])
                          ])
         if embed is True:
-            meta_wf.connect([(pass_meta_ins_struct_node, omni_embedding_node,
+            omni_embedding_node_struct = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
+                                                              output_names=['out_paths_dwi', 'out_paths_func'],
+                                                              function=embeddings.build_omnetome),
+                                                 name='omni_embedding_node_struct', imports=import_list)
+            ase_embedding_node_struct = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
+                                                             output_names=['out_paths'],
+                                                             function=embeddings.build_asetomes),
+                                                name='ase_embedding_node_struct', imports=import_list)
+            meta_wf.connect([(pass_meta_ins_struct_node, omni_embedding_node_struct,
                               [('est_path_iterlist', 'est_path_iterlist')]),
-                             (meta_inputnode, omni_embedding_node, [('ID', 'ID')]),
-                             (pass_meta_ins_struct_node, ase_embedding_node,
+                             (meta_inputnode, omni_embedding_node_struct, [('ID', 'ID')]),
+                             (pass_meta_ins_struct_node, ase_embedding_node_struct,
                               [('est_path_iterlist', 'est_path_iterlist')]),
-                             (meta_inputnode, ase_embedding_node, [('ID', 'ID')])
+                             (meta_inputnode, ase_embedding_node_struct, [('ID', 'ID')])
                              ])
-    if func_file and dwi_file:
+    if multimodal is True:
+        mase_embedding_node = pe.Node(niu.Function(input_names=['est_path_iterlist', 'ID'],
+                                                   output_names=['out_paths'],
+                                                   function=embeddings.build_masetome),
+                                      name='mase_embedding_node', imports=import_list)
+
         # Multiplex magic happens in the meta-workflow space.
         meta_wf.connect([(pass_meta_ins_multi_node, pass_meta_outs_node,
                           [('conn_model_iterlist', 'conn_model_iterlist'),
@@ -680,19 +686,7 @@ def workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas
             if embed is True:
                 meta_wf.connect([(build_multigraphs_node, mase_embedding_node,
                                   [('graph_path_list_top', 'est_path_iterlist')]),
-                                 (meta_inputnode, mase_embedding_node, [('ID', 'ID')]),
-                                 (pass_meta_ins_multi_node, omni_embedding_node,
-                                  [('est_path_iterlist', 'est_path_iterlist')]),
-                                 (meta_inputnode, omni_embedding_node, [('ID', 'ID')]),
-                                 (pass_meta_ins_multi_node, ase_embedding_node,
-                                  [('est_path_iterlist', 'est_path_iterlist')]),
-                                 (meta_inputnode, ase_embedding_node, [('ID', 'ID')]),
-                                 (pass_meta_ins_multi_node, omni_embedding_node,
-                                  [('est_path_iterlist', 'est_path_iterlist')]),
-                                 (meta_inputnode, omni_embedding_node, [('ID', 'ID')]),
-                                 (pass_meta_ins_multi_node, ase_embedding_node,
-                                  [('est_path_iterlist', 'est_path_iterlist')]),
-                                 (meta_inputnode, ase_embedding_node, [('ID', 'ID')])
+                                 (meta_inputnode, mase_embedding_node, [('ID', 'ID')])
                                  ])
 
     # Set resource restrictions at level of the meta wf
@@ -745,7 +739,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     from pynets.registration import reg_utils as regutils
     from pynets.dmri import estimation
     from pynets.core.interfaces import PlotStruct, RegisterDWI, Tracking, MakeGtabBmask, RegisterAtlasDWI, \
-        FetchNodesLabels
+        FetchNodesLabels, RegisterROIDWI
     import os.path as op
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
@@ -753,8 +747,15 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     base_dirname = f"dmri_connectometry_{ID}"
     dmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
-    template = pkg_resources.resource_filename("pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz")
-    template_mask = pkg_resources.resource_filename("pynets", f"templates/{template_name}_brain_mask_{vox_size}.nii.gz")
+    if template_name == 'MNI152_T1':
+        template = pkg_resources.resource_filename("pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz")
+        template_mask = pkg_resources.resource_filename("pynets",
+                                                        f"templates/{template_name}_brain_mask_{vox_size}.nii.gz")
+    else:
+        [template, template_mask, _] = utils.get_template_tf(template_name, vox_size)
+
+    if not op.isfile(template) or not op.isfile(template_mask):
+        raise FileNotFoundError('Template or mask not found!')
 
     # Create input/output nodes
     inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'atlas', 'network', 'node_size', 'roi',
@@ -770,6 +771,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                       'min_length_list', 'outdir']),
                         name='inputnode')
 
+    in_dir = op.dirname(anat_file)
     inputnode.inputs.ID = ID
     inputnode.inputs.atlas = atlas
     inputnode.inputs.network = network
@@ -897,14 +899,14 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
 
         prep_spherical_nodes_node.synchronize = True
 
-    save_nifti_parcels_node = pe.Node(niu.Function(input_names=['ID', 'dir_path', 'roi', 'network',
+    save_nifti_parcels_node = pe.Node(niu.Function(input_names=['ID', 'dir_path', 'network',
                                                                 'net_parcels_map_nifti'],
                                                    output_names=['net_parcels_nii_path'],
                                                    function=utils.save_nifti_parcels_map, imports=import_list),
                                       name="save_nifti_parcels_node")
 
     # Generate nodes
-    if (roi is not None) or (mask is not None):
+    if roi is not None:
         # Masking case
         node_gen_node = pe.Node(niu.Function(input_names=['roi', 'coords', 'parcel_list', 'labels', 'dir_path',
                                                           'ID', 'parc', 'atlas', 'uatlas'],
@@ -932,7 +934,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                              function=estimation.create_anisopowermap, imports=import_list),
                                 name="get_anisopwr_node")
 
-    register_node = pe.Node(RegisterDWI(), name="register_node")
+    register_node = pe.Node(RegisterDWI(in_dir=in_dir), name="register_node")
     register_node._n_procs = runtime_dict['register_node'][0]
     register_node._mem_gb = runtime_dict['register_node'][1]
 
@@ -1110,6 +1112,22 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                          ('uatlas', 'uatlas')])
                                        ])
 
+    # ROI case
+    if roi is not None:
+        check_orient_and_dims_roi_node = pe.Node(niu.Function(input_names=['infile', 'outdir', 'vox_size'],
+                                                              output_names=['outfile'],
+                                                              function=regutils.check_orient_and_dims,
+                                                              imports=import_list),
+                                                 name="check_orient_and_dims_roi_node")
+
+        register_roi_node = pe.Node(RegisterROIDWI(), name='register_roi_node')
+        dmri_connectometry_wf.connect([
+            (inputnode, check_orient_and_dims_roi_node,
+             [('roi', 'infile')]),
+            (check_orient_and_dims_roi_node, register_roi_node,
+             [('outfile', 'roi')]),
+        ])
+
     # RSN case
     if network or multi_nets:
         get_node_membership_node = pe.Node(niu.Function(input_names=['network', 'infile', 'coords', 'labels',
@@ -1148,9 +1166,10 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                            (get_node_membership_node, save_coords_and_labels_node,
                                             [('net_coords', 'coords'), ('net_labels', 'labels'),
                                              ('network', 'network')]),
-                                           (prep_spherical_nodes_node, node_gen_node,
-                                            [('parc', 'parc'),
-                                             ('parcel_list', 'parcel_list')]),
+                                           (prep_spherical_nodes_node, get_node_membership_node,
+                                            [('parcel_list', 'parcel_list')]),
+                                           (get_node_membership_node, node_gen_node,
+                                            [('net_parcel_list', 'parcel_list')]),
                                            (get_node_membership_node, node_gen_node,
                                             [('net_coords', 'coords'), ('net_labels', 'labels')]),
                                            ])
@@ -1458,10 +1477,11 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         (inputnode, check_orient_and_dims_anat_node, [('anat_file', 'infile'), ('vox_size', 'vox_size'),
                                                       ('outdir', 'outdir')]),
         (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_file')]),
-        (inputnode, save_nifti_parcels_node, [('ID', 'ID'), ('roi', 'roi')]),
+        (inputnode, save_nifti_parcels_node, [('ID', 'ID')]),
         (fetch_nodes_and_labels_node, save_nifti_parcels_node, [('dir_path', 'dir_path')]),
         (node_gen_node, save_nifti_parcels_node, [('net_parcels_map_nifti', 'net_parcels_map_nifti')]),
-        (inputnode, register_atlas_node, [('vox_size', 'vox_size'), ('template_name', 'template_name')]),
+        (inputnode, register_atlas_node, [('vox_size', 'vox_size'), ('template_name', 'template_name'),
+                                          ('mask', 'mask')]),
         (save_nifti_parcels_node, register_atlas_node, [('net_parcels_nii_path', 'uatlas_parcels')]),
         (node_gen_node, register_atlas_node, [('atlas', 'atlas'),
                                               ('coords', 'coords'),
@@ -1505,7 +1525,6 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         (inputnode, run_tracking_node, [('tiss_class', 'tiss_class'),
                                         ('dens_thresh', 'dens_thresh'),
                                         ('ID', 'ID'),
-                                        ('roi', 'roi'),
                                         ('min_span_tree', 'min_span_tree'),
                                         ('disp_filt', 'disp_filt'),
                                         ('parc', 'parc'),
@@ -1583,17 +1602,17 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         dmri_connectometry_wf.connect([
             (inputnode, check_orient_and_dims_waymask_node, [('waymask', 'infile'), ('vox_size', 'vox_size'),
                                                              ('outdir', 'outdir')]),
-            (check_orient_and_dims_waymask_node, register_node, [('outfile', 'waymask')]),
-            (register_node, run_tracking_node, [('waymask_in_dwi', 'waymask')]),
+            (check_orient_and_dims_waymask_node, register_atlas_node, [('outfile', 'waymask')]),
+            (register_atlas_node, run_tracking_node, [('waymask_in_dwi', 'waymask')]),
         ])
     else:
         dmri_connectometry_wf.connect([
-            (inputnode, register_node, [('waymask', 'waymask')]),
+            (inputnode, register_atlas_node, [('waymask', 'waymask')]),
             (inputnode, run_tracking_node, [('waymask', 'waymask')]),
         ])
 
-    # Handle masking scenarios (brain mask and/or roi)
-    if (mask is not None) and (roi is None):
+    # Handle mask scenarios
+    if mask is not None:
         check_orient_and_dims_mask_node = pe.Node(niu.Function(input_names=['infile', 'outdir', 'vox_size'],
                                                                output_names=['outfile'],
                                                                function=regutils.check_orient_and_dims,
@@ -1602,21 +1621,33 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         dmri_connectometry_wf.connect([
             (inputnode, check_orient_and_dims_mask_node, [('mask', 'infile'), ('outdir', 'outdir'),
                                                           ('vox_size', 'vox_size')]),
-            (check_orient_and_dims_mask_node, node_gen_node, [('outfile', 'roi')]),
             (check_orient_and_dims_mask_node, register_node, [('outfile', 'mask')]),
-            (check_orient_and_dims_mask_node, register_atlas_node, [('outfile', 'mask')])
         ])
-    elif (op.isfile(template_mask) is True) and (roi is None):
+    else:
         dmri_connectometry_wf.connect([
-            (inputnode, node_gen_node, [('template_mask', 'roi')]),
             (inputnode, register_node, [('mask', 'mask')]),
-            (inputnode, register_atlas_node, [('mask', 'mask')])
+        ])
+
+    if roi:
+        dmri_connectometry_wf.connect([
+            (inputnode, register_roi_node, [('vox_size', 'vox_size'), ('template_name', 'template_name')]),
+            (register_node, register_roi_node, [('basedir_path', 'basedir_path'),
+                                                ('anat_file', 'anat_file'),
+                                                ('gm_in_dwi', 'gm_in_dwi'),
+                                                ('vent_csf_in_dwi', 'vent_csf_in_dwi'),
+                                                ('wm_in_dwi', 'wm_in_dwi'),
+                                                ('ap_path', 'ap_path'),
+                                                ('B0_mask', 'B0_mask'),
+                                                ('gtab_file', 'gtab_file'),
+                                                ('dwi_file', 'dwi_file')]),
+            (get_fa_node, register_roi_node, [('fa_path', 'fa_path')]),
+            (register_roi_node, node_gen_node, [('roi', 'roi')]),
+            (register_roi_node, run_tracking_node, [('roi', 'roi')])
         ])
     else:
         dmri_connectometry_wf.connect([
             (inputnode, node_gen_node, [('roi', 'roi')]),
-            (inputnode, register_node, [('mask', 'mask')]),
-            (inputnode, register_atlas_node, [('mask', 'mask')])
+            (inputnode, run_tracking_node, [('roi', 'roi')]),
         ])
 
     # Handle multiple RSN cases with multi_nets joinnode
@@ -1685,15 +1716,23 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     from pynets.core import nodemaker, utils, thresholding
     from pynets.fmri import estimation
     from pynets.registration import reg_utils as regutils
-    from pynets.core.interfaces import ExtractTimeseries, PlotFunc, RegisterFunc, RegisterAtlasFunc, FetchNodesLabels
+    from pynets.core.interfaces import ExtractTimeseries, PlotFunc, RegisterFunc, RegisterAtlasFunc, FetchNodesLabels, \
+        RegisterROIEPI
 
     import_list = ["import warnings", "warnings.filterwarnings(\"ignore\")", "import sys", "import os",
                    "import numpy as np", "import networkx as nx", "import nibabel as nib"]
     base_dirname = f"fmri_connectometry_{ID}"
     fmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
-    template = pkg_resources.resource_filename("pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz")
-    template_mask = pkg_resources.resource_filename("pynets", f"templates/{template_name}_brain_mask_{vox_size}.nii.gz")
+    if template_name == 'MNI152_T1':
+        template = pkg_resources.resource_filename("pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz")
+        template_mask = pkg_resources.resource_filename("pynets",
+                                                        f"templates/{template_name}_brain_mask_{vox_size}.nii.gz")
+    else:
+        [template, template_mask, _] = utils.get_template_tf(template_name, vox_size)
+
+    if not op.isfile(template) or not op.isfile(template_mask):
+        raise FileNotFoundError('Template or mask not found!')
 
     # Create input/output nodes
     inputnode = pe.Node(niu.IdentityInterface(fields=['func_file', 'ID', 'atlas', 'network',
@@ -1711,6 +1750,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                       'extract_strategy_list', 'outdir']),
                         name='inputnode')
 
+    in_dir = op.dirname(anat_file)
     inputnode.inputs.func_file = func_file
     inputnode.inputs.ID = ID
     inputnode.inputs.atlas = atlas
@@ -1827,7 +1867,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                            imports=import_list),
                                               name="check_orient_and_dims_anat_node")
 
-    register_node = pe.Node(RegisterFunc(), name="register_node")
+    register_node = pe.Node(RegisterFunc(in_dir=in_dir), name="register_node")
 
     register_node._n_procs = runtime_dict['register_node'][0]
     register_node._mem_gb = runtime_dict['register_node'][1]
@@ -2014,6 +2054,24 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
     # Connect clustering solutions to node definition Node
     if float(k_clustering) > 0:
+        check_orient_and_dims_clust_mask_node = pe.Node(niu.Function(input_names=['infile', 'outdir', 'vox_size'],
+                                                                     output_names=['outfile'],
+                                                                     function=regutils.check_orient_and_dims,
+                                                                     imports=import_list),
+                                                        name="check_orient_and_dims_clust_mask_node")
+
+        register_clust_mask_node = pe.Node(RegisterROIEPI(), name='register_clust_mask_node')
+
+        fmri_connectometry_wf.connect([
+            (inputnode, check_orient_and_dims_clust_mask_node,
+             [('clust_mask', 'infile')]),
+            (check_orient_and_dims_clust_mask_node, register_clust_mask_node,
+             [('outfile', 'roi')]),
+            (check_orient_and_dims_anat_node, register_clust_mask_node, [('outfile', 'anat_file')]),
+            (inputnode, register_clust_mask_node, [('vox_size', 'vox_size'), ('template_name', 'template_name')]),
+            (register_node, register_clust_mask_node, [('basedir_path', 'basedir_path')]),
+        ])
+
         fmri_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('conf', 'conf'),
                                                                      ('local_corr', 'local_corr'),
                                                                      ('outdir', 'outdir')]),
@@ -2026,9 +2084,12 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                          ('atlas', 'atlas'),
                                          ('clustering', 'clustering')]),
                                        (inputnode, clustering_info_node,
-                                        [('clust_mask', 'clust_mask'), ('clust_type', 'clust_type'), ('k', 'k')]),
+                                        [('clust_type', 'clust_type'), ('k', 'k')]),
+                                       (register_clust_mask_node, clustering_info_node,
+                                        [('roi', 'clust_mask')]),
                                        (clustering_info_node, clustering_node,
-                                        [('clust_mask', 'clust_mask'), ('clust_type', 'clust_type'), ('k', 'k')])
+                                        [('clust_mask', 'clust_mask'),
+                                         ('clust_type', 'clust_type'), ('k', 'k')])
                                        ])
     else:
         # Connect atlas input vars to node definition Node
@@ -2139,7 +2200,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                            ])
 
     # Generate nodes
-    if (roi is not None) or (mask is not None):
+    if roi is not None:
         # Masking case
         node_gen_node = pe.Node(niu.Function(input_names=['roi', 'coords', 'parcel_list', 'labels', 'dir_path',
                                                           'ID', 'parc', 'atlas', 'uatlas'],
@@ -2179,75 +2240,72 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         # Parcels case
         extract_ts_node.inputs.parc = True
         extract_ts_node.inputs.node_size = None
-        save_nifti_parcels_node = pe.Node(niu.Function(input_names=['ID', 'dir_path', 'roi', 'network',
-                                                                    'net_parcels_map_nifti'],
-                                                       output_names=['net_parcels_nii_path'],
-                                                       function=utils.save_nifti_parcels_map, imports=import_list),
-                                          name="save_nifti_parcels_node")
-        fmri_connectometry_wf.add_nodes([save_nifti_parcels_node])
-        fmri_connectometry_wf.connect([(inputnode, save_nifti_parcels_node,
-                                        [('roi', 'roi'), ('ID', 'ID')]),
-                                       (fetch_nodes_and_labels_node, save_nifti_parcels_node,
-                                        [('dir_path', 'dir_path')]),
-                                       (node_gen_node, save_nifti_parcels_node,
-                                        [('net_parcels_map_nifti', 'net_parcels_map_nifti')]),
-                                       (save_nifti_parcels_node, extract_ts_node,
-                                        [('net_parcels_nii_path', 'net_parcels_nii_path')])
-                                       ])
-        # Set extract_ts iterables
-        if not smooth_list and hpass_list and extract_strategy_list:
-            extract_strategy_hpass_combo = list(itertools.product(hpass_list, extract_strategy_list))
-            hpass_list = [i[0] for i in extract_strategy_hpass_combo]
-            extract_strategy_list = [i[1] for i in extract_strategy_hpass_combo]
-        elif smooth_list and not hpass_list and extract_strategy_list:
-            extract_strategy_smooth_combo = list(itertools.product(smooth_list, extract_strategy_list))
-            smooth_list = [i[0] for i in extract_strategy_smooth_combo]
-            extract_strategy_list = [i[1] for i in extract_strategy_smooth_combo]
-        elif smooth_list and hpass_list and extract_strategy_list:
-            extract_strategy_smooth_hpass_combo = list(itertools.product(smooth_list, extract_strategy_list, hpass_list))
-            smooth_list = [i[0] for i in extract_strategy_smooth_hpass_combo]
-            extract_strategy_list = [i[1] for i in extract_strategy_smooth_hpass_combo]
-            hpass_list = [i[2] for i in extract_strategy_smooth_hpass_combo]
-        elif smooth_list and hpass_list and not extract_strategy_list:
-            smooth_hpass_combo = list(itertools.product(hpass_list, smooth_list))
-            hpass_list = [i[0] for i in smooth_hpass_combo]
-            smooth_list = [i[1] for i in smooth_hpass_combo]
-
-        if extract_strategy_list:
-            extract_ts_info_iters.append(('extract_strategy', extract_strategy_list))
-        else:
-            fmri_connectometry_wf.connect([(inputnode, extract_ts_info_node, [('extract_strategy',
-                                                                               'extract_strategy')])])
+        register_atlas_node.inputs.node_size = None
 
     else:
-        # Coordinate case
-        extract_ts_node.inputs.parc = False
-        extract_ts_node.inputs.net_parcels_nii_path = None
-        extract_ts_node.inputs.extract_strategy = 'None'
-
-        # Set extract_ts iterables
-        if not smooth_list and hpass_list and node_size_list:
-            node_size_hpass_combo = list(itertools.product(hpass_list, node_size_list))
-            hpass_list = [i[0] for i in node_size_hpass_combo]
-            node_size_list = [i[1] for i in node_size_hpass_combo]
-        elif smooth_list and not hpass_list and node_size_list:
-            node_size_smooth_combo = list(itertools.product(smooth_list, node_size_list))
-            smooth_list = [i[0] for i in node_size_smooth_combo]
-            node_size_list = [i[1] for i in node_size_smooth_combo]
-        elif smooth_list and hpass_list and node_size_list:
-            node_size_smooth_hpass_combo = list(itertools.product(smooth_list, node_size_list, hpass_list))
-            smooth_list = [i[0] for i in node_size_smooth_hpass_combo]
-            node_size_list = [i[1] for i in node_size_smooth_hpass_combo]
-            hpass_list = [i[2] for i in node_size_smooth_hpass_combo]
-        elif smooth_list and hpass_list and not node_size_list:
-            smooth_hpass_combo = list(itertools.product(hpass_list, smooth_list))
-            hpass_list = [i[0] for i in smooth_hpass_combo]
-            smooth_list = [i[1] for i in smooth_hpass_combo]
+        prep_spherical_nodes_node = pe.Node(niu.Function(input_names=['coords', 'node_size', 'template_mask'],
+                                                         output_names=['parcel_list', 'par_max', 'node_size', 'parc'],
+                                                         function=nodemaker.create_spherical_roi_volumes,
+                                                         imports=import_list),
+                                            name="prep_spherical_nodes_node")
 
         if node_size_list:
-            extract_ts_info_iters.append(("node_size", node_size_list))
+            prep_spherical_nodes_node.inputs.node_size = None
+            prep_spherical_nodes_node.iterables = [("node_size", node_size_list)]
         else:
-            fmri_connectometry_wf.connect([(inputnode, extract_ts_info_node, [('node_size', 'node_size')])])
+            fmri_connectometry_wf.connect([(inputnode, prep_spherical_nodes_node,
+                                            [('node_size', 'node_size')]),
+                                           (prep_spherical_nodes_node, register_atlas_node,
+                                            [('node_size', 'node_size')]),
+                                           ])
+
+        prep_spherical_nodes_node.synchronize = True
+
+        # Coordinate case
+        extract_ts_node.inputs.parc = False
+
+    save_nifti_parcels_node = pe.Node(niu.Function(input_names=['ID', 'dir_path', 'network',
+                                                                'net_parcels_map_nifti'],
+                                                   output_names=['net_parcels_nii_path'],
+                                                   function=utils.save_nifti_parcels_map, imports=import_list),
+                                      name="save_nifti_parcels_node")
+    fmri_connectometry_wf.add_nodes([save_nifti_parcels_node])
+    fmri_connectometry_wf.connect([(inputnode, save_nifti_parcels_node,
+                                    [('ID', 'ID')]),
+                                   (fetch_nodes_and_labels_node, save_nifti_parcels_node,
+                                    [('dir_path', 'dir_path')]),
+                                   (node_gen_node, save_nifti_parcels_node,
+                                    [('net_parcels_map_nifti', 'net_parcels_map_nifti')]),
+                                   (save_nifti_parcels_node, extract_ts_node,
+                                    [('net_parcels_nii_path', 'net_parcels_nii_path')]),
+                                   (save_nifti_parcels_node, register_atlas_node,
+                                    [('net_parcels_nii_path', 'uatlas_parcels')]),
+                                   ])
+
+    # Set extract_ts iterables
+    if not smooth_list and hpass_list and extract_strategy_list:
+        extract_strategy_hpass_combo = list(itertools.product(hpass_list, extract_strategy_list))
+        hpass_list = [i[0] for i in extract_strategy_hpass_combo]
+        extract_strategy_list = [i[1] for i in extract_strategy_hpass_combo]
+    elif smooth_list and not hpass_list and extract_strategy_list:
+        extract_strategy_smooth_combo = list(itertools.product(smooth_list, extract_strategy_list))
+        smooth_list = [i[0] for i in extract_strategy_smooth_combo]
+        extract_strategy_list = [i[1] for i in extract_strategy_smooth_combo]
+    elif smooth_list and hpass_list and extract_strategy_list:
+        extract_strategy_smooth_hpass_combo = list(itertools.product(smooth_list, extract_strategy_list, hpass_list))
+        smooth_list = [i[0] for i in extract_strategy_smooth_hpass_combo]
+        extract_strategy_list = [i[1] for i in extract_strategy_smooth_hpass_combo]
+        hpass_list = [i[2] for i in extract_strategy_smooth_hpass_combo]
+    elif smooth_list and hpass_list and not extract_strategy_list:
+        smooth_hpass_combo = list(itertools.product(hpass_list, smooth_list))
+        hpass_list = [i[0] for i in smooth_hpass_combo]
+        smooth_list = [i[1] for i in smooth_hpass_combo]
+
+    if extract_strategy_list:
+        extract_ts_info_iters.append(('extract_strategy', extract_strategy_list))
+    else:
+        fmri_connectometry_wf.connect([(inputnode, extract_ts_info_node, [('extract_strategy',
+                                                                           'extract_strategy')])])
 
     if smooth_list:
         extract_ts_info_iters.append(('smooth', smooth_list))
@@ -2291,6 +2349,23 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
     get_conn_matrix_node.synchronize = True
 
+    # ROI case
+    if roi is not None:
+        check_orient_and_dims_roi_node = pe.Node(niu.Function(input_names=['infile', 'outdir', 'vox_size'],
+                                                              output_names=['outfile'],
+                                                              function=regutils.check_orient_and_dims,
+                                                              imports=import_list),
+                                                 name="check_orient_and_dims_roi_node")
+
+        register_roi_node = pe.Node(RegisterROIEPI(), name='register_roi_node')
+
+        fmri_connectometry_wf.connect([
+            (inputnode, check_orient_and_dims_roi_node,
+             [('roi', 'infile')]),
+            (check_orient_and_dims_roi_node, register_roi_node,
+             [('outfile', 'roi')]),
+        ])
+
     # RSN case
     if network or multi_nets:
         get_node_membership_node = pe.Node(niu.Function(input_names=['network', 'infile', 'coords', 'labels',
@@ -2311,41 +2386,68 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
         fmri_connectometry_wf.connect([(inputnode, get_node_membership_node, [('network', 'network'),
                                                                               ('template', 'infile'),
                                                                               ('parc', 'parc')]),
-                                       (fetch_nodes_and_labels_node, get_node_membership_node,
-                                        [('coords', 'coords'), ('labels', 'labels'),
-                                         ('parcel_list', 'parcel_list'), ('par_max', 'par_max'),
-                                         ('networks_list', 'networks_list')]),
-                                       (get_node_membership_node, node_gen_node,
-                                        [('net_coords', 'coords'), ('net_labels', 'labels'),
-                                         ('net_parcel_list', 'parcel_list')]),
-                                       (get_node_membership_node, save_coords_and_labels_node,
-                                        [('net_coords', 'coords'), ('net_labels', 'labels'),
-                                         ('network', 'network')]),
                                        (fetch_nodes_and_labels_node, save_coords_and_labels_node,
                                         [('dir_path', 'dir_path')]),
+                                       (get_node_membership_node, save_nifti_parcels_node,
+                                        [('network', 'network')]),
                                        (get_node_membership_node, extract_ts_node,
                                         [('network', 'network')]),
                                        (get_node_membership_node, get_conn_matrix_node,
                                         [('network', 'network')]),
-                                       (get_node_membership_node, register_atlas_node, [('network', 'network')])
+                                       (get_node_membership_node, register_atlas_node, [('network', 'network')]),
                                        ])
-        if parc is True:
-            fmri_connectometry_wf.connect([(get_node_membership_node, save_nifti_parcels_node,
-                                            [('network', 'network')]),
+
+        if parc is False:
+            fmri_connectometry_wf.connect([(get_node_membership_node, prep_spherical_nodes_node,
+                                            [('net_coords', 'coords')]),
+                                           (fetch_nodes_and_labels_node, get_node_membership_node,
+                                            [('coords', 'coords'), ('labels', 'labels'),
+                                             ('networks_list', 'networks_list')]),
+                                           (get_node_membership_node, save_coords_and_labels_node,
+                                            [('net_coords', 'coords'), ('net_labels', 'labels'),
+                                             ('network', 'network')]),
+                                           (prep_spherical_nodes_node, get_node_membership_node,
+                                            [('parcel_list', 'parcel_list')]),
+                                           (get_node_membership_node, node_gen_node,
+                                            [('net_parcel_list', 'parcel_list')]),
+                                           (get_node_membership_node, node_gen_node,
+                                            [('net_coords', 'coords'), ('net_labels', 'labels')]),
+                                           ])
+        else:
+            fmri_connectometry_wf.connect([(fetch_nodes_and_labels_node, get_node_membership_node,
+                                            [('coords', 'coords'), ('labels', 'labels'),
+                                             ('parcel_list', 'parcel_list'), ('par_max', 'par_max'),
+                                             ('networks_list', 'networks_list')]),
+                                           (get_node_membership_node, node_gen_node,
+                                            [('net_coords', 'coords'), ('net_labels', 'labels'),
+                                             ('net_parcel_list', 'parcel_list')]),
+                                           (get_node_membership_node, save_coords_and_labels_node,
+                                            [('net_coords', 'coords'), ('net_labels', 'labels'),
+                                             ('network', 'network')]),
                                            ])
     else:
-        fmri_connectometry_wf.connect([(fetch_nodes_and_labels_node, node_gen_node,
-                                        [('coords', 'coords'), ('labels', 'labels'),
-                                         ('parcel_list', 'parcel_list')]),
-                                       (inputnode, register_atlas_node, [('network', 'network')]),
+        fmri_connectometry_wf.connect([(inputnode, save_nifti_parcels_node,
+                                        [('network', 'network')]),
                                        (inputnode, extract_ts_node,
                                         [('network', 'network')]),
                                        (inputnode, get_conn_matrix_node,
-                                        [('network', 'network')])
+                                        [('network', 'network')]),
+                                       (inputnode, register_atlas_node, [('network', 'network')]),
                                        ])
-        if parc is True:
-            fmri_connectometry_wf.connect([(inputnode, save_nifti_parcels_node,
-                                            [('network', 'network')]),
+        if parc is False:
+            fmri_connectometry_wf.connect([(prep_spherical_nodes_node, node_gen_node,
+                                            [('parcel_list', 'parcel_list')]),
+                                           (fetch_nodes_and_labels_node, prep_spherical_nodes_node,
+                                            [('coords', 'coords')]),
+                                           (fetch_nodes_and_labels_node, node_gen_node,
+                                            [('coords', 'coords'),
+                                             ('labels', 'labels')]),
+                                           ])
+        else:
+            fmri_connectometry_wf.connect([(fetch_nodes_and_labels_node, node_gen_node,
+                                            [('coords', 'coords'),
+                                             ('labels', 'labels'),
+                                             ('parcel_list', 'parcel_list')]),
                                            ])
 
     # Begin joinnode chaining
@@ -2600,52 +2702,41 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                         ('prune', 'prune'), ('norm', 'norm'), ('binary', 'binary')])
         ])
 
-    # Handle masking scenarios (brain mask and/or roi)
-    if (mask is not None) and (roi is None):
+    # Handle mask scenarios
+    if mask is not None:
         check_orient_and_dims_mask_node = pe.Node(niu.Function(input_names=['infile', 'outdir', 'vox_size'],
                                                                output_names=['outfile'],
                                                                function=regutils.check_orient_and_dims,
                                                                imports=import_list),
                                                   name="check_orient_and_dims_mask_node")
         fmri_connectometry_wf.connect([
-            (inputnode, check_orient_and_dims_mask_node, [('mask', 'infile'), ('vox_size', 'vox_size'),
-                                                          ('outdir', 'outdir')]),
-            (check_orient_and_dims_mask_node, extract_ts_node, [('outfile', 'mask'), ('outfile', 'roi')]),
-            (extract_ts_node, get_conn_matrix_node, [('roi', 'roi')]),
-            (check_orient_and_dims_mask_node, node_gen_node, [('outfile', 'roi')]),
+            (inputnode, check_orient_and_dims_mask_node, [('mask', 'infile'), ('outdir', 'outdir'),
+                                                          ('vox_size', 'vox_size')]),
+            (check_orient_and_dims_mask_node, register_node, [('outfile', 'mask')]),
         ])
-        if parc is True:
-            fmri_connectometry_wf.connect([
-                (check_orient_and_dims_mask_node, register_node, [('outfile', 'mask')]),
-                (check_orient_and_dims_mask_node, register_atlas_node, [('outfile', 'mask')])
-            ])
-        if k_clustering > 0:
-            fmri_connectometry_wf.connect([
-                (check_orient_and_dims_mask_node, clustering_node, [('outfile', 'mask')]),
-            ])
-    elif (op.isfile(template_mask) is True) and (roi is None):
+    else:
         fmri_connectometry_wf.connect([
-            (inputnode, node_gen_node, [('template_mask', 'roi')]),
-            (inputnode, get_conn_matrix_node, [('template_mask', 'roi')]),
-            (inputnode, extract_ts_node, [('mask', 'mask'), ('roi', 'roi')]),
-
+            (inputnode, register_node, [('mask', 'mask')]),
         ])
-        if parc is True:
-            fmri_connectometry_wf.connect([
-                (inputnode, register_node, [('mask', 'mask')]),
-                (inputnode, register_atlas_node, [('mask', 'mask')])
-            ])
+
+    if roi:
+        fmri_connectometry_wf.connect([
+            (check_orient_and_dims_anat_node, register_roi_node, [('outfile', 'anat_file')]),
+            (inputnode, register_roi_node, [('vox_size', 'vox_size'), ('template_name', 'template_name')]),
+            (register_node, register_roi_node, [('basedir_path', 'basedir_path')]),
+            (register_roi_node, node_gen_node, [('roi', 'roi')]),
+            (register_roi_node, extract_ts_node, [('roi', 'roi')])
+        ])
     else:
         fmri_connectometry_wf.connect([
             (inputnode, node_gen_node, [('roi', 'roi')]),
-            (inputnode, get_conn_matrix_node, [('roi', 'roi')]),
-            (inputnode, extract_ts_node, [('mask', 'mask'), ('roi', 'roi')]),
+            (inputnode, extract_ts_node, [('roi', 'roi')]),
         ])
-        if parc is True:
-            fmri_connectometry_wf.connect([
-                (inputnode, register_node, [('mask', 'mask')]),
-                (inputnode, register_atlas_node, [('mask', 'mask')])
-            ])
+
+    if k_clustering > 0:
+        fmri_connectometry_wf.connect([
+            (register_node, clustering_node, [('t1w_brain_mask', 'mask')]),
+        ])
 
     # Connect remaining nodes of workflow
     fmri_connectometry_wf.connect([
@@ -2657,6 +2748,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                       ('outdir', 'outdir')]),
         (check_orient_and_dims_func_node, extract_ts_node, [('outfile', 'func_file')]),
         (check_orient_and_dims_func_node, fetch_nodes_and_labels_node, [('outfile', 'in_file')]),
+        (register_node, register_atlas_node, [('t1w_brain_mask', 'mask')]),
+        (register_node, extract_ts_node, [('t1w_brain_mask', 'mask')]),
         (inputnode, node_gen_node, [('ID', 'ID'), ('parc', 'parc')]),
         (fetch_nodes_and_labels_node, node_gen_node, [('atlas', 'atlas'), ('uatlas', 'uatlas'),
                                                       ('dir_path', 'dir_path'), ('par_max', 'par_max')]),
@@ -2669,47 +2762,45 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                            ('prune', 'prune'),
                                            ('norm', 'norm'),
                                            ('binary', 'binary')]),
-        (node_gen_node, extract_ts_node, [('coords', 'coords'), ('labels', 'labels'),
-                                          ('atlas', 'atlas'), ('uatlas', 'uatlas'),
-                                          ('dir_path', 'dir_path')]),
+        (node_gen_node, extract_ts_node, [('atlas', 'atlas'), ('dir_path', 'dir_path')]),
         (extract_ts_node, get_conn_matrix_node, [('ts_within_nodes', 'time_series'), ('dir_path', 'dir_path'),
                                                  ('node_size', 'node_size'), ('smooth', 'smooth'),
                                                  ('coords', 'coords'), ('labels', 'labels'),
                                                  ('atlas', 'atlas'), ('uatlas', 'uatlas'), ('hpass', 'hpass'),
-                                                 ('extract_strategy', 'extract_strategy')])
+                                                 ('extract_strategy', 'extract_strategy'), ('roi', 'roi')])
     ])
 
-    # Handle case that t1w image is available to refine parcellation
-    if anat_file and parc is True:
-        fmri_connectometry_wf.disconnect([
-            (node_gen_node, extract_ts_node, [('uatlas', 'uatlas'), ('coords', 'coords'), ('labels', 'labels')]),
-        ])
+    # Check orientation and resolution
+    check_orient_and_dims_uatlas_node = pe.Node(niu.Function(input_names=['infile', 'outdir', 'vox_size'],
+                                                             output_names=['outfile'],
+                                                             function=regutils.check_orient_and_dims,
+                                                             imports=import_list),
+                                                name="check_orient_and_dims_uatlas_node")
+    fmri_connectometry_wf.connect([
+        (inputnode, check_orient_and_dims_anat_node, [('anat_file', 'infile'), ('vox_size', 'vox_size'),
+                                                      ('outdir', 'outdir')]),
+        (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_file')]),
+        (check_orient_and_dims_anat_node, register_atlas_node, [('outfile', 'anat_file')]),
+        (inputnode, register_node, [('vox_size', 'vox_size'), ('template_name', 'template_name')]),
+        (inputnode, register_atlas_node, [('vox_size', 'vox_size'), ('template_name', 'template_name')]),
+        (register_node, register_atlas_node, [('reg_fmri_complete', 'reg_fmri_complete'),
+                                              ('basedir_path', 'basedir_path')]),
+        (inputnode, check_orient_and_dims_uatlas_node, [('vox_size', 'vox_size')]),
+        (fetch_nodes_and_labels_node, check_orient_and_dims_uatlas_node, [('uatlas', 'infile'),
+                                                                          ('dir_path', 'outdir')]),
+        (check_orient_and_dims_uatlas_node, register_atlas_node, [('outfile', 'uatlas')]),
+        (node_gen_node, register_atlas_node, [('coords', 'coords'), ('labels', 'labels'), ('atlas', 'atlas')]),
+        (register_atlas_node, extract_ts_node, [('aligned_atlas_gm', 'uatlas'),
+                                                ('coords', 'coords'), ('labels', 'labels')])
+    ])
 
-        # Check orientation and resolution
-        check_orient_and_dims_uatlas_node = pe.Node(niu.Function(input_names=['infile', 'outdir', 'vox_size'],
-                                                                 output_names=['outfile'],
-                                                                 function=regutils.check_orient_and_dims,
-                                                                 imports=import_list),
-                                                    name="check_orient_and_dims_uatlas_node")
-        fmri_connectometry_wf.connect([
-            (inputnode, check_orient_and_dims_anat_node, [('anat_file', 'infile'), ('vox_size', 'vox_size'),
-                                                          ('outdir', 'outdir')]),
-            (check_orient_and_dims_anat_node, register_node, [('outfile', 'anat_file')]),
-            (check_orient_and_dims_anat_node, register_atlas_node, [('outfile', 'anat_file')]),
-            (inputnode, register_node, [('vox_size', 'vox_size'), ('template_name', 'template_name')]),
-            (inputnode, register_atlas_node, [('vox_size', 'vox_size'), ('template_name', 'template_name')]),
-            (register_node, register_atlas_node, [('reg_fmri_complete', 'reg_fmri_complete'),
-                                                  ('basedir_path', 'basedir_path')]),
-            (inputnode, check_orient_and_dims_uatlas_node, [('vox_size', 'vox_size')]),
-            (fetch_nodes_and_labels_node, check_orient_and_dims_uatlas_node, [('uatlas', 'infile'),
-                                                                              ('dir_path', 'outdir')]),
-            (check_orient_and_dims_uatlas_node, register_atlas_node, [('outfile', 'uatlas')]),
-            (node_gen_node, register_atlas_node, [('coords', 'coords'), ('labels', 'labels'), ('atlas', 'atlas'),
-                                                  ('uatlas', 'uatlas_parcels')]),
-            (register_atlas_node, extract_ts_node, [('aligned_atlas_t1mni_gm', 'uatlas'),
-                                                    ('coords', 'coords'),
-                                                    ('labels', 'labels')]),
-        ])
+    if parc is False:
+        # register_node.inputs.simple = True
+        fmri_connectometry_wf.connect([(inputnode, prep_spherical_nodes_node,
+                                        [('template_mask', 'template_mask')]),
+                                       (fetch_nodes_and_labels_node, prep_spherical_nodes_node,
+                                        [('dir_path', 'dir_path')])
+                                       ])
 
     # Set cpu/memory reqs
     for node_name in fmri_connectometry_wf.list_node_names():

@@ -105,7 +105,7 @@ def test_timseries_extraction_prepare_inputs(conf, hpass, mask, func_file, dim):
 
     base_dir = str(Path(__file__).parent/"examples")
     net_parcels_map_nifti_file = f"{base_dir}/miscellaneous/002_parcels_Default.nii.gz"
-    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
 
     if func_file:
         func_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
@@ -225,10 +225,6 @@ def test_timseries_extraction_extract(conf):
                               extract_strategy=extract_strategy)
     te.prepare_inputs()
 
-    # Test coords extraction
-    te.extract_ts_coords()
-    assert np.shape(te.ts_within_nodes) == (np.shape(img_data)[-1], len(coords))
-
     # Test parc extraction
     te.extract_ts_parc()
     assert np.shape(te.ts_within_nodes) == (np.shape(img_data)[-1], len(np.unique(parcels)) - 1)
@@ -236,7 +232,7 @@ def test_timseries_extraction_extract(conf):
     # Test save and clean up
     te._mask_path = te._mask_img
     te.save_and_cleanup()
-    assert '_spheres_masker' not in te.__dict__.keys()
+
     assert '_parcel_masker' not in te.__dict__.keys()
 
     func_file.close()
@@ -244,6 +240,7 @@ def test_timseries_extraction_extract(conf):
     mask_tmp.close()
     if conf:
         conf_file.close()
+
 
 # dMRI
 def test_create_anisopowermap(dmri_estimation_data):

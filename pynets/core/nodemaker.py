@@ -76,6 +76,11 @@ def create_parcel_atlas(parcel_list):
     concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float32)
     parcel_list_exp = np.array(range(len(parcel_list_exp))).astype('float32')
     parcel_sum = np.sum(parcel_list_exp * np.asarray(concatted_parcels.dataobj), axis=3, dtype=np.uint16)
+    par_max = np.max(parcel_list_exp)
+    outs = np.unique(parcel_sum[parcel_sum>par_max])
+    # Set overlapping cases to zero.
+    for out in outs:
+        parcel_sum[parcel_sum==out] = 0
     net_parcels_map_nifti = nib.Nifti1Image(parcel_sum, affine=parcel_list[0].affine)
     del concatted_parcels, parcel_sum, parcel_list
     gc.collect()
@@ -126,6 +131,8 @@ def fetch_nilearn_atlas_coords(atlas):
 
     if len(coords) <= 1:
         raise ValueError('\nERROR: No coords returned for specified atlas! Ensure an active internet connection.')
+
+    assert len(coords) == len(labels)
 
     return coords, atlas_name, networks_list, labels
 
@@ -398,6 +405,8 @@ def get_node_membership(network, infile, coords, labels, parc, parcel_list, perc
     if len(coords_mm) <= 1:
         raise ValueError(f"\nERROR: No coords from the specified atlas found within {network} network.")
 
+    assert len(coords_mm) == len(net_labels) == len(RSN_parcels)
+
     return coords_mm, RSN_parcels, net_labels, network
 
 
@@ -492,6 +501,8 @@ def parcel_masker(roi, coords, parcel_list, labels, dir_path, ID, perc_overlap):
     if not coords_adj:
         raise ValueError('\nERROR: ROI mask was likely too restrictive and yielded < 2 remaining parcels')
 
+    assert len(coords_adj) == len(labels_adj) == len(parcel_list_adj)
+
     return coords_adj, labels_adj, parcel_list_adj
 
 
@@ -564,6 +575,8 @@ def coords_masker(roi, coords, labels, error):
 
     if len(coords) <= 1:
         raise ValueError('\nERROR: ROI mask was likely too restrictive and yielded < 2 remaining coords')
+
+    assert len(coords) == len(labels)
 
     return coords, labels
 
@@ -929,25 +942,22 @@ def node_gen_masking(roi, coords, parcel_list, labels, dir_path, ID, parc, atlas
     except ImportError:
         import _pickle as pickle
 
-    # Mask Parcels
-    if parc is True:
-        # For parcel masking, specify overlap thresh and error cushion in mm voxels
-        [coords, labels, parcel_list_masked] = nodemaker.parcel_masker(roi, coords, parcel_list, labels,
-                                                                       dir_path, ID, perc_overlap)
-        [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list_masked)
-    # Mask Coordinates
-    else:
-        [coords, labels] = nodemaker.coords_masker(roi, coords, labels, error)
-        # Save coords to pickle
-        coords_path = f"{dir_path}/atlas_coords_{op.basename(roi).split('.')[0]}.pkl"
-        with open(coords_path, 'wb') as f:
-            pickle.dump(coords, f, protocol=2)
+    # For parcel masking, specify overlap thresh and error cushion in mm voxels
+    [coords, labels, parcel_list_masked] = nodemaker.parcel_masker(roi, coords, parcel_list, labels,
+                                                                   dir_path, ID, perc_overlap)
+    [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list_masked)
 
-        net_parcels_map_nifti = None
+    # Save coords to pickle
+    coords_path = f"{dir_path}/atlas_coords_{op.basename(roi).split('.')[0]}.pkl"
+    with open(coords_path, 'wb') as f:
+        pickle.dump(coords, f, protocol=2)
+
     # Save labels to pickle
     labels_path = f"{dir_path}/atlas_labelnames_{op.basename(roi).split('.')[0]}.pkl"
     with open(labels_path, 'wb') as f:
         pickle.dump(labels, f, protocol=2)
+
+    assert len(coords) == len(labels) == len(np.unique(np.asarray(net_parcels_map_nifti.dataobj))[1:])
 
     return net_parcels_map_nifti, coords, labels, atlas, uatlas, dir_path
 
@@ -1003,11 +1013,7 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
     from pynets.core import nodemaker
     pick_dump = False
 
-    if parc is True:
-        [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list)
-    else:
-        net_parcels_map_nifti = None
-        print('No additional roi masking...')
+    [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list)
 
     coords = list(tuple(x) for x in coords)
     if pick_dump is True:
@@ -1020,6 +1026,8 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
         labels_path = f"{dir_path}/atlas_labelnames_wb.pkl"
         with open(labels_path, 'wb') as f:
             pickle.dump(labels, f, protocol=2)
+
+    assert len(coords) == len(labels) == len(np.unique(np.asarray(net_parcels_map_nifti.dataobj))[1:])
 
     return net_parcels_map_nifti, coords, labels, atlas, uatlas, dir_path
 
@@ -1116,7 +1124,7 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     z_vox = np.diagonal(mask_aff[:3, 0:3])[2]
 
     parcel_list_all = []
-    i = 0
+    i = 1
     for coord in coords_vox:
         sphere_vol = np.zeros(mask_shape, dtype=bool)
         sphere_vol[tuple(get_sphere(coord, node_size, (np.abs(x_vox), y_vox, z_vox), mask_shape).T)] = i * 1
@@ -1129,7 +1137,7 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     parcel_list = []
     for mask in parcel_list_all:
         non_ovlp = np.asarray(mask.dataobj) * parcel_intersect
-        parcel_list.append(nib.Nifti1Image(non_ovlp.astype('uint16'), affine=mask_aff))
+        parcel_list.append(nib.Nifti1Image(non_ovlp.astype('bool').astype('uint16'), affine=mask_aff))
 
     par_max = len(coords)
     if par_max > 0:

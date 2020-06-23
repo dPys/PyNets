@@ -187,7 +187,7 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
     import os.path as op
     from nilearn.image import resample_to_img
     from dipy.io.streamline import load_tractogram
-    from pynets.core.utils import missing_elements
+    # from pynets.core.utils import missing_elements
 
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         try:
@@ -356,13 +356,15 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
 
     gc.collect()
 
-    # Correct coords and labels
-    bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(atlas_mni).dataobj).astype('int'))))
-    bad_idxs = [i-1 for i in bad_idxs]
-    if len(bad_idxs) > 0:
-        bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
-        for j in bad_idxs:
-            del labels[j], coords[j]
+    assert len(coords) == len(labels)
+
+    # # Correct coords and labels
+    # bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(atlas_mni).dataobj).astype('int'))))
+    # bad_idxs = [i-1 for i in bad_idxs]
+    # if len(bad_idxs) > 0:
+    #     bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+    #     for j in bad_idxs:
+    #         del labels[j], coords[j]
 
     return (streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi,
             min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget,
@@ -408,15 +410,16 @@ class DmriReg(object):
         self.reg_path_warp = f"{self.reg_path}{'/warps'}"
         self.reg_path_img = f"{self.reg_path}{'/imgs'}"
         self.t12mni_xfm_init = f"{self.reg_path_mat}{'/xfm_t1w2mni_init.mat'}"
-        self.mni2t1_xfm_init = f"{self.reg_path_mat}{'/xfm_mni2t1w_init.mat'}"
         self.t12mni_xfm = f"{self.reg_path_mat}{'/xfm_t1w2mni.mat'}"
         self.mni2t1_xfm = f"{self.reg_path_mat}{'/xfm_mni2t1.mat'}"
         self.mni2t1w_warp = f"{self.reg_path_warp}{'/mni2t1w_warp.nii.gz'}"
         self.warp_t1w2mni = f"{self.reg_path_warp}{'/t1w2mni_warp.nii.gz'}"
         self.t1w2dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_in_dwi.nii.gz'}"
-        self.t1_aligned_mni = f"{self.anat_path}{'/'}{self.t1w_name}{'_aligned_mni.nii.gz'}"
+        self.t1_aligned_mni = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_aligned_mni.nii.gz'}"
         self.t1w_brain = f"{self.anat_path}{'/'}{self.t1w_name}{'_brain.nii.gz'}"
+        self.t1w_head = f"{self.anat_path}{'/'}{self.t1w_name}{'_head.nii.gz'}"
         self.t1w_brain_mask = f"{self.anat_path}{'/'}{self.t1w_name}{'_brain_mask.nii.gz'}"
+        self.t1w_brain_mask_in_dwi = f"{self.anat_path}{'/'}{self.t1w_name}{'_brain_mask_in_dwi.nii.gz'}"
         self.dwi2t1w_xfm = f"{self.reg_path_mat}{'/dwi2t1w_xfm.mat'}"
         self.t1w2dwi_xfm = f"{self.reg_path_mat}{'/t1w2dwi_xfm.mat'}"
         self.t1w2dwi_bbr_xfm = f"{self.reg_path_mat}{'/t1w2dwi_bbr_xfm.mat'}"
@@ -456,8 +459,6 @@ class DmriReg(object):
         self.corpuscallosum = pkg_resources.resource_filename("pynets", f"templates/CorpusCallosum_{vox_size}.nii.gz")
         self.corpuscallosum_mask_t1w = f"{self.reg_path_img}{'/CorpusCallosum_t1wmask.nii.gz'}"
         self.corpuscallosum_dwi = f"{self.reg_path_img}{'/CorpusCallosum_dwi.nii.gz'}"
-        self.waymask_in_t1w = f"{self.reg_path_img}{'/waymask_in_t1w.nii.gz'}"
-        self.waymask_in_dwi = f"{self.reg_path_img}{'/waymask_in_dwi.nii.gz'}"
 
         # Create empty tmp directories that do not yet exist
         reg_dirs = [self.tmp_path, self.reg_path, self.anat_path, self.reg_path_mat, self.reg_path_warp,
@@ -468,7 +469,7 @@ class DmriReg(object):
 
         if op.isfile(self.t1w_brain) is False:
             import shutil
-            shutil.copyfile(self.t1w, self.t1w_brain)
+            shutil.copyfile(self.t1w, self.t1w_head)
 
     def gen_tissue(self, overwrite=True):
         """
@@ -479,27 +480,42 @@ class DmriReg(object):
         import glob
         import shutil
 
+        print(self.basedir_path)
+
         # Apply brain mask if detected as a separate file
-        anat_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')
-        if len(anat_mask_existing) > 0 and not self.mask and overwrite is False:
-            anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing[0], self.basedir_path, self.vox_size)
-            try:
-                os.system(f"fslmaths {self.t1w_brain} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
-            except:
-                try:
-                    from nilearn.image import resample_to_img
-                    nib.save(resample_to_img(nib.load(anat_mask_existing), nib.load(self.t1w_brain)),
-                             anat_mask_existing)
-                    os.system(f"fslmaths {self.t1w_brain} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
-                except ValueError:
-                    print('Cannot coerce mask to shape of T1w anatomical.')
-            # Segment the t1w brain into probability maps
-            gm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
-            wm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-WM_probseg.nii.gz')[0]
-            csf_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-CSF_probseg.nii.gz')[0]
+        anat_mask_existing = glob.glob(self.basedir_path + '/*_desc-brain_mask.nii.gz')
+        if len(anat_mask_existing) > 0:
+            anat_mask_existing = anat_mask_existing[0]
+            print(f"Using {anat_mask_existing}...")
         else:
+            anat_mask_existing = None
+
+        # Segment the t1w brain into probability maps
+        # WM
+        wm_mask_existing = glob.glob(self.basedir_path + '/*_label-WM_probseg.nii.gz')
+        if len(wm_mask_existing) > 0:
+            wm_mask_existing = wm_mask_existing[0]
+        else:
+            wm_mask_existing = None
+
+        # GM
+        gm_mask_existing = glob.glob(self.basedir_path + '/*_label-GM_probseg.nii.gz')
+        if len(gm_mask_existing) > 0:
+            gm_mask_existing = gm_mask_existing[0]
+        else:
+            gm_mask_existing = None
+
+        # CSF
+        csf_mask_existing = glob.glob(self.basedir_path + '/*_label-CSF_probseg.nii.gz')
+        if len(csf_mask_existing) > 0:
+            csf_mask_existing = csf_mask_existing[0]
+            print(f"Using {csf_mask_existing}...")
+        else:
+            csf_mask_existing = None
+
+        if not self.mask:
             # Check if already skull-stripped. If not, strip it.
-            img = nib.load(self.t1w_brain)
+            img = nib.load(self.t1w_head)
             t1w_data = img.get_fdata()
             perc_nonzero = np.count_nonzero(t1w_data) / np.count_nonzero(t1w_data == 0)
             # TODO find a better heuristic for determining whether a t1w image has already been skull-stripped
@@ -513,26 +529,28 @@ class DmriReg(object):
                 ext = Extractor()
                 prob = ext.run(t1w_data)
                 mask = prob > 0.5
-                deeb_brain_mask = op.dirname(self.t1w_brain) + '/deep_brain_mask.nii.gz'
-                nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), deeb_brain_mask)
-                try:
-                    os.system(f"fslmaths {self.t1w_brain} -mas {deeb_brain_mask} {self.t1w_brain} 2>/dev/null")
-                except:
-                    try:
-                        from nilearn.image import resample_to_img
-                        nib.save(resample_to_img(nib.load(deeb_brain_mask), nib.load(self.t1w_brain)),
-                                 deeb_brain_mask)
-                        os.system(f"fslmaths {self.t1w_brain} -mas {deeb_brain_mask} {self.t1w_brain} 2>/dev/null")
-                    except ValueError:
-                        print('Cannot coerce mask to shape of T1w anatomical.')
+                self.mask = f"{op.dirname(self.t1w_head)}/deep_brain_mask.nii.gz"
+                nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), self.mask)
+                img.uncache()
+            else:
+                nib.save(nib.Nifti1Image(t1w_data.astype('bool'), affine=img.affine, header=img.header), self.mask)
+        else:
+            anat_mask_existing = self.mask
 
-            anat_mask_existing = None
-            wm_mask_existing = None
-            gm_mask_existing = None
-            csf_mask_existing = None
+        try:
+            os.system(f"fslmaths {self.t1w_head} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
+        except:
+            try:
+                from nilearn.image import resample_to_img
+                nib.save(resample_to_img(nib.load(anat_mask_existing), nib.load(self.t1w_brain)),
+                         anat_mask_existing)
+                os.system(f"fslmaths {self.t1w_head} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
+            except ValueError:
+                print('Cannot coerce mask to shape of T1w anatomical.')
 
         if wm_mask_existing and gm_mask_existing and csf_mask_existing and overwrite is False:
             if op.isfile(wm_mask_existing) and op.isfile(gm_mask_existing) and op.isfile(csf_mask_existing):
+                print('Existing segmentations detected...')
                 wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.basedir_path,
                                                          self.vox_size, overwrite=False)
                 gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.basedir_path,
@@ -577,11 +595,9 @@ class DmriReg(object):
 
         return
 
-    def t1w2dwi_align(self):
+    def t1w2mni_align(self):
         """
-        A function to perform alignment from T1w --> MNI and T1w_MNI --> DWI. Uses a local optimisation
-        cost function to get the two images close, and then uses bbr to obtain a good alignment of brain boundaries.
-        Assumes input dwi is already preprocessed and brain extracted.
+        A function to perform alignment from T1w --> MNI template.
         """
 
         # Create linear transform/ initializer T1w-->MNI
@@ -591,7 +607,7 @@ class DmriReg(object):
         # Attempt non-linear registration of T1 to MNI template
         if self.simple is False:
             try:
-                print('Running non-linear registration: T1w-->MNI ...')
+                print(f"Learning a non-linear mapping from T1w --> {self.template_name} ...")
                 # Use FNIRT to nonlinearly align T1 to MNI template
                 regutils.align_nonlinear(self.t1w_brain, self.input_mni, xfm=self.t12mni_xfm_init,
                                          out=self.t1_aligned_mni, warp=self.warp_t1w2mni, ref_mask=self.input_mni_mask)
@@ -600,10 +616,15 @@ class DmriReg(object):
                 regutils.inverse_warp(self.t1w_brain, self.mni2t1w_warp, self.warp_t1w2mni)
 
                 # Get mat from MNI -> T1
-                os.system(f"convert_xfm -omat {self.mni2t1_xfm_init} -inverse {self.t12mni_xfm_init} 2>/dev/null")
+                os.system(f"convert_xfm -omat {self.mni2t1_xfm} -inverse {self.t12mni_xfm_init} 2>/dev/null")
 
-            except RuntimeError('Error: FNIRT failed!'):
-                pass
+            except:
+                # Falling back to linear registration
+                regutils.align(self.t1w_brain, self.input_mni_brain, xfm=self.mni2t1_xfm, init=self.t12mni_xfm_init,
+                               bins=None, dof=12, cost='mutualinfo', searchrad=True, interp="spline",
+                               out=self.t1_aligned_mni, sch=None)
+                # Get mat from MNI -> T1
+                os.system(f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm} 2>/dev/null")
         else:
             # Falling back to linear registration
             regutils.align(self.t1w_brain, self.input_mni_brain, xfm=self.t12mni_xfm, init=self.t12mni_xfm_init,
@@ -611,6 +632,13 @@ class DmriReg(object):
                            out=self.t1_aligned_mni, sch=None)
             # Get mat from MNI -> T1
             os.system(f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm} 2>/dev/null")
+
+    def t1w2dwi_align(self):
+        """
+        A function to perform alignment from T1w_MNI --> DWI. Uses a local optimization
+        cost function to get the two images close, and then uses bbr to obtain a good alignment of brain boundaries.
+        Assumes input dwi is already preprocessed and brain extracted.
+        """
 
         # Align T1w-->DWI
         regutils.align(self.ap_path, self.t1w_brain, xfm=self.t1w2dwi_xfm, bins=None, interp="spline", dof=6,
@@ -620,7 +648,7 @@ class DmriReg(object):
         if self.simple is False:
             # Flirt bbr
             try:
-                print('Running FLIRT BBR registration: T1w-->DWI ...')
+                print('Learning a Boundary-Based Mapping from T1w-->DWI ...')
                 regutils.align(self.fa_path, self.t1w_brain, wmseg=self.wm_edge, xfm=self.dwi2t1w_bbr_xfm,
                                init=self.dwi2t1w_xfm, bins=256, dof=7, searchrad=True, interp="spline", out=None,
                                cost='bbr', sch="${FSLDIR}/etc/flirtsch/bbr.sch")
@@ -630,8 +658,11 @@ class DmriReg(object):
                 regutils.align(self.t1w_brain, self.ap_path, init=self.t1w2dwi_bbr_xfm, xfm=self.t1wtissue2dwi_xfm,
                                bins=None, interp="spline", dof=7, cost='mutualinfo', out=self.t1w2dwi, searchrad=True,
                                sch=None)
-            except RuntimeError('Error: FLIRT BBR failed!'):
-                pass
+            except:
+                # Apply the alignment
+                regutils.align(self.t1w_brain, self.ap_path, init=self.t1w2dwi_xfm, xfm=self.t1wtissue2dwi_xfm,
+                               bins=None, interp="spline", dof=7, cost='mutualinfo', out=self.t1w2dwi, searchrad=True,
+                               sch=None)
         else:
             # Apply the alignment
             regutils.align(self.t1w_brain, self.ap_path, init=self.t1w2dwi_xfm, xfm=self.t1wtissue2dwi_xfm, bins=None,
@@ -668,7 +699,7 @@ class DmriReg(object):
         if self.simple is False:
             try:
                 regutils.apply_warp(self.t1w_brain, aligned_atlas_t1mni, aligned_atlas_skull,
-                                    warp=self.mni2t1w_warp, interp='nn', sup=True)
+                                    warp=self.mni2t1w_warp, interp='nn', sup=True, mask=self.t1w_brain_mask)
 
                 # Apply linear transformation from template to dwi space
                 regutils.align(aligned_atlas_skull, self.ap_path, init=self.t1w2dwi_bbr_xfm,
@@ -679,7 +710,7 @@ class DmriReg(object):
                 print("Warning: Atlas is not in correct dimensions, or input is low quality,\nusing linear template "
                       "registration.")
 
-                regutils.align(aligned_atlas_t1mni, self.t1w_brain, init=self.mni2t1_xfm_init,
+                regutils.align(aligned_atlas_t1mni, self.t1w_brain, init=self.mni2t1_xfm,
                                out=aligned_atlas_skull, dof=6, searchrad=True, interp="nearestneighbour",
                                cost='mutualinfo')
 
@@ -688,7 +719,7 @@ class DmriReg(object):
                                cost='mutualinfo')
 
         else:
-            regutils.align(aligned_atlas_t1mni, self.t1w_brain, init=self.mni2t1_xfm_init,
+            regutils.align(aligned_atlas_t1mni, self.t1w_brain, init=self.mni2t1_xfm,
                            out=aligned_atlas_skull, dof=6, searchrad=True, interp="nearestneighbour",
                            cost='mutualinfo')
 
@@ -733,7 +764,7 @@ class DmriReg(object):
         A function to perform alignment of ventricle ROI's from MNI space --> dwi and CSF from T1w space --> dwi.
         First generates and performs dwi space alignment of avoidance/waypoint masks for tractography.
         First creates ventricle ROI. Then creates transforms from stock MNI template to dwi space.
-        For this to succeed, must first have called both t1w2dwi_align and atlas2t1w2dwi_align.
+        For this to succeed, must first have called both t1w2dwi_align.
         """
         import os.path as op
 
@@ -761,6 +792,8 @@ class DmriReg(object):
             regutils.applyxfm(self.corpuscallosum, self.t1w_brain, self.mni2t1_xfm, self.corpuscallosum_mask_t1w)
 
         # Applyxfm tissue maps to dwi space
+        if self.mask is not None:
+            regutils.applyxfm(self.ap_path, self.mask, self.t1wtissue2dwi_xfm, self.t1w_brain_mask_in_dwi)
         regutils.applyxfm(self.ap_path, self.vent_mask_t1w, self.t1wtissue2dwi_xfm, self.vent_mask_dwi)
         regutils.applyxfm(self.ap_path, self.csf_mask, self.t1wtissue2dwi_xfm, self.csf_mask_dwi)
         regutils.applyxfm(self.ap_path, self.gm_mask, self.t1wtissue2dwi_xfm, self.gm_in_dwi)
@@ -810,22 +843,42 @@ class DmriReg(object):
         """
         A function to perform alignment of a waymask from MNI space --> T1w --> dwi.
         """
+        waymask_in_t1w = f"{self.reg_path_img}/waymask-{os.path.basename(waymask).split('.nii')[0]}_in_t1w.nii.gz"
+        waymask_in_dwi = f"{self.reg_path_img}/waymask-{os.path.basename(waymask).split('.nii')[0]}_in_dwi.nii.gz"
 
         # Apply warp or transformer resulting from the inverse MNI->T1w created earlier
         if self.simple is False:
-            regutils.apply_warp(self.t1w_brain, waymask, self.waymask_in_t1w, warp=self.mni2t1w_warp)
+            regutils.apply_warp(self.t1w_brain, waymask, waymask_in_t1w, warp=self.mni2t1w_warp)
         else:
-            regutils.applyxfm(self.t1w_brain, waymask, self.mni2t1_xfm, self.waymask_in_t1w)
+            regutils.applyxfm(self.t1w_brain, waymask, self.mni2t1_xfm, waymask_in_t1w)
 
         # Apply transform from t1w to native dwi space
-        regutils.applyxfm(self.ap_path, self.waymask_in_t1w, self.t1wtissue2dwi_xfm, self.waymask_in_dwi)
+        regutils.applyxfm(self.ap_path, waymask_in_t1w, self.t1wtissue2dwi_xfm, waymask_in_dwi)
 
-        return
+        return waymask_in_dwi
+
+    def roi2dwi_align(self, roi):
+        """
+        A function to perform alignment of a waymask from MNI space --> T1w --> dwi.
+        """
+        roi_in_t1w = f"{self.reg_path_img}/waymask-{os.path.basename(roi).split('.nii')[0]}_in_t1w.nii.gz"
+        roi_in_dwi = f"{self.reg_path_img}/waymask-{os.path.basename(roi).split('.nii')[0]}_in_dwi.nii.gz"
+
+        # Apply warp or transformer resulting from the inverse MNI->T1w created earlier
+        if self.simple is False:
+            regutils.apply_warp(self.t1w_brain, roi, roi_in_t1w, warp=self.mni2t1w_warp)
+        else:
+            regutils.applyxfm(self.t1w_brain, roi, self.mni2t1_xfm, roi_in_t1w)
+
+        # Apply transform from t1w to native dwi space
+        regutils.applyxfm(self.ap_path, roi_in_t1w, self.t1wtissue2dwi_xfm, roi_in_dwi)
+
+        return roi_in_dwi
 
 
 class FmriReg(object):
     """
-    A Class for Registering an atlas to a subject's MNI-aligned T1w image.
+    A Class for Registering an atlas to a subject's MNI-aligned T1w image in native epi space.
 
     References
     ----------
@@ -848,24 +901,26 @@ class FmriReg(object):
         self.t1w_name = 't1w'
         self.simple = simple
         self.basedir_path = basedir_path
-        self.tmp_path = f"{basedir_path}{'/fmri_tmp'}"
-        self.reg_path = f"{basedir_path}{'/fmri_tmp/reg'}"
-        self.anat_path = f"{basedir_path}{'/anat_reg'}"
+        self.reg_path = f"{basedir_path}{'/reg'}"
         self.reg_path_mat = f"{self.reg_path}{'/mats'}"
         self.reg_path_warp = f"{self.reg_path}{'/warps'}"
         self.reg_path_img = f"{self.reg_path}{'/imgs'}"
+        self.t1w2epi_xfm = f"{self.reg_path_mat}{'/t1w2epi_xfm.mat'}"
         self.t12mni_xfm_init = f"{self.reg_path_mat}{'/xfm_t1w2mni_init.mat'}"
-        self.mni2t1_xfm_init = f"{self.reg_path_mat}{'/xfm_mni2t1w_init.mat'}"
         self.t12mni_xfm = f"{self.reg_path_mat}{'/xfm_t1w2mni.mat'}"
         self.mni2t1_xfm = f"{self.reg_path_mat}{'/xfm_mni2t1.mat'}"
         self.mni2t1w_warp = f"{self.reg_path_warp}{'/mni2t1w_warp.nii.gz'}"
         self.warp_t1w2mni = f"{self.reg_path_warp}{'/t1w2mni_warp.nii.gz'}"
-        self.t1_aligned_mni = f"{self.anat_path}{'/'}{self.t1w_name}{'_aligned_mni.nii.gz'}"
-        self.t1w_brain = f"{self.anat_path}{'/'}{self.t1w_name}{'_brain.nii.gz'}"
-        self.t1w_brain_mask = f"{self.anat_path}{'/'}{self.t1w_name}{'_brain_mask.nii.gz'}"
-        self.map_name = f"{self.anat_path}{'/'}{self.t1w_name}{'_seg'}"
-        self.gm_mask = f"{self.anat_path}{'/'}{self.t1w_name}{'_gm.nii.gz'}"
-        self.gm_mask_thr = f"{self.anat_path}{'/'}{self.t1w_name}{'_gm_thr.nii.gz'}"
+        self.t1_aligned_mni = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_aligned_mni.nii.gz'}"
+        self.t1w_brain = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_brain.nii.gz'}"
+        self.t1w_head = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_head.nii.gz'}"
+        self.t1w_brain_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_brain_mask.nii.gz'}"
+        self.map_name = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_seg'}"
+        self.gm_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_gm.nii.gz'}"
+        self.gm_mask_thr = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_gm_thr.nii.gz'}"
+        self.wm_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm.nii.gz'}"
+        self.wm_mask_thr = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm_thr.nii.gz'}"
+        self.wm_edge = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm_edge.nii.gz'}"
         self.input_mni = pkg_resources.resource_filename("pynets",
                                                          f"templates/{self.template_name}_{vox_size}.nii.gz")
         self.input_mni_brain = pkg_resources.resource_filename("pynets",
@@ -876,15 +931,14 @@ class FmriReg(object):
                                                               f"brain_mask_{vox_size}.nii.gz")
 
         # Create empty tmp directories that do not yet exist
-        reg_dirs = [self.tmp_path, self.reg_path, self.anat_path, self.reg_path_mat, self.reg_path_warp,
-                    self.reg_path_img]
+        reg_dirs = [self.reg_path, self.reg_path_mat, self.reg_path_warp, self.reg_path_img]
         for i in range(len(reg_dirs)):
             if not op.isdir(reg_dirs[i]):
                 os.mkdir(reg_dirs[i])
 
         if op.isfile(self.t1w_brain) is False:
             import shutil
-            shutil.copyfile(self.t1w, self.t1w_brain)
+            shutil.copyfile(self.t1w, self.t1w_head)
 
     def gen_tissue(self, overwrite=False):
         """
@@ -894,25 +948,32 @@ class FmriReg(object):
         import os.path as op
 
         # Apply brain mask if detected as a separate file
-        anat_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_desc-brain_mask.nii.gz')
-        if len(anat_mask_existing) > 0 and not self.mask and overwrite is False:
-            anat_mask_existing = regutils.check_orient_and_dims(anat_mask_existing[0], self.basedir_path, self.vox_size)
-            try:
-                os.system(f"fslmaths {self.t1w_brain} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
-            except:
-                try:
-                    from nilearn.image import resample_to_img
-                    nib.save(resample_to_img(nib.load(anat_mask_existing), nib.load(self.t1w_brain)),
-                             anat_mask_existing)
-                    os.system(f"fslmaths {self.t1w_brain} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
-                except ValueError:
-                    print('Cannot coerce mask to shape of T1w anatomical.')
-
-            # Segment the t1w brain into probability maps
-            gm_mask_existing = glob.glob(op.dirname(self.t1w) + '/*_label-GM_probseg.nii.gz')[0]
+        print(self.basedir_path)
+        anat_mask_existing = glob.glob(self.basedir_path + '/*_desc-brain_mask.nii.gz')
+        if len(anat_mask_existing) > 0:
+            anat_mask_existing = anat_mask_existing[0]
+            print(f"Using {anat_mask_existing}...")
         else:
+            anat_mask_existing = None
+
+        # Segment the t1w brain into probability maps
+        # WM
+        wm_mask_existing = glob.glob(self.basedir_path + '/*_label-WM_probseg.nii.gz')
+        if len(wm_mask_existing) > 0:
+            wm_mask_existing = wm_mask_existing[0]
+        else:
+            wm_mask_existing = None
+
+        # GM
+        gm_mask_existing = glob.glob(self.basedir_path + '/*_label-GM_probseg.nii.gz')
+        if len(gm_mask_existing) > 0:
+            gm_mask_existing = gm_mask_existing[0]
+        else:
+            gm_mask_existing = None
+
+        if not self.mask:
             # Check if already skull-stripped. If not, strip it.
-            img = nib.load(self.t1w_brain)
+            img = nib.load(self.t1w_head)
             t1w_data = img.get_fdata()
             perc_nonzero = np.count_nonzero(t1w_data) / np.count_nonzero(t1w_data == 0)
             # TODO find a better heuristic for determining whether a t1w image has already been skull-stripped
@@ -926,49 +987,65 @@ class FmriReg(object):
                 ext = Extractor()
                 prob = ext.run(t1w_data)
                 mask = prob > 0.5
-                deeb_brain_mask = op.dirname(self.t1w_brain) + '/deep_brain_mask.nii.gz'
-                nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), deeb_brain_mask)
-                try:
-                    os.system(f"fslmaths {self.t1w_brain} -mas {deeb_brain_mask} {self.t1w_brain} 2>/dev/null")
-                except:
-                    try:
-                        from nilearn.image import resample_to_img
-                        nib.save(resample_to_img(nib.load(deeb_brain_mask), nib.load(self.t1w_brain)),
-                                 deeb_brain_mask)
-                        os.system(f"fslmaths {self.t1w_brain} -mas {deeb_brain_mask} {self.t1w_brain} 2>/dev/null")
-                    except ValueError:
-                        print('Cannot coerce mask to shape of T1w anatomical.')
-            anat_mask_existing = None
-            gm_mask_existing = None
-            img.uncache()
+                self.mask = f"{op.dirname(self.t1w_head)}/deep_brain_mask.nii.gz"
+                nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), self.mask)
+                img.uncache()
+            else:
+                nib.save(nib.Nifti1Image(t1w_data.astype('bool'), affine=img.affine, header=img.header), self.mask)
+        else:
+            anat_mask_existing = self.mask
 
-        if gm_mask_existing:
+        try:
+            os.system(f"fslmaths {self.t1w_head} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
+        except:
+            try:
+                from nilearn.image import resample_to_img
+                nib.save(resample_to_img(nib.load(anat_mask_existing), nib.load(self.t1w_brain)),
+                         anat_mask_existing)
+                os.system(f"fslmaths {self.t1w_head} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
+            except ValueError:
+                print('Cannot coerce mask to shape of T1w anatomical.')
+
+        if wm_mask_existing and gm_mask_existing:
             if op.isfile(gm_mask_existing) and overwrite is False:
-                out_gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.basedir_path, self.vox_size,
-                                                             overwrite=False)
+                print('Existing segmentations detected...')
+                gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.basedir_path, self.vox_size,
+                                                         overwrite=False)
+                wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.basedir_path, self.vox_size,
+                                                         overwrite=False)
             else:
                 try:
                     maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
-                    out_gm_mask = maps['gm_prob']
+                    gm_mask = maps['gm_prob']
+                    wm_mask = maps['wm_prob']
                 except RuntimeError:
                     print('Segmentation failed. Does the input anatomical image still contained skull?')
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
-                out_gm_mask = maps['gm_prob']
+                gm_mask = maps['gm_prob']
+                wm_mask = maps['wm_prob']
             except RuntimeError:
                 print('Segmentation failed. Does the input anatomical image still contained skull?')
-
-        # Threshold GM to binary in func space
-        t_img = nib.load(out_gm_mask)
-        mask = math_img('img > 0.05', img=t_img)
-        mask.to_filename(self.gm_mask_thr)
-        os.system(f"fslmaths {out_gm_mask} -mas {self.gm_mask_thr} {self.gm_mask} 2>/dev/null")
 
         # Threshold T1w brain to binary in anat space
         t_img = nib.load(self.t1w_brain)
         mask = math_img('img > 0.0', img=t_img)
         mask.to_filename(self.t1w_brain_mask)
+
+        # Threshold GM to binary in func space
+        t_img = nib.load(gm_mask)
+        mask = math_img('img > 0.05', img=t_img)
+        mask.to_filename(self.gm_mask_thr)
+        os.system(f"fslmaths {gm_mask} -mas {self.gm_mask_thr} {self.gm_mask} 2>/dev/null")
+
+        # Threshold WM to binary in dwi space
+        t_img = nib.load(wm_mask)
+        mask = math_img('img > 0.50', img=t_img)
+        mask.to_filename(self.wm_mask_thr)
+
+        # Extract wm edge
+        os.system(f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} {self.wm_edge} 2>/dev/null")
 
         return
 
@@ -976,30 +1053,67 @@ class FmriReg(object):
         """
         A function to perform alignment from T1w --> MNI.
         """
+
         # Create linear transform/ initializer T1w-->MNI
         regutils.align(self.t1w_brain, self.input_mni_brain, xfm=self.t12mni_xfm_init, bins=None, interp="spline",
                        out=None, dof=12, cost='mutualinfo', searchrad=True)
 
         # Attempt non-linear registration of T1 to MNI template
-        try:
-            print('Running non-linear registration: T1w-->MNI ...')
-            # Use FNIRT to nonlinearly align T1 to MNI template
-            regutils.align_nonlinear(self.t1w_brain, self.input_mni, xfm=self.t12mni_xfm_init, out=self.t1_aligned_mni,
-                                     warp=self.warp_t1w2mni, ref_mask=self.input_mni_mask)
+        if self.simple is False:
+            try:
+                print(f"Learning a non-linear mapping from T1w --> {self.template_name} ...")
+                # Use FNIRT to nonlinearly align T1w to MNI template
+                regutils.align_nonlinear(self.t1w_brain, self.input_mni, xfm=self.t12mni_xfm_init,
+                                         out=self.t1_aligned_mni, warp=self.warp_t1w2mni,
+                                         ref_mask=self.input_mni_mask)
 
-        except RuntimeError('Error: FNIRT failed!'):
-            pass
+                # Get warp from T1w --> MNI
+                regutils.inverse_warp(self.t1w_brain, self.mni2t1w_warp, self.warp_t1w2mni)
 
-    def atlas2t1wmni_align(self, uatlas, uatlas_parcels, atlas):
+                # Get mat from MNI -> T1w
+                os.system(f"convert_xfm -omat {self.mni2t1_xfm} -inverse {self.t12mni_xfm_init} 2>/dev/null")
+
+            except:
+                # Falling back to linear registration
+                regutils.align(self.t1w_brain, self.input_mni_brain, xfm=self.t12mni_xfm, init=self.t12mni_xfm_init,
+                               bins=None, dof=12, cost='mutualinfo', searchrad=True, interp="spline",
+                               out=self.t1_aligned_mni, sch=None)
+                # Get mat from MNI -> T1w
+                os.system(f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm} 2>/dev/null")
+        else:
+            # Falling back to linear registration
+            regutils.align(self.t1w_brain, self.input_mni_brain, xfm=self.t12mni_xfm, init=self.t12mni_xfm_init,
+                           bins=None, dof=12, cost='mutualinfo', searchrad=True, interp="spline",
+                           out=self.t1_aligned_mni, sch=None)
+            # Get mat from MNI -> T1w
+            os.system(f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm} 2>/dev/null")
+        return
+
+    def roi2t1w_align(self, roi):
         """
-        A function to perform atlas alignment from atlas --> T1_MNI.
+        A function to perform alignment of a roi from MNI space --> T1w.
+        """
+
+        roi_in_t1w = f"{self.reg_path_img}/roi-{os.path.basename(roi).split('.nii')[0]}_in_t1w.nii.gz"
+
+        # Apply warp or transformer resulting from the inverse MNI->T1w created earlier
+        if self.simple is False:
+            regutils.apply_warp(self.t1w_brain, roi, roi_in_t1w, warp=self.mni2t1w_warp)
+        else:
+            regutils.applyxfm(self.t1w_brain, roi, self.mni2t1_xfm, roi_in_t1w)
+
+        return roi_in_t1w
+
+    def atlas2t1w_align(self, uatlas, uatlas_parcels, atlas):
+        """
+        A function to perform atlas alignment from atlas --> T1w.
         """
         from nilearn.image import resample_to_img
         from pynets.core.utils import checkConsecutive
 
-        gm_mask_mni = f"{self.anat_path}{'/'}{atlas}{'_gm_mask_t1w_mni.nii.gz'}"
-        aligned_atlas_t1mni_gm = f"{self.anat_path}{'/'}{atlas}{'_t1w_mni_gm.nii.gz'}"
-        uatlas_res = f"{self.anat_path}{'/'}{atlas}{'_res.nii.gz'}"
+        aligned_atlas_t1mni = f"{self.reg_path_img}{'/'}{atlas}{'_t1w_mni.nii.gz'}"
+        aligned_atlas_skull = f"{self.reg_path_img}{'/'}{atlas}{'_t1w_skull.nii.gz'}"
+        aligned_atlas_gm = f"{self.reg_path_img}{'/'}{atlas}{'_gm.nii.gz'}"
 
         template_img = nib.load(self.t1_aligned_mni)
         if uatlas_parcels:
@@ -1011,19 +1125,41 @@ class FmriReg(object):
 
         uatlas_res_template = nib.Nifti1Image(uatlas_res_template_data.astype('uint16'),
                                               affine=uatlas_res_template.affine, header=uatlas_res_template.header)
-        nib.save(uatlas_res_template, uatlas_res)
+        nib.save(uatlas_res_template, aligned_atlas_t1mni)
 
-        regutils.applyxfm(self.t1_aligned_mni, self.gm_mask, self.t12mni_xfm_init, gm_mask_mni,
-                          interp="nearestneighbour")
+        if self.simple is False:
+            try:
+                regutils.apply_warp(self.t1w_brain, aligned_atlas_t1mni, aligned_atlas_skull,
+                                    warp=self.mni2t1w_warp, interp='nn', sup=True, mask=self.t1w_brain_mask)
 
-        os.system(f"fslmaths {gm_mask_mni} -bin {gm_mask_mni} 2>/dev/null")
-        os.system(f"fslmaths {uatlas_res} -mas {gm_mask_mni} {aligned_atlas_t1mni_gm} 2>/dev/null")
+            except:
+                print("Warning: Atlas is not in correct dimensions, or input is low quality,\nusing linear template "
+                      "registration.")
 
-        final_dat = nib.load(aligned_atlas_t1mni_gm).get_fdata()
+                regutils.align(aligned_atlas_t1mni, self.t1w_brain, init=self.mni2t1_xfm,
+                               out=aligned_atlas_skull, dof=6, searchrad=True, interp="nearestneighbour",
+                               cost='mutualinfo')
+
+        else:
+            regutils.align(aligned_atlas_t1mni, self.t1w_brain, init=self.mni2t1_xfm,
+                           out=aligned_atlas_skull, dof=6, searchrad=True, interp="nearestneighbour",
+                           cost='mutualinfo')
+
+        os.system(f"fslmaths {aligned_atlas_skull} -mas {self.gm_mask} {aligned_atlas_gm} 2>/dev/null")
+        atlas_img = nib.load(aligned_atlas_gm)
+
+        uatlas_res_template_data = np.asarray(atlas_img.dataobj)
+        uatlas_res_template_data[uatlas_res_template_data != uatlas_res_template_data.astype(int)] = 0
+        atlas_img_corr = nib.Nifti1Image(uatlas_res_template_data.astype('uint32'),
+                                         affine=atlas_img.affine, header=atlas_img.header)
+        nib.save(atlas_img_corr, aligned_atlas_gm)
+        final_dat = nib.load(aligned_atlas_gm).get_fdata()
         unique_a = list(set(np.array(final_dat.flatten().tolist())))
         unique_a.sort()
 
         if not checkConsecutive(unique_a):
             print('Warning! Non-consecutive integers found in parcellation...')
 
-        return aligned_atlas_t1mni_gm
+        template_img.uncache()
+
+        return aligned_atlas_gm, aligned_atlas_skull

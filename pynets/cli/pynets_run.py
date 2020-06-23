@@ -76,11 +76,11 @@ def get_parser():
                              'simultaneously, then anatomical Nifti1Image file paths need to be repeated, '
                              'but separated by comma.\n')
     parser.add_argument('-m',
-                        metavar='Path to binarized mask Nifti1Image to apply to regions before extracting signals',
+                        metavar='Path to a T1w brain mask image (if available) in native anatomical space',
                         default=None,
                         nargs='+',
-                        help='Specify either a path to a binarized brain mask Nifti1Image in MNI152 space '
-                             'OR multiple paths to multiple brain mask Nifti1Image files in the case of running '
+                        help='File path to a T1w brain mask Nifti image (if available) in native anatomical space'
+                             'OR multiple file paths to multiple T1w brain mask Nifti images in the case of running '
                              'multiple participants, in which case paths should be separated by a space. If no brain '
                              'mask is supplied, the template mask will be used (see runconfig.yaml).\n')
     parser.add_argument('-conf',
@@ -105,7 +105,7 @@ def get_parser():
                              'or the `-p` and `-norm` flags if graph defragementation or normalization is desired. '
                              'The `-mod` flag can be used for additional provenance/file-naming.\n')
     parser.add_argument('-roi',
-                        metavar='Path to binarized Region-of-Interest (ROI) Nifti1Image',
+                        metavar='Path to binarized Region-of-Interest (ROI) Nifti1Image in template MNI space.',
                         default=None,
                         nargs='+',
                         help='Optionally specify a binarized ROI mask and retain only those nodes '
@@ -121,6 +121,14 @@ def get_parser():
                         nargs='+',
                         help='Optionally specify a binarized ROI mask in MNI-space to constrain tractography in the '
                              'case of dmri connectome estimation.\n')
+    parser.add_argument('-ua',
+                        metavar='Path to custom parcellation file',
+                        default=None,
+                        nargs='+',
+                        help='(Hyperparameter): Optionally specify a path to a parcellation/atlas Nifti1Image file in '
+                             'MNI space. Labels should be spatially distinct across hemispheres and ordered with '
+                             'consecutive integers with a value of 0 as the background label. If specifying a list of '
+                             'paths to multiple user atlases, separate them by space.\n')
 
     # Modality-independent hyperparameters
     parser.add_argument('-mod',
@@ -135,14 +143,6 @@ def get_parser():
                              'If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, '
                              'QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. '
                              'Default is partcorr for fMRI. For dMRI, models include csa and csd.\n')
-    parser.add_argument('-ua',
-                        metavar='Path to parcellation file in MNI-space',
-                        default=None,
-                        nargs='+',
-                        help='(Hyperparameter): Optionally specify a path to a parcellation/atlas Nifti1Image file in '
-                             'MNI152 space. Labels should be spatially distinct across hemispheres and ordered with '
-                             'consecutive integers with a value of 0 as the background label. If specifying a list of '
-                             'paths to multiple user atlases, separate them by space.\n')
     parser.add_argument('-a',
                         metavar='Atlas',
                         default=None,
@@ -242,14 +242,6 @@ def get_parser():
                              'disconnected components will leading to clustering instability in the case of complete, '
                              'average, or single clustering. If specifying a list of '
                              'clustering types, separate them by space.\n')
-    parser.add_argument('-cc',
-                        metavar='Clustering connectivity type',
-                        default='allcorr',
-                        nargs=1,
-                        choices=['tcorr', 'scorr', 'allcorr'],
-                        help='Include this flag if you are running agglomerative-type clustering (e.g. ward, average, '
-                             'single, complete, and wish to specify a spatially constrained connectivity method based '
-                             'on tcorr or scorr. Default is allcorr which has no constraints.\n')
     parser.add_argument('-cm',
                         metavar='Cluster mask',
                         default=None,
@@ -277,31 +269,6 @@ def get_parser():
                              'Default is det. If you wish to iterate the pipeline across multiple '
                              'direction-getting methods, separate the list by space (e.g. \'det\', \'prob\', '
                              '\'clos\').\n')
-
-    # dMRI settings (non-hyperparameter)
-    parser.add_argument('-tt',
-                        metavar='Tracking algorithm',
-                        default='local',
-                        nargs=1,
-                        choices=['local', 'particle'],
-                        help='Include this flag to manually specify a tracking algorithm for dmri connectome '
-                             'estimation. Options are: local and particle. Default is local. Iterable tracking '
-                             'techniques not currently supported.\n')
-    parser.add_argument('-tc',
-                        metavar='Tissue classification method',
-                        default='bin',
-                        nargs=1,
-                        choices=['wb', 'cmc', 'act', 'bin'],
-                        help='Include this flag to manually specify a tissue classification method for dmri '
-                             'connectome estimation. Options are: cmc (continuous), act (anatomically-constrained), '
-                             'wb (whole-brain mask), and bin (binary to white-matter only). Default is bin. Iterable '
-                             'selection of tissue classification method is not currently supported.\n')
-    parser.add_argument('-s',
-                        metavar='Number of samples',
-                        default='100000',
-                        help='Include this flag to manually specify a number of cumulative streamline samples for '
-                             'tractography. Default is 100000. Iterable number of samples not currently supported.\n')
-
     # General settings
     parser.add_argument('-norm',
                         metavar='Normalization strategy for resulting graph(s)',
@@ -377,11 +344,6 @@ def get_parser():
                              'LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing '
                              'multiple RSNs, separate them by space. (e.g. -n \'Default\' \'Cont\' \'SalVentAttn\')\'.'
                              '\n')
-    parser.add_argument('-names',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to deactivate automated anatomical labeling of '
-                             'nodes.\n')
     parser.add_argument('-vox',
                         default='2mm',
                         nargs=1,
@@ -620,15 +582,11 @@ def build_workflow(args, retval):
             clust_type_list = None
     else:
         clust_type_list = None
-    local_corr = args.cc
-    if type(local_corr) is list:
-        local_corr = local_corr[0]
     plot_switch = args.plt
     min_thr = args.min_thr
     max_thr = args.max_thr
     step_thr = args.step_thr
     anat_file = args.anat
-    num_total_samples = args.s
     spheres = args.spheres
     if spheres is True:
         parc = False
@@ -668,7 +626,6 @@ def build_workflow(args, retval):
     plugin_type = args.plug
     if type(plugin_type) is list:
         plugin_type = plugin_type[0]
-    use_AAL_naming = args.names
     verbose = args.v
     clust_mask = args.cm
     if clust_mask:
@@ -731,7 +688,6 @@ def build_workflow(args, retval):
             multi_atlas = None
     else:
         multi_atlas = None
-    target_samples = args.s
     min_length = args.ml
     if min_length:
         if (type(min_length) is list) and (len(min_length) > 1):
@@ -746,14 +702,6 @@ def build_workflow(args, retval):
             min_length_list = None
     else:
         min_length_list = None
-    track_type = args.tt
-    if type(track_type) is list:
-        track_type = track_type[0]
-    tiss_class = args.tc
-    if type(tiss_class) is list:
-        tiss_class = tiss_class[0]
-    if track_type == 'particle':
-        tiss_class = 'cmc'
     directget = args.dg
     if directget:
         if (type(directget) is list) and (len(directget) > 1):
@@ -784,12 +732,20 @@ def build_workflow(args, retval):
             hardcoded_params = yaml.load(stream)
             maxcrossing = hardcoded_params['maxcrossing'][0]
             overlap_thr = hardcoded_params['overlap_thr'][0]
+            local_corr = hardcoded_params['clustering_local_conn'][0]
+            track_type = hardcoded_params['tracking_method'][0]
+            tiss_class = hardcoded_params['tissue_classifier'][0]
+            target_samples = hardcoded_params['tracking_samples'][0]
+            use_AAL_naming = hardcoded_params['aal_names'][0]
             step_list = hardcoded_params['step_list']
             curv_thr_list = hardcoded_params['curv_thr_list']
             nilearn_parc_atlases = hardcoded_params['nilearn_parc_atlases']
             nilearn_coord_atlases = hardcoded_params['nilearn_coord_atlases']
             nilearn_prob_atlases = hardcoded_params['nilearn_prob_atlases']
             local_atlases = hardcoded_params['local_atlases']
+
+            if track_type == 'particle':
+                tiss_class = 'cmc'
 
             # Set paths to templates
             runtime_dict = {}
@@ -1084,13 +1040,11 @@ def build_workflow(args, retval):
             else:
                 hpass = None
 
-            if extract_strategy_list and (parc is True):
+            if extract_strategy_list:
                 print(f"\nExtracting node signal using multiple strategies: "
                       f"{str(', '.join(str(n) for n in extract_strategy_list))}...")
-            elif (extract_strategy is not None) and (parc is True):
-                print(f"\nExtracting node signal using a {extract_strategy} strategy...")
             else:
-                extract_strategy = None
+                print(f"\nExtracting node signal using a {extract_strategy} strategy...")
 
         if conn_model_list:
             print(f"\nIterating graph estimation across multiple connectivity models: "
@@ -1557,7 +1511,7 @@ def build_workflow(args, retval):
                                multi_nets, conn_model, dens_thresh, conf, plot_switch, dwi_file,
                                multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_file, parc, ref_txt, procmem, k,
                                clust_mask, k_list, k_clustering, user_atlas_list, clust_mask_list, prune,
-                               node_size_list, num_total_samples, graph, conn_model_list, min_span_tree, verbose,
+                               node_size_list, graph, conn_model_list, min_span_tree, verbose,
                                plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
                                clust_type_list, mask, norm, binary, fbval, fbvec, target_samples,
                                curv_thr_list, step_list, overlap_thr, track_type, min_length, maxcrossing, directget,
@@ -1619,7 +1573,7 @@ def build_workflow(args, retval):
                                         multi_nets, conn_model, dens_thresh, conf, plot_switch, dwi_file,
                                         anat_file, parc, ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr,
                                         step_thr, k, clust_mask, k_list, k_clustering, user_atlas_list,
-                                        clust_mask_list, prune, node_size_list, num_total_samples, conn_model_list,
+                                        clust_mask_list, prune, node_size_list, conn_model_list,
                                         min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list,
                                         disp_filt, clust_type, clust_type_list, mask, norm, binary,
                                         fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
@@ -1738,7 +1692,7 @@ def build_workflow(args, retval):
                          anat_file_list, atlas, network, node_size, roi, thr, uatlas, multi_nets, conn_model,
                          dens_thresh, conf, plot_switch, dwi_file, multi_thr, multi_atlas, min_thr,
                          max_thr, step_thr, anat_file, parc, ref_txt, procmem, k, clust_mask, k_list,
-                         k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list, num_total_samples,
+                         k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
                          conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming,
                          multi_subject_graph, multi_subject_multigraph,
                          smooth, smooth_list, disp_filt, clust_type, clust_type_list, mask, norm,
@@ -1803,7 +1757,7 @@ def build_workflow(args, retval):
                     parc=parc, ref_txt=ref_txt, procmem=procmem, k=k, clust_mask=clust_mask, k_list=k_list,
                     k_clustering=k_clustering, user_atlas_list=user_atlas_list,
                     clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
-                    num_total_samples=num_total_samples, graph=None, conn_model_list=conn_model_list,
+                    graph=None, conn_model_list=conn_model_list,
                     min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type,
                     use_AAL_naming=use_AAL_naming,
                     multi_graph=None, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
@@ -1868,7 +1822,7 @@ def build_workflow(args, retval):
                     parc=parc, ref_txt=ref_txt, procmem=procmem, k=k, clust_mask=clust_mask, k_list=k_list,
                     k_clustering=k_clustering, user_atlas_list=user_atlas_list,
                     clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
-                    num_total_samples=num_total_samples, graph=graph, conn_model_list=conn_model_list,
+                    graph=graph, conn_model_list=conn_model_list,
                     min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type,
                     use_AAL_naming=use_AAL_naming,
                     multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
@@ -1913,7 +1867,7 @@ def build_workflow(args, retval):
                                               multi_atlas, min_thr, max_thr, step_thr, anat_file, parc,
                                               ref_txt, procmem, k, clust_mask, k_list,
                                               k_clustering, user_atlas_list, clust_mask_list, prune,
-                                              node_size_list, num_total_samples, conn_model_list,
+                                              node_size_list, conn_model_list,
                                               min_span_tree, verbose, plugin_type, use_AAL_naming, multi_subject_graph,
                                               multi_subject_multigraph,
                                               smooth, smooth_list, disp_filt, clust_type, clust_type_list, mask, norm,
@@ -2014,7 +1968,7 @@ def build_workflow(args, retval):
                                     multi_nets, conn_model, dens_thresh, conf, plot_switch, dwi_file,
                                     multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_file, parc, ref_txt,
                                     procmem, k, clust_mask, k_list, k_clustering, user_atlas_list,
-                                    clust_mask_list, prune, node_size_list, num_total_samples, graph, conn_model_list,
+                                    clust_mask_list, prune, node_size_list, graph, conn_model_list,
                                     min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
                                     smooth_list, disp_filt, clust_type, clust_type_list, mask,
                                     norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,

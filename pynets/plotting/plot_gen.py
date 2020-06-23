@@ -744,7 +744,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         if '\'b' in atlas:
             atlas = atlas.decode('utf-8')
 
-        namer_dir = dir_path + '/figures'
+        namer_dir = f"{dir_path}/figures"
         if not os.path.isdir(namer_dir):
             os.makedirs(namer_dir, exist_ok=True)
 
@@ -887,8 +887,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             sys.exit(0)
     stream.close()
 
-    [struct_mat_path, func_mat_path] = modality_paths
-    struct_mat, func_mat = [np.load(struct_mat_path), np.load(func_mat_path)]
+    [struct_mat, func_mat] = [np.load(modality_paths[0]), np.load(modality_paths[1])]
 
     if adjacency is True:
         # Multiplex adjacency
@@ -920,7 +919,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                 edge_intensities.append(0)
 
         node_centralities = list(nx.algorithms.eigenvector_centrality(mG, weight='weight').values())
-        mx.draw_networkx(mG, pos=pos, ax=ax2, node_size=100, with_labels=False,
+        mx.draw_networkx(mG, pos=pos, ax=ax2, node_size=100, with_labels=True,
                          edge_color=edge_intensities,
                          node_color=node_centralities,
                          edge_vmin=z_min, edge_vmax=z_max, dim=3, font_size=6, widths=3, alpha=0.7,

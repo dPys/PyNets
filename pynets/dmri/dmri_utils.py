@@ -66,26 +66,6 @@ def normalize_gradients(bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_sca
     return bvecs, bvals.astype('uint16')
 
 
-def median(in_file):
-    """Average a 4D dataset across the last dimension using median."""
-    out_file = fname_presuffix(in_file, suffix="_mean_b0.nii.gz", use_ext=True)
-
-    img = nib.load(in_file)
-    if img.dataobj.ndim == 3:
-        return in_file
-    if img.shape[-1] == 1:
-        nib.squeeze_image(img).to_filename(out_file)
-        return out_file
-
-    median_data = np.median(img.get_fdata(dtype="float32"), axis=-1)
-
-    hdr = img.header.copy()
-    hdr.set_xyzt_units("mm")
-    hdr.set_data_dtype(np.float32)
-    nib.Nifti1Image(median_data, img.affine, hdr).to_filename(out_file)
-    return out_file
-
-
 def generate_sl(streamlines):
     """
     Helper function that takes a sequence and returns a generator

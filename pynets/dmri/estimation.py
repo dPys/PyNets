@@ -578,6 +578,8 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     coords = np.array(coords)
     labels = np.array(labels)
 
+    assert len(coords) == len(labels) == conn_matrix.shape[0]
+
     return (atlas_mni, streams, conn_matrix, track_type, target_samples, dir_path, conn_model, network, node_size,
             dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
             directget, min_length)

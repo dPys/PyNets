@@ -977,7 +977,28 @@ def missing_elements(L):
     return sorted(set(range(start, end + 1)).difference(L))
 
 
-def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
+def get_template_tf(template_name, vox_size):
+    from pathlib import Path
+    from templateflow.api import get as get_template
+
+    templateflow_home = Path(os.getenv(
+        'TEMPLATEFLOW_HOME',
+        os.path.join(os.getenv('HOME'), '.cache', 'templateflow'))
+    )
+    res = int(vox_size.strip('mm'))
+    # str(get_template(
+    #     template_name, resolution=res, desc=None, suffix='T1w', extension=['.nii', '.nii.gz']))
+
+    template = str(get_template(template_name, resolution=res, desc='brain', suffix='T1w',
+                                extension=['.nii', '.nii.gz']))
+
+    template_mask = str(get_template(template_name, resolution=res, desc='brain', suffix='mask',
+                                     extension=['.nii', '.nii.gz']))
+
+    return template, template_mask, templateflow_home
+
+
+def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti):
     """
     This function takes a Nifti1Image parcellation object resulting from some form of masking and saves it to disk.
 
@@ -987,8 +1008,6 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
         A subject id or other unique identifier.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    roi : str
-        File path to binarized/boolean region-of-interest Nifti1Image file.
     network : str
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
         brain subgraphs.
@@ -1008,11 +1027,9 @@ def save_nifti_parcels_map(ID, dir_path, roi, network, net_parcels_map_nifti):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    net_parcels_nii_path = "%s%s%s%s%s%s%s" % (namer_dir, '/', str(ID), '_parcels_masked',
-                                               '%s' % ("%s%s" % ('_rsn-', network) if network is not None else ''),
-                                               '%s' % ("%s%s" % ('_roi-', op.basename(roi).split('.')[0])
-                                                       if roi is not None else ''),
-                                               '.nii.gz')
+    net_parcels_nii_path = "%s%s%s%s%s%s" % (namer_dir, '/', str(ID), '_parcels_masked',
+                                             '%s' % ("%s%s" % ('_rsn-', network) if network is not None else ''),
+                                             '.nii.gz')
 
     nib.save(net_parcels_map_nifti, net_parcels_nii_path)
     return net_parcels_nii_path

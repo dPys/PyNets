@@ -102,13 +102,20 @@ def sweep_directory(derivatives_path, modality, space, func_desc, subj=None,
                 for an in anat:
                     anats.append(an.path)
 
+            # grab mask
+            mask_query = {'datatype': 'anat', 'suffix': 'mask',
+                          'extensions': ['.nii', '.nii.gz']}
+            for attr, key in zip(anat_attributes, anat_keys):
+                if attr:
+                    mask_query[key] = attr
+
+            mask = layout.get(**mask_query)
+            mask = [i for i in mask if 'MNI' not in i.filename and 'space' not in i.filename]
+
             if modality == 'dwi':
                 dwi = layout.get(**merge_dicts(mod_query, {'extensions': ['.nii', '.nii.gz'], 'suffix': ['dwi']}))
                 bval = layout.get(**merge_dicts(mod_query, {'extensions': 'bval'}))
                 bvec = layout.get(**merge_dicts(mod_query, {'extensions': 'bvec'}))
-                mask = layout.get(**merge_dicts(mod_query, {'extensions': ['.nii', '.nii.gz'],
-                                                            'suffix': 'mask',
-                                                            'desc': 'brain', 'space': space}))
                 if dwi and bval and bvec:
                     if not mask:
                         for (dw, bva, bve) in zip(dwi, bval, bvec):
@@ -131,9 +138,7 @@ def sweep_directory(derivatives_path, modality, space, func_desc, subj=None,
                 func = [i for i in func if func_desc in i.filename]
                 conf = layout.get(**merge_dicts(mod_query, {'extensions': ['.tsv', '.tsv.gz']}))
                 conf = [i for i in conf if 'confounds_regressors' in i.filename]
-                mask = layout.get(**merge_dicts(mod_query, {'extensions': ['.nii', '.nii.gz'],
-                                                            'suffix': 'mask',
-                                                            'desc': 'brain', 'space': space}))
+
                 if func:
                     if not conf and not mask:
                         for fun in func:
@@ -164,14 +169,14 @@ def sweep_directory(derivatives_path, modality, space, func_desc, subj=None,
 
     if modality == 'dwi':
         if not len(dwis) or not len(bvals) or not len(bvecs):
-            print("No dMRI files found in BIDs spec. Skipping...")
+            print("No dMRI files found in BIDs spec. Skipping...\n")
             return None, None, None, None, None, None, None, subjs, seshs
         else:
             return None, None, dwis, bvals, bvecs, anats, masks, subjs, seshs
 
     elif modality == 'func':
         if not len(funcs):
-            print("No fMRI files found in BIDs spec. Skipping...")
+            print("No fMRI files found in BIDs spec. Skipping...\n")
             return None, None, None, None, None, None, None, subjs, seshs
         else:
             return funcs, confs, None, None, None, anats, masks, subjs, seshs
@@ -236,11 +241,11 @@ def get_bids_parser():
                              'clustering. If specifying a list of paths to multiple cluster masks, separate '
                              'them by space.\n')
     parser.add_argument('-roi',
-                        metavar='Path to binarized Region-of-Interest (ROI) Nifti1Image',
+                        metavar='Path to binarized Region-of-Interest (ROI) Nifti1Image in template MNI space',
                         default=None,
                         nargs='+',
-                        help='Optionally specify a binarized ROI mask and retain only those nodes '
-                             'of a parcellation contained within that mask for connectome estimation.\n')
+                        help='Optionally specify a binarized ROI mask in template MNI space and retain only those '
+                             'nodes of a parcellation contained within that mask for connectome estimation.\n')
     parser.add_argument('-ref',
                         metavar='Atlas reference file path',
                         default=None,
@@ -250,8 +255,8 @@ def get_bids_parser():
                         metavar='Path to binarized Nifti1Image to constrain tractography',
                         default=None,
                         nargs='+',
-                        help='Optionally specify a binarized ROI mask in MNI-space to constrain tractography in the '
-                             'case of dmri connectome estimation.\n')
+                        help='Optionally specify a binarized ROI mask in template MNI-space to constrain'
+                             'tractography in the case of dmri connectome estimation.\n')
 
     # Debug/Runtime settings
     parser.add_argument('-config',
@@ -349,12 +354,12 @@ def main():
         try:
             struct_models = hardcoded_params['available_models']['struct_models']
         except KeyError:
-            print('ERROR: available structural models not successfully extracted from s.yaml')
+            print('ERROR: available structural models not successfully extracted from runconfig.yaml')
             sys.exit()
-    stream.close()
 
-    space = 'MNI152NLin2009cAsym'
-    func_desc = 'smoothAROMAnonaggr'
+        space = hardcoded_params['bids_defaults']['space'][0]
+        func_desc = hardcoded_params['bids_defaults']['desc'][0]
+    stream.close()
 
     # S3
     # Primary inputs

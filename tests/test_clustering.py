@@ -55,7 +55,8 @@ def test_make_local_connectivity_tcorr():
     print("testing make_local_connectivity_tcorr")
     base_dir = str(Path(__file__).parent/"examples")
     mask_file = f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"
-    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_short.nii.gz"
+    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-MNI152NLin6Asym_desc-" \
+        f"smoothAROMAnonaggr_bold_short.nii.gz"
     func_img = nib.load(func_file)
     mask_img = nib.load(mask_file)
     W = clustools.make_local_connectivity_tcorr(func_img, mask_img, thresh=0.50)
@@ -74,7 +75,8 @@ def test_make_local_connectivity_scorr():
     print("testing make_local_connectivity_scorr")
     base_dir = str(Path(__file__).parent/"examples")
     mask_file = f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"
-    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_short.nii.gz"
+    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-MNI152NLin6Asym_desc-" \
+        f"smoothAROMAnonaggr_bold_short.nii.gz"
     func_img = nib.load(func_file)
     mask_img = nib.load(mask_file)
     W = clustools.make_local_connectivity_scorr(func_img, mask_img, thresh=0.50)
@@ -97,15 +99,16 @@ def test_ni_parcellate(clust_type):
 
     k = 20
     base_dir = str(Path(__file__).parent/"examples")
-    out_dir = f"{base_dir}/outputs/sub-0025427/ses-1/func"
+    out_dir = f"{base_dir}/outputs/sub-25659/ses-1/func"
     tmpdir = tempfile.TemporaryDirectory()
     if clust_type != 'ncut':
         local_corr = 'allcorr'
     else:
         local_corr = 'tcorr'
     clust_mask = f"{base_dir}/miscellaneous/rMFG_node6mm.nii.gz"
-    mask = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz"
-    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_short.nii.gz"
+    mask = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_mask.nii.gz"
+    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-MNI152NLin6Asym_desc-" \
+        f"smoothAROMAnonaggr_bold_short.nii.gz"
     func_img = nib.load(func_file)
     nip = clustools.NiParcellate(func_file=func_file, clust_mask=clust_mask, k=k, clust_type=clust_type,
                                  local_corr=local_corr, outdir=out_dir, conf=None, mask=mask)
@@ -129,7 +132,7 @@ def test_ni_parcellate_mult_conn_comps(clust_type):
     import tempfile
 
     base_dir = str(Path(__file__).parent/"examples")
-    out_dir = f"{base_dir}/outputs/sub-0025427/ses-1/func"
+    out_dir = f"{base_dir}/outputs/sub-25659/ses-1/func"
     tmpdir = tempfile.TemporaryDirectory()
 
     k = 150
@@ -138,8 +141,9 @@ def test_ni_parcellate_mult_conn_comps(clust_type):
     else:
         local_corr = 'tcorr'
     clust_mask = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
-    mask = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz"
-    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold_short.nii.gz"
+    mask = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_mask.nii.gz"
+    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-MNI152NLin6Asym_desc-" \
+        f"smoothAROMAnonaggr_bold_short.nii.gz"
     func_img = nib.load(func_file)
     nip = clustools.NiParcellate(func_file=func_file, clust_mask=clust_mask, k=k, clust_type=clust_type,
                                  local_corr=local_corr, outdir=out_dir, conf=None, mask=mask)
