@@ -104,9 +104,8 @@ def extract_b0(in_file, b0_ixs, out_path=None):
             in_file, suffix='_b0', use_ext=True)
 
     img = nib.load(in_file)
-    data = img.get_fdata()
 
-    b0 = data[..., b0_ixs]
+    b0 = np.asarray(img.dataobj).astype('float32')[..., b0_ixs]
 
     hdr = img.header.copy()
     hdr.set_data_shape(b0.shape)
