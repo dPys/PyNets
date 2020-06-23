@@ -52,4 +52,3 @@ docs/_static/image22.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/css filter=lfs diff=lfs merge=lfs -text
 docs/_static/link_communities.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/pynets_diffusion.png filter=lfs diff=lfs merge=lfs -text
-docs/_static/OHBM_poster_2020.jpg filter=lfs diff=lfs merge=lfs -text
