@@ -729,7 +729,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                        binary, target_samples, curv_thr_list, step_list, overlap_thr, track_type, min_length,
                        maxcrossing, directget, tiss_class, runtime_dict, execution_dict, multi_directget,
                        template_name, vox_size, waymask, min_length_list, outdir):
-    """A function interface for generating a dMRI nested workflow"""
+    """A function interface for generating a dMRI connectometry nested workflow"""
     import itertools
     import pkg_resources
     from nipype.pipeline import engine as pe
@@ -1706,7 +1706,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                        clust_type, clust_type_list, plugin_type, mask, norm, binary,
                        anat_file, runtime_dict, execution_dict, hpass, hpass_list, template_name, vox_size,
                        local_corr, extract_strategy, extract_strategy_list, outdir):
-    """A function interface for generating an fMRI nested workflow"""
+    """A function interface for generating an fMRI connectometry nested workflow"""
     import itertools
     import pkg_resources
     import os.path as op
@@ -2422,6 +2422,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                            (get_node_membership_node, save_coords_and_labels_node,
                                             [('net_coords', 'coords'), ('net_labels', 'labels'),
                                              ('network', 'network')]),
+                                           (inputnode, node_gen_node,
+                                            [('parc', 'parc')]),
                                            ])
     else:
         fmri_connectometry_wf.connect([(inputnode, save_nifti_parcels_node,
@@ -2434,7 +2436,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                        ])
         if parc is False:
             fmri_connectometry_wf.connect([(prep_spherical_nodes_node, node_gen_node,
-                                            [('parcel_list', 'parcel_list')]),
+                                            [('parcel_list', 'parcel_list'), ('parc', 'parc')]),
                                            (fetch_nodes_and_labels_node, prep_spherical_nodes_node,
                                             [('coords', 'coords')]),
                                            (fetch_nodes_and_labels_node, node_gen_node,
@@ -2446,6 +2448,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                             [('coords', 'coords'),
                                              ('labels', 'labels'),
                                              ('parcel_list', 'parcel_list')]),
+                                           (inputnode, node_gen_node,
+                                            [('parc', 'parc')]),
                                            ])
 
     # Begin joinnode chaining
