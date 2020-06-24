@@ -84,18 +84,16 @@ Command-Line Arguments
 PyNets BIDS CLI:
 
 .. argparse::
-   :ref: pynets.cli.pynets_bids.get_bids_parser
-   :prog: pynets_bids
-   :nodefault:
-   :nodefaultconst:
+    :module: pynets.cli.pynets_bids
+    :func: get_bids_parser
+    :prog: pynets
 
 PyNets Manual Execution CLI:
 
 .. argparse::
-   :ref: pynets.cli.pynets_run.get_parser
-   :prog: pynets
-   :nodefault:
-   :nodefaultconst:
+    :module: pynets.cli.pynets_run
+    :func: get_bids_parser
+    :prog: pynets
 
 **********
 Quickstart

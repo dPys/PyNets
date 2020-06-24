@@ -481,7 +481,7 @@ def load_mat_ext(est_path, ID, network, conn_model, roi, prune, norm, binary, mi
 
 def save_mat(conn_matrix, est_path, fmt='npy'):
     """
-   Save an adjacency matrix using any of a variety of methods.
+    Save an adjacency matrix using any of a variety of methods.
 
     Parameters
     ----------

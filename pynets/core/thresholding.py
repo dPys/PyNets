@@ -218,10 +218,6 @@ def est_density(in_mat):
     """
     Calculates the density of a given undirected graph.
 
-    .. math::
-
-       d = \frac{2m}{n(n-1)},
-
     Parameters
     ----------
     in_mat : NxN np.ndarray
